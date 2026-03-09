@@ -119,8 +119,8 @@ public class KeywordGrantResolutionService {
             return;
         }
 
-        target.getGrantedColors().clear();
-        target.getGrantedColors().add(effect.color());
+        target.getTransientColors().clear();
+        target.getTransientColors().add(effect.color());
         target.setColorOverridden(true);
 
         String colorName = effect.color().name().charAt(0) + effect.color().name().substring(1).toLowerCase();

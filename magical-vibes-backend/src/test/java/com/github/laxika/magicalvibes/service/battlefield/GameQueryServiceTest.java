@@ -1656,7 +1656,7 @@ class GameQueryServiceTest extends BaseCardTest {
         void colorInPredicateMatchesOverriddenColor() {
             Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
             perm.setColorOverridden(true);
-            perm.getGrantedColors().add(CardColor.BLUE);
+            perm.getTransientColors().add(CardColor.BLUE);
 
             assertThat(gqs.matchesPermanentPredicate(gd, perm,
                     new PermanentColorInPredicate(EnumSet.of(CardColor.BLUE)))).isTrue();

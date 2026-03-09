@@ -110,7 +110,7 @@ class SpawningPoolTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, pool)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, pool)).isEqualTo(1);
         assertThat(pool.getAnimatedColor()).isEqualTo(CardColor.BLACK);
-        assertThat(pool.getGrantedSubtypes()).containsExactly(CardSubtype.SKELETON);
+        assertThat(pool.getTransientSubtypes()).containsExactly(CardSubtype.SKELETON);
     }
 
     @Test
@@ -156,7 +156,7 @@ class SpawningPoolTest extends BaseCardTest {
 
         assertThat(pool.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, pool)).isFalse();
-        assertThat(pool.getGrantedSubtypes()).isEmpty();
+        assertThat(pool.getTransientSubtypes()).isEmpty();
         assertThat(pool.getAnimatedColor()).isNull();
     }
 

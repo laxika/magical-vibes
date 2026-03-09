@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 
 import java.util.ArrayList;
@@ -17,6 +19,8 @@ public class GraveyardChoiceState {
     private List<Card> cardPool;
     private boolean gainLifeEqualToManaValue;
     private UUID attachToSourcePermanentId;
+    private CardColor grantColor;
+    private CardSubtype grantSubtype;
 
     public GraveyardChoiceState() {
     }
@@ -69,6 +73,22 @@ public class GraveyardChoiceState {
         this.attachToSourcePermanentId = permanentId;
     }
 
+    public CardColor grantColor() {
+        return grantColor;
+    }
+
+    public void setGrantColor(CardColor grantColor) {
+        this.grantColor = grantColor;
+    }
+
+    public CardSubtype grantSubtype() {
+        return grantSubtype;
+    }
+
+    public void setGrantSubtype(CardSubtype grantSubtype) {
+        this.grantSubtype = grantSubtype;
+    }
+
     public GraveyardChoiceState deepCopy() {
         GraveyardChoiceState copy = new GraveyardChoiceState(
                 playerId,
@@ -78,6 +98,8 @@ public class GraveyardChoiceState {
         );
         copy.gainLifeEqualToManaValue = this.gainLifeEqualToManaValue;
         copy.attachToSourcePermanentId = this.attachToSourcePermanentId;
+        copy.grantColor = this.grantColor;
+        copy.grantSubtype = this.grantSubtype;
         return copy;
     }
 }

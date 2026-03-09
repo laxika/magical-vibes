@@ -157,7 +157,8 @@ public class GraveyardReturnResolutionService {
             putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
                     effect.grantHaste(), effect.exileAtEndStep());
         } else {
-            moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination());
+            moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
+                    effect.grantColor(), effect.grantSubtype());
         }
 
         if (effect.gainLifeEqualToManaValue()) {
@@ -277,6 +278,12 @@ public class GraveyardReturnResolutionService {
 
         gameData.interaction.prepareGraveyardChoice(effect.destination(), null);
         gameData.interaction.setGraveyardChoiceGainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
+        if (effect.grantColor() != null) {
+            gameData.interaction.setGraveyardChoiceGrantColor(effect.grantColor());
+        }
+        if (effect.grantSubtype() != null) {
+            gameData.interaction.setGraveyardChoiceGrantSubtype(effect.grantSubtype());
+        }
 
         if (effect.attachToSource()) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -322,6 +329,12 @@ public class GraveyardReturnResolutionService {
         String prompt = "Choose a " + filterLabel + " from a graveyard to put onto " + destText + ".";
 
         gameData.interaction.prepareGraveyardChoice(effect.destination(), cardPool);
+        if (effect.grantColor() != null) {
+            gameData.interaction.setGraveyardChoiceGrantColor(effect.grantColor());
+        }
+        if (effect.grantSubtype() != null) {
+            gameData.interaction.setGraveyardChoiceGrantSubtype(effect.grantSubtype());
+        }
         playerInputService.beginGraveyardChoice(gameData, controllerId, indices, prompt);
     }
 
@@ -390,7 +403,8 @@ public class GraveyardReturnResolutionService {
     }
 
     private void moveCardToDestination(GameData gameData, UUID playerId, Card card,
-                                       GraveyardChoiceDestination destination) {
+                                       GraveyardChoiceDestination destination,
+                                       CardColor grantColor, CardSubtype grantSubtype) {
         String playerName = gameData.playerIdToName.get(playerId);
         if (destination == GraveyardChoiceDestination.HAND) {
             gameData.playerHands.get(playerId).add(card);
@@ -401,13 +415,19 @@ public class GraveyardReturnResolutionService {
             String logEntry = playerName + " puts " + card.getName() + " on top of their library from a graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            putCardOntoBattlefield(gameData, playerId, card);
+            putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype);
         }
     }
 
     private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card) {
+        putCardOntoBattlefield(gameData, controllerId, card, null, null);
+    }
+
+    private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
+        applyPermanentGrants(permanent, grantColor, grantSubtype);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -415,6 +435,15 @@ public class GraveyardReturnResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+    }
+
+    private void applyPermanentGrants(Permanent permanent, CardColor grantColor, CardSubtype grantSubtype) {
+        if (grantColor != null) {
+            permanent.getGrantedColors().add(grantColor);
+        }
+        if (grantSubtype != null && !permanent.getGrantedSubtypes().contains(grantSubtype)) {
+            permanent.getGrantedSubtypes().add(grantSubtype);
+        }
     }
 
     private void putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,

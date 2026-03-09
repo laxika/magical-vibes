@@ -87,7 +87,7 @@ class InkmothNexusTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, nexus)).isEqualTo(1);
         assertThat(nexus.getAnimatedColor()).isNull();
-        assertThat(nexus.getGrantedSubtypes()).containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.BLINKMOTH);
+        assertThat(nexus.getTransientSubtypes()).containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.BLINKMOTH);
         assertThat(nexus.getGrantedKeywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.INFECT);
         assertThat(gqs.isArtifact(nexus)).isTrue();
     }
@@ -138,7 +138,7 @@ class InkmothNexusTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, nexus)).isFalse();
         assertThat(gqs.isArtifact(nexus)).isFalse();
         assertThat(nexus.getGrantedKeywords()).isEmpty();
-        assertThat(nexus.getGrantedSubtypes()).isEmpty();
+        assertThat(nexus.getTransientSubtypes()).isEmpty();
     }
 
     // ===== Mana cost enforcement =====

@@ -146,12 +146,12 @@ class ChimericMassTest extends BaseCardTest {
         Permanent mass = addMassReady(player1, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThat(mass.getGrantedSubtypes()).isEmpty();
+        assertThat(mass.getTransientSubtypes()).isEmpty();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mass.getGrantedSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(mass.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
     }
 
     // ===== Charge counters persist =====

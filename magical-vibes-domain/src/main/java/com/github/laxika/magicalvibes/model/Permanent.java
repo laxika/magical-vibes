@@ -54,9 +54,17 @@ public class Permanent {
     @Setter private int awakeningCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
-    private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
+    /** Transient colors granted by static/continuous effects (equipment, auras, animation, etc.).
+     *  Cleared every turn by {@link #resetModifiers()} and recomputed from active static effect sources.
+     *  For persistent color grants from one-shot effects, see {@link #grantedColors}. */
+    private final Set<CardColor> transientColors = EnumSet.noneOf(CardColor.class);
+    /** When {@code true}, {@link #transientColors} completely replaces the permanent's natural color
+     *  (e.g. "target creature becomes blue"). When {@code false}, transient colors are additive. */
     @Setter private boolean colorOverridden;
-    private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
+    /** Transient subtypes granted by static/continuous effects (equipment, auras, animation, etc.).
+     *  Cleared every turn by {@link #resetModifiers()} and recomputed from active static effect sources.
+     *  For persistent subtype grants from one-shot effects, see {@link #grantedSubtypes}. */
+    private final List<CardSubtype> transientSubtypes = new ArrayList<>();
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
@@ -72,6 +80,14 @@ public class Permanent {
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
     @Setter private int skipUntapCount;
+    /** Colors permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other colors").
+     *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
+     *  For transient color grants from static effects, see {@link #transientColors}. */
+    private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
+    /** Subtypes permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other types").
+     *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
+     *  For transient subtype grants from static effects, see {@link #transientSubtypes}. */
+    private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -126,9 +142,9 @@ public class Permanent {
         this.awakeningCounters = source.awakeningCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
-        this.grantedColors.addAll(source.grantedColors);
+        this.transientColors.addAll(source.transientColors);
         this.colorOverridden = source.colorOverridden;
-        this.grantedSubtypes.addAll(source.grantedSubtypes);
+        this.transientSubtypes.addAll(source.transientSubtypes);
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
@@ -138,6 +154,8 @@ public class Permanent {
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.skipUntapCount = source.skipUntapCount;
+        this.grantedColors.addAll(source.grantedColors);
+        this.grantedSubtypes.addAll(source.grantedSubtypes);
     }
 
     public Card getOriginalCard() {
@@ -231,8 +249,8 @@ public class Permanent {
     }
 
     public CardColor getEffectiveColor() {
-        if (colorOverridden && !grantedColors.isEmpty()) {
-            return grantedColors.iterator().next();
+        if (colorOverridden && !transientColors.isEmpty()) {
+            return transientColors.iterator().next();
         }
         if (animatedUntilEndOfTurn && animatedColor != null) {
             return animatedColor;
@@ -261,9 +279,9 @@ public class Permanent {
         this.animatedToughness = 0;
         this.animatedColor = null;
         this.grantedKeywords.clear();
-        this.grantedColors.clear();
+        this.transientColors.clear();
         this.colorOverridden = false;
-        this.grantedSubtypes.clear();
+        this.transientSubtypes.clear();
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();

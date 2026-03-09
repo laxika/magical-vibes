@@ -536,12 +536,16 @@ public class GameQueryService {
         if (predicate instanceof PermanentHasSubtypePredicate hasSubtypePredicate) {
             boolean creatureSubtype = isCreatureSubtype(hasSubtypePredicate.subtype());
             return permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
+                    || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
+                    || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype())
                     || (creatureSubtype && (gameData == null
                     ? permanent.hasKeyword(Keyword.CHANGELING)
                     : hasKeyword(gameData, permanent, Keyword.CHANGELING)));
         }
         if (predicate instanceof PermanentHasAnySubtypePredicate hasAnySubtypePredicate) {
-            boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains);
+            boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains)
+                    || permanent.getTransientSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains)
+                    || permanent.getGrantedSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains);
             boolean canUseChangeling = hasAnySubtypePredicate.subtypes().stream().anyMatch(this::isCreatureSubtype);
             return hasSubtype || (canUseChangeling && (gameData == null
                     ? permanent.hasKeyword(Keyword.CHANGELING)
@@ -591,10 +595,11 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
             if (permanent.isColorOverridden()) {
-                return permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
+                return permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains);
             }
             CardColor effectiveColor = permanent.getEffectiveColor();
             return (effectiveColor != null && colorInPredicate.colors().contains(effectiveColor))
+                    || permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains)
                     || permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
         }
         if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
@@ -1106,7 +1111,9 @@ public class GameQueryService {
         }
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getSubtypes().contains(subtype)) {
+            if (permanent.getCard().getSubtypes().contains(subtype)
+                    || permanent.getTransientSubtypes().contains(subtype)
+                    || permanent.getGrantedSubtypes().contains(subtype)) {
                 count++;
             }
         }

@@ -137,13 +137,13 @@ class ChimericStaffTest extends BaseCardTest {
 
         // Before animation: no subtypes
         assertThat(staffPerm.getCard().getSubtypes()).isEmpty();
-        assertThat(staffPerm.getGrantedSubtypes()).isEmpty();
+        assertThat(staffPerm.getTransientSubtypes()).isEmpty();
 
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
         // After animation: gains Construct
-        assertThat(staffPerm.getGrantedSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(staffPerm.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
     }
 
     @Test
@@ -154,14 +154,14 @@ class ChimericStaffTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
-        assertThat(staffPerm.getGrantedSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
+        assertThat(staffPerm.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(staffPerm.getGrantedSubtypes()).isEmpty();
+        assertThat(staffPerm.getTransientSubtypes()).isEmpty();
     }
 
     // ===== Does not tap =====

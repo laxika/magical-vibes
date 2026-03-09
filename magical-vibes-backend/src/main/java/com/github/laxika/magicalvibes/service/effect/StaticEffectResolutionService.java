@@ -335,11 +335,11 @@ public class StaticEffectResolutionService {
         Permanent target = context.target();
         boolean colorMatch = false;
         if (target.isColorOverridden()) {
-            colorMatch = target.getGrantedColors().contains(chosenColor);
+            colorMatch = target.getTransientColors().contains(chosenColor);
         } else {
             CardColor effectiveColor = target.getEffectiveColor();
             colorMatch = (effectiveColor != null && effectiveColor == chosenColor)
-                    || target.getGrantedColors().contains(chosenColor);
+                    || target.getTransientColors().contains(chosenColor);
         }
         if (colorMatch) {
             accumulator.addPower(boost.powerBoost());
@@ -382,7 +382,7 @@ public class StaticEffectResolutionService {
         GameData gameData = context.gameData();
 
         List<CardSubtype> targetTypes = new ArrayList<>(target.getCard().getSubtypes());
-        targetTypes.addAll(target.getGrantedSubtypes());
+        targetTypes.addAll(target.getTransientSubtypes());
         boolean targetIsChangeling = target.hasKeyword(Keyword.CHANGELING);
 
         if (targetTypes.isEmpty() && !targetIsChangeling) return;
@@ -395,7 +395,7 @@ public class StaticEffectResolutionService {
             if (!isEffectivelyCreature(other, hasAnimateArtifacts)) return;
 
             List<CardSubtype> otherTypes = new ArrayList<>(other.getCard().getSubtypes());
-            otherTypes.addAll(other.getGrantedSubtypes());
+            otherTypes.addAll(other.getTransientSubtypes());
             boolean otherIsChangeling = other.hasKeyword(Keyword.CHANGELING);
 
             if (otherTypes.isEmpty() && !otherIsChangeling) return;
@@ -782,11 +782,11 @@ public class StaticEffectResolutionService {
         if (filter == null) return true;
         if (filter instanceof PermanentColorInPredicate p) {
             if (target.isColorOverridden()) {
-                return target.getGrantedColors().stream().anyMatch(p.colors()::contains);
+                return target.getTransientColors().stream().anyMatch(p.colors()::contains);
             }
             CardColor effectiveColor = target.getEffectiveColor();
             return (effectiveColor != null && p.colors().contains(effectiveColor))
-                    || target.getGrantedColors().stream().anyMatch(p.colors()::contains);
+                    || target.getTransientColors().stream().anyMatch(p.colors()::contains);
         }
         if (filter instanceof PermanentHasSubtypePredicate p)
             return target.getCard().getSubtypes().contains(p.subtype())

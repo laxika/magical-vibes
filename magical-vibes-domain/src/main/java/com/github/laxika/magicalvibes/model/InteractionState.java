@@ -248,11 +248,13 @@ public class InteractionState {
         if (this.graveyardChoice == null) {
             this.graveyardChoice = new GraveyardChoiceState(playerId, new HashSet<>(validIndices), destination, cardPool);
         } else {
-            // Preserve independently-set fields (gainLife, attachToSource)
+            // Preserve independently-set fields (gainLife, attachToSource, grantColor, grantSubtype)
             GraveyardChoiceState prev = this.graveyardChoice;
             this.graveyardChoice = new GraveyardChoiceState(playerId, new HashSet<>(validIndices), destination, cardPool);
             this.graveyardChoice.setGainLifeEqualToManaValue(prev.gainLifeEqualToManaValue());
             this.graveyardChoice.setAttachToSourcePermanentId(prev.attachToSourcePermanentId());
+            this.graveyardChoice.setGrantColor(prev.grantColor());
+            this.graveyardChoice.setGrantSubtype(prev.grantSubtype());
         }
         this.context = new InteractionContext.GraveyardChoice(playerId, new HashSet<>(validIndices), destination, cardPool);
     }
@@ -272,6 +274,14 @@ public class InteractionState {
 
     public void setGraveyardChoiceAttachToSourcePermanentId(UUID permanentId) {
         ensureGraveyardChoice().setAttachToSourcePermanentId(permanentId);
+    }
+
+    public void setGraveyardChoiceGrantColor(CardColor color) {
+        ensureGraveyardChoice().setGrantColor(color);
+    }
+
+    public void setGraveyardChoiceGrantSubtype(CardSubtype subtype) {
+        ensureGraveyardChoice().setGrantSubtype(subtype);
     }
 
     public InteractionContext.GraveyardChoice graveyardChoiceContext() {

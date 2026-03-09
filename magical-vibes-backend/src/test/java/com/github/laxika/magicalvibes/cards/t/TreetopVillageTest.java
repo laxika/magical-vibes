@@ -102,7 +102,7 @@ class TreetopVillageTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(3);
         assertThat(village.getAnimatedColor()).isEqualTo(CardColor.GREEN);
-        assertThat(village.getGrantedSubtypes()).containsExactly(CardSubtype.APE);
+        assertThat(village.getTransientSubtypes()).containsExactly(CardSubtype.APE);
         assertThat(village.getGrantedKeywords()).contains(Keyword.TRAMPLE);
     }
 
@@ -150,7 +150,7 @@ class TreetopVillageTest extends BaseCardTest {
         assertThat(village.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, village)).isFalse();
         assertThat(village.getGrantedKeywords()).isEmpty();
-        assertThat(village.getGrantedSubtypes()).isEmpty();
+        assertThat(village.getTransientSubtypes()).isEmpty();
         assertThat(village.getAnimatedColor()).isNull();
     }
 

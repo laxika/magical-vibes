@@ -72,7 +72,7 @@ class GrandArchitectTest extends BaseCardTest {
         Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Copper Myr"))
                 .findFirst().orElseThrow();
-        assertThat(myr.getGrantedColors()).contains(CardColor.BLUE);
+        assertThat(myr.getTransientColors()).contains(CardColor.BLUE);
     }
 
     @Test
@@ -110,7 +110,7 @@ class GrandArchitectTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         myr.resetModifiers();
 
-        assertThat(myr.getGrantedColors()).isEmpty();
+        assertThat(myr.getTransientColors()).isEmpty();
     }
 
     @Test
@@ -207,7 +207,7 @@ class GrandArchitectTest extends BaseCardTest {
         Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Copper Myr"))
                 .findFirst().orElseThrow();
-        assertThat(myr.getGrantedColors()).contains(CardColor.BLUE);
+        assertThat(myr.getTransientColors()).contains(CardColor.BLUE);
 
         // Now 2 blue creatures — presents choice
         harness.activateAbility(player1, 0, 1, null, null);

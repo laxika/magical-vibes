@@ -109,7 +109,7 @@ class GhituEncampmentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(encampment.getGrantedSubtypes()).containsExactly(CardSubtype.WARRIOR);
+        assertThat(encampment.getTransientSubtypes()).containsExactly(CardSubtype.WARRIOR);
     }
 
     @Test
@@ -157,7 +157,7 @@ class GhituEncampmentTest extends BaseCardTest {
         assertThat(encampment.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, encampment)).isFalse();
         assertThat(encampment.getGrantedKeywords()).isEmpty();
-        assertThat(encampment.getGrantedSubtypes()).isEmpty();
+        assertThat(encampment.getTransientSubtypes()).isEmpty();
         assertThat(encampment.getAnimatedColor()).isNull();
     }
 

@@ -75,7 +75,7 @@ class GlintHawkIdolTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, idolPerm)).isTrue();
         assertThat(gqs.getEffectivePower(gd, idolPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, idolPerm)).isEqualTo(2);
-        assertThat(idolPerm.getGrantedSubtypes()).contains(CardSubtype.BIRD);
+        assertThat(idolPerm.getTransientSubtypes()).contains(CardSubtype.BIRD);
         assertThat(gqs.hasKeyword(gd, idolPerm, Keyword.FLYING)).isTrue();
     }
 
@@ -108,7 +108,7 @@ class GlintHawkIdolTest extends BaseCardTest {
 
         assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, idolPerm)).isFalse();
-        assertThat(idolPerm.getGrantedSubtypes()).isEmpty();
+        assertThat(idolPerm.getTransientSubtypes()).isEmpty();
         assertThat(idolPerm.getGrantedKeywords()).isEmpty();
     }
 

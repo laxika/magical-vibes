@@ -91,7 +91,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
 
         // March of the Machines makes artifacts into creatures but does NOT grant creature subtypes
         assertThat(gqs.isCreature(gd, feather)).isTrue();
-        assertThat(feather.getGrantedSubtypes()).isEmpty();
+        assertThat(feather.getTransientSubtypes()).isEmpty();
         assertThat(feather.getCard().getSubtypes()).isEmpty();
     }
 

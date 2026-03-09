@@ -113,7 +113,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(mountain.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(mountain.getAnimatedPower()).isEqualTo(4);
         assertThat(mountain.getAnimatedToughness()).isEqualTo(4);
-        assertThat(mountain.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(mountain.getTransientSubtypes()).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test

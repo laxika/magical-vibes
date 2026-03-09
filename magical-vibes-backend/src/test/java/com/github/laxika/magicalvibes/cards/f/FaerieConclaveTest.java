@@ -116,7 +116,7 @@ class FaerieConclaveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(conclave.getGrantedSubtypes()).containsExactly(CardSubtype.FAERIE);
+        assertThat(conclave.getTransientSubtypes()).containsExactly(CardSubtype.FAERIE);
     }
 
     @Test
@@ -167,7 +167,7 @@ class FaerieConclaveTest extends BaseCardTest {
         assertThat(conclave.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, conclave)).isFalse();
         assertThat(conclave.getGrantedKeywords()).isEmpty();
-        assertThat(conclave.getGrantedSubtypes()).isEmpty();
+        assertThat(conclave.getTransientSubtypes()).isEmpty();
         assertThat(conclave.getAnimatedColor()).isNull();
     }
 

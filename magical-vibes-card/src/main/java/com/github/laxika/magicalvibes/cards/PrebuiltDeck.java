@@ -171,8 +171,8 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "115", 2),   // Carrion Call
             new DeckEntry(CardSet.MAGIC_2011, "178", 2),           // Giant Growth
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "127", 2),   // Slice in Twain
-            new DeckEntry(CardSet.MAGIC_2011, "81", 2)             // Assassinate
-            // new DeckEntry(CardSet.MAGIC_2011, "114", 1),        // Rise from the Grave (not yet implemented)
+            new DeckEntry(CardSet.MAGIC_2011, "81", 2),            // Assassinate
+            new DeckEntry(CardSet.MAGIC_2011, "114", 1)            // Rise from the Grave
     )),
 
     RELIC_BREAKER("relic-breaker", "Relic Breaker (Scars of Mirrodin Intro Pack)", List.of(

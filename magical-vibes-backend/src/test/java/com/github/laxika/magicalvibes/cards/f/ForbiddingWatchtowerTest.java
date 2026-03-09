@@ -108,7 +108,7 @@ class ForbiddingWatchtowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(watchtower.getGrantedSubtypes()).containsExactly(CardSubtype.SOLDIER);
+        assertThat(watchtower.getTransientSubtypes()).containsExactly(CardSubtype.SOLDIER);
     }
 
     @Test
@@ -167,7 +167,7 @@ class ForbiddingWatchtowerTest extends BaseCardTest {
 
         assertThat(watchtower.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, watchtower)).isFalse();
-        assertThat(watchtower.getGrantedSubtypes()).isEmpty();
+        assertThat(watchtower.getTransientSubtypes()).isEmpty();
         assertThat(watchtower.getAnimatedColor()).isNull();
     }
 

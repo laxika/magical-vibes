@@ -35,8 +35,8 @@ public class AnimationResolutionService {
         self.setAnimatedPower(effect.power());
         self.setAnimatedToughness(effect.toughness());
         self.setAnimatedColor(effect.animatedColor());
-        self.getGrantedSubtypes().clear();
-        self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
+        self.getTransientSubtypes().clear();
+        self.getTransientSubtypes().addAll(effect.grantedSubtypes());
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
         self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
 
@@ -57,8 +57,8 @@ public class AnimationResolutionService {
         self.setAnimatedUntilEndOfTurn(true);
         self.setAnimatedPower(xValue);
         self.setAnimatedToughness(xValue);
-        self.getGrantedSubtypes().clear();
-        self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
+        self.getTransientSubtypes().clear();
+        self.getTransientSubtypes().addAll(effect.grantedSubtypes());
 
         String logEntry = self.getCard().getName() + " becomes a " + xValue + "/" + xValue + " artifact creature until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -77,8 +77,8 @@ public class AnimationResolutionService {
         self.setAnimatedUntilEndOfTurn(true);
         self.setAnimatedPower(counters);
         self.setAnimatedToughness(counters);
-        self.getGrantedSubtypes().clear();
-        self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
+        self.getTransientSubtypes().clear();
+        self.getTransientSubtypes().addAll(effect.grantedSubtypes());
 
         String logEntry = self.getCard().getName() + " becomes a " + counters + "/" + counters + " artifact creature until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -96,8 +96,8 @@ public class AnimationResolutionService {
         self.setAnimatedUntilEndOfTurn(true);
         self.setAnimatedPower(effect.power());
         self.setAnimatedToughness(effect.toughness());
-        self.getGrantedSubtypes().clear();
-        self.getGrantedSubtypes().addAll(effect.grantedSubtypes());
+        self.getTransientSubtypes().clear();
+        self.getTransientSubtypes().addAll(effect.grantedSubtypes());
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
 
         String logEntry = self.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness()

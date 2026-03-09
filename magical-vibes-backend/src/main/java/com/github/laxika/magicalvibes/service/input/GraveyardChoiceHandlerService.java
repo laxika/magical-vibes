@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -62,6 +64,8 @@ public class GraveyardChoiceHandlerService {
         GraveyardChoiceDestination destination = graveyardChoice.destination();
         boolean gainLifeEqualToManaValue = gameData.interaction.graveyardChoice().gainLifeEqualToManaValue();
         UUID attachToSourcePermanentId = gameData.interaction.graveyardChoice().attachToSourcePermanentId();
+        CardColor grantColor = gameData.interaction.graveyardChoice().grantColor();
+        CardSubtype grantSubtype = gameData.interaction.graveyardChoice().grantSubtype();
         gameData.interaction.clearGraveyardChoice();
 
         if (cardIndex == -1) {
@@ -107,6 +111,12 @@ public class GraveyardChoiceHandlerService {
                 }
                 case BATTLEFIELD -> {
                     Permanent perm = new Permanent(card);
+                    if (grantColor != null) {
+                        perm.getGrantedColors().add(grantColor);
+                    }
+                    if (grantSubtype != null && !perm.getGrantedSubtypes().contains(grantSubtype)) {
+                        perm.getGrantedSubtypes().add(grantSubtype);
+                    }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
 
                     String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";

@@ -210,7 +210,12 @@ ReturnCardFromGraveyardEffect(
     boolean thisTurnOnly,                    // true = only cards put there from battlefield this turn
     PermanentPredicate attachmentTarget,     // non-null = aura attaches to matching permanent on ETB
     boolean gainLifeEqualToManaValue,        // true = controller gains life equal to returned card's mana value
-    boolean attachToSource                   // true = auto-attach returned equipment to the source permanent (e.g. Auriok Survivors)
+    boolean attachToSource,                  // true = auto-attach returned equipment to the source permanent (e.g. Auriok Survivors)
+    boolean grantHaste,                      // true = grant haste to the returned permanent (e.g. Postmortem Lunge)
+    boolean exileAtEndStep,                  // true = exile at next end step (e.g. Postmortem Lunge)
+    boolean requiresManaValueEqualsX,        // true = restrict to cards with MV = X (e.g. Postmortem Lunge)
+    CardColor grantColor,                    // non-null = permanently grant this color "in addition to" (e.g. Rise from the Grave)
+    CardSubtype grantSubtype                 // non-null = permanently grant this subtype "in addition to" (e.g. Rise from the Grave)
 )
 ```
 
@@ -285,6 +290,7 @@ Pass `null` as filter to allow any card.
 | Razor Hippogriff | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(ARTIFACT), CONTROLLERS_GRAVEYARD, false, false, false, null, true)` — artifact to hand + gain life equal to mana value |
 | Noxious Revival | `ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY, null, ALL_GRAVEYARDS, true, false, false, null, false, false)` — any card from any graveyard on top of owner's library |
 | Postmortem Lunge | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, true, false, false, null, false, false, true, true, true)` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |
+| Rise from the Grave | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), ALL_GRAVEYARDS, false, false, false, null, false, false, false, false, false, CardColor.BLACK, CardSubtype.ZOMBIE)` — creature from any graveyard to battlefield as a black Zombie in addition to other colors/types |
 
 ### Other graveyard effects
 

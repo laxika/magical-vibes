@@ -76,10 +76,15 @@ public class PermanentViewFactory {
     }
 
     private CardView applyGrantedSubtypes(CardView cardView, Permanent p) {
-        if (p.getGrantedSubtypes().isEmpty()) {
+        if (p.getTransientSubtypes().isEmpty() && p.getGrantedSubtypes().isEmpty()) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());
+        for (CardSubtype subtype : p.getTransientSubtypes()) {
+            if (!mergedSubtypes.contains(subtype)) {
+                mergedSubtypes.add(subtype);
+            }
+        }
         for (CardSubtype subtype : p.getGrantedSubtypes()) {
             if (!mergedSubtypes.contains(subtype)) {
                 mergedSubtypes.add(subtype);
@@ -260,14 +265,25 @@ public class PermanentViewFactory {
     private CardView applyStaticGrantedColors(CardView cardView, Permanent p, Set<CardColor> staticGrantedColors, boolean colorOverriding) {
         // Determine the effective color: static grants add to permanent's colors
         // If the permanent already has a color override (from non-static effects), use that
-        if (staticGrantedColors.isEmpty() && !p.isColorOverridden()) {
+        if (staticGrantedColors.isEmpty() && !p.isColorOverridden() && p.getGrantedColors().isEmpty()) {
             return cardView;
         }
         CardColor effectiveColor = cardView.color();
         List<CardColor> effectiveColors = new ArrayList<>(cardView.colors());
-        if (p.isColorOverridden() && !p.getGrantedColors().isEmpty()) {
-            effectiveColor = p.getGrantedColors().iterator().next();
-            effectiveColors = new ArrayList<>(p.getGrantedColors());
+        // Persistent granted colors are additive ("in addition to its other colors")
+        if (!p.getGrantedColors().isEmpty()) {
+            for (CardColor color : p.getGrantedColors()) {
+                if (!effectiveColors.contains(color)) {
+                    effectiveColors.add(color);
+                }
+            }
+            if (effectiveColor == null) {
+                effectiveColor = p.getGrantedColors().iterator().next();
+            }
+        }
+        if (p.isColorOverridden() && !p.getTransientColors().isEmpty()) {
+            effectiveColor = p.getTransientColors().iterator().next();
+            effectiveColors = new ArrayList<>(p.getTransientColors());
         }
         if (!staticGrantedColors.isEmpty()) {
             // Static color grants take precedence for display if the card has no color
