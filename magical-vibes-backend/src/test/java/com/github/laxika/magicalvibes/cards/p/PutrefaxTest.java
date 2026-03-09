@@ -125,6 +125,7 @@ class PutrefaxTest extends BaseCardTest {
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(putrefax);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+        harness.passBothPriorities();
 
         // Putrefax has trample, so assign all 5 damage to blocker (no excess to player)
         harness.handleCombatDamageAssigned(player1, attackerIdx, Map.of(
@@ -164,6 +165,7 @@ class PutrefaxTest extends BaseCardTest {
         gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
 
         // 5/3 trample+infect blocked by 2/2 → assign 2 lethal to blocker as -1/-1, 3 excess to player as poison
         harness.handleCombatDamageAssigned(player1, 0, Map.of(

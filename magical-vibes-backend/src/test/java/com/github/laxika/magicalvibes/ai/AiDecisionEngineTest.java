@@ -283,6 +283,7 @@ class AiDecisionEngineTest {
         gd.playerLifeTotals.put(aiPlayer.getId(), 3);
 
         ai.handleMessage("AVAILABLE_BLOCKERS", "");
+        harness.passBothPriorities();
 
         // Combat fully resolves — assert on outcomes:
         // Phantom Warrior was unblocked, so only its 2 damage got through (3 - 2 = 1)

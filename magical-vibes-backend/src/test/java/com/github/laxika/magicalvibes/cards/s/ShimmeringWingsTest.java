@@ -269,6 +269,7 @@ class ShimmeringWingsTest extends BaseCardTest {
         // Enchanted creature blocks and dies
         gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
 
         // Shimmering Wings should be in graveyard (orphaned aura cleanup)
         assertThat(gd.playerBattlefields.get(player2.getId()))

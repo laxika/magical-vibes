@@ -83,6 +83,7 @@ class OverrunTest extends BaseCardTest {
         gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
 
         // 5/5 trample blocked by 2/2 → assign lethal to blocker, excess to player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(

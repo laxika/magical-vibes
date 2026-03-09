@@ -226,6 +226,7 @@ class CombatServiceTest extends BaseCardTest {
             setupBlockerDeclaration();
 
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passBothPriorities();
 
             // Both 2/2 creatures traded in combat
             harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -259,6 +260,7 @@ class CombatServiceTest extends BaseCardTest {
 
             // Should not throw — reach can block flying
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passBothPriorities();
 
             // Goblin Sky Raider dies (1/2 takes 2 damage), Giant Spider survives (2/4 takes 1 damage)
             harness.assertNotOnBattlefield(player1, "Goblin Sky Raider");

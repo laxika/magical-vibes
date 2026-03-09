@@ -215,7 +215,8 @@ class FogElementalTest extends BaseCardTest {
         gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        // Resolve block trigger
+        // Resolve block trigger, then pass through declare blockers priority
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         // Fog Elemental should be in graveyard (sacrificed at end of combat)

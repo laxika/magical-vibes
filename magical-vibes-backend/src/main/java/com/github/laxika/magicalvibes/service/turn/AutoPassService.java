@@ -110,6 +110,15 @@ public class AutoPassService {
                 return;
             }
 
+            // After blockers are declared, stop for the attacking player so they can
+            // respond to blocks (e.g. cast combat tricks or activate abilities).
+            if (gameData.currentStep == TurnStep.DECLARE_BLOCKERS
+                    && priorityHolder.equals(gameData.activePlayerId)
+                    && hasBlockingCreatures(gameData)) {
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+
             // Check if current step is in the priority holder's auto-stop set
             java.util.Set<TurnStep> stopSteps = gameData.playerAutoStopSteps.get(priorityHolder);
             if (stopSteps != null && stopSteps.contains(gameData.currentStep)) {
@@ -174,6 +183,20 @@ public class AutoPassService {
             // Auto-pass for this player
             gameData.priorityPassedBy.add(stackPriorityHolder);
         }
+    }
+
+    /**
+     * Checks whether any creature on the defending player's battlefield
+     * is currently blocking (i.e. blockers were declared this combat).
+     */
+    private boolean hasBlockingCreatures(GameData gameData) {
+        UUID defenderId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null) return false;
+        for (Permanent p : defenderBattlefield) {
+            if (p.isBlocking()) return true;
+        }
+        return false;
     }
 
     /**
