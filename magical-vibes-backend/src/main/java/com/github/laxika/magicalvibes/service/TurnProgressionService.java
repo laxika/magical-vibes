@@ -748,8 +748,12 @@ public class TurnProgressionService {
                 boolean hasMayNotUntap = p.isTapped() && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
                 boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty();
+                boolean skipsNextUntap = p.getSkipUntapCount() > 0;
 
-                if (hasMayNotUntap) {
+                if (skipsNextUntap) {
+                    // Decrement skip counter but don't untap this step (e.g. Vorinclex)
+                    p.setSkipUntapCount(p.getSkipUntapCount() - 1);
+                } else if (hasMayNotUntap) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
                 } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock) {

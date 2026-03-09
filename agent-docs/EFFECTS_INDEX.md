@@ -634,6 +634,8 @@ Pass `null` as filter to allow any card.
 | `AwardAnyColorManaEffect` | `()` | add one mana of any color |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
 | `AddExtraManaOfChosenColorOnLandTapEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when a land you control taps for mana of the source permanent's chosen color, add one additional mana of that color. Checks ON_TAP effects of the tapped land. Used by Caged Sun |
+| `AddOneOfEachManaTypeProducedByLandEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when a land you control taps for mana, add one additional mana of any type that land produced (exactly 1 mana, picks first type if multiple). Used by Vorinclex, Voice of Hunger |
+| `OpponentTappedLandDoesntUntapEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when an opponent taps a land for mana, increments skipUntapCount on the tapped land so it doesn't untap during its controller's next untap step. Multiple taps stack. Used by Vorinclex, Voice of Hunger |
 | `DoubleManaPoolEffect` | `()` | double your mana pool |
 | `AddManaPerControlledSubtypeEffect` | `(ManaColor color, CardSubtype subtype)` | add one mana of color for each permanent with subtype you control |
 | `AwardRestrictedManaEffect` | `(ManaColor color, int amount, Set<CardType> allowedSpellTypes)` | add N mana of specified color that can only be spent to cast spells of the given types. Currently supports RED via `ManaPool.restrictedRed`; `ManaCost.canPay/pay` accept `restrictedRedContext=true` to include this mana for both colored and generic costs |

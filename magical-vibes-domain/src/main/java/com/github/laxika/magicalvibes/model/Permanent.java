@@ -67,6 +67,10 @@ public class Permanent {
     /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent remains tapped." */
     private final Set<UUID> untapPreventedByPermanentIds = new HashSet<>();
+    /** Number of untap steps this permanent should skip. Decremented each untap step.
+     *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
+     *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
+    @Setter private int skipUntapCount;
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -131,6 +135,7 @@ public class Permanent {
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
+        this.skipUntapCount = source.skipUntapCount;
     }
 
     public Card getOriginalCard() {

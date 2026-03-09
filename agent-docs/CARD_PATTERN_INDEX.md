@@ -181,6 +181,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Opponent land enters (punisher) | `t/TunnelIgnus.java` | ON_OPPONENT_LAND_ENTERS_BATTLEFIELD PermanentEnteredThisTurnConditionalEffect(DealDamageToTargetPlayerEffect(3), CardTypePredicate(LAND), 2) — conditional wrapper checks 2+ lands entered this turn |
 | Imprint ETB exile land + opponent land name match | `i/InvaderParasite.java` | ON_ENTER_BATTLEFIELD ExileTargetPermanentAndImprintEffect + ON_OPPONENT_LAND_ENTERS_BATTLEFIELD ImprintedCardNameMatchesEnteringPermanentConditionalEffect(DealDamageToTargetPlayerEffect(2)) — exile target land on ETB, deal 2 damage when opponent plays land with same name |
 | Land tap trigger | `m/Manabarbs.java` | ON_ANY_PLAYER_TAPS_LAND DealDamageOnLandTapEffect |
+| Land tap mana doubling + opponent untap lock | `v/VorinclexVoiceOfHunger.java` | ON_ANY_PLAYER_TAPS_LAND AddOneOfEachManaTypeProducedByLandEffect + OpponentTappedLandDoesntUntapEffect — doubles controller's land mana, opponent lands skip next untap step |
 | End step self-destruct | `s/SparkElemental.java` | END_STEP_TRIGGERED SacrificeSelfEffect |
 | Controller end step draw | `j/JinGitaxiasCoreAugur.java` | CONTROLLER_END_STEP_TRIGGERED DrawCardEffect(7) — "your end step" trigger (only fires on controller's turn) + STATIC ReduceOpponentMaxHandSizeEffect(7) |
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |

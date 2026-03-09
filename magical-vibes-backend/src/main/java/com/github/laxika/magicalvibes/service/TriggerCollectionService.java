@@ -18,7 +18,9 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
@@ -595,6 +597,54 @@ public class TriggerCollectionService {
 
                     String logEntry = perm.getCard().getName() + " triggers — " + gameData.playerIdToName.get(tappingPlayerId)
                             + " adds 1 additional " + chosenColor.name().toLowerCase() + " mana.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    anyTriggered[0] = true;
+                } else if (effect instanceof AddOneOfEachManaTypeProducedByLandEffect) {
+                    // Only triggers for the controller's own lands
+                    if (!playerId.equals(tappingPlayerId)) {
+                        continue;
+                    }
+
+                    Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
+                    if (tappedLand == null) {
+                        continue;
+                    }
+
+                    // Find the first mana type the land produces and add exactly one of that type.
+                    // Per ruling: "adds one mana of only one of those types" (player chooses if multiple).
+                    // In this engine, basic lands have a single ON_TAP AwardManaEffect, so picking the first is correct.
+                    ManaColor producedColor = null;
+                    for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
+                        if (tapEffect instanceof AwardManaEffect awardMana) {
+                            producedColor = awardMana.color();
+                            break;
+                        }
+                    }
+
+                    if (producedColor != null) {
+                        ManaPool pool = gameData.playerManaPools.get(tappingPlayerId);
+                        pool.add(producedColor);
+
+                        String logEntry = perm.getCard().getName() + " triggers — " + gameData.playerIdToName.get(tappingPlayerId)
+                                + " adds 1 additional " + producedColor.name().toLowerCase() + " mana.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        anyTriggered[0] = true;
+                    }
+                } else if (effect instanceof OpponentTappedLandDoesntUntapEffect) {
+                    // Only triggers for opponents' lands
+                    if (playerId.equals(tappingPlayerId)) {
+                        continue;
+                    }
+
+                    Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
+                    if (tappedLand == null) {
+                        continue;
+                    }
+
+                    tappedLand.setSkipUntapCount(tappedLand.getSkipUntapCount() + 1);
+
+                    String logEntry = perm.getCard().getName() + " triggers — " + tappedLand.getCard().getName()
+                            + " doesn't untap during its controller's next untap step.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     anyTriggered[0] = true;
                 }
