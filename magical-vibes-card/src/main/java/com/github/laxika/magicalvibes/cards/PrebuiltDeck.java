@@ -101,6 +101,32 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "50", 1)     // Twisted Image
     )),
 
+    METALCRAFT("metalcraft", "Metalcraft (Scars of Mirrodin Intro Pack)", List.of(
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "234", 12),  // Island
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "242", 12),  // Mountain
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "28", 1),    // Argent Sphinx
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "84", 2),    // Blade-Tribe Berserkers
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "142", 3),   // Chrome Steed
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "87", 2),    // Embersmith
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "154", 1),   // Etched Champion
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "168", 2),   // Iron Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "36", 2),    // Lumengrid Drake
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "174", 2),   // Memnite
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "40", 2),    // Riddlesmith
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "202", 2),   // Silver Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "203", 3),   // Snapsail Glider
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "48", 2),    // Trinket Mage
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "136", 1),   // Accorder's Shield
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "149", 1),   // Darksteel Axe
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "153", 1),   // Echo Circlet
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "160", 1),   // Golem Foundry
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "161", 1),   // Golem's Heart
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "199", 2),   // Rusted Relic
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "209", 1),   // Sylvok Lifestaff
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "31", 1),    // Disperse
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "91", 3)     // Galvanic Blast
+    )),
+
     EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", List.of(
             new DeckEntry(CardSet.TENTH_EDITION, "372", 17),  // Swamp
             new DeckEntry(CardSet.TENTH_EDITION, "186", 2),   // Vampire Bats
