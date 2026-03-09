@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "221")
+@CardRegistration(set = "M11", collectorNumber = "152")
 public class ProdigalPyromancer extends Card {
 
     public ProdigalPyromancer() {

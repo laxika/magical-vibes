@@ -175,6 +175,34 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.MAGIC_2011, "114", 1),        // Rise from the Grave (not yet implemented)
     )),
 
+    RELIC_BREAKER("relic-breaker", "Relic Breaker (Scars of Mirrodin Intro Pack)", List.of(
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "246", 12),  // Forest
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "242", 12),  // Mountain
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "108", 1),   // Acid Web Spider
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "83", 2),    // Barrage Ogre
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "146", 2),   // Copper Myr
+            // new DeckEntry(CardSet.MAGIC_2011, "167", 1),        // Cudgel Troll (not yet implemented)
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "89", 2),    // Flameborn Hellion
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "93", 1),    // Hoard-Smelter Dragon
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "168", 2),   // Iron Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "125", 2),   // Molder Beast
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "101", 2),   // Oxidda Scrapmelter
+            new DeckEntry(CardSet.MAGIC_2011, "152", 1),           // Prodigal Pyromancer
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "210", 2),   // Sylvok Replica
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "107", 2),   // Vulshok Heartstoker
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "221", 3),   // Vulshok Replica
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "139", 1),   // Barbed Battlegear
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "165", 1),   // Horizon Spellbomb
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "191", 1),   // Panic Spellbomb
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "110", 1),   // Asceticism
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "132", 1),   // Viridian Revel
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "103", 2),   // Shatter
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "131", 2),   // Untamed Might
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "81", 2),    // Arc Trail
+            // new DeckEntry(CardSet.MAGIC_2011, "138", 1),         // Fireball (not yet implemented)
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "106", 1)    // Turn to Slag
+    )),
+
     EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", List.of(
             new DeckEntry(CardSet.TENTH_EDITION, "372", 17),  // Swamp
             new DeckEntry(CardSet.TENTH_EDITION, "186", 2),   // Vampire Bats
