@@ -158,6 +158,8 @@ public class SpellCastingService {
                 }
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+                int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetPermanentIds.size() - 1);
+                additionalCost += perTargetCost;
                 boolean isArtifact = card.getType() == CardType.ARTIFACT
                         || card.getAdditionalTypes().contains(CardType.ARTIFACT);
                 boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
@@ -342,7 +344,8 @@ public class SpellCastingService {
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.getType() == CardType.SORCERY) {
             int resolvedXValue = effectiveXValue;
-            paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions, phyrexianLifeCount);
+            int sorceryPerTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetPermanentIds.size() - 1);
+            paySpellManaCost(gameData, playerId, card, resolvedXValue + sorceryPerTargetCost, convokeContributions, phyrexianLifeCount);
             if (usesSacrificeCreatureCost) {
                 int sacrificedPower = paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
                 SacrificeCreatureCost sacCreatureCost = (SacrificeCreatureCost) card.getEffects(EffectSlot.SPELL).stream()
@@ -423,7 +426,8 @@ public class SpellCastingService {
             }
         } else if (card.getType() == CardType.INSTANT) {
             int resolvedXValue = effectiveXValue;
-            paySpellManaCost(gameData, playerId, card, resolvedXValue, convokeContributions, phyrexianLifeCount);
+            int instantPerTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetPermanentIds.size() - 1);
+            paySpellManaCost(gameData, playerId, card, resolvedXValue + instantPerTargetCost, convokeContributions, phyrexianLifeCount);
             if (usesSacrificeCreatureCost) {
                 int sacrificedPower = paySacrificeCreatureCost(gameData, player, card, sacrificePermanentId);
                 SacrificeCreatureCost sacCreatureCost = (SacrificeCreatureCost) card.getEffects(EffectSlot.SPELL).stream()

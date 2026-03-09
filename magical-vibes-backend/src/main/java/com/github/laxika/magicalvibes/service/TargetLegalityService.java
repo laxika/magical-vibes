@@ -243,7 +243,7 @@ public class TargetLegalityService {
         }
 
         boolean multiTargetAllowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(e -> e instanceof DealOrderedDamageToAnyTargetsEffect);
+                .anyMatch(e -> e.canTargetPlayer() && e.canTargetPermanent());
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
         for (int i = 0; i < targetPermanentIds.size(); i++) {
             UUID targetId = targetPermanentIds.get(i);

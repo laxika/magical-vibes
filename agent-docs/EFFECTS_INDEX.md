@@ -103,6 +103,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DealXDamageToAnyTargetAndGainXLifeEffect` | `()` | deal X damage and gain X life (X spell) |
 | `DealXDamageToTargetCreatureEffect` | `()` | deal X damage to target creature (X spell) |
 | `DealXDamageDividedAmongTargetAttackingCreaturesEffect` | `()` | deal X damage divided among attacking creatures |
+| `DealXDamageDividedEvenlyAmongTargetsEffect` | `()` | deal X damage divided evenly (rounded down) among any number of targets (creatures/players). Uses `targetPermanentIds` for target list. Pair with `setAdditionalCostPerExtraTarget(1)` for Fireball-style cost |
 | `FirstTargetDealsPowerDamageToSecondTargetEffect` | `()` | first target creature deals damage equal to its power to second target creature (bite mechanic) |
 | `DoubleDamageEffect` | `()` | double all damage dealt (static) |
 | `SacrificeArtifactThenDealDividedDamageEffect` | `(int totalDamage)` | Sacrifice an artifact, then deal N total damage divided among any number of targets (creatures/players). Wrap in `MayEffect` for optional sacrifice. Damage assignments provided before cast via `pendingETBDamageAssignments`. Does NOT use standard targeting |

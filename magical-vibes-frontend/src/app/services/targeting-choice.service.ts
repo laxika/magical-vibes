@@ -472,7 +472,12 @@ export class TargetingChoiceService {
     }
 
     // Send directly
-    this.sendPlayCardMessage(this.multiTargetCardIndex, null, { targetPermanentIds: this.pendingMultiTargetIds });
+    const multiExtra: Record<string, any> = { targetPermanentIds: this.pendingMultiTargetIds };
+    if (this.pendingAbilityXValue != null) {
+      multiExtra['xValue'] = this.pendingAbilityXValue;
+    }
+    this.sendPlayCardMessage(this.multiTargetCardIndex, null, multiExtra);
+    this.resetTargetingState();
     this.resetMultiTargetState();
   }
 
