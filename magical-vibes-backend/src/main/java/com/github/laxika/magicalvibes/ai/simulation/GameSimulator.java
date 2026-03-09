@@ -224,7 +224,7 @@ public class GameSimulator {
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService);
-        PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService);
+        PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, triggerCollectionService, effectHandlerRegistry);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         List<Object> effectServices = List.of(
                 damageResolutionService,

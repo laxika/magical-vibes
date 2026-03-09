@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawXCardsForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -79,6 +80,7 @@ public class PlayerInteractionResolutionService {
     private final CardViewFactory cardViewFactory;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     @HandlesEffect(OpponentMayPlayCreatureEffect.class)
     private void resolveOpponentMayPlayCreature(GameData gameData, StackEntry entry) {
@@ -115,6 +117,34 @@ public class PlayerInteractionResolutionService {
                 entry.getCard().getName() + " is sacrificed.");
 
         applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    /**
+     * Flips a coin for the source permanent's controller. On a win, the wrapped effect is
+     * dispatched via the effect handler registry. On a loss, nothing happens.
+     */
+    @HandlesEffect(FlipCoinWinEffect.class)
+    private void resolveFlipCoinWinEffect(GameData gameData, StackEntry entry, FlipCoinWinEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String sourceName = entry.getCard().getName();
+        boolean wonFlip = ThreadLocalRandom.current().nextBoolean();
+
+        String flipLog = wonFlip
+                ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName + "."
+                : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, flipLog);
+
+        if (!wonFlip) {
+            return;
+        }
+
+        EffectHandler handler = effectHandlerRegistry.getHandler(effect.wrapped());
+        if (handler != null) {
+            handler.resolve(gameData, entry, effect.wrapped());
+        } else {
+            log.warn("No handler for wrapped effect in FlipCoinWinEffect: {}",
+                    effect.wrapped().getClass().getSimpleName());
+        }
     }
 
     @HandlesEffect(SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect.class)

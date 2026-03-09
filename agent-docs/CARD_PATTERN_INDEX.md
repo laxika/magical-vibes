@@ -290,6 +290,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Shrine (upkeep + spell trigger charge + sac-for-library-pick) | `s/ShrineOfPiercingVision.java` | UPKEEP_TRIGGERED PutChargeCounterOnSelfEffect + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(CardColorPredicate(BLUE)) + tap+SacrificeSelfCost+LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect — charge counters on upkeep and blue spell cast, sacrifice to look at top X and pick one to hand |
 | Multi-target player ability (exchange life) | `s/SoulConduit.java` | Activated {6}+tap ExchangeTargetPlayersLifeTotalsEffect with multi-target PlayerPredicateTargetFilter(ANY) — two target players exchange life totals |
 | Untap own artifacts on opponent's untap | `u/UnwindingClock.java` | STATIC UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(UNTAP, PermanentIsArtifactPredicate) — filtered variant of Seedborn Muse (which uses null filter for all permanents) |
+| Coin flip activated ability | `s/SorcerersStrongbox.java` | Tap+{2} FlipCoinWinEffect(SacrificeSelfAndDrawCardsEffect(3)) — flip a coin, if you win sacrifice self and draw 3 |
 
 ## Equipment
 
