@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifePerMatchingPermanentOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
@@ -163,6 +165,28 @@ public class LifeResolutionService {
             return;
         }
         applyGainLife(gameData, entry.getControllerId(), creatureCount);
+    }
+
+    @HandlesEffect(GainLifePerMatchingPermanentOnBattlefieldEffect.class)
+    private void resolveGainLifePerMatchingPermanentOnBattlefield(GameData gameData, StackEntry entry,
+                                                                   GainLifePerMatchingPermanentOnBattlefieldEffect effect) {
+        int totalCount = 0;
+        for (PermanentPredicate predicate : effect.predicates()) {
+            int[] count = {0};
+            gameData.forEachPermanent((playerId, permanent) -> {
+                if (gameQueryService.matchesPermanentPredicate(gameData, permanent, predicate)) {
+                    count[0]++;
+                }
+            });
+            totalCount += count[0];
+        }
+        if (totalCount == 0) {
+            String playerName = gameData.playerIdToName.get(entry.getControllerId());
+            String logEntry = playerName + " gains no life (no matching permanents on the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+        applyGainLife(gameData, entry.getControllerId(), totalCount);
     }
 
     @HandlesEffect(GainLifeForEachSubtypeOnBattlefieldEffect.class)

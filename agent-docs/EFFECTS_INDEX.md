@@ -412,6 +412,7 @@ Pass `null` as filter to allow any card.
 | `GainLifeForEachSubtypeOnBattlefieldEffect` | `(CardSubtype subtype)` | gain 1 life per permanent with given subtype on the battlefield (all players) |
 | `GainLifePerControlledCreatureEffect` | `()` | gain 1 life per creature you control |
 | `GainLifePerCreatureOnBattlefieldEffect` | `()` | gain 1 life per creature on the battlefield (all players) |
+| `GainLifePerMatchingPermanentOnBattlefieldEffect` | `(List<PermanentPredicate> predicates)` | gain life equal to sum of permanents matching each predicate on the battlefield (all players); a permanent matching multiple predicates is counted once per match (e.g. artifact creature counts twice with creature+artifact predicates) |
 | `GainLifePerCardsInHandEffect` | `()` | gain 1 life per card in controller's hand (upkeep trigger) |
 | `GainLifePerGraveyardCardEffect` | `()` | gain life equal to cards in graveyard |
 | `GainLifeEqualToTargetToughnessEffect` | `()` | gain life equal to target creature's toughness |
