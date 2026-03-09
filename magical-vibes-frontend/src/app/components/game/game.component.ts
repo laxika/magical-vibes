@@ -777,7 +777,12 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.choice.awaitingXValueChoice) {
       if (perm && this.choice.canTapForMana(perm)) {
-        this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+        const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
+        if (manaAbilityIndex >= 0) {
+          this.websocketService.send({ type: MessageType.ACTIVATE_ABILITY, permanentIndex: index, abilityIndex: manaAbilityIndex });
+        } else {
+          this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+        }
       }
       return;
     }

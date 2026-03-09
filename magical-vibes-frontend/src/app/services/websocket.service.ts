@@ -139,6 +139,7 @@ export interface ActivatedAbilityView {
   loyaltyCost: number | null;
   minTargets: number;
   maxTargets: number;
+  isManaAbility: boolean;
 }
 
 export interface Card {

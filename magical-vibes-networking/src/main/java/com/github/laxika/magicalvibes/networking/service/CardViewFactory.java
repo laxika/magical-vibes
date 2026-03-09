@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,11 @@ public class CardViewFactory {
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
+        boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
+                && ability.getLoyaltyCost() == null
+                && ability.getEffects().stream()
+                        .filter(e -> !(e instanceof CostEffect))
+                        .anyMatch(e -> e instanceof ManaProducingEffect);
         return new ActivatedAbilityView(
                 ability.getDescription(),
                 ability.isRequiresTap(),
@@ -64,6 +71,7 @@ public class CardViewFactory {
                 ability.getManaCost(),
                 ability.getLoyaltyCost(),
                 ability.getMinTargets(),
-                ability.getMaxTargets());
+                ability.getMaxTargets(),
+                isManaAbility);
     }
 }

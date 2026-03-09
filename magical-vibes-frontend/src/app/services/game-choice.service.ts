@@ -382,8 +382,12 @@ export class GameChoiceService {
   // ========== X value mana tapping ==========
 
   canTapForMana(perm: Permanent): boolean {
-    return this.awaitingXValueChoice && !perm.tapped && perm.card.hasTapAbility
-      && !(perm.summoningSick && isPermanentCreature(perm));
+    if (!this.awaitingXValueChoice || perm.tapped) return false;
+    if (perm.summoningSick && isPermanentCreature(perm)) return false;
+    // Has ON_TAP mana effects (lands, mana rocks)
+    if (perm.card.hasTapAbility) return true;
+    // Has mana-producing activated ability (e.g., Birds of Paradise)
+    return perm.card.activatedAbilities.some(a => a.isManaAbility);
   }
 
   // ========== Graveyard choice ==========
