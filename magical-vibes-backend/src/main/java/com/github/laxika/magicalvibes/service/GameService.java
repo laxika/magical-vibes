@@ -444,7 +444,14 @@ public class GameService {
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            combatService.handleCombatDamageAssigned(gameData, attackerIndex, assignments);
+            try {
+                combatService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
+            } catch (IllegalStateException e) {
+                // Re-send the assignment notification so the player can retry
+                // (the frontend already cleared its popup when it sent the invalid request)
+                combatService.resolveCombatDamage(gameData);
+                throw e;
+            }
             turnProgressionService.handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
         }
     }

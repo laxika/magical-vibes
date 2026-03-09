@@ -89,8 +89,8 @@ public class CombatService {
         return combatDamageService.resolveCombatDamage(gameData);
     }
 
-    public void handleCombatDamageAssigned(GameData gameData, int attackerIndex, Map<UUID, Integer> assignments) {
-        combatDamageService.handleCombatDamageAssigned(gameData, attackerIndex, assignments);
+    public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
+        combatDamageService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
     }
 
     // ===== Combat state management =====

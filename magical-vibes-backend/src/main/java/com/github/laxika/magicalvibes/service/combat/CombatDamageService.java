@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -218,7 +219,7 @@ public class CombatDamageService {
     /**
      * Processes a player's combat damage assignment for a single attacker.
      */
-    public void handleCombatDamageAssigned(GameData gameData, int attackerIndex, Map<UUID, Integer> assignments) {
+    public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         if (!gameData.combatDamagePhase1Complete) {
             throw new IllegalStateException("Not in combat damage assignment phase");
         }
@@ -227,6 +228,9 @@ public class CombatDamageService {
         }
 
         UUID activeId = gameData.activePlayerId;
+        if (!player.getId().equals(activeId)) {
+            throw new IllegalStateException("Only the active player can assign combat damage");
+        }
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);

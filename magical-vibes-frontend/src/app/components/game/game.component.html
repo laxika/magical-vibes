@@ -234,7 +234,7 @@
           }
         </div>
         <button class="btn-confirm-combat combat-damage-confirm" (click)="choice.damage.confirmCombatDamageAssignment()"
-          [disabled]="choice.damage.combatDamageRemaining !== 0">Confirm</button>
+          [disabled]="!choice.damage.isCombatDamageAssignmentValid">Confirm</button>
       </div>
     }
 

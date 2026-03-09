@@ -96,6 +96,21 @@ export class DamageChoiceService {
     return this.combatDamageTotalDamage - assigned;
   }
 
+  get isCombatDamageAssignmentValid(): boolean {
+    if (this.combatDamageRemaining !== 0) return false;
+    if (!this.combatDamageIsTrample) return true;
+    // Trample: each blocker must receive at least lethal damage
+    for (const target of this.combatDamageTargets) {
+      if (target.isPlayer) continue;
+      const lethal = this.combatDamageIsDeathtouch
+        ? Math.max(0, 1 - target.currentDamage)
+        : target.toughness - target.currentDamage;
+      const assigned = this.combatDamageAssignments.get(target.id) ?? 0;
+      if (assigned < lethal) return false;
+    }
+    return true;
+  }
+
   assignCombatDamage(targetId: string): void {
     if (!this.assigningCombatDamage || this.combatDamageRemaining <= 0) return;
     const current = this.combatDamageAssignments.get(targetId) ?? 0;
@@ -117,7 +132,7 @@ export class DamageChoiceService {
   }
 
   confirmCombatDamageAssignment(): void {
-    if (this.combatDamageRemaining !== 0) return;
+    if (!this.isCombatDamageAssignmentValid) return;
     const assignments: Record<string, number> = {};
     this.combatDamageAssignments.forEach((v, k) => assignments[k] = v);
     this.websocketService.send({
