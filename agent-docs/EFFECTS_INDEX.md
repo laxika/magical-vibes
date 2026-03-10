@@ -626,6 +626,7 @@ Pass `null` as filter to allow any card.
 | `PreventAllDamageByTargetCreatureEffect` | `()` | prevent all damage target creature(s) would deal this turn (multi-target via targetPermanentIds) |
 | `PreventAllDamageFromChosenSourceEffect` | `()` | prevent all damage a chosen source would deal to controller this turn (prompts permanent choice on resolution) |
 | `PreventDamageAndAddMinusCountersEffect` | `()` | prevent all damage to this creature and put a -1/-1 counter for each 1 damage prevented (static, e.g. Phyrexian Hydra) |
+| `ProtectionFromCardTypesEffect` | `(Set<CardType> cardTypes)` | protection from specified card types (static, permanent). Unlike `GrantProtectionFromCardTypeUntilEndOfTurnEffect`, this is NOT cleared by `resetModifiers()` — it lives on the card's STATIC effects. Checked by `GameQueryService.hasProtectionFromSourceCardTypes()` in both overloads (permanent source and card source) |
 | `ProtectionFromColorsEffect` | `(Set<CardColor> colors)` | protection from specified colors (static) |
 | `ProtectionFromChosenColorEffect` | `()` | protection from chosen color (static, requires ChooseColorOnEnterEffect) |
 | `CantBeTargetedBySpellColorsEffect` | `(Set<CardColor> colors)` | can't be targeted by spells of specified colors (static) |

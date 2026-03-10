@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -776,7 +777,13 @@ public class GameQueryService {
      * status (including animation).
      */
     public boolean hasProtectionFromSourceCardTypes(GameData gameData, Permanent target, Permanent source) {
-        Set<CardType> protectedTypes = target.getProtectionFromCardTypes();
+        Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
+        protectedTypes.addAll(target.getProtectionFromCardTypes());
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromCardTypesEffect protection) {
+                protectedTypes.addAll(protection.cardTypes());
+            }
+        }
         if (protectedTypes.isEmpty()) return false;
         if (protectedTypes.contains(CardType.ARTIFACT) && isArtifact(source)) return true;
         if (protectedTypes.contains(CardType.CREATURE) && isCreature(gameData, source)) return true;
@@ -793,7 +800,13 @@ public class GameQueryService {
      * not permanents) and only checks the card's natural types.
      */
     public boolean hasProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
-        Set<CardType> protectedTypes = target.getProtectionFromCardTypes();
+        Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
+        protectedTypes.addAll(target.getProtectionFromCardTypes());
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromCardTypesEffect protection) {
+                protectedTypes.addAll(protection.cardTypes());
+            }
+        }
         if (protectedTypes.isEmpty()) return false;
         if (protectedTypes.contains(sourceCard.getType())) return true;
         for (CardType type : sourceCard.getAdditionalTypes()) {
