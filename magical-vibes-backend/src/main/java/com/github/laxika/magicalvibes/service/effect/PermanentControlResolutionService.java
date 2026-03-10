@@ -457,6 +457,7 @@ public class PermanentControlResolutionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
+                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, target);
                 gameData.playerDecks.get(playerId).add(target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is put on the bottom of "
@@ -480,6 +481,7 @@ public class PermanentControlResolutionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
+                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, target);
                 gameData.playerDecks.get(playerId).add(0, target.getOriginalCard());
 
                 String logEntry = target.getCard().getName() + " is put on top of "

@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -147,5 +150,48 @@ public class AnimationResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes a {}/{} artifact creature permanently", gameData.id, target.getCard().getName(), effect.power(), effect.toughness());
+    }
+
+    @HandlesEffect(AnimateTargetLandWhileSourceOnBattlefieldEffect.class)
+    private void resolveAnimateTargetLandWhileSourceOnBattlefield(GameData gameData, StackEntry entry,
+                                                                   AnimateTargetLandWhileSourceOnBattlefieldEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        // Per ruling: if the source creature left the battlefield before this ETB resolves,
+        // nothing happens to the targeted land.
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability has no effect (it is no longer on the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            log.info("Game {} - {} ETB has no effect, source left battlefield", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        target.setPermanentlyAnimated(true);
+        target.setPermanentAnimatedPower(effect.power());
+        target.setPermanentAnimatedToughness(effect.toughness());
+
+        for (CardSubtype subtype : effect.grantedSubtypes()) {
+            if (!target.getGrantedSubtypes().contains(subtype)) {
+                target.getGrantedSubtypes().add(subtype);
+            }
+        }
+
+        if (effect.color() != null) {
+            target.getGrantedColors().add(effect.color());
+        }
+
+        gameData.sourceLinkedAnimations.put(target.getId(), sourcePermanentId);
+
+        String logEntry = target.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness()
+                + " green Treefolk creature. It's still a land.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes a {}/{} creature while {} is on the battlefield",
+                gameData.id, target.getCard().getName(), effect.power(), effect.toughness(),
+                entry.getCard().getName());
     }
 }

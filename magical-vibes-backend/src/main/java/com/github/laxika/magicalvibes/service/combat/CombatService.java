@@ -118,6 +118,7 @@ public class CombatService {
             for (Permanent perm : toSacrifice) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, perm);
                 battlefield.remove(perm);
+                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, perm);
                 boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
                 if (wentToGraveyard) {
                     deathTriggerService.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);

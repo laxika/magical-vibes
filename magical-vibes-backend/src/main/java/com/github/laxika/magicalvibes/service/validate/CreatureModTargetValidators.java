@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerControlledSubtypeEffect;
@@ -115,6 +116,11 @@ public class CreatureModTargetValidators {
 
     @ValidatesTarget(AnimateTargetPermanentEffect.class)
     public void validateAnimateTargetPermanent(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(AnimateTargetLandWhileSourceOnBattlefieldEffect.class)
+    public void validateAnimateTargetLandWhileSourceOnBattlefield(TargetValidationContext ctx) {
         tvs.requireBattlefieldTarget(ctx);
     }
 }

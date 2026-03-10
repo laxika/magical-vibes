@@ -584,6 +584,7 @@ public class CardSpecificResolutionService {
         gameData.permanentControlStolenCreatures.clear();
         gameData.pendingExileReturns.clear();
         gameData.exileReturnOnPermanentLeave.clear();
+        gameData.sourceLinkedAnimations.clear();
         gameData.pendingTokenExilesAtEndStep.clear();
         gameData.pendingMayAbilities.clear();
         gameData.pendingDeathTriggerTargets.clear();

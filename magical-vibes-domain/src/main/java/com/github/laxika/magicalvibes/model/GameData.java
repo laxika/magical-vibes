@@ -128,6 +128,11 @@ public class GameData {
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
+    /** Tracks source-linked animations (Awakener Druid-style).
+     *  Maps animated target permanent UUID → source permanent UUID.
+     *  When the source leaves the battlefield, the target's animation is cleared. */
+    public final Map<UUID, UUID> sourceLinkedAnimations = new ConcurrentHashMap<>();
+
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -478,6 +483,9 @@ public class GameData {
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
+
+        // --- Source-linked animations (Awakener Druid-style) ---
+        copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
 
         // --- Per-permanent exile tracking (Knowledge Pool, etc.) ---
         this.permanentExiledCards.forEach((k, v) ->

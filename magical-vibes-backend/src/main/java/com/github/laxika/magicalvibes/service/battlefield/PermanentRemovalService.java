@@ -275,6 +275,7 @@ public class PermanentRemovalService {
                 gameData.permanentExiledCards.remove(target.getId());
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
                 gameData.stolenCreatures.remove(target.getId());
+                handleSourceLinkedAnimationCleanup(gameData, target);
                 return Optional.of(new RemovedPermanentInfo(playerId, ownerId));
             }
         }
@@ -306,6 +307,40 @@ public class PermanentRemovalService {
         log.info("Game {} - {} sacrificed due to {} leaving battlefield", gameData.id, creature.getCard().getName(), removedEquipment.getCard().getName());
         removePermanentToGraveyard(gameData, creature);
         removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Cleans up source-linked animations (Awakener Druid-style) when a permanent leaves the battlefield.
+     * If the removed permanent was a source, reverts the target land back to a normal land.
+     * If the removed permanent was an animated target, removes the tracking entry.
+     */
+    public void handleSourceLinkedAnimationCleanup(GameData gameData, Permanent removedPermanent) {
+        UUID removedId = removedPermanent.getId();
+
+        // Check if this permanent was a source for any linked animations
+        var iterator = gameData.sourceLinkedAnimations.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            if (entry.getValue().equals(removedId)) {
+                Permanent animatedTarget = gameQueryService.findPermanentById(gameData, entry.getKey());
+                if (animatedTarget != null) {
+                    animatedTarget.setPermanentlyAnimated(false);
+                    animatedTarget.setPermanentAnimatedPower(0);
+                    animatedTarget.setPermanentAnimatedToughness(0);
+                    animatedTarget.getGrantedSubtypes().clear();
+                    animatedTarget.getGrantedColors().clear();
+
+                    String revertLog = animatedTarget.getCard().getName() + " is no longer a creature.";
+                    gameBroadcastService.logAndBroadcast(gameData, revertLog);
+                    log.info("Game {} - {} reverts to non-creature (source {} left battlefield)",
+                            gameData.id, animatedTarget.getCard().getName(), removedPermanent.getCard().getName());
+                }
+                iterator.remove();
+            }
+        }
+
+        // Also clean up if the removed permanent was itself an animated target
+        gameData.sourceLinkedAnimations.remove(removedId);
     }
 
     /**

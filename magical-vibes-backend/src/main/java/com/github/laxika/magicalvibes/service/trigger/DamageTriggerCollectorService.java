@@ -51,6 +51,7 @@ public class DamageTriggerCollectorService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(currentSource)) {
+                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, currentSource);
                 permanentRemovalService.removeOrphanedAuras(gameData);
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(currentSource.getId(), playerId);
                 gameData.stolenCreatures.remove(currentSource.getId());

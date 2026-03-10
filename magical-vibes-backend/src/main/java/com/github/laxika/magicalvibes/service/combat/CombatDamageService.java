@@ -742,6 +742,7 @@ public class CombatDamageService {
             deathTriggerService.checkAllyCreatureDeathTriggers(gameData, controllerId);
         }
         battlefield.remove(idx);
+        permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, dead);
     }
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {

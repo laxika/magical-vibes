@@ -171,6 +171,7 @@ public class ActivatedAbilityExecutionService {
         if (shouldSacrifice) {
             boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
             battlefield.remove(permanent);
+            permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, permanent);
             boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
             if (wentToGraveyard) {
                 deathTriggerService.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);

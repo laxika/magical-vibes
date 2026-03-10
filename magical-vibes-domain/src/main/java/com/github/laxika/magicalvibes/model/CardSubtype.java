@@ -102,6 +102,7 @@ public enum CardSubtype {
     MINION("Minion"),
     VIASHINO("Viashino"),
     SAPROLING("Saproling"),
+    TREEFOLK("Treefolk"),
     TROLL("Troll"),
     MASTICORE("Masticore"),
     DINOSAUR("Dinosaur"),

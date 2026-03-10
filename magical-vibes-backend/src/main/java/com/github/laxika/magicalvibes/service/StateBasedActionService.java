@@ -40,6 +40,7 @@ public class StateBasedActionService {
                     it.remove();
                     UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
                     gameData.stolenCreatures.remove(p.getId());
+                    permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, p);
                     boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     if (wentToGraveyard) {
                         deathTriggerService.collectDeathTrigger(gameData, p.getCard(), playerId, true, p);
@@ -105,5 +106,6 @@ public class StateBasedActionService {
             gameData.playersAttemptedDrawFromEmptyLibrary.clear();
         }
     }
+
 }
 
