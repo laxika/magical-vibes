@@ -69,7 +69,9 @@ export enum MessageType {
   VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE',
   PAY_SEARCH_TAX = 'PAY_SEARCH_TAX',
   X_VALUE_CHOICE = 'X_VALUE_CHOICE',
-  X_VALUE_CHOSEN = 'X_VALUE_CHOSEN'
+  X_VALUE_CHOSEN = 'X_VALUE_CHOSEN',
+  LEAVE_GAME = 'LEAVE_GAME',
+  LOBBY_GAMES_RESPONSE = 'LOBBY_GAMES_RESPONSE'
 }
 
 export enum GameStatus {
@@ -166,6 +168,7 @@ export interface Card {
   hasConvoke: boolean;
   hasPhyrexianMana: boolean;
   phyrexianManaCount: number;
+  token: boolean;
   watermark: string | null;
 }
 
@@ -267,6 +270,11 @@ export interface GameNotification {
 export interface LobbyGameNotification {
   type: MessageType;
   game?: LobbyGame;
+}
+
+export interface LobbyGamesNotification {
+  type: MessageType;
+  games: LobbyGame[];
 }
 
 export interface GameStateNotification {

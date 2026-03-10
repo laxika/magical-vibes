@@ -1,51 +1,68 @@
-<div class="title-bar">
-  <span class="card-name">{{ card.name }}</span>
-  @if (card.manaCost) {
-    <span class="card-mana-cost" [innerHTML]="formattedManaCost"></span>
+@if (card.token) {
+  @if (artUrl()) {
+    <img class="token-art" [src]="artUrl()" [alt]="card.name + ' art'" />
+  } @else {
+    <div class="token-art-placeholder"></div>
   }
-</div>
-@if (artUrl()) {
-  <img class="card-art" [src]="artUrl()" [alt]="card.name + ' art'" />
-} @else {
-  <div class="card-art"></div>
-}
-<div class="type-line">
-  <span class="card-type">{{ typeLine }}</span>
-  @if (setSymbolUrl) {
-    <img class="set-symbol" [src]="setSymbolUrl" [attr.data-rarity]="rarity" alt="set symbol" />
-  } @else if (rarity) {
-    <span class="rarity-diamond" [attr.data-rarity]="rarity">&#9670;</span>
-  }
-</div>
-<div class="text-box" [style.font-size]="textBoxFontSize">
-  @if (watermarkUrl()) {
-    <img class="watermark" [src]="watermarkUrl()" alt="" />
-  }
-  @if (card.cardText) {
-    <div class="card-text" [innerHTML]="formattedCardText"></div>
-  }
-  @if (effectiveKeywords.length > 0) {
-    <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
-  }
-  @if (flavorText) {
-    <div class="flavor-separator"></div>
-    <div class="card-flavor-text">{{ flavorText }}</div>
-  }
+  <div class="token-name-bar">
+    <span class="card-name">{{ card.name }}</span>
+  </div>
+  <div class="token-type-line">
+    <span class="card-type">{{ typeLine }}</span>
+  </div>
   @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
-    <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
+    <div class="token-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
   }
-  @if (displayLoyalty != null) {
-    <div class="card-loyalty">{{ displayLoyalty }}</div>
+} @else {
+  <div class="title-bar">
+    <span class="card-name">{{ card.name }}</span>
+    @if (card.manaCost) {
+      <span class="card-mana-cost" [innerHTML]="formattedManaCost"></span>
+    }
+  </div>
+  @if (artUrl()) {
+    <img class="card-art" [src]="artUrl()" [alt]="card.name + ' art'" />
+  } @else {
+    <div class="card-art"></div>
   }
-</div>
-<div class="info-line">
-  @if (artist) {
-    <span class="card-artist">{{ artist }}</span>
-  }
-  @if (card.setCode) {
-    <span class="card-set-badge" [attr.data-rarity]="rarity">{{ card.setCode }} #{{ card.collectorNumber }}</span>
-  }
-</div>
+  <div class="type-line">
+    <span class="card-type">{{ typeLine }}</span>
+    @if (setSymbolUrl) {
+      <img class="set-symbol" [src]="setSymbolUrl" [attr.data-rarity]="rarity" alt="set symbol" />
+    } @else if (rarity) {
+      <span class="rarity-diamond" [attr.data-rarity]="rarity">&#9670;</span>
+    }
+  </div>
+  <div class="text-box" [style.font-size]="textBoxFontSize">
+    @if (watermarkUrl()) {
+      <img class="watermark" [src]="watermarkUrl()" alt="" />
+    }
+    @if (card.cardText) {
+      <div class="card-text" [innerHTML]="formattedCardText"></div>
+    }
+    @if (effectiveKeywords.length > 0) {
+      <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
+    }
+    @if (flavorText) {
+      <div class="flavor-separator"></div>
+      <div class="card-flavor-text">{{ flavorText }}</div>
+    }
+    @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
+      <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
+    }
+    @if (displayLoyalty != null) {
+      <div class="card-loyalty">{{ displayLoyalty }}</div>
+    }
+  </div>
+  <div class="info-line">
+    @if (artist) {
+      <span class="card-artist">{{ artist }}</span>
+    }
+    @if (card.setCode) {
+      <span class="card-set-badge" [attr.data-rarity]="rarity">{{ card.setCode }} #{{ card.collectorNumber }}</span>
+    }
+  </div>
+}
 @if (permanent && permanent.regenerationShield > 0) {
   <div class="card-regen-badge">Regen x{{ permanent.regenerationShield }}</div>
 }

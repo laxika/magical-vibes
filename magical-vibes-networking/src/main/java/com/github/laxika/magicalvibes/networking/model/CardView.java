@@ -34,6 +34,7 @@ public record CardView(
         boolean hasConvoke,
         boolean hasPhyrexianMana,
         int phyrexianManaCount,
+        boolean token,
         String watermark
 ) {
 }

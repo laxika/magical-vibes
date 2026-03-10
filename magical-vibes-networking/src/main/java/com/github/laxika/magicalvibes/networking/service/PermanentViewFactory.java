@@ -97,6 +97,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -116,6 +117,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), CardColor.GREEN, List.of(CardColor.GREEN), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -133,6 +135,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -150,6 +153,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -167,6 +171,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -186,6 +191,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), mergedAbilities, cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -205,6 +211,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -264,6 +271,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }
@@ -307,6 +315,7 @@ public class PermanentViewFactory {
                 cardView.collectorNumber(), effectiveColor, List.copyOf(effectiveColors), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
                 cardView.watermark()
         );
     }

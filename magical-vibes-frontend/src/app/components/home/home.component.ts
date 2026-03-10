@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, DeckInfo, GameStatus, MessageType, DraftJoinedNotification, DraftPackUpdateNotification } from '../../services/websocket.service';
+import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, LobbyGamesNotification, DeckInfo, GameStatus, MessageType, DraftJoinedNotification, DraftPackUpdateNotification } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -87,6 +87,10 @@ export class HomeComponent implements OnInit, OnDestroy {
               this.games.set(updatedGames);
             }
           }
+        } else if (message.type === MessageType.LOBBY_GAMES_RESPONSE) {
+          const notification = message as LobbyGamesNotification;
+          this.games.set(notification.games);
+          this.websocketService.initialGames = notification.games;
         } else if (message.type === MessageType.DRAFT_JOINED) {
           this.router.navigate(['/draft']);
         } else if (message.type === MessageType.DRAFT_PACK_UPDATE) {

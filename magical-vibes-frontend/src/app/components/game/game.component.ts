@@ -896,6 +896,10 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Hover & navigation ==========
 
   backToLobby(): void {
+    this.websocketService.currentGame = null;
+    // Tell the backend we're leaving the game, which returns us to lobby status
+    this.websocketService.send({ type: MessageType.LEAVE_GAME });
+
     if (this.websocketService.inDraft) {
       this.router.navigate(['/draft']);
     } else {

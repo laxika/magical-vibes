@@ -55,6 +55,7 @@ public class CardViewFactory {
                 card.getKeywords().contains(Keyword.CONVOKE),
                 hasPhyrexianMana,
                 phyrexianManaCount,
+                card.isToken(),
                 card.getWatermark());
     }
 

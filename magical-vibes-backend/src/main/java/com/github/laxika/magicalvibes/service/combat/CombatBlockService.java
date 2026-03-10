@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -66,14 +65,7 @@ public class CombatBlockService {
         if (battlefield == null) return List.of();
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            Permanent p = battlefield.get(i);
-            if (gameQueryService.isCreature(gameData, p)
-                    && !p.isTapped()
-                    && !p.isCantBlockThisTurn()
-                    && p.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
-                    && !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantAttackOrBlockEffect.class)
-                    && !gameQueryService.hasAuraWithEffect(gameData, p, CantBlockEffect.class)
-                    && !CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, p)) {
+            if (gameQueryService.canBlock(gameData, battlefield.get(i))) {
                 indices.add(i);
             }
         }

@@ -906,6 +906,22 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
+    public void handleLeaveGame(Connection connection) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        // Mark player as back in the lobby so they receive future lobby broadcasts
+        sessionManager.clearInGame(connection.getId());
+
+        var games = lobbyService.listRunningGames();
+        var response = new com.github.laxika.magicalvibes.networking.message.LobbyGamesResponse(games);
+        connection.sendMessage(objectMapper.writeValueAsString(response));
+    }
+
+    @Override
     public void handleError(Connection connection, String message) throws Exception {
         log.warn("Sending error to {}: {}", connection.getId(), message);
         ErrorMessage error = new ErrorMessage(message);

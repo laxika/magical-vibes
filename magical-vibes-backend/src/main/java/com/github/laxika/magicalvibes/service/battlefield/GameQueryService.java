@@ -17,7 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
@@ -34,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -773,7 +777,13 @@ public class GameQueryService {
      * status (including animation).
      */
     public boolean hasProtectionFromSourceCardTypes(GameData gameData, Permanent target, Permanent source) {
-        Set<CardType> protectedTypes = target.getProtectionFromCardTypes();
+        Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
+        protectedTypes.addAll(target.getProtectionFromCardTypes());
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromCardTypesEffect protection) {
+                protectedTypes.addAll(protection.cardTypes());
+            }
+        }
         if (protectedTypes.isEmpty()) return false;
         if (protectedTypes.contains(CardType.ARTIFACT) && isArtifact(source)) return true;
         if (protectedTypes.contains(CardType.CREATURE) && isCreature(gameData, source)) return true;
@@ -790,7 +800,13 @@ public class GameQueryService {
      * not permanents) and only checks the card's natural types.
      */
     public boolean hasProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
-        Set<CardType> protectedTypes = target.getProtectionFromCardTypes();
+        Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
+        protectedTypes.addAll(target.getProtectionFromCardTypes());
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromCardTypesEffect protection) {
+                protectedTypes.addAll(protection.cardTypes());
+            }
+        }
         if (protectedTypes.isEmpty()) return false;
         if (protectedTypes.contains(sourceCard.getType())) return true;
         for (CardType type : sourceCard.getAdditionalTypes()) {
@@ -929,6 +945,21 @@ public class GameQueryService {
         return gameData.anyPermanentMatches(p ->
                 p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                         && p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId()));
+    }
+
+    /**
+     * Returns {@code true} if the given creature permanent can legally be declared as a blocker.
+     */
+    public boolean canBlock(GameData gameData, Permanent creature) {
+        return isCreature(gameData, creature)
+                && !creature.isTapped()
+                && !creature.isCantBlockThisTurn()
+                && creature.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
+                && !hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)
+                && !hasAuraWithEffect(gameData, creature, CantBlockEffect.class)
+                && !(creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
+                        && !isEquipped(gameData, creature));
     }
 
     /**

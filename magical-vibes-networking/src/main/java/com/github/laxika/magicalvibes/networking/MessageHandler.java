@@ -99,6 +99,8 @@ public interface MessageHandler {
 
     void handleXValueChosen(Connection connection, XValueChosenRequest request) throws Exception;
 
+    void handleLeaveGame(Connection connection) throws Exception;
+
     void handleTimeout(Connection connection);
 
     void handleError(Connection connection, String message) throws Exception;

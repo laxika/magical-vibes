@@ -57,6 +57,10 @@ public class WebSocketSessionManager implements SessionManager {
         inGameConnectionIds.add(connectionId);
     }
 
+    public void clearInGame(String connectionId) {
+        inGameConnectionIds.remove(connectionId);
+    }
+
     public Collection<Player> getLobbyPlayers() {
         return players.entrySet().stream()
                 .filter(e -> !inGameConnectionIds.contains(e.getKey()))

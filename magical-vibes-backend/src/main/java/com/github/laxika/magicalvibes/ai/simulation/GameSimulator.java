@@ -785,10 +785,9 @@ public class GameSimulator {
         }
         List<Integer> blockerIndices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            Permanent perm = battlefield.get(i);
-            if (!gameQueryService.isCreature(gd, perm)) continue;
-            if (perm.isTapped()) continue;
-            blockerIndices.add(i);
+            if (gameQueryService.canBlock(gd, battlefield.get(i))) {
+                blockerIndices.add(i);
+            }
         }
         return combatSimulator.findBestBlockers(gd, playerId, attackerIndices, blockerIndices);
     }

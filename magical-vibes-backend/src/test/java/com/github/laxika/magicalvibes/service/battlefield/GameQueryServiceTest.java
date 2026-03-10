@@ -7,12 +7,10 @@ import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartOfLight;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarplusanStrider;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.MelirasKeepers;
 import com.github.laxika.magicalvibes.cards.m.MirranCrusader;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.m.MyrSire;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
@@ -28,6 +26,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -62,12 +65,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -75,8 +82,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest extends BaseCardTest {
+
+    @Mock
+    private StaticEffectHandlerRegistry staticEffectRegistry;
+
+    @InjectMocks
+    private GameQueryService gqs;
 
     // ===== Helper methods =====
 
@@ -99,20 +114,25 @@ class GameQueryServiceTest extends BaseCardTest {
         return card;
     }
 
-    private static Card createEnchantment(String name, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.ENCHANTMENT);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        return card;
-    }
-
     private Permanent addPermanent(UUID playerId, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(playerId).add(perm);
         return perm;
+    }
+
+    /**
+     * Creates a "lord" permanent on the given player's battlefield whose static effect
+     * is handled by the provided handler. Uses {@link DoubleDamageEffect} as a carrier
+     * effect — the actual behavior is defined entirely by the handler lambda.
+     */
+    private Permanent addLordWithHandler(UUID playerId,
+                                         com.github.laxika.magicalvibes.service.effect.StaticEffectHandler handler) {
+        CardEffect carrierEffect = new DoubleDamageEffect();
+        Card lordCard = createCreature("Test Lord", 1, 1, null);
+        lordCard.addEffect(EffectSlot.STATIC, carrierEffect);
+        when(staticEffectRegistry.getHandler(carrierEffect)).thenReturn(handler);
+        return addPermanent(playerId, lordCard);
     }
 
     // ===== findPermanentById =====
@@ -481,6 +501,31 @@ class GameQueryServiceTest extends BaseCardTest {
         }
     }
 
+    // ===== isArtifact (with GameData) =====
+
+    @Nested
+    @DisplayName("isArtifact (with GameData)")
+    class IsArtifactWithGameData {
+
+        @Test
+        @DisplayName("returns true when artifact type granted by static effect from another permanent")
+        void returnsTrueWhenArtifactTypeGrantedByStaticEffect() {
+            addLordWithHandler(player1.getId(),
+                    (ctx, eff, acc) -> acc.addGrantedCardType(CardType.ARTIFACT));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.isArtifact(gd, perm)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when no artifact type granted by static effect")
+        void returnsFalseWithoutStaticGrant() {
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.isArtifact(gd, perm)).isFalse();
+        }
+    }
+
     // ===== isMetalcraftMet =====
 
     @Nested
@@ -564,6 +609,24 @@ class GameQueryServiceTest extends BaseCardTest {
 
             assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isTrue();
         }
+
+        @Test
+        @DisplayName("returns true when keyword granted by static effect from another permanent")
+        void returnsTrueForKeywordGrantedByStaticEffect() {
+            addLordWithHandler(player1.getId(), (ctx, eff, acc) -> acc.addKeyword(Keyword.FLYING));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when innate keyword is removed by static effect")
+        void returnsFalseWhenKeywordRemovedByStaticEffect() {
+            addLordWithHandler(player1.getId(), (ctx, eff, acc) -> acc.removeKeyword(Keyword.DOUBLE_STRIKE));
+            Permanent perm = addPermanent(player1.getId(), new MirranCrusader());
+
+            assertThat(gqs.hasKeyword(gd, perm, Keyword.DOUBLE_STRIKE)).isFalse();
+        }
     }
 
     // ===== cantHaveCounters =====
@@ -586,6 +649,41 @@ class GameQueryServiceTest extends BaseCardTest {
             Permanent perm = addPermanent(player1.getId(), new MelirasKeepers());
 
             assertThat(gqs.cantHaveCounters(gd, perm)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns true when CantHaveCountersEffect granted by static effect from another permanent")
+        void returnsTrueWhenGrantedByStaticEffect() {
+            addLordWithHandler(player1.getId(),
+                    (ctx, eff, acc) -> acc.addGrantedEffect(new CantHaveCountersEffect()));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.cantHaveCounters(gd, perm)).isTrue();
+        }
+    }
+
+    // ===== cantHaveMinusOneMinusOneCounters =====
+
+    @Nested
+    @DisplayName("cantHaveMinusOneMinusOneCounters")
+    class CantHaveMinusOneMinusOneCountersTest {
+
+        @Test
+        @DisplayName("returns false by default")
+        void returnsFalseByDefault() {
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, perm)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true when granted by static effect from another permanent")
+        void returnsTrueWhenGrantedByStaticEffect() {
+            addLordWithHandler(player1.getId(),
+                    (ctx, eff, acc) -> acc.addGrantedEffect(new CantHaveMinusOneMinusOneCountersEffect()));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, perm)).isTrue();
         }
     }
 
@@ -631,6 +729,16 @@ class GameQueryServiceTest extends BaseCardTest {
             equipment.setAttachedTo(creature.getId());
 
             assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns true when CantBeBlockedEffect granted by static effect from another permanent")
+        void returnsTrueWhenGrantedByStaticEffect() {
+            addLordWithHandler(player1.getId(),
+                    (ctx, eff, acc) -> acc.addGrantedEffect(new CantBeBlockedEffect()));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.hasCantBeBlocked(gd, perm)).isTrue();
         }
     }
 
@@ -730,6 +838,24 @@ class GameQueryServiceTest extends BaseCardTest {
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
         }
+
+        @Test
+        @DisplayName("includes power from static bonus of another permanent")
+        void includesStaticBonusPower() {
+            addLordWithHandler(player1.getId(), (ctx, eff, acc) -> acc.addPower(2));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("includes toughness from static bonus of another permanent")
+        void includesStaticBonusToughness() {
+            addLordWithHandler(player1.getId(), (ctx, eff, acc) -> acc.addToughness(1));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
+        }
     }
 
     // ===== getEffectiveCombatDamage =====
@@ -803,6 +929,17 @@ class GameQueryServiceTest extends BaseCardTest {
             Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
             perm.setChosenColor(CardColor.RED);
 
+            assertThat(gqs.hasProtectionFrom(gd, perm, CardColor.BLUE)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true when protection color granted by static effect from another permanent")
+        void returnsTrueForProtectionGrantedByStaticEffect() {
+            addLordWithHandler(player1.getId(),
+                    (ctx, eff, acc) -> acc.addProtectionColors(EnumSet.of(CardColor.RED)));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.hasProtectionFrom(gd, perm, CardColor.RED)).isTrue();
             assertThat(gqs.hasProtectionFrom(gd, perm, CardColor.BLUE)).isFalse();
         }
     }
@@ -916,6 +1053,18 @@ class GameQueryServiceTest extends BaseCardTest {
         void returnsFalseForNonMatchingColor() {
             Permanent perm = addPermanent(player1.getId(), new KarplusanStrider());
 
+            assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.RED)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true when granted by static effect from another permanent")
+        void returnsTrueWhenGrantedByStaticEffect() {
+            addLordWithHandler(player1.getId(),
+                    (ctx, eff, acc) -> acc.addGrantedEffect(
+                            new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE))));
+            Permanent perm = addPermanent(player1.getId(), new GrizzlyBears());
+
+            assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.BLUE)).isTrue();
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.RED)).isFalse();
         }
     }
