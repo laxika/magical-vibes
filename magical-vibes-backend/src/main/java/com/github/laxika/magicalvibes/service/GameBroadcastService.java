@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsE
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
@@ -234,6 +235,7 @@ public class GameBroadcastService {
         int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
+        boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
 
         boolean stackEmpty = gameData.stack.isEmpty();
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
@@ -255,7 +257,7 @@ public class GameBroadcastService {
             if (card.getType() == CardType.LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
                 playable.add(i);
             }
-            if (card.getManaCost() != null && !spellLimitReached) {
+            if (card.getManaCost() != null && !spellLimitReached && !cantCastDueToAttack) {
                 if (restrictedSpellTypes.contains(card.getType())
                         || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
                 if (forbiddenCardNames.contains(card.getName())) continue;
@@ -355,6 +357,7 @@ public class GameBroadcastService {
         int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
+        boolean cantCastDueToAttackExile = isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
 
@@ -378,7 +381,7 @@ public class GameBroadcastService {
                 continue;
             }
 
-            if (card.getManaCost() == null || spellLimitReached) continue;
+            if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
             if (restrictedSpellTypes.contains(card.getType())
                     || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
             if (forbiddenCardNames.contains(card.getName())) continue;
@@ -431,6 +434,28 @@ public class GameBroadcastService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PlayLandsFromGraveyardEffect) {
                     return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the player is prevented from casting spells (e.g. Angelic Arbiter:
+     * "Each opponent who attacked with a creature this turn can't cast spells").
+     */
+    boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
+        if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
+
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(playerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect) {
+                        return true;
+                    }
                 }
             }
         }

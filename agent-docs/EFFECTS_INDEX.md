@@ -732,6 +732,8 @@ Pass `null` as filter to allow any card.
 | `ReduceOpponentMaxHandSizeEffect` | `(int reduction)` | each opponent's maximum hand size is reduced by N (static, checked during cleanup discard) |
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` or `(Set<CardType> cardTypes, boolean opponentsOnly)` | permanents of specified types enter tapped (static). When `opponentsOnly` is true, only opponents' permanents are affected (e.g. Urabrask the Hidden) |
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static) |
+| `OpponentsCantAttackIfCastSpellThisTurnEffect` | `()` | each opponent who cast a spell this turn can't attack with creatures (static, Angelic Arbiter) |
+| `OpponentsCantCastSpellsIfAttackedThisTurnEffect` | `()` | each opponent who attacked with a creature this turn can't cast spells (static, Angelic Arbiter) |
 
 ## Choose / name
 

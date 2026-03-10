@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHa
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
@@ -56,6 +57,7 @@ public class CombatAttackService {
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
+        if (isPlayerPreventedFromAttacking(gameData, playerId)) return List.of();
         UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Integer> indices = new ArrayList<>();
@@ -178,6 +180,9 @@ public class CombatAttackService {
                 gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
             }
         }
+
+        // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
+        gameData.playersDeclaredAttackersThisTurn.add(playerId);
 
         // Mark creatures as attacking and tap them (vigilance skips tapping)
         for (int idx : attackerIndices) {
@@ -398,6 +403,29 @@ public class CombatAttackService {
             }
             throw new IllegalStateException("Attack declaration satisfies too few attack requirements");
         }
+    }
+
+    /**
+     * Returns true if the player is globally prevented from attacking (e.g. Angelic Arbiter:
+     * "Each opponent who cast a spell this turn can't attack with creatures").
+     */
+    private boolean isPlayerPreventedFromAttacking(GameData gameData, UUID playerId) {
+        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        if (spellsCast == 0) return false;
+
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(playerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void payGenericMana(ManaPool pool, int amount) {
