@@ -696,6 +696,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return isLandStack(item);
   }
 
+  landStackTrackKey(item: IndexedPermanent | LandStack): string {
+    return isLandStack(item) ? item.lands[0].perm.id : item.perm.id;
+  }
+
   isPermanentCreature(perm: Permanent): boolean {
     return isPermanentCreature(perm);
   }

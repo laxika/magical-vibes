@@ -242,7 +242,7 @@
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-sub-row lands-row">
-          @for (item of opponentLandStacks; track $index) {
+          @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.originalIndex) {
@@ -413,7 +413,7 @@
           }
         </div>
         <div class="battlefield-sub-row lands-row">
-          @for (item of myLandStacks; track $index) {
+          @for (item of myLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.originalIndex) {
