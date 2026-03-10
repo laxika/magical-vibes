@@ -225,6 +225,34 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.TENTH_EDITION, "159", 2),   // Mind Rot
             new DeckEntry(CardSet.TENTH_EDITION, "312", 1),   // Bottle Gnomes
             new DeckEntry(CardSet.TENTH_EDITION, "320", 1)    // Demon's Horn
+    )),
+
+    BATTLE_CRIES("battle-cries", "Battle Cries (Mirrodin Besieged Intro Pack)", List.of(
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "146", 16),  // Plains
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "152", 8),   // Mountain
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "1", 2),     // Accorder Paladin
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "2", 2),     // Ardent Recruit
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "157", 1),   // Gold Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "168", 2),   // Iron Myr
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "70", 3),    // Kuldotha Ringleader
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "10", 1),    // Leonin Relic-Warder
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "11", 1),    // Leonin Skyhunter
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "174", 2),   // Memnite
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "16", 1),    // Myrsmith
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "119", 2),   // Peace Strider
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "127", 1),   // Razorfield Rhino
+            new DeckEntry(CardSet.MAGIC_2011, "29", 1),            // Siege Mastodon
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "131", 2),   // Signal Pest
+            new DeckEntry(CardSet.MAGIC_2011, "31", 1),            // Silvercoat Lion
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "18", 1),    // Victory's Herald
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "189", 2),   // Origin Spellbomb
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "143", 1),   // Viridian Claw
+            new DeckEntry(CardSet.MAGIC_2011, "221", 1),           // Whispersilk Cloak
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "2", 2),     // Arrest
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "91", 2),    // Galvanic Blast
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "13", 3),    // Master's Call
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "19", 1),    // White Sun's Zenith
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "60", 1)     // Concussive Bolt
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
