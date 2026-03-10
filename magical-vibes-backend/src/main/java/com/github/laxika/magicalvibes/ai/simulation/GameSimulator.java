@@ -481,8 +481,6 @@ public class GameSimulator {
      * After applying, auto-resolves any pending decisions for other players.
      */
     public void applyAction(GameData gd, UUID playerId, SimulationAction action) {
-        // Register the game in the local registry so GameService can find it
-        gameRegistry.register(gd);
         Player player = new Player(playerId, gd.playerIdToName.getOrDefault(playerId, "AI"));
 
         try {

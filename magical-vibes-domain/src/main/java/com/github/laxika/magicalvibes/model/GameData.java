@@ -178,6 +178,10 @@ public class GameData {
     // CR 704.5b — track players who attempted to draw from an empty library
     public final Set<UUID> playersAttemptedDrawFromEmptyLibrary = ConcurrentHashMap.newKeySet();
 
+    /** When true, this GameData is an MCTS simulation copy — suppress all external side effects
+     *  (broadcasting, session messages, registry mutations, logging). */
+    public boolean simulation;
+
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
         this.gameName = gameName;
@@ -305,6 +309,7 @@ public class GameData {
         copy.lastBroadcastedLogSize = this.lastBroadcastedLogSize;
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
+        copy.simulation = this.simulation;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
         copy.pendingForcedSacrificeCount = this.pendingForcedSacrificeCount;

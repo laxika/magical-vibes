@@ -27,6 +27,7 @@ public class Determinizer {
      */
     public GameData determinize(GameData gd, UUID aiPlayerId, Random rng) {
         GameData copy = gd.deepCopy();
+        copy.simulation = true;
 
         UUID opponentId = null;
         for (UUID id : copy.orderedPlayerIds) {

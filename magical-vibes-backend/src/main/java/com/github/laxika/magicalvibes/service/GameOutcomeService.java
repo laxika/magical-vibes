@@ -53,10 +53,15 @@ public class GameOutcomeService {
                     continue;
                 }
 
+                gameData.status = GameStatus.FINISHED;
+
+                // During MCTS simulation, only set the status — skip all external side effects
+                if (gameData.simulation) {
+                    return true;
+                }
+
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String winnerName = gameData.playerIdToName.get(winnerId);
-
-                gameData.status = GameStatus.FINISHED;
 
                 String logEntry;
                 if (poison >= 10) {
@@ -81,9 +86,11 @@ public class GameOutcomeService {
     }
 
     public void declareWinner(GameData gameData, UUID winnerId) {
-        String winnerName = gameData.playerIdToName.get(winnerId);
-
         gameData.status = GameStatus.FINISHED;
+
+        if (gameData.simulation) return;
+
+        String winnerName = gameData.playerIdToName.get(winnerId);
 
         String logEntry = winnerName + " wins the game!";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
