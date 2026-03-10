@@ -84,13 +84,18 @@ public class SpellCastingService {
         return new SacrificeCostFlags(sacAllCreatures, sacCreature, sacArtifact, permCost);
     }
 
-    private int unwrapChooseOneEffect(List<CardEffect> effects, int effectiveXValue) {
+    private int unwrapChooseOneEffect(Card card, List<CardEffect> effects, int effectiveXValue) {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ChooseOneEffect coe) {
                 if (effectiveXValue < 0 || effectiveXValue >= coe.options().size()) {
                     throw new IllegalStateException("Invalid mode index: " + effectiveXValue);
                 }
-                effects.set(i, coe.options().get(effectiveXValue).effect());
+                ChooseOneEffect.ChooseOneOption chosen = coe.options().get(effectiveXValue);
+                effects.set(i, chosen.effect());
+                // Apply per-mode target filter so downstream validation uses the correct filter
+                if (chosen.targetFilter() != null) {
+                    card.setTargetFilter(chosen.targetFilter());
+                }
                 return 0;
             }
         }
@@ -188,7 +193,17 @@ public class SpellCastingService {
         SacrificeCostFlags sacFlags = extractAndRemoveSacrificeCosts(filteredSpellEffects);
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
-        effectiveXValue = unwrapChooseOneEffect(filteredSpellEffects, effectiveXValue);
+        boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
+        effectiveXValue = unwrapChooseOneEffect(card, filteredSpellEffects, effectiveXValue);
+
+        // For modal spells, derive targeting from the chosen mode's unwrapped effect;
+        // for non-modal spells, use the card's declared targeting (which accounts for auras, ETB effects, etc.)
+        boolean unwrappedNeedsSpellTarget = wasModal
+                ? filteredSpellEffects.stream().anyMatch(CardEffect::canTargetSpell)
+                : card.isNeedsSpellTarget();
+        boolean unwrappedNeedsTarget = wasModal
+                ? filteredSpellEffects.stream().anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer() || e.canTargetGraveyard())
+                : card.isNeedsTarget();
 
         // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
         if (card.getManaCost() != null) {
@@ -227,7 +242,7 @@ public class SpellCastingService {
         }
 
         // Validate spell target (targeting a spell on the stack)
-        if (card.isNeedsSpellTarget()) {
+        if (unwrappedNeedsSpellTarget) {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, card.getTargetFilter(), playerId);
         }
 
@@ -242,7 +257,7 @@ public class SpellCastingService {
         boolean canTargetAnyGraveyard = card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetAnyGraveyard());
 
         // Validate target if specified (can be a permanent or a player)
-        if (targetPermanentId != null && !card.isNeedsSpellTarget()) {
+        if (targetPermanentId != null && !unwrappedNeedsSpellTarget) {
             if (needsSingleGraveyardTargeting) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
@@ -267,12 +282,12 @@ public class SpellCastingService {
                 }
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
             } else {
-                targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId);
+                targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, unwrappedNeedsTarget);
             }
-        } else if (card.isNeedsTarget() && needsSingleGraveyardTargeting) {
+        } else if (unwrappedNeedsTarget && needsSingleGraveyardTargeting) {
             String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
             throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
-        } else if (card.isNeedsTarget() && needsGraveyardEffectTargeting) {
+        } else if (unwrappedNeedsTarget && needsGraveyardEffectTargeting) {
             throw new IllegalStateException("Must target a card in a graveyard");
         }
 
@@ -440,7 +455,7 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null, damageAssignments
                 ));
-            } else if (card.isNeedsSpellTarget()) {
+            } else if (unwrappedNeedsSpellTarget) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, targetPermanentId, Zone.STACK
@@ -607,7 +622,7 @@ public class SpellCastingService {
         if (card.getType() == CardType.SORCERY || card.getType() == CardType.INSTANT) {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             extractAndRemoveSacrificeCosts(effectsToResolve);
-            effectiveXValue = unwrapChooseOneEffect(effectsToResolve, effectiveXValue);
+            effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
         } else {
             effectsToResolve = List.of();
         }

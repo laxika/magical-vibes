@@ -128,17 +128,21 @@ public class TargetLegalityService {
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, Zone targetZone, UUID controllerId) {
+        validateSpellTargeting(gameData, card, targetPermanentId, targetZone, controllerId, card.isNeedsTarget());
+    }
+
+    public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, Zone targetZone, UUID controllerId, boolean needsTarget) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
         if (target == null && !gameData.playerIds.contains(targetPermanentId)) {
             throw new IllegalStateException("Invalid target");
         }
 
-        if (target != null && card.isNeedsTarget()) {
+        if (target != null && needsTarget) {
             validateSpellProtections(gameData, target, card);
             validatePermanentTargetable(gameData, target, controllerId);
         }
 
-        if (target == null && card.isNeedsTarget() && gameData.playerIds.contains(targetPermanentId)) {
+        if (target == null && needsTarget && gameData.playerIds.contains(targetPermanentId)) {
             validatePlayerTargetable(gameData, targetPermanentId);
         }
 
