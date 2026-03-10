@@ -2,34 +2,63 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.cards.g.GraftedExoskeleton;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.p.Pariah;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.DeathTriggerService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class PermanentRemovalServiceTest extends BaseCardTest {
 
-    private PermanentRemovalService prs;
+    @Mock
+    private GraveyardService graveyardService;
 
-    @org.junit.jupiter.api.BeforeEach
-    void setUpPrs() {
-        prs = harness.getPermanentRemovalService();
-    }
+    @Mock
+    private BattlefieldEntryService battlefieldEntryService;
+
+    @Mock
+    private DeathTriggerService deathTriggerService;
+
+    @Mock
+    private DamagePreventionService damagePreventionService;
+
+    @Mock
+    private AuraAttachmentService auraAttachmentService;
+
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private GameBroadcastService gameBroadcastService;
+
+    @InjectMocks
+    private PermanentRemovalService prs;
 
     private Permanent addPermanent(com.github.laxika.magicalvibes.model.Player player, Card card) {
         Permanent permanent = new Permanent(card);
@@ -50,6 +79,12 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         return card;
     }
 
+    private void stubGraveyardForCreature(Permanent target, UUID ownerId) {
+        when(gameQueryService.isCreature(gd, target)).thenReturn(true);
+        when(gameQueryService.isArtifact(target)).thenReturn(false);
+        when(graveyardService.addCardToGraveyard(eq(gd), eq(ownerId), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+    }
+
     // =========================================================================
     // removePermanentToGraveyard
     // =========================================================================
@@ -62,12 +97,13 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         @DisplayName("Removes permanent from battlefield and puts card in graveyard")
         void removesFromBattlefieldAndAddsToGraveyard() {
             Permanent bears = addPermanent(player1, new GrizzlyBears());
+            stubGraveyardForCreature(bears, player1.getId());
 
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertInGraveyard(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1.getId()), eq(bears.getOriginalCard()), eq(Zone.BATTLEFIELD));
         }
 
         @Test
@@ -78,6 +114,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isFalse();
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
         }
 
         @Test
@@ -89,12 +126,11 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotInGraveyard(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
             assertThat(gd.playerExiledCards.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("exiled instead of going to the graveyard"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), contains("exiled instead of going to the graveyard"));
         }
 
         @Test
@@ -106,10 +142,10 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotInGraveyard(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
             assertThat(gd.playerExiledCards.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
         }
 
         @Test
@@ -117,12 +153,12 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         void stolenCreatureGoesToOriginalOwnersGraveyard() {
             Permanent stolen = addPermanent(player1, new GrizzlyBears());
             gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            stubGraveyardForCreature(stolen, player2.getId());
 
             prs.removePermanentToGraveyard(gd, stolen);
 
-            // Card goes to player2's graveyard (original owner), not player1's (controller)
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertNotInGraveyard(player1, "Grizzly Bears");
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2.getId()), eq(stolen.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player1.getId()), any(Card.class), any());
         }
 
         @Test
@@ -130,6 +166,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         void cleansUpStolenCreaturesEntry() {
             Permanent stolen = addPermanent(player1, new GrizzlyBears());
             gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            stubGraveyardForCreature(stolen, player2.getId());
 
             prs.removePermanentToGraveyard(gd, stolen);
 
@@ -140,6 +177,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         @DisplayName("Creature death increments death count this turn")
         void creatureDeathIncreasesDeathCount() {
             Permanent bears = addPermanent(player1, new GrizzlyBears());
+            stubGraveyardForCreature(bears, player1.getId());
             int deathsBefore = gd.creatureDeathCountThisTurn.getOrDefault(player1.getId(), 0);
 
             prs.removePermanentToGraveyard(gd, bears);
@@ -152,6 +190,9 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         @DisplayName("Non-creature permanent death does not increment creature death count")
         void nonCreatureDoesNotIncrementDeathCount() {
             Permanent artifact = addPermanent(player1, new Spellbook());
+            when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
+            when(gameQueryService.isArtifact(artifact)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1.getId()), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
             int deathsBefore = gd.creatureDeathCountThisTurn.getOrDefault(player1.getId(), 0);
 
             prs.removePermanentToGraveyard(gd, artifact);
@@ -161,9 +202,37 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Fires death triggers for creatures sent to graveyard")
+        void firesDeathTriggersForCreature() {
+            Permanent bears = addPermanent(player1, new GrizzlyBears());
+            stubGraveyardForCreature(bears, player1.getId());
+
+            prs.removePermanentToGraveyard(gd, bears);
+
+            verify(deathTriggerService).collectDeathTrigger(eq(gd), eq(bears.getCard()), eq(player1.getId()), eq(true), eq(bears));
+            verify(deathTriggerService).checkAllyCreatureDeathTriggers(gd, player1.getId());
+            verify(deathTriggerService).checkOpponentCreatureDeathTriggers(gd, player1.getId());
+            verify(deathTriggerService).checkEquippedCreatureDeathTriggers(gd, bears.getId(), player1.getId());
+        }
+
+        @Test
+        @DisplayName("Fires artifact graveyard trigger for artifacts sent to graveyard")
+        void firesArtifactGraveyardTrigger() {
+            Permanent artifact = addPermanent(player1, new Spellbook());
+            when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
+            when(gameQueryService.isArtifact(artifact)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1.getId()), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+
+            prs.removePermanentToGraveyard(gd, artifact);
+
+            verify(deathTriggerService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1.getId(), player1.getId());
+        }
+
+        @Test
         @DisplayName("Exiled card returns to battlefield when source permanent leaves")
         void exileReturnOnLeave() {
             Permanent source = addPermanent(player1, new SerraAngel());
+            stubGraveyardForCreature(source, player1.getId());
 
             Card exiledCard = new GrizzlyBears();
             gd.playerExiledCards.get(player2.getId()).add(exiledCard);
@@ -171,13 +240,11 @@ class PermanentRemovalServiceTest extends BaseCardTest {
 
             prs.removePermanentToGraveyard(gd, source);
 
-            // Exiled card should return to the battlefield
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            // And be removed from exile
             assertThat(gd.playerExiledCards.get(player2.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2.getId()), any(Permanent.class));
+            verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player2.getId()), eq(exiledCard), isNull(), eq(false));
         }
 
         @Test
@@ -187,13 +254,19 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             Permanent equipment = addPermanent(player1, new GraftedExoskeleton());
             equipment.setAttachedTo(creature.getId());
 
+            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
+            when(gameQueryService.isArtifact(equipment)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.isArtifact(creature)).thenReturn(false);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1.getId()), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+
             prs.removePermanentToGraveyard(gd, equipment);
 
-            // Equipment went to graveyard
-            harness.assertInGraveyard(player1, "Grafted Exoskeleton");
-            // Creature was sacrificed too
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(equipment);
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1.getId()), eq(equipment.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1.getId()), eq(creature.getOriginalCard()), eq(Zone.BATTLEFIELD));
         }
     }
 
@@ -213,8 +286,9 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             boolean result = prs.removePermanentToHand(gd, bears);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertInHand(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
 
         @Test
@@ -236,12 +310,12 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             boolean result = prs.removePermanentToHand(gd, bears);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotInHand(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.playerExiledCards.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("exiled instead of returning to hand"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), contains("exiled instead of returning to hand"));
         }
 
         @Test
@@ -252,8 +326,8 @@ class PermanentRemovalServiceTest extends BaseCardTest {
 
             prs.removePermanentToHand(gd, bears);
 
-            // Should go to hand, not exile
-            harness.assertInHand(player1, "Grizzly Bears");
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.playerExiledCards.get(player1.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -266,8 +340,10 @@ class PermanentRemovalServiceTest extends BaseCardTest {
 
             prs.removePermanentToHand(gd, stolen);
 
-            harness.assertInHand(player2, "Grizzly Bears");
-            harness.assertNotInHand(player1, "Grizzly Bears");
+            assertThat(gd.playerHands.get(player2.getId()))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.stolenCreatures).doesNotContainKey(stolen.getId());
         }
 
@@ -282,10 +358,10 @@ class PermanentRemovalServiceTest extends BaseCardTest {
 
             prs.removePermanentToHand(gd, source);
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
             assertThat(gd.playerExiledCards.get(player2.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2.getId()), any(Permanent.class));
         }
     }
 
@@ -305,7 +381,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             boolean result = prs.removePermanentToExile(gd, bears);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
             assertThat(gd.playerExiledCards.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -342,14 +418,17 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             Permanent equipment = addPermanent(player1, new GraftedExoskeleton());
             equipment.setAttachedTo(creature.getId());
 
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.isArtifact(creature)).thenReturn(false);
+            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1.getId()), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+
             prs.removePermanentToExile(gd, equipment);
 
-            // Equipment went to exile
             assertThat(gd.playerExiledCards.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grafted Exoskeleton"));
-            // Creature was sacrificed
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1.getId()), eq(creature.getOriginalCard()), eq(Zone.BATTLEFIELD));
         }
 
         @Test
@@ -363,10 +442,10 @@ class PermanentRemovalServiceTest extends BaseCardTest {
 
             prs.removePermanentToExile(gd, source);
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
             assertThat(gd.playerExiledCards.get(player2.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2.getId()), any(Permanent.class));
         }
     }
 
@@ -382,71 +461,80 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         @DisplayName("Destroys a normal permanent and sends it to graveyard")
         void destroysNormalPermanent() {
             Permanent bears = addPermanent(player1, new GrizzlyBears());
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
+            stubGraveyardForCreature(bears, player1.getId());
 
             boolean result = prs.tryDestroyPermanent(gd, bears);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertInGraveyard(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1.getId()), eq(bears.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(auraAttachmentService).removeOrphanedAuras(gd);
         }
 
         @Test
         @DisplayName("Indestructible permanent is not destroyed")
         void indestructibleSurvives() {
             Permanent golem = addPermanent(player1, indestructibleCreature());
+            when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 
             boolean result = prs.tryDestroyPermanent(gd, golem);
 
             assertThat(result).isFalse();
-            harness.assertOnBattlefield(player1, "Indestructible Golem");
-            harness.assertNotInGraveyard(player1, "Indestructible Golem");
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
         }
 
         @Test
         @DisplayName("Indestructible is logged when destruction is prevented")
         void indestructibleIsLogged() {
             Permanent golem = addPermanent(player1, indestructibleCreature());
+            when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 
             prs.tryDestroyPermanent(gd, golem);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Indestructible Golem") && log.contains("indestructible"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Indestructible Golem") && msg.contains("indestructible")));
         }
 
         @Test
         @DisplayName("Permanent with regeneration shield survives destruction")
         void regenerationPreventsDestruction() {
             Permanent bears = addPermanent(player1, new GrizzlyBears());
-            bears.setRegenerationShield(1);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(true);
 
             boolean result = prs.tryDestroyPermanent(gd, bears);
 
             assertThat(result).isFalse();
-            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         }
 
         @Test
         @DisplayName("cannotBeRegenerated flag bypasses regeneration")
         void cannotBeRegeneratedBypassesRegeneration() {
             Permanent bears = addPermanent(player1, new GrizzlyBears());
-            bears.setRegenerationShield(1);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            stubGraveyardForCreature(bears, player1.getId());
 
             boolean result = prs.tryDestroyPermanent(gd, bears, true);
 
             assertThat(result).isTrue();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertInGraveyard(player1, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+            verify(graveyardService, never()).tryRegenerate(any(), any());
         }
 
         @Test
         @DisplayName("cannotBeRegenerated still respects indestructible")
         void cannotBeRegeneratedStillRespectsIndestructible() {
             Permanent golem = addPermanent(player1, indestructibleCreature());
+            when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 
             boolean result = prs.tryDestroyPermanent(gd, golem, true);
 
             assertThat(result).isFalse();
-            harness.assertOnBattlefield(player1, "Indestructible Golem");
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
         }
     }
 
@@ -466,7 +554,8 @@ class PermanentRemovalServiceTest extends BaseCardTest {
 
             prs.removeCardFromGraveyardById(gd, bears.getId());
 
-            harness.assertNotInGraveyard(player1, "Grizzly Bears");
+            assertThat(gd.playerGraveyards.get(player1.getId()))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         }
 
         @Test
@@ -475,7 +564,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             Card bears = new GrizzlyBears();
             gd.playerGraveyards.get(player1.getId()).add(bears);
             gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
-                    .computeIfAbsent(player1.getId(), k -> new java.util.HashSet<>())
+                    .computeIfAbsent(player1.getId(), k -> new HashSet<>())
                     .add(bears.getId());
 
             prs.removeCardFromGraveyardById(gd, bears.getId());
@@ -509,6 +598,9 @@ class PermanentRemovalServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Returns damage unchanged when no redirect aura is present")
         void noRedirectWhenNoAura() {
+            when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1.getId()), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
+                    .thenReturn(null);
+
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1.getId(), 5, "Lightning Bolt");
 
             assertThat(result).isEqualTo(5);
@@ -520,55 +612,61 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1.getId(), 0, "Source");
 
             assertThat(result).isEqualTo(0);
+            verify(gameQueryService, never()).findEnchantedCreatureByAuraEffect(any(), any(), any());
         }
 
         @Test
         @DisplayName("Redirects damage to enchanted creature and returns 0")
         void redirectsDamageToEnchantedCreature() {
-            // Set up Pariah enchanting a creature on player1's battlefield
             Permanent creature = addPermanent(player1, new SerraAngel());
-            Permanent pariah = new Permanent(new Pariah());
-            pariah.setAttachedTo(creature.getId());
-            gd.playerBattlefields.get(player1.getId()).add(pariah);
+            when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1.getId()), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
+                    .thenReturn(creature);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3)).thenReturn(3);
+            when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(5);
 
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1.getId(), 3, "Lightning Bolt");
 
             assertThat(result).isEqualTo(0);
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Serra Angel") && log.contains("absorbs") && log.contains("redirected"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Serra Angel") && msg.contains("absorbs") && msg.contains("redirected")));
         }
 
         @Test
         @DisplayName("Enchanted creature is destroyed when redirected damage meets toughness")
         void enchantedCreatureDestroyedByLethalDamage() {
-            // Serra Angel has 4 toughness
             Permanent creature = addPermanent(player1, new SerraAngel());
-            Permanent pariah = new Permanent(new Pariah());
-            pariah.setAttachedTo(creature.getId());
-            gd.playerBattlefields.get(player1.getId()).add(pariah);
+            when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1.getId()), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
+                    .thenReturn(creature);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 4)).thenReturn(4);
+            when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(4);
+            // tryDestroyPermanent stubs
+            when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, creature)).thenReturn(false);
+            stubGraveyardForCreature(creature, player1.getId());
 
             prs.redirectPlayerDamageToEnchantedCreature(gd, player1.getId(), 4, "Fireball");
 
-            harness.assertNotOnBattlefield(player1, "Serra Angel");
-            harness.assertInGraveyard(player1, "Serra Angel");
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Serra Angel") && log.contains("destroyed"));
+            assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Serra Angel") && msg.contains("destroyed")));
         }
 
         @Test
         @DisplayName("Indestructible enchanted creature survives lethal redirected damage")
         void indestructibleSurvivesLethalRedirect() {
             Permanent creature = addPermanent(player1, indestructibleCreature());
-            Permanent pariah = new Permanent(new Pariah());
-            pariah.setAttachedTo(creature.getId());
-            gd.playerBattlefields.get(player1.getId()).add(pariah);
+            when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1.getId()), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
+                    .thenReturn(creature);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 5)).thenReturn(5);
+            when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(2);
+            when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1.getId(), 5, "Fireball");
 
             assertThat(result).isEqualTo(0);
-            harness.assertOnBattlefield(player1, "Indestructible Golem");
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("indestructible"));
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("indestructible")));
         }
     }
 }
