@@ -173,6 +173,20 @@ img.card-art {
   color: #e74c3c;
 }
 
+/* Watermark */
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 65%;
+  width: auto;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  filter: invert(1);
+}
+
 /* Text box */
 .text-box {
   flex: 1;
@@ -187,6 +201,8 @@ img.card-art {
   line-height: 1.3;
   white-space: pre-line;
   font-size: inherit;
+  position: relative;
+  z-index: 1;
 }
 
 .text-box .card-keywords {
@@ -195,12 +211,16 @@ img.card-art {
   opacity: 0.9;
   margin-top: 2px;
   font-size: inherit;
+  position: relative;
+  z-index: 1;
 }
 
 .flavor-separator {
   height: 1px;
   background: rgba(245, 230, 200, 0.3);
   margin: 3px 8px;
+  position: relative;
+  z-index: 1;
 }
 
 :host([data-card-color="WHITE"]) .flavor-separator {
@@ -217,6 +237,8 @@ img.card-art {
   line-height: 1.3;
   white-space: pre-line;
   font-size: inherit;
+  position: relative;
+  z-index: 1;
 }
 
 /* P/T box */

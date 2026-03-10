@@ -18,6 +18,9 @@
   }
 </div>
 <div class="text-box" [style.font-size]="textBoxFontSize">
+  @if (watermarkUrl()) {
+    <img class="watermark" [src]="watermarkUrl()" alt="" />
+  }
   @if (card.cardText) {
     <div class="card-text" [innerHTML]="formattedCardText"></div>
   }

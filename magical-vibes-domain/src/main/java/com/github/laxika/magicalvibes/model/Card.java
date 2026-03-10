@@ -57,6 +57,7 @@ public class Card {
     @Setter private boolean requiresCreatureMana;
     @Setter private int additionalCostPerExtraTarget;
     @Setter private Card imprintedCard;
+    @Setter private String watermark;
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
@@ -78,6 +79,7 @@ public class Card {
             this.toughness = oracle.toughness();
             this.keywords = oracle.keywords();
             this.loyalty = oracle.loyalty();
+            this.watermark = oracle.watermark();
         }
     }
 

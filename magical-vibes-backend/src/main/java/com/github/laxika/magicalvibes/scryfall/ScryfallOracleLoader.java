@@ -360,6 +360,12 @@ public class ScryfallOracleLoader {
             }
         }
 
+        // Watermark
+        String watermark = null;
+        if (card.has("watermark") && !card.get("watermark").asText().isEmpty()) {
+            watermark = card.get("watermark").asText();
+        }
+
         return new OracleData(
                 name,
                 parsed.type(),
@@ -373,7 +379,8 @@ public class ScryfallOracleLoader {
                 power,
                 toughness,
                 keywords,
-                loyalty
+                loyalty,
+                watermark
         );
     }
 

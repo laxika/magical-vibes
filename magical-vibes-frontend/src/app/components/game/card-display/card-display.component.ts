@@ -5,6 +5,7 @@ import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
+import { WatermarkService } from '../../../services/watermark.service';
 import { formatEnumName, formatKeywords } from '../../../utils/format-utils';
 
 @Component({
@@ -21,15 +22,18 @@ export class CardDisplayComponent implements OnInit, OnChanges {
 
   formatKeywords = formatKeywords;
   artUrl = signal<string | null>(null);
+  watermarkUrl = signal<string | null>(null);
 
   private scryfallImageService = inject(ScryfallImageService);
   private scryfallCardDataService = inject(ScryfallCardDataService);
   private manaSymbolService = inject(ManaSymbolService);
   private setSymbolService = inject(SetSymbolService);
+  private watermarkService = inject(WatermarkService);
   private sanitizer = inject(DomSanitizer);
 
   ngOnInit(): void {
     this.fetchCardArt();
+    this.fetchWatermark();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -45,6 +49,26 @@ export class CardDisplayComponent implements OnInit, OnChanges {
       } else {
         this.artUrl.set(null);
       }
+
+      if (this.card.watermark) {
+        const cachedWm = this.watermarkService.getCachedWatermarkUrl(this.card.watermark);
+        if (cachedWm) {
+          this.watermarkUrl.set(cachedWm);
+        } else {
+          this.watermarkUrl.set(null);
+          this.fetchWatermark();
+        }
+      } else {
+        this.watermarkUrl.set(null);
+      }
+    }
+  }
+
+  private fetchWatermark(): void {
+    if (this.card.watermark) {
+      this.watermarkService.getWatermarkUrl(this.card.watermark)
+        .then(url => this.watermarkUrl.set(url))
+        .catch(() => { this.watermarkUrl.set(null); });
     }
   }
 

@@ -166,6 +166,7 @@ export interface Card {
   hasConvoke: boolean;
   hasPhyrexianMana: boolean;
   phyrexianManaCount: number;
+  watermark: string | null;
 }
 
 export interface Permanent {

@@ -33,6 +33,7 @@ public record CardView(
         Integer loyalty,
         boolean hasConvoke,
         boolean hasPhyrexianMana,
-        int phyrexianManaCount
+        int phyrexianManaCount,
+        String watermark
 ) {
 }
