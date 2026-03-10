@@ -56,6 +56,78 @@ public class LibraryChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final PlayerInputService playerInputService;
 
+    public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.SCRY)) {
+            throw new IllegalStateException("Not awaiting scry");
+        }
+        InteractionContext.Scry scryContext = gameData.interaction.scryContext();
+        if (scryContext == null || !player.getId().equals(scryContext.playerId())) {
+            throw new IllegalStateException("Not your turn to scry");
+        }
+
+        List<Card> scryCards = scryContext.cards();
+        int count = scryCards.size();
+
+        if (topCardOrder.size() + bottomCardOrder.size() != count) {
+            throw new IllegalStateException("Must assign all " + count + " cards");
+        }
+
+        // Validate indices are a valid permutation of 0..count-1
+        Set<Integer> seen = new HashSet<>();
+        for (int idx : topCardOrder) {
+            if (idx < 0 || idx >= count) {
+                throw new IllegalStateException("Invalid card index: " + idx);
+            }
+            if (!seen.add(idx)) {
+                throw new IllegalStateException("Duplicate card index: " + idx);
+            }
+        }
+        for (int idx : bottomCardOrder) {
+            if (idx < 0 || idx >= count) {
+                throw new IllegalStateException("Invalid card index: " + idx);
+            }
+            if (!seen.add(idx)) {
+                throw new IllegalStateException("Duplicate card index: " + idx);
+            }
+        }
+
+        List<Card> deck = gameData.playerDecks.get(player.getId());
+
+        // Put top cards on top of library in order (first in list = top of library)
+        for (int i = topCardOrder.size() - 1; i >= 0; i--) {
+            deck.add(0, scryCards.get(topCardOrder.get(i)));
+        }
+
+        // Put bottom cards on bottom of library in order
+        for (int idx : bottomCardOrder) {
+            deck.add(scryCards.get(idx));
+        }
+
+        // Clear awaiting state
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearScry();
+
+        String logMsg;
+        if (bottomCardOrder.isEmpty()) {
+            logMsg = player.getUsername() + " puts " + count + " card(s) on top of their library.";
+        } else if (topCardOrder.isEmpty()) {
+            logMsg = player.getUsername() + " puts " + count + " card(s) on the bottom of their library.";
+        } else {
+            logMsg = player.getUsername() + " puts " + topCardOrder.size() + " card(s) on top and "
+                    + bottomCardOrder.size() + " on the bottom of their library.";
+        }
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} scry completed: {} top, {} bottom", gameData.id, player.getUsername(),
+                topCardOrder.size(), bottomCardOrder.size());
+
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.LIBRARY_REORDER)) {
             throw new IllegalStateException("Not awaiting library reorder");

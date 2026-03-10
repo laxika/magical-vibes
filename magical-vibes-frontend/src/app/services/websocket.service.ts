@@ -41,6 +41,8 @@ export enum MessageType {
   MULTIPLE_PERMANENTS_CHOSEN = 'MULTIPLE_PERMANENTS_CHOSEN',
   CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS = 'CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS',
   MULTIPLE_GRAVEYARD_CARDS_CHOSEN = 'MULTIPLE_GRAVEYARD_CARDS_CHOSEN',
+  SCRY = 'SCRY',
+  SCRY_COMPLETED = 'SCRY_COMPLETED',
   REORDER_LIBRARY_CARDS = 'REORDER_LIBRARY_CARDS',
   LIBRARY_CARDS_REORDERED = 'LIBRARY_CARDS_REORDERED',
   CHOOSE_CARD_FROM_LIBRARY = 'CHOOSE_CARD_FROM_LIBRARY',
@@ -383,6 +385,12 @@ export interface ChooseMultipleCardsFromGraveyardsNotification {
   prompt: string;
 }
 
+export interface ScryNotification {
+  type: MessageType;
+  cards: Card[];
+  prompt: string;
+}
+
 export interface ReorderLibraryCardsNotification {
   type: MessageType;
   cards: Card[];
@@ -634,6 +642,7 @@ export class WebsocketService {
               message.type === MessageType.CHOOSE_PERMANENT ||
               message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS ||
               message.type === MessageType.CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS ||
+              message.type === MessageType.SCRY ||
               message.type === MessageType.REORDER_LIBRARY_CARDS ||
               message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY ||
               message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM ||

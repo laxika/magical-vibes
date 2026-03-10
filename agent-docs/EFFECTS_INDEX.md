@@ -353,6 +353,7 @@ Pass `null` as filter to allow any card.
 | `LookAtTopCardsHandTopBottomEffect` | `(int count)` | look at top N cards, choose hand/top/bottom for each |
 | `LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect` | `()` | look at top X cards (X = charge counters on source, snapshotted before sacrifice), choose one to hand, rest on bottom in any order |
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |
+| `ScryEffect` | `(int count)` | scry N — look at top N cards, put any number on bottom in any order, rest on top in any order |
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |
 | `RevealTopCardOfLibraryEffect` | `()` | reveal top card of library (static/continuous) |
 | `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |

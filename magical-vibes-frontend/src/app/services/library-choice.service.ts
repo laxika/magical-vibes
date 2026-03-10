@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
   WebsocketService, MessageType, Card,
+  ScryNotification,
   ReorderLibraryCardsNotification,
   ChooseCardFromLibraryNotification,
   ChooseHandTopBottomNotification
@@ -10,6 +11,13 @@ import {
 export class LibraryChoiceService {
 
   constructor(private websocketService: WebsocketService) {}
+
+  // --- Scry state ---
+  scrying = false;
+  scryCards: Card[] = [];
+  scryPrompt = '';
+  scryTopIndices: number[] = [];
+  scryBottomIndices: number[] = [];
 
   // --- Library search state ---
   searchingLibrary = false;
@@ -31,6 +39,11 @@ export class LibraryChoiceService {
   handTopBottomTopIndex: number | null = null;
 
   reset(): void {
+    this.scrying = false;
+    this.scryCards = [];
+    this.scryPrompt = '';
+    this.scryTopIndices = [];
+    this.scryBottomIndices = [];
     this.searchingLibrary = false;
     this.librarySearchCards = [];
     this.librarySearchPrompt = '';
@@ -47,6 +60,14 @@ export class LibraryChoiceService {
   }
 
   // ========== Message handlers ==========
+
+  handleScry(msg: ScryNotification): void {
+    this.scrying = true;
+    this.scryCards = msg.cards;
+    this.scryPrompt = msg.prompt;
+    this.scryTopIndices = [];
+    this.scryBottomIndices = [];
+  }
 
   handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
     this.reorderingLibrary = true;
@@ -68,6 +89,72 @@ export class LibraryChoiceService {
     this.handTopBottomCards = msg.cards;
     this.handTopBottomHandIndex = null;
     this.handTopBottomTopIndex = null;
+  }
+
+  // ========== Scry ==========
+
+  get scryAvailableCards(): { card: Card; originalIndex: number }[] {
+    return this.scryCards
+      .map((card, i) => ({ card, originalIndex: i }))
+      .filter(item => !this.scryTopIndices.includes(item.originalIndex) && !this.scryBottomIndices.includes(item.originalIndex));
+  }
+
+  get scryTopCards(): { card: Card; originalIndex: number; position: number }[] {
+    return this.scryTopIndices.map((origIdx, pos) => ({
+      card: this.scryCards[origIdx],
+      originalIndex: origIdx,
+      position: pos + 1
+    }));
+  }
+
+  get scryBottomCards(): { card: Card; originalIndex: number }[] {
+    return this.scryBottomIndices.map(origIdx => ({
+      card: this.scryCards[origIdx],
+      originalIndex: origIdx
+    }));
+  }
+
+  scryToTop(originalIndex: number): void {
+    this.scryTopIndices = [...this.scryTopIndices, originalIndex];
+  }
+
+  scryToBottom(originalIndex: number): void {
+    this.scryBottomIndices = [...this.scryBottomIndices, originalIndex];
+  }
+
+  undoScry(): void {
+    // Undo last action from either pile
+    if (this.scryBottomIndices.length > 0 && (this.scryTopIndices.length === 0 ||
+        this.scryBottomIndices.length >= this.scryTopIndices.length)) {
+      this.scryBottomIndices = this.scryBottomIndices.slice(0, -1);
+    } else if (this.scryTopIndices.length > 0) {
+      this.scryTopIndices = this.scryTopIndices.slice(0, -1);
+    }
+  }
+
+  undoScryTop(): void {
+    if (this.scryTopIndices.length > 0) {
+      this.scryTopIndices = this.scryTopIndices.slice(0, -1);
+    }
+  }
+
+  undoScryBottom(): void {
+    if (this.scryBottomIndices.length > 0) {
+      this.scryBottomIndices = this.scryBottomIndices.slice(0, -1);
+    }
+  }
+
+  confirmScry(): void {
+    this.websocketService.send({
+      type: MessageType.SCRY_COMPLETED,
+      topCardOrder: this.scryTopIndices,
+      bottomCardOrder: this.scryBottomIndices
+    });
+    this.scrying = false;
+    this.scryCards = [];
+    this.scryPrompt = '';
+    this.scryTopIndices = [];
+    this.scryBottomIndices = [];
   }
 
   // ========== Library search ==========

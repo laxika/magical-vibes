@@ -52,6 +52,7 @@ public class InteractionState {
         copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
         LibraryViewState lvCopy = this.libraryView.deepCopy();
         copy.libraryView.setReorder(lvCopy.reorderPlayerId(), lvCopy.reorderCards(), lvCopy.reorderToBottom());
+        copy.libraryView.setScry(lvCopy.scryPlayerId(), lvCopy.scryCards());
         copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
         copy.libraryView.setHandTopBottom(lvCopy.handTopBottomPlayerId(), lvCopy.handTopBottomCards());
         copy.revealedHandChoice = this.revealedHandChoice != null ? this.revealedHandChoice.deepCopy() : null;
@@ -435,6 +436,26 @@ public class InteractionState {
         if (libraryView.reorderPlayerId() == null || libraryView.reorderCards() == null) return null;
         return new InteractionContext.LibraryReorder(libraryView.reorderPlayerId(),
                 libraryView.reorderCards(), libraryView.reorderToBottom());
+    }
+
+    // ========================================================================
+    // Scry
+    // ========================================================================
+
+    public void beginScry(UUID playerId, List<Card> cards) {
+        this.awaitingInput = AwaitingInput.SCRY;
+        this.libraryView.setScry(playerId, cards);
+        this.context = new InteractionContext.Scry(playerId, cards);
+    }
+
+    public void clearScry() {
+        this.libraryView.clearScry();
+    }
+
+    public InteractionContext.Scry scryContext() {
+        if (context instanceof InteractionContext.Scry s) return s;
+        if (libraryView.scryPlayerId() == null || libraryView.scryCards() == null) return null;
+        return new InteractionContext.Scry(libraryView.scryPlayerId(), libraryView.scryCards());
     }
 
     // ========================================================================

@@ -57,6 +57,70 @@
       </div>
     }
 
+    @if (choice.library.scrying) {
+      <div class="combat-banner reorder-banner">
+        <span>{{ choice.library.scryPrompt }}</span>
+      </div>
+      <div class="reorder-zone">
+        @if (choice.library.scryAvailableCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">Click a card then choose Top or Bottom:</div>
+            <div class="reorder-cards">
+              @for (item of choice.library.scryAvailableCards; track item.originalIndex) {
+                <div class="reorder-card-wrapper">
+                  <app-card-display
+                    [card]="item.card"
+                    class="reorder-card available"
+                    (mouseenter)="onCardHover(item.card)"
+                    (mouseleave)="onCardHoverEnd()" />
+                  <div class="scry-buttons">
+                    <button class="btn-scry-top" (click)="choice.library.scryToTop(item.originalIndex)">Top</button>
+                    <button class="btn-scry-bottom" (click)="choice.library.scryToBottom(item.originalIndex)">Bottom</button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        @if (choice.library.scryTopCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">Top of library (first = top):</div>
+            <div class="reorder-cards">
+              @for (item of choice.library.scryTopCards; track item.originalIndex) {
+                <div class="reorder-card-wrapper">
+                  <div class="reorder-position-badge">{{ item.position }}</div>
+                  <app-card-display
+                    [card]="item.card"
+                    class="reorder-card placed"
+                    (mouseenter)="onCardHover(item.card)"
+                    (mouseleave)="onCardHoverEnd()" />
+                </div>
+              }
+            </div>
+            <button class="btn-confirm-combat" (click)="choice.library.undoScryTop()" [disabled]="choice.library.scryTopCards.length === 0">Undo Top</button>
+          </div>
+        }
+        @if (choice.library.scryBottomCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">Bottom of library:</div>
+            <div class="reorder-cards">
+              @for (item of choice.library.scryBottomCards; track item.originalIndex) {
+                <app-card-display
+                  [card]="item.card"
+                  class="reorder-card placed"
+                  (mouseenter)="onCardHover(item.card)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+            <button class="btn-confirm-combat" (click)="choice.library.undoScryBottom()" [disabled]="choice.library.scryBottomCards.length === 0">Undo Bottom</button>
+          </div>
+        }
+        <div class="reorder-actions">
+          <button class="btn-confirm-combat" (click)="choice.library.confirmScry()" [disabled]="choice.library.scryAvailableCards.length > 0">Confirm Scry</button>
+        </div>
+      </div>
+    }
+
     @if (choice.library.reorderingLibrary) {
       <div class="combat-banner reorder-banner">
         <span>{{ choice.library.reorderPrompt }}</span>

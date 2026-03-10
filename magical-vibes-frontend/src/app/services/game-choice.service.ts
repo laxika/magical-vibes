@@ -3,7 +3,7 @@ import {
   WebsocketService, Game, MessageType, Card, Permanent,
   ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification,
   ChoosePermanentNotification, ChooseMultiplePermanentsNotification,
-  ChooseMultipleCardsFromGraveyardsNotification, ReorderLibraryCardsNotification,
+  ChooseMultipleCardsFromGraveyardsNotification, ScryNotification, ReorderLibraryCardsNotification,
   ChooseCardFromLibraryNotification, RevealHandNotification,
   ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification,
   ChooseHandTopBottomNotification, CombatDamageAssignmentNotification,
@@ -226,6 +226,10 @@ export class GameChoiceService {
   }
 
   // --- Delegated handlers ---
+
+  handleScry(msg: ScryNotification): void {
+    this.library.handleScry(msg);
+  }
 
   handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
     this.library.handleReorderLibraryCards(msg);

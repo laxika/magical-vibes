@@ -84,6 +84,8 @@ public enum MessageType {
     PAY_SEARCH_TAX,
     X_VALUE_CHOICE,
     X_VALUE_CHOSEN,
+    SCRY,
+    SCRY_COMPLETED,
     LEAVE_GAME,
     LOBBY_GAMES_RESPONSE
 }

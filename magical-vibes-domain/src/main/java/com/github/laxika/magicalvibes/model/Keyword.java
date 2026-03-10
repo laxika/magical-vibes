@@ -28,5 +28,6 @@ public enum Keyword {
     METALCRAFT,
     BATTLE_CRY,
     LIVING_WEAPON,
-    DEATHTOUCH
+    DEATHTOUCH,
+    SCRY
 }

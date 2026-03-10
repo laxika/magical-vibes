@@ -405,6 +405,13 @@ public class GameService {
         }
     }
 
+    public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            libraryChoiceHandlerService.handleScryCompleted(gameData, player, topCardOrder, bottomCardOrder);
+        }
+    }
+
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);

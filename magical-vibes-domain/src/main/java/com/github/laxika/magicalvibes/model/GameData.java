@@ -598,6 +598,9 @@ public class GameData {
                             cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
             case InteractionContext.XValueChoice xvc ->
                     targetInteraction.beginXValueChoice(xvc.playerId(), xvc.maxValue(), xvc.prompt(), xvc.cardName());
+            case InteractionContext.Scry s ->
+                    targetInteraction.beginScry(s.playerId(),
+                            s.cards() != null ? new ArrayList<>(s.cards()) : null);
             case InteractionContext.KnowledgePoolCastChoice kpc ->
                     targetInteraction.beginKnowledgePoolCastChoice(kpc.playerId(),
                             kpc.validCardIds() != null ? new HashSet<>(kpc.validCardIds()) : null, kpc.maxCount());

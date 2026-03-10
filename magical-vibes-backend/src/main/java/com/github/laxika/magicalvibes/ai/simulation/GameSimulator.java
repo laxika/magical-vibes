@@ -707,6 +707,14 @@ public class GameSimulator {
                     gameService.handleLibraryCardChosen(gd, player, 0);
                 }
             }
+            case SCRY -> {
+                var sc = gd.interaction.scryContext();
+                if (sc != null && sc.cards() != null) {
+                    List<Integer> topOrder = new ArrayList<>();
+                    for (int k = 0; k < sc.cards().size(); k++) topOrder.add(k);
+                    gameService.handleScryCompleted(gd, player, topOrder, List.of());
+                }
+            }
             case LIBRARY_REORDER -> {
                 var lr = gd.interaction.libraryReorderContext();
                 if (lr != null && lr.cards() != null) {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibrary
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ScryMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
@@ -151,6 +153,66 @@ public class LibraryRevealResolutionService {
         String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
+    }
+
+    /**
+     * Lets the controller look at the top N cards of their library and choose which to put
+     * on top (in any order) and which to put on the bottom (in any order). Used by cards
+     * with the scry keyword ability.
+     */
+    @HandlesEffect(ScryEffect.class)
+    void resolveScry(GameData gameData, StackEntry entry, ScryEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        // 701.22b: If a player is instructed to scry 0, no scry event occurs.
+        if (effect.count() == 0) {
+            return;
+        }
+
+        int count = Math.min(effect.count(), deck.size());
+
+        // 701.22d: Empty library — scry event still occurs (triggers would fire), but nothing to interact with.
+        if (count == 0) {
+            String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + effect.count()
+                    + " but their library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        if (count == 1) {
+            // Scry 1: show single card, player chooses top or bottom
+            List<Card> topCards = new ArrayList<>(deck.subList(0, 1));
+            deck.subList(0, 1).clear();
+
+            gameData.interaction.beginScry(controllerId, topCards);
+
+            List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+            sessionManager.sendToPlayer(controllerId, new ScryMessage(
+                    cardViews,
+                    "Scry 1: Keep on top or put on the bottom of your library."
+            ));
+
+            String logMsg = gameData.playerIdToName.get(controllerId) + " scries 1.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} scries 1", gameData.id, gameData.playerIdToName.get(controllerId));
+            return;
+        }
+
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        deck.subList(0, count).clear();
+
+        gameData.interaction.beginScry(controllerId, topCards);
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ScryMessage(
+                cardViews,
+                "Scry " + count + ": Put cards on the top or bottom of your library."
+        ));
+
+        String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + count + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(controllerId), count);
     }
 
     /**

@@ -88,6 +88,7 @@ public abstract class AiDecisionEngine {
             case "CHOOSE_COLOR" -> choiceHandler.handleColorChoice(gameData);
             case "MAY_ABILITY_CHOICE" -> choiceHandler.handleMayAbilityChoice(gameData);
             case "X_VALUE_CHOICE" -> choiceHandler.handleXValueChoice(gameData);
+            case "SCRY" -> choiceHandler.handleScry(gameData);
             case "REORDER_LIBRARY_CARDS" -> choiceHandler.handleReorderCards(gameData);
             case "CHOOSE_CARD_FROM_LIBRARY" -> choiceHandler.handleLibrarySearch(gameData);
             case "CHOOSE_CARD_FROM_GRAVEYARD" -> choiceHandler.handleGraveyardChoice(gameData);

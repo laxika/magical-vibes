@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChose
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
@@ -116,6 +117,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case MULTIPLE_GRAVEYARD_CARDS_CHOSEN -> messageHandler.handleMultipleGraveyardCardsChosen(connection, objectMapper.treeToValue(jsonNode, MultipleGraveyardCardsChosenRequest.class));
                 case COLOR_CHOSEN -> messageHandler.handleColorChosen(connection, objectMapper.treeToValue(jsonNode, ColorChosenRequest.class));
                 case MAY_ABILITY_CHOSEN -> messageHandler.handleMayAbilityChosen(connection, objectMapper.treeToValue(jsonNode, MayAbilityChosenRequest.class));
+                case SCRY_COMPLETED -> messageHandler.handleScryCompleted(connection, objectMapper.treeToValue(jsonNode, ScryCompletedRequest.class));
                 case LIBRARY_CARDS_REORDERED -> messageHandler.handleLibraryCardsReordered(connection, objectMapper.treeToValue(jsonNode, ReorderLibraryCardsRequest.class));
                 case LIBRARY_CARD_CHOSEN -> messageHandler.handleLibraryCardChosen(connection, objectMapper.treeToValue(jsonNode, LibraryCardChosenRequest.class));
                 case HAND_TOP_BOTTOM_CHOSEN -> messageHandler.handleHandTopBottomChosen(connection, objectMapper.treeToValue(jsonNode, HandTopBottomChosenRequest.class));

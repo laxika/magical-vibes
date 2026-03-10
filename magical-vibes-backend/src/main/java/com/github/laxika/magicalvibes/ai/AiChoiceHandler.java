@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsC
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
+import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.Setter;
@@ -298,6 +299,40 @@ class AiChoiceHandler {
         int chosenValue = xValueChoice.maxValue();
         log.info("AI: Choosing X={} for {} in game {}", chosenValue, xValueChoice.cardName(), gameId);
         send(() -> messageHandler.handleXValueChosen(selfConnection, new XValueChosenRequest(null, chosenValue)));
+    }
+
+    // ===== Scry =====
+
+    void handleScry(GameData gameData) {
+        InteractionContext.Scry scryContext = gameData.interaction.scryContext();
+        if (scryContext == null) {
+            return;
+        }
+        UUID choicePlayerId = scryContext.playerId();
+        List<Card> cards = scryContext.cards();
+
+        if (!aiPlayerId.equals(choicePlayerId)) {
+            return;
+        }
+
+        if (cards == null || cards.isEmpty()) {
+            return;
+        }
+
+        // AI strategy: keep spells on top (sorted by mana value), put lands on bottom
+        List<Integer> topOrder = new ArrayList<>();
+        List<Integer> bottomOrder = new ArrayList<>();
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.get(i);
+            if (card.getType() == CardType.LAND) {
+                bottomOrder.add(i);
+            } else {
+                topOrder.add(i);
+            }
+        }
+
+        log.info("AI: Scry {} - keeping {} on top, {} on bottom in game {}", cards.size(), topOrder.size(), bottomOrder.size(), gameId);
+        send(() -> messageHandler.handleScryCompleted(selfConnection, new ScryCompletedRequest(topOrder, bottomOrder)));
     }
 
     // ===== Reorder Cards =====
