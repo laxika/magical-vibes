@@ -707,14 +707,37 @@ public class CombatDamageService {
                                               List<Permanent> atkBf, List<Permanent> defBf,
                                               UUID activeId, UUID defenderId) {
         List<String> deadCreatureNames = new ArrayList<>();
+        // Collect dead attacker IDs before removal so we can clean up orphaned blockers
+        Set<UUID> deadAttackerIds = new HashSet<>();
+        for (int idx : state.deadAttackerIndices) {
+            deadAttackerIds.add(atkBf.get(idx).getId());
+        }
         for (int idx : state.deadAttackerIndices) {
             processDeadCreature(gameData, atkBf, activeId, deadCreatureNames, idx);
         }
         for (int idx : state.deadDefenderIndices) {
             processDeadCreature(gameData, defBf, defenderId, deadCreatureNames, idx);
         }
+        // Clear blocking state for surviving blockers whose blocked attacker died
+        clearOrphanedBlockingState(defBf, deadAttackerIds);
         permanentRemovalService.removeOrphanedAuras(gameData);
         return deadCreatureNames;
+    }
+
+    /**
+     * Removes dead permanent IDs from surviving blockers' blockingTargetPermanentIds.
+     * If a blocker has no remaining blocking targets, clears its blocking state entirely.
+     */
+    private void clearOrphanedBlockingState(List<Permanent> battlefield, Set<UUID> deadIds) {
+        if (deadIds.isEmpty()) return;
+        for (Permanent p : battlefield) {
+            if (!p.isBlocking()) continue;
+            p.getBlockingTargetPermanentIds().removeAll(deadIds);
+            if (p.getBlockingTargetPermanentIds().isEmpty()) {
+                p.setBlocking(false);
+                p.getBlockingTargets().clear();
+            }
+        }
     }
 
     private void processDeadCreature(GameData gameData, List<Permanent> battlefield,
