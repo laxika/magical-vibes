@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class ScryfallOracleLoader {
@@ -32,6 +33,11 @@ public class ScryfallOracleLoader {
 
     // Rarity registry: "SET:collectorNumber" -> rarity (e.g. "common", "uncommon", "rare", "mythic")
     private static final Map<String, String> rarityRegistry = new HashMap<>();
+
+    // Token image registry: regularSetCode -> (tokenCharKey -> TokenImageData)
+    private static final Map<String, Map<String, TokenImageData>> tokenImageRegistry = new ConcurrentHashMap<>();
+
+    public record TokenImageData(String setCode, String collectorNumber) {}
 
     private static final Map<String, CardColor> COLOR_MAP = Map.of(
             "W", CardColor.WHITE,
@@ -115,6 +121,8 @@ public class ScryfallOracleLoader {
             }
 
             LOG.info("Oracle registry populated with data for all card sets");
+
+            loadTokenSets(cachePath);
         } catch (Exception e) {
             throw new RuntimeException("Failed to load Scryfall oracle data", e);
         }
@@ -125,6 +133,79 @@ public class ScryfallOracleLoader {
      */
     public static String getRarity(String setCode, String collectorNumber) {
         return rarityRegistry.get(setCode + ":" + collectorNumber);
+    }
+
+    /**
+     * Looks up the Scryfall token image data for a token created by a card from the given set.
+     * Falls back to stripping "Phyrexian " prefix if no exact match is found, since Scryfall
+     * token cards use the pre-errata names (e.g. "Golem" instead of "Phyrexian Golem").
+     * Returns null if no matching token image is found.
+     */
+    public static TokenImageData getTokenImage(String setCode, String tokenName, int power, int toughness, CardColor color) {
+        if (setCode == null) return null;
+        Map<String, TokenImageData> tokenMap = tokenImageRegistry.get(setCode);
+        if (tokenMap == null) return null;
+        String key = buildTokenKey(tokenName, power, toughness, color);
+        TokenImageData result = tokenMap.get(key);
+        if (result == null && tokenName.startsWith("Phyrexian ")) {
+            key = buildTokenKey(tokenName.substring("Phyrexian ".length()), power, toughness, color);
+            result = tokenMap.get(key);
+        }
+        return result;
+    }
+
+    private static void loadTokenSets(Path cachePath) {
+        for (CardSet cardSet : CardSet.values()) {
+            String tokenSetCode = "t" + cardSet.getCode().toLowerCase();
+            try {
+                Map<String, JsonNode> tokens = loadSet(cachePath, tokenSetCode);
+                Map<String, TokenImageData> tokenMap = new HashMap<>();
+
+                for (Map.Entry<String, JsonNode> entry : tokens.entrySet()) {
+                    JsonNode tokenNode = entry.getValue();
+                    String typeLine = tokenNode.has("type_line") ? tokenNode.get("type_line").asText() : "";
+                    if (!typeLine.contains("Creature")) continue;
+
+                    String name = tokenNode.get("name").asText();
+                    Integer power = parseIntField(tokenNode, "power");
+                    Integer toughness = parseIntField(tokenNode, "toughness");
+                    CardColor color = parseColor(tokenNode);
+
+                    String key = buildTokenKey(name, power, toughness, color);
+                    tokenMap.put(key, new TokenImageData(tokenSetCode, entry.getKey()));
+                }
+
+                if (!tokenMap.isEmpty()) {
+                    tokenImageRegistry.put(cardSet.getCode(), tokenMap);
+                    LOG.info("Loaded " + tokenMap.size() + " token images for set " + cardSet.getCode());
+                }
+            } catch (Exception e) {
+                // Write empty cache to avoid hitting Scryfall again on next startup
+                Path cacheFile = cachePath.resolve(tokenSetCode + ".json");
+                if (!Files.exists(cacheFile)) {
+                    try {
+                        Files.writeString(cacheFile, "[]");
+                    } catch (IOException ignored) {}
+                }
+                LOG.warning("Could not load token set " + tokenSetCode + ": " + e.getMessage());
+            }
+        }
+    }
+
+    private static String buildTokenKey(String name, Integer power, Integer toughness, CardColor color) {
+        String colorKey = color != null ? color.name() : "COLORLESS";
+        String p = power != null ? String.valueOf(power) : "*";
+        String t = toughness != null ? String.valueOf(toughness) : "*";
+        return name + ":" + p + ":" + t + ":" + colorKey;
+    }
+
+    private static Integer parseIntField(JsonNode node, String field) {
+        if (!node.has(field)) return null;
+        try {
+            return Integer.parseInt(node.get(field).asText());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private static Map<String, JsonNode> loadSet(Path cachePath, String setCode) throws IOException, InterruptedException {

@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -71,7 +72,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(CreateCreatureTokenEffect.class)
     private void resolveCreateCreatureToken(GameData gameData, StackEntry entry, CreateCreatureTokenEffect effect) {
-        applyCreateCreatureToken(gameData, entry.getControllerId(), effect);
+        applyCreateCreatureToken(gameData, entry.getControllerId(), effect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateXCreatureTokenEffect.class)
@@ -82,7 +83,7 @@ public class PermanentControlResolutionService {
                 amount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensPerOwnCreatureDeathsThisTurnEffect.class)
@@ -94,7 +95,7 @@ public class PermanentControlResolutionService {
                 amount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensEqualToChargeCountersOnSourceEffect.class)
@@ -106,7 +107,7 @@ public class PermanentControlResolutionService {
                 count, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensEqualToControlledCreatureCountEffect.class)
@@ -127,7 +128,7 @@ public class PermanentControlResolutionService {
                 count, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(ReturnSelfToHandAndCreateTokensEffect.class)
@@ -148,7 +149,7 @@ public class PermanentControlResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
-        applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect());
+        applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect(), entry.getCard().getSetCode());
     }
 
     @HandlesEffect(SacrificeEnchantedCreatureAndCreateTokenEffect.class)
@@ -188,10 +189,10 @@ public class PermanentControlResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Create token for the aura's controller
-        applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect());
+        applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect(), entry.getCard().getSetCode());
     }
 
-    private void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token) {
+    private void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token, String sourceSetCode) {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (int i = 0; i < token.amount(); i++) {
@@ -209,6 +210,15 @@ public class PermanentControlResolutionService {
             }
             if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
                 tokenCard.setAdditionalTypes(token.additionalTypes());
+            }
+
+            // Look up token image from Scryfall token set
+            ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
+                    sourceSetCode, token.tokenName(), token.power(), token.toughness(), token.color()
+            );
+            if (imageData != null) {
+                tokenCard.setSetCode(imageData.setCode());
+                tokenCard.setCollectorNumber(imageData.collectorNumber());
             }
 
             Permanent tokenPermanent = new Permanent(tokenCard);
@@ -278,7 +288,7 @@ public class PermanentControlResolutionService {
                 equipmentCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect);
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokenPerOpponentPoisonCounterEffect.class)
@@ -302,7 +312,7 @@ public class PermanentControlResolutionService {
                 totalPoison, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, controllerId, tokenEffect);
+        applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(LivingWeaponEffect.class)
@@ -319,6 +329,16 @@ public class PermanentControlResolutionService {
         tokenCard.setPower(0);
         tokenCard.setToughness(0);
         tokenCard.setSubtypes(List.of(CardSubtype.PHYREXIAN, CardSubtype.GERM));
+
+        // Look up token image from Scryfall token set
+        // Scryfall names this token "Germ" (subtypes are Phyrexian Germ)
+        ScryfallOracleLoader.TokenImageData germImageData = ScryfallOracleLoader.getTokenImage(
+                entry.getCard().getSetCode(), "Germ", 0, 0, CardColor.BLACK
+        );
+        if (germImageData != null) {
+            tokenCard.setSetCode(germImageData.setCode());
+            tokenCard.setCollectorNumber(germImageData.collectorNumber());
+        }
 
         Permanent tokenPermanent = new Permanent(tokenCard);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
@@ -637,6 +657,8 @@ public class PermanentControlResolutionService {
         tokenCard.setToughness(imprintedCard.getToughness());
         tokenCard.setSubtypes(imprintedCard.getSubtypes());
         tokenCard.setCardText(imprintedCard.getCardText());
+        tokenCard.setSetCode(imprintedCard.getSetCode());
+        tokenCard.setCollectorNumber(imprintedCard.getCollectorNumber());
 
         // Copy keywords (conditionally add haste)
         Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
@@ -698,6 +720,8 @@ public class PermanentControlResolutionService {
         tokenCard.setToughness(sourceCard.getToughness());
         tokenCard.setSubtypes(sourceCard.getSubtypes());
         tokenCard.setCardText(sourceCard.getCardText());
+        tokenCard.setSetCode(sourceCard.getSetCode());
+        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
         // Copy keywords
         if (sourceCard.getKeywords() != null) {
@@ -747,6 +771,8 @@ public class PermanentControlResolutionService {
         tokenCard.setToughness(sourceCard.getToughness());
         tokenCard.setSubtypes(sourceCard.getSubtypes());
         tokenCard.setCardText(sourceCard.getCardText());
+        tokenCard.setSetCode(sourceCard.getSetCode());
+        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
         // Copy keywords
         if (sourceCard.getKeywords() != null) {
