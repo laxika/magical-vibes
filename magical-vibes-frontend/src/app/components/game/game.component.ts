@@ -896,6 +896,14 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Hover & navigation ==========
 
   backToLobby(): void {
+    // Clear finished game from cached lobby list so home page doesn't show stale entry
+    const finishedGame = this.websocketService.currentGame;
+    if (finishedGame) {
+      this.websocketService.initialGames = this.websocketService.initialGames
+        .filter(g => g.id !== finishedGame.id);
+    }
+    this.websocketService.currentGame = null;
+
     if (this.websocketService.inDraft) {
       this.router.navigate(['/draft']);
     } else {
