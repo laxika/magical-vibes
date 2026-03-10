@@ -46,4 +46,7 @@
 @if (permanent && permanent.regenerationShield > 0) {
   <div class="card-regen-badge">Regen x{{ permanent.regenerationShield }}</div>
 }
+@if (!preview && permanent && permanent.chargeCounters > 0) {
+  <div class="card-charge-badge">Charge x{{ permanent.chargeCounters }}</div>
+}
 <ng-content></ng-content>

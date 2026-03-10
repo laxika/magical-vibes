@@ -344,3 +344,17 @@ img.card-art {
   text-transform: uppercase;
   font-family: 'Cinzel', Georgia, serif;
 }
+
+.card-charge-badge {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: #5a3d8a;
+  color: #e0d0f0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-family: 'Cinzel', Georgia, serif;
+}
