@@ -355,7 +355,7 @@ public class PlayerInputService {
             canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
         }
 
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, next.controllerId()), new MayAbilityMessage(next.description(), canPay));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, next.controllerId()), new MayAbilityMessage(next.description(), canPay, next.manaCost()));
 
         String playerName = gameData.playerIdToName.get(next.controllerId());
         log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());

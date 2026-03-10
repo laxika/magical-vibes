@@ -419,6 +419,9 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.choice.awaitingXValueChoice) {
       this.choice.xValueChoiceMaxValue = this.totalMana;
     }
+    if (this.choice.awaitingMayAbility) {
+      this.choice.updateMayAbilityCanPay(state.manaPool);
+    }
     this.searchTaxCost.set(state.searchTaxCost ?? 0);
 
     // Switch to stack tab when stack is non-empty
@@ -800,7 +803,7 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    if (this.choice.awaitingXValueChoice) {
+    if (this.choice.awaitingXValueChoice || (this.choice.awaitingMayAbility && this.choice.mayAbilityManaCost != null)) {
       if (perm && this.choice.canTapForMana(perm)) {
         const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
         if (manaAbilityIndex >= 0) {

@@ -342,6 +342,7 @@ export interface MayAbilityNotification {
   type: MessageType;
   prompt: string;
   canPay: boolean;
+  manaCost: string | null;
 }
 
 export interface XValueChoiceNotification {

@@ -49,6 +49,7 @@ export class GameChoiceService {
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
     this.mayAbilityCanPay = true;
+    this.mayAbilityManaCost = null;
     // Permanent choice
     this.choosingPermanent = false;
     this.choosablePermanentIds.set(new Set());
@@ -105,6 +106,7 @@ export class GameChoiceService {
   awaitingMayAbility = false;
   mayAbilityPrompt = '';
   mayAbilityCanPay = true;
+  mayAbilityManaCost: string | null = null;
 
   // --- Permanent choice state ---
   choosingPermanent = false;
@@ -167,6 +169,7 @@ export class GameChoiceService {
     this.awaitingMayAbility = true;
     this.mayAbilityPrompt = msg.prompt;
     this.mayAbilityCanPay = msg.canPay;
+    this.mayAbilityManaCost = msg.manaCost;
   }
 
   handleChoosePermanent(msg: ChoosePermanentNotification): void {
@@ -291,6 +294,7 @@ export class GameChoiceService {
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
     this.mayAbilityCanPay = true;
+    this.mayAbilityManaCost = null;
   }
 
   declineMayAbility(): void {
@@ -302,6 +306,7 @@ export class GameChoiceService {
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
     this.mayAbilityCanPay = true;
+    this.mayAbilityManaCost = null;
   }
 
   confirmXValueChoice(): void {
@@ -439,15 +444,51 @@ export class GameChoiceService {
     return this.choosingFromRevealedHand && this.revealedHandChoosableIndices.has(index);
   }
 
-  // ========== X value mana tapping ==========
+  // ========== Mana tapping (X value choice & may ability) ==========
 
   canTapForMana(perm: Permanent): boolean {
-    if (!this.awaitingXValueChoice || perm.tapped) return false;
+    const allowTap = this.awaitingXValueChoice || (this.awaitingMayAbility && this.mayAbilityManaCost != null);
+    if (!allowTap || perm.tapped) return false;
     if (perm.summoningSick && isPermanentCreature(perm)) return false;
     // Has ON_TAP mana effects (lands, mana rocks)
     if (perm.card.hasTapAbility) return true;
     // Has mana-producing activated ability (e.g., Birds of Paradise)
     return perm.card.activatedAbilities.some(a => a.isManaAbility);
+  }
+
+  updateMayAbilityCanPay(manaPool: Record<string, number>): void {
+    if (!this.awaitingMayAbility || !this.mayAbilityManaCost) {
+      return;
+    }
+    const tokens = this.mayAbilityManaCost.match(/\{([^}]+)\}/g)?.map(t => t.slice(1, -1)) ?? [];
+    const coloredNeeded: Record<string, number> = {};
+    let genericNeeded = 0;
+    let hasX = false;
+
+    for (const token of tokens) {
+      if (/^\d+$/.test(token)) {
+        genericNeeded += parseInt(token);
+      } else if (token === 'X') {
+        hasX = true;
+      } else {
+        coloredNeeded[token] = (coloredNeeded[token] ?? 0) + 1;
+      }
+    }
+
+    // Check each colored requirement
+    for (const [color, needed] of Object.entries(coloredNeeded)) {
+      if ((manaPool[color] ?? 0) < needed) {
+        this.mayAbilityCanPay = false;
+        return;
+      }
+    }
+
+    // Calculate remaining mana after colored costs
+    const totalAvailable = Object.values(manaPool).reduce((sum, v) => sum + v, 0);
+    const coloredSpent = Object.values(coloredNeeded).reduce((sum, v) => sum + v, 0);
+    const remaining = totalAvailable - coloredSpent;
+
+    this.mayAbilityCanPay = hasX ? remaining > genericNeeded : remaining >= genericNeeded;
   }
 
   // ========== Graveyard choice ==========

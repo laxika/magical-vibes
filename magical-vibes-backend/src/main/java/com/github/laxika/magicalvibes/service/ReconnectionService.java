@@ -299,15 +299,17 @@ public class ReconnectionService {
             case InteractionContext.MayAbilityChoice mc -> {
                 if (playerId.equals(mc.playerId())) {
                     boolean canPay = true;
+                    String manaCost = null;
                     if (!gameData.pendingMayAbilities.isEmpty()) {
                         PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
-                        if (next.manaCost() != null) {
-                            ManaCost cost = new ManaCost(next.manaCost());
+                        manaCost = next.manaCost();
+                        if (manaCost != null) {
+                            ManaCost cost = new ManaCost(manaCost);
                             ManaPool pool = gameData.playerManaPools.get(next.controllerId());
                             canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
                         }
                     }
-                    sessionManager.sendToPlayer(playerId, new MayAbilityMessage(mc.description(), canPay));
+                    sessionManager.sendToPlayer(playerId, new MayAbilityMessage(mc.description(), canPay, manaCost));
                 }
             }
             case InteractionContext.MultiPermanentChoice mpc -> {
