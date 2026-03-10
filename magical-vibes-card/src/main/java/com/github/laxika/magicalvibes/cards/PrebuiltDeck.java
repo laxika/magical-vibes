@@ -253,6 +253,36 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "13", 3),    // Master's Call
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "19", 1),    // White Sun's Zenith
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "60", 1)     // Concussive Bolt
+    )),
+
+    DOOM_INEVITABLE("doom-inevitable", "Doom Inevitable (Mirrodin Besieged Intro Pack)", List.of(
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "148", 13),  // Island
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "150", 12),  // Swamp
+            new DeckEntry(CardSet.MAGIC_2011, "44", 1),            // Armored Cancrix
+            new DeckEntry(CardSet.MAGIC_2011, "82", 1),            // Barony Vampire
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "40", 1),    // Caustic Hound
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "63", 2),    // Fume Spitter
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "116", 2),   // Myr Sire
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "29", 3),    // Oculus
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "51", 2),    // Phyrexian Rager
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "123", 2),   // Pierce Strider
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "126", 1),   // Psychosis Crawler
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "78", 1),    // Skinrender
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "36", 1),    // Vedalken Anatomist
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "100", 1),   // Bonehoard
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "144", 2),   // Contagion Clasp
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "107", 1),   // Flayer Husk
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "133", 2),   // Skinwing
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "213", 2),   // Trigon of Corruption
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "137", 1),   // Strandwalker
+            new DeckEntry(CardSet.MAGIC_2011, "67", 1),            // Mind Control
+            new DeckEntry(CardSet.MAGIC_2011, "95", 1),            // Doom Blade
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "33", 1),    // Steel Sabotage
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "45", 1),    // Steady Progress
+            new DeckEntry(CardSet.MAGIC_2011, "94", 1),            // Disentomb
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "45", 1),    // Horrifying Revelation
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "56", 1),    // Spread the Sickness
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "38", 2)     // Vivisection
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
