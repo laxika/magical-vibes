@@ -764,6 +764,7 @@ public class GameSimulator {
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
             case InteractionContext.XValueChoice xvc -> xvc.playerId();
             case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
+            case InteractionContext.Scry s -> s.playerId();
         };
     }
 

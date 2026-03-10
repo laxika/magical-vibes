@@ -462,6 +462,9 @@ public class ReconnectionService {
                         validCardIds, cardViews, 1,
                         "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
             }
+            case InteractionContext.Scry s -> {
+                // Scry reconnection handled elsewhere; no resend needed
+            }
         }
     }
 

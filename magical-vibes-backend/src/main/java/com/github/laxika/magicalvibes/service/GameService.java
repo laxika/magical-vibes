@@ -111,6 +111,7 @@ public class GameService {
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
             case InteractionContext.XValueChoice xvc -> controlledId.equals(xvc.playerId());
             case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
+            case InteractionContext.Scry s -> controlledId.equals(s.playerId());
         };
     }
 
