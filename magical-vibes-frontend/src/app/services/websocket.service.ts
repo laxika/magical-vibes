@@ -168,6 +168,7 @@ export interface Card {
   hasConvoke: boolean;
   hasPhyrexianMana: boolean;
   phyrexianManaCount: number;
+  token: boolean;
 }
 
 export interface Permanent {

@@ -64,6 +64,11 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     'WHITE': '#f0e6b2',
   };
 
+  @HostBinding('class.token-card')
+  get isToken(): boolean {
+    return this.card.token;
+  }
+
   @HostBinding('attr.data-card-color')
   get cardColor(): string | null {
     const colors = this.card.colors;

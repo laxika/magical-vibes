@@ -330,6 +330,91 @@ img.card-art {
   margin-left: 2px;
 }
 
+/* ── Token layout ── */
+:host(.token-card) {
+  overflow: hidden;
+}
+
+.token-art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1px;
+}
+
+.token-art-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.token-name-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 3px 6px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%);
+  z-index: 1;
+}
+
+.token-name-bar .card-name {
+  color: #f5e6c8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.token-type-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 3px 6px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%);
+  z-index: 1;
+}
+
+.token-type-line .card-type {
+  color: #f5e6c8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.token-pt {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 28px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Cinzel', Georgia, serif;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0;
+  border-radius: 3px;
+  border: 1.5px solid rgba(245, 230, 200, 0.5);
+  line-height: 1.4;
+  text-align: center;
+  color: #f5e6c8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 2;
+}
+
+.token-pt.buffed {
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.3);
+  border-color: rgba(46, 204, 113, 0.5);
+}
+
+.token-pt.debuffed {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.3);
+  border-color: rgba(231, 76, 60, 0.5);
+}
+
 /* Badges */
 .card-regen-badge {
   position: absolute;

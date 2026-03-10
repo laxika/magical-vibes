@@ -54,7 +54,8 @@ public class CardViewFactory {
                 card.getLoyalty(),
                 card.getKeywords().contains(Keyword.CONVOKE),
                 hasPhyrexianMana,
-                phyrexianManaCount);
+                phyrexianManaCount,
+                card.isToken());
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
