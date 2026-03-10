@@ -568,6 +568,7 @@ Pass `null` as filter to allow any card.
 | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate)` | can't be blocked as long as defender controls matching permanent (static) |
 | `CanAttackAsThoughNoDefenderEffect` | `()` | this creature can attack as though it didn't have defender (static, typically wrapped in MetalcraftConditionalEffect) |
 | `MustAttackEffect` | `()` | this creature must attack each turn if able (static) |
+| `MustAttackThisTurnEffect` | `()` | target creature must attack this turn if able (one-shot, sets transient flag cleared at end of turn) |
 | `MustBeBlockedByAllCreaturesEffect` | `()` | all creatures able to block this must do so (static, Lure-style) |
 | `MustBlockSourceEffect` | `(UUID sourcePermanentId)` | target creature must block source permanent this turn if able |
 | `AssignCombatDamageAsThoughUnblockedEffect` | `()` | assign combat damage as though unblocked (static) |

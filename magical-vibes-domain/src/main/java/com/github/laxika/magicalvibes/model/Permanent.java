@@ -33,6 +33,7 @@ public class Permanent {
     @Setter private CardSubtype chosenSubtype;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
+    @Setter private boolean mustAttackThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
@@ -124,6 +125,7 @@ public class Permanent {
         this.chosenSubtype = source.chosenSubtype;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
+        this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
@@ -271,6 +273,7 @@ public class Permanent {
         this.powerToughnessSwitched = false;
         this.cantBeBlocked = false;
         this.cantBlockThisTurn = false;
+        this.mustAttackThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;

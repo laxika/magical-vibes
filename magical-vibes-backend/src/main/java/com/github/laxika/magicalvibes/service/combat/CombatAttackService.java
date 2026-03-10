@@ -349,6 +349,11 @@ public class CombatAttackService {
                 .filter(MustAttackEffect.class::isInstance)
                 .count()};
 
+        // Check for transient "must attack this turn" flag (e.g. Alluring Siren)
+        if (creature.isMustAttackThisTurn()) {
+            count[0]++;
+        }
+
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.getAttachedTo() != null
                     && permanent.getAttachedTo().equals(creature.getId())) {
