@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -47,24 +46,14 @@ public class DamageTriggerCollectorService {
         Permanent currentSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
         if (currentSource == null) return false;
 
-        // Find which player controls the source and bounce it
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(currentSource)) {
-                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, currentSource);
-                permanentRemovalService.removeOrphanedAuras(gameData);
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(currentSource.getId(), playerId);
-                gameData.stolenCreatures.remove(currentSource.getId());
-                List<Card> hand = gameData.playerHands.get(ownerId);
-                hand.add(currentSource.getOriginalCard());
-
-                String logEntry = match.permanent().getCard().getName() + " triggers — "
-                        + currentSource.getCard().getName() + " is returned to its owner's hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} triggers, bouncing {} to owner's hand",
-                        gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
-                break;
-            }
+        // Bounce the source to its owner's hand
+        if (permanentRemovalService.removePermanentToHand(gameData, currentSource)) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            String logEntry = match.permanent().getCard().getName() + " triggers — "
+                    + currentSource.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} triggers, bouncing {} to owner's hand",
+                    gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
         }
         return true;
     }

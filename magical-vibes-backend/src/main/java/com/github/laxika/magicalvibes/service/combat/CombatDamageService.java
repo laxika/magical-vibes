@@ -697,16 +697,25 @@ public class CombatDamageService {
                                               List<Permanent> atkBf, List<Permanent> defBf,
                                               UUID activeId, UUID defenderId) {
         List<String> deadCreatureNames = new ArrayList<>();
-        // Collect dead attacker IDs before removal so we can clean up orphaned blockers
+        // Collect dead attacker references and IDs before removal
         Set<UUID> deadAttackerIds = new HashSet<>();
+        List<Permanent> deadAttackers = new ArrayList<>();
         for (int idx : state.deadAttackerIndices) {
-            deadAttackerIds.add(atkBf.get(idx).getId());
+            Permanent dead = atkBf.get(idx);
+            deadAttackerIds.add(dead.getId());
+            deadAttackers.add(dead);
         }
-        for (int idx : state.deadAttackerIndices) {
-            processDeadCreature(gameData, atkBf, activeId, deadCreatureNames, idx);
-        }
+        List<Permanent> deadDefenders = new ArrayList<>();
         for (int idx : state.deadDefenderIndices) {
-            processDeadCreature(gameData, defBf, defenderId, deadCreatureNames, idx);
+            deadDefenders.add(defBf.get(idx));
+        }
+        for (Permanent dead : deadAttackers) {
+            deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
+            permanentRemovalService.removePermanentToGraveyard(gameData, dead);
+        }
+        for (Permanent dead : deadDefenders) {
+            deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
+            permanentRemovalService.removePermanentToGraveyard(gameData, dead);
         }
         // Clear blocking state for surviving blockers whose blocked attacker died
         clearOrphanedBlockingState(defBf, deadAttackerIds);
@@ -730,20 +739,6 @@ public class CombatDamageService {
         }
     }
 
-    private void processDeadCreature(GameData gameData, List<Permanent> battlefield,
-                                      UUID controllerId, List<String> deadNames, int idx) {
-        Permanent dead = battlefield.get(idx);
-        deadNames.add(gameData.playerIdToName.get(controllerId) + "'s " + dead.getCard().getName());
-        UUID graveyardOwner = gameData.stolenCreatures.getOrDefault(dead.getId(), controllerId);
-        gameData.stolenCreatures.remove(dead.getId());
-        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, graveyardOwner, dead.getOriginalCard(), Zone.BATTLEFIELD);
-        if (wentToGraveyard) {
-            deathTriggerService.collectDeathTrigger(gameData, dead.getCard(), controllerId, true, dead);
-            deathTriggerService.checkAllyCreatureDeathTriggers(gameData, controllerId);
-        }
-        battlefield.remove(idx);
-        permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, dead);
-    }
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);

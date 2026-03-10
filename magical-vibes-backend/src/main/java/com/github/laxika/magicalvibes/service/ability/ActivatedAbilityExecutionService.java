@@ -38,8 +38,6 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -59,8 +57,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ActivatedAbilityExecutionService {
 
-    private final GraveyardService graveyardService;
-    private final DeathTriggerService deathTriggerService;
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
@@ -169,16 +165,7 @@ public class ActivatedAbilityExecutionService {
 
         boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
         if (shouldSacrifice) {
-            boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
-            battlefield.remove(permanent);
-            permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, permanent);
-            boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, permanent.getCard(), Zone.BATTLEFIELD);
-            if (wentToGraveyard) {
-                deathTriggerService.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
-                if (wasCreature) {
-                    deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
-                }
-            }
+            permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
         }
 
         String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";

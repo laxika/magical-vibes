@@ -27,9 +27,12 @@ import java.util.UUID;
 
 /**
  * Handles removing permanents from the battlefield and moving them to their destination zones
- * (graveyard, hand, or exile). Applies replacement effects (CR 614.6), processes death triggers,
- * handles stolen-creature ownership, and manages related cleanup such as orphaned auras,
- * sacrifice-on-unattach, and exile-return-on-leave.
+ * (graveyard, hand, library, or exile). Applies replacement effects (CR 614.6), processes death
+ * triggers, handles stolen-creature ownership, and manages related cleanup such as orphaned auras,
+ * sacrifice-on-unattach, exile-return-on-leave, and source-linked animations.
+ *
+ * <p><b>All battlefield removal must go through this service</b> to ensure cross-cutting cleanup
+ * is applied consistently. Never call {@code battlefield.remove()} directly from other services.
  */
 @Slf4j
 @Component
@@ -72,26 +75,39 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
 
-        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, target.getOriginalCard(), Zone.BATTLEFIELD);
-        // Skip "dies" and graveyard triggers if a replacement effect redirected the card (CR 614.6)
-        if (wentToGraveyard) {
-            deathTriggerService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
-            if (wasCreature) {
-                gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
-                deathTriggerService.checkAllyCreatureDeathTriggers(gameData, controllerId);
-                deathTriggerService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
-                deathTriggerService.checkOpponentCreatureDeathTriggers(gameData, controllerId);
-                deathTriggerService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId);
-                deathTriggerService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
-            }
-            if (wasArtifact) {
-                deathTriggerService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
-            }
-            deathTriggerService.checkEnchantedPermanentDeathTriggers(gameData, target.getId());
-        }
+        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, controllerId, ownerId);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
+    }
+
+    /**
+     * Processes a permanent that has already been removed from the battlefield list by the caller
+     * (e.g. via iterator or index-based removal) and sends it to the owner's graveyard.
+     * Performs all the same cleanup as {@link #removePermanentToGraveyard(GameData, Permanent)},
+     * but skips the list removal step.
+     *
+     * <p>Use this for state-based actions or combat damage where the caller manages list iteration.
+     *
+     * @param gameData     the current game state
+     * @param target       the permanent that was already removed from the battlefield list
+     * @param controllerId the player who controlled the permanent on the battlefield
+     */
+    public void processAlreadyRemovedToGraveyard(GameData gameData, Permanent target, UUID controllerId) {
+        // Replacement effect: exile instead of going to graveyard (CR 614.6)
+        if (tryApplyExileReplacementEffect(gameData, target, true, "going to the graveyard")) {
+            return;
+        }
+
+        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
+
+        boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        boolean wasArtifact = gameQueryService.isArtifact(target);
+        RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
+
+        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, info.controllerId(), info.ownerId());
+        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
+        handleExileReturnOnLeave(gameData, target);
     }
 
     /**
@@ -139,6 +155,56 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
+        handleExileReturnOnLeave(gameData, target);
+        return true;
+    }
+
+    /**
+     * Removes a permanent from the battlefield and puts its card on top of the owner's library.
+     * Applies exile replacement effects (CR 614.6) and handles exile-return-on-leave.
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to tuck
+     * @return {@code true} if the permanent was found on a battlefield and removed,
+     *         {@code false} if it was not on any battlefield
+     */
+    public boolean removePermanentToLibraryTop(GameData gameData, Permanent target) {
+        // Replacement effect: exile instead of going to library (CR 614.6)
+        if (tryApplyExileReplacementEffect(gameData, target, false, "going to the library")) {
+            return true;
+        }
+
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
+        }
+        UUID ownerId = removed.get().ownerId();
+        gameData.playerDecks.get(ownerId).add(0, target.getOriginalCard());
+        handleExileReturnOnLeave(gameData, target);
+        return true;
+    }
+
+    /**
+     * Removes a permanent from the battlefield and puts its card on the bottom of the owner's library.
+     * Applies exile replacement effects (CR 614.6) and handles exile-return-on-leave.
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to tuck
+     * @return {@code true} if the permanent was found on a battlefield and removed,
+     *         {@code false} if it was not on any battlefield
+     */
+    public boolean removePermanentToLibraryBottom(GameData gameData, Permanent target) {
+        // Replacement effect: exile instead of going to library (CR 614.6)
+        if (tryApplyExileReplacementEffect(gameData, target, false, "going to the library")) {
+            return true;
+        }
+
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
+        }
+        UUID ownerId = removed.get().ownerId();
+        gameData.playerDecks.get(ownerId).add(target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;
     }
@@ -272,14 +338,45 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.remove(target)) {
-                gameData.permanentExiledCards.remove(target.getId());
-                UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                gameData.stolenCreatures.remove(target.getId());
-                handleSourceLinkedAnimationCleanup(gameData, target);
-                return Optional.of(new RemovedPermanentInfo(playerId, ownerId));
+                return Optional.of(processRemovalCleanup(gameData, target, playerId));
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Performs all leaving-the-battlefield cleanup for a permanent that has already been removed
+     * from the battlefield list. This is the single point where structural cleanup happens.
+     */
+    private RemovedPermanentInfo processRemovalCleanup(GameData gameData, Permanent target, UUID controllerId) {
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+        gameData.stolenCreatures.remove(target.getId());
+        handleSourceLinkedAnimationCleanup(gameData, target);
+        return new RemovedPermanentInfo(controllerId, ownerId);
+    }
+
+    /**
+     * Sends a removed permanent's card to the graveyard and fires all death/graveyard triggers.
+     */
+    private void processGraveyardAndTriggers(GameData gameData, Permanent target,
+                                              boolean wasCreature, boolean wasArtifact,
+                                              UUID controllerId, UUID ownerId) {
+        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, target.getOriginalCard(), Zone.BATTLEFIELD);
+        if (wentToGraveyard) {
+            deathTriggerService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
+            if (wasCreature) {
+                gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                deathTriggerService.checkAllyCreatureDeathTriggers(gameData, controllerId);
+                deathTriggerService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
+                deathTriggerService.checkOpponentCreatureDeathTriggers(gameData, controllerId);
+                deathTriggerService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId);
+                deathTriggerService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
+            }
+            if (wasArtifact) {
+                deathTriggerService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
+            }
+            deathTriggerService.checkEnchantedPermanentDeathTriggers(gameData, target.getId());
+        }
     }
 
     /**
@@ -314,7 +411,7 @@ public class PermanentRemovalService {
      * If the removed permanent was a source, reverts the target land back to a normal land.
      * If the removed permanent was an animated target, removes the tracking entry.
      */
-    public void handleSourceLinkedAnimationCleanup(GameData gameData, Permanent removedPermanent) {
+    private void handleSourceLinkedAnimationCleanup(GameData gameData, Permanent removedPermanent) {
         UUID removedId = removedPermanent.getId();
 
         // Check if this permanent was a source for any linked animations

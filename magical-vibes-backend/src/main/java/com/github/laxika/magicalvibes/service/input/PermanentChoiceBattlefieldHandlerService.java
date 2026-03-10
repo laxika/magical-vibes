@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
@@ -24,7 +22,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,9 +46,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
-    private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final DeathTriggerService deathTriggerService;
     private final CloneService cloneService;
     private final WarpWorldService warpWorldService;
     private final GameBroadcastService gameBroadcastService;
@@ -120,16 +116,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
         for (Permanent perm : toRemove) {
-            boolean wasCreature = gameQueryService.isCreature(gameData, perm);
-            battlefield.remove(perm);
-            permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, perm);
-            boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
-            if (wentToGraveyard) {
-                deathTriggerService.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
-                if (wasCreature) {
-                    deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
-                }
-            }
+            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
             String logEntry = perm.getCard().getName() + " is put into the graveyard (legend rule).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());

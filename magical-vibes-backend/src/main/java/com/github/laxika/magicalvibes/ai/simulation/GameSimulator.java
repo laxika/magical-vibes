@@ -212,14 +212,14 @@ public class GameSimulator {
                 triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
-                graveyardService, deathTriggerService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService);
+                gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService);
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         CombatAttackService combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, noOpSession, triggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, noOpSession, combatAttackService, combatTriggerService);
         CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, deathTriggerService, permanentRemovalService, playerInputService, noOpSession, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
-                combatAttackService, combatBlockService, combatDamageService, gameQueryService, graveyardService, deathTriggerService, permanentRemovalService);
+                combatAttackService, combatBlockService, combatDamageService, gameBroadcastService, permanentRemovalService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
         TargetValidationService targetValidationService = new TargetValidationService(gameQueryService, targetValidatorRegistry);
         List<Object> validatorBeans = List.of(
@@ -287,9 +287,9 @@ public class GameSimulator {
         SpellCastingService spellCastingService = new SpellCastingService(
                 battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
-                graveyardService, deathTriggerService, damagePreventionService, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, noOpSession);
+                damagePreventionService, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, noOpSession);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
-                graveyardService, deathTriggerService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
+                graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, noOpSession, permanentRemovalService, triggerCollectionService);
         ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
                 noOpSession, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
@@ -304,7 +304,7 @@ public class GameSimulator {
         InputCompletionService inputCompletionService = new InputCompletionService(
                 playerInputService, gameBroadcastService, turnProgressionService, stateBasedActionService);
         PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
-                inputCompletionService, gameQueryService, graveyardService, battlefieldEntryService, deathTriggerService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
+                inputCompletionService, gameQueryService, battlefieldEntryService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
                 inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService);

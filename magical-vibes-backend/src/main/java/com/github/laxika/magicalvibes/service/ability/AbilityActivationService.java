@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -93,7 +92,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AbilityActivationService {
 
     private final GraveyardService graveyardService;
-    private final DeathTriggerService deathTriggerService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final TargetLegalityService targetLegalityService;
@@ -223,16 +221,7 @@ public class AbilityActivationService {
         }
 
         // Sacrifice: remove from battlefield, add to graveyard
-        boolean wasCreature = gameQueryService.isCreature(gameData, permanent);
-        battlefield.remove(permanentIndex);
-        permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, permanent);
-        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, permanent.getOriginalCard(), Zone.BATTLEFIELD);
-        if (wentToGraveyard) {
-            deathTriggerService.collectDeathTrigger(gameData, permanent.getCard(), playerId, wasCreature, permanent);
-            if (wasCreature) {
-                deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
-            }
-        }
+        permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
@@ -771,12 +760,7 @@ public class AbilityActivationService {
         if (playerBf == null || !playerBf.contains(sacTarget)) {
             throw new IllegalStateException("Must sacrifice a permanent you control");
         }
-        playerBf.remove(sacTarget);
-        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, sacTarget.getCard(), Zone.BATTLEFIELD);
-        if (wentToGraveyard && gameQueryService.isCreature(gameData, sacTarget)) {
-            deathTriggerService.collectDeathTrigger(gameData, sacTarget.getCard(), playerId, true, sacTarget);
-            deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
-        }
+        permanentRemovalService.removePermanentToGraveyard(gameData, sacTarget);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);

@@ -3,12 +3,9 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,9 +31,7 @@ public class CombatService {
     private final CombatAttackService combatAttackService;
     private final CombatBlockService combatBlockService;
     private final CombatDamageService combatDamageService;
-    private final GameQueryService gameQueryService;
-    private final GraveyardService graveyardService;
-    private final DeathTriggerService deathTriggerService;
+    private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
 
     // ===== Attack delegation =====
@@ -116,18 +111,9 @@ public class CombatService {
                     .filter(p -> gameData.permanentsToSacrificeAtEndOfCombat.contains(p.getId()))
                     .toList();
             for (Permanent perm : toSacrifice) {
-                boolean wasCreature = gameQueryService.isCreature(gameData, perm);
-                battlefield.remove(perm);
-                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, perm);
-                boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, perm.getOriginalCard(), Zone.BATTLEFIELD);
-                if (wentToGraveyard) {
-                    deathTriggerService.collectDeathTrigger(gameData, perm.getCard(), playerId, wasCreature, perm);
-                    if (wasCreature) {
-                        deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
-                    }
-                }
+                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
                 String logEntry = perm.getCard().getName() + " is sacrificed.";
-                gameData.gameLog.add(logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
             }
         });

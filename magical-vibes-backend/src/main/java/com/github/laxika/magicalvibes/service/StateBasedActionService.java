@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Zone;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,8 +19,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StateBasedActionService {
 
-    private final GraveyardService graveyardService;
-    private final DeathTriggerService deathTriggerService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -33,37 +29,31 @@ public class StateBasedActionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
-            Iterator<Permanent> it = battlefield.iterator();
-            while (it.hasNext()) {
-                Permanent p = it.next();
+
+            // Two-pass: collect dead permanents first, then remove via PermanentRemovalService
+            List<Permanent> toDie = new ArrayList<>();
+            for (Permanent p : battlefield) {
                 if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                    it.remove();
-                    UUID graveyardOwnerId = gameData.stolenCreatures.getOrDefault(p.getId(), playerId);
-                    gameData.stolenCreatures.remove(p.getId());
-                    permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, p);
-                    boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD);
-                    if (wentToGraveyard) {
-                        deathTriggerService.collectDeathTrigger(gameData, p.getCard(), playerId, true, p);
-                        gameData.creatureDeathCountThisTurn.merge(playerId, 1, Integer::sum);
-                        deathTriggerService.checkAllyCreatureDeathTriggers(gameData, playerId);
-                        deathTriggerService.checkAnyNontokenCreatureDeathTriggers(gameData, p.getCard());
-                        deathTriggerService.checkOpponentCreatureDeathTriggers(gameData, playerId);
-                        deathTriggerService.checkEquippedCreatureDeathTriggers(gameData, p.getId(), playerId);
-                        deathTriggerService.checkEnchantedPermanentDeathTriggers(gameData, p.getId());
-                        deathTriggerService.triggerDelayedPoisonOnDeath(gameData, p.getCard().getId(), playerId);
-                    }
+                    toDie.add(p);
+                } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
+                    toDie.add(p);
+                }
+            }
+
+            for (Permanent p : toDie) {
+                boolean isCreature = gameQueryService.isCreature(gameData, p);
+                permanentRemovalService.removePermanentToGraveyard(gameData, p);
+
+                if (isCreature) {
                     String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
-                    anyDied = true;
-                } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
-                    it.remove();
-                    graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                } else {
                     String logEntry = p.getCard().getName() + " has no loyalty counters and is put into the graveyard.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, p.getCard().getName());
-                    anyDied = true;
                 }
+                anyDied = true;
             }
         }
         if (anyDied) {
@@ -106,6 +96,4 @@ public class StateBasedActionService {
             gameData.playersAttemptedDrawFromEmptyLibrary.clear();
         }
     }
-
 }
-

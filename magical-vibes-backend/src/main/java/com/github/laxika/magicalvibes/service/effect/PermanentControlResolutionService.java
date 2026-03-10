@@ -454,20 +454,10 @@ public class PermanentControlResolutionService {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, target);
-                gameData.playerDecks.get(playerId).add(target.getOriginalCard());
-
-                String logEntry = target.getCard().getName() + " is put on the bottom of "
-                        + gameData.playerIdToName.get(playerId) + "'s library.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-                log.info("Game {} - {} put on bottom of {}'s library",
-                        gameData.id, target.getCard().getName(), gameData.playerIdToName.get(playerId));
-                break;
-            }
+        if (permanentRemovalService.removePermanentToLibraryBottom(gameData, target)) {
+            String logEntry = target.getCard().getName() + " is put on the bottom of its owner's library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} put on bottom of library", gameData.id, target.getCard().getName());
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
@@ -478,20 +468,10 @@ public class PermanentControlResolutionService {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) return;
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.remove(target)) {
-                permanentRemovalService.handleSourceLinkedAnimationCleanup(gameData, target);
-                gameData.playerDecks.get(playerId).add(0, target.getOriginalCard());
-
-                String logEntry = target.getCard().getName() + " is put on top of "
-                        + gameData.playerIdToName.get(playerId) + "'s library.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-                log.info("Game {} - {} put on top of {}'s library",
-                        gameData.id, target.getCard().getName(), gameData.playerIdToName.get(playerId));
-                break;
-            }
+        if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
+            String logEntry = target.getCard().getName() + " is put on top of its owner's library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} put on top of library", gameData.id, target.getCard().getName());
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
