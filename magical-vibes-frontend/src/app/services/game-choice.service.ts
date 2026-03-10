@@ -48,6 +48,7 @@ export class GameChoiceService {
     // May ability
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
+    this.mayAbilityCanPay = true;
     // Permanent choice
     this.choosingPermanent = false;
     this.choosablePermanentIds.set(new Set());
