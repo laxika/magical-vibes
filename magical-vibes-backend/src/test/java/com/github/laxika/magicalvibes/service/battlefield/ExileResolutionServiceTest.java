@@ -1,43 +1,107 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.cards.a.ArgentSphinx;
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GlimmerpointStag;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.IntoTheCore;
-import com.github.laxika.magicalvibes.cards.l.LeoninRelicWarder;
-import com.github.laxika.magicalvibes.cards.m.MimicVat;
-import com.github.laxika.magicalvibes.cards.r.RevokeExistence;
-import com.github.laxika.magicalvibes.cards.s.SemblanceAnvil;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ExileResolutionServiceTest extends BaseCardTest {
 
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Mock
+    private GraveyardService graveyardService;
+    @Mock
+    private GameQueryService gameQueryService;
+    @Mock
+    private GameBroadcastService gameBroadcastService;
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
+    @Mock
+    private PlayerInputService playerInputService;
+    @Mock
+    private CardViewFactory cardViewFactory;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private BattlefieldEntryService battlefieldEntryService;
+
+    @InjectMocks
+    private ExileResolutionService exileResolutionService;
+
+    private static Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        return card;
+    }
+
+    private static Card createCreatureCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
+    }
+
+    private Permanent addPermanent(UUID playerId, Card card) {
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(playerId).add(perm);
+        return perm;
+    }
+
+    private StackEntry createSingleTargetEntry(Card sourceCard, UUID controllerId, UUID targetPermanentId) {
+        return new StackEntry(
+                StackEntryType.SORCERY_SPELL, sourceCard, controllerId, sourceCard.getName(),
+                List.of(new ExileTargetPermanentEffect()), 0, targetPermanentId, null
+        );
+    }
+
+    private StackEntry createMultiTargetEntry(Card sourceCard, UUID controllerId, List<UUID> targetIds) {
+        return new StackEntry(
+                StackEntryType.INSTANT_SPELL, sourceCard, controllerId, sourceCard.getName(),
+                List.of(new ExileTargetPermanentEffect()), 0, targetIds
+        );
     }
 
     // =========================================================================
-    // ExileTargetPermanentEffect — single target (via RevokeExistence)
+    // ExileTargetPermanentEffect — single target
     // =========================================================================
 
     @Nested
@@ -45,60 +109,42 @@ class ExileResolutionServiceTest extends BaseCardTest {
     class ResolveExileTargetPermanentSingle {
 
         @Test
-        @DisplayName("Exiles target permanent and moves it to owner's exile zone")
+        @DisplayName("Exiles target permanent and logs the exile")
         void exilesTargetPermanent() {
-            // Use Spellbook (no triggered abilities) to avoid may-ability interrupts
-            harness.addToBattlefield(player2, new Spellbook());
-            harness.setHand(player1, List.of(new RevokeExistence()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            Card targetCard = createCard("Spellbook");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCard("Revoke Existence");
 
-            UUID targetId = harness.getPermanentId(player2, "Spellbook");
-            harness.castSorcery(player1, 0, 0, targetId);
-            harness.passBothPriorities();
+            StackEntry entry = createSingleTargetEntry(sourceCard, player1.getId(), target.getId());
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Spellbook"));
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+
+            exileResolutionService.resolveExileTargetPermanent(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, target);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Spellbook is exiled."));
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
 
         @Test
         @DisplayName("Does nothing when target permanent is removed before resolution")
         void fizzlesWhenTargetRemoved() {
-            harness.addToBattlefield(player2, new Spellbook());
-            harness.setHand(player1, List.of(new RevokeExistence()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            UUID targetId = UUID.randomUUID();
+            Card sourceCard = createCard("Revoke Existence");
 
-            UUID targetId = harness.getPermanentId(player2, "Spellbook");
-            harness.castSorcery(player1, 0, 0, targetId);
+            StackEntry entry = createSingleTargetEntry(sourceCard, player1.getId(), targetId);
 
-            // Remove target before resolution
-            gd.playerBattlefields.get(player2.getId()).clear();
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            harness.passBothPriorities();
+            exileResolutionService.resolveExileTargetPermanent(gd, entry);
 
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Spellbook"));
-        }
-
-        @Test
-        @DisplayName("Logs that the permanent is exiled")
-        void logsExile() {
-            harness.addToBattlefield(player2, new Spellbook());
-            harness.setHand(player1, List.of(new RevokeExistence()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
-
-            UUID targetId = harness.getPermanentId(player2, "Spellbook");
-            harness.castSorcery(player1, 0, 0, targetId);
-            harness.passBothPriorities();
-
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Spellbook") && log.contains("exiled"));
+            verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
     }
 
     // =========================================================================
-    // ExileTargetPermanentEffect — multi-target (via Into the Core)
+    // ExileTargetPermanentEffect — multi-target
     // =========================================================================
 
     @Nested
@@ -108,72 +154,77 @@ class ExileResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Exiles two target artifacts")
         void exilesTwoTargetArtifacts() {
-            harness.addToBattlefield(player2, new Spellbook());
-            harness.addToBattlefield(player2, new Spellbook());
-            harness.setHand(player1, List.of(new IntoTheCore()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            Card targetCard1 = createCard("Spellbook");
+            Permanent target1 = new Permanent(targetCard1);
+            Card targetCard2 = createCard("Spellbook");
+            Permanent target2 = new Permanent(targetCard2);
+            Card sourceCard = createCard("Into the Core");
 
-            UUID target1 = gd.playerBattlefields.get(player2.getId()).get(0).getId();
-            UUID target2 = gd.playerBattlefields.get(player2.getId()).get(1).getId();
-            harness.castInstant(player1, 0, List.of(target1, target2));
-            harness.passBothPriorities();
+            StackEntry entry = createMultiTargetEntry(sourceCard, player1.getId(),
+                    List.of(target1.getId(), target2.getId()));
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .filteredOn(c -> c.getName().equals("Spellbook"))
-                    .hasSize(2);
+            when(gameQueryService.findPermanentById(gd, target1.getId())).thenReturn(target1);
+            when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
+
+            exileResolutionService.resolveExileTargetPermanent(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, target1);
+            verify(permanentRemovalService).removePermanentToExile(gd, target2);
+            verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), eq("Spellbook is exiled."));
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
 
         @Test
         @DisplayName("Skips targets that were removed before resolution and exiles the rest")
         void skipsRemovedTargets() {
-            harness.addToBattlefield(player2, new Spellbook());
-            harness.addToBattlefield(player2, new Spellbook());
-            harness.setHand(player1, List.of(new IntoTheCore()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            UUID removedId = UUID.randomUUID();
+            Card targetCard = createCard("Spellbook");
+            Permanent target2 = new Permanent(targetCard);
+            Card sourceCard = createCard("Into the Core");
 
-            UUID target1 = gd.playerBattlefields.get(player2.getId()).get(0).getId();
-            UUID target2 = gd.playerBattlefields.get(player2.getId()).get(1).getId();
-            harness.castInstant(player1, 0, List.of(target1, target2));
+            StackEntry entry = createMultiTargetEntry(sourceCard, player1.getId(),
+                    List.of(removedId, target2.getId()));
 
-            // Remove one target before resolution
-            gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(target1));
+            when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
+            when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
 
-            harness.passBothPriorities();
+            exileResolutionService.resolveExileTargetPermanent(gd, entry);
 
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .filteredOn(c -> c.getName().equals("Spellbook"))
-                    .hasSize(1);
+            verify(permanentRemovalService).removePermanentToExile(gd, target2);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
     }
 
     // =========================================================================
-    // ExileTargetPermanentAndReturnAtEndStepEffect (via Glimmerpoint Stag)
+    // ExileTargetPermanentAndReturnAtEndStepEffect
     // =========================================================================
 
     @Nested
     @DisplayName("resolveExileTargetPermanentAndReturnAtEndStep")
     class ResolveExileTargetPermanentAndReturnAtEndStep {
 
+        private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetPermanentId) {
+            return new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, sourceCard.getName(),
+                    List.of(new ExileTargetPermanentAndReturnAtEndStepEffect()), 0, targetPermanentId, null
+            );
+        }
+
         @Test
         @DisplayName("Exiles target permanent and adds a pending exile return")
         void exilesAndSchedulesReturn() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.setHand(player1, List.of(new GlimmerpointStag()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            Card targetCard = createCreatureCard("Grizzly Bears");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Glimmerpoint Stag");
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            // GlimmerpointStag requires target at cast time
-            gs.playCard(gd, player1, 0, 0, targetId, null);
+            StackEntry entry = createEntry(sourceCard, player1.getId(), target.getId());
 
-            // Resolve creature spell → ETB trigger on stack
-            harness.passBothPriorities();
-            // Resolve ETB trigger
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1.getId());
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.pendingExileReturns)
                     .anyMatch(per -> per.card().getName().equals("Grizzly Bears")
                             && per.controllerId().equals(player1.getId()));
@@ -182,45 +233,36 @@ class ExileResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Does nothing when target is removed before resolution")
         void fizzlesWhenTargetRemoved() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.setHand(player1, List.of(new GlimmerpointStag()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            UUID targetId = UUID.randomUUID();
+            Card sourceCard = createCreatureCard("Glimmerpoint Stag");
 
-            UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-            gs.playCard(gd, player1, 0, 0, bearsId, null);
+            StackEntry entry = createEntry(sourceCard, player1.getId(), targetId);
 
-            // Resolve creature spell → ETB trigger on stack
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            // Remove the bears before the ETB trigger resolves
-            gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(bearsId));
+            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
 
-            // Resolve ETB → fizzles
-            harness.passBothPriorities();
-
-            assertThat(gd.pendingExileReturns)
-                    .noneMatch(per -> per.card().getName().equals("Grizzly Bears"));
+            verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
+            assertThat(gd.pendingExileReturns).isEmpty();
         }
 
         @Test
         @DisplayName("Stolen creature's pending return uses original owner")
         void stolenCreatureUsesOriginalOwner() {
-            // Place a creature on player1's battlefield but mark as stolen from player2
-            Card bears = new GrizzlyBears();
-            Permanent stolen = addPermanent(player1, bears);
-            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            Card targetCard = createCreatureCard("Grizzly Bears");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Glimmerpoint Stag");
 
-            harness.setHand(player1, List.of(new GlimmerpointStag()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            // Mark target as stolen from player2
+            gd.stolenCreatures.put(target.getId(), player2.getId());
 
-            gs.playCard(gd, player1, 0, 0, stolen.getId(), null);
+            StackEntry entry = createEntry(sourceCard, player1.getId(), target.getId());
 
-            // Resolve creature spell → ETB trigger
-            harness.passBothPriorities();
-            // Resolve ETB
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1.getId());
 
-            // The pending return should go to the original owner (player2)
+            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
+
             assertThat(gd.pendingExileReturns)
                     .anyMatch(per -> per.card().getName().equals("Grizzly Bears")
                             && per.controllerId().equals(player2.getId()));
@@ -229,46 +271,50 @@ class ExileResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Logs exile and return message")
         void logsExileAndReturn() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.setHand(player1, List.of(new GlimmerpointStag()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            Card targetCard = createCreatureCard("Grizzly Bears");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Glimmerpoint Stag");
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            gs.playCard(gd, player1, 0, 0, targetId, null);
+            StackEntry entry = createEntry(sourceCard, player1.getId(), target.getId());
 
-            harness.passBothPriorities();
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1.getId());
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("exiled")
-                            && log.contains("return"));
+            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears is exiled. It will return at the beginning of the next end step."));
         }
     }
 
     // =========================================================================
-    // ExileSelfAndReturnAtEndStepEffect (via Argent Sphinx)
+    // ExileSelfAndReturnAtEndStepEffect
     // =========================================================================
 
     @Nested
     @DisplayName("resolveExileSelfAndReturnAtEndStep")
     class ResolveExileSelfAndReturnAtEndStep {
 
+        private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
+            return new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY, sourceCard, controllerId, sourceCard.getName(),
+                    List.of(new ExileSelfAndReturnAtEndStepEffect()), null, sourcePermanentId
+            );
+        }
+
         @Test
         @DisplayName("Exiles self and adds a pending exile return for the controller")
         void exilesSelfAndSchedulesReturn() {
-            // Argent Sphinx needs metalcraft (3+ artifacts)
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new ArgentSphinx());
-            harness.addMana(player1, ManaColor.BLUE, 1);
+            Card sourceCard = createCreatureCard("Argent Sphinx");
+            Permanent source = new Permanent(sourceCard);
 
-            int sphinxIndex = gd.playerBattlefields.get(player1.getId()).size() - 1;
-            harness.activateAbility(player1, sphinxIndex, null, null);
-            harness.passBothPriorities();
+            StackEntry entry = createEntry(sourceCard, player1.getId(), source.getId());
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Argent Sphinx"));
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+
+            exileResolutionService.resolveExileSelfAndReturnAtEndStep(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, source);
             assertThat(gd.pendingExileReturns)
                     .anyMatch(per -> per.card().getName().equals("Argent Sphinx")
                             && per.controllerId().equals(player1.getId()));
@@ -277,167 +323,159 @@ class ExileResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Does nothing when the source permanent is removed before resolution")
         void fizzlesWhenSourceRemoved() {
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new ArgentSphinx());
-            harness.addMana(player1, ManaColor.BLUE, 1);
+            UUID sourceId = UUID.randomUUID();
+            Card sourceCard = createCreatureCard("Argent Sphinx");
 
-            int sphinxIndex = gd.playerBattlefields.get(player1.getId()).size() - 1;
-            harness.activateAbility(player1, sphinxIndex, null, null);
+            StackEntry entry = createEntry(sourceCard, player1.getId(), sourceId);
 
-            // Remove the sphinx before the ability resolves
-            gd.playerBattlefields.get(player1.getId()).removeIf(
-                    p -> p.getCard().getName().equals("Argent Sphinx"));
+            when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
 
-            harness.passBothPriorities();
+            exileResolutionService.resolveExileSelfAndReturnAtEndStep(gd, entry);
 
-            assertThat(gd.pendingExileReturns)
-                    .noneMatch(per -> per.card().getName().equals("Argent Sphinx"));
+            verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
+            assertThat(gd.pendingExileReturns).isEmpty();
         }
 
         @Test
         @DisplayName("Logs exile and return message")
         void logsExileAndReturn() {
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new ArgentSphinx());
-            harness.addMana(player1, ManaColor.BLUE, 1);
+            Card sourceCard = createCreatureCard("Argent Sphinx");
+            Permanent source = new Permanent(sourceCard);
 
-            int sphinxIndex = gd.playerBattlefields.get(player1.getId()).size() - 1;
-            harness.activateAbility(player1, sphinxIndex, null, null);
-            harness.passBothPriorities();
+            StackEntry entry = createEntry(sourceCard, player1.getId(), source.getId());
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Argent Sphinx") && log.contains("exiled")
-                            && log.contains("return"));
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+
+            exileResolutionService.resolveExileSelfAndReturnAtEndStep(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Argent Sphinx is exiled. It will return at the beginning of the next end step."));
         }
     }
 
     // =========================================================================
-    // ExileTargetPermanentUntilSourceLeavesEffect (via Leonin Relic-Warder)
+    // ExileTargetPermanentUntilSourceLeavesEffect
     // =========================================================================
 
     @Nested
     @DisplayName("resolveExileTargetPermanentUntilSourceLeaves")
     class ResolveExileTargetPermanentUntilSourceLeaves {
 
-        private void castWarderAndExile(UUID targetId) {
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.setHand(player1, List.of(new LeoninRelicWarder()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
-
-            harness.castCreature(player1, 0);
-            harness.passBothPriorities(); // resolve creature -> may prompt
-            harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-            harness.handlePermanentChosen(player1, targetId); // choose target -> ETB on stack
-            harness.passBothPriorities(); // resolve ETB
+        private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetPermanentId) {
+            return new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, sourceCard.getName(),
+                    List.of(new ExileTargetPermanentUntilSourceLeavesEffect()), 0, targetPermanentId, null
+            );
         }
 
         @Test
         @DisplayName("Exiles target permanent and tracks return on source leave")
         void exilesTargetAndTracksReturn() {
-            harness.addToBattlefield(player2, new Spellbook());
-            UUID targetId = harness.getPermanentId(player2, "Spellbook");
-            castWarderAndExile(targetId);
+            Card targetCard = createCard("Spellbook");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Leonin Relic-Warder");
+            Permanent source = addPermanent(player1.getId(), sourceCard);
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Spellbook"));
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Spellbook"));
+            StackEntry entry = createEntry(sourceCard, player1.getId(), target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2.getId());
+
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
-            assertThat(gd.exileReturnOnPermanentLeave.values())
-                    .anyMatch(per -> per.card().getName().equals("Spellbook")
-                            && per.controllerId().equals(player2.getId()));
+            assertThat(gd.exileReturnOnPermanentLeave.get(source.getId()))
+                    .isNotNull()
+                    .satisfies(per -> {
+                        assertThat(per.card().getName()).isEqualTo("Spellbook");
+                        assertThat(per.controllerId()).isEqualTo(player2.getId());
+                    });
         }
 
         @Test
         @DisplayName("Does nothing when target permanent is removed before resolution")
         void fizzlesWhenTargetRemoved() {
-            harness.addToBattlefield(player2, new Spellbook());
-            UUID targetId = harness.getPermanentId(player2, "Spellbook");
+            UUID targetId = UUID.randomUUID();
+            Card sourceCard = createCreatureCard("Leonin Relic-Warder");
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.setHand(player1, List.of(new LeoninRelicWarder()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            StackEntry entry = createEntry(sourceCard, player1.getId(), targetId);
 
-            harness.castCreature(player1, 0);
-            harness.passBothPriorities(); // resolve creature -> may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, targetId); // ETB on stack
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            // Remove target before ETB resolves
-            gd.playerBattlefields.get(player2.getId()).clear();
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
 
-            harness.passBothPriorities();
-
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Spellbook"));
+            verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
             assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
         }
 
         @Test
         @DisplayName("Still exiles target when source has left battlefield but without return tracking")
         void exilesWithoutTrackingWhenSourceGone() {
-            harness.addToBattlefield(player2, new Spellbook());
-            UUID targetId = harness.getPermanentId(player2, "Spellbook");
+            Card targetCard = createCard("Spellbook");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Leonin Relic-Warder");
+            // Source is NOT on battlefield
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.setHand(player1, List.of(new LeoninRelicWarder()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            StackEntry entry = createEntry(sourceCard, player1.getId(), target.getId());
 
-            harness.castCreature(player1, 0);
-            harness.passBothPriorities(); // resolve creature -> may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, targetId); // ETB on stack
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2.getId());
 
-            // Remove the Warder before ETB resolves
-            gd.playerBattlefields.get(player1.getId())
-                    .removeIf(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
 
-            harness.passBothPriorities();
-
-            // Target should still be exiled
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Spellbook"));
-            // But no return tracking since source is gone
+            verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
         }
 
         @Test
         @DisplayName("Stolen permanent tracks original owner for return")
         void stolenPermanentUsesOriginalOwner() {
-            // Place Spellbook on player1's battlefield but mark as stolen from player2
-            Permanent stolen = addPermanent(player1, new Spellbook());
-            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            Card targetCard = createCard("Spellbook");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Leonin Relic-Warder");
+            Permanent source = addPermanent(player1.getId(), sourceCard);
 
-            castWarderAndExile(stolen.getId());
+            // Mark target as stolen from player2
+            gd.stolenCreatures.put(target.getId(), player2.getId());
 
-            // The return tracking should use the original owner (player2)
-            assertThat(gd.exileReturnOnPermanentLeave.values())
-                    .anyMatch(per -> per.card().getName().equals("Spellbook")
-                            && per.controllerId().equals(player2.getId()));
+            StackEntry entry = createEntry(sourceCard, player1.getId(), target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1.getId());
+
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+
+            assertThat(gd.exileReturnOnPermanentLeave.get(source.getId()))
+                    .isNotNull()
+                    .satisfies(per -> {
+                        assertThat(per.card().getName()).isEqualTo("Spellbook");
+                        assertThat(per.controllerId()).isEqualTo(player2.getId());
+                    });
         }
 
         @Test
         @DisplayName("Logs exile message with source name")
         void logsExile() {
-            harness.addToBattlefield(player2, new Spellbook());
-            UUID targetId = harness.getPermanentId(player2, "Spellbook");
-            castWarderAndExile(targetId);
+            Card targetCard = createCard("Spellbook");
+            Permanent target = new Permanent(targetCard);
+            Card sourceCard = createCreatureCard("Leonin Relic-Warder");
+            addPermanent(player1.getId(), sourceCard);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Spellbook") && log.contains("exiled")
-                            && log.contains("Leonin Relic-Warder"));
+            StackEntry entry = createEntry(sourceCard, player1.getId(), target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2.getId());
+
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Spellbook is exiled by Leonin Relic-Warder."));
         }
     }
 
     // =========================================================================
-    // ImprintDyingCreatureEffect (via Mimic Vat)
+    // ImprintDyingCreatureEffect
     // =========================================================================
 
     @Nested
@@ -445,199 +483,234 @@ class ExileResolutionServiceTest extends BaseCardTest {
     class ResolveImprintDyingCreature {
 
         @Test
-        @DisplayName("Imprints a dying creature onto Mimic Vat")
+        @DisplayName("Imprints a dying creature onto source permanent")
         void imprintsDyingCreature() {
-            harness.addToBattlefield(player1, new MimicVat());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            Card vatCard = createCard("Mimic Vat");
+            Permanent vatPerm = new Permanent(vatCard);
 
-            // Kill creature with Cruel Edict
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities(); // Resolve Cruel Edict → creature dies → may trigger
+            Card dyingCard = createCreatureCard("Grizzly Bears");
+            gd.playerGraveyards.get(player2.getId()).add(dyingCard);
 
-            // Accept the imprint
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // Resolve the imprint effect
+            ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, vatCard, player1.getId(), "Mimic Vat trigger",
+                    List.of(effect), vatPerm.getId(), (UUID) null
+            );
 
-            // Grizzly Bears should be exiled (in its owner's exile zone)
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
-            // Should no longer be in graveyard
+            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+
+            // Dying card moved from graveyard to exile
             assertThat(gd.playerGraveyards.get(player2.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-
-            // Mimic Vat should have Grizzly Bears imprinted
-            Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Mimic Vat"))
-                    .findFirst().orElseThrow();
-            assertThat(vat.getCard().getImprintedCard()).isNotNull();
-            assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+            assertThat(gd.playerExiledCards.get(player2.getId()))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            // Card imprinted on source
+            assertThat(vatPerm.getCard().getImprintedCard()).isSameAs(dyingCard);
         }
 
         @Test
         @DisplayName("Replaces previously imprinted card when a new creature dies")
         void replacesPreviousImprint() {
-            harness.addToBattlefield(player1, new MimicVat());
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.addToBattlefield(player2, new GiantSpider());
+            Card vatCard = createCard("Mimic Vat");
+            Permanent vatPerm = new Permanent(vatCard);
 
-            // Kill first creature (Grizzly Bears): player2 has two creatures so must choose
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities(); // Resolve Cruel Edict → player2 prompted to choose
+            // Set up previously imprinted card
+            Card previousCard = createCreatureCard("Giant Spider");
+            vatPerm.getCard().setImprintedCard(previousCard);
+            gd.playerExiledCards.get(player1.getId()).add(previousCard);
 
-            // Player2 chooses to sacrifice Grizzly Bears
-            harness.handlePermanentChosen(player2, bearsId);
+            // New dying creature
+            Card dyingCard = createCreatureCard("Grizzly Bears");
+            gd.playerGraveyards.get(player2.getId()).add(dyingCard);
 
-            // Accept imprint of Grizzly Bears
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
+            ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, vatCard, player1.getId(), "Mimic Vat trigger",
+                    List.of(effect), vatPerm.getId(), (UUID) null
+            );
 
-            Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Mimic Vat"))
-                    .findFirst().orElseThrow();
-            assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+            when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
-            // Kill second creature (Giant Spider): now player2 has only one, auto-sacrificed
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities(); // Resolve Cruel Edict → auto-sacrifice Giant Spider
+            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
 
-            // Accept second imprint
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
-
-            // Grizzly Bears (previously imprinted) should now be in a graveyard
-            boolean oldCardInGraveyard = false;
-            for (UUID pid : gd.orderedPlayerIds) {
-                if (gd.playerGraveyards.get(pid).stream().anyMatch(c -> c.getName().equals("Grizzly Bears"))) {
-                    oldCardInGraveyard = true;
-                    break;
-                }
-            }
-            assertThat(oldCardInGraveyard).isTrue();
-
-            // Giant Spider should now be imprinted
-            assertThat(vat.getCard().getImprintedCard()).isNotNull();
-            assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Giant Spider");
+            // New card should be imprinted
+            assertThat(vatPerm.getCard().getImprintedCard()).isSameAs(dyingCard);
+            // Previous card returned to owner's graveyard
+            verify(graveyardService).addCardToGraveyard(gd, player1.getId(), previousCard);
+            // Previous card removed from exile
+            assertThat(gd.playerExiledCards.get(player1.getId()))
+                    .noneMatch(c -> c.getName().equals("Giant Spider"));
         }
 
         @Test
-        @DisplayName("Declining may ability does not imprint")
-        void decliningMayDoesNotImprint() {
-            harness.addToBattlefield(player1, new MimicVat());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+        @DisplayName("Does nothing when source permanent is gone")
+        void fizzlesWhenSourceGone() {
+            Card dyingCard = createCreatureCard("Grizzly Bears");
+            gd.playerGraveyards.get(player2.getId()).add(dyingCard);
 
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities(); // Resolve Cruel Edict → may trigger
+            UUID vatId = UUID.randomUUID();
+            Card vatCard = createCard("Mimic Vat");
 
-            // Decline the imprint
-            harness.handleMayAbilityChosen(player1, false);
+            ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, vatCard, player1.getId(), "Mimic Vat trigger",
+                    List.of(effect), vatId, (UUID) null
+            );
 
-            // Grizzly Bears should remain in graveyard
+            when(gameQueryService.findPermanentById(gd, vatId)).thenReturn(null);
+
+            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+
+            // Dying card should still be in graveyard
             assertThat(gd.playerGraveyards.get(player2.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
 
-            // Mimic Vat should have nothing imprinted
-            Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Mimic Vat"))
-                    .findFirst().orElseThrow();
-            assertThat(vat.getCard().getImprintedCard()).isNull();
+        @Test
+        @DisplayName("Does nothing when dying card is no longer in graveyard")
+        void fizzlesWhenDyingCardGone() {
+            Card vatCard = createCard("Mimic Vat");
+            Permanent vatPerm = new Permanent(vatCard);
+
+            UUID dyingCardId = UUID.randomUUID();
+            ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCardId);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, vatCard, player1.getId(), "Mimic Vat trigger",
+                    List.of(effect), vatPerm.getId(), (UUID) null
+            );
+
+            when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
+
+            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+
+            assertThat(vatPerm.getCard().getImprintedCard()).isNull();
         }
 
         @Test
         @DisplayName("Logs imprint message")
         void logsImprint() {
-            harness.addToBattlefield(player1, new MimicVat());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            Card vatCard = createCard("Mimic Vat");
+            Permanent vatPerm = new Permanent(vatCard);
 
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            Card dyingCard = createCreatureCard("Grizzly Bears");
+            gd.playerGraveyards.get(player2.getId()).add(dyingCard);
 
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
+            ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect(dyingCard.getId());
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, vatCard, player1.getId(), "Mimic Vat trigger",
+                    List.of(effect), vatPerm.getId(), (UUID) null
+            );
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("imprinted"));
+            when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
+
+            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears is exiled and imprinted on Mimic Vat."));
         }
     }
 
     // =========================================================================
-    // ExileFromHandToImprintEffect (via Semblance Anvil)
+    // ExileFromHandToImprintEffect
     // =========================================================================
 
     @Nested
     @DisplayName("resolveExileFromHandToImprint")
     class ResolveExileFromHandToImprint {
 
+        private final CardPredicate filter = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
+
         @Test
         @DisplayName("Prompts player to choose a card from hand to imprint")
         void promptsCardChoice() {
-            harness.setHand(player1, List.of(new SemblanceAnvil(), new GrizzlyBears()));
-            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            Card anvilCard = createCard("Semblance Anvil");
+            Permanent anvilPerm = new Permanent(anvilCard);
 
-            harness.castArtifact(player1, 0);
-            harness.passBothPriorities(); // Resolve Anvil → ETB may trigger
+            gd.playerHands.get(player1.getId()).clear();
+            Card handCard = createCreatureCard("Grizzly Bears");
+            gd.playerHands.get(player1.getId()).add(handCard);
 
-            // Accept the may ability
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // Resolve the imprint effect
+            ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, anvilCard, player1.getId(), "Semblance Anvil trigger",
+                    List.of(effect), anvilPerm.getId(), (UUID) null
+            );
 
-            // Should now be awaiting card choice from hand
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.IMPRINT_FROM_HAND_CHOICE);
+            when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
+            when(gameQueryService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(true);
+
+            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+
+            verify(playerInputService).beginImprintFromHandChoice(
+                    eq(gd), eq(player1.getId()), eq(List.of(0)),
+                    eq("Choose a nonland card from your hand to exile and imprint."),
+                    eq(anvilPerm.getId()));
         }
 
         @Test
         @DisplayName("Skips when controller has no matching cards in hand")
         void skipsWhenNoMatchingCards() {
-            // Semblance Anvil with empty hand after casting (no nonland cards left)
-            harness.setHand(player1, List.of(new SemblanceAnvil()));
-            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            Card anvilCard = createCard("Semblance Anvil");
+            Permanent anvilPerm = new Permanent(anvilCard);
 
-            harness.castArtifact(player1, 0);
-            harness.passBothPriorities(); // Resolve Anvil → ETB may trigger
+            gd.playerHands.get(player1.getId()).clear();
 
-            // Accept may — but there are no nonland cards in hand
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // Resolve the imprint effect → no valid cards → skip
+            ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, anvilCard, player1.getId(), "Semblance Anvil trigger",
+                    List.of(effect), anvilPerm.getId(), (UUID) null
+            );
 
-            // Should not be waiting for imprint choice
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.IMPRINT_FROM_HAND_CHOICE);
+            when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
+
+            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+
+            verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("Declining may ability skips imprint entirely")
-        void decliningMaySkipsImprint() {
-            harness.setHand(player1, List.of(new SemblanceAnvil(), new GrizzlyBears()));
-            harness.addMana(player1, ManaColor.COLORLESS, 3);
+        @DisplayName("Skips when no cards match the filter")
+        void skipsWhenNoCardsMatchFilter() {
+            Card anvilCard = createCard("Semblance Anvil");
+            Permanent anvilPerm = new Permanent(anvilCard);
 
-            harness.castArtifact(player1, 0);
-            harness.passBothPriorities(); // Resolve Anvil → ETB may trigger
+            gd.playerHands.get(player1.getId()).clear();
+            Card handCard = createCreatureCard("Grizzly Bears");
+            gd.playerHands.get(player1.getId()).add(handCard);
 
-            // Decline the may ability
-            harness.handleMayAbilityChosen(player1, false);
+            ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, anvilCard, player1.getId(), "Semblance Anvil trigger",
+                    List.of(effect), anvilPerm.getId(), (UUID) null
+            );
 
-            // Grizzly Bears should still be in hand
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
+            when(gameQueryService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(false);
 
-            // Anvil should have nothing imprinted
-            Permanent anvil = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Semblance Anvil"))
-                    .findFirst().orElseThrow();
-            assertThat(anvil.getCard().getImprintedCard()).isNull();
+            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+
+            verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Does nothing when source permanent is gone")
+        void fizzlesWhenSourceGone() {
+            UUID anvilId = UUID.randomUUID();
+            Card anvilCard = createCard("Semblance Anvil");
+
+            ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, anvilCard, player1.getId(), "Semblance Anvil trigger",
+                    List.of(effect), anvilId, (UUID) null
+            );
+
+            when(gameQueryService.findPermanentById(gd, anvilId)).thenReturn(null);
+
+            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+
+            verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
         }
     }
 }
