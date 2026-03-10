@@ -31,8 +31,63 @@ export class GameChoiceService {
     opponentBattlefieldFn: () => Permanent[],
     totalManaFn: () => number
   ): void {
+    this.reset();
     this.gameSignal = gameSignal;
     this.targeting.init(gameSignal, myBattlefieldFn, opponentBattlefieldFn, totalManaFn);
+  }
+
+  reset(): void {
+    // Hand choice
+    this.choosingFromHand = false;
+    this.choosableHandIndices.set(new Set());
+    this.handChoicePrompt = '';
+    // Color choice
+    this.choosingColor = false;
+    this.colorChoices = [];
+    this.colorChoicePrompt = '';
+    // May ability
+    this.awaitingMayAbility = false;
+    this.mayAbilityPrompt = '';
+    // Permanent choice
+    this.choosingPermanent = false;
+    this.choosablePermanentIds.set(new Set());
+    this.choosablePlayerIds.set(new Set());
+    this.permanentChoicePrompt = '';
+    // Multi-permanent
+    this.choosingMultiplePermanents = false;
+    this.multiPermanentChoiceIds.set(new Set());
+    this.multiPermanentSelectedIds.set(new Set());
+    this.multiPermanentMaxCount = 0;
+    this.multiPermanentChoicePrompt = '';
+    // Multi-graveyard
+    this.choosingGraveyardCards = false;
+    this.multiGraveyardCards = [];
+    this.graveyardChoiceCardIds = [];
+    this.graveyardChoiceSelectedIds.set(new Set());
+    this.graveyardChoiceMaxCount = 0;
+    this.multiGraveyardPrompt = '';
+    // Reveal hand
+    this.revealingHand = false;
+    this.revealedHandCards = [];
+    this.revealedHandPlayerName = '';
+    // Choose from revealed hand
+    this.choosingFromRevealedHand = false;
+    this.revealedHandChoosableIndices = new Set();
+    this.revealedHandChoicePrompt = '';
+    // Choose from graveyard
+    this.choosingFromGraveyard = false;
+    this.graveyardChoiceIndices = [];
+    this.graveyardChoicePrompt = '';
+    this.graveyardChoiceAllGraveyards = false;
+    // X value choice
+    this.awaitingXValueChoice = false;
+    this.xValueChoicePrompt = '';
+    this.xValueChoiceMaxValue = 0;
+    this.xValueChoiceInput = 0;
+    // Sub-services
+    this.targeting.reset();
+    this.library.reset();
+    this.damage.reset();
   }
 
   // --- Hand choice state ---

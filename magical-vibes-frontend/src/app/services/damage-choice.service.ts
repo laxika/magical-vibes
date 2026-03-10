@@ -26,6 +26,22 @@ export class DamageChoiceService {
   combatDamageIsDeathtouch = false;
   combatDamageAttackerIndex = -1;
 
+  reset(): void {
+    this.distributingDamage = false;
+    this.damageDistributionCardIndex = -1;
+    this.damageDistributionCardName = '';
+    this.damageDistributionXValue = 0;
+    this.damageAssignments = new Map();
+    this.assigningCombatDamage = false;
+    this.combatDamageAttackerName = '';
+    this.combatDamageTotalDamage = 0;
+    this.combatDamageTargets = [];
+    this.combatDamageAssignments = new Map();
+    this.combatDamageIsTrample = false;
+    this.combatDamageIsDeathtouch = false;
+    this.combatDamageAttackerIndex = -1;
+  }
+
   // ========== Message handlers ==========
 
   handleCombatDamageAssignment(msg: CombatDamageAssignmentNotification): void {

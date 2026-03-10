@@ -27,6 +27,55 @@ export class TargetingChoiceService {
     this.totalManaFn = totalManaFn;
   }
 
+  reset(): void {
+    // Ability picker
+    this.choosingAbility = false;
+    this.abilityChoicePermanentIndex = -1;
+    this.abilityChoices = [];
+    // X cost
+    this.choosingXValue = false;
+    this.xValueCardIndex = -1;
+    this.xValueCardName = '';
+    this.xValueInput = 0;
+    this.xValueMaximum = 0;
+    // Targeting
+    this.selectingTarget = false;
+    this.targetingCardIndex = -1;
+    this.targetingCardName = '';
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
+    this.pendingAbilityXValue = null;
+    this.validTargetPermanentIds.set(new Set());
+    this.validTargetPlayerIds.set(new Set());
+    this.targetingPrompt = '';
+    this.pendingTargetRequest = false;
+    // Spell targeting
+    this.targetingSpell = false;
+    this.targetingSpellCardIndex = -1;
+    this.targetingSpellCardName = '';
+    // Multi-target
+    this.multiTargeting = false;
+    this.multiTargetCardIndex = -1;
+    this.multiTargetCardName = '';
+    this.multiTargetMinCount = 0;
+    this.multiTargetMaxCount = 0;
+    this.multiTargetSelectedIds.set([]);
+    // Phyrexian mana
+    this.choosingPhyrexianPayment = false;
+    this.phyrexianCardIndex = -1;
+    this.phyrexianCardName = '';
+    this.phyrexianSymbolCount = 0;
+    this.phyrexianLifePayCount = 0;
+    this.pendingPhyrexianLifeCount = null;
+    // Convoke
+    this.convoking = false;
+    this.convokeCardIndex = -1;
+    this.convokeCardName = '';
+    this.convokeSelectedCreatureIds.set([]);
+    this.pendingMultiTargetIds = [];
+    this.pendingConvokeCard = null;
+  }
+
   private get hasPriority(): boolean {
     const g = this.gameSignal();
     return g !== null && g.priorityPlayerId === this.websocketService.currentUser?.userId;

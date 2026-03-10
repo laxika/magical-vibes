@@ -59,6 +59,27 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.game.set(this.websocketService.currentGame);
 
+    // Reset local component state from any previous game
+    this.gameOverWinner.set(null);
+    this.gameOverWinnerId.set(null);
+    this.declaringAttackers.set(false);
+    this.declaringBlockers.set(false);
+    this.availableAttackerIndices.set(new Set());
+    this.mustAttackIndices.set(new Set());
+    this.availableBlockerIndices.set(new Set());
+    this.selectedAttackerIndices.set(new Set());
+    this.opponentAttackerIndices.set([]);
+    this.blockerAssignments.set(new Map());
+    this.legalBlockPairs.set(new Map());
+    this.selectedBlockerIndex.set(null);
+    this.playableCardIndices.set(new Set());
+    this.playableGraveyardLandIndices.set(new Set());
+    this.playableExileCards.set([]);
+    this.searchTaxCost.set(0);
+    this.hoveredCard.set(null);
+    this.hoveredPermanent.set(null);
+    this.stackTargetId.set(null);
+
     this.choice.init(
       this.game,
       () => this.myBattlefield,

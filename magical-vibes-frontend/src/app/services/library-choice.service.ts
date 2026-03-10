@@ -30,6 +30,22 @@ export class LibraryChoiceService {
   handTopBottomHandIndex: number | null = null;
   handTopBottomTopIndex: number | null = null;
 
+  reset(): void {
+    this.searchingLibrary = false;
+    this.librarySearchCards = [];
+    this.librarySearchPrompt = '';
+    this.librarySearchCanFailToFind = false;
+    this.reorderingLibrary = false;
+    this.reorderAllCards = [];
+    this.reorderAvailableIndices = [];
+    this.reorderOriginalIndices = [];
+    this.reorderPrompt = '';
+    this.choosingHandTopBottom = false;
+    this.handTopBottomCards = [];
+    this.handTopBottomHandIndex = null;
+    this.handTopBottomTopIndex = null;
+  }
+
   // ========== Message handlers ==========
 
   handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
