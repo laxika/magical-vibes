@@ -40,6 +40,11 @@ public class NoOpSessionManager implements SessionManager {
     }
 
     @Override
+    public void clearInGame(String connectionId) {
+        // no-op
+    }
+
+    @Override
     public Collection<Player> getLobbyPlayers() {
         return List.of();
     }

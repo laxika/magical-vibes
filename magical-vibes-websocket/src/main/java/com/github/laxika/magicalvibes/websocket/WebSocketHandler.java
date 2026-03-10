@@ -127,6 +127,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case VALID_TARGETS_REQUEST -> messageHandler.handleValidTargetsRequest(connection, objectMapper.treeToValue(jsonNode, ValidTargetsRequest.class));
                 case PAY_SEARCH_TAX -> messageHandler.handlePaySearchTax(connection, objectMapper.treeToValue(jsonNode, PaySearchTaxRequest.class));
                 case X_VALUE_CHOSEN -> messageHandler.handleXValueChosen(connection, objectMapper.treeToValue(jsonNode, XValueChosenRequest.class));
+                case LEAVE_GAME -> messageHandler.handleLeaveGame(connection);
                 default -> messageHandler.handleError(connection, "Unknown message type: " + type);
             }
         } catch (Exception e) {
