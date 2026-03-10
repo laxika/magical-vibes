@@ -17,7 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
@@ -929,6 +932,21 @@ public class GameQueryService {
         return gameData.anyPermanentMatches(p ->
                 p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                         && p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId()));
+    }
+
+    /**
+     * Returns {@code true} if the given creature permanent can legally be declared as a blocker.
+     */
+    public boolean canBlock(GameData gameData, Permanent creature) {
+        return isCreature(gameData, creature)
+                && !creature.isTapped()
+                && !creature.isCantBlockThisTurn()
+                && creature.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
+                && !hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)
+                && !hasAuraWithEffect(gameData, creature, CantBlockEffect.class)
+                && !(creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
+                        && !isEquipped(gameData, creature));
     }
 
     /**

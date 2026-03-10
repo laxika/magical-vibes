@@ -197,10 +197,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // Find available blocker indices
         List<Integer> blockerIndices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            Permanent perm = battlefield.get(i);
-            if (!gameQueryService.isCreature(gameData, perm)) continue;
-            if (perm.isTapped()) continue;
-            blockerIndices.add(i);
+            if (gameQueryService.canBlock(gameData, battlefield.get(i))) {
+                blockerIndices.add(i);
+            }
         }
 
         List<int[]> assignments = combatSimulator.findBestBlockers(
