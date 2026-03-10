@@ -172,7 +172,8 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
       colors: info.color ? [info.color] : [],
       hasPhyrexianMana: (info.manaCost ?? '').includes('/P'),
       phyrexianManaCount: ((info.manaCost ?? '').match(/\/P/g) || []).length,
-      token: false
+      token: false,
+      watermark: null
     };
   }
 
