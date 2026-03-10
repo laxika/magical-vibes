@@ -120,6 +120,10 @@ public class LifeResolutionService {
     }
 
     public void applyGainLife(GameData gameData, UUID controllerId, int amount) {
+        applyGainLife(gameData, controllerId, amount, null);
+    }
+
+    public void applyGainLife(GameData gameData, UUID controllerId, int amount, String source) {
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
@@ -129,10 +133,14 @@ public class LifeResolutionService {
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = playerName + " gains " + amount + " life.";
+        String logEntry = source != null
+                ? playerName + " gains " + amount + " life from " + source + "."
+                : playerName + " gains " + amount + " life.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
+
+        triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, amount);
     }
 
     @HandlesEffect(GainLifePerCardsInHandEffect.class)
@@ -360,12 +368,14 @@ public class LifeResolutionService {
         gameData.playerLifeTotals.put(playerA, lifeB);
         gameData.playerLifeTotals.put(playerB, lifeA);
 
-        // Fire life loss triggers for the player(s) who lost life
+        // Fire life loss/gain triggers for the player(s) who lost or gained life
         if (lifeB < lifeA) {
             triggerCollectionService.checkLifeLossTriggers(gameData, playerA, lifeA - lifeB);
+            triggerCollectionService.checkLifeGainTriggers(gameData, playerB, lifeA - lifeB);
         }
         if (lifeA < lifeB) {
             triggerCollectionService.checkLifeLossTriggers(gameData, playerB, lifeB - lifeA);
+            triggerCollectionService.checkLifeGainTriggers(gameData, playerA, lifeB - lifeA);
         }
 
         log.info("Game {} - {} and {} exchange life totals ({} -> {}, {} -> {})",

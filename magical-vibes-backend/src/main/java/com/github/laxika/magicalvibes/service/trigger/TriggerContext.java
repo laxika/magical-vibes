@@ -50,4 +50,9 @@ public sealed interface TriggerContext {
      * Context for life-loss triggers (ON_OPPONENT_LOSES_LIFE).
      */
     record LifeLoss(UUID losingPlayerId, int lifeLostAmount) implements TriggerContext {}
+
+    /**
+     * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
+     */
+    record LifeGain(UUID gainingPlayerId, int lifeGainedAmount) implements TriggerContext {}
 }

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -65,6 +66,7 @@ public class CombatDamageService {
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
     private final TriggerCollectionService triggerCollectionService;
+    private final LifeResolutionService lifeResolutionService;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
 
@@ -473,7 +475,7 @@ public class CombatDamageService {
             if (!gameQueryService.hasKeyword(gameData, creature, Keyword.LIFELINK)) continue;
             UUID controllerId = CombatHelper.findControllerOf(gameData, creature);
             if (controllerId == null) continue;
-            grantLifeToPlayer(gameData, controllerId, damageDealt, "lifelink");
+            lifeResolutionService.applyGainLife(gameData, controllerId, damageDealt, "lifelink");
         }
     }
 
@@ -486,24 +488,12 @@ public class CombatDamageService {
                 if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof GainLifeEqualToDamageDealtEffect) {
-                            grantLifeToPlayer(gameData, playerId, damageDealt, perm.getCard().getName());
+                            lifeResolutionService.applyGainLife(gameData, playerId, damageDealt, perm.getCard().getName());
                         }
                     }
                 }
             });
         }
-    }
-
-    private void grantLifeToPlayer(GameData gameData, UUID playerId, int amount, String source) {
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(playerId) + "'s life total can't change.");
-            return;
-        }
-        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
-        gameData.playerLifeTotals.put(playerId, currentLife + amount);
-        String logEntry = gameData.playerIdToName.get(playerId) + " gains " + amount + " life from " + source + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 
     // ===== Combat damage triggers =====

@@ -363,6 +363,25 @@ public class TriggerCollectionService {
         }
     }
 
+    // ── Life-gain triggers ──────────────────────────────────────────────
+
+    public void checkLifeGainTriggers(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount) {
+        if (lifeGainedAmount <= 0) return;
+
+        var ctx = new TriggerContext.LifeGain(gainingPlayerId, lifeGainedAmount);
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (!playerId.equals(gainingPlayerId)) return;
+
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)) {
+                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
+                    registry.dispatch(match, EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                }
+            }
+        });
+    }
+
     // ── Queue-processing delegates ─────────────────────────────────────
 
     public void processNextDeathTriggerTarget(GameData gameData) {

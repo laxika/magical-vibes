@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Trigger collectors for sacrifice, enchanted-permanent-tap, and life-loss events.
+ * Trigger collectors for sacrifice, enchanted-permanent-tap, life-loss, and life-gain events.
  */
 @Slf4j
 @Service
@@ -105,6 +106,30 @@ public class MiscTriggerCollectorService {
                 gameData.id, cardName, playerName, amount);
 
         graveyardService.resolveMillPlayer(gameData, ll.losingPlayerId(), amount);
+        return true;
+    }
+
+    // ── ON_CONTROLLER_GAINS_LIFE ────────────────────────────────────────
+
+    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainPutCounters(TriggerMatchContext match,
+            PutCountersOnSourceEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
         return true;
     }
 }
