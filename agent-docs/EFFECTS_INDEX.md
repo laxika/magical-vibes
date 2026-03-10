@@ -633,6 +633,7 @@ Pass `null` as filter to allow any card.
 | `PreventDamageAndAddMinusCountersEffect` | `()` | prevent all damage to this creature and put a -1/-1 counter for each 1 damage prevented (static, e.g. Phyrexian Hydra) |
 | `ProtectionFromCardTypesEffect` | `(Set<CardType> cardTypes)` | protection from specified card types (static, permanent). Unlike `GrantProtectionFromCardTypeUntilEndOfTurnEffect`, this is NOT cleared by `resetModifiers()` — it lives on the card's STATIC effects. Checked by `GameQueryService.hasProtectionFromSourceCardTypes()` in both overloads (permanent source and card source) |
 | `ProtectionFromColorsEffect` | `(Set<CardColor> colors)` | protection from specified colors (static) |
+| `ProtectionFromSubtypesEffect` | `(Set<CardSubtype> subtypes)` | protection from specified creature subtypes (static). Prevents blocking, damage, targeting, and enchanting/equipping by sources with any of the listed subtypes. Also checks transient/granted subtypes and Changeling. Checked by `GameQueryService.hasProtectionFromSourceSubtypes()`. Used by Baneslayer Angel (DEMON, DRAGON) |
 | `ProtectionFromChosenColorEffect` | `()` | protection from chosen color (static, requires ChooseColorOnEnterEffect) |
 | `CantBeTargetedBySpellColorsEffect` | `(Set<CardColor> colors)` | can't be targeted by spells of specified colors (static) |
 | `CantBeTargetOfSpellsOrAbilitiesEffect` | `()` | can't be targeted by opponents' spells or abilities (hexproof behavior, use with GrantEffectEffect) |

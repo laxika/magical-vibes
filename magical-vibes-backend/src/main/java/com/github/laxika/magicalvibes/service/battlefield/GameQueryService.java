@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -817,21 +818,74 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the target permanent has protection from any of the source
+     * permanent's subtypes. Checks the permanent's own card subtypes, transient subtypes,
+     * granted subtypes, and Changeling keyword (which counts as all creature subtypes).
+     */
+    public boolean hasProtectionFromSourceSubtypes(GameData gameData, Permanent target, Permanent source) {
+        Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromSubtypesEffect protection) {
+                protectedSubtypes.addAll(protection.subtypes());
+            }
+        }
+        if (protectedSubtypes.isEmpty()) return false;
+        for (CardSubtype subtype : source.getCard().getSubtypes()) {
+            if (protectedSubtypes.contains(subtype)) return true;
+        }
+        for (CardSubtype subtype : source.getTransientSubtypes()) {
+            if (protectedSubtypes.contains(subtype)) return true;
+        }
+        for (CardSubtype subtype : source.getGrantedSubtypes()) {
+            if (protectedSubtypes.contains(subtype)) return true;
+        }
+        if (hasKeyword(gameData, source, Keyword.CHANGELING)
+                && protectedSubtypes.stream().anyMatch(this::isCreatureSubtype)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if the target permanent has protection from any of the source
+     * card's subtypes. This overload is used for spells on the stack.
+     */
+    public boolean hasProtectionFromSourceSubtypes(Permanent target, Card sourceCard) {
+        Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromSubtypesEffect protection) {
+                protectedSubtypes.addAll(protection.subtypes());
+            }
+        }
+        if (protectedSubtypes.isEmpty()) return false;
+        for (CardSubtype subtype : sourceCard.getSubtypes()) {
+            if (protectedSubtypes.contains(subtype)) return true;
+        }
+        if (sourceCard.getKeywords().contains(Keyword.CHANGELING)
+                && protectedSubtypes.stream().anyMatch(this::isCreatureSubtype)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the target permanent has protection from the source permanent,
-     * checking both color-based and card-type-based protection.
+     * checking color-based, card-type-based, and subtype-based protection.
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source) {
         return hasProtectionFrom(gameData, target, source.getEffectiveColor())
-                || hasProtectionFromSourceCardTypes(gameData, target, source);
+                || hasProtectionFromSourceCardTypes(gameData, target, source)
+                || hasProtectionFromSourceSubtypes(gameData, target, source);
     }
 
     /**
      * Returns {@code true} if the target permanent has protection from the source card
-     * (a spell on the stack), checking both color-based and card-type-based protection.
+     * (a spell on the stack), checking color-based, card-type-based, and subtype-based protection.
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
         return hasProtectionFrom(gameData, target, sourceCard.getColor())
-                || hasProtectionFromSourceCardTypes(target, sourceCard);
+                || hasProtectionFromSourceCardTypes(target, sourceCard)
+                || hasProtectionFromSourceSubtypes(target, sourceCard);
     }
 
     /**

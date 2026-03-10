@@ -216,6 +216,9 @@ public class AbilityActivationService {
                 if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, permanent)) {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getType().getDisplayName().toLowerCase() + "s");
                 }
+                if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, permanent)) {
+                    throw new IllegalStateException(target.getCard().getName() + " has protection from source's subtype");
+                }
             }
         }
 

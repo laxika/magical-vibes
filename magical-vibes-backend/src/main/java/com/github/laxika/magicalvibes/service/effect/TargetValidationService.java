@@ -56,6 +56,9 @@ public class TargetValidationService {
         if (gameQueryService.hasProtectionFromSourceCardTypes(target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");
         }
+        if (gameQueryService.hasProtectionFromSourceSubtypes(target, ctx.sourceCard())) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from source's subtype");
+        }
     }
 
     public void requireTargetPlayer(TargetValidationContext ctx) {

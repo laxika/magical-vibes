@@ -334,6 +334,9 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s");
         }
+        if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
+            throw new IllegalStateException(target.getCard().getName() + " has protection from source's subtype");
+        }
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
             throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
         }

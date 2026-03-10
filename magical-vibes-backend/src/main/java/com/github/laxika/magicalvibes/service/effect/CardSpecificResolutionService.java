@@ -449,6 +449,9 @@ public class CardSpecificResolutionService {
             if (gameQueryService.hasProtectionFromSourceCardTypes(candidate, auraCard)) {
                 return;
             }
+            if (gameQueryService.hasProtectionFromSourceSubtypes(candidate, auraCard)) {
+                return;
+            }
             if (auraCard.getTargetFilter() != null) {
                 try {
                     gameQueryService.validateTargetFilter(auraCard.getTargetFilter(),

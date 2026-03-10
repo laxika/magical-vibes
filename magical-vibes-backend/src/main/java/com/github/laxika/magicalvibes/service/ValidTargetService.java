@@ -161,6 +161,10 @@ public class ValidTargetService {
         if (gameQueryService.hasProtectionFromSourceCardTypes(perm, spellCard)) {
             return false;
         }
+        // Protection from source subtype
+        if (gameQueryService.hasProtectionFromSourceSubtypes(perm, spellCard)) {
+            return false;
+        }
 
         // Shroud
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) {
@@ -325,6 +329,9 @@ public class ValidTargetService {
                     e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
                             || e.getClass().getSimpleName().contains("Destroy")));
             if (dealsDamage && gameQueryService.hasProtectionFromSourceCardTypes(perm, sourceCard)) {
+                return false;
+            }
+            if (dealsDamage && gameQueryService.hasProtectionFromSourceSubtypes(perm, sourceCard)) {
                 return false;
             }
         }
