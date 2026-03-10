@@ -102,6 +102,8 @@ class MoltenPsycheTest extends BaseCardTest {
         fillDeck(player1, 10);
         fillDeck(player2, 10);
 
+        int libraryBefore = gd.playerDecks.get(player2.getId()).size();
+
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -110,9 +112,9 @@ class MoltenPsycheTest extends BaseCardTest {
 
         // Player2 drew 1 new card from library; the unique card was shuffled into library
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        // The unique card should now be somewhere in the library (not in hand)
-        assertThat(gd.playerHands.get(player2.getId()))
-                .doesNotContain(uniqueCard);
+        // Library size unchanged (1 shuffled in from hand, 1 drawn out), proving
+        // the hand card was shuffled into the library rather than discarded
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(libraryBefore);
     }
 
     // ===== Without metalcraft =====
