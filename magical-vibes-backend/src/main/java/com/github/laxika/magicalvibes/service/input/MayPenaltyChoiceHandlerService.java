@@ -73,6 +73,14 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
+        if (gameQueryService.isProtectedFromCounterBySourceCard(gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            log.info("Game {} - {} cannot be countered by {} spells",
+                    gameData.id, targetEntry.getCard().getName(),
+                    ability.sourceCard().getColor().name().toLowerCase());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (accepted) {
             ManaCost cost = new ManaCost("{" + amount + "}");
             ManaPool pool = gameData.playerManaPools.get(player.getId());

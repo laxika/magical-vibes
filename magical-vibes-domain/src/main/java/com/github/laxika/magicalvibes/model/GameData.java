@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -132,6 +134,12 @@ public class GameData {
      *  Maps animated target permanent UUID → source permanent UUID.
      *  When the source leaves the battlefield, the target's animation is cleared. */
     public final Map<UUID, UUID> sourceLinkedAnimations = new ConcurrentHashMap<>();
+
+    /** Per-player: spells controlled by this player can't be countered by spells of these colors this turn. Cleared at end of turn. */
+    public final Map<UUID, Set<CardColor>> playerSpellsCantBeCounteredByColorsThisTurn = new ConcurrentHashMap<>();
+
+    /** Per-player: creatures controlled by this player can't be the targets of spells of these colors this turn. Cleared at end of turn. */
+    public final Map<UUID, Set<CardColor>> playerCreaturesCantBeTargetedByColorsThisTurn = new ConcurrentHashMap<>();
 
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
@@ -486,6 +494,18 @@ public class GameData {
 
         // --- Source-linked animations (Awakener Druid-style) ---
         copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
+
+        // --- Per-player spell/creature color protection (Autumn's Veil style) ---
+        this.playerSpellsCantBeCounteredByColorsThisTurn.forEach((k, v) -> {
+            Set<CardColor> s = ConcurrentHashMap.newKeySet();
+            s.addAll(v);
+            copy.playerSpellsCantBeCounteredByColorsThisTurn.put(k, s);
+        });
+        this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) -> {
+            Set<CardColor> s = ConcurrentHashMap.newKeySet();
+            s.addAll(v);
+            copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, s);
+        });
 
         // --- Per-permanent exile tracking (Knowledge Pool, etc.) ---
         this.permanentExiledCards.forEach((k, v) ->

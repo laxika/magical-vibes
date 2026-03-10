@@ -640,6 +640,8 @@ Pass `null` as filter to allow any card.
 | `RedirectPlayerDamageToEnchantedCreatureEffect` | `()` | redirect damage dealt to player to enchanted creature |
 | `RedirectUnblockedCombatDamageToSelfEffect` | `()` | redirect unblocked combat damage to this creature |
 | `GrantControllerShroudEffect` | `()` | controller has shroud (can't be targeted) (static) |
+| `GrantControllerSpellsCantBeCounteredByColorsEffect` | `(Set<CardColor> colors)` | controller's spells can't be countered by spells of specified colors this turn (one-shot, cleared at end of turn) |
+| `GrantControllerCreaturesCantBeTargetedByColorsEffect` | `(Set<CardColor> colors)` | controller's creatures can't be targeted by spells of specified colors this turn (one-shot, cleared at end of turn) |
 
 ## Mana
 

@@ -48,7 +48,7 @@ public class CounterResolutionService {
         UUID targetCardId = entry.getTargetPermanentId();
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = findCounterTarget(gameData, targetCardId);
+        StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
         counterSpell(gameData, entry, targetEntry);
@@ -66,7 +66,7 @@ public class CounterResolutionService {
         UUID targetCardId = entry.getTargetPermanentId();
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = findCounterTarget(gameData, targetCardId);
+        StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
         UUID targetControllerId = targetEntry.getControllerId();
@@ -95,7 +95,7 @@ public class CounterResolutionService {
         UUID targetCardId = entry.getTargetPermanentId();
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = findCounterTarget(gameData, targetCardId);
+        StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
         UUID targetControllerId = targetEntry.getControllerId();
@@ -117,12 +117,13 @@ public class CounterResolutionService {
     /**
      * Locates the targeted spell on the stack and validates that it can be countered.
      *
-     * @param gameData    the current game state
+     * @param gameData     the current game state
      * @param targetCardId the card ID of the spell being targeted
+     * @param counterSource the stack entry of the spell/ability attempting to counter
      * @return the target {@link StackEntry}, or {@code null} if the target is no longer on the
      *         stack or is uncounterable
      */
-    private StackEntry findCounterTarget(GameData gameData, UUID targetCardId) {
+    private StackEntry findCounterTarget(GameData gameData, UUID targetCardId, StackEntry counterSource) {
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
             if (se.getCard().getId().equals(targetCardId)) {
@@ -138,6 +139,13 @@ public class CounterResolutionService {
 
         if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+            return null;
+        }
+
+        if (gameQueryService.isProtectedFromCounterBySpellColor(gameData, targetEntry.getControllerId(), counterSource)) {
+            log.info("Game {} - {} cannot be countered by {} spells",
+                    gameData.id, targetEntry.getCard().getName(),
+                    counterSource.getCard().getColor().name().toLowerCase());
             return null;
         }
 

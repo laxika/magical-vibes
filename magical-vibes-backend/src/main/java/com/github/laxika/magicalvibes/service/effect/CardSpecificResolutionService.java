@@ -605,6 +605,8 @@ public class CardSpecificResolutionService {
         gameData.permanentsToSacrificeAtEndOfCombat.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.drawReplacementTargetToController.clear();
+        gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
+        gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.pendingTurnControl.clear();
         gameData.combatDamageToPlayersThisTurn.clear();

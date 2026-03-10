@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
@@ -120,6 +122,38 @@ public class PreventionResolutionService {
         gameData.allPermanentsEnterTappedThisTurn = true;
 
         String logEntry = "Permanents enter tapped this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+    }
+
+    @HandlesEffect(GrantControllerSpellsCantBeCounteredByColorsEffect.class)
+    void resolveGrantControllerSpellsCantBeCounteredByColors(GameData gameData, StackEntry entry, GrantControllerSpellsCantBeCounteredByColorsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        gameData.playerSpellsCantBeCounteredByColorsThisTurn
+                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
+                .addAll(effect.colors());
+
+        String colorNames = effect.colors().stream()
+                .map(c -> c.name().toLowerCase())
+                .sorted()
+                .reduce((a, b) -> a + " or " + b)
+                .orElse("");
+        String logEntry = "Spells " + gameData.playerIdToName.get(controllerId) + " controls can't be countered by " + colorNames + " spells this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+    }
+
+    @HandlesEffect(GrantControllerCreaturesCantBeTargetedByColorsEffect.class)
+    void resolveGrantControllerCreaturesCantBeTargetedByColors(GameData gameData, StackEntry entry, GrantControllerCreaturesCantBeTargetedByColorsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        gameData.playerCreaturesCantBeTargetedByColorsThisTurn
+                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
+                .addAll(effect.colors());
+
+        String colorNames = effect.colors().stream()
+                .map(c -> c.name().toLowerCase())
+                .sorted()
+                .reduce((a, b) -> a + " or " + b)
+                .orElse("");
+        String logEntry = "Creatures " + gameData.playerIdToName.get(controllerId) + " controls can't be the targets of " + colorNames + " spells this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 

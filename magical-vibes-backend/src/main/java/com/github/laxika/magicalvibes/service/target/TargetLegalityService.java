@@ -239,6 +239,9 @@ public class TargetLegalityService {
                 } else if (targetPerm != null) {
                     targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
                     if (!targetFizzled) {
+                        targetFizzled = isSpellProtected(gameData, targetPerm, entry);
+                    }
+                    if (!targetFizzled) {
                         TargetFilter effectiveTargetFilter =
                                 entry.getTargetFilter() != null
                                         ? entry.getTargetFilter()
@@ -269,6 +272,20 @@ public class TargetLegalityService {
         }
 
         return targetFizzled;
+    }
+
+    /**
+     * Checks if the target permanent is protected from the resolving spell's color
+     * (e.g. via Autumn's Veil or static CantBeTargetedBySpellColorsEffect).
+     * Only applies when the entry is a spell (not a triggered/activated ability).
+     */
+    private boolean isSpellProtected(GameData gameData, Permanent targetPerm, StackEntry entry) {
+        if (entry.getCard() == null) return false;
+        StackEntryType entryType = entry.getEntryType();
+        if (entryType == StackEntryType.TRIGGERED_ABILITY || entryType == StackEntryType.ACTIVATED_ABILITY) {
+            return false;
+        }
+        return gameQueryService.cantBeTargetedBySpellColor(gameData, targetPerm, entry.getCard().getColor());
     }
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
@@ -879,7 +880,56 @@ public class GameQueryService {
                 return true;
             }
         }
+
+        // Check per-player turn-duration protection (Autumn's Veil style)
+        if (isCreature(gameData, target)) {
+            UUID controllerId = findPermanentController(gameData, target.getId());
+            if (controllerId != null) {
+                Set<CardColor> protectedColors = gameData.playerCreaturesCantBeTargetedByColorsThisTurn.get(controllerId);
+                if (protectedColors != null && protectedColors.contains(spellColor)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
+    }
+
+    /**
+     * Returns {@code true} if the given spell cannot be countered by the given counter source,
+     * because the spell's controller has turn-duration protection from countering by spells
+     * of the source's color (e.g. Autumn's Veil). Only applies when the counter source is
+     * a spell (not a triggered or activated ability).
+     */
+    public boolean isProtectedFromCounterBySpellColor(GameData gameData, UUID spellControllerId, StackEntry counterSource) {
+        Set<CardColor> protectedColors = gameData.playerSpellsCantBeCounteredByColorsThisTurn.get(spellControllerId);
+        if (protectedColors == null || protectedColors.isEmpty()) {
+            return false;
+        }
+        // Only protects against spells, not abilities
+        StackEntryType sourceType = counterSource.getEntryType();
+        if (sourceType == StackEntryType.TRIGGERED_ABILITY || sourceType == StackEntryType.ACTIVATED_ABILITY) {
+            return false;
+        }
+        return protectedColors.contains(counterSource.getCard().getColor());
+    }
+
+    /**
+     * Returns {@code true} if the given spell cannot be countered by the given source card,
+     * because the spell's controller has turn-duration protection from countering by spells
+     * of that color (e.g. Autumn's Veil). Only applies when the source is an instant or sorcery.
+     */
+    public boolean isProtectedFromCounterBySourceCard(GameData gameData, UUID spellControllerId, Card sourceCard) {
+        Set<CardColor> protectedColors = gameData.playerSpellsCantBeCounteredByColorsThisTurn.get(spellControllerId);
+        if (protectedColors == null || protectedColors.isEmpty()) {
+            return false;
+        }
+        // Only protects against spells, not abilities
+        CardType sourceType = sourceCard.getType();
+        if (sourceType != CardType.INSTANT && sourceType != CardType.SORCERY) {
+            return false;
+        }
+        return protectedColors.contains(sourceCard.getColor());
     }
 
     /**
