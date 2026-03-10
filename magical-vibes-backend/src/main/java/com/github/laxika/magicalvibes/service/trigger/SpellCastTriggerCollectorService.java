@@ -175,21 +175,15 @@ public class SpellCastTriggerCollectorService {
         if (trigger.spellFilter() == null) return false;
         if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null)) return false;
 
-        UUID opponentId = match.gameData().orderedPlayerIds.stream()
-                .filter(id -> !id.equals(match.controllerId()))
-                .findFirst().orElse(null);
-        if (opponentId == null) return false;
-
         List<CardEffect> resolvedEffects = List.of(new GiveTargetPlayerPoisonCountersEffect(trigger.amount()));
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(resolvedEffects)
-        );
-        entry.setTargetPermanentId(opponentId);
-        match.gameData().stack.add(entry);
+        match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects), true
+        ));
+        String logEntry = match.permanent().getCard().getName()
+                + "'s triggered ability triggers — choose target player for poison counter.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+        log.info("Game {} - {} spell-cast poison trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 
