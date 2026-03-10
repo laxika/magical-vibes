@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -296,7 +298,16 @@ public class ReconnectionService {
             }
             case InteractionContext.MayAbilityChoice mc -> {
                 if (playerId.equals(mc.playerId())) {
-                    sessionManager.sendToPlayer(playerId, new MayAbilityMessage(mc.description()));
+                    boolean canPay = true;
+                    if (!gameData.pendingMayAbilities.isEmpty()) {
+                        PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
+                        if (next.manaCost() != null) {
+                            ManaCost cost = new ManaCost(next.manaCost());
+                            ManaPool pool = gameData.playerManaPools.get(next.controllerId());
+                            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
+                        }
+                    }
+                    sessionManager.sendToPlayer(playerId, new MayAbilityMessage(mc.description(), canPay));
                 }
             }
             case InteractionContext.MultiPermanentChoice mpc -> {

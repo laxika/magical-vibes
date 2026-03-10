@@ -341,6 +341,7 @@ export interface ChooseColorNotification {
 export interface MayAbilityNotification {
   type: MessageType;
   prompt: string;
+  canPay: boolean;
 }
 
 export interface XValueChoiceNotification {

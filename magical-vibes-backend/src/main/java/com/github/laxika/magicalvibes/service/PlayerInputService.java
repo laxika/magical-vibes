@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -345,7 +347,15 @@ public class PlayerInputService {
 
         PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
         gameData.interaction.beginMayAbilityChoice(next.controllerId(), next.description());
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, next.controllerId()), new MayAbilityMessage(next.description()));
+
+        boolean canPay = true;
+        if (next.manaCost() != null) {
+            ManaCost cost = new ManaCost(next.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(next.controllerId());
+            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
+        }
+
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, next.controllerId()), new MayAbilityMessage(next.description(), canPay));
 
         String playerName = gameData.playerIdToName.get(next.controllerId());
         log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());

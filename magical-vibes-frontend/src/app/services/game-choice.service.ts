@@ -103,6 +103,7 @@ export class GameChoiceService {
   // --- May ability state ---
   awaitingMayAbility = false;
   mayAbilityPrompt = '';
+  mayAbilityCanPay = true;
 
   // --- Permanent choice state ---
   choosingPermanent = false;
@@ -164,6 +165,7 @@ export class GameChoiceService {
   handleMayAbilityChoice(msg: MayAbilityNotification): void {
     this.awaitingMayAbility = true;
     this.mayAbilityPrompt = msg.prompt;
+    this.mayAbilityCanPay = msg.canPay;
   }
 
   handleChoosePermanent(msg: ChoosePermanentNotification): void {
@@ -287,6 +289,7 @@ export class GameChoiceService {
     });
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
+    this.mayAbilityCanPay = true;
   }
 
   declineMayAbility(): void {
@@ -297,6 +300,7 @@ export class GameChoiceService {
     });
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
+    this.mayAbilityCanPay = true;
   }
 
   confirmXValueChoice(): void {
