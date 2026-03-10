@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControllerLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
@@ -740,6 +741,15 @@ public class StaticEffectResolutionService {
         int count = hand != null ? hand.size() : 0;
         accumulator.addPower(count);
         accumulator.addToughness(count);
+    }
+
+    @HandlesStaticEffect(value = PowerToughnessEqualToControllerLifeTotalEffect.class, selfOnly = true)
+    private void resolvePowerToughnessEqualToControllerLifeTotal(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 0);
+        accumulator.addPower(lifeTotal);
+        accumulator.addToughness(lifeTotal);
     }
 
     private int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter) {

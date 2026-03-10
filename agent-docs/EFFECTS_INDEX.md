@@ -30,7 +30,7 @@ Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` 
 
 Effects that are characteristic-defining abilities (CDAs) for power/toughness (`*/*` effects) override `isPowerToughnessDefining()` to return `true`. Per CR 707.9d, when a copy effect provides specific P/T values (e.g. "except it's 7/7"), CDAs that define P/T are not copied. Used by `CopyPermanentOnEnterEffect` with `powerOverride`/`toughnessOverride`.
 
-Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInHandEffect`.
+Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInHandEffect`, `PowerToughnessEqualToControllerLifeTotalEffect`.
 
 ---
 
@@ -410,6 +410,7 @@ Pass `null` as filter to allow any card.
 | `CreateTokensEqualToControlledCreatureCountEffect` | `(String tokenName, int power, int toughness, CardColor color, List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes)` | create creature tokens equal to the number of creatures the controller controls. Count is determined at resolution time. Used for Chancellor of the Forge ETB |
 | `CreateTokenPerEquipmentOnSourceEffect` | `(String tokenName, int power, int toughness, CardColor color, List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes)` | create creature tokens equal to the number of Equipment attached to the source permanent. Requires `sourcePermanentId` on StackEntry (automatically provided by UPKEEP_TRIGGERED). Used by Kemba, Kha Regent |
 | `CreateTokenPerOpponentPoisonCounterEffect` | `(String tokenName, int power, int toughness, CardColor color, List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes)` | create creature tokens equal to the total number of poison counters on opponents. Used by Phyrexian Swarmlord |
+| `CreateLifeTotalAvatarTokenEffect` | `(String tokenName, CardColor color, List<CardSubtype> subtypes)` | create a creature token with P/T = controller's life total (CDA). Token gets `PowerToughnessEqualToControllerLifeTotalEffect` as a static effect so P/T updates dynamically. Used by Ajani Goldmane |
 | `LivingWeaponEffect` | `()` | living weapon ETB: create 0/0 black Phyrexian Germ token and attach this equipment to it (resolved by PermanentControlResolutionService) |
 
 ## Life
@@ -512,7 +513,9 @@ Pass `null` as filter to allow any card.
 | `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect` | `()` | P/T = number of creature cards in all graveyards (static) |
 | `PowerToughnessEqualToCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | P/T = number of cards matching filter in all graveyards (static). E.g. `new CardTypePredicate(CardType.ARTIFACT)` for artifact cards |
 | `PowerToughnessEqualToCardsInHandEffect` | `()` | P/T = number of cards in controller's hand (static) |
+| `PowerToughnessEqualToControllerLifeTotalEffect` | `()` | P/T = controller's life total (static CDA, e.g. Ajani Goldmane's Avatar token, Serra Avatar) |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
+| `PutPlusOnePlusOneCounterOnEachOwnCreatureEffect` | `()` | put a +1/+1 counter on each creature you control |
 | `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect` | `(Set<CardColor> triggerColors, int amount, boolean onlyOwnSpells)` | put +1/+1 counters when spell of matching color is cast. Use `ON_CONTROLLER_CASTS_SPELL` with `onlyOwnSpells=true` for "whenever you cast" cards; use `ON_ANY_PLAYER_CASTS_SPELL` with `onlyOwnSpells=false` for "whenever a player casts" cards |
 | `PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect` | `()` | put a -1/-1 counter on each attacking creature (all players' attacking creatures) |
 | `PutMinusOneMinusOneCounterOnEachOtherCreatureEffect` | `()` | put a -1/-1 counter on each other creature (all players' creatures except the source permanent) |

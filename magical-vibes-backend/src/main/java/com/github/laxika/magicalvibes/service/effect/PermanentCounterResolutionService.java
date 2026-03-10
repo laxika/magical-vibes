@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPerma
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
@@ -363,6 +364,25 @@ public class PermanentCounterResolutionService {
         gameData.pendingProliferateCount = (int) totalProliferates;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligiblePermanentIds,
                 eligiblePermanentIds.size(), "Proliferate: Choose permanents to add counters to.");
+    }
+
+    @HandlesEffect(PutPlusOnePlusOneCounterOnEachOwnCreatureEffect.class)
+    private void resolvePutPlusOnePlusOneCounterOnEachOwnCreature(GameData gameData, StackEntry entry) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        if (battlefield == null) return;
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (!gameQueryService.isCreature(gameData, p)) continue;
+            if (gameQueryService.cantHaveCounters(gameData, p)) continue;
+
+            p.setPlusOnePlusOneCounters(p.getPlusOnePlusOneCounters() + 1);
+            count++;
+        }
+
+        String logEntry = entry.getCard().getName() + " puts a +1/+1 counter on " + count + " creature(s) you control.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} puts +1/+1 counter on {} own creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     @HandlesEffect(UnattachEquipmentFromTargetPermanentsEffect.class)

@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControllerLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerOwnCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
@@ -313,6 +315,44 @@ public class PermanentControlResolutionService {
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
         applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
+    }
+
+    @HandlesEffect(CreateLifeTotalAvatarTokenEffect.class)
+    private void resolveCreateLifeTotalAvatarToken(GameData gameData, StackEntry entry, CreateLifeTotalAvatarTokenEffect effect) {
+        UUID controllerId = entry.getControllerId();
+
+        Card tokenCard = new Card();
+        tokenCard.setName(effect.tokenName());
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setToken(true);
+        tokenCard.setColor(effect.color());
+        tokenCard.setPower(0);
+        tokenCard.setToughness(0);
+        tokenCard.setSubtypes(effect.subtypes());
+
+        // CDA: "This creature's power and toughness are each equal to your life total."
+        tokenCard.addEffect(EffectSlot.STATIC, new PowerToughnessEqualToControllerLifeTotalEffect());
+
+        ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
+                entry.getCard().getSetCode(), effect.tokenName(), 0, 0, effect.color()
+        );
+        if (imageData != null) {
+            tokenCard.setSetCode(imageData.setCode());
+            tokenCard.setCollectorNumber(imageData.collectorNumber());
+        }
+
+        Permanent tokenPermanent = new Permanent(tokenCard);
+        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
+        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+
+        int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
+        String logEntry = entry.getCard().getName() + " creates a " + lifeTotal + "/" + lifeTotal
+                + " white " + effect.tokenName() + " creature token.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} creates a {}/{} {} token", gameData.id, entry.getCard().getName(),
+                lifeTotal, lifeTotal, effect.tokenName());
     }
 
     @HandlesEffect(LivingWeaponEffect.class)
