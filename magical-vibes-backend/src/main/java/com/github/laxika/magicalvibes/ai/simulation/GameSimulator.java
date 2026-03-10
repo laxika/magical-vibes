@@ -493,7 +493,7 @@ public class GameSimulator {
                     case SimulationAction.PassPriority ignored ->
                             gameService.passPriority(gd, player);
                     case SimulationAction.DeclareAttackers da ->
-                            gameService.declareAttackers(gd, player, da.attackerIndices());
+                            gameService.declareAttackers(gd, player, da.attackerIndices(), null);
                     case SimulationAction.DeclareBlockers db -> {
                         List<BlockerAssignment> assignments = db.blockerAssignments().stream()
                                 .map(a -> new BlockerAssignment(a[0], a[1]))
@@ -627,7 +627,7 @@ public class GameSimulator {
                     available.add(i);
                 }
                 List<Integer> attackers = combatSimulator.findBestAttackers(gd, pid, available);
-                gameService.declareAttackers(gd, player, attackers);
+                gameService.declareAttackers(gd, player, attackers, null);
             }
             case BLOCKER_DECLARATION -> {
                 List<int[]> blockers = findBestBlockerAssignments(gd, player.getId());
@@ -763,8 +763,8 @@ public class GameSimulator {
             case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
             case InteractionContext.XValueChoice xvc -> xvc.playerId();
+            case InteractionContext.Scry sc -> sc.playerId();
             case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
-            case InteractionContext.Scry s -> s.playerId();
         };
     }
 

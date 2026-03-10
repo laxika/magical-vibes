@@ -21,5 +21,6 @@ public record PermanentView(
         boolean cantBeBlocked,
         boolean animatedCreature,
         int loyaltyCounters,
-        int chargeCounters
+        int chargeCounters,
+        UUID attackTargetId
 ) {}

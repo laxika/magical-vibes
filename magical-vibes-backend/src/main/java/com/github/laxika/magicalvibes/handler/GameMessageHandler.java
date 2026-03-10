@@ -55,6 +55,10 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.CardBrowserService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.LoginService;
 import com.github.laxika.magicalvibes.service.ValidTargetService;
@@ -456,7 +460,14 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.declareAttackers(gameData, player, request.attackerIndices());
+            Map<Integer, UUID> attackTargets = null;
+            if (request.attackTargets() != null) {
+                attackTargets = new HashMap<>();
+                for (var entry : request.attackTargets().entrySet()) {
+                    attackTargets.put(entry.getKey(), UUID.fromString(entry.getValue()));
+                }
+            }
+            gameService.declareAttackers(gameData, player, request.attackerIndices(), attackTargets);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

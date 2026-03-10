@@ -28,6 +28,9 @@ class CombatDamageState {
     final Set<Integer> deathtouchDamagedAttackerIndices = new HashSet<>();
     final Set<Integer> deathtouchDamagedDefenderIndices = new HashSet<>();
 
+    // Planeswalker damage accumulation (planeswalker UUID -> damage)
+    final Map<UUID, Integer> damageToPlaneswalkers = new HashMap<>();
+
     // Combat damage records (for triggers: lifelink, combat damage to player, etc.)
     final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();

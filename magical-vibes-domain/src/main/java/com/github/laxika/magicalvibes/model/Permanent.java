@@ -18,6 +18,8 @@ public class Permanent {
     private final Card originalCard;
     private boolean tapped;
     private boolean attacking;
+    /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
+    @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
     private boolean blocking;
     private final List<Integer> blockingTargets = new ArrayList<>();
@@ -34,6 +36,8 @@ public class Permanent {
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean mustAttackThisTurn;
+    /** When non-null, this creature must attack this specific player (not their planeswalkers). Cleared at end of turn. */
+    @Setter private UUID mustAttackTargetId;
     @Setter private boolean cantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
@@ -110,6 +114,7 @@ public class Permanent {
         this.originalCard = source.originalCard;
         this.tapped = source.tapped;
         this.attacking = source.attacking;
+        this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
         this.blocking = source.blocking;
         this.blockingTargets.addAll(source.blockingTargets);
@@ -126,6 +131,7 @@ public class Permanent {
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
+        this.mustAttackTargetId = source.mustAttackTargetId;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
@@ -201,6 +207,7 @@ public class Permanent {
 
     public void clearCombatState() {
         this.attacking = false;
+        this.attackTarget = null;
         this.blocking = false;
         this.blockingTargets.clear();
         this.blockingTargetPermanentIds.clear();
@@ -274,6 +281,7 @@ public class Permanent {
         this.cantBeBlocked = false;
         this.cantBlockThisTurn = false;
         this.mustAttackThisTurn = false;
+        this.mustAttackTargetId = null;
         this.cantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;

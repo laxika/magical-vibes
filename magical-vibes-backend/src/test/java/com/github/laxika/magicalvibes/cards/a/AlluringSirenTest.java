@@ -87,7 +87,20 @@ class AlluringSirenTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Must attack flag is cleared by resetModifiers at end of turn")
+    @DisplayName("Resolving ability sets mustAttackTargetId to the Siren controller")
+    void resolvingSetsAttackTargetToController() {
+        addReadySiren(player1);
+        Permanent target = addReadyCreature(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(target.getMustAttackTargetId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Must attack flag and target are cleared by resetModifiers at end of turn")
     void mustAttackClearedAtEndOfTurn() {
         addReadySiren(player1);
         Permanent target = addReadyCreature(player2);
@@ -96,10 +109,12 @@ class AlluringSirenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isMustAttackThisTurn()).isTrue();
+        assertThat(target.getMustAttackTargetId()).isEqualTo(player1.getId());
 
         target.resetModifiers();
 
         assertThat(target.isMustAttackThisTurn()).isFalse();
+        assertThat(target.getMustAttackTargetId()).isNull();
     }
 
     // ===== Helpers =====

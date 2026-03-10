@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ScryNotification, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, XValueChoiceNotification } from '../../services/websocket.service';
+import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AttackTarget, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsFromGraveyardsNotification, StackEntry, ScryNotification, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, XValueChoiceNotification } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
@@ -540,6 +540,8 @@ export class GameComponent implements OnInit, OnDestroy {
   mustAttackIndices = signal(new Set<number>());
   availableBlockerIndices = signal(new Set<number>());
   selectedAttackerIndices = signal(new Set<number>());
+  availableAttackTargets = signal<AttackTarget[]>([]);
+  attackerTargetAssignments = signal(new Map<number, string>());
   opponentAttackerIndices = signal<number[]>([]);
   blockerAssignments = signal(new Map<number, number>());
   legalBlockPairs = signal(new Map<number, number[]>());
@@ -552,6 +554,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.availableAttackerIndices.set(new Set(msg.attackerIndices));
     this.mustAttackIndices.set(new Set(msg.mustAttackIndices));
     this.selectedAttackerIndices.set(new Set(msg.mustAttackIndices));
+    this.availableAttackTargets.set(msg.availableTargets || []);
+    this.attackerTargetAssignments.set(new Map());
   }
 
   private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
@@ -591,22 +595,62 @@ export class GameComponent implements OnInit, OnDestroy {
     if (updated.has(index)) {
       if (this.mustAttackIndices().has(index)) return;
       updated.delete(index);
+      // Remove target assignment when deselecting
+      const updatedTargets = new Map(this.attackerTargetAssignments());
+      updatedTargets.delete(index);
+      this.attackerTargetAssignments.set(updatedTargets);
     } else {
       updated.add(index);
     }
     this.selectedAttackerIndices.set(updated);
   }
 
+  /** Cycles through available attack targets for a selected attacker (player → planeswalker1 → ...) */
+  cycleAttackTarget(index: number): void {
+    const targets = this.availableAttackTargets();
+    if (targets.length <= 1) return;
+    const currentMap = this.attackerTargetAssignments();
+    const currentTargetId = currentMap.get(index) || targets[0]?.id;
+    const currentIdx = targets.findIndex(t => t.id === currentTargetId);
+    const nextIdx = (currentIdx + 1) % targets.length;
+    const updated = new Map(currentMap);
+    updated.set(index, targets[nextIdx].id);
+    this.attackerTargetAssignments.set(updated);
+  }
+
+  /** Returns the display name of the attack target for a given attacker */
+  getAttackTargetName(index: number): string {
+    const targets = this.availableAttackTargets();
+    if (targets.length <= 1) return '';
+    const targetId = this.attackerTargetAssignments().get(index) || targets[0]?.id;
+    const target = targets.find(t => t.id === targetId);
+    return target ? target.name : '';
+  }
+
   confirmAttackers(): void {
     const g = this.game();
     if (!g) return;
-    this.websocketService.send({
+    // Build attackTargets map if there are non-player targets (planeswalkers)
+    const targets = this.availableAttackTargets();
+    const hasPlaneswalkersTarget = targets.some(t => !t.isPlayer);
+    const assignments = this.attackerTargetAssignments();
+    const msg: Record<string, unknown> = {
       type: MessageType.DECLARE_ATTACKERS,
       attackerIndices: Array.from(this.selectedAttackerIndices())
-    });
+    };
+    if (hasPlaneswalkersTarget && assignments.size > 0) {
+      const attackTargets: Record<number, string> = {};
+      for (const [idx, targetId] of assignments) {
+        attackTargets[idx] = targetId;
+      }
+      msg['attackTargets'] = attackTargets;
+    }
+    this.websocketService.send(msg as unknown as WebSocketMessage);
     this.declaringAttackers.set(false);
     this.availableAttackerIndices.set(new Set());
     this.mustAttackIndices.set(new Set());
+    this.availableAttackTargets.set([]);
+    this.attackerTargetAssignments.set(new Map());
   }
 
   canBlock(index: number): boolean {

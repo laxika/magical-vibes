@@ -195,6 +195,7 @@ export interface Permanent {
   animatedCreature: boolean;
   loyaltyCounters: number;
   chargeCounters: number;
+  attackTargetId: string | null;
 }
 
 export interface StackEntry {
@@ -318,10 +319,17 @@ export interface SelectCardsToBottomNotification {
   count: number;
 }
 
+export interface AttackTarget {
+  id: string;
+  name: string;
+  isPlayer: boolean;
+}
+
 export interface AvailableAttackersNotification {
   type: MessageType;
   attackerIndices: number[];
   mustAttackIndices: number[];
+  availableTargets: AttackTarget[];
 }
 
 export interface AvailableBlockersNotification {

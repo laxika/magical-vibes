@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
@@ -74,7 +75,7 @@ public class ReconnectionService {
                 if (playerId.equals(gameData.activePlayerId)) {
                     List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);
                     List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, playerId, attackable);
-                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack));
+                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId)));
                 }
             }
             case BLOCKER_DECLARATION -> {
@@ -201,7 +202,7 @@ public class ReconnectionService {
                 if (playerId.equals(ad.activePlayerId())) {
                     List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);
                     List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, playerId, attackable);
-                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack));
+                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId)));
                 }
             }
             case InteractionContext.BlockerDeclaration bd -> {
@@ -441,6 +442,16 @@ public class ReconnectionService {
                             xvc.prompt(), xvc.maxValue(), xvc.cardName()));
                 }
             }
+            case InteractionContext.Scry s -> {
+                if (!playerId.equals(s.playerId()) || s.cards() == null) {
+                    return;
+                }
+                List<CardView> cardViews = s.cards().stream().map(cardViewFactory::create).toList();
+                String prompt = s.cards().size() == 1
+                        ? "Scry 1: Keep on top or put on the bottom of your library."
+                        : "Scry " + s.cards().size() + ": Put cards on the top or bottom of your library.";
+                sessionManager.sendToPlayer(playerId, new ScryMessage(cardViews, prompt));
+            }
             case InteractionContext.KnowledgePoolCastChoice kpc -> {
                 if (!playerId.equals(kpc.playerId())) {
                     return;
@@ -462,16 +473,6 @@ public class ReconnectionService {
                 sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
                         validCardIds, cardViews, 1,
                         "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
-            }
-            case InteractionContext.Scry s -> {
-                if (!playerId.equals(s.playerId()) || s.cards() == null) {
-                    return;
-                }
-                List<CardView> cardViews = s.cards().stream().map(cardViewFactory::create).toList();
-                String prompt = s.cards().size() == 1
-                        ? "Scry 1: Keep on top or put on the bottom of your library."
-                        : "Scry " + s.cards().size() + ": Put cards on the top or bottom of your library.";
-                sessionManager.sendToPlayer(playerId, new ScryMessage(cardViews, prompt));
             }
         }
     }

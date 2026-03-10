@@ -171,6 +171,7 @@ public class CombatDamageService {
         List<String> deadCreatureNames = removeDeadCreatures(gameData, state, atkBf, defBf, activeId, defenderId);
 
         applyPlayerDamage(gameData, state, defenderId);
+        applyPlaneswalkerDamage(gameData, state);
 
         if (!deadCreatureNames.isEmpty()) {
             String logEntry = String.join(", ", deadCreatureNames) + " died in combat.";
@@ -253,14 +254,17 @@ public class CombatDamageService {
                 .filter(i -> !p1.deadDefenderIndices.contains(i))
                 .toList();
 
+        // Determine the overflow target: the player or planeswalker being attacked
+        UUID overflowTargetId = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
+
         Set<UUID> validTargetIds = new HashSet<>();
         for (int blkIdx : livingBlockers) {
             validTargetIds.add(defBf.get(blkIdx).getId());
         }
-        boolean canTargetPlayer = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
+        boolean canTargetOverflow = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
                 || assignsCombatDamageAsThoughUnblocked(atk);
-        if (canTargetPlayer) {
-            validTargetIds.add(defenderId);
+        if (canTargetOverflow) {
+            validTargetIds.add(overflowTargetId);
         }
 
         for (UUID targetId : assignments.keySet()) {
@@ -286,9 +290,10 @@ public class CombatDamageService {
             }
         }
 
-        // Validate non-trample non-unblocked: no damage to player
-        if (!canTargetPlayer && assignments.containsKey(defenderId)) {
-            throw new IllegalStateException("Cannot assign damage to defending player");
+        // Validate non-trample non-unblocked: no damage to overflow target
+        if (!canTargetOverflow && assignments.containsKey(overflowTargetId)) {
+            throw new IllegalStateException("Cannot assign damage to " +
+                    (gameData.playerIds.contains(overflowTargetId) ? "defending player" : "planeswalker"));
         }
 
         // Store and remove from pending
@@ -301,6 +306,9 @@ public class CombatDamageService {
         for (var entry : assignments.entrySet()) {
             if (entry.getKey().equals(defenderId)) {
                 parts.add(entry.getValue() + " to player");
+            } else if (entry.getKey().equals(overflowTargetId) && !gameData.playerIds.contains(overflowTargetId)) {
+                Permanent pw = gameQueryService.findPermanentById(gameData, overflowTargetId);
+                parts.add(entry.getValue() + " to " + (pw != null ? pw.getCard().getName() : "planeswalker"));
             } else {
                 Permanent target = defBf.stream().filter(p -> p.getId().equals(entry.getKey())).findFirst().orElse(null);
                 parts.add(entry.getValue() + " to " + (target != null ? target.getCard().getName() : entry.getKey()));
@@ -408,11 +416,13 @@ public class CombatDamageService {
                                             Map<UUID, Integer> playerAssignment,
                                             UUID activeId, UUID defenderId,
                                             Permanent redirectTarget) {
+        UUID overflowTargetId = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
         for (var dmgEntry : playerAssignment.entrySet()) {
             UUID targetId = dmgEntry.getKey();
             int dmg = dmgEntry.getValue();
             if (dmg <= 0) continue;
-            if (targetId.equals(defenderId)) {
+            if (targetId.equals(overflowTargetId)) {
+                // Overflow damage to the attack target (player or planeswalker)
                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                 accumulatePlayerDamage(gameData, atk, actualDmg, defenderId, redirectTarget, state);
             } else {
@@ -770,6 +780,21 @@ public class CombatDamageService {
         }
     }
 
+    private void applyPlaneswalkerDamage(GameData gameData, CombatDamageState state) {
+        for (var entry : state.damageToPlaneswalkers.entrySet()) {
+            UUID pwId = entry.getKey();
+            int damage = entry.getValue();
+            if (damage <= 0) continue;
+            Permanent pw = gameQueryService.findPermanentById(gameData, pwId);
+            if (pw == null) continue; // planeswalker may have left battlefield
+            // CR 306.8: Damage dealt to a planeswalker removes that many loyalty counters from it
+            pw.setLoyaltyCounters(pw.getLoyaltyCounters() - damage);
+            String logEntry = pw.getCard().getName() + " takes " + damage + " combat damage ("
+                    + pw.getLoyaltyCounters() + " loyalty remaining).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+    }
+
     // ===== Damage computation helpers =====
 
     private void determineCasualties(GameData gameData, List<Integer> indices,
@@ -806,6 +831,18 @@ public class CombatDamageService {
     private void accumulatePlayerDamage(GameData gameData, Permanent atk, int damage,
                                          UUID defenderId, Permanent redirectTarget,
                                          CombatDamageState state) {
+        // Check if the attacker is attacking a planeswalker instead of a player
+        UUID attackTarget = atk.getAttackTarget();
+        if (attackTarget != null && !gameData.playerIds.contains(attackTarget)) {
+            // CR 510.1b: If the planeswalker left the battlefield, the creature assigns no combat damage
+            Permanent pw = gameQueryService.findPermanentById(gameData, attackTarget);
+            if (pw == null) return;
+            // Attacking a planeswalker — damage removes loyalty counters (CR 306.8)
+            state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
+            state.combatDamageDealt.merge(atk, damage, Integer::sum);
+            return;
+        }
+
         boolean atkHasInfect = gameQueryService.hasKeyword(gameData, atk, Keyword.INFECT);
         if (redirectTarget != null) {
             if (atkHasInfect) {
@@ -914,6 +951,9 @@ public class CombatDamageService {
         state.defDamageTaken.putAll(p1.defDamageTaken);
         state.damageToDefendingPlayer = p1.damageToDefendingPlayer;
         state.damageRedirectedToGuard = p1.damageRedirectedToGuard;
+        if (p1.damageToPlaneswalkers != null) {
+            state.damageToPlaneswalkers.putAll(p1.damageToPlaneswalkers);
+        }
         for (var e : p1.combatDamageDealt.entrySet()) {
             Permanent perm = gameQueryService.findPermanentById(gameData, e.getKey());
             if (perm != null) state.combatDamageDealt.put(perm, e.getValue());
@@ -967,6 +1007,7 @@ public class CombatDamageService {
                 dealtByUUID, dealtToPlayerByUUID, dealtToCreaturesByUUID, dealerControllersByUUID,
                 damageAmountsByUUID,
                 state.damageToDefendingPlayer, state.damageRedirectedToGuard,
+                new HashMap<>(state.damageToPlaneswalkers),
                 new LinkedHashMap<>(blockerMap), anyFirstStrike,
                 new HashSet<>(state.deathtouchDamagedAttackerIndices), new HashSet<>(state.deathtouchDamagedDefenderIndices));
     }
@@ -995,13 +1036,24 @@ public class CombatDamageService {
 
         boolean isTrample = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE);
         boolean isDeathtouch = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
-        boolean addPlayer = isTrample || assignsCombatDamageAsThoughUnblocked(atk);
-        if (addPlayer) {
-            String defenderName = gameData.playerIdToName.get(defenderId);
-            targetViews.add(new CombatDamageTargetView(
-                    defenderId.toString(), defenderName, 0, 0, true));
-            domainTargets.add(new CombatDamageTarget(
-                    defenderId, defenderName, 0, 0, true));
+        boolean addOverflow = isTrample || assignsCombatDamageAsThoughUnblocked(atk);
+        if (addOverflow) {
+            UUID overflowTarget = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
+            if (gameData.playerIds.contains(overflowTarget)) {
+                String defenderName = gameData.playerIdToName.get(overflowTarget);
+                targetViews.add(new CombatDamageTargetView(
+                        overflowTarget.toString(), defenderName, 0, 0, true));
+                domainTargets.add(new CombatDamageTarget(
+                        overflowTarget, defenderName, 0, 0, true));
+            } else {
+                Permanent pw = gameQueryService.findPermanentById(gameData, overflowTarget);
+                if (pw != null) {
+                    targetViews.add(new CombatDamageTargetView(
+                            overflowTarget.toString(), pw.getCard().getName(), 0, 0, true));
+                    domainTargets.add(new CombatDamageTarget(
+                            overflowTarget, pw.getCard().getName(), 0, 0, true));
+                }
+            }
         }
 
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, atk);

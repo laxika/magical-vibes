@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -44,12 +45,16 @@ public class CombatService {
         return combatAttackService.getMustAttackIndices(gameData, playerId, attackableIndices);
     }
 
+    public List<AttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
+        return combatAttackService.buildAvailableTargets(gameData, activePlayerId);
+    }
+
     public void handleDeclareAttackersStep(GameData gameData) {
         combatAttackService.handleDeclareAttackersStep(gameData);
     }
 
-    public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
-        return combatAttackService.declareAttackers(gameData, player, attackerIndices);
+    public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
+        return combatAttackService.declareAttackers(gameData, player, attackerIndices, attackTargets);
     }
 
     public List<Integer> getAttackingCreatureIndices(GameData gameData, UUID playerId) {

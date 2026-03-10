@@ -160,7 +160,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     protected void handleAttackers(GameData gameData) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         if (battlefield == null) {
-            send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of())));
+            send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of(), null)));
             return;
         }
 
@@ -229,7 +229,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices)));
+        send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
     @Override

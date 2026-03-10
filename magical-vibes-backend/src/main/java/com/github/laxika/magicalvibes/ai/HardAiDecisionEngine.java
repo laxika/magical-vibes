@@ -227,7 +227,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         if (battlefield == null) {
             send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                    new DeclareAttackersRequest(List.of())));
+                    new DeclareAttackersRequest(List.of(), null)));
             return;
         }
 
@@ -254,7 +254,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (bestAction instanceof SimulationAction.DeclareAttackers da) {
                 log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", da.attackerIndices().size(), gameId);
                 send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                        new DeclareAttackersRequest(da.attackerIndices())));
+                        new DeclareAttackersRequest(da.attackerIndices(), null)));
                 return;
             }
         } catch (Exception e) {
@@ -271,7 +271,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                new DeclareAttackersRequest(attackerIndices)));
+                new DeclareAttackersRequest(attackerIndices, null)));
     }
 
     @Override

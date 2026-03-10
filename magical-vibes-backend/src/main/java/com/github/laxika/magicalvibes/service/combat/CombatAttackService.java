@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -108,15 +110,16 @@ public class CombatAttackService {
         }
 
         List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
+        List<AttackTarget> availableTargets = buildAvailableTargets(gameData, activeId);
         gameData.interaction.beginAttackerDeclaration(activeId);
         sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, activeId),
-                new AvailableAttackersMessage(attackable, mustAttack));
+                new AvailableAttackersMessage(attackable, mustAttack, availableTargets));
     }
 
     /**
      * Validates and processes a player's attacker declaration.
      */
-    public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
+    public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
@@ -184,10 +187,31 @@ public class CombatAttackService {
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
 
+        // Resolve and validate attack targets
+        UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
+        Set<UUID> validTargetIds = buildValidAttackTargetIds(gameData, playerId);
+        Map<Integer, UUID> resolvedTargets = new HashMap<>();
+        for (int idx : attackerIndices) {
+            UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
+            if (targetId == null) {
+                targetId = defenderId;
+            }
+            if (!validTargetIds.contains(targetId)) {
+                throw new IllegalStateException("Invalid attack target for attacker at index " + idx);
+            }
+            // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
+            Permanent attacker = battlefield.get(idx);
+            if (attacker.getMustAttackTargetId() != null && !attacker.getMustAttackTargetId().equals(targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
+            }
+            resolvedTargets.put(idx, targetId);
+        }
+
         // Mark creatures as attacking and tap them (vigilance skips tapping)
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             attacker.setAttacking(true);
+            attacker.setAttackTarget(resolvedTargets.get(idx));
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)) {
                 attacker.tap();
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, attacker);
@@ -426,6 +450,42 @@ public class CombatAttackService {
             }
         }
         return false;
+    }
+
+    /**
+     * Builds the list of available attack targets: the defending player plus any planeswalkers they control.
+     */
+    public List<AttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
+        List<AttackTarget> targets = new ArrayList<>();
+        targets.add(new AttackTarget(defenderId.toString(), gameData.playerIdToName.get(defenderId), true));
+        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
+        if (defBf != null) {
+            for (Permanent p : defBf) {
+                if (p.getCard().getType() == CardType.PLANESWALKER) {
+                    targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
+                }
+            }
+        }
+        return targets;
+    }
+
+    /**
+     * Returns the set of valid attack target UUIDs: the defending player plus their planeswalkers.
+     */
+    private Set<UUID> buildValidAttackTargetIds(GameData gameData, UUID activePlayerId) {
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
+        Set<UUID> validIds = new HashSet<>();
+        validIds.add(defenderId);
+        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
+        if (defBf != null) {
+            for (Permanent p : defBf) {
+                if (p.getCard().getType() == CardType.PLANESWALKER) {
+                    validIds.add(p.getId());
+                }
+            }
+        }
+        return validIds;
     }
 
     private void payGenericMana(ManaPool pool, int amount) {

@@ -54,11 +54,15 @@ public class CombatRestrictionResolutionService {
         }
 
         target.setMustAttackThisTurn(true);
+        // Force the creature to attack the ability's controller specifically, not their planeswalkers
+        // (Scryfall ruling: "it must attack you, not the planeswalker")
+        target.setMustAttackTargetId(entry.getControllerId());
 
-        String logEntry = target.getCard().getName() + " must attack this turn if able.";
+        String controllerName = gameData.playerIdToName.get(entry.getControllerId());
+        String logEntry = target.getCard().getName() + " must attack " + controllerName + " this turn if able.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} must attack this turn if able", gameData.id, target.getCard().getName());
+        log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(), controllerName);
     }
 
     @HandlesEffect(MustBlockSourceEffect.class)

@@ -110,8 +110,8 @@ public class GameService {
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
             case InteractionContext.XValueChoice xvc -> controlledId.equals(xvc.playerId());
+            case InteractionContext.Scry sc -> controlledId.equals(sc.playerId());
             case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
-            case InteractionContext.Scry s -> controlledId.equals(s.playerId());
         };
     }
 
@@ -437,9 +437,13 @@ public class GameService {
     // ===== Combat wrapper methods =====
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
+        declareAttackers(gameData, player, attackerIndices, null);
+    }
+
+    public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices), gameData);
+            turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets), gameData);
         }
     }
 

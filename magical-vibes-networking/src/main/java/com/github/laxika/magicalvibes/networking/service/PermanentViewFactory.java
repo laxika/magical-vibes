@@ -71,7 +71,8 @@ public class PermanentViewFactory {
                 p.isCantBeBlocked(),
                 animatedCreature || p.isPermanentlyAnimated(),
                 p.getLoyaltyCounters(),
-                p.getChargeCounters()
+                p.getChargeCounters(),
+                p.getAttackTarget()
         );
     }
 

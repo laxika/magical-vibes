@@ -150,7 +150,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         if (battlefield == null) {
             send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                    new DeclareAttackersRequest(List.of())));
+                    new DeclareAttackersRequest(List.of(), null)));
             return;
         }
 
@@ -170,7 +170,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Medium): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                new DeclareAttackersRequest(attackerIndices)));
+                new DeclareAttackersRequest(attackerIndices, null)));
     }
 
     @Override
