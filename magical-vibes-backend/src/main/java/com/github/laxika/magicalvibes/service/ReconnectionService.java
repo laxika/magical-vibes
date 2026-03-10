@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanent
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ScryMessage;
 import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -463,7 +464,14 @@ public class ReconnectionService {
                         "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
             }
             case InteractionContext.Scry s -> {
-                // Scry reconnection handled elsewhere; no resend needed
+                if (!playerId.equals(s.playerId()) || s.cards() == null) {
+                    return;
+                }
+                List<CardView> cardViews = s.cards().stream().map(cardViewFactory::create).toList();
+                String prompt = s.cards().size() == 1
+                        ? "Scry 1: Keep on top or put on the bottom of your library."
+                        : "Scry " + s.cards().size() + ": Put cards on the top or bottom of your library.";
+                sessionManager.sendToPlayer(playerId, new ScryMessage(cardViews, prompt));
             }
         }
     }
