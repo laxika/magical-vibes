@@ -255,6 +255,35 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "60", 1)     // Concussive Bolt
     )),
 
+    MIRROMANCY("mirromancy", "Mirromancy (Mirrodin Besieged Intro Pack)", List.of(
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "148", 11),  // Island
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "152", 13),  // Mountain
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "58", 2),    // Blisterstick Shaman
+            // new DeckEntry(CardSet.MAGIC_2011, "137", 1),        // Fire Servant (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "62", 1),    // Galvanoth
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "168", 2),   // Iron Myr
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "68", 2),    // Koth's Courier
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "112", 2),   // Lumengrid Gargoyle
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "28", 2),    // Neurok Commando
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "72", 2),    // Ogre Resister
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "119", 2),   // Peace Strider
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "202", 1),   // Silver Myr
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "59", 1),    // Burn the Impure
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "61", 1),    // Crush
+            // new DeckEntry(CardSet.MAGIC_2011, "149", 1),        // Lightning Bolt (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "30", 2),    // Quicksilver Geyser
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "73", 1),    // Rally the Forces
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "35", 1),    // Turn the Tide
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "81", 2),    // Arc Trail
+            // new DeckEntry(CardSet.MAGIC_2011, "47", 2),         // Call to Mind (not yet implemented)
+            // new DeckEntry(CardSet.MAGIC_2011, "54", 2),         // Foresee (not yet implemented)
+            new DeckEntry(CardSet.MAGIC_2011, "147", 2),           // Lava Axe
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "97", 1),    // Melt Terrain
+            // new DeckEntry(CardSet.MAGIC_2011, "70", 1),         // Preordain (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "74", 1)     // Red Sun's Zenith
+            // new DeckEntry(CardSet.MAGIC_2011, "73", 1)          // Sleep (not yet implemented)
+    )),
+
     DOOM_INEVITABLE("doom-inevitable", "Doom Inevitable (Mirrodin Besieged Intro Pack)", List.of(
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "148", 13),  // Island
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "150", 12),  // Swamp
