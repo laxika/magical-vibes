@@ -644,6 +644,7 @@ public class GameBroadcastService {
                 manaPool,
                 autoStopSteps,
                 getLifeTotals(data),
+                getPoisonCounters(data),
                 getStackViews(data),
                 getGraveyardViews(data)
         );
