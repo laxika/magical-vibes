@@ -223,6 +223,12 @@ public class AutoPassService {
                     continue;
                 }
 
+                // Skip attack-only abilities when the permanent is not attacking
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING
+                        && !perm.isAttacking()) {
+                    continue;
+                }
+
                 // Skip mana abilities (any effect that produces mana makes the whole ability a mana ability per CR 605.1a)
                 boolean isManaAbility = ability.getEffects().stream()
                         .anyMatch(e -> e instanceof ManaProducingEffect);

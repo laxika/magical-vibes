@@ -348,6 +348,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Metalcraft exile-flicker | `a/ArgentSphinx.java` | ExileSelfAndReturnAtEndStepEffect + METALCRAFT restriction |
 | Metalcraft tap ability | `v/VedalkenCertarch.java` | ActivationTimingRestriction.METALCRAFT + target filter |
 | Power-gated tap ability | `b/BloodshotTrainee.java` | ActivationTimingRestriction.POWER_4_OR_GREATER + creature target filter |
+| Attack-only ability | `a/AncientHellkite.java` | ActivationTimingRestriction.ONLY_WHILE_ATTACKING + opponent creature filter (PermanentNotPredicate(PermanentControlledBySourceControllerPredicate)) |
 | X-cost mass destroy (combat damage gated) | `s/SteelHellkite.java` | BoostSelfEffect pump + DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect with maxActivationsPerTurn=1 — X-cost, once per turn, only affects damaged player's permanents |
 | Loyalty (no target) | `a/AjaniOutlandChaperone.java` | `(+1, effects, false, description)` |
 | Loyalty (with target filter) | `a/AjaniOutlandChaperone.java` | `(-2, effects, true, description, filter)` |

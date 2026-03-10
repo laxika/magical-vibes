@@ -785,6 +785,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Metalcraft — activate only if you control three or more artifacts");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING) {
+                if (!permanent.isAttacking()) {
+                    throw new IllegalStateException("Activate only if this creature is attacking");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_CREATURE) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
                     throw new IllegalStateException("This ability can only be activated while this permanent is a creature");
