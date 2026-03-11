@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
@@ -147,6 +148,55 @@ public class LibrarySearchResolutionService {
                 true,
                 destination
         );
+    }
+
+    /**
+     * Searches the controller's library for up to two basic land cards, reveals them,
+     * puts one onto the battlefield tapped and the other into the controller's hand,
+     * then shuffles. The search is a single action (one Leonin Arbiter check).
+     *
+     * <p>Implemented as two sequential picks: first for battlefield tapped (no shuffle),
+     * then for hand (with shuffle). The pending follow-up is stored on
+     * {@link GameData#pendingBasicLandToHandSearch} and handled by
+     * {@link com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService}.
+     */
+    @HandlesEffect(SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect.class)
+    void resolveCultivate(GameData gameData, StackEntry entry, SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> basicLands = deck.stream()
+                .filter(card -> card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC))
+                .toList();
+
+        if (basicLands.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        // Mark that a follow-up hand search is pending after the first pick
+        gameData.pendingBasicLandToHandSearch = true;
+
+        // First pick: basic land to battlefield tapped (no shuffle yet)
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(basicLands))
+                .reveals(true)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                .shuffleAfterSelection(false)
+                .build(), "Search your library for a basic land card to put onto the battlefield tapped.", true);
+
+        log.info("Game {} - {} searches library for Cultivate ({} basic lands)", gameData.id, playerName, basicLands.size());
     }
 
     /**

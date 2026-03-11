@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
@@ -412,6 +413,15 @@ public class LibraryChoiceHandlerService {
                     : player.getUsername() + " chooses not to take a card.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
+            // Per ruling: if you find only one basic land with Cultivate, it must go to
+            // the battlefield tapped — skipping the battlefield pick means finding zero,
+            // so clear the pending hand search and shuffle.
+            if (gameData.pendingBasicLandToHandSearch) {
+                gameData.pendingBasicLandToHandSearch = false;
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                String shuffleLog = player.getUsername() + "'s library is shuffled.";
+                gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+            }
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -617,8 +627,44 @@ public class LibraryChoiceHandlerService {
             stateBasedActionService.performStateBasedActions(gameData);
         }
 
+        if (startPendingBasicLandToHandSearch(gameData, playerId)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
+    /**
+     * If a pending basic-land-to-hand search is queued (e.g. Cultivate second pick),
+     * starts the follow-up library search and returns true. Otherwise returns false.
+     */
+    private boolean startPendingBasicLandToHandSearch(GameData gameData, UUID playerId) {
+        if (!gameData.pendingBasicLandToHandSearch) return false;
+        gameData.pendingBasicLandToHandSearch = false;
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        List<Card> basicLands = deck.stream()
+                .filter(card -> card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC))
+                .toList();
+
+        if (basicLands.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            String logMsg = playerName + " finds no more basic land cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return false;
+        }
+
+        String prompt = "Search your library for a basic land card to put into your hand.";
+        LibrarySearchParams params = LibrarySearchParams.builder(playerId, new ArrayList<>(basicLands))
+                .reveals(true)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.HAND)
+                .build();
+
+        gameData.interaction.beginLibrarySearch(params);
+        List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, true));
+        return true;
+    }
+
     public void handleLibraryRevealChoice(GameData gameData, Player player, List<UUID> cardIds) {
         InteractionContext.LibraryRevealChoice libraryRevealChoice = gameData.interaction.libraryRevealChoiceContext();
         if (libraryRevealChoice == null || !player.getId().equals(libraryRevealChoice.playerId())) {

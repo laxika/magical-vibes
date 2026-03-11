@@ -338,6 +338,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `SearchLibraryForCardToHandEffect` | `()` | search library for any card to hand |
 | `SearchLibraryForBasicLandToHandEffect` | `()` | search library for basic land to hand |
+| `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect` | `()` | search library for up to two basic lands: one to battlefield tapped, one to hand. Single search action (one Leonin Arbiter check). Used by Cultivate, Kodama's Reach |
 | `SearchLibraryForCardTypesToHandEffect` | `(Set<CardType> cardTypes)` or `(Set<CardType> cardTypes, int maxManaValue)` or `(Set<CardType> cardTypes, int minManaValue, int maxManaValue)` | search library for card of specific types to hand (optionally filtered by min/max mana value) |
 | `SearchLibraryForCardTypesToBattlefieldEffect` | `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped)` | search library for card to battlefield |
 | `SearchLibraryForCardTypeToExileAndImprintEffect` | `(Set<CardType> cardTypes)` | search library for card of specific types, exile it, and imprint on source permanent |

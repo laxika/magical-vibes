@@ -188,6 +188,9 @@ public class GameData {
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
 
+    /** When true, a follow-up library search for a basic land to hand is pending (e.g. Cultivate second pick). */
+    public boolean pendingBasicLandToHandSearch;
+
     /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
     public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
 

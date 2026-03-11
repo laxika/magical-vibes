@@ -65,6 +65,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Tutor to hand | `d/DiabolicTutor.java` | SearchLibraryForCardToHandEffect |
 | Tutor + exile + opponent choice | `d/DistantMemories.java` | DistantMemoriesEffect — search, exile, opponent may let you have it or draw 3 |
 | Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryForCardTypesToBattlefieldEffect |
+| Cultivate (2 basic lands split) | `c/Cultivate.java` | SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect — one to BF tapped, one to hand |
 | Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect(HAND, null, true) — any card, targets graveyard |
 | Graveyard return (multi-target to hand) | `m/MorbidPlunder.java` | ReturnTargetCardsFromGraveyardToHandEffect(CardTypePredicate(CREATURE), 2) — up to N target cards to hand |
 | Graveyard return (to battlefield) | `b/BeaconOfUnrest.java` | ReturnCardFromGraveyardEffect(BATTLEFIELD, CardAnyOfPredicate, ALL_GRAVEYARDS) |
