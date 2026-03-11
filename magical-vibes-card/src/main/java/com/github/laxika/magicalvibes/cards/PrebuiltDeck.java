@@ -560,6 +560,35 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "93", 2),         // Unnatural Predation
             // new DeckEntry(CardSet.ZENDIKAR, "193", 2),               // Vines of Vastwood (set not available)
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "94", 1)          // Viridian Corrupter
+    )),
+
+    WAR_OF_ATTRITION("war-of-attrition", "War of Attrition (New Phyrexia Event Deck)", List.of(
+            // new DeckEntry(CardSet.WORLDWAKE, "161", 2),                 // Dread Statuary (set not available)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "166", 21),              // Plains
+            new DeckEntry(CardSet.MAGIC_2011, "13", 4),                  // Elite Vanguard
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "12", 1),           // Kemba, Kha Regent
+            // new DeckEntry(CardSet.ZENDIKAR, "10", 2),                   // Kor Duelist (set not available)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "10", 4),           // Leonin Relic-Warder
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "11", 4),           // Leonin Skyhunter
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "14", 1),           // Mirran Crusader
+            new DeckEntry(CardSet.NEW_PHYREXIA, "19", 4),                // Porcelain Legionnaire
+            new DeckEntry(CardSet.NEW_PHYREXIA, "20", 1),                // Puresteel Paladin
+            // new DeckEntry(CardSet.WORLDWAKE, "20", 2),                  // Stoneforge Mystic (set not available)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "100", 1),          // Bonehoard
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "149", 1),          // Darksteel Axe
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "107", 4),          // Flayer Husk
+            new DeckEntry(CardSet.NEW_PHYREXIA, "157", 1),               // Sickleslicer
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "133", 1),          // Skinwing
+            // new DeckEntry(CardSet.MAGIC_2011, "216", 1),                // Sword of Vengeance (not yet implemented)
+            // new DeckEntry(CardSet.ZENDIKAR, "14", 4),                   // Journey to Nowhere (set not available)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "2", 1)                  // Apostle's Blessing
+    ), List.of(
+            new DeckEntry(CardSet.NEW_PHYREXIA, "2", 1),                 // Apostle's Blessing
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "2", 2),            // Arrest
+            new DeckEntry(CardSet.MAGIC_2011, "9", 3),                   // Celestial Purge
+            // new DeckEntry(CardSet.ZENDIKAR, "10", 1),                   // Kor Duelist (set not available)
+            // new DeckEntry(CardSet.WORLDWAKE, "11", 4),                  // Kor Firewalker (set not available)
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "18", 4)            // Revoke Existence
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
