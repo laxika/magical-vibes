@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsE
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEachOtherCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapAllTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -147,6 +148,26 @@ public class TapUntapResolutionService {
         String logEntry = target.getCard().getName() + " won't untap as long as " + entry.getCard().getName() + " remains tapped.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(UntapAllTargetPermanentsEffect.class)
+    private void resolveUntapAllTargetPermanents(GameData gameData, StackEntry entry) {
+        List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
+                ? (entry.getTargetPermanentId() != null ? List.of(entry.getTargetPermanentId()) : List.of())
+                : entry.getTargetPermanentIds();
+
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+
+            target.untap();
+
+            String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+        }
     }
 
     @HandlesEffect(UntapTargetPermanentEffect.class)
