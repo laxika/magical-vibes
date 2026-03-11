@@ -284,6 +284,33 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.MAGIC_2011, "73", 1)          // Sleep (not yet implemented)
     )),
 
+    PATH_OF_BLIGHT("path-of-blight", "Path of Blight (Mirrodin Besieged Intro Pack)", List.of(
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "154", 14),  // Forest
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "146", 11),  // Plains
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "112", 2),   // Blight Mamba
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "77", 1),    // Blightwidow
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "103", 1),   // Core Prowler
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "147", 1),   // Corpse Cur
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "120", 2),   // Phyrexian Digester
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "85", 1),    // Phyrexian Hydra
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "121", 2),   // Phyrexian Juggernaut
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "125", 2),   // Plague Myr
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "16", 2),    // Priests of Norn
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "90", 2),    // Rot Wolf
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "128", 2),   // Tangle Angler
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "17", 2),    // Tine Shrike
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "94", 1),    // Viridian Corrupter
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "105", 1),   // Decimator Web
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "214", 2),   // Trigon of Infestation
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "3", 2),     // Banishment Decree
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "4", 2),     // Choking Fumes
+            // new DeckEntry(CardSet.MAGIC_2011, "22", 1),         // Mighty Leap (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "86", 1),    // Pistus Strike
+            // new DeckEntry(CardSet.MAGIC_2011, "26", 1),         // Safe Passage (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "93", 2)     // Unnatural Predation
+            // new DeckEntry(CardSet.MAGIC_2011, "182", 2)         // Hunters' Feast (not yet implemented)
+    )),
+
     DOOM_INEVITABLE("doom-inevitable", "Doom Inevitable (Mirrodin Besieged Intro Pack)", List.of(
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "148", 13),  // Island
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "150", 12),  // Swamp
