@@ -504,6 +504,35 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.NEW_PHYREXIA, "64", 1),              // Ichor Explosion
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "47", 1),         // Morbid Plunder
             new DeckEntry(CardSet.NEW_PHYREXIA, "102", 1)              // Whipflare
+    )),
+
+    RAVAGING_SWARM("ravaging-swarm", "Ravaging Swarm (New Phyrexia Intro Pack)", List.of(
+            new DeckEntry(CardSet.NEW_PHYREXIA, "174", 12),              // Forest
+            new DeckEntry(CardSet.NEW_PHYREXIA, "168", 12),              // Island
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "112", 1),          // Blight Mamba
+            new DeckEntry(CardSet.NEW_PHYREXIA, "29", 3),                // Blighted Agent
+            new DeckEntry(CardSet.NEW_PHYREXIA, "30", 2),                // Chained Throatseeker
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "103", 1),          // Core Prowler
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "117", 2),          // Cystbearer
+            new DeckEntry(CardSet.NEW_PHYREXIA, "111", 3),               // Glistener Elf
+            new DeckEntry(CardSet.NEW_PHYREXIA, "117", 2),               // Mycosynth Fiend
+            new DeckEntry(CardSet.NEW_PHYREXIA, "119", 1),               // Phyrexian Swarmlord
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "87", 1),           // Plaguemaw Beast
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "90", 1),           // Rot Wolf
+            new DeckEntry(CardSet.NEW_PHYREXIA, "121", 1),               // Spinebiter
+            new DeckEntry(CardSet.NEW_PHYREXIA, "49", 2),                // Viral Drake
+            new DeckEntry(CardSet.NEW_PHYREXIA, "124", 2),               // Viridian Betrayers
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "222", 1),          // Wall of Tanglecord
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "144", 1),          // Contagion Clasp
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "214", 2),          // Trigon of Infestation
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "22", 1),           // Corrupted Conscience
+            new DeckEntry(CardSet.NEW_PHYREXIA, "34", 1),                // Defensive Stance
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "35", 1),           // Inexorable Tide
+            new DeckEntry(CardSet.NEW_PHYREXIA, "32", 1),                // Corrupted Resolve
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "25", 1),           // Fuel for the Cause
+            new DeckEntry(CardSet.NEW_PHYREXIA, "113", 3),               // Leeching Bite
+            new DeckEntry(CardSet.TENTH_EDITION, "282", 1),              // Naturalize
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "45", 1)            // Steady Progress
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
