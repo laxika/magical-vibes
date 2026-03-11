@@ -82,7 +82,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DealDamageToAnyTargetEffect` | `(int damage, boolean cantRegenerate)` | deal N damage to any target |
 | `DealDamageEqualToSourcePowerToAnyTargetEffect` | `()` | deal damage equal to source permanent's power to any target (uses effective power at resolution) |
 | `DealDamageToTargetAndTheirCreaturesEffect` | `(int damage)` | deal N damage to target player or planeswalker AND each creature that player or that planeswalker's controller controls (e.g. Chandra Nalaar ultimate) |
-| `DealDamageToTargetCreatureEffect` | `(int damage)` | deal N damage to target creature |
+| `DealDamageToTargetCreatureEffect` | `(int damage)` or `(int damage, boolean unpreventable)` | deal N damage to target creature. When `unpreventable=true`, bypasses all damage prevention (shields, protection, global prevention) |
 | `DealDamageToBlockedAttackersOnDeathEffect` | `(int damage)` | ON_DEATH marker: when this creature dies during combat, deal N damage to each creature it blocked this combat (e.g. Cathedral Membrane). Target permanent IDs baked in at trigger time from blockingTargetPermanentIds |
 | `DealDamageToTargetPlayerEffect` | `(int damage)` | deal N damage to target player |
 | `DealDamageToTargetPlayerByHandSizeEffect` | `()` | deal damage equal to hand size to target player |

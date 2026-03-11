@@ -20,6 +20,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 |---------|-----------|-------|
 | Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
 | Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToTargetCreatureControllerEffect |
+| Uncounterable + unpreventable burn | `c/Combust.java` | setCantBeCountered(true) + DealDamageToTargetCreatureEffect(5, true) + PermanentColorInPredicate target filter |
 | X burn | `b/Blaze.java` | DealXDamageToAnyTargetEffect |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
 | X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |

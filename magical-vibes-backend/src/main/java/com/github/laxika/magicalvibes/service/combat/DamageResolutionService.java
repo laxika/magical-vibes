@@ -85,10 +85,18 @@ public class DamageResolutionService {
 
     /**
      * Resolves {@link DealDamageToTargetCreatureEffect} — deals a fixed amount of damage to the targeted creature.
+     * When the effect is unpreventable, all damage prevention (shields, protection, global prevention) is bypassed.
      */
     @HandlesEffect(DealDamageToTargetCreatureEffect.class)
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
-        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, effect.damage()));
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        if (effect.unpreventable()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+            if (target == null) return;
+            dealDamageAndDestroyIfLethalUnpreventable(gameData, entry, target, damage);
+        } else {
+            resolveCreatureTargetDamage(gameData, entry, damage);
+        }
     }
 
     /**
@@ -646,6 +654,41 @@ public class DamageResolutionService {
         return false;
     }
 
+    /**
+     * Deals damage to a creature bypassing all prevention effects (shields, protection, global prevention).
+     * Used for effects where "the damage can't be prevented" (e.g. Combust).
+     */
+    private boolean dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
+        // Skip applyCreaturePreventionShield — damage is unpreventable
+        int damage = rawDamage;
+
+        if (entry.getSourcePermanentId() != null) {
+            graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
+        }
+
+        if (damage > 0) {
+            triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, entry.getControllerId());
+        }
+
+        String sourceName = entry.getCard().getName();
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                sourceName + " deals " + damage + " damage to " + target.getCard().getName() + ". (damage can't be prevented)");
+        log.info("Game {} - {} deals {} unpreventable damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
+
+        boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
+        boolean isLethal = gameQueryService.isLethalDamage(damage, gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
+        if (isLethal) {
+            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        target.getCard().getName() + " is indestructible and survives.");
+                return false;
+            }
+            return !graveyardService.tryRegenerate(gameData, target);
+        }
+        return false;
+    }
+
     private void destroyPermanent(GameData gameData, Permanent target) {
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
         gameBroadcastService.logAndBroadcast(gameData, target.getCard().getName() + " is destroyed.");
@@ -668,6 +711,13 @@ public class DamageResolutionService {
     private void dealDamageAndDestroyIfLethal(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
         if (dealCreatureDamage(gameData, entry, target, rawDamage, damageSource)) {
             gameData.pendingLethalDamageDestructions.add(target);
+        }
+    }
+
+    private void dealDamageAndDestroyIfLethalUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
+        if (dealCreatureDamageUnpreventable(gameData, entry, target, rawDamage)) {
+            destroyPermanent(gameData, target);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
