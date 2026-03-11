@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
@@ -603,6 +604,24 @@ public class PermanentControlResolutionService {
 
         creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
         gameData.untilEndOfTurnStolenCreatures.add(target.getId());
+    }
+
+    @HandlesEffect(GainControlOfTargetPermanentEffect.class)
+    private void resolveGainControlOfTargetPermanent(GameData gameData, StackEntry entry, GainControlOfTargetPermanentEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (oldController != null && !oldController.equals(entry.getControllerId())) {
+            creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
+            gameData.permanentControlStolenCreatures.add(target.getId());
+        }
+
+        if (effect.grantedSubtype() != null && !target.getGrantedSubtypes().contains(effect.grantedSubtype())) {
+            target.getGrantedSubtypes().add(effect.grantedSubtype());
+            String subtypeLog = target.getCard().getName() + " becomes a " + effect.grantedSubtype().getDisplayName() + " in addition to its other types.";
+            gameBroadcastService.logAndBroadcast(gameData, subtypeLog);
+        }
     }
 
     @HandlesEffect(AttachTargetToSourcePermanentEffect.class)

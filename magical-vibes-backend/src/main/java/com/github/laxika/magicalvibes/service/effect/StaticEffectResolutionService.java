@@ -800,9 +800,13 @@ public class StaticEffectResolutionService {
         }
         if (filter instanceof PermanentHasSubtypePredicate p)
             return target.getCard().getSubtypes().contains(p.subtype())
+                    || target.getTransientSubtypes().contains(p.subtype())
+                    || target.getGrantedSubtypes().contains(p.subtype())
                     || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));
         if (filter instanceof PermanentHasAnySubtypePredicate p)
             return target.getCard().getSubtypes().stream().anyMatch(p.subtypes()::contains)
+                    || target.getTransientSubtypes().stream().anyMatch(p.subtypes()::contains)
+                    || target.getGrantedSubtypes().stream().anyMatch(p.subtypes()::contains)
                     || (p.subtypes().stream().anyMatch(StaticEffectResolutionService::isCreatureSubtype)
                     && target.hasKeyword(Keyword.CHANGELING));
         if (filter instanceof PermanentHasKeywordPredicate p)
