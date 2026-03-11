@@ -106,7 +106,7 @@ class HornetStingTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .allMatch(p -> p.getDamage() == 1);
+                .allMatch(p -> p.getMarkedDamage() == 1);
     }
 
     @Test
