@@ -448,6 +448,35 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.NEW_PHYREXIA, "48", 2)            // Vapor Snag
     )),
 
+    LIFE_FOR_DEATH("life-for-death", "Life for Death (New Phyrexia Intro Pack)", List.of(
+            new DeckEntry(CardSet.NEW_PHYREXIA, "172", 11),           // Mountain
+            new DeckEntry(CardSet.NEW_PHYREXIA, "166", 13),           // Plains
+            new DeckEntry(CardSet.NEW_PHYREXIA, "131", 2),            // Blinding Souleater
+            new DeckEntry(CardSet.NEW_PHYREXIA, "5", 1),              // Cathedral Membrane
+            new DeckEntry(CardSet.NEW_PHYREXIA, "139", 2),            // Immolating Souleater
+            new DeckEntry(CardSet.NEW_PHYREXIA, "12", 1),             // Inquisitor Exarch
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "13", 2),        // Kemba's Skyguard
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "112", 1),       // Lumengrid Gargoyle
+            new DeckEntry(CardSet.NEW_PHYREXIA, "88", 1),             // Moltensteel Dragon
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "72", 1),        // Ogre Resister
+            new DeckEntry(CardSet.NEW_PHYREXIA, "19", 3),             // Porcelain Legionnaire
+            new DeckEntry(CardSet.NEW_PHYREXIA, "23", 1),             // Shattered Angel
+            new DeckEntry(CardSet.NEW_PHYREXIA, "96", 3),             // Slash Panther
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "161", 2),       // Golem's Heart
+            new DeckEntry(CardSet.NEW_PHYREXIA, "151", 1),            // Pristine Talisman
+            new DeckEntry(CardSet.NEW_PHYREXIA, "91", 2),             // Rage Extractor
+            new DeckEntry(CardSet.MAGIC_2011, "23", 2),               // Pacifism
+            new DeckEntry(CardSet.NEW_PHYREXIA, "78", 2),             // Act of Aggression
+            new DeckEntry(CardSet.NEW_PHYREXIA, "2", 1),              // Apostle's Blessing
+            new DeckEntry(CardSet.NEW_PHYREXIA, "86", 1),             // Gut Shot
+            // new DeckEntry(CardSet.MAGIC_2011, "145", 1),           // Incite (not yet implemented)
+            // new DeckEntry(CardSet.MAGIC_2011, "149", 1),           // Lightning Bolt (not yet implemented)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "15", 1),             // Marrow Shards
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "27", 2),        // Whitesun's Passage
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "15", 1)         // Phyrexian Rebirth
+            // new DeckEntry(CardSet.MAGIC_2011, "32", 1)             // Solemn Offering (not yet implemented)
+    )),
+
     FEAST_OF_FLESH("feast-of-flesh", "Feast of Flesh (New Phyrexia Intro Pack)", List.of(
             new DeckEntry(CardSet.NEW_PHYREXIA, "172", 11),            // Mountain
             new DeckEntry(CardSet.NEW_PHYREXIA, "170", 13),            // Swamp
