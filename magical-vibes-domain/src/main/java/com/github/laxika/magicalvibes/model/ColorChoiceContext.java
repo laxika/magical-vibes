@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public sealed interface ColorChoiceContext {
@@ -22,4 +23,15 @@ public sealed interface ColorChoiceContext {
     record ProtectionColorChoice(UUID targetPermanentId, boolean includeArtifacts) implements ColorChoiceContext {}
 
     record SubtypeChoice(UUID permanentId) implements ColorChoiceContext {}
+
+    /**
+     * Tracks the sequential "each player names a card" flow for Conundrum Sphinx etc.
+     * Players name in APNAP order. After all have named, top cards are revealed and
+     * moved to hand (match) or bottom of library (no match).
+     *
+     * @param playerOrder  all player IDs in APNAP order
+     * @param chosenNames  names chosen so far (playerId → chosen name)
+     */
+    record EachPlayerCardNameRevealChoice(List<UUID> playerOrder,
+                                          Map<UUID, String> chosenNames) implements ColorChoiceContext {}
 }

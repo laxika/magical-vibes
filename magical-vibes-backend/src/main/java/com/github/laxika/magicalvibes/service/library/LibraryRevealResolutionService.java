@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
@@ -619,6 +622,55 @@ public class LibraryRevealResolutionService {
         }
 
         log.info("Game {} - {} reveals {} (MV {}) from Dark Tutelage", gameData.id, playerName, topCard.getName(), manaValue);
+    }
+
+    /**
+     * Resolves "each player chooses a card name, then each player reveals the top card of
+     * their library" (Conundrum Sphinx). Begins the sequential name choice flow starting
+     * with the active player (APNAP order).
+     */
+    @HandlesEffect(EachPlayerNameCardRevealTopEffect.class)
+    void resolveEachPlayerNameCardRevealTop(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        // Build APNAP order: active player first, then the rest
+        List<UUID> playerOrder = new ArrayList<>();
+        playerOrder.add(gameData.activePlayerId);
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (!pid.equals(gameData.activePlayerId)) {
+                playerOrder.add(pid);
+            }
+        }
+
+        // Begin the first player's card name choice
+        UUID firstPlayerId = playerOrder.getFirst();
+        var choiceContext = new ColorChoiceContext.EachPlayerCardNameRevealChoice(
+                playerOrder, new LinkedHashMap<>());
+        gameData.interaction.beginColorChoice(firstPlayerId, null, null, choiceContext);
+
+        List<String> cardNames = collectAllCardNamesInGame(gameData);
+        sessionManager.sendToPlayer(firstPlayerId, new ChooseColorMessage(cardNames, "Choose a card name."));
+
+        String playerName = gameData.playerIdToName.get(firstPlayerId);
+        log.info("Game {} - Awaiting {} to choose a card name (Conundrum Sphinx)", gameData.id, playerName);
+    }
+
+    private List<String> collectAllCardNamesInGame(GameData gameData) {
+        Set<String> names = new TreeSet<>();
+        for (UUID pid : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(pid, List.of())
+                    .forEach(p -> names.add(p.getCard().getName()));
+            gameData.playerHands.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerGraveyards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerDecks.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerExiledCards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+        }
+        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
+        return new ArrayList<>(names);
     }
 
     // =========================================================================

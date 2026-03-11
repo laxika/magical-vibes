@@ -292,6 +292,9 @@ public class ReconnectionService {
                             .map(CardSubtype::name)
                             .toList();
                     prompt = "Choose a creature type.";
+                } else if (cc.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice) {
+                    options = collectAllCardNamesInGame(gameData);
+                    prompt = "Choose a card name.";
                 } else {
                     options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     prompt = "Choose a color.";

@@ -30,8 +30,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.ArrayList;
 
@@ -98,6 +101,10 @@ public class ColorChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ColorChoiceContext.SubtypeChoice ctx) {
             handleSubtypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice ctx) {
+            handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -410,6 +417,100 @@ public class ColorChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleEachPlayerCardNameRevealChoice(GameData gameData, Player player, String cardName,
+                                                      ColorChoiceContext.EachPlayerCardNameRevealChoice ctx) {
+        // Store this player's chosen name
+        Map<UUID, String> updatedNames = new LinkedHashMap<>(ctx.chosenNames());
+        updatedNames.put(player.getId(), cardName);
+
+        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
+        gameBroadcastService.logAndBroadcast(gameData, choiceLog);
+        log.info("Game {} - {} chooses card name \"{}\" (each player name/reveal)",
+                gameData.id, player.getUsername(), cardName);
+
+        // Check if more players need to name a card
+        UUID nextPlayerId = null;
+        for (UUID pid : ctx.playerOrder()) {
+            if (!updatedNames.containsKey(pid)) {
+                nextPlayerId = pid;
+                break;
+            }
+        }
+
+        if (nextPlayerId != null) {
+            // Prompt next player
+            gameData.interaction.clearAwaitingInput();
+            gameData.interaction.clearColorChoice();
+
+            var nextContext = new ColorChoiceContext.EachPlayerCardNameRevealChoice(
+                    ctx.playerOrder(), updatedNames);
+            gameData.interaction.beginColorChoice(nextPlayerId, null, null, nextContext);
+
+            List<String> cardNames = collectAllCardNamesInGame(gameData);
+            sessionManager.sendToPlayer(nextPlayerId, new ChooseColorMessage(cardNames, "Choose a card name."));
+
+            String nextPlayerName = gameData.playerIdToName.get(nextPlayerId);
+            log.info("Game {} - Awaiting {} to choose a card name (each player name/reveal)",
+                    gameData.id, nextPlayerName);
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
+        }
+
+        // All players have named — resolve reveals
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        for (UUID pid : ctx.playerOrder()) {
+            String chosenName = updatedNames.get(pid);
+            String playerName = gameData.playerIdToName.get(pid);
+            List<Card> deck = gameData.playerDecks.get(pid);
+
+            if (deck == null || deck.isEmpty()) {
+                String logEntry = playerName + "'s library is empty.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                continue;
+            }
+
+            Card topCard = deck.removeFirst();
+            String revealLog = playerName + " reveals " + topCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+            if (topCard.getName().equals(chosenName)) {
+                gameData.playerHands.get(pid).add(topCard);
+                String handLog = playerName + " puts " + topCard.getName() + " into their hand.";
+                gameBroadcastService.logAndBroadcast(gameData, handLog);
+                log.info("Game {} - {} guessed correctly, {} goes to hand", gameData.id, playerName, topCard.getName());
+            } else {
+                deck.add(topCard);
+                String bottomLog = playerName + " puts " + topCard.getName() + " on the bottom of their library.";
+                gameBroadcastService.logAndBroadcast(gameData, bottomLog);
+                log.info("Game {} - {} guessed wrong, {} goes to bottom", gameData.id, playerName, topCard.getName());
+            }
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private List<String> collectAllCardNamesInGame(GameData gameData) {
+        Set<String> names = new TreeSet<>();
+        for (UUID pid : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(pid, List.of())
+                    .forEach(p -> names.add(p.getCard().getName()));
+            gameData.playerHands.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerGraveyards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerDecks.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+            gameData.playerExiledCards.getOrDefault(pid, List.of())
+                    .forEach(c -> names.add(c.getName()));
+        }
+        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
+        return new ArrayList<>(names);
     }
 
     private void handleExileByNameChoice(GameData gameData, Player player, String cardName, ColorChoiceContext.ExileByNameChoice ctx) {

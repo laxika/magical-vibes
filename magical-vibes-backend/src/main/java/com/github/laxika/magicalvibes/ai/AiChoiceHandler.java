@@ -218,6 +218,16 @@ class AiChoiceHandler {
             return;
         }
 
+        if (colorChoice.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice) {
+            // For the reveal-top-card game: guess the top card of our library
+            List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
+            String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();
+            log.info("AI: Choosing card name \"{}\" for reveal in game {}", chosenName, gameId);
+            final String finalName = chosenName;
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, finalName)));
+            return;
+        }
+
         if (colorChoice.context() instanceof ColorChoiceContext.SubtypeChoice) {
             String chosenSubtype = "HUMAN";
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
