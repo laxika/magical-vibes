@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "146")
+@CardRegistration(set = "M11", collectorNumber = "98")
 public class Gravedigger extends Card {
 
     public Gravedigger() {
