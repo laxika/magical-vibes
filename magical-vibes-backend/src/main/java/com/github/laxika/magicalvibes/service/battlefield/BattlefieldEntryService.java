@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
@@ -512,7 +513,33 @@ public class BattlefieldEntryService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                if (effect instanceof GainLifeEqualToToughnessEffect) {
+                if (effect instanceof EnteringCreatureMinPowerConditionalEffect conditional) {
+                    if (enteringCreature.getPower() == null || enteringCreature.getPower() < conditional.minPower()) {
+                        continue;
+                    }
+                    CardEffect innerEffect = conditional.wrapped();
+                    if (innerEffect instanceof MayEffect may) {
+                        gameData.queueMayAbility(perm.getCard(), controllerId, may);
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for {} entering (power {} >= {})",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
+                                enteringCreature.getPower(), conditional.minPower());
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                controllerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(innerEffect))
+                        ));
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for {} entering (power {} >= {})",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
+                                enteringCreature.getPower(), conditional.minPower());
+                    }
+                } else if (effect instanceof GainLifeEqualToToughnessEffect) {
                     int toughness = enteringCreature.getToughness();
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
