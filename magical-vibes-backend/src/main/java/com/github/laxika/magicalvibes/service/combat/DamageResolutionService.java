@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermane
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -893,6 +894,33 @@ public class DamageResolutionService {
         if (!gameQueryService.hasKeyword(gameData, target, effect.keyword())) {
             return;
         }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        String cardName = entry.getCard().getName();
+
+        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented.");
+        } else {
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToTargetCreatureControllerEffect} — deals damage to the controller
+     * of the targeted creature unconditionally.
+     */
+    @HandlesEffect(DealDamageToTargetCreatureControllerEffect.class)
+    void resolveDealDamageToTargetCreatureController(
+            GameData gameData,
+            StackEntry entry,
+            DealDamageToTargetCreatureControllerEffect effect
+    ) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         String cardName = entry.getCard().getName();

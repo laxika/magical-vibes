@@ -19,6 +19,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
+| Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToTargetCreatureControllerEffect |
 | X burn | `b/Blaze.java` | DealXDamageToAnyTargetEffect |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
 | X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |
