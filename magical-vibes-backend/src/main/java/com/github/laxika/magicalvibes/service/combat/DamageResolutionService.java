@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerT
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
@@ -443,6 +444,20 @@ public class DamageResolutionService {
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDividedDamageToAnyTargetsEffect} — deals N damage divided as chosen
+     * among up to M targets (creatures and/or players). Damage assignments are read from
+     * {@code gameData.pendingETBDamageAssignments}.
+     */
+    @HandlesEffect(DealDividedDamageToAnyTargetsEffect.class)
+    void resolveDealDividedDamageToAnyTargets(GameData gameData, StackEntry entry, DealDividedDamageToAnyTargetsEffect effect) {
+        Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
+        gameData.pendingETBDamageAssignments = Map.of();
+
+        // dealDividedDamageToAnyTargets already calls checkWinCondition internally
+        dealDividedDamageToAnyTargets(gameData, entry.getCard(), entry.getControllerId(), assignments);
     }
 
     /**
