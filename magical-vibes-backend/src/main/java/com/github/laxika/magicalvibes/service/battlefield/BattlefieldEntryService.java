@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -158,6 +159,25 @@ public class BattlefieldEntryService {
                     }
                 }
                 if (otherLandCount > fewLands.maxOtherLands()) {
+                    enteringPermanent.tap();
+                }
+            }
+            if (effect instanceof EntersTappedUnlessControlLandSubtypeEffect checkLand) {
+                // Check if the controller has a permanent with any of the required land subtypes
+                List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+                boolean hasRequiredSubtype = false;
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        for (CardSubtype subtype : checkLand.requiredSubtypes()) {
+                            if (p.getCard().getSubtypes().contains(subtype)) {
+                                hasRequiredSubtype = true;
+                                break;
+                            }
+                        }
+                        if (hasRequiredSubtype) break;
+                    }
+                }
+                if (!hasRequiredSubtype) {
                     enteringPermanent.tap();
                 }
             }
