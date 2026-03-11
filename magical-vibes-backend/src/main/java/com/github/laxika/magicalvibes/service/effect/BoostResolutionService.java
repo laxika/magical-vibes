@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureE
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageDefenderEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -339,5 +340,22 @@ public class BoostResolutionService {
         gameData.pendingTapSubtypeBoostSourcePermanentId = sourcePermanentId;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
                 "You may tap any number of untapped " + effect.subtype().getDisplayName() + " you control.");
+    }
+
+    @HandlesEffect(SetBasePowerToughnessUntilEndOfTurnEffect.class)
+    private void resolveSetBasePowerToughness(GameData gameData, StackEntry entry, SetBasePowerToughnessUntilEndOfTurnEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
+        target.setBasePowerOverride(effect.power());
+        target.setBaseToughnessOverride(effect.toughness());
+
+        String logEntry = target.getCard().getName() + " has base power and toughness " + effect.power() + "/" + effect.toughness() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} base P/T set to {}/{}", gameData.id, target.getCard().getName(), effect.power(), effect.toughness());
     }
 }

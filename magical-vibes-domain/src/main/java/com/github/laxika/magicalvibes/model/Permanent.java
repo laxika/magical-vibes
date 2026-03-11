@@ -45,6 +45,9 @@ public class Permanent {
      *  that player controls to its owner's hand" until end of turn (e.g. Arm with Aether). Cleared at end of turn. */
     @Setter private boolean hasDamageToOpponentCreatureBounce;
     @Setter private boolean powerToughnessSwitched;
+    @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
+    @Setter private int basePowerOverride;
+    @Setter private int baseToughnessOverride;
     @Setter private boolean animatedUntilEndOfTurn;
     @Setter private int animatedPower;
     @Setter private int animatedToughness;
@@ -138,6 +141,9 @@ public class Permanent {
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         this.powerToughnessSwitched = source.powerToughnessSwitched;
+        this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
+        this.basePowerOverride = source.basePowerOverride;
+        this.baseToughnessOverride = source.baseToughnessOverride;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedPower = source.animatedPower;
         this.animatedToughness = source.animatedToughness;
@@ -244,7 +250,10 @@ public class Permanent {
         if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
             return 8 + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
-        return (card.getPower() != null ? card.getPower() : 0) + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        int basePower = basePowerToughnessOverriddenUntilEndOfTurn
+                ? basePowerOverride
+                : (card.getPower() != null ? card.getPower() : 0);
+        return basePower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }
 
     private int getRawToughness() {
@@ -257,7 +266,10 @@ public class Permanent {
         if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
             return 8 + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
         }
-        return (card.getToughness() != null ? card.getToughness() : 0) + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        int baseToughness = basePowerToughnessOverriddenUntilEndOfTurn
+                ? baseToughnessOverride
+                : (card.getToughness() != null ? card.getToughness() : 0);
+        return baseToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }
 
     public CardColor getEffectiveColor() {
@@ -281,6 +293,9 @@ public class Permanent {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
         this.powerToughnessSwitched = false;
+        this.basePowerToughnessOverriddenUntilEndOfTurn = false;
+        this.basePowerOverride = 0;
+        this.baseToughnessOverride = 0;
         this.cantBeBlocked = false;
         this.cantBlockThisTurn = false;
         this.mustAttackThisTurn = false;
