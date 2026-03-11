@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithM
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroySourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
@@ -891,6 +892,19 @@ public class DestructionResolutionService {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self != null) {
             tryDestroyAndLog(gameData, self, entry.getCard().getName());
+        }
+    }
+
+    /**
+     * Resolves a {@link DestroySourcePermanentEffect}, destroying the source permanent
+     * identified by the stack entry's sourcePermanentId (e.g. Ice Cage destroying itself
+     * when the enchanted creature becomes the target of a spell or ability).
+     */
+    @HandlesEffect(DestroySourcePermanentEffect.class)
+    void resolveDestroySourcePermanent(GameData gameData, StackEntry entry) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source != null) {
+            tryDestroyAndLog(gameData, source, entry.getCard().getName());
         }
     }
 

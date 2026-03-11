@@ -57,6 +57,10 @@ Effects in the `ON_BECOMES_BLOCKED` slot can be registered with `TriggerMode.PER
 
 Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the creature an equipment is attached to) becomes the target of a spell. Any targeting effect can be placed in this slot — e.g. `DealDamageToAnyTargetEffect` for "deal 2 damage to any target" when the equipped creature becomes targeted. Cards using this: `LivewireLash`.
 
+### Becomes-target-of-spell-or-ability trigger
+
+Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the permanent (or a permanent it is attached to) becomes the target of any spell or activated ability. The triggered ability goes directly on the stack with `sourcePermanentId` set to the source permanent. Cards using this: `IceCage`.
+
 ## Wrapper / modifier effects
 
 | Effect | Constructor | Description |
@@ -128,6 +132,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 | `DestroyTargetPermanentAndControllerLosesLifeEffect` | `(int lifeLoss)` | destroy target permanent and its controller loses N life. Life loss occurs regardless of whether destruction succeeds (e.g. indestructible) |
 | `DestroyTargetPermanentAndGiveControllerPoisonCountersEffect` | `(int poisonCounters)` or `()` (default 1) | destroy target permanent and give its controller N poison counters |
 | `DestroyBlockedCreatureAndSelfEffect` | `()` | destroy creature this blocks and itself (Deathtrap-style) |
+| `DestroySourcePermanentEffect` | `()` | destroy the source permanent (identified by sourcePermanentId on the stack entry). Used by Ice Cage's becomes-target trigger |
 | `DestroyCreatureBlockingThisEffect` | `()` | destroy creature that blocks this (combat trigger) |
 | `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect` | `()` | destroy target creature and gain life equal to its toughness (combat trigger, life gain occurs even if destroy fails). Works with both ON_BLOCK and ON_BECOMES_BLOCKED slots |
 | `DestroyTargetPermanentAndBoostSelfByManaValueEffect` | `()` | destroy target permanent and boost source creature +X/+0 until end of turn, where X is the permanent's mana value. Boost applies even if destruction fails (indestructible). Target type restriction handled by ability's target filter. Used by Hoard-Smelter Dragon |

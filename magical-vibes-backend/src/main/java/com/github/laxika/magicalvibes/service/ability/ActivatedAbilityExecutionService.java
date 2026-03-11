@@ -363,6 +363,7 @@ public class ActivatedAbilityExecutionService {
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
+        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {

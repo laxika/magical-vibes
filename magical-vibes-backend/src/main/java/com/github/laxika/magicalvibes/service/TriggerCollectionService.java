@@ -269,6 +269,9 @@ public class TriggerCollectionService {
                             && attached.getAttachedTo().equals(targetPermanent.getId())) {
                         collectBecomesTargetTriggers(gameData, attached, controllerId, targetPermanent);
                         collectBecomesTargetOfOpponentSpellTriggers(gameData, attached, controllerId, spellEntry);
+                        // CR 603.3b: triggered ability is controlled by the controller of the
+                        // permanent that has it (the aura/equipment), not the enchanted creature.
+                        collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId);
                     }
                 }
             }
@@ -276,6 +279,43 @@ public class TriggerCollectionService {
 
         if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
             processNextSpellTargetTrigger(gameData);
+        }
+    }
+
+    /**
+     * Checks becomes-target triggers for activated/triggered abilities that target permanents.
+     * Must be called after an ability is pushed onto the stack with a target permanent.
+     */
+    public void checkBecomesTargetOfAbilityTriggers(GameData gameData) {
+        if (gameData.stack.isEmpty()) return;
+        StackEntry abilityEntry = gameData.stack.getLast();
+        List<UUID> targetIds = new ArrayList<>();
+        if (abilityEntry.getTargetPermanentId() != null
+                && abilityEntry.getTargetZone() == null
+                && !abilityEntry.isNonTargeting()) {
+            targetIds.add(abilityEntry.getTargetPermanentId());
+        }
+        if (abilityEntry.getTargetPermanentIds() != null) {
+            targetIds.addAll(abilityEntry.getTargetPermanentIds());
+        }
+
+        for (UUID targetId : targetIds) {
+            if (gameData.playerIds.contains(targetId)) continue;
+
+            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+            if (targetPermanent == null) continue;
+
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) continue;
+                for (Permanent attached : battlefield) {
+                    if (attached.getAttachedTo() != null
+                            && attached.getAttachedTo().equals(targetPermanent.getId())) {
+                        // CR 603.3b: triggered ability controlled by the aura/equipment's controller
+                        collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId);
+                    }
+                }
+            }
         }
     }
 
@@ -290,6 +330,26 @@ public class TriggerCollectionService {
         String logEntry = targetedCreature.getCard().getName() + "'s triggered ability triggers — choose a target for damage.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} becomes-target-of-spell trigger queued", gameData.id, targetedCreature.getCard().getName());
+    }
+
+    private void collectBecomesTargetOfSpellOrAbilityTriggers(GameData gameData, Permanent source, UUID controllerId) {
+        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY);
+        if (effects.isEmpty()) return;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                controllerId,
+                source.getCard().getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                source.getId()
+        );
+        gameData.stack.add(entry);
+
+        String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} becomes-target-of-spell-or-ability trigger queued", gameData.id, source.getCard().getName());
     }
 
     private void collectBecomesTargetOfOpponentSpellTriggers(GameData gameData, Permanent source, UUID controllerId, StackEntry spellEntry) {
