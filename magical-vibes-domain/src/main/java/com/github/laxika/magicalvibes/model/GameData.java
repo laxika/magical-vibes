@@ -166,6 +166,9 @@ public class GameData {
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
+    public final Set<UUID> playersDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
 
@@ -368,6 +371,7 @@ public class GameData {
             s.addAll(v);
             copy.combatDamageToPlayersThisTurn.put(k, s);
         });
+        copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, ConcurrentHashMap.newKeySet()));

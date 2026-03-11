@@ -68,6 +68,9 @@ public class LandTapTriggerCollectorService {
                 int currentLife = gameData.playerLifeTotals.getOrDefault(tappingPlayerId, 20);
                 gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
             }
+            if (effectiveDamage > 0) {
+                gameData.playersDealtDamageThisTurn.add(tappingPlayerId);
+            }
         }
 
         return true;

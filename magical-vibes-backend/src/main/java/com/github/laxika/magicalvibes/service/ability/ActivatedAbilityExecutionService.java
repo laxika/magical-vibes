@@ -286,6 +286,9 @@ public class ActivatedAbilityExecutionService {
                             log.info("Game {} - {} takes {} damage from {}", gameData.id, player.getUsername(), effectiveDamage, cardName);
                         }
                     }
+                    if (effectiveDamage > 0) {
+                        gameData.playersDealtDamageThisTurn.add(playerId);
+                    }
                 }
             }
         }

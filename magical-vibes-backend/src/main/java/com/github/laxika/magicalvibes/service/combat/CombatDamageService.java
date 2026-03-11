@@ -778,6 +778,11 @@ public class CombatDamageService {
             String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + state.poisonDamageToDefendingPlayer + " poison counters.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
+
+        // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
+        if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
+            gameData.playersDealtDamageThisTurn.add(defenderId);
+        }
     }
 
     private void applyPlaneswalkerDamage(GameData gameData, CombatDamageState state) {

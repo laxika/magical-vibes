@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessOpponentDealtDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
@@ -331,6 +332,7 @@ public class CombatAttackService {
         if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
         if (isCantAttackUnlessBattlefieldCount(gameData, creature)) return false;
         if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
+        if (isCantAttackUnlessOpponentDealtDamage(gameData, creature)) return false;
         return true;
     }
 
@@ -340,6 +342,20 @@ public class CombatAttackService {
         if (!hasRestriction) return false;
         int poison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
         return poison <= 0;
+    }
+
+    private boolean isCantAttackUnlessOpponentDealtDamage(GameData gameData, Permanent creature) {
+        boolean hasRestriction = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackUnlessOpponentDealtDamageThisTurnEffect.class::isInstance);
+        if (!hasRestriction) return false;
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        // Check if any opponent of the creature's controller has been dealt damage this turn
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(controllerId) && gameData.playersDealtDamageThisTurn.contains(playerId)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean isCantAttackDueToLandRestriction(GameData gameData, Permanent attacker,

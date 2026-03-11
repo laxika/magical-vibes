@@ -68,6 +68,9 @@ public class DiscardTriggerCollectorService {
                 int currentLife = gameData.playerLifeTotals.getOrDefault(discardingPlayerId, 20);
                 gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
             }
+            if (effectiveDamage > 0) {
+                gameData.playersDealtDamageThisTurn.add(discardingPlayerId);
+            }
         }
 
         return true;
