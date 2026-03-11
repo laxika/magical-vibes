@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
@@ -114,6 +115,20 @@ public class TapUntapResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
+    @HandlesEffect(SkipNextUntapOnTargetEffect.class)
+    private void resolveSkipNextUntapOnTarget(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        target.setSkipUntapCount(target.getSkipUntapCount() + 1);
+
+        String logEntry = target.getCard().getName() + " won't untap during its controller's next untap step.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} skip next untap set", gameData.id, target.getCard().getName());
     }
 
     @HandlesEffect(PreventTargetUntapWhileSourceTappedEffect.class)

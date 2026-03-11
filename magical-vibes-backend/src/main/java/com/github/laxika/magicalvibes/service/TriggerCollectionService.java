@@ -259,6 +259,7 @@ public class TriggerCollectionService {
             if (controllerId == null) continue;
 
             collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent);
+            collectBecomesTargetOfOpponentSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
 
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -267,6 +268,7 @@ public class TriggerCollectionService {
                     if (attached.getAttachedTo() != null
                             && attached.getAttachedTo().equals(targetPermanent.getId())) {
                         collectBecomesTargetTriggers(gameData, attached, controllerId, targetPermanent);
+                        collectBecomesTargetOfOpponentSpellTriggers(gameData, attached, controllerId, spellEntry);
                     }
                 }
             }
@@ -288,6 +290,34 @@ public class TriggerCollectionService {
         String logEntry = targetedCreature.getCard().getName() + "'s triggered ability triggers — choose a target for damage.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} becomes-target-of-spell trigger queued", gameData.id, targetedCreature.getCard().getName());
+    }
+
+    private void collectBecomesTargetOfOpponentSpellTriggers(GameData gameData, Permanent source, UUID controllerId, StackEntry spellEntry) {
+        // Only trigger if the spell/ability is controlled by an opponent
+        if (controllerId.equals(spellEntry.getControllerId())) return;
+
+        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL);
+        if (effects.isEmpty()) return;
+
+        for (CardEffect effect : effects) {
+            if (effect instanceof CounterUnlessPaysEffect counterEffect) {
+                // Put counter-unless-pays directly on the stack targeting the spell
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source.getCard(),
+                        controllerId,
+                        source.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(counterEffect)),
+                        spellEntry.getCard().getId(),
+                        Zone.STACK
+                );
+                gameData.stack.add(entry);
+
+                String logEntry = source.getCard().getName() + "'s triggered ability triggers — counter unless controller pays {" + counterEffect.amount() + "}.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} becomes-target-of-opponent-spell counter trigger queued", gameData.id, source.getCard().getName());
+            }
+        }
     }
 
     // ── Dealt-damage-to-creature triggers ──────────────────────────────
