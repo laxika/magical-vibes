@@ -518,7 +518,9 @@ public class PlayerInteractionResolutionService {
                 entry.getControllerId(),
                 List.of(mayEffect.wrapped()),
                 entry.getCard().getName() + " - " + mayEffect.prompt(),
-                entry.getTargetPermanentId()
+                entry.getTargetPermanentId(),
+                null,
+                entry.getSourcePermanentId()
         ));
     }
 

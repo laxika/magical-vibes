@@ -262,14 +262,27 @@ public class MayAbilityHandlerService {
         if (accepted && isTargetedPermanentEffect && ability.targetCardId() != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, ability.targetCardId());
             if (target != null) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        ability.sourceCard(),
-                        ability.controllerId(),
-                        ability.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(ability.effects()),
-                        0
-                );
+                StackEntry entry;
+                if (ability.sourcePermanentId() != null) {
+                    entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            ability.sourceCard(),
+                            ability.controllerId(),
+                            ability.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(ability.effects()),
+                            null,
+                            ability.sourcePermanentId()
+                    );
+                } else {
+                    entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            ability.sourceCard(),
+                            ability.controllerId(),
+                            ability.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(ability.effects()),
+                            0
+                    );
+                }
                 entry.setTargetPermanentId(ability.targetCardId());
                 gameData.stack.add(entry);
 
