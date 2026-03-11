@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -61,7 +60,7 @@ public class ValidTargetService {
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
             boolean multiTargetAllowsPlayers = isMultiTarget && card.getEffects(EffectSlot.SPELL).stream()
-                    .anyMatch(e -> e instanceof DealOrderedDamageToAnyTargetsEffect);
+                    .anyMatch(CardEffect::canTargetPlayer);
             boolean singleTargetAllowsPlayers = !isMultiTarget;
 
             if (singleTargetAllowsPlayers || multiTargetAllowsPlayers) {

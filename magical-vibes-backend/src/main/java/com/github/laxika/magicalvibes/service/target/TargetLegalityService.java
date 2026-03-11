@@ -190,7 +190,7 @@ public class TargetLegalityService {
         validateMultiTargetCount(targetPermanentIds, card.getMinTargets(), card.getMaxTargets());
 
         boolean allowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(e -> e.canTargetPlayer() && e.canTargetPermanent());
+                .anyMatch(CardEffect::canTargetPlayer);
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
         for (int i = 0; i < targetPermanentIds.size(); i++) {
             UUID targetId = targetPermanentIds.get(i);

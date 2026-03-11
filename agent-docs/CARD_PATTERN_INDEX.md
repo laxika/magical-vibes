@@ -28,6 +28,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Burn + drain by land count | `c/Corrupt.java` | DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect — damage and life gain equal to controlled Swamps |
 | X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |
 | Multi-target damage | `c/ConeOfFlame.java` | DealOrderedDamageToAnyTargetsEffect |
+| Any number of target players life gain | `h/HuntersFeast.java` | EachTargetPlayerGainsLifeEffect(6) + setMinTargets(0) + setMaxTargets(99) — any number of target players each gain N life |
 | X burn divided evenly | `f/Fireball.java` | DealXDamageDividedEvenlyAmongTargetsEffect + setMinTargets(1) + setMaxTargets(99) + setAdditionalCostPerExtraTarget(1) — X divided evenly (rounded down) among any number of targets, costs {1} extra per target beyond first |
 | Damage all creatures | `p/Pyroclasm.java` | MassDamageEffect |
 | Modal spell (choose one) | `s/Slagstorm.java` | ChooseOneEffect wrapping multiple CardEffects (e.g. MassDamageEffect + DealDamageToEachPlayerEffect). Mode chosen at cast time via `xValue` parameter (0-based index). Test with `castSorcery(player, idx, modeIndex)` |

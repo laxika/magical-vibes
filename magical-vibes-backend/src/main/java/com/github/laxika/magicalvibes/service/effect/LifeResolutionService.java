@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEf
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetPlayersLifeTotalsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeAndControllerGainsLifeLostEffect;
@@ -596,6 +597,20 @@ public class LifeResolutionService {
             return;
         }
         applyGainLife(gameData, targetPlayerId, effect.amount());
+    }
+
+    @HandlesEffect(EachTargetPlayerGainsLifeEffect.class)
+    private void resolveEachTargetPlayerGainsLife(GameData gameData, StackEntry entry, EachTargetPlayerGainsLifeEffect effect) {
+        List<UUID> targets = entry.getTargetPermanentIds();
+        if (targets == null || targets.isEmpty()) {
+            return;
+        }
+        for (UUID targetPlayerId : targets) {
+            if (!gameData.playerIds.contains(targetPlayerId)) {
+                continue;
+            }
+            applyGainLife(gameData, targetPlayerId, effect.amount());
+        }
     }
 
     @HandlesEffect(GiveEnchantedPermanentControllerPoisonCountersEffect.class)
