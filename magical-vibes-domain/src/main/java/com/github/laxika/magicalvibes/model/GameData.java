@@ -82,6 +82,8 @@ public class GameData {
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID pendingSacrificeSelfToDestroySourceId;
     public int pendingProliferateCount;
+    /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
+    public final List<Permanent> pendingLethalDamageDestructions = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     public Integer chosenXValue;

@@ -11,7 +11,7 @@
     <span class="card-type">{{ typeLine }}</span>
   </div>
   @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
-    <div class="token-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
+    <div class="token-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
   }
 } @else {
   <div class="title-bar">
@@ -48,7 +48,7 @@
       <div class="card-flavor-text">{{ flavorText }}</div>
     }
     @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
-      <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
+      <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
     }
     @if (displayLoyalty != null) {
       <div class="card-loyalty">{{ displayLoyalty }}</div>
@@ -62,6 +62,9 @@
       <span class="card-set-badge" [attr.data-rarity]="rarity">{{ card.setCode }} #{{ card.collectorNumber }}</span>
     }
   </div>
+}
+@if (permanent && permanent.markedDamage > 0) {
+  <div class="card-damage-badge">{{ permanent.markedDamage }} dmg</div>
 }
 @if (permanent && permanent.regenerationShield > 0) {
   <div class="card-regen-badge">Regen x{{ permanent.regenerationShield }}</div>

@@ -168,6 +168,9 @@ public class CombatDamageService {
         // Collect ON_DEALT_DAMAGE trigger data before dead creatures are removed from battlefield
         List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
 
+        // Update markedDamage on creatures that took combat damage (CR 704.5g)
+        updateMarkedDamageFromCombat(atkBf, defBf, state);
+
         List<String> deadCreatureNames = removeDeadCreatures(gameData, state, atkBf, defBf, activeId, defenderId);
 
         applyPlayerDamage(gameData, state, defenderId);
@@ -703,6 +706,30 @@ public class CombatDamageService {
 
     // ===== Creature death and player damage =====
 
+    /**
+     * Updates markedDamage on creatures from combat damage maps (CR 704.5g).
+     * Called after determineCasualties so the prevention-applied values are final.
+     */
+    private void updateMarkedDamageFromCombat(List<Permanent> atkBf, List<Permanent> defBf,
+                                               CombatDamageState state) {
+        for (var entry : state.atkDamageTaken.entrySet()) {
+            int idx = entry.getKey();
+            int dmg = entry.getValue();
+            if (dmg > 0 && idx < atkBf.size()) {
+                Permanent atk = atkBf.get(idx);
+                atk.setMarkedDamage(atk.getMarkedDamage() + dmg);
+            }
+        }
+        for (var entry : state.defDamageTaken.entrySet()) {
+            int idx = entry.getKey();
+            int dmg = entry.getValue();
+            if (dmg > 0 && idx < defBf.size()) {
+                Permanent def = defBf.get(idx);
+                def.setMarkedDamage(def.getMarkedDamage() + dmg);
+            }
+        }
+    }
+
     private List<String> removeDeadCreatures(GameData gameData, CombatDamageState state,
                                               List<Permanent> atkBf, List<Permanent> defBf,
                                               UUID activeId, UUID defenderId) {
@@ -814,7 +841,7 @@ public class CombatDamageService {
             int effToughness = gameQueryService.getEffectiveToughness(gameData, battlefield.get(idx));
             if (effToughness <= 0) {
                 deadSet.add(idx);
-            } else if (gameQueryService.isLethalDamage(dmg, effToughness, deathtouchSet.contains(idx))
+            } else if (gameQueryService.isLethalDamage(battlefield.get(idx).getMarkedDamage() + dmg, effToughness, deathtouchSet.contains(idx))
                     && !gameQueryService.hasKeyword(gameData, battlefield.get(idx), Keyword.INDESTRUCTIBLE)
                     && !graveyardService.tryRegenerate(gameData, battlefield.get(idx))) {
                 deadSet.add(idx);

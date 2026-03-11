@@ -197,6 +197,7 @@ export interface Permanent {
   loyaltyCounters: number;
   chargeCounters: number;
   attackTargetId: string | null;
+  markedDamage: number;
 }
 
 export interface StackEntry {

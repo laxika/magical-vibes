@@ -211,7 +211,7 @@ public class GameTestHarness {
                 triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
-                gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService);
+                gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService);
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         CombatAttackService combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, sessionManager, triggerCollectionService, combatTriggerService);

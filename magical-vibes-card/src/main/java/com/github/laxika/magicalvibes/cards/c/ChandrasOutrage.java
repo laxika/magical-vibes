@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 public class ChandrasOutrage extends Card {
 
     public ChandrasOutrage() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureControllerEffect(2));
         addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureControllerEffect(2));
     }
 }

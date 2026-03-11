@@ -626,12 +626,15 @@ public class DamageResolutionService {
             return gameQueryService.getEffectiveToughness(gameData, target) <= 0;
         }
 
+        // Accumulate damage on creature (CR 704.5g — lethal when total marked damage >= toughness)
+        target.setMarkedDamage(target.getMarkedDamage() + damage);
+
         gameBroadcastService.logAndBroadcast(gameData,
                 sourceName + " deals " + damage + " damage to " + target.getCard().getName() + ".");
         log.info("Game {} - {} deals {} damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
 
         boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
-        boolean isLethal = gameQueryService.isLethalDamage(damage, gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
+        boolean isLethal = gameQueryService.isLethalDamage(target.getMarkedDamage(), gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
         if (isLethal) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
                 gameBroadcastService.logAndBroadcast(gameData,
@@ -664,8 +667,7 @@ public class DamageResolutionService {
 
     private void dealDamageAndDestroyIfLethal(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
         if (dealCreatureDamage(gameData, entry, target, rawDamage, damageSource)) {
-            destroyPermanent(gameData, target);
-            permanentRemovalService.removeOrphanedAuras(gameData);
+            gameData.pendingLethalDamageDestructions.add(target);
         }
     }
 

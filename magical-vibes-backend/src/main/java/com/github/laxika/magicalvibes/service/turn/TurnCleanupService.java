@@ -57,6 +57,8 @@ public class TurnCleanupService {
      */
     public void resetEndOfTurnModifiers(GameData gameData) {
         gameData.forEachPermanent((playerId, p) -> {
+            // CR 514.2 — remove all damage marked on permanents during cleanup step
+            p.setMarkedDamage(0);
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
                     || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()

@@ -310,6 +310,13 @@ img.card-art {
   border-color: rgba(231, 76, 60, 0.5);
 }
 
+/* Damaged state */
+.card-pt.damaged {
+  color: #e67e22;
+  background: rgba(230, 126, 34, 0.3);
+  border-color: rgba(230, 126, 34, 0.5);
+}
+
 /* Loyalty box */
 .card-loyalty {
   position: absolute;
@@ -437,7 +444,28 @@ img.card-art {
   border-color: rgba(231, 76, 60, 0.5);
 }
 
+.token-pt.damaged {
+  color: #e67e22;
+  background: rgba(230, 126, 34, 0.3);
+  border-color: rgba(230, 126, 34, 0.5);
+}
+
 /* Badges */
+.card-damage-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #c0392b;
+  color: #f5e6c8;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-family: 'Cinzel', Georgia, serif;
+  z-index: 3;
+}
+
 .card-regen-badge {
   position: absolute;
   bottom: -8px;

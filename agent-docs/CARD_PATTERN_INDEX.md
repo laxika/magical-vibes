@@ -80,7 +80,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateXCreatureTokenEffect + ShuffleIntoLibraryEffect |
 | Bite (pump + bite) | `a/AssertPerfection.java` | BoostFirstTargetCreatureEffect + FirstTargetDealsPowerDamageToSecondTargetEffect, multi-target with per-position filters |
 | Pump + debuff (two targets) | `l/LeechingBite.java` | BoostFirstTargetCreatureEffect + BoostSecondTargetCreatureEffect, multi-target with creature filters |
-| Damage creature + destroy equipment | `t/TurnToSlag.java` | DestroyEquipmentAttachedToTargetCreatureEffect + DealDamageToTargetCreatureEffect — equipment destruction placed before damage (engine destroys creatures immediately on lethal) |
+| Damage creature + destroy equipment | `t/TurnToSlag.java` | DestroyEquipmentAttachedToTargetCreatureEffect + DealDamageToTargetCreatureEffect — effect order doesn't matter; lethal damage destruction is deferred until all effects on the stack entry resolve |
 | Sacrifice artifact spell cost + tokens | `k/KuldothaRebirth.java` | SacrificeArtifactCost + CreateCreatureTokenEffect — sacrifice artifact as additional spell cost |
 | Sacrifice permanent spell cost + burn | `a/Artillerize.java` | SacrificePermanentCost(PermanentAnyOfPredicate) + DealDamageToAnyTargetEffect — sacrifice artifact or creature as additional spell cost |
 | Sacrifice creature spell cost + power-based mass debuff | `i/IchorExplosion.java` | SacrificeCreatureCost(false, true) + BoostAllCreaturesXEffect(-1, -1) — sacrifice creature, all creatures get -X/-X where X = sacrificed creature's power |

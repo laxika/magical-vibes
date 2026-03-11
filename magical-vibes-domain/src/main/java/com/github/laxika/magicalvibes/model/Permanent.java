@@ -85,6 +85,8 @@ public class Permanent {
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
     @Setter private int skipUntapCount;
+    /** Accumulated damage marked on this creature (CR 704.5g). Reset during cleanup step. */
+    @Setter private int markedDamage;
     /** Colors permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other colors").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  For transient color grants from static effects, see {@link #transientColors}. */
@@ -162,6 +164,7 @@ public class Permanent {
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.skipUntapCount = source.skipUntapCount;
+        this.markedDamage = source.markedDamage;
         this.grantedColors.addAll(source.grantedColors);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
     }

@@ -36,8 +36,8 @@ class ChandrasOutrageTest extends BaseCardTest {
         ChandrasOutrage card = new ChandrasOutrage();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetCreatureControllerEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealDamageToTargetCreatureControllerEffect.class);
     }
 
     @Test
@@ -71,7 +71,7 @@ class ChandrasOutrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        // Large Beast is 4/5, survives 4 damage
+        // Large Beast is 4/5, survives 4 damage (4 marked damage < 5 toughness)
         harness.assertOnBattlefield(player2, "Large Beast");
         // Controller still takes 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

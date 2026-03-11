@@ -111,7 +111,23 @@ public class EffectResolutionService {
         }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
+        destroyPendingLethalDamageCreatures(gameData);
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Destroys all creatures that took lethal damage during effect resolution.
+     * Deferred to this point so that all effects on a stack entry see the full battlefield
+     * before any lethally-damaged creature is removed (matching MTG state-based action timing).
+     */
+    private void destroyPendingLethalDamageCreatures(GameData gameData) {
+        if (gameData.pendingLethalDamageDestructions.isEmpty()) return;
+        for (Permanent target : gameData.pendingLethalDamageDestructions) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, target);
+            gameBroadcastService.logAndBroadcast(gameData, target.getCard().getName() + " is destroyed.");
+            log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
+        }
+        gameData.pendingLethalDamageDestructions.clear();
     }
 
     /**
