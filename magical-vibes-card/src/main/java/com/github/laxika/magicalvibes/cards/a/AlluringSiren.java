@@ -19,7 +19,7 @@ public class AlluringSiren extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MustAttackThisTurnEffect()),
+                List.of(new MustAttackThisTurnEffect(true)),
                 "{T}: Target creature an opponent controls attacks you this turn if able.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

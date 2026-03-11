@@ -6,8 +6,14 @@ package com.github.laxika.magicalvibes.model.effect;
  * via {@code resetModifiers()}.
  * Per CR 508.1d, the controller is not required to pay any attack costs
  * (e.g. Ghostly Prison tax) even if this effect is present.
+ *
+ * @param forceAttackController if {@code true}, the creature must specifically attack the
+ *                              controller of this effect (e.g. Alluring Siren: "attacks you
+ *                              this turn if able"). If {@code false}, the creature must attack
+ *                              but may choose any legal target (e.g. Incite: "attacks this turn
+ *                              if able").
  */
-public record MustAttackThisTurnEffect() implements CardEffect {
+public record MustAttackThisTurnEffect(boolean forceAttackController) implements CardEffect {
     @Override
     public boolean canTargetPermanent() {
         return true;

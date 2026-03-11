@@ -47,22 +47,28 @@ public class CombatRestrictionResolutionService {
     }
 
     @HandlesEffect(MustAttackThisTurnEffect.class)
-    private void resolveMustAttackThisTurn(GameData gameData, StackEntry entry) {
+    private void resolveMustAttackThisTurn(GameData gameData, StackEntry entry, MustAttackThisTurnEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
         }
 
         target.setMustAttackThisTurn(true);
-        // Force the creature to attack the ability's controller specifically, not their planeswalkers
-        // (Scryfall ruling: "it must attack you, not the planeswalker")
-        target.setMustAttackTargetId(entry.getControllerId());
 
-        String controllerName = gameData.playerIdToName.get(entry.getControllerId());
-        String logEntry = target.getCard().getName() + " must attack " + controllerName + " this turn if able.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        if (effect.forceAttackController()) {
+            // Force the creature to attack the ability's controller specifically, not their planeswalkers
+            // (Scryfall ruling: "it must attack you, not the planeswalker")
+            target.setMustAttackTargetId(entry.getControllerId());
 
-        log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(), controllerName);
+            String controllerName = gameData.playerIdToName.get(entry.getControllerId());
+            String logEntry = target.getCard().getName() + " must attack " + controllerName + " this turn if able.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(), controllerName);
+        } else {
+            String logEntry = target.getCard().getName() + " must attack this turn if able.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} must attack this turn if able", gameData.id, target.getCard().getName());
+        }
     }
 
     @HandlesEffect(MustBlockSourceEffect.class)
