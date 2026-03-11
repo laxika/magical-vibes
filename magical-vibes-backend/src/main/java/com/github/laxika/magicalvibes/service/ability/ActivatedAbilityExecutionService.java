@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -251,6 +252,26 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
             } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
                 gameData.playerManaPools.get(playerId).addMyrOnlyColorless(mom.amount());
+            } else if (effect instanceof AddManaPerControlledSubtypeEffect manaPerSubtype) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                int count = 0;
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        if (p.getCard().getSubtypes().contains(manaPerSubtype.subtype())) {
+                            count++;
+                        }
+                    }
+                }
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                for (int i = 0; i < count; i++) {
+                    pool.add(manaPerSubtype.color());
+                    if (isCreatureSource) {
+                        pool.addCreatureMana(manaPerSubtype.color(), 1);
+                    }
+                }
+                String logEntry = player.getUsername() + " adds " + count + " " + manaPerSubtype.color().getCode()
+                        + " (" + manaPerSubtype.subtype().getDisplayName() + "s controlled).";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
                 int count = permanent.getChargeCounters();
                 if (count > 0) {
