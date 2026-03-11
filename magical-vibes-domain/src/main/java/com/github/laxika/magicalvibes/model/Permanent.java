@@ -241,34 +241,36 @@ public class Permanent {
     }
 
     private int getRawPower() {
-        if (animatedUntilEndOfTurn) {
-            return animatedPower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        int basePower;
+        if (basePowerToughnessOverriddenUntilEndOfTurn) {
+            // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
+            basePower = basePowerOverride;
+        } else if (animatedUntilEndOfTurn) {
+            basePower = animatedPower;
+        } else if (permanentlyAnimated) {
+            basePower = permanentAnimatedPower;
+        } else if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
+            basePower = 8;
+        } else {
+            basePower = card.getPower() != null ? card.getPower() : 0;
         }
-        if (permanentlyAnimated) {
-            return permanentAnimatedPower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
-        }
-        if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
-            return 8 + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
-        }
-        int basePower = basePowerToughnessOverriddenUntilEndOfTurn
-                ? basePowerOverride
-                : (card.getPower() != null ? card.getPower() : 0);
         return basePower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }
 
     private int getRawToughness() {
-        if (animatedUntilEndOfTurn) {
-            return animatedToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        int baseToughness;
+        if (basePowerToughnessOverriddenUntilEndOfTurn) {
+            // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
+            baseToughness = baseToughnessOverride;
+        } else if (animatedUntilEndOfTurn) {
+            baseToughness = animatedToughness;
+        } else if (permanentlyAnimated) {
+            baseToughness = permanentAnimatedToughness;
+        } else if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
+            baseToughness = 8;
+        } else {
+            baseToughness = card.getToughness() != null ? card.getToughness() : 0;
         }
-        if (permanentlyAnimated) {
-            return permanentAnimatedToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
-        }
-        if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
-            return 8 + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
-        }
-        int baseToughness = basePowerToughnessOverriddenUntilEndOfTurn
-                ? baseToughnessOverride
-                : (card.getToughness() != null ? card.getToughness() : 0);
         return baseToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
     }
 
