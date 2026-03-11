@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEff
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "135")
+@CardRegistration(set = "M11", collectorNumber = "93")
 public class DiabolicTutor extends Card {
 
     public DiabolicTutor() {
