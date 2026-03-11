@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedEvenlyAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -404,6 +405,66 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToTargetAndTheirCreaturesEffect} — deals a fixed amount of damage
+     * to target player or planeswalker AND each creature that player or that planeswalker's controller controls.
+     */
+    @HandlesEffect(DealDamageToTargetAndTheirCreaturesEffect.class)
+    void resolveDealDamageToTargetAndTheirCreatures(GameData gameData, StackEntry entry, DealDamageToTargetAndTheirCreaturesEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        String cardName = entry.getCard().getName();
+
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        // Determine the affected player: if target is a player, use directly;
+        // if target is a planeswalker, use its controller
+        UUID affectedPlayerId;
+        boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+        if (targetIsPlayer) {
+            affectedPlayerId = targetId;
+            dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+        } else {
+            Permanent targetPw = gameQueryService.findPermanentById(gameData, targetId);
+            if (targetPw == null) return;
+            affectedPlayerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (affectedPlayerId == null) return;
+
+            if (gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard())) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + "'s damage to " + targetPw.getCard().getName() + " is prevented.");
+            } else {
+                if (dealCreatureDamage(gameData, entry, targetPw, rawDamage)) {
+                    destroyPermanent(gameData, targetPw);
+                }
+            }
+        }
+
+        // Deal damage to each creature the affected player controls
+        List<Permanent> battlefield = gameData.playerBattlefields.get(affectedPlayerId);
+        if (battlefield != null) {
+            List<Permanent> destroyed = new ArrayList<>();
+            for (Permanent creature : new ArrayList<>(battlefield)) {
+                if (!gameQueryService.isCreature(gameData, creature)) continue;
+                // Skip the planeswalker target (already dealt damage above)
+                if (!targetIsPlayer && creature.getId().equals(targetId)) continue;
+                if (gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            cardName + "'s damage to " + creature.getCard().getName() + " is prevented.");
+                    continue;
+                }
+                if (dealCreatureDamage(gameData, entry, creature, rawDamage)) {
+                    destroyed.add(creature);
+                }
+            }
+            destroyAllLethal(gameData, destroyed);
+        }
+
         gameOutcomeService.checkWinCondition(gameData);
     }
 

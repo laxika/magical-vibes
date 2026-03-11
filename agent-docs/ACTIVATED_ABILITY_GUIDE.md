@@ -11,7 +11,8 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `effects` | `List<CardEffect>` | Effects to resolve (costs first, then actual effects) |
 | `description` | `String` | Rules text shown to the player (e.g. `"{T}: Draw a card."`) |
 | `targetFilter` | `TargetFilter` | Restricts valid targets (permanent filter or stack filter) |
-| `loyaltyCost` | `Integer` | Planeswalker loyalty cost (e.g. `+1`, `-2`, `-8`). `null` for non-planeswalker abilities |
+| `loyaltyCost` | `Integer` | Planeswalker loyalty cost (e.g. `+1`, `-2`, `-8`). `null` for non-planeswalker abilities. `0` when `variableLoyaltyCost` is `true` |
+| `variableLoyaltyCost` | `boolean` | `true` for -X loyalty abilities where X is chosen by the player. The chosen X is passed as xValue |
 | `maxActivationsPerTurn` | `Integer` | Maximum activations per turn. `null` for unlimited |
 | `timingRestriction` | `ActivationTimingRestriction` | When the ability can be activated. `null` for default (instant speed) |
 
@@ -183,7 +184,27 @@ Cards: `AjaniOutlandChaperone`
 
 ---
 
-### 7. Equipment ability (equip with sorcery speed + controlled creature filter)
+### 7. Variable loyalty ability (-X)
+
+```java
+ActivatedAbility.variableLoyaltyAbility(effects, description, targetFilter)
+```
+
+**Use when:** Planeswalker -X loyalty ability where the player chooses X (e.g. "−X: Deal X damage to target creature"). The chosen X is stored as `xValue` on the stack entry and also used as the loyalty cost (removing X counters).
+
+```java
+// −X: Chandra Nalaar deals X damage to target creature.
+ActivatedAbility.variableLoyaltyAbility(
+    List.of(new DealXDamageToTargetCreatureEffect()),
+    "\u2212X: Chandra Nalaar deals X damage to target creature.",
+    null)
+```
+
+Cards: `ChandraNalaar`
+
+---
+
+### 8. Equipment ability (equip with sorcery speed + controlled creature filter)
 
 ```java
 new EquipActivatedAbility(manaCost)
@@ -195,7 +216,7 @@ Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `W
 
 ---
 
-### 8. Full constructor (all parameters)
+### 9. Full constructor (all parameters)
 
 ```java
 new ActivatedAbility(requiresTap, manaCost, effects,
@@ -206,7 +227,7 @@ new ActivatedAbility(requiresTap, manaCost, effects,
 
 ---
 
-### 9. Multi-target ability constructor
+### 10. Multi-target ability constructor
 
 ```java
 new ActivatedAbility(requiresTap, manaCost, effects, description,

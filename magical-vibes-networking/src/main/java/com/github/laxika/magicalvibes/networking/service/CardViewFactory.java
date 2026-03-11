@@ -74,6 +74,7 @@ public class CardViewFactory {
                 ability.getLoyaltyCost(),
                 ability.getMinTargets(),
                 ability.getMaxTargets(),
-                isManaAbility);
+                isManaAbility,
+                ability.isVariableLoyaltyCost());
     }
 }

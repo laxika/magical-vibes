@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
@@ -54,6 +55,20 @@ public class DamageTargetValidators {
                 || target.getCard().getType() == CardType.PLANESWALKER;
         if (!validPermanentType) {
             throw new IllegalStateException("Target must be a creature, planeswalker, or player");
+        }
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(DealDamageToTargetAndTheirCreaturesEffect.class)
+    public void validateDealDamageToTargetAndTheirCreatures(TargetValidationContext ctx) {
+        tvs.requireTarget(ctx);
+        if (ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
+            return;
+        }
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        if (target.getCard().getType() != CardType.PLANESWALKER
+                && !target.getCard().getAdditionalTypes().contains(CardType.PLANESWALKER)) {
+            throw new IllegalStateException("Target must be a player or planeswalker");
         }
         tvs.checkProtection(ctx, target);
     }

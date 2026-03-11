@@ -399,7 +399,7 @@ public class AbilityActivationService {
 
         // Validate loyalty ability restrictions
         if (ability.getLoyaltyCost() != null) {
-            validateAndPayLoyaltyCost(gameData, playerId, permanent, ability);
+            validateAndPayLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
         }
 
         // Validate tap requirement
@@ -811,7 +811,7 @@ public class AbilityActivationService {
         }
     }
 
-    private void validateAndPayLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {
+    private void validateAndPayLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
         // Sorcery-speed timing: must be active player, main phase, stack empty
         if (!playerId.equals(gameData.activePlayerId)) {
             throw new IllegalStateException("Loyalty abilities can only be activated on your turn");
@@ -826,11 +826,25 @@ public class AbilityActivationService {
         if (permanent.isLoyaltyAbilityUsedThisTurn()) {
             throw new IllegalStateException("Only one loyalty ability per planeswalker per turn");
         }
-        // For negative loyalty costs, check sufficient loyalty
-        int loyaltyCost = ability.getLoyaltyCost();
-        if (loyaltyCost < 0 && permanent.getLoyaltyCounters() < Math.abs(loyaltyCost)) {
-            throw new IllegalStateException("Not enough loyalty counters");
+
+        int loyaltyCost;
+        if (ability.isVariableLoyaltyCost()) {
+            // Variable loyalty cost (-X): player chooses X via xValue, cost is -X
+            if (effectiveXValue < 0) {
+                throw new IllegalStateException("X value cannot be negative");
+            }
+            if (effectiveXValue > permanent.getLoyaltyCounters()) {
+                throw new IllegalStateException("Not enough loyalty counters");
+            }
+            loyaltyCost = -effectiveXValue;
+        } else {
+            loyaltyCost = ability.getLoyaltyCost();
+            // For negative loyalty costs, check sufficient loyalty
+            if (loyaltyCost < 0 && permanent.getLoyaltyCounters() < Math.abs(loyaltyCost)) {
+                throw new IllegalStateException("Not enough loyalty counters");
+            }
         }
+
         // Pay loyalty cost
         permanent.setLoyaltyCounters(permanent.getLoyaltyCounters() + loyaltyCost);
         permanent.setLoyaltyAbilityUsedThisTurn(true);

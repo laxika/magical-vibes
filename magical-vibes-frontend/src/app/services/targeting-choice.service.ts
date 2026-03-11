@@ -678,7 +678,7 @@ export class TargetingChoiceService {
   }
 
   canUseAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
-    if (ability.loyaltyCost != null) {
+    if (ability.loyaltyCost != null || ability.variableLoyaltyCost) {
       const g = this.gameSignal();
       if (!g) return false;
       const myId = this.websocketService.currentUser?.userId;
@@ -688,8 +688,10 @@ export class TargetingChoiceService {
       if (g.currentStep !== 'PRECOMBAT_MAIN' && g.currentStep !== 'POSTCOMBAT_MAIN') return false;
       // Stack must be empty
       if (g.stack.length > 0) return false;
+      // Variable loyalty cost: just need the planeswalker to exist (X can be 0)
+      if (ability.variableLoyaltyCost) return true;
       // Negative loyalty cost: check sufficient loyalty
-      if (ability.loyaltyCost < 0 && perm.loyaltyCounters < Math.abs(ability.loyaltyCost)) return false;
+      if (ability.loyaltyCost! < 0 && perm.loyaltyCounters < Math.abs(ability.loyaltyCost!)) return false;
       return true;
     }
     if (ability.requiresTap) {
@@ -734,6 +736,18 @@ export class TargetingChoiceService {
 
   activateAbilityAtIndex(permanentIndex: number, abilityIndex: number, perm: Permanent): void {
     const ability = perm.card.activatedAbilities[abilityIndex];
+
+    // Check for variable loyalty cost (-X)
+    if (ability.variableLoyaltyCost) {
+      this.choosingXValue = true;
+      this.xValueCardIndex = permanentIndex;
+      this.xValueCardName = perm.card.name;
+      this.xValueInput = 0;
+      this.xValueMaximum = perm.loyaltyCounters;
+      this.targetingForAbility = true;
+      this.targetingAbilityIndex = abilityIndex;
+      return;
+    }
 
     // Check for X cost
     const hasXCost = ability.manaCost?.includes('{X}') ?? false;
