@@ -126,6 +126,9 @@ public class GameData {
     public boolean pendingSacrificeAttackingCreature;
     public int pendingForcedSacrificeCount;
     public UUID pendingForcedSacrificePlayerId;
+    public final List<PendingForcedSacrifice> pendingForcedSacrificeQueue = Collections.synchronizedList(new ArrayList<>());
+    /** Permanent IDs to sacrifice simultaneously once all players have made forced sacrifice choices. */
+    public final List<UUID> pendingSimultaneousSacrificeIds = Collections.synchronizedList(new ArrayList<>());
     public boolean pendingAwakeningCounterPlacement;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
@@ -341,6 +344,8 @@ public class GameData {
         copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
         copy.pendingForcedSacrificeCount = this.pendingForcedSacrificeCount;
         copy.pendingForcedSacrificePlayerId = this.pendingForcedSacrificePlayerId;
+        copy.pendingForcedSacrificeQueue.addAll(this.pendingForcedSacrificeQueue);
+        copy.pendingSimultaneousSacrificeIds.addAll(this.pendingSimultaneousSacrificeIds);
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
         copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
 

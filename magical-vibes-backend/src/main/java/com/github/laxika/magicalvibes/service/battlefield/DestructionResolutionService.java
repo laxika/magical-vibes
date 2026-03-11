@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoos
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
@@ -654,6 +656,94 @@ public class DestructionResolutionService {
             if (playerId.equals(controllerId)) continue;
             performSacrificeCreatureForPlayer(gameData, playerId);
         }
+    }
+
+    /**
+     * Resolves an {@link EachPlayerSacrificesPermanentsEffect}, forcing each player (in APNAP
+     * order) to sacrifice a number of permanents matching the filter. Players with fewer
+     * matching permanents than required sacrifice all of them automatically. Players with
+     * more are prompted to choose.
+     */
+    @HandlesEffect(EachPlayerSacrificesPermanentsEffect.class)
+    void resolveEachPlayerSacrificesPermanents(GameData gameData, StackEntry entry,
+                                                EachPlayerSacrificesPermanentsEffect effect) {
+        // Per CR 101.4 and Destructive Force ruling (2010-08-15): active player chooses first,
+        // then each other player in turn order, then all chosen permanents are sacrificed at the
+        // same time. Collect all IDs to sacrifice and defer actual sacrifice until all choices
+        // are made.
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null || battlefield.isEmpty()) {
+                continue;
+            }
+
+            List<Permanent> matching = battlefield.stream()
+                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter()))
+                    .toList();
+
+            if (matching.isEmpty()) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                String logEntry = playerName + " has no matching permanents to sacrifice.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
+                continue;
+            }
+
+            if (matching.size() <= effect.count()) {
+                // No choice needed — mark all for simultaneous sacrifice
+                matching.stream().map(Permanent::getId)
+                        .forEach(gameData.pendingSimultaneousSacrificeIds::add);
+            } else {
+                // Player must choose — add to queue
+                List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
+                gameData.pendingForcedSacrificeQueue.add(
+                        new PendingForcedSacrifice(playerId, effect.count(), matchingIds));
+            }
+        }
+
+        if (gameData.pendingForcedSacrificeQueue.isEmpty()) {
+            // All players auto-resolved — sacrifice everything now
+            performSimultaneousSacrifice(gameData);
+        } else {
+            // Some players need to choose — begin the first prompt
+            beginNextForcedSacrificeFromQueue(gameData);
+        }
+    }
+
+    /**
+     * Sacrifices all permanents in {@link GameData#pendingSimultaneousSacrificeIds} at once,
+     * then clears the list. Used to implement "all chosen permanents are sacrificed at the
+     * same time" per CR 101.4.
+     */
+    void performSimultaneousSacrifice(GameData gameData) {
+        List<UUID> ids = new ArrayList<>(gameData.pendingSimultaneousSacrificeIds);
+        gameData.pendingSimultaneousSacrificeIds.clear();
+
+        for (UUID permId : ids) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                sacrificeAndLog(gameData, perm, controllerId);
+            }
+        }
+    }
+
+    /**
+     * Pops the next entry from the forced sacrifice queue and prompts that player to choose.
+     * Does nothing if the queue is empty.
+     */
+    private void beginNextForcedSacrificeFromQueue(GameData gameData) {
+        if (gameData.pendingForcedSacrificeQueue.isEmpty()) {
+            return;
+        }
+
+        PendingForcedSacrifice next = gameData.pendingForcedSacrificeQueue.removeFirst();
+        gameData.pendingForcedSacrificeCount = next.count();
+        gameData.pendingForcedSacrificePlayerId = next.playerId();
+        playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
+                next.count(), "Choose " + next.count() + " permanent"
+                        + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }
 
     /**

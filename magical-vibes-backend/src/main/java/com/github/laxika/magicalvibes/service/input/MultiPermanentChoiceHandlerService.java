@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -172,19 +173,73 @@ public class MultiPermanentChoiceHandlerService {
         gameData.pendingForcedSacrificeCount = 0;
         gameData.pendingForcedSacrificePlayerId = null;
 
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                String ownerName = sacrificingPlayerId != null ? gameData.playerIdToName.get(sacrificingPlayerId) : "Unknown";
-                String logEntry = ownerName + " sacrifices " + perm.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
+        boolean simultaneousFlow = !gameData.pendingSimultaneousSacrificeIds.isEmpty()
+                || !gameData.pendingForcedSacrificeQueue.isEmpty();
+
+        if (simultaneousFlow) {
+            // "Each player sacrifices" flow — defer actual sacrifice until all players have chosen.
+            // Per CR 101.4: all chosen permanents are sacrificed at the same time.
+            gameData.pendingSimultaneousSacrificeIds.addAll(permanentIds);
+
+            if (!gameData.pendingForcedSacrificeQueue.isEmpty()) {
+                // More players still need to choose — prompt the next one
+                var next = gameData.pendingForcedSacrificeQueue.removeFirst();
+                gameData.pendingForcedSacrificeCount = next.count();
+                gameData.pendingForcedSacrificePlayerId = next.playerId();
+                playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
+                        next.count(), "Choose " + next.count() + " permanent"
+                                + (next.count() > 1 ? "s" : "") + " to sacrifice.");
+                return;
+            }
+
+            // All players have chosen — sacrifice all simultaneously
+            List<UUID> allIds = new ArrayList<>(gameData.pendingSimultaneousSacrificeIds);
+            gameData.pendingSimultaneousSacrificeIds.clear();
+
+            for (UUID permId : allIds) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                    String ownerName = controllerId != null ? gameData.playerIdToName.get(controllerId) : "Unknown";
+                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                    String logEntry = ownerName + " sacrifices " + perm.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
+                }
+            }
+        } else {
+            // Direct forced sacrifice (e.g. Phyrexian Obliterator) — sacrifice immediately
+            for (UUID permId : permanentIds) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null) {
+                    String ownerName = sacrificingPlayerId != null ? gameData.playerIdToName.get(sacrificingPlayerId) : "Unknown";
+                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                    String logEntry = ownerName + " sacrifices " + perm.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
+                }
             }
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+
+        // Follow the same pattern as proliferate completion: SBA → may abilities → resume effects
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     private void handleCombatDamageBounce(GameData gameData, UUID playerId, List<UUID> permanentIds) {
