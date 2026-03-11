@@ -23,6 +23,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Uncounterable + unpreventable burn | `c/Combust.java` | setCantBeCountered(true) + DealDamageToTargetCreatureEffect(5, true) + PermanentColorInPredicate target filter |
 | X burn | `b/Blaze.java` | DealXDamageToAnyTargetEffect |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
+| Burn + drain by land count | `c/Corrupt.java` | DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect — damage and life gain equal to controlled Swamps |
 | X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |
 | Multi-target damage | `c/ConeOfFlame.java` | DealOrderedDamageToAnyTargetsEffect |
 | X burn divided evenly | `f/Fireball.java` | DealXDamageDividedEvenlyAmongTargetsEffect + setMinTargets(1) + setMaxTargets(99) + setAdditionalCostPerExtraTarget(1) — X divided evenly (rounded down) among any number of targets, costs {1} extra per target beyond first |

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDealDamageToD
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedEvenlyAmongTargetsEffect;
@@ -128,6 +129,33 @@ public class DamageResolutionService {
     ) {
         int count = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
         resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, count));
+    }
+
+    /**
+     * Resolves {@link DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect} — deals damage
+     * to any target equal to the number of permanents with the given subtype the controller controls.
+     * When {@code gainLife} is true, the controller also gains life equal to the damage amount.
+     */
+    @HandlesEffect(DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect.class)
+    void resolveDealDamageToAnyTargetEqualToSubtypeCountAndGainLife(
+            GameData gameData,
+            StackEntry entry,
+            DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect effect
+    ) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        int count = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count);
+
+        resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
+
+        // Gain life equal to the damage amount (subtype count) if enabled
+        if (effect.gainLife() && count > 0) {
+            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), count);
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
