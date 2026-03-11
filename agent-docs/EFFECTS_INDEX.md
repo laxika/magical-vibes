@@ -368,6 +368,7 @@ Pass `null` as filter to allow any card.
 | `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |
 | `ShuffleGraveyardIntoLibraryEffect` | `()` | shuffle graveyard into library |
+| `ShuffleSelfAndGraveyardIntoLibraryEffect` | `()` | shuffle source permanent and controller's graveyard into library |
 
 ## Mill
 
