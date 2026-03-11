@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
@@ -161,6 +162,11 @@ public class ActivatedAbilityExecutionService {
                 || e instanceof CreateTokensEqualToChargeCountersOnSourceEffect
                 || e instanceof LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect)) {
             effectiveXValue = permanent.getChargeCounters();
+        }
+
+        boolean shouldExileSelf = abilityEffects.stream().anyMatch(e -> e instanceof ExileSelfCost);
+        if (shouldExileSelf) {
+            permanentRemovalService.removePermanentToExile(gameData, permanent);
         }
 
         boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);

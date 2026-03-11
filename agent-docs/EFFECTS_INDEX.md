@@ -148,6 +148,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `ExileSelfCost` | `()` | exile this permanent as cost (e.g. Brittle Effigy). Handled in `ActivatedAbilityExecutionService` via `removePermanentToExile` |
 | `SacrificeSelfCost` | `()` | sacrifice this permanent as cost |
 | `SacrificeCreatureCost` | `()` or `(boolean trackSacrificedManaValue)` or `(boolean trackSacrificedManaValue, boolean trackSacrificedPower)` | sacrifice a creature as cost. When `trackSacrificedManaValue=true`, the sacrificed creature's mana value is stored in the StackEntry's xValue (e.g. Birthing Pod). When `trackSacrificedPower=true`, the sacrificed creature's effective power (including static bonuses) is stored in xValue (e.g. Ichor Explosion) |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
