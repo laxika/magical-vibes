@@ -652,6 +652,7 @@ Pass `null` as filter to allow any card.
 | `ProtectionFromSubtypesEffect` | `(Set<CardSubtype> subtypes)` | protection from specified creature subtypes (static). Prevents blocking, damage, targeting, and enchanting/equipping by sources with any of the listed subtypes. Also checks transient/granted subtypes and Changeling. Checked by `GameQueryService.hasProtectionFromSourceSubtypes()`. Used by Baneslayer Angel (DEMON, DRAGON) |
 | `ProtectionFromChosenColorEffect` | `()` | protection from chosen color (static, requires ChooseColorOnEnterEffect) |
 | `CantBeTargetedBySpellColorsEffect` | `(Set<CardColor> colors)` | can't be targeted by spells of specified colors (static) |
+| `CantBeTargetedByNonColorSourcesEffect` | `(CardColor allowedColor)` | can't be targeted by spells or abilities from sources that don't have the allowed color (static, e.g. Gaea's Revenge) |
 | `CantBeTargetOfSpellsOrAbilitiesEffect` | `()` | can't be targeted by opponents' spells or abilities (hexproof behavior, use with GrantEffectEffect) |
 | `GrantEffectEffect` | `(CardEffect effect, GrantScope scope)` | grant a CardEffect to permanents matching scope (e.g. OWN_CREATURES) |
 | `RedirectPlayerDamageToEnchantedCreatureEffect` | `()` | redirect damage dealt to player to enchanted creature |

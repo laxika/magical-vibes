@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -93,6 +94,11 @@ public class TargetLegalityService {
 
             validatePermanentTargetable(gameData, target, playerId);
 
+            // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
+            if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, sourceCard)) {
+                throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
+            }
+
             // Per-position filter
             if (positionFilter != null) {
                 gameQueryService.validateTargetFilter(positionFilter, target,
@@ -125,6 +131,14 @@ public class TargetLegalityService {
         }
 
         validateTargetable(gameData, targetPermanentId, playerId);
+
+        // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
+        if (targetPermanentId != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+            if (target != null && gameQueryService.cantBeTargetedByNonColorSources(gameData, target, sourceCard)) {
+                throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
+            }
+        }
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetPermanentId, Zone targetZone, UUID controllerId) {
@@ -242,6 +256,9 @@ public class TargetLegalityService {
                         targetFizzled = isSpellProtected(gameData, targetPerm, entry);
                     }
                     if (!targetFizzled) {
+                        targetFizzled = isNonColorSourceRestricted(gameData, targetPerm, entry);
+                    }
+                    if (!targetFizzled) {
                         TargetFilter effectiveTargetFilter =
                                 entry.getTargetFilter() != null
                                         ? entry.getTargetFilter()
@@ -286,6 +303,21 @@ public class TargetLegalityService {
             return false;
         }
         return gameQueryService.cantBeTargetedBySpellColor(gameData, targetPerm, entry.getCard().getColor());
+    }
+
+    private boolean isNonColorSourceRestricted(GameData gameData, Permanent targetPerm, StackEntry entry) {
+        if (entry.getCard() == null) return false;
+        return gameQueryService.cantBeTargetedByNonColorSources(gameData, targetPerm, entry.getCard());
+    }
+
+    private String nonColorSourceRestrictionMessage(Permanent target) {
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeTargetedByNonColorSourcesEffect r) {
+                return target.getCard().getName() + " can't be the target of non-"
+                        + r.allowedColor().name().toLowerCase() + " spells or abilities";
+            }
+        }
+        return target.getCard().getName() + " can't be targeted by this source";
     }
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
@@ -339,6 +371,9 @@ public class TargetLegalityService {
         }
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
             throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
+        }
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card)) {
+            throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
         }
     }
 

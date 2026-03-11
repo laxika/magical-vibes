@@ -192,6 +192,11 @@ public class ValidTargetService {
             return false;
         }
 
+        // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spellCard)) {
+            return false;
+        }
+
         // Card's TargetFilter
         if (spellCard.getTargetFilter() != null) {
             try {
@@ -300,6 +305,11 @@ public class ValidTargetService {
             if (targetController != null && !targetController.equals(controllerId)) {
                 return false;
             }
+        }
+
+        // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, sourceCard)) {
+            return false;
         }
 
         // TargetFilter from ability

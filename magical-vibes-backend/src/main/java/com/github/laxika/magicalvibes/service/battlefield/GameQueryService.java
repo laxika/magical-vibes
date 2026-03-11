@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquipp
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
@@ -948,6 +949,38 @@ public class GameQueryService {
         }
 
         return false;
+    }
+
+    /**
+     * Returns {@code true} if the target permanent cannot be targeted by spells or abilities
+     * from the given source card, because the target has a static effect restricting targeting
+     * to only sources of a specific color (e.g. Gaea's Revenge: "can't be the target of
+     * nongreen spells or abilities from nongreen sources").
+     */
+    public boolean cantBeTargetedByNonColorSources(GameData gameData, Permanent target, Card sourceCard) {
+        if (sourceCard == null) {
+            return false;
+        }
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeTargetedByNonColorSourcesEffect restriction
+                    && !sourceHasColor(sourceCard, restriction.allowedColor())) {
+                return true;
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (effect instanceof CantBeTargetedByNonColorSourcesEffect restriction
+                    && !sourceHasColor(sourceCard, restriction.allowedColor())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean sourceHasColor(Card card, CardColor color) {
+        if (card.getColor() == color) {
+            return true;
+        }
+        return card.getColors().contains(color);
     }
 
     /**
