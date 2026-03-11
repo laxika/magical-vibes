@@ -82,7 +82,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealXDamageToTargetCreatureEffect.class)
     void resolveDealXDamageToTargetCreature(GameData gameData, StackEntry entry) {
-        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, entry.getXValue()));
+        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, entry.getXValue(), entry));
     }
 
     /**
@@ -91,7 +91,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToTargetCreatureEffect.class)
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
-        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         if (effect.unpreventable()) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
             if (target == null) return;
@@ -107,7 +107,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToBlockedAttackersOnDeathEffect.class)
     void resolveDealDamageToBlockedAttackers(GameData gameData, StackEntry entry, DealDamageToBlockedAttackersOnDeathEffect effect) {
-        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
         for (UUID targetId : entry.getTargetPermanentIds()) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -129,7 +129,7 @@ public class DamageResolutionService {
             DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect
     ) {
         int count = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
-        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, count));
+        resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, count, entry));
     }
 
     /**
@@ -147,7 +147,7 @@ public class DamageResolutionService {
         if (targetId == null) return;
 
         int count = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count, entry);
 
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
@@ -179,7 +179,7 @@ public class DamageResolutionService {
             if (target == null) continue;
             if (gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) continue;
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), entry);
             if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
                 destroyed.add(target);
             }
@@ -197,7 +197,7 @@ public class DamageResolutionService {
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
 
         int baseDamage = effect.usesXValue() ? entry.getXValue() : effect.damage();
-        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
+        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage, entry);
 
         Predicate<Permanent> creatureFilter = effect.filter() == null
                 ? p -> gameQueryService.isCreature(gameData, p)
@@ -221,7 +221,7 @@ public class DamageResolutionService {
     void resolveDealDamageToEachPlayer(GameData gameData, StackEntry entry, DealDamageToEachPlayerEffect effect) {
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         for (UUID playerId : gameData.orderedPlayerIds) {
             dealDamageToPlayer(gameData, entry, playerId, damage);
         }
@@ -249,7 +249,7 @@ public class DamageResolutionService {
             }
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue());
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
@@ -272,7 +272,7 @@ public class DamageResolutionService {
 
         int x = entry.getXValue();
         int damagePerTarget = x / targets.size();
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damagePerTarget);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damagePerTarget, entry);
         String cardName = entry.getCard().getName();
 
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
@@ -313,7 +313,7 @@ public class DamageResolutionService {
         if (targetId == null) return;
 
         int xValue = entry.getXValue();
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, xValue);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, xValue, entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
@@ -331,7 +331,7 @@ public class DamageResolutionService {
         if (!gameData.playerIds.contains(targetId)) return;
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
@@ -349,7 +349,7 @@ public class DamageResolutionService {
         if (!gameData.playerIds.contains(targetId)) return;
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
@@ -367,7 +367,7 @@ public class DamageResolutionService {
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
             List<Card> hand = gameData.playerHands.get(targetId);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, hand != null ? hand.size() : 0);
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, hand != null ? hand.size() : 0, entry);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
@@ -395,7 +395,7 @@ public class DamageResolutionService {
                 }
             }
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count);
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count, entry);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
@@ -424,7 +424,7 @@ public class DamageResolutionService {
         }
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
@@ -440,7 +440,7 @@ public class DamageResolutionService {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
         gameOutcomeService.checkWinCondition(gameData);
     }
@@ -454,7 +454,7 @@ public class DamageResolutionService {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         String cardName = entry.getCard().getName();
 
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
@@ -523,7 +523,7 @@ public class DamageResolutionService {
             return;
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, chargeCounters);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, chargeCounters, entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
@@ -547,7 +547,7 @@ public class DamageResolutionService {
         int power = gameQueryService.getEffectivePower(gameData, source);
         if (power <= 0) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
@@ -586,7 +586,7 @@ public class DamageResolutionService {
         // Source deals damage equal to its power to target
         if (sourcePower > 0) {
             if (!gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) {
-                int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower);
+                int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
                 if (dealCreatureDamage(gameData, entry, target, sourceDamage)) {
                     gameData.pendingLethalDamageDestructions.add(target);
                 }
@@ -603,7 +603,7 @@ public class DamageResolutionService {
             int targetPower = gameQueryService.getEffectivePower(gameData, target);
             if (targetPower > 0) {
                 if (!gameQueryService.hasProtectionFromSource(gameData, source, target.getCard())) {
-                    int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower);
+                    int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
                     if (dealCreatureDamage(gameData, entry, source, targetDamage, target)) {
                         gameData.pendingLethalDamageDestructions.add(source);
                     }
@@ -627,8 +627,9 @@ public class DamageResolutionService {
     @HandlesEffect(DealOrderedDamageToAnyTargetsEffect.class)
     void resolveDealOrderedDamageToAnyTargets(GameData gameData, StackEntry entry, DealOrderedDamageToAnyTargetsEffect effect) {
         List<UUID> targets = entry.getTargetPermanentIds();
-        int damageMultiplier = gameQueryService.getDamageMultiplier(gameData);
-        List<Integer> damages = effect.damageAmounts().stream().map(d -> d * damageMultiplier).toList();
+        List<Integer> damages = effect.damageAmounts().stream()
+                .map(d -> gameQueryService.applyDamageMultiplier(gameData, d, entry))
+                .toList();
         String cardName = entry.getCard().getName();
 
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
@@ -672,7 +673,7 @@ public class DamageResolutionService {
         UUID targetId = entry.getTargetPermanentId();
         if (targetId == null) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
@@ -979,7 +980,7 @@ public class DamageResolutionService {
             return;
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power);
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage, biter);
     }
 
@@ -1008,7 +1009,7 @@ public class DamageResolutionService {
                 targetPlayerName + " reveals " + topCard.getName() + " (mana value " + manaValue + ") from the top of their library.");
 
         if (manaValue > 0 && !gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue);
+            int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
 
             if (effect.damageTargetPlayer()) {
                 dealDamageToPlayer(gameData, entry, targetPlayerId, damage);
@@ -1042,7 +1043,7 @@ public class DamageResolutionService {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getCard().getName() + "'s damage to controller is prevented.");
         } else {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
         }
 
@@ -1071,7 +1072,7 @@ public class DamageResolutionService {
         String creatureName = creature.getCard().getName();
         String ownerName = gameData.playerIdToName.get(ownerId);
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
 
         // Create a temporary stack entry with the creature as source for correct damage attribution
         StackEntry creatureEntry = new StackEntry(
@@ -1112,7 +1113,7 @@ public class DamageResolutionService {
             gameBroadcastService.logAndBroadcast(gameData,
                     cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented.");
         } else {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
 
@@ -1139,7 +1140,7 @@ public class DamageResolutionService {
             gameBroadcastService.logAndBroadcast(gameData,
                     cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented.");
         } else {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
 
@@ -1174,7 +1175,7 @@ public class DamageResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         cardName + "'s damage to " + playerName + " is prevented.");
             } else {
-                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, cardsDrawn);
+                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, cardsDrawn, entry);
                 dealDamageToPlayer(gameData, entry, playerId, rawDamage);
             }
         }
@@ -1220,7 +1221,7 @@ public class DamageResolutionService {
 
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue());
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), tempEntry);
 
             boolean targetIsPlayer = gameData.playerIds.contains(targetId);
             Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
@@ -1276,7 +1277,7 @@ public class DamageResolutionService {
         if (!gameData.playerIds.contains(defenderId)) {
             return;
         }
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage());
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         dealDamageToPlayer(gameData, entry, defenderId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     }

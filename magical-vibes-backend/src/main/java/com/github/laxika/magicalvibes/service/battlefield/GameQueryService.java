@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
@@ -1215,6 +1216,41 @@ public class GameQueryService {
      */
     public int applyDamageMultiplier(GameData gameData, int damage) {
         return damage * getDamageMultiplier(gameData);
+    }
+
+    /**
+     * Applies both the global damage multiplier and per-controller spell damage multipliers
+     * (e.g. {@link DoubleControllerSpellDamageEffect}) to the given damage amount.
+     *
+     * @param entry the stack entry representing the damage source; used to check if the source
+     *              is an instant/sorcery spell of the appropriate color for controller-specific doubling
+     * @return the damage after applying all multipliers
+     */
+    public int applyDamageMultiplier(GameData gameData, int damage, StackEntry entry) {
+        return damage * getDamageMultiplier(gameData) * getControllerSpellDamageMultiplier(gameData, entry);
+    }
+
+    /**
+     * Returns the per-controller spell damage multiplier based on {@link DoubleControllerSpellDamageEffect}
+     * permanents on the battlefield. Only applies when the stack entry is an instant or sorcery spell
+     * whose color matches the effect's required color and whose controller matches the permanent's controller.
+     */
+    int getControllerSpellDamageMultiplier(GameData gameData, StackEntry entry) {
+        if (entry == null) return 1;
+        StackEntryType type = entry.getEntryType();
+        if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL) return 1;
+
+        int[] multiplier = {1};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!playerId.equals(entry.getControllerId())) return;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof DoubleControllerSpellDamageEffect dcsde
+                        && entry.getCard().getColors().contains(dcsde.color())) {
+                    multiplier[0] *= 2;
+                }
+            }
+        });
+        return multiplier[0];
     }
 
     /**
