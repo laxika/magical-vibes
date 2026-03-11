@@ -55,4 +55,9 @@ public sealed interface TriggerContext {
      * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
      */
     record LifeGain(UUID gainingPlayerId, int lifeGainedAmount) implements TriggerContext {}
+
+    /**
+     * Context for noncombat-damage-to-opponent triggers (ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).
+     */
+    record NoncombatDamageToOpponent(UUID damagedPlayerId) implements TriggerContext {}
 }

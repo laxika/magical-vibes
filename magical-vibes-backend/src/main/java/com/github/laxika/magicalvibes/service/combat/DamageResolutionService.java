@@ -785,6 +785,7 @@ public class DamageResolutionService {
             if (effectiveDamage > 0) {
                 gameData.playersDealtDamageThisTurn.add(playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
+                triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
             }
         }
     }

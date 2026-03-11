@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -130,6 +131,30 @@ public class MiscTriggerCollectorService {
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
         log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
+        return true;
+    }
+
+    // ── ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE ──────────────────────────────
+
+    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
+    private boolean handleNoncombatDamageBoostSelf(TriggerMatchContext match,
+            BoostSelfEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on noncombat damage to opponent", gameData.id, cardName);
         return true;
     }
 }
