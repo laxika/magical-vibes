@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.AlternateCastingCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -292,6 +293,18 @@ public class GameBroadcastService {
                             playable.add(i);
                         }
                     }
+                    if (!playable.contains(i) && canAlternateCast(gameData, playerId, card, battlefield)) {
+                        playable.add(i);
+                    }
+                }
+            } else if (card.getManaCost() == null && canAlternateCast(gameData, playerId, card, battlefield)) {
+                // Card with no mana cost but has alternate cost (e.g. some future cards)
+                boolean isInstantSpeed = card.getType() == CardType.INSTANT
+                        || card.getKeywords().contains(Keyword.FLASH)
+                        || hasFlashGrantForCard(gameData, playerId, card);
+                boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+                if (canCastTiming && !spellLimitReached && !cantCastDueToAttack) {
+                    playable.add(i);
                 }
             }
         }
@@ -425,6 +438,18 @@ public class GameBroadcastService {
             }
         }
         return false;
+    }
+
+    private boolean canAlternateCast(GameData gameData, UUID playerId, Card card, List<Permanent> battlefield) {
+        AlternateCastingCost altCost = card.getAlternateCastingCost();
+        if (altCost == null) return false;
+        int currentLife = gameData.getLife(playerId);
+        if (currentLife < altCost.lifeCost()) return false;
+        if (battlefield == null) return false;
+        long matchingCount = battlefield.stream()
+                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, altCost.sacrificeFilter()))
+                .count();
+        return matchingCount >= altCost.sacrificeCount();
     }
 
     private boolean canPlayLandsFromGraveyard(GameData gameData, UUID playerId) {

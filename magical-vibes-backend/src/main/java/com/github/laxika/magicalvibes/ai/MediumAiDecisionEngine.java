@@ -141,7 +141,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null)));
         return true;
     }
 

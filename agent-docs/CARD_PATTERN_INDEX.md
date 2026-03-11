@@ -101,6 +101,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Intimidate creature + activated ability | `g/GethLordOfTheVault.java` | Intimidate from Scryfall + X-cost graveyard-targeting activated ability. PutCardFromOpponentGraveyardOntoBattlefieldEffect(tapped=true) |
 | Keyword creature + shuffle-into-library replacement | `b/BlightsteelColossus.java` | Keywords (infect, trample, indestructible) auto-loaded from Scryfall + `setShufflesIntoLibraryFromGraveyard(true)`. Replacement effect: when put into graveyard from anywhere, shuffled into owner's library instead. Also used by `l/LegacyWeapon.java`. |
 | Can't be countered + keyword + ability | `t/ThrunTheLastTroll.java` | `setCantBeCountered(true)` + hexproof from Scryfall + `{1}{G}` RegenerateEffect activated ability. Intrinsic uncounterable checked by `GameQueryService.isUncounterable()` via `Card.isCantBeCountered()`. |
+| Alternate casting cost (sacrifice + life) | `d/DemonOfDeathsGate.java` | `setAlternateCastingCost(new AlternateCastingCost(lifeCost, sacrificeCount, PermanentAllOfPredicate))` — "You may pay N life and sacrifice M [matching] creatures rather than pay this spell's mana cost." Frontend sends `alternateCostSacrificePermanentIds` in PlayCardRequest. Keywords (flying, trample) auto-loaded from Scryfall. |
 
 ## ETB creatures
 

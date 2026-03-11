@@ -173,6 +173,9 @@ export interface Card {
   phyrexianManaCount: number;
   token: boolean;
   watermark: string | null;
+  hasAlternateCastingCost: boolean;
+  alternateCostLifePayment: number;
+  alternateCostSacrificeCount: number;
 }
 
 export interface Permanent {

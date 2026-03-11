@@ -100,7 +100,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -120,7 +123,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -138,7 +144,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -156,7 +165,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -174,7 +186,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -194,7 +209,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), mergedAbilities, cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -214,7 +232,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -274,7 +295,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 
@@ -318,7 +342,10 @@ public class PermanentViewFactory {
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
-                cardView.watermark()
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount()
         );
     }
 }

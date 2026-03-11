@@ -35,6 +35,9 @@ public record CardView(
         boolean hasPhyrexianMana,
         int phyrexianManaCount,
         boolean token,
-        String watermark
+        String watermark,
+        boolean hasAlternateCastingCost,
+        int alternateCostLifePayment,
+        int alternateCostSacrificeCount
 ) {
 }

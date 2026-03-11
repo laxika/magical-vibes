@@ -414,6 +414,10 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, mode, targetPermanentId, null);
     }
 
+    public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
+    }
+
     public void castEnchantment(Player player, int cardIndex) {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }

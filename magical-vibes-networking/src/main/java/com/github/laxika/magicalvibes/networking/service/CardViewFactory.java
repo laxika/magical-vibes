@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AlternateCastingCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,6 +32,11 @@ public class CardViewFactory {
             phyrexianManaCount = cost.getPhyrexianManaCount();
         }
 
+        AlternateCastingCost altCost = card.getAlternateCastingCost();
+        boolean hasAlternateCastingCost = altCost != null;
+        int alternateCostLifePayment = altCost != null ? altCost.lifeCost() : 0;
+        int alternateCostSacrificeCount = altCost != null ? altCost.sacrificeCount() : 0;
+
         return new CardView(
                 card.getId(),
                 card.getName(),
@@ -56,7 +62,10 @@ public class CardViewFactory {
                 hasPhyrexianMana,
                 phyrexianManaCount,
                 card.isToken(),
-                card.getWatermark());
+                card.getWatermark(),
+                hasAlternateCastingCost,
+                alternateCostLifePayment,
+                alternateCostSacrificeCount);
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {

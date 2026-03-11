@@ -350,6 +350,12 @@ public class GameMessageHandler implements MessageHandler {
         try {
             if (request.fromExileCardId() != null) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetPermanentId());
+            } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {
+                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
+                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
+                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
+                        request.alternateCostSacrificePermanentIds());
             } else {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
                         request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
