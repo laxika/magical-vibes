@@ -533,6 +533,33 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.NEW_PHYREXIA, "113", 3),               // Leeching Bite
             new DeckEntry(CardSet.TENTH_EDITION, "282", 1),              // Naturalize
             new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "45", 1)            // Steady Progress
+    )),
+
+    ROT_FROM_WITHIN("rot-from-within", "Rot from Within (New Phyrexia Event Deck)", List.of(
+            new DeckEntry(CardSet.NEW_PHYREXIA, "174", 22),            // Forest
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "145", 1),        // Inkmoth Nexus
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "112", 1),        // Blight Mamba
+            new DeckEntry(CardSet.NEW_PHYREXIA, "111", 4),             // Glistener Elf
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "166", 2),        // Ichorclaw Myr
+            // new DeckEntry(CardSet.RISE_OF_THE_ELDRAZI, "203", 4),   // Overgrown Battlement (set not available)
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "126", 2),        // Putrefax
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "90", 3),         // Rot Wolf
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "94", 3),         // Viridian Corrupter
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "144", 1),        // Contagion Clasp
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "115", 4),        // Carrion Call
+            // new DeckEntry(CardSet.WORLDWAKE, "104", 4),              // Groundswell (set not available)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "116", 4),             // Mutagenic Growth
+            // new DeckEntry(CardSet.ZENDIKAR, "176", 4),               // Primal Bellow (set not available)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "81", 1)          // Green Sun's Zenith
+    ), List.of(
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "144", 3),        // Contagion Clasp
+            new DeckEntry(CardSet.NEW_PHYREXIA, "115", 1),             // Melira, Sylvok Outcast
+            // new DeckEntry(CardSet.MAGIC_2011, "188", 2),             // Obstinate Baloth (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "86", 1),         // Pistus Strike
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "214", 3),        // Trigon of Infestation
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "93", 2),         // Unnatural Predation
+            // new DeckEntry(CardSet.ZENDIKAR, "193", 2),               // Vines of Vastwood (set not available)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "94", 1)          // Viridian Corrupter
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
