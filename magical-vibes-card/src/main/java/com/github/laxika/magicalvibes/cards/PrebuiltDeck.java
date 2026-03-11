@@ -446,6 +446,35 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.MAGIC_2012, "221", 2),          // Warlord's Axe (not yet implemented)
             new DeckEntry(CardSet.MAGIC_2011, "95", 1),             // Doom Blade
             new DeckEntry(CardSet.NEW_PHYREXIA, "48", 2)            // Vapor Snag
+    )),
+
+    FEAST_OF_FLESH("feast-of-flesh", "Feast of Flesh (New Phyrexia Intro Pack)", List.of(
+            new DeckEntry(CardSet.NEW_PHYREXIA, "172", 11),            // Mountain
+            new DeckEntry(CardSet.NEW_PHYREXIA, "170", 13),            // Swamp
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "56", 2),         // Blistergrub
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "58", 2),         // Blisterstick Shaman
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "40", 2),         // Caustic Hound
+            new DeckEntry(CardSet.NEW_PHYREXIA, "54", 1),              // Chancellor of the Dross
+            new DeckEntry(CardSet.NEW_PHYREXIA, "59", 2),              // Entomber Exarch
+            new DeckEntry(CardSet.NEW_PHYREXIA, "83", 2),              // Flameborn Viron
+            new DeckEntry(CardSet.NEW_PHYREXIA, "84", 2),              // Furnace Scamp
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "51", 2),         // Phyrexian Rager
+            new DeckEntry(CardSet.MAGIC_2011, "152", 1),               // Prodigal Pyromancer
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "102", 1),        // Scoria Elemental
+            new DeckEntry(CardSet.NEW_PHYREXIA, "97", 2),              // Tormentor Exarch
+            new DeckEntry(CardSet.NEW_PHYREXIA, "153", 2),             // Shrine of Burning Rage
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "212", 1),        // Tower of Calamities
+            new DeckEntry(CardSet.NEW_PHYREXIA, "58", 1),              // Enslave
+            new DeckEntry(CardSet.NEW_PHYREXIA, "67", 2),              // Parasitic Implant
+            new DeckEntry(CardSet.NEW_PHYREXIA, "79", 2),              // Artillerize
+            // new DeckEntry(CardSet.MAGIC_2011, "140", 1),            // Fling (not yet implemented)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "61", 2),              // Geth's Verdict
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "43", 1),         // Go for the Throat
+            new DeckEntry(CardSet.NEW_PHYREXIA, "56", 1),              // Despise
+            // new DeckEntry(CardSet.MAGIC_2011, "94", 1),             // Disentomb (not yet implemented)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "64", 1),              // Ichor Explosion
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "47", 1),         // Morbid Plunder
+            new DeckEntry(CardSet.NEW_PHYREXIA, "102", 1)              // Whipflare
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
