@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "320")
+@CardRegistration(set = "M11", collectorNumber = "204")
 public class DemonsHorn extends Card {
 
     public DemonsHorn() {
