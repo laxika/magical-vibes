@@ -208,12 +208,13 @@ public class LibrarySearchResolutionService {
                                                           SearchLibraryForCardTypeToExileAndImprintEffect effect) {
         gameData.imprintSourcePermanentId = entry.getSourcePermanentId();
 
+        String typeText = formatCardTypeSetForPrompt(effect.cardTypes());
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
                 card -> matchesCardTypes(card, effect.cardTypes()),
-                "matching cards",
-                "Search your library for a land card to exile (imprint).",
+                typeText + " cards",
+                "Search your library for a " + typeText + " card to exile (imprint).",
                 false,
                 true,
                 LibrarySearchDestination.EXILE_IMPRINT

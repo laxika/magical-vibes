@@ -272,7 +272,9 @@ public class BattlefieldEntryService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
-                gameData.queueMayAbility(card, controllerId, may);
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+                gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
             }
 
             if (!mandatoryEffects.isEmpty()) {

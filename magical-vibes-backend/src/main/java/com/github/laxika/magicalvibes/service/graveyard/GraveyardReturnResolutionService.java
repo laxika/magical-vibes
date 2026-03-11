@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAnd
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -950,6 +951,55 @@ public class GraveyardReturnResolutionService {
 
         log.info("Game {} - {} puts imprinted creature {} onto battlefield",
                 gameData.id, playerName, imprintedCard.getName());
+    }
+
+    /**
+     * Resolves a {@link PutImprintedCardIntoOwnersHandEffect} by putting the card imprinted
+     * on the source into its owner's hand. The owner is determined by which player's exile zone
+     * contains the card. Used by cards like Hoarding Dragon.
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved (card must have an imprinted card)
+     */
+    @HandlesEffect(PutImprintedCardIntoOwnersHandEffect.class)
+    void resolvePutImprintedCardIntoOwnersHand(GameData gameData, StackEntry entry) {
+        Card imprintedCard = entry.getCard().getImprintedCard();
+        String cardName = entry.getCard().getName();
+
+        if (imprintedCard == null) {
+            String logMsg = cardName + "'s ability resolves but no card was exiled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        // Find the owner by checking which player's exile zone has the card
+        UUID ownerId = null;
+        for (Map.Entry<UUID, List<Card>> exileEntry : gameData.playerExiledCards.entrySet()) {
+            if (exileEntry.getValue().stream().anyMatch(c -> c.getId().equals(imprintedCard.getId()))) {
+                ownerId = exileEntry.getKey();
+                break;
+            }
+        }
+
+        if (ownerId == null) {
+            String logMsg = cardName + "'s ability resolves but the exiled card is no longer in exile.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        // Remove from exile zone
+        gameData.playerExiledCards.get(ownerId).removeIf(c -> c.getId().equals(imprintedCard.getId()));
+
+        // Put into owner's hand
+        List<Card> hand = gameData.playerHands.get(ownerId);
+        hand.add(imprintedCard);
+
+        String ownerName = gameData.playerIdToName.get(ownerId);
+        String logMsg = imprintedCard.getName() + " is returned to " + ownerName + "'s hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        log.info("Game {} - {} puts imprinted card {} into {}'s hand",
+                gameData.id, cardName, imprintedCard.getName(), ownerName);
     }
 
     /**

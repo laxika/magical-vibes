@@ -144,6 +144,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may-sacrifice-artifact-divided-damage | `k/KuldothaFlamefiend.java` | MayEffect(SacrificeArtifactThenDealDividedDamageEffect(4)) — may sacrifice artifact, deal N divided damage. Damage assignments via `pendingETBDamageAssignments`, artifact choice via PermanentChoiceContext.SacrificeArtifactForDividedDamage |
 | ETB modal (choose one, no target) | `b/BrutalizerExarch.java` | ChooseOneEffect on ON_ENTER_BATTLEFIELD with one non-targeting mode (library search) and one targeting mode. Card-level setTargetFilter for the targeting mode. Mode chosen at cast time via xValue |
 | ETB modal (choose one, per-mode targeting) | `d/DeceiverExarch.java` | ChooseOneEffect on ON_ENTER_BATTLEFIELD with per-mode TargetFilter on each ChooseOneOption. Mode 0: UntapTargetPermanentEffect + PermanentControlledBySourceControllerPredicate. Mode 1: TapTargetPermanentEffect + PermanentNotPredicate(PermanentControlledBySourceControllerPredicate). Flash creature |
+| ETB search-exile-imprint + death return to hand | `h/HoardingDragon.java` | MayEffect(SearchLibraryForCardTypeToExileAndImprintEffect(ARTIFACT)) + MayEffect(PutImprintedCardIntoOwnersHandEffect) — ETB searches library for artifact to exile/imprint, death returns exiled card to owner's hand |
 
 ## Triggered creatures
 

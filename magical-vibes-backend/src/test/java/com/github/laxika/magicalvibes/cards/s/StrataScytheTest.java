@@ -178,7 +178,7 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no matching cards"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("no land cards"));
     }
 
     // ===== Static boost =====

@@ -310,6 +310,7 @@ Pass `null` as filter to allow any card.
 | `PutCardFromOpponentGraveyardOntoBattlefieldEffect` | `(boolean tapped)` | put target artifact/creature with MV=X from opponent's graveyard onto battlefield under your control (tapped if `tapped=true`), then mill that player X cards |
 | `PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect` | `()` | put target creature card from opponent's graveyard onto battlefield under your control with haste; exile at beginning of next end step; if it would leave the battlefield, exile it instead |
 | `PutImprintedCreatureOntoBattlefieldEffect` | `()` | when this creature dies, reveal imprinted card; if creature, put onto battlefield (Clone Shell dies trigger) |
+| `PutImprintedCardIntoOwnersHandEffect` | `()` | when this permanent dies, put the imprinted (exiled) card into its owner's hand (Hoarding Dragon dies trigger) |
 
 ## Draw / discard / hand manipulation
 
