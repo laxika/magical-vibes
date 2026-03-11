@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,7 @@ public class LibraryChoiceHandlerService {
     private final CardViewFactory cardViewFactory;
     private final TurnProgressionService turnProgressionService;
     private final PlayerInputService playerInputService;
+    private final EffectResolutionService effectResolutionService;
 
     public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.SCRY)) {
@@ -124,6 +126,14 @@ public class LibraryChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        // (e.g. Foresee: "Scry 4, then draw two cards.")
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
         }
 
         turnProgressionService.resolveAutoPass(gameData);

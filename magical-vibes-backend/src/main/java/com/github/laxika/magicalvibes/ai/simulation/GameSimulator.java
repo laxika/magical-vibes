@@ -325,7 +325,7 @@ public class GameSimulator {
                 gameQueryService, gameBroadcastService, playerInputService, turnProgressionService);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 noOpSession, gameQueryService, graveyardService, warpWorldService, battlefieldEntryService, legendRuleService, stateBasedActionService, gameBroadcastService,
-                cardViewFactory, turnProgressionService, playerInputService);
+                cardViewFactory, turnProgressionService, playerInputService, effectResolutionService);
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 gameBroadcastService, stateBasedActionService, playerInputService, turnProgressionService, effectResolutionService);
         MulliganService mulliganService = new MulliganService(

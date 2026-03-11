@@ -325,7 +325,7 @@ public class GameTestHarness {
                 playerInputService, turnProgressionService, effectResolutionService);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 sessionManager, gameQueryService, graveyardService, warpWorldService, battlefieldEntryService, legendRuleService, stateBasedActionService, gameBroadcastService,
-                cardViewFactory, turnProgressionService, playerInputService);
+                cardViewFactory, turnProgressionService, playerInputService, effectResolutionService);
         MulliganService mulliganService = new MulliganService(
                 sessionManager, gameBroadcastService, turnProgressionService, battlefieldEntryService);
         ReconnectionService reconnectionService = new ReconnectionService(
