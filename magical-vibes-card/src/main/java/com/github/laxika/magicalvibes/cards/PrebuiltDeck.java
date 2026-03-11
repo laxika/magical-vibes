@@ -339,6 +339,34 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "38", 2)     // Vivisection
     )),
 
+    INFECT_AND_DEFILE("infect-and-defile", "Infect and Defile (Mirrodin Besieged Event Deck)", List.of(
+            // new DeckEntry(CardSet.MAGIC_2011, "224", 2),              // Drowned Catacomb (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "148", 10),         // Island
+            // new DeckEntry(CardSet.ZENDIKAR, "215", 4),                // Jwar Isle Refuge (set not available)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "150", 7),          // Swamp
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "147", 4),          // Corpse Cur
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "66", 1),           // Hand of the Praetors
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "185", 4),          // Necropede
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "52", 2),           // Phyrexian Vatmother
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "125", 4),          // Plague Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "144", 2),          // Contagion Clasp
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "22", 4),           // Corrupted Conscience
+            // new DeckEntry(CardSet.RISE_OF_THE_ELDRAZI, "59", 2),      // Deprive (set not available)
+            new DeckEntry(CardSet.MAGIC_2011, "95", 1)                     // Doom Blade
+            // new DeckEntry(CardSet.MAGIC_2011, "62", 2),               // Mana Leak (not yet implemented)
+            // new DeckEntry(CardSet.WORLDWAKE, "68", 2),                // Smother (set not available)
+            // new DeckEntry(CardSet.RISE_OF_THE_ELDRAZI, "101", 2),     // Consuming Vapors (set not available)
+            // new DeckEntry(CardSet.MAGIC_2011, "54", 4),               // Foresee (not yet implemented)
+            // new DeckEntry(CardSet.MAGIC_2011, "70", 3)                // Preordain (not yet implemented)
+    ), List.of(
+            new DeckEntry(CardSet.MAGIC_2011, "91", 3),                   // Deathmark
+            new DeckEntry(CardSet.MAGIC_2011, "95", 1),                   // Doom Blade
+            new DeckEntry(CardSet.MAGIC_2011, "53", 3),                   // Flashfreeze
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "43", 2)            // Go for the Throat
+            // new DeckEntry(CardSet.MAGIC_2011, "68", 4),               // Negate (not yet implemented)
+            // new DeckEntry(CardSet.WORLDWAKE, "68", 2)                 // Smother (set not available)
+    )),
+
     INTO_THE_BREACH("into-the-breach", "Into the Breach (Mirrodin Besieged Event Deck)", List.of(
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "144", 1),    // Contested War Zone
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "152", 21),   // Mountain
