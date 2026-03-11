@@ -175,7 +175,13 @@ public class ExileResolutionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
 
-        exileAndScheduleReturn(gameData, entry, target, ownerId);
+        boolean returnTapped = entry.getEffectsToResolve().stream()
+                .filter(e -> e instanceof ExileTargetPermanentAndReturnAtEndStepEffect)
+                .map(e -> ((ExileTargetPermanentAndReturnAtEndStepEffect) e).returnTapped())
+                .findFirst()
+                .orElse(false);
+
+        exileAndScheduleReturn(gameData, entry, target, ownerId, returnTapped);
     }
 
     /**
@@ -189,11 +195,11 @@ public class ExileResolutionService {
             return;
         }
 
-        exileAndScheduleReturn(gameData, entry, source, entry.getControllerId());
+        exileAndScheduleReturn(gameData, entry, source, entry.getControllerId(), false);
     }
 
     private void exileAndScheduleReturn(GameData gameData, StackEntry entry,
-                                        Permanent permanent, UUID ownerId) {
+                                        Permanent permanent, UUID ownerId, boolean returnTapped) {
         Card card = permanent.getOriginalCard();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
 
@@ -202,7 +208,7 @@ public class ExileResolutionService {
         log.info("Game {} - {} exiles {}; will return at next end step",
                 gameData.id, entry.getCard().getName(), card.getName());
 
-        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId));
+        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId, returnTapped));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

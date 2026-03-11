@@ -14,6 +14,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Check land | `d/DragonskullSummit.java` | STATIC EntersTappedUnlessControlLandSubtypeEffect(subtypes) + 2 mana abilities |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC EntersTappedUnlessFewLandsEffect(2) + 2 mana abilities |
 | Utility land | `q/Quicksand.java` | mana ability + sacrifice-to-debuff ability |
+| Utility land (exile-return) | `m/MystifyingMaze.java` | colorless mana ability + {4},{T}: exile target attacking creature, return tapped at end step (ExileTargetPermanentAndReturnAtEndStepEffect(true) + PermanentIsAttackingPredicate) |
 
 ## Spells
 

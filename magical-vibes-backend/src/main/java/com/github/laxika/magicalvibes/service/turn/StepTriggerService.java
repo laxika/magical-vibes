@@ -558,6 +558,9 @@ public class StepTriggerService {
                 }
                 // Return as a new permanent
                 Permanent perm = new Permanent(card);
+                if (pending.returnTapped()) {
+                    perm.tap();
+                }
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String logEntry = card.getName() + " returns to the battlefield under " + playerName + "'s control.";
