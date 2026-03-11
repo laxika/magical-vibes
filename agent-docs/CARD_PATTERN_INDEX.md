@@ -213,7 +213,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Subtype lord | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
+| Subtype lord (all) | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
+| Subtype lord (own) + keyword | `k/KnightExemplar.java` | STATIC StaticBoostEffect(1, 1, Set.of(INDESTRUCTIBLE), OWN_CREATURES, PermanentHasAnySubtypePredicate) — +1/+1 and indestructible to other Knights you control |
 | Anthem (all own) | `g/GloriousAnthem.java` | STATIC StaticBoostEffect with OWN_CREATURES scope, no filter |
 | Color boost/debuff | `a/AscendantEvincar.java` | STATIC StaticBoostEffect with PermanentColorInPredicate / PermanentNotPredicate filter |
 | Own boost + opponent debuff | `e/EleshNornGrandCenobite.java` | STATIC StaticBoostEffect(2, 2, OWN_CREATURES) + StaticBoostEffect(-2, -2, OPPONENT_CREATURES) |
