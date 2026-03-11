@@ -419,6 +419,33 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.MAGIC_2011, "22", 1),           // Mighty Leap (not yet implemented)
             new DeckEntry(CardSet.NEW_PHYREXIA, "26", 2)              // War Report
             // new DeckEntry(CardSet.MAGIC_2011, "168", 2)           // Cultivate (not yet implemented)
+    )),
+
+    DEVOURING_SKIES("devouring-skies", "Devouring Skies (New Phyrexia Intro Pack)", List.of(
+            new DeckEntry(CardSet.NEW_PHYREXIA, "168", 13),         // Island
+            new DeckEntry(CardSet.NEW_PHYREXIA, "170", 11),         // Swamp
+            new DeckEntry(CardSet.MAGIC_2011, "45", 2),             // Augury Owl
+            new DeckEntry(CardSet.NEW_PHYREXIA, "52", 2),           // Blind Zealot
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "101", 2),     // Brass Squire
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "30", 1),      // Darkslick Drake
+            new DeckEntry(CardSet.NEW_PHYREXIA, "55", 2),           // Dementia Bat
+            new DeckEntry(CardSet.NEW_PHYREXIA, "138", 3),          // Hovermyr
+            new DeckEntry(CardSet.NEW_PHYREXIA, "36", 2),           // Impaler Shrike
+            new DeckEntry(CardSet.NEW_PHYREXIA, "142", 1),          // Kiln Walker
+            new DeckEntry(CardSet.NEW_PHYREXIA, "66", 2),           // Mortis Dogs
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "71", 1),      // Necrogen Scudder
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "37", 1),      // Neurok Invisimancer
+            new DeckEntry(CardSet.NEW_PHYREXIA, "41", 1),           // Phyrexian Ingester
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "202", 1),     // Silver Myr
+            new DeckEntry(CardSet.NEW_PHYREXIA, "46", 2),           // Spire Monitor
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "137", 1),     // Argentum Armor
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "102", 2),     // Copper Carapace
+            new DeckEntry(CardSet.NEW_PHYREXIA, "147", 1),          // Necropouncer
+            new DeckEntry(CardSet.NEW_PHYREXIA, "157", 2),          // Sickleslicer
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "143", 2),     // Viridian Claw
+            // new DeckEntry(CardSet.MAGIC_2012, "221", 2),          // Warlord's Axe (not yet implemented)
+            new DeckEntry(CardSet.MAGIC_2011, "95", 1),             // Doom Blade
+            new DeckEntry(CardSet.NEW_PHYREXIA, "48", 2)            // Vapor Snag
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
