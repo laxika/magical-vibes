@@ -90,6 +90,8 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Sacrifice creature spell cost + power-based mass debuff | `i/IchorExplosion.java` | SacrificeCreatureCost(false, true) + BoostAllCreaturesXEffect(-1, -1) — sacrifice creature, all creatures get -X/-X where X = sacrificed creature's power |
 | Graveyard-count damage | `s/ScrapyardSalvo.java` | DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect(ARTIFACT) — damage to target player equal to artifact cards in graveyard |
 
+| Static self-boost per controlled subtype | `e/EarthServant.java` | STATIC BoostSelfPerControlledSubtypeEffect(MOUNTAIN, 0, 1) — +0/+1 for each Mountain you control |
+
 ## Vanilla creatures (empty body, all from Scryfall)
 
 Reference: `a/AirElemental.java` — no constructor code needed.
