@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureControllerEffect;
@@ -16,6 +18,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ChandrasOutrageTest extends BaseCardTest {
+
+    private static Card createCreature(String name, int power, int toughness) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}");
+        card.setColor(CardColor.GREEN);
+        card.setPower(power);
+        card.setToughness(toughness);
+        return card;
+    }
 
     @Test
     @DisplayName("Has correct effects")
@@ -49,17 +62,17 @@ class ChandrasOutrageTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 2 damage to controller even when creature survives")
     void deals2DamageToControllerWhenCreatureSurvives() {
-        harness.addToBattlefield(player2, new AirElemental());
+        harness.addToBattlefield(player2, createCreature("Large Beast", 4, 5));
         harness.setHand(player1, List.of(new ChandrasOutrage()));
         harness.addMana(player1, ManaColor.RED, 4);
         harness.setLife(player2, 20);
 
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player2, "Large Beast");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        // Air Elemental is 4/4, survives 4 damage
-        harness.assertOnBattlefield(player2, "Air Elemental");
+        // Large Beast is 4/5, survives 4 damage
+        harness.assertOnBattlefield(player2, "Large Beast");
         // Controller still takes 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

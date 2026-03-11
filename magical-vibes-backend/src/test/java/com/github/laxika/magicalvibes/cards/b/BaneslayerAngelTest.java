@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BaneslayerAngelTest extends BaseCardTest {
 
     private static Card createCreatureWithSubtype(String name, int power, int toughness,
-                                                  CardColor color, CardSubtype subtype) {
+                                                  CardColor color, CardSubtype subtype, Keyword... keywords) {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.CREATURE);
@@ -33,10 +35,13 @@ class BaneslayerAngelTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         card.setSubtypes(List.of(subtype));
+        if (keywords.length > 0) {
+            card.setKeywords(Set.of(keywords));
+        }
         return card;
     }
 
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
+    private static Card createCreature(String name, int power, int toughness, CardColor color, Keyword... keywords) {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.CREATURE);
@@ -44,6 +49,9 @@ class BaneslayerAngelTest extends BaseCardTest {
         card.setColor(color);
         card.setPower(power);
         card.setToughness(toughness);
+        if (keywords.length > 0) {
+            card.setKeywords(Set.of(keywords));
+        }
         return card;
     }
 
@@ -71,7 +79,7 @@ class BaneslayerAngelTest extends BaseCardTest {
         attacker.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreatureWithSubtype("Sengir Vampire", 4, 4, CardColor.BLACK, CardSubtype.DEMON));
+        Permanent blocker = new Permanent(createCreatureWithSubtype("Sengir Vampire", 4, 4, CardColor.BLACK, CardSubtype.DEMON, Keyword.FLYING));
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
@@ -93,7 +101,7 @@ class BaneslayerAngelTest extends BaseCardTest {
         attacker.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreatureWithSubtype("Shivan Dragon", 5, 5, CardColor.RED, CardSubtype.DRAGON));
+        Permanent blocker = new Permanent(createCreatureWithSubtype("Shivan Dragon", 5, 5, CardColor.RED, CardSubtype.DRAGON, Keyword.FLYING));
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
@@ -115,7 +123,7 @@ class BaneslayerAngelTest extends BaseCardTest {
         attacker.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Serra Angel", 4, 4, CardColor.WHITE));
+        Permanent blocker = new Permanent(createCreature("Serra Angel", 4, 4, CardColor.WHITE, Keyword.FLYING));
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
@@ -151,11 +159,11 @@ class BaneslayerAngelTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Baneslayer deals 5 first strike damage to 9/9 Demon (survives)
+        // Baneslayer deals 5 first strike damage to 9/9 Demon (survives at 9/4)
         // Demon's 9 damage to Baneslayer is prevented (protection from Demons)
-        // Then Baneslayer deals 5 regular damage (total 10, kills 9/9 Demon)
+        // Both creatures survive
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Demon of Death's Gate"));
+                .anyMatch(p -> p.getCard().getName().equals("Demon of Death's Gate"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Baneslayer Angel"));
     }
@@ -208,10 +216,11 @@ class BaneslayerAngelTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Baneslayer deals 5 first strike (6/6 survives with 1 toughness remaining)
-        // Regular damage: Baneslayer deals 5 more (kills 6/6), Hill Giant deals 6 (kills 5/5 Baneslayer)
+        // Baneslayer deals 5 first strike (6/6 survives at 6/1)
+        // Regular damage: Hill Giant deals 6 (kills 5/5 Baneslayer)
+        // Hill Giant survives, Baneslayer dies
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Hill Giant"));
+                .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Baneslayer Angel"));
     }
