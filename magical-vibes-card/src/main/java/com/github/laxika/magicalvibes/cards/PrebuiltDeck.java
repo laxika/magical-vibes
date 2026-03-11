@@ -391,6 +391,34 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.MAGIC_2011, "148", 1),         // Leyline of Punishment (not yet implemented)
             // new DeckEntry(CardSet.WORLDWAKE, "90", 4),           // Searing Blaze (not yet implemented)
             // new DeckEntry(CardSet.ZENDIKAR, "153", 2)            // Unstable Footing (not yet implemented)
+    )),
+
+    ARTFUL_DESTRUCTION("artful-destruction", "Artful Destruction (New Phyrexia Intro Pack)", List.of(
+            new DeckEntry(CardSet.NEW_PHYREXIA, "174", 12),         // Forest
+            new DeckEntry(CardSet.NEW_PHYREXIA, "166", 12),         // Plains
+            new DeckEntry(CardSet.NEW_PHYREXIA, "4", 1),            // Blade Splicer
+            new DeckEntry(CardSet.NEW_PHYREXIA, "105", 1),          // Brutalizer Exarch
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "146", 3),     // Copper Myr
+            // new DeckEntry(CardSet.MAGIC_2011, "177", 1),          // Garruk's Packleader (not yet implemented)
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "157", 3),     // Gold Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "159", 1),     // Golem Artisan
+            new DeckEntry(CardSet.NEW_PHYREXIA, "16", 3),           // Master Splicer
+            new DeckEntry(CardSet.NEW_PHYREXIA, "114", 1),          // Maul Splicer
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "190", 2),     // Palladium Myr
+            new DeckEntry(CardSet.NEW_PHYREXIA, "150", 1),          // Phyrexian Hulk
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "194", 1),     // Precursor Golem
+            new DeckEntry(CardSet.NEW_PHYREXIA, "22", 2),           // Sensor Splicer
+            // new DeckEntry(CardSet.MAGIC_2011, "215", 1),          // Stone Golem (not yet implemented)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "25", 2),           // Suture Priest
+            new DeckEntry(CardSet.NEW_PHYREXIA, "126", 2),          // Vital Splicer
+            new DeckEntry(CardSet.NEW_PHYREXIA, "133", 1),          // Conversion Chamber
+            new DeckEntry(CardSet.NEW_PHYREXIA, "11", 2),           // Forced Worship
+            new DeckEntry(CardSet.NEW_PHYREXIA, "125", 1),          // Viridian Harvest
+            new DeckEntry(CardSet.MAGIC_2011, "178", 1),            // Giant Growth
+            new DeckEntry(CardSet.NEW_PHYREXIA, "110", 1),          // Glissa's Scorn
+            // new DeckEntry(CardSet.MAGIC_2011, "22", 1),           // Mighty Leap (not yet implemented)
+            new DeckEntry(CardSet.NEW_PHYREXIA, "26", 2)              // War Report
+            // new DeckEntry(CardSet.MAGIC_2011, "168", 2)           // Cultivate (not yet implemented)
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
