@@ -245,7 +245,7 @@ public class GameTestHarness {
                 damageResolutionService,
                 new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
                 new MillResolutionService(graveyardService, gameBroadcastService),
-                new LibraryShuffleResolutionService(gameBroadcastService),
+                new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 new LibrarySearchResolutionService(drawService, gameBroadcastService, sessionManager, cardViewFactory),
                 new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
