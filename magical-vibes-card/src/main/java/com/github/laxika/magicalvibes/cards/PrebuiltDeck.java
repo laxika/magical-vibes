@@ -2,13 +2,11 @@ package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.model.Card;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@RequiredArgsConstructor
 public enum PrebuiltDeck {
 
     CHO_MANNOS_RESOLVE("cho-mannos-resolve", "Cho-Manno's Resolve (Tenth Edition Theme Deck)", List.of(
@@ -339,6 +337,32 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "45", 1),    // Horrifying Revelation
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "56", 1),    // Spread the Sickness
             new DeckEntry(CardSet.MIRRODIN_BESIEGED, "38", 2)     // Vivisection
+    )),
+
+    INTO_THE_BREACH("into-the-breach", "Into the Breach (Mirrodin Besieged Event Deck)", List.of(
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "144", 1),    // Contested War Zone
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "152", 21),   // Mountain
+            // new DeckEntry(CardSet.ZENDIKAR, "125", 2),           // Goblin Bushwhacker (not yet implemented)
+            // new DeckEntry(CardSet.ZENDIKAR, "126", 2),           // Goblin Guide (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "64", 4),    // Goblin Wardriver
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "168", 1),   // Iron Myr
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "174", 4),   // Memnite
+            new DeckEntry(CardSet.TENTH_EDITION, "336", 4),        // Ornithopter
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "131", 4),   // Signal Pest
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "104", 1),   // Spikeshot Elder
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "149", 2),   // Darksteel Axe
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "191", 2),   // Panic Spellbomb
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "91", 2),    // Galvanic Blast
+            // new DeckEntry(CardSet.MAGIC_2011, "149", 4),         // Lightning Bolt (not yet implemented)
+            // new DeckEntry(CardSet.RISE_OF_THE_ELDRAZI, "140", 2), // Devastating Summons (not yet implemented)
+            new DeckEntry(CardSet.SCARS_OF_MIRRODIN, "96", 4)     // Kuldotha Rebirth
+    ), List.of(
+            new DeckEntry(CardSet.MAGIC_2011, "121", 2),           // Act of Treason
+            // new DeckEntry(CardSet.ZENDIKAR, "127", 4),           // Goblin Ruinblaster (not yet implemented)
+            new DeckEntry(CardSet.MIRRODIN_BESIEGED, "67", 2)     // Into the Core
+            // new DeckEntry(CardSet.MAGIC_2011, "148", 1),         // Leyline of Punishment (not yet implemented)
+            // new DeckEntry(CardSet.WORLDWAKE, "90", 4),           // Searing Blaze (not yet implemented)
+            // new DeckEntry(CardSet.ZENDIKAR, "153", 2)            // Unstable Footing (not yet implemented)
     ));
 
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
@@ -346,16 +370,36 @@ public enum PrebuiltDeck {
     private final String id;
     private final String name;
     private final List<DeckEntry> entries;
+    private final List<DeckEntry> sideboard;
+
+    PrebuiltDeck(String id, String name, List<DeckEntry> entries) {
+        this(id, name, entries, List.of());
+    }
+
+    PrebuiltDeck(String id, String name, List<DeckEntry> entries, List<DeckEntry> sideboard) {
+        this.id = id;
+        this.name = name;
+        this.entries = entries;
+        this.sideboard = sideboard;
+    }
 
     public List<Card> buildDeck() {
-        List<Card> deck = new ArrayList<>();
-        for (DeckEntry entry : entries) {
+        return buildCards(entries);
+    }
+
+    public List<Card> buildSideboard() {
+        return buildCards(sideboard);
+    }
+
+    private List<Card> buildCards(List<DeckEntry> deckEntries) {
+        List<Card> cards = new ArrayList<>();
+        for (DeckEntry entry : deckEntries) {
             CardPrinting printing = entry.cardSet().findByCollectorNumber(entry.collectorNumber());
             for (int i = 0; i < entry.count(); i++) {
-                deck.add(printing.createCard());
+                cards.add(printing.createCard());
             }
         }
-        return deck;
+        return cards;
     }
 
     public static PrebuiltDeck findById(String id) {
