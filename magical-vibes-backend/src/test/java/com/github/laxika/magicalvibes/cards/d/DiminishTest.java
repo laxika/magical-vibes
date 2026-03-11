@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TreetopVillage;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -184,6 +186,86 @@ class DiminishTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Diminish overrides animated land's base P/T (layer 7b timestamp)")
+    void overridesAnimatedLandBasePowerToughness() {
+        // Animate Treetop Village into a 3/3 creature, then Diminish it
+        Permanent village = addVillageReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        // Village is now a 3/3 animated creature
+        assertThat(village.isAnimatedUntilEndOfTurn()).isTrue();
+        assertThat(village.getEffectivePower()).isEqualTo(3);
+        assertThat(village.getEffectiveToughness()).isEqualTo(3);
+
+        // Cast Diminish on the animated village
+        harness.setHand(player1, List.of(new Diminish()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, village.getId());
+        harness.passBothPriorities();
+
+        // Per layer 7b: Diminish has later timestamp, overrides animation's 3/3 → 1/1
+        assertThat(village.getEffectivePower()).isEqualTo(1);
+        assertThat(village.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Diminish overrides permanently animated permanent's base P/T")
+    void overridesPermanentlyAnimatedBasePowerToughness() {
+        // Simulate a permanently animated artifact (e.g. Tezzeret's -1 making it a 5/5)
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        perm.setPermanentlyAnimated(true);
+        perm.setPermanentAnimatedPower(5);
+        perm.setPermanentAnimatedToughness(5);
+
+        assertThat(perm.getEffectivePower()).isEqualTo(5);
+        assertThat(perm.getEffectiveToughness()).isEqualTo(5);
+
+        // Cast Diminish
+        harness.setHand(player1, List.of(new Diminish()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, perm.getId());
+        harness.passBothPriorities();
+
+        // Diminish overrides the permanently animated 5/5 → 1/1
+        assertThat(perm.getEffectivePower()).isEqualTo(1);
+        assertThat(perm.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Animated land reverts to animated P/T after Diminish wears off at cleanup")
+    void animatedLandRevertsAfterDiminishWearsOff() {
+        // Both animation and Diminish are "until end of turn", so both wear off at cleanup
+        Permanent village = addVillageReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Diminish()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, village.getId());
+        harness.passBothPriorities();
+
+        assertThat(village.getEffectivePower()).isEqualTo(1);
+
+        // Move to cleanup — both effects wear off
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        // Village is no longer a creature, no longer has base P/T override
+        assertThat(village.isAnimatedUntilEndOfTurn()).isFalse();
+        assertThat(village.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
+        assertThat(gqs.isCreature(gd, village)).isFalse();
+    }
+
+    @Test
     @DisplayName("Diminish goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -198,5 +280,13 @@ class DiminishTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Diminish"));
+    }
+
+    private Permanent addVillageReady(Player player) {
+        TreetopVillage card = new TreetopVillage();
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
     }
 }
