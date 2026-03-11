@@ -347,7 +347,7 @@
                         [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
-                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
+                        [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                         (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
                         (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                         (mouseleave)="onCardHoverEnd()" />
@@ -523,7 +523,7 @@
                         [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
-                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
+                        [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                         (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                         (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                         (mouseleave)="onCardHoverEnd()" />
