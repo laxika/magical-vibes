@@ -72,8 +72,7 @@ class HowlingBansheeTest extends BaseCardTest {
     void etbCausesEachPlayerToLose3Life() {
         castHowlingBanshee();
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve first ETB trigger
-        harness.passBothPriorities(); // resolve second ETB trigger
+        harness.passBothPriorities(); // resolve ETB trigger (both effects in one ability)
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -87,8 +86,7 @@ class HowlingBansheeTest extends BaseCardTest {
 
         castHowlingBanshee();
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve first ETB trigger
-        harness.passBothPriorities(); // resolve second ETB trigger
+        harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(7);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
@@ -99,8 +97,7 @@ class HowlingBansheeTest extends BaseCardTest {
     void stackIsEmptyAfterResolution() {
         castHowlingBanshee();
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve first ETB trigger
-        harness.passBothPriorities(); // resolve second ETB trigger
+        harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.stack).isEmpty();
     }
