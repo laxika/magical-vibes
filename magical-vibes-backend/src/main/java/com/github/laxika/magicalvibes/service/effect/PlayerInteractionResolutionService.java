@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
@@ -95,6 +96,13 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(DrawCardEffect.class)
     private void resolveDrawCards(GameData gameData, StackEntry entry, DrawCardEffect effect) {
         applyDrawCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(EachPlayerDrawsCardEffect.class)
+    private void resolveEachPlayerDrawsCard(GameData gameData, StackEntry entry, EachPlayerDrawsCardEffect effect) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            applyDrawCards(gameData, playerId, effect.amount());
+        }
     }
 
     @HandlesEffect(SacrificeSelfAndDrawCardsEffect.class)
