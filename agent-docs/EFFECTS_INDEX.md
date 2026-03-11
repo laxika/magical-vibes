@@ -359,6 +359,7 @@ Pass `null` as filter to allow any card.
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |
 | `ScryEffect` | `(int count)` | scry N — look at top N cards, put any number on bottom in any order, rest on top in any order |
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |
+| `RevealTopCardPutIntoHandAndLoseLifeEffect` | `()` | reveal top card of controller's library, put into hand, lose life equal to mana value (Dark Confidant/Dark Tutelage style) |
 | `RevealTopCardOfLibraryEffect` | `()` | reveal top card of library (static/continuous) |
 | `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |
