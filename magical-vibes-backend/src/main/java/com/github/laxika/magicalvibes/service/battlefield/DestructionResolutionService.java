@@ -352,7 +352,7 @@ public class DestructionResolutionService {
             return;
         }
 
-        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
 
         if (effectiveDamage > 0) {
@@ -457,7 +457,7 @@ public class DestructionResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         gameData.playerIdToName.get(targetControllerId) + "'s life total can't change.");
             } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(targetControllerId, 20);
+                int currentLife = gameData.getLife(targetControllerId);
                 gameData.playerLifeTotals.put(targetControllerId, currentLife - totalDeaths);
 
                 String playerName = gameData.playerIdToName.get(targetControllerId);
@@ -570,7 +570,7 @@ public class DestructionResolutionService {
             gameBroadcastService.logAndBroadcast(gameData,
                     gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
         } else {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            int currentLife = gameData.getLife(controllerId);
             gameData.playerLifeTotals.put(controllerId, currentLife - effect.lifeLoss());
 
             String playerName = gameData.playerIdToName.get(controllerId);

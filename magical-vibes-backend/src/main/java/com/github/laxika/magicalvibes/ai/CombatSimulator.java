@@ -58,7 +58,7 @@ public class CombatSimulator {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        int opponentLife = gameData.playerLifeTotals.getOrDefault(opponentId, 20);
+        int opponentLife = gameData.getLife(opponentId);
         int opponentPoison = gameData.playerPoisonCounters.getOrDefault(opponentId, 0);
 
         // Build creature info for available attackers
@@ -140,7 +140,7 @@ public class CombatSimulator {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayerId, 20);
+        int aiLife = gameData.getLife(aiPlayerId);
 
         // Build attacker and blocker info
         List<CreatureInfo> attackerInfos = new ArrayList<>();

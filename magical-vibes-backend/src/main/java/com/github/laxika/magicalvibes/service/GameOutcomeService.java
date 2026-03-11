@@ -38,7 +38,7 @@ public class GameOutcomeService {
 
     public boolean checkWinCondition(GameData gameData) {
         for (UUID playerId : gameData.orderedPlayerIds) {
-            int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+            int life = gameData.getLife(playerId);
             int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
             if (life <= 0 || poison >= 10) {
                 // Check if the player is protected from losing (e.g. Platinum Angel)

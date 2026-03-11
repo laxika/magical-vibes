@@ -892,7 +892,7 @@ public class AbilityActivationService {
         }
 
         if (phyrexianLifeCost > 0) {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+            int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
             String playerName = gameData.playerIdToName.get(playerId);
             gameBroadcastService.logAndBroadcast(gameData,

@@ -229,7 +229,7 @@ public class LibraryRevealResolutionService {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
-        int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+        int lifeTotal = gameData.getLife(controllerId);
 
         int count = Math.min(lifeTotal, deck.size());
         if (count <= 0) {
@@ -608,7 +608,7 @@ public class LibraryRevealResolutionService {
         // Lose life equal to mana value
         if (manaValue > 0) {
             if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+                int currentLife = gameData.getLife(controllerId);
                 gameData.playerLifeTotals.put(controllerId, currentLife - manaValue);
                 gameBroadcastService.logAndBroadcast(gameData,
                         playerName + " puts " + topCard.getName() + " into their hand and loses " + manaValue + " life (" + sourceName + ").");

@@ -260,7 +260,7 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof GainLifeEffect gain) {
                 if (gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                    int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                    int currentLife = gameData.getLife(playerId);
                     gameData.playerLifeTotals.put(playerId, currentLife + gain.amount());
                     String logEntry = player.getUsername() + " gains " + gain.amount() + " life.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -284,7 +284,7 @@ public class ActivatedAbilityExecutionService {
                     } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                         gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
                     } else {
-                        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                        int currentLife = gameData.getLife(playerId);
                         gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
                         if (effectiveDamage > 0) {
                             String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";

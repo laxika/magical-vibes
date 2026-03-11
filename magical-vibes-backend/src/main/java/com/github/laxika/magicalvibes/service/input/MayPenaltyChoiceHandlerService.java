@@ -208,7 +208,7 @@ public class MayPenaltyChoiceHandlerService {
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
         } else {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            int currentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
 
             String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
@@ -240,7 +240,7 @@ public class MayPenaltyChoiceHandlerService {
                 if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                     gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
                 } else {
-                    int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                    int currentLife = gameData.getLife(targetPlayerId);
                     gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
                     String logEntry = player.getUsername() + " can't pay {" + effect.payAmount() + "}. " + player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -252,7 +252,7 @@ public class MayPenaltyChoiceHandlerService {
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                 gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
             } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
                 String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);

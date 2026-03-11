@@ -106,7 +106,7 @@ public class BounceResolutionService {
                     gameBroadcastService.logAndBroadcast(gameData,
                             gameData.playerIdToName.get(controllerId) + "'s life total can't change.");
                 } else {
-                    int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+                    int currentLife = gameData.getLife(controllerId);
                     gameData.playerLifeTotals.put(controllerId, currentLife - effect.lifeLoss());
 
                     String playerName = gameData.playerIdToName.get(controllerId);

@@ -499,7 +499,7 @@ public class GraveyardReturnResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
             return;
         }
-        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+        int currentLife = gameData.getLife(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
         String logEntry = playerName + " gains " + amount + " life.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

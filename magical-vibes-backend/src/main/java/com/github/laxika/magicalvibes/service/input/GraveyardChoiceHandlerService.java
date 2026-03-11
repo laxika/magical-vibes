@@ -100,7 +100,7 @@ public class GraveyardChoiceHandlerService {
                     if (gainLifeEqualToManaValue) {
                         int manaValue = card.getManaValue();
                         if (manaValue > 0 && gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                            int currentLife = gameData.getLife(playerId);
                             gameData.playerLifeTotals.put(playerId, currentLife + manaValue);
                             String lifeLog = player.getUsername() + " gains " + manaValue + " life.";
                             gameBroadcastService.logAndBroadcast(gameData, lifeLog);

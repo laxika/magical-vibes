@@ -65,7 +65,7 @@ public class LandTapTriggerCollectorService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change.");
             } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(tappingPlayerId, 20);
+                int currentLife = gameData.getLife(tappingPlayerId);
                 gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
             }
             if (effectiveDamage > 0) {

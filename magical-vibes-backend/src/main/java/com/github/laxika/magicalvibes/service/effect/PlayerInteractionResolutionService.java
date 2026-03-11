@@ -804,7 +804,7 @@ public class PlayerInteractionResolutionService {
                     + " (" + entry.getCard().getName() + "). " + playerName + "'s life total can't change.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+            int currentLife = gameData.getLife(controllerId);
             gameData.playerLifeTotals.put(controllerId, currentLife - count);
 
             String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
@@ -931,7 +931,7 @@ public class PlayerInteractionResolutionService {
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                 gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
             } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
                 String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + effect.lifeLoss() + " life.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -962,7 +962,7 @@ public class PlayerInteractionResolutionService {
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
                 gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
             } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+                int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
                 String logEntry = playerName + " can't pay {" + effect.payAmount() + "}. " + playerName + " loses " + effect.lifeLoss() + " life.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);

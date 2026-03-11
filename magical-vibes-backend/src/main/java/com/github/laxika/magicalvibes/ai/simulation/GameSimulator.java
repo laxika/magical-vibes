@@ -528,7 +528,7 @@ public class GameSimulator {
     public boolean isTerminal(GameData gd) {
         if (gd.status == GameStatus.FINISHED) return true;
         for (UUID pid : gd.orderedPlayerIds) {
-            if (gd.playerLifeTotals.getOrDefault(pid, 20) <= 0) return true;
+            if (gd.getLife(pid) <= 0) return true;
         }
         return false;
     }

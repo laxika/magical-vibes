@@ -344,7 +344,7 @@ public class GameQueryService {
         if (!playerBattlefieldHasStaticEffect(gameData, playerId, DamageDealtAsInfectBelowZeroLifeEffect.class)) {
             return false;
         }
-        int life = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        int life = gameData.getLife(playerId);
         return life <= 0;
     }
 

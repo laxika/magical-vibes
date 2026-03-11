@@ -851,7 +851,7 @@ public class DamageResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         playerName + "'s life total can't change.");
             } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                int currentLife = gameData.getLife(playerId);
                 gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
 
                 if (effectiveDamage > 0) {

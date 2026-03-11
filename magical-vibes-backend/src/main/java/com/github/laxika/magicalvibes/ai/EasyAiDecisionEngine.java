@@ -169,7 +169,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         List<Integer> attackerIndices = new ArrayList<>();
         int totalAttackDamage = 0;
-        int opponentLife = gameData.playerLifeTotals.getOrDefault(opponentId, 20);
+        int opponentLife = gameData.getLife(opponentId);
 
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent perm = battlefield.get(i);
@@ -262,7 +262,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         boolean[] blockerUsed = new boolean[battlefield.size()];
 
         int totalIncomingDamage = attackers.stream().mapToInt(a -> a[1]).sum();
-        int myLife = gameData.playerLifeTotals.getOrDefault(aiPlayer.getId(), 20);
+        int myLife = gameData.getLife(aiPlayer.getId());
         boolean lethalIncoming = totalIncomingDamage >= myLife;
 
         for (int[] attacker : attackers) {

@@ -65,7 +65,7 @@ public class DiscardTriggerCollectorService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change.");
             } else {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(discardingPlayerId, 20);
+                int currentLife = gameData.getLife(discardingPlayerId);
                 gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
             }
             if (effectiveDamage > 0) {

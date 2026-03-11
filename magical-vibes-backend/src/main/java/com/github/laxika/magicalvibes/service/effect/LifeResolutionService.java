@@ -91,7 +91,7 @@ public class LifeResolutionService {
             new ManaCost("{0}").pay(pool, chosenValue);
 
             if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+                int currentLife = gameData.getLife(controllerId);
                 gameData.playerLifeTotals.put(controllerId, currentLife + chosenValue);
 
                 String logEntry = playerName + " pays {" + chosenValue + "} and gains " + chosenValue + " life (" + cardName + ").";
@@ -266,7 +266,7 @@ public class LifeResolutionService {
                             gameData.playerIdToName.get(playerId) + "'s life total can't change.");
                     break;
                 }
-                int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+                int currentLife = gameData.getLife(playerId);
                 gameData.playerLifeTotals.put(playerId, currentLife + toughness);
 
                 String logEntry = gameData.playerIdToName.get(playerId) + " gains " + toughness + " life.";
@@ -297,7 +297,7 @@ public class LifeResolutionService {
             return;
         }
 
-        int currentLife = gameData.playerLifeTotals.getOrDefault(controllerId, 20);
+        int currentLife = gameData.getLife(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + count);
 
         String logEntry = playerName + " gains " + count + " life from " + entry.getCard().getName() + ".";
@@ -315,7 +315,7 @@ public class LifeResolutionService {
             return;
         }
 
-        int currentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+        int currentLife = gameData.getLife(targetPlayerId);
         int newLife = currentLife * 2;
         gameData.playerLifeTotals.put(targetPlayerId, newLife);
 
@@ -346,8 +346,8 @@ public class LifeResolutionService {
             return;
         }
 
-        int lifeA = gameData.playerLifeTotals.getOrDefault(playerA, 20);
-        int lifeB = gameData.playerLifeTotals.getOrDefault(playerB, 20);
+        int lifeA = gameData.getLife(playerA);
+        int lifeB = gameData.getLife(playerB);
 
         if (lifeA == lifeB) {
             String nameA = gameData.playerIdToName.get(playerA);
@@ -393,7 +393,7 @@ public class LifeResolutionService {
             return;
         }
 
-        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - effect.amount());
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -503,7 +503,7 @@ public class LifeResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
             return;
         }
-        int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 20);
+        int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -524,7 +524,7 @@ public class LifeResolutionService {
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
         } else {
-            int targetCurrentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - effect.lifeLoss());
 
             String lossLog = targetName + " loses " + effect.lifeLoss() + " life (" + entry.getCard().getName() + ").";
@@ -560,7 +560,7 @@ public class LifeResolutionService {
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
         } else {
-            int targetCurrentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - drainAmount);
 
             String lossLog = targetName + " loses " + drainAmount + " life (" + entry.getCard().getName() + ").";
@@ -580,7 +580,7 @@ public class LifeResolutionService {
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
         } else {
-            int targetCurrentLife = gameData.playerLifeTotals.getOrDefault(targetPlayerId, 20);
+            int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - effect.amount());
 
             String lossLog = targetName + " loses " + effect.amount() + " life (" + entry.getCard().getName() + ").";

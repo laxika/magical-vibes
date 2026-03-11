@@ -195,7 +195,7 @@ public class GameBroadcastService {
     List<Integer> getLifeTotals(GameData gameData) {
         List<Integer> totals = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
-            totals.add(gameData.playerLifeTotals.getOrDefault(pid, 20));
+            totals.add(gameData.getLife(pid));
         }
         return totals;
     }

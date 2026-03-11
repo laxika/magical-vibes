@@ -441,7 +441,7 @@ public class MultiPermanentChoiceHandlerService {
                         gameBroadcastService.logAndBroadcast(gameData,
                                 defenderName + "'s life total can't change.");
                     } else {
-                        int currentLife = gameData.playerLifeTotals.getOrDefault(defendingPlayerId, 20);
+                        int currentLife = gameData.getLife(defendingPlayerId);
                         gameData.playerLifeTotals.put(defendingPlayerId, currentLife - damage);
                         gameBroadcastService.logAndBroadcast(gameData, sourceName + " deals "
                                 + damage + " damage to " + defenderName + ".");

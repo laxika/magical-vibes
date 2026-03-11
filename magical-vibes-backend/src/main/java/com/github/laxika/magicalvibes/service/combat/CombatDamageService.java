@@ -787,7 +787,7 @@ public class CombatDamageService {
         }
         if (state.damageToDefendingPlayer > 0) {
             if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
-                int currentLife = gameData.playerLifeTotals.getOrDefault(defenderId, 20);
+                int currentLife = gameData.getLife(defenderId);
                 gameData.playerLifeTotals.put(defenderId, currentLife - state.damageToDefendingPlayer);
                 String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + state.damageToDefendingPlayer + " combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);

@@ -212,6 +212,13 @@ public class GameData {
     }
 
     /**
+     * Returns the current life total for the given player, defaulting to 20 if not yet set.
+     */
+    public int getLife(UUID playerId) {
+        return playerLifeTotals.getOrDefault(playerId, 20);
+    }
+
+    /**
      * Iterates over each player's battlefield list in player order.
      * Skips null battlefields.
      */

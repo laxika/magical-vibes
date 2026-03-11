@@ -39,8 +39,8 @@ public class BoardEvaluator {
     public double evaluate(GameData gameData, UUID aiPlayerId) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
 
-        int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayerId, 20);
-        int oppLife = gameData.playerLifeTotals.getOrDefault(opponentId, 20);
+        int aiLife = gameData.getLife(aiPlayerId);
+        int oppLife = gameData.getLife(opponentId);
         int aiPoison = gameData.playerPoisonCounters.getOrDefault(aiPlayerId, 0);
         int oppPoison = gameData.playerPoisonCounters.getOrDefault(opponentId, 0);
 
