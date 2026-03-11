@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "328")
+@CardRegistration(set = "M11", collectorNumber = "209")
 public class Juggernaut extends Card {
 
     public Juggernaut() {
