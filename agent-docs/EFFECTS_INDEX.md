@@ -478,7 +478,7 @@ Pass `null` as filter to allow any card.
 | `CantHaveCountersEffect` | `()` | this permanent can't have counters put on it (static) |
 | `CantHaveMinusOneMinusOneCountersEffect` | `()` | this creature can't have -1/-1 counters put on it (granted via GrantEffectEffect). Checked by `GameQueryService.cantHaveMinusOneMinusOneCounters()` |
 | `PlayerCantGetPoisonCountersEffect` | `()` | controller can't get poison counters (static on source permanent). Checked at all poison counter application points |
-| `RemoveKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | static: creatures in scope lose the specified keyword. Added to `removedKeywords` in static bonus computation |
+| `RemoveKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | static: creatures in scope lose the specified keyword. Added to `removedKeywords` in static bonus computation. Also works as one-shot in activated abilities with SELF/TARGET scope: adds keyword to `Permanent.removedKeywords` (cleared at end of turn) |
 | `CantLoseGameEffect` | `()` | you can't lose and opponents can't win (static) |
 | `CantLoseGameFromLifeEffect` | `()` | you don't lose the game for having 0 or less life, but can still lose from poison or other effects (static) |
 | `DamageDealtAsInfectBelowZeroLifeEffect` | `()` | as long as you have 0 or less life, all damage dealt to you is dealt as though its source had infect (static) |

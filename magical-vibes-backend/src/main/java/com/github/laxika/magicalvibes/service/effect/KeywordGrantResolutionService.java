@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -154,6 +155,29 @@ public class KeywordGrantResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), typeName);
+    }
+
+    @HandlesEffect(RemoveKeywordEffect.class)
+    private void resolveRemoveKeyword(GameData gameData, StackEntry entry, RemoveKeywordEffect remove) {
+        UUID targetId = switch (remove.scope()) {
+            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+            case TARGET -> entry.getTargetPermanentId();
+            default -> null;
+        };
+        if (targetId == null) {
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) {
+            return;
+        }
+
+        target.getRemovedKeywords().add(remove.keyword());
+        String keywordName = remove.keyword().name().charAt(0) + remove.keyword().name().substring(1).toLowerCase().replace('_', ' ');
+        String logEntry = target.getCard().getName() + " loses " + keywordName + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(), remove.scope());
     }
 
     @HandlesEffect(GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect.class)

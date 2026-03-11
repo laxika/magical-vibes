@@ -13,6 +13,7 @@ public record PermanentView(
         List<Integer> blockingTargets, boolean summoningSick,
         int powerModifier, int toughnessModifier,
         Set<Keyword> grantedKeywords,
+        Set<Keyword> removedKeywords,
         int effectivePower, int effectiveToughness,
         UUID attachedTo,
         CardColor chosenColor,

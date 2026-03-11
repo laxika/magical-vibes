@@ -62,6 +62,9 @@ public class Permanent {
     @Setter private int awakeningCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
+    /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
+     *  Cleared every turn by {@link #resetModifiers()}. */
+    private final Set<Keyword> removedKeywords = new HashSet<>();
     /** Transient colors granted by static/continuous effects (equipment, auras, animation, etc.).
      *  Cleared every turn by {@link #resetModifiers()} and recomputed from active static effect sources.
      *  For persistent color grants from one-shot effects, see {@link #grantedColors}. */
@@ -158,6 +161,7 @@ public class Permanent {
         this.awakeningCounters = source.awakeningCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
+        this.removedKeywords.addAll(source.removedKeywords);
         this.transientColors.addAll(source.transientColors);
         this.colorOverridden = source.colorOverridden;
         this.transientSubtypes.addAll(source.transientSubtypes);
@@ -288,6 +292,7 @@ public class Permanent {
     }
 
     public boolean hasKeyword(Keyword keyword) {
+        if (removedKeywords.contains(keyword)) return false;
         return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword);
     }
 
@@ -310,6 +315,7 @@ public class Permanent {
         this.animatedToughness = 0;
         this.animatedColor = null;
         this.grantedKeywords.clear();
+        this.removedKeywords.clear();
         this.transientColors.clear();
         this.colorOverridden = false;
         this.transientSubtypes.clear();

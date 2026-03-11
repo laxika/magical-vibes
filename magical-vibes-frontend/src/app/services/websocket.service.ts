@@ -189,6 +189,7 @@ export interface Permanent {
   powerModifier: number;
   toughnessModifier: number;
   grantedKeywords: string[];
+  removedKeywords: string[];
   effectivePower: number;
   effectiveToughness: number;
   chosenColor: string | null;
