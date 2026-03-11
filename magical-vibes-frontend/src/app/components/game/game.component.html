@@ -57,6 +57,23 @@
       </div>
     }
 
+    @if (choice.targeting.choosingAlternateCost) {
+      <div class="combat-banner targeting-banner">
+        <span>Cast {{ choice.targeting.alternateCostCardName }} &mdash; choose how to pay:</span>
+        <button class="btn-confirm-combat" (click)="choice.targeting.choosePayMana()">Pay Mana</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
+      </div>
+    }
+
+    @if (choice.targeting.selectingAlternateCostCreatures) {
+      <div class="combat-banner targeting-banner">
+        <span>Select {{ choice.targeting.alternateCostSacrificeCount }} creatures to sacrifice for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostSacrificeCount }})</span>
+        <button class="btn-confirm-combat" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostSacrificeCount">Cast</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
+      </div>
+    }
+
     @if (choice.library.scrying) {
       <div class="combat-banner reorder-banner">
         <span>{{ choice.library.scryPrompt }}</span>
@@ -330,6 +347,7 @@
                         [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
+                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                         (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
                         (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                         (mouseleave)="onCardHoverEnd()" />
@@ -357,6 +375,7 @@
                   [class.stack-targeted]="stackTargetId() === item.perm.id"
                   [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
                   [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
+                  [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(item.perm.id)"
                   (click)="onOpponentBattlefieldCardClick(item.originalIndex)"
                   (mouseenter)="onCardHover(item.perm.card, item.perm)"
                   (mouseleave)="onCardHoverEnd()" />
@@ -387,6 +406,7 @@
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
+                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
@@ -461,6 +481,7 @@
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
+                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                 (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
@@ -502,6 +523,7 @@
                         [class.stack-targeted]="stackTargetId() === ip.perm.id"
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
+                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                         (click)="onMyBattlefieldCardClick(ip.originalIndex)"
                         (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                         (mouseleave)="onCardHoverEnd()" />
@@ -539,6 +561,7 @@
                   [class.stack-targeted]="stackTargetId() === item.perm.id"
                   [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
                   [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
+                  [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(item.perm.id)"
                   (click)="onMyBattlefieldCardClick(item.originalIndex)"
                   (mouseenter)="onCardHover(item.perm.card, item.perm)"
                   (mouseleave)="onCardHoverEnd()" />

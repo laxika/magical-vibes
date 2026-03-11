@@ -173,7 +173,10 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
       hasPhyrexianMana: (info.manaCost ?? '').includes('/P'),
       phyrexianManaCount: ((info.manaCost ?? '').match(/\/P/g) || []).length,
       token: false,
-      watermark: null
+      watermark: null,
+      hasAlternateCastingCost: false,
+      alternateCostLifePayment: 0,
+      alternateCostSacrificeCount: 0
     };
   }
 

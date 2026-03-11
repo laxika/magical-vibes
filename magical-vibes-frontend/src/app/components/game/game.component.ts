@@ -851,6 +851,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.selectingAlternateCostCreatures) {
+      if (perm && isPermanentCreature(perm)) {
+        this.choice.targeting.toggleAlternateCostCreature(perm.id);
+      }
+      return;
+    }
     if (this.choice.awaitingXValueChoice || (this.choice.awaitingMayAbility && this.choice.mayAbilityManaCost != null)) {
       if (perm && this.choice.canTapForMana(perm)) {
         const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);

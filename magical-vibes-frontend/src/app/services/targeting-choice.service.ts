@@ -74,6 +74,14 @@ export class TargetingChoiceService {
     this.convokeSelectedCreatureIds.set([]);
     this.pendingMultiTargetIds = [];
     this.pendingConvokeCard = null;
+    // Alternate casting cost
+    this.choosingAlternateCost = false;
+    this.selectingAlternateCostCreatures = false;
+    this.alternateCostCardIndex = -1;
+    this.alternateCostCardName = '';
+    this.alternateCostSacrificeCount = 0;
+    this.alternateCostLifePayment = 0;
+    this.alternateCostSelectedIds.set([]);
   }
 
   private get hasPriority(): boolean {
@@ -134,6 +142,15 @@ export class TargetingChoiceService {
   private pendingMultiTargetIds: string[] = [];
   private pendingConvokeCard: Card | null = null;
 
+  // --- Alternate casting cost state ---
+  choosingAlternateCost = false;
+  selectingAlternateCostCreatures = false;
+  alternateCostCardIndex = -1;
+  alternateCostCardName = '';
+  alternateCostSacrificeCount = 0;
+  alternateCostLifePayment = 0;
+  alternateCostSelectedIds = signal<string[]>([]);
+
   // ========== Message handlers ==========
 
   handleValidTargetsResponse(msg: ValidTargetsResponse): void {
@@ -173,6 +190,16 @@ export class TargetingChoiceService {
     const g = this.gameSignal();
     if (g && isCardPlayable(index)) {
       const card = g.hand[index];
+
+      // Check for alternate casting cost — offer choice before anything else
+      if (card.hasAlternateCastingCost) {
+        this.choosingAlternateCost = true;
+        this.alternateCostCardIndex = index;
+        this.alternateCostCardName = card.name;
+        this.alternateCostSacrificeCount = card.alternateCostSacrificeCount;
+        this.alternateCostLifePayment = card.alternateCostLifePayment;
+        return;
+      }
 
       // Check for Phyrexian mana — show chooser before anything else
       if (card.hasPhyrexianMana && card.phyrexianManaCount > 0) {
@@ -637,6 +664,61 @@ export class TargetingChoiceService {
     this.convokeCardName = '';
     this.convokeSelectedCreatureIds.set([]);
     this.pendingPhyrexianLifeCount = null;
+  }
+
+  // ========== Alternate casting cost selection ==========
+
+  choosePayMana(): void {
+    const savedIndex = this.alternateCostCardIndex;
+    this.resetAlternateCostState();
+    this.continuePlayCard(savedIndex);
+  }
+
+  choosePayAlternateCost(): void {
+    this.choosingAlternateCost = false;
+    this.selectingAlternateCostCreatures = true;
+    this.alternateCostSelectedIds.set([]);
+  }
+
+  toggleAlternateCostCreature(permanentId: string): void {
+    if (!this.selectingAlternateCostCreatures) return;
+    const current = this.alternateCostSelectedIds();
+    if (current.includes(permanentId)) {
+      this.alternateCostSelectedIds.set(current.filter(id => id !== permanentId));
+    } else {
+      if (current.length >= this.alternateCostSacrificeCount) return;
+      this.alternateCostSelectedIds.set([...current, permanentId]);
+    }
+  }
+
+  isAlternateCostSelected(permanentId: string): boolean {
+    return this.alternateCostSelectedIds().includes(permanentId);
+  }
+
+  confirmAlternateCost(): void {
+    if (!this.selectingAlternateCostCreatures) return;
+    const selected = this.alternateCostSelectedIds();
+    if (selected.length !== this.alternateCostSacrificeCount) return;
+    this.websocketService.send({
+      type: MessageType.PLAY_CARD,
+      cardIndex: this.alternateCostCardIndex,
+      alternateCostSacrificePermanentIds: selected
+    });
+    this.resetAlternateCostState();
+  }
+
+  cancelAlternateCost(): void {
+    this.resetAlternateCostState();
+  }
+
+  private resetAlternateCostState(): void {
+    this.choosingAlternateCost = false;
+    this.selectingAlternateCostCreatures = false;
+    this.alternateCostCardIndex = -1;
+    this.alternateCostCardName = '';
+    this.alternateCostSacrificeCount = 0;
+    this.alternateCostLifePayment = 0;
+    this.alternateCostSelectedIds.set([]);
   }
 
   // ========== Tap / ability activation ==========

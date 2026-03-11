@@ -729,6 +729,12 @@
   cursor: pointer;
 }
 
+.card.alternate-cost-selected {
+  outline: 3px solid #c02020;
+  box-shadow: 0 0 16px rgba(192, 32, 32, 0.8);
+  cursor: pointer;
+}
+
 .permanent-choice-banner {
   background: linear-gradient(135deg, #c9854a, #a06020);
   border: 2px solid #8a5010;
