@@ -362,6 +362,7 @@ Pass `null` as filter to allow any card.
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
 | `CastTargetInstantOrSorceryFromGraveyardEffect` | `(GraveyardSearchScope scope, boolean withoutPayingManaCost)` | ETB: target instant or sorcery from a graveyard matching scope, you may cast it (without paying mana cost if flag is true). Has `canTargetGraveyard()=true`. Graveyard targeting handled by GameHelper ETB flow |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
+| `SearchLibraryForCardToTopOfLibraryEffect` | `()` | search library for any card, then shuffle and put that card on top of library (unrestricted, no reveal) |
 | `SearchLibraryForCreatureToTopOfLibraryEffect` | `()` | search library for a creature card, reveal it, then shuffle and put that card on top of library |
 | `SearchTargetLibraryForCardsToGraveyardEffect` | `(int maxCount, Set<CardType> cardTypes)` | search target opponent's library for up to N cards of specified types and put them into that player's graveyard, then shuffle. Targets player. Multi-pick via remainingCount |
 | `SearchTargetLibraryForCardToExileWithPlayPermissionEffect` | `()` | search target opponent's library for any card, exile it face down, shuffle. Grants caster permission to play the exiled card for as long as it remains exiled. Targets player |

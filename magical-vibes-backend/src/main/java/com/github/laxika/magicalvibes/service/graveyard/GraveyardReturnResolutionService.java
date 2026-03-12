@@ -216,39 +216,54 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        // Return all matching (e.g. self-return)
-        if (graveyard == null) {
-            return;
-        }
-
-        List<Card> toReturn = new ArrayList<>();
-        for (Card card : graveyard) {
-            if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
-                toReturn.add(card);
+        // Return all matching — collect from either controller's graveyard or all graveyards
+        Map<UUID, List<Card>> graveyardsToSearch = new LinkedHashMap<>();
+        if (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS) {
+            for (Map.Entry<UUID, List<Card>> gyEntry : gameData.playerGraveyards.entrySet()) {
+                if (gyEntry.getValue() != null && !gyEntry.getValue().isEmpty()) {
+                    graveyardsToSearch.put(gyEntry.getKey(), gyEntry.getValue());
+                }
+            }
+        } else {
+            if (graveyard != null && !graveyard.isEmpty()) {
+                graveyardsToSearch.put(controllerId, graveyard);
             }
         }
 
-        if (toReturn.isEmpty()) {
+        if (graveyardsToSearch.isEmpty()) {
             return;
         }
 
         List<String> returnedNames = new ArrayList<>();
-        for (Card card : toReturn) {
-            graveyard.remove(card);
-            if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                gameData.playerHands.get(controllerId).add(card);
-            } else {
-                putCardOntoBattlefield(gameData, controllerId, card);
+        for (Map.Entry<UUID, List<Card>> gyEntry : graveyardsToSearch.entrySet()) {
+            List<Card> gy = gyEntry.getValue();
+            List<Card> toReturn = new ArrayList<>();
+            for (Card card : gy) {
+                if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                    toReturn.add(card);
+                }
             }
-            returnedNames.add(card.getName());
+            for (Card card : toReturn) {
+                gy.remove(card);
+                if (effect.destination() == GraveyardChoiceDestination.HAND) {
+                    gameData.playerHands.get(controllerId).add(card);
+                } else {
+                    putCardOntoBattlefield(gameData, controllerId, card);
+                }
+                returnedNames.add(card.getName());
+            }
+        }
+
+        if (returnedNames.isEmpty()) {
+            return;
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String destName = effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
-        String logEntry = playerName + " returns " + String.join(", ", returnedNames)
-                + " from graveyard to " + destName + ".";
+        String logEntry = playerName + " puts " + String.join(", ", returnedNames)
+                + " onto " + destName + " from " + (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS ? "all graveyards" : "graveyard") + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} returns {} from graveyard to {}", gameData.id, playerName,
+        log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 String.join(", ", returnedNames), destName);
     }
 

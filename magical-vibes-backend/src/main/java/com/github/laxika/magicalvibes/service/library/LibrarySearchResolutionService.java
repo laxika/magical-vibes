@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEff
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithExactMVToBattlefieldEffect;
@@ -384,6 +385,24 @@ public class LibrarySearchResolutionService {
                 "Search your library for a creature card, reveal it, then shuffle and put that card on top.",
                 true,
                 true,
+                LibrarySearchDestination.TOP_OF_LIBRARY
+        );
+    }
+
+    /**
+     * Performs an unrestricted library search — the controller may choose any card and put it
+     * on top of their library. Used by cards like Liliana Vess.
+     */
+    @HandlesEffect(SearchLibraryForCardToTopOfLibraryEffect.class)
+    void resolveSearchLibraryForCardToTopOfLibrary(GameData gameData, StackEntry entry, SearchLibraryForCardToTopOfLibraryEffect effect) {
+        performLibrarySearch(
+                gameData,
+                entry.getControllerId(),
+                card -> true,
+                "cards",
+                "Search your library for a card, then shuffle and put that card on top.",
+                false,
+                false,
                 LibrarySearchDestination.TOP_OF_LIBRARY
         );
     }
