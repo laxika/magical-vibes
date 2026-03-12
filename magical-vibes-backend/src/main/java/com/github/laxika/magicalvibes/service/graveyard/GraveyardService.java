@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -76,6 +77,7 @@ public class GraveyardService {
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
+        // CR 614.7 — self-replacement effects apply first
         if (card.isShufflesIntoLibraryFromGraveyard()) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
@@ -85,11 +87,21 @@ public class GraveyardService {
             log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
             return false;
-        } else {
-            gameData.playerGraveyards.get(ownerId).add(card);
-            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
-            return true;
         }
+
+        // Leyline of the Void — if an opponent controls a permanent with
+        // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
+        if (opponentHasExileReplacementEffect(gameData, ownerId)) {
+            gameData.playerExiledCards.get(ownerId).add(card);
+            String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
+            return false;
+        }
+
+        gameData.playerGraveyards.get(ownerId).add(card);
+        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
+        return true;
     }
 
     // ===== Regeneration =====
@@ -132,6 +144,21 @@ public class GraveyardService {
     }
 
     // ===== Private helpers =====
+
+    private boolean opponentHasExileReplacementEffect(GameData gameData, UUID ownerId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ownerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ExileOpponentCardsInsteadOfGraveyardEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
