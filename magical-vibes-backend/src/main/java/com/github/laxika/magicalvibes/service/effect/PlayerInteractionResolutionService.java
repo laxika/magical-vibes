@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZon
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
@@ -293,6 +294,25 @@ public class PlayerInteractionResolutionService {
         // Store the amount for later queue processing
         gameData.pendingEachPlayerDiscardAmount = effect.amount();
         // Start the first player's discard
+        startNextEachPlayerDiscard(gameData);
+    }
+
+    @HandlesEffect(EachOpponentDiscardsEffect.class)
+    private void resolveEachOpponentDiscards(GameData gameData, StackEntry entry, EachOpponentDiscardsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        // Build APNAP-ordered queue with only opponents (skip controller)
+        gameData.pendingEachPlayerDiscardQueue.clear();
+        gameData.pendingEachPlayerDiscardControllerId = controllerId;
+        UUID activePlayerId = gameData.activePlayerId;
+        if (!activePlayerId.equals(controllerId)) {
+            gameData.pendingEachPlayerDiscardQueue.add(activePlayerId);
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId) && !playerId.equals(controllerId)) {
+                gameData.pendingEachPlayerDiscardQueue.add(playerId);
+            }
+        }
+        gameData.pendingEachPlayerDiscardAmount = effect.amount();
         startNextEachPlayerDiscard(gameData);
     }
 

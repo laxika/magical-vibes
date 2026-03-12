@@ -119,7 +119,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
 | ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |
 | ETB may exile until leaves (O-ring) | `l/LeoninRelicWarder.java` | MayEffect(ExileTargetPermanentUntilSourceLeavesEffect) + PermanentPredicateTargetFilter(AnyOf(artifact, enchantment)). Exiled card returns when source leaves battlefield |
-| ETB discard | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
+| ETB discard (targeted) | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
+| ETB discard (each opponent) | `l/LilianasSpecter.java` | EachOpponentDiscardsEffect — no targeting, all opponents discard |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
 | ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryForCardTypesToHandEffect(ARTIFACT, 6, MAX_VALUE)) — artifact with MV 6+ |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(CREATURE))) |
