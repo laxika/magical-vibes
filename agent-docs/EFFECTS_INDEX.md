@@ -341,6 +341,7 @@ Pass `null` as filter to allow any card.
 | `ChooseCardsFromTargetHandToTopOfLibraryEffect` | `(int count)` | choose N cards from target hand to put on top of library |
 | `LookAtHandEffect` | `()` | look at target player's hand |
 | `RevealOpponentHandsEffect` | `()` | reveal all opponents' hands |
+| `RevealRandomCardFromTargetPlayerHandEffect` | `()` | target player reveals a card at random from their hand (e.g. Merfolk Spy combat damage trigger) |
 | `HeadGamesEffect` | `()` | exchange target player's hand with cards from your library (Head Games) |
 | `RedirectDrawsEffect` | `()` | redirect opponent's draws to controller (static, e.g. Plagiarize-style) |
 | `ShuffleHandIntoLibraryAndDrawEffect` | `()` | each player shuffles cards from their hand into their library, then draws that many cards (wheel effect) |

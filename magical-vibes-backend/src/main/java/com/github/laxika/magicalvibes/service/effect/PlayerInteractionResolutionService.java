@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
@@ -668,6 +669,33 @@ public class PlayerInteractionResolutionService {
         sessionManager.sendToPlayer(entry.getControllerId(), new RevealHandMessage(cardViews, targetName));
 
         log.info("Game {} - {} looks at {}'s hand", gameData.id, casterName, targetName);
+    }
+
+    @HandlesEffect(RevealRandomCardFromTargetPlayerHandEffect.class)
+    private void resolveRevealRandomCardFromTargetPlayerHand(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String sourceName = entry.getCard().getName();
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = targetName + " has no cards to reveal.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} trigger: {} has no cards to reveal", gameData.id, sourceName, targetName);
+            return;
+        }
+
+        int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
+        Card revealed = hand.get(randomIndex);
+        String logEntry = targetName + " reveals " + revealed.getName() + " at random.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            sessionManager.sendToPlayer(playerId, new RevealHandMessage(cardViews, targetName));
+        }
+
+        log.info("Game {} - {} trigger: {} reveals {} at random", gameData.id, sourceName, targetName, revealed.getName());
     }
 
     @HandlesEffect(ChooseCardsFromTargetHandToTopOfLibraryEffect.class)
