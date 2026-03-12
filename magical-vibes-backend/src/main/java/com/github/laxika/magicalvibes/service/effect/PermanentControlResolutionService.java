@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
@@ -56,6 +57,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -213,6 +215,11 @@ public class PermanentControlResolutionService {
             }
             if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
                 tokenCard.setAdditionalTypes(token.additionalTypes());
+            }
+            if (token.tokenEffects() != null) {
+                for (Map.Entry<EffectSlot, CardEffect> tokenEffect : token.tokenEffects().entrySet()) {
+                    tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
+                }
             }
 
             // Look up token image from Scryfall token set
