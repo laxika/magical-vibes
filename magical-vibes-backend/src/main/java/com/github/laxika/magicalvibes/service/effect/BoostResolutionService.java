@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesByGreatestPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSecondTargetCreatureEffect;
@@ -263,6 +264,37 @@ public class BoostResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, boost.powerBoost(), boost.toughnessBoost());
+    }
+
+    @HandlesEffect(BoostAllOwnCreaturesByGreatestPowerEffect.class)
+    private void resolveBoostAllOwnCreaturesByGreatestPower(GameData gameData, StackEntry entry, BoostAllOwnCreaturesByGreatestPowerEffect effect) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+
+        // Find the greatest power among creatures the controller controls
+        int greatestPower = 0;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                int power = gameQueryService.getEffectivePower(gameData, permanent);
+                if (power > greatestPower) {
+                    greatestPower = power;
+                }
+            }
+        }
+
+        // Apply +X/+X where X is the greatest power
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                permanent.setPowerModifier(permanent.getPowerModifier() + greatestPower);
+                permanent.setToughnessModifier(permanent.getToughnessModifier() + greatestPower);
+                count++;
+            }
+        }
+
+        String logEntry = entry.getCard().getName() + " gives +" + greatestPower + "/+" + greatestPower + " to " + count + " creature(s) until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count, greatestPower, greatestPower);
     }
 
     @HandlesEffect(BoostAllCreaturesEffect.class)
