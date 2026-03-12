@@ -49,6 +49,7 @@ export class SidePanelComponent {
   @Input() playerId1 = '';
   @Input() stackTargetId: string | null = null;
   @Input() isGraveyardLandPlayable!: (index: number) => boolean;
+  @Input() isGraveyardAbilityActivatable!: (index: number) => boolean;
   @Input() getPlayerName!: (playerId: string) => string;
   @Input() getStackEntryTargetName!: (entry: StackEntry) => string | null;
   @Input() searchTaxCost = 0;
@@ -63,6 +64,7 @@ export class SidePanelComponent {
   @Output() stackEntryHover = new EventEmitter<StackEntry>();
   @Output() stackEntryHoverEnd = new EventEmitter<void>();
   @Output() graveyardLandPlay = new EventEmitter<number>();
+  @Output() graveyardAbilityActivate = new EventEmitter<number>();
 
   activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
 

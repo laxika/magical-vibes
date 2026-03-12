@@ -270,6 +270,77 @@ public class AbilityActivationService {
     }
 
     /**
+     * Activates an activated ability on a card in the player's graveyard (e.g. Magma Phoenix's
+     * "{3}{R}{R}: Return Magma Phoenix from your graveyard to your hand.").
+     *
+     * <p>Validates the card exists in the graveyard, has a graveyard activated ability, and that
+     * the player can pay the mana cost. Pays the cost and pushes the ability onto the stack.</p>
+     */
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {
+            throw new IllegalStateException("Invalid graveyard card index");
+        }
+
+        Card card = graveyard.get(graveyardCardIndex);
+        List<ActivatedAbility> abilities = card.getGraveyardActivatedAbilities();
+        if (abilities.isEmpty()) {
+            throw new IllegalStateException("Card has no graveyard activated ability");
+        }
+
+        int idx = abilityIndex != null ? abilityIndex : 0;
+        if (idx < 0 || idx >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        ActivatedAbility ability = abilities.get(idx);
+
+        // Pithing Needle check: block non-mana activated abilities of the chosen name
+        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
+            for (Permanent perm : gameData.playerBattlefields.get(opponentId)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect
+                            && perm.getChosenName() != null
+                            && perm.getChosenName().equals(card.getName())) {
+                        throw new IllegalStateException("Activated abilities of " + card.getName() + " can't be activated (Pithing Needle)");
+                    }
+                }
+            }
+        }
+
+        // Pay mana cost
+        String abilityCost = ability.getManaCost();
+        if (abilityCost != null) {
+            payManaCost(gameData, playerId, abilityCost, 0, false, false);
+        }
+
+        // Filter out cost effects for the snapshot
+        List<CardEffect> snapshotEffects = new ArrayList<>();
+        for (CardEffect effect : ability.getEffects()) {
+            if (!(effect instanceof CostEffect)) {
+                snapshotEffects.add(effect);
+            }
+        }
+
+        // Push ability onto the stack
+        StackEntry stackEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s ability",
+                snapshotEffects
+        );
+        gameData.stack.add(stackEntry);
+
+        String logEntry = player.getUsername() + " activates " + card.getName() + "'s ability from the graveyard.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} activates {}'s graveyard ability", gameData.id, player.getUsername(), card.getName());
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
      * Callback for when a player has chosen which card to discard as an activated ability's discard cost
      * (e.g. {@link DiscardCardTypeCost}). Resumes the pending ability activation with the chosen card.
      *

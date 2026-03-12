@@ -62,6 +62,19 @@ harness.activateAbility(player1, 0, null, targetId);
 harness.passBothPriorities();
 ```
 
+## Recipe: graveyard activated ability
+
+```java
+MagmaPhoenix phoenix = new MagmaPhoenix();
+harness.setGraveyard(player1, List.of(phoenix));
+harness.addMana(player1, ManaColor.RED, 2);
+harness.addMana(player1, ManaColor.COLORLESS, 3);
+harness.activateGraveyardAbility(player1, 0); // activates first ability on graveyard card at index 0
+harness.passBothPriorities(); // resolve
+assertThat(gd.playerHands.get(player1.getId()))
+        .anyMatch(c -> c.getName().equals("Magma Phoenix"));
+```
+
 ## Recipe: force turn-step context
 
 ```java
@@ -153,6 +166,8 @@ assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 | `activateAbility` | `(Player, int permIdx, Integer xValue, UUID targetId)` | Activate first ability on a permanent |
 | `activateAbility` | `(Player, int permIdx, Integer xValue, UUID targetId, Zone)` | Activate ability targeting a specific zone |
 | `activateAbility` | `(Player, int permIdx, int abilityIdx, Integer xValue, UUID targetId)` | Activate Nth ability on a permanent |
+| `activateGraveyardAbility` | `(Player, int graveyardCardIndex)` | Activate first graveyard ability on a card in graveyard |
+| `activateGraveyardAbility` | `(Player, int graveyardCardIndex, int abilityIndex)` | Activate Nth graveyard ability on a card in graveyard |
 | `sacrificePermanent` | `(Player, int permIdx, UUID targetId)` | Sacrifice a permanent (e.g. for Siege-Gang) |
 
 ### Player input handlers

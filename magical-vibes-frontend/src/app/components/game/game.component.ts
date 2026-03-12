@@ -43,6 +43,7 @@ export class GameComponent implements OnInit, OnDestroy {
   readonly boundGetDamageAssigned = (permanentId: string) => this.choice.damage.getDamageAssigned(permanentId);
   readonly boundUnassignDamage = (permanentId: string) => this.choice.damage.unassignDamage(permanentId);
   readonly boundIsGraveyardLandPlayable = (index: number) => this.isGraveyardLandPlayable(index);
+  readonly boundIsGraveyardAbilityActivatable = (index: number) => this.isGraveyardAbilityActivatable(index);
   readonly boundGetPlayerName = (playerId: string) => this.getPlayerName(playerId);
   readonly boundGetStackEntryTargetName = (entry: StackEntry) => this.getStackEntryTargetName(entry);
 
@@ -484,6 +485,18 @@ export class GameComponent implements OnInit, OnDestroy {
   playGraveyardLand(index: number): void {
     if (this.isGraveyardLandPlayable(index)) {
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null, fromGraveyard: true });
+    }
+  }
+
+  isGraveyardAbilityActivatable(index: number): boolean {
+    const card = this.myGraveyard[index];
+    return card?.graveyardActivatedAbilities?.length > 0 && this.hasPriority;
+  }
+
+  activateGraveyardAbility(index: number): void {
+    const card = this.myGraveyard[index];
+    if (card?.graveyardActivatedAbilities?.length > 0) {
+      this.websocketService.send({ type: MessageType.ACTIVATE_GRAVEYARD_ABILITY, graveyardCardIndex: index, abilityIndex: 0 });
     }
   }
 

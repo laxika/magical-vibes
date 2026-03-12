@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
@@ -107,6 +108,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case TAP_PERMANENT -> messageHandler.handleTapPermanent(connection, objectMapper.treeToValue(jsonNode, TapPermanentRequest.class));
                 case SACRIFICE_PERMANENT -> messageHandler.handleSacrificePermanent(connection, objectMapper.treeToValue(jsonNode, SacrificePermanentRequest.class));
                 case ACTIVATE_ABILITY -> messageHandler.handleActivateAbility(connection, objectMapper.treeToValue(jsonNode, ActivateAbilityRequest.class));
+                case ACTIVATE_GRAVEYARD_ABILITY -> messageHandler.handleActivateGraveyardAbility(connection, objectMapper.treeToValue(jsonNode, ActivateGraveyardAbilityRequest.class));
                 case SET_AUTO_STOPS -> messageHandler.handleSetAutoStops(connection, objectMapper.treeToValue(jsonNode, SetAutoStopsRequest.class));
                 case DECLARE_ATTACKERS -> messageHandler.handleDeclareAttackers(connection, objectMapper.treeToValue(jsonNode, DeclareAttackersRequest.class));
                 case DECLARE_BLOCKERS -> messageHandler.handleDeclareBlockers(connection, objectMapper.treeToValue(jsonNode, DeclareBlockersRequest.class));

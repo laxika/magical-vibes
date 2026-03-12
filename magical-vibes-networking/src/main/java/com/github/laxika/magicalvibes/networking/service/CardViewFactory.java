@@ -32,6 +32,10 @@ public class CardViewFactory {
             phyrexianManaCount = cost.getPhyrexianManaCount();
         }
 
+        List<ActivatedAbilityView> graveyardAbilityViews = card.getGraveyardActivatedAbilities().stream()
+                .map(this::createAbilityView)
+                .toList();
+
         AlternateCastingCost altCost = card.getAlternateCastingCost();
         boolean hasAlternateCastingCost = altCost != null;
         int alternateCostLifePayment = altCost != null ? altCost.lifeCost() : 0;
@@ -65,7 +69,8 @@ public class CardViewFactory {
                 card.getWatermark(),
                 hasAlternateCastingCost,
                 alternateCostLifePayment,
-                alternateCostSacrificeCount);
+                alternateCostSacrificeCount,
+                graveyardAbilityViews);
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {

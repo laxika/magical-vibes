@@ -328,6 +328,17 @@ public class GameService {
         }
     }
 
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
+        }
+    }
+
     public void setAutoStops(GameData gameData, Player player, List<TurnStep> stops) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");

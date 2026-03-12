@@ -240,6 +240,37 @@ Cards: `BrassSquire` (2 targets: Equipment + creature), `SoulConduit` (2 targets
 
 ---
 
+### 11. Graveyard activated ability
+
+```java
+addGraveyardActivatedAbility(new ActivatedAbility(requiresTap, manaCost, effects, description))
+```
+
+**Use when:** The card has an activated ability that can be used while it is in the graveyard (e.g. "{3}{R}{R}: Return ~ from your graveyard to your hand."). These are distinct from `GRAVEYARD_UPKEEP_TRIGGERED` triggered abilities — graveyard activated abilities can be activated at instant speed whenever the player has priority, not just during upkeep.
+
+- Uses `Card.addGraveyardActivatedAbility()` instead of `addActivatedAbility()`
+- The ability is exposed via `Card.getGraveyardActivatedAbilities()`
+- Activated from graveyard via `AbilityActivationService.activateGraveyardAbility()`
+- Blocked by Pithing Needle (checks `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect`)
+- Creates a `StackEntry` with `StackEntryType.ACTIVATED_ABILITY` using the Card reference (no source permanent)
+- Frontend sends `ACTIVATE_GRAVEYARD_ABILITY` message with `graveyardCardIndex` and `abilityIndex`
+- `CardView` includes `graveyardActivatedAbilities` list for frontend rendering
+
+```java
+// {3}{R}{R}: Return Magma Phoenix from your graveyard to your hand.
+addGraveyardActivatedAbility(new ActivatedAbility(
+    false, "{3}{R}{R}",
+    List.of(new ReturnCardFromGraveyardEffect(
+        GraveyardChoiceDestination.HAND, new CardIsSelfPredicate(),
+        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+        false, true, false, null, false)),
+    "{3}{R}{R}: Return Magma Phoenix from your graveyard to your hand."));
+```
+
+Cards: `MagmaPhoenix`
+
+---
+
 ## Costs in the effects list
 
 Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. The engine processes them in order.

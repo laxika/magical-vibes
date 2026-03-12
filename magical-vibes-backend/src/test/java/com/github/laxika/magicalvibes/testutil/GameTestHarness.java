@@ -557,6 +557,14 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null, targetPermanentIds);
     }
 
+    public void activateGraveyardAbility(Player player, int graveyardCardIndex) {
+        gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, 0);
+    }
+
+    public void activateGraveyardAbility(Player player, int graveyardCardIndex, int abilityIndex) {
+        gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
+    }
+
     public void handlePermanentChosen(Player player, UUID permanentId) {
         gameService.handlePermanentChosen(gameData, player, permanentId);
     }

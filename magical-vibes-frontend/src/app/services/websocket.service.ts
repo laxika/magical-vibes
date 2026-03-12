@@ -35,6 +35,7 @@ export enum MessageType {
   MAY_ABILITY_CHOICE = 'MAY_ABILITY_CHOICE',
   MAY_ABILITY_CHOSEN = 'MAY_ABILITY_CHOSEN',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
+  ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
   CHOOSE_PERMANENT = 'CHOOSE_PERMANENT',
   PERMANENT_CHOSEN = 'PERMANENT_CHOSEN',
   CHOOSE_MULTIPLE_PERMANENTS = 'CHOOSE_MULTIPLE_PERMANENTS',
@@ -176,6 +177,7 @@ export interface Card {
   hasAlternateCastingCost: boolean;
   alternateCostLifePayment: number;
   alternateCostSacrificeCount: number;
+  graveyardActivatedAbilities: ActivatedAbilityView[];
 }
 
 export interface Permanent {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
@@ -57,6 +58,8 @@ public interface MessageHandler {
     void handleSacrificePermanent(Connection connection, SacrificePermanentRequest request) throws Exception;
 
     void handleActivateAbility(Connection connection, ActivateAbilityRequest request) throws Exception;
+
+    void handleActivateGraveyardAbility(Connection connection, ActivateGraveyardAbilityRequest request) throws Exception;
 
     void handleSetAutoStops(Connection connection, SetAutoStopsRequest request) throws Exception;
 

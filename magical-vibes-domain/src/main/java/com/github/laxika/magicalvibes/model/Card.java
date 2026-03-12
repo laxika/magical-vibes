@@ -63,6 +63,7 @@ public class Card {
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
+    private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
 
     public Card() {
         OracleData oracle = oracleRegistry.get(getClass().getSimpleName());
@@ -104,6 +105,10 @@ public class Card {
 
     public void addActivatedAbility(ActivatedAbility ability) {
         activatedAbilities.add(ability);
+    }
+
+    public void addGraveyardActivatedAbility(ActivatedAbility ability) {
+        graveyardActivatedAbilities.add(ability);
     }
 
     public int getManaValue() {

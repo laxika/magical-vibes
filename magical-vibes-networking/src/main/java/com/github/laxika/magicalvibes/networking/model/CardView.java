@@ -38,6 +38,7 @@ public record CardView(
         String watermark,
         boolean hasAlternateCastingCost,
         int alternateCostLifePayment,
-        int alternateCostSacrificeCount
+        int alternateCostSacrificeCount,
+        List<ActivatedAbilityView> graveyardActivatedAbilities
 ) {
 }
