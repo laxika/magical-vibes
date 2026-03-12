@@ -72,4 +72,7 @@
 @if (!preview && permanent && permanent.chargeCounters > 0) {
   <div class="card-charge-badge">Charge x{{ permanent.chargeCounters }}</div>
 }
+@if (!preview && permanent && permanent.phylacteryCounters > 0) {
+  <div class="card-charge-badge">Phylactery x{{ permanent.phylacteryCounters }}</div>
+}
 <ng-content></ng-content>

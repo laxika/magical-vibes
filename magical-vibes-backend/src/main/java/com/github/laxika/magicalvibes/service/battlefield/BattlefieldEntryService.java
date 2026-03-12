@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -232,6 +233,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof CopyPermanentOnEnterEffect))
                 .filter(e -> !(e instanceof EnterWithXChargeCountersEffect))
                 .filter(e -> !(e instanceof EnterWithFixedChargeCountersEffect))
+                .filter(e -> !(e instanceof PutPhylacteryCounterOnTargetPermanentEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
             // Extract per-mode targetFilter from ChooseOneEffect (if present)

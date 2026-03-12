@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -105,6 +106,10 @@ public class StackResolutionService {
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
         logEnterBattlefield(gameData, card, controllerId);
+
+        // "As enters" phylactery counter placement — replacement effect (MTG Rule 614.1c),
+        // happens as part of the entering process before state-based actions are checked.
+        handlePhylacteryCounterPlacement(gameData, controllerId, card, entry.getTargetPermanentId());
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
         checkLegendRuleIfIdle(gameData, controllerId);
@@ -328,6 +333,31 @@ public class StackResolutionService {
         } else {
             graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
         }
+    }
+
+    private void handlePhylacteryCounterPlacement(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+        boolean hasPhylacteryEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof PutPhylacteryCounterOnTargetPermanentEffect);
+        if (!hasPhylacteryEffect) return;
+
+        // Per MTG rulings: "If you control no artifacts as Phylactery Lich enters the
+        // battlefield, its ability does nothing." No target was chosen — skip placement.
+        if (targetPermanentId == null) return;
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+        if (target == null) return;
+
+        // Validate the chosen permanent is an artifact controlled by the caster.
+        // This does NOT use targeting (shroud/hexproof don't prevent it per MTG rulings).
+        UUID targetController = gameQueryService.findPermanentController(gameData, targetPermanentId);
+        if (!controllerId.equals(targetController)) return;
+        if (!gameQueryService.isArtifact(gameData, target)) return;
+        if (gameQueryService.cantHaveCounters(gameData, target)) return;
+
+        target.setPhylacteryCounters(target.getPhylacteryCounters() + 1);
+        String logEntry = card.getName() + " puts a phylactery counter on " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());
     }
 
     private void logEnterBattlefield(GameData gameData, Card card, UUID controllerId) {

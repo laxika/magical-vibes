@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
@@ -190,6 +191,24 @@ public class PermanentCounterResolutionService {
         log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, target.getCard().getName(), target.getChargeCounters());
     }
 
+    @HandlesEffect(PutPhylacteryCounterOnTargetPermanentEffect.class)
+    private void resolvePutPhylacteryCounterOnTargetPermanent(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, target)) {
+            return;
+        }
+
+        target.setPhylacteryCounters(target.getPhylacteryCounters() + 1);
+
+        String logEntry = target.getCard().getName() + " gets a phylactery counter (" + target.getPhylacteryCounters() + " total).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets a phylactery counter ({} total)", gameData.id, target.getCard().getName(), target.getPhylacteryCounters());
+    }
+
     @HandlesEffect(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class)
     private void resolvePutMinusOneMinusOneCounterOnTargetCreature(GameData gameData, StackEntry entry, PutMinusOneMinusOneCounterOnTargetCreatureEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -275,6 +294,13 @@ public class PermanentCounterResolutionService {
         if (remaining > 0 && target.getLoyaltyCounters() > 0) {
             int remove = Math.min(remaining, target.getLoyaltyCounters());
             target.setLoyaltyCounters(target.getLoyaltyCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
+        if (remaining > 0 && target.getPhylacteryCounters() > 0) {
+            int remove = Math.min(remaining, target.getPhylacteryCounters());
+            target.setPhylacteryCounters(target.getPhylacteryCounters() - remove);
             totalRemoved += remove;
             remaining -= remove;
         }

@@ -202,6 +202,7 @@ export interface Permanent {
   animatedCreature: boolean;
   loyaltyCounters: number;
   chargeCounters: number;
+  phylacteryCounters: number;
   attackTargetId: string | null;
   markedDamage: number;
 }
