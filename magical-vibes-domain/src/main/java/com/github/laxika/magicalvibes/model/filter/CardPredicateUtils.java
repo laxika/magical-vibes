@@ -22,6 +22,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsAuraPredicate) {
             return "Aura card";
         }
+        if (predicate instanceof CardIsPermanentPredicate) {
+            return "permanent card";
+        }
         if (predicate instanceof CardAllOfPredicate p) {
             List<String> parts = new ArrayList<>();
             for (CardPredicate sub : p.predicates()) {

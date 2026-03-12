@@ -1,0 +1,123 @@
+package com.github.laxika.magicalvibes.cards.n;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class NaturesSpiralTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Nature's Spiral has correct effect configuration")
+    void hasCorrectEffectConfiguration() {
+        NaturesSpiral card = new NaturesSpiral();
+
+        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
+    }
+
+    @Test
+    @DisplayName("Nature's Spiral returns target creature card from graveyard to hand")
+    void returnsTargetCreatureFromGraveyardToHand() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new NaturesSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(creature.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Nature's Spiral"));
+    }
+
+    @Test
+    @DisplayName("Nature's Spiral cannot target instant card in graveyard")
+    void cannotTargetInstantCardInGraveyard() {
+        Card instant = new HolyDay();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setHand(player1, List.of(new NaturesSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, instant.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Nature's Spiral cannot target sorcery card in graveyard")
+    void cannotTargetSorceryCardInGraveyard() {
+        Card sorcery = new LavaAxe();
+        harness.setGraveyard(player1, List.of(sorcery));
+        harness.setHand(player1, List.of(new NaturesSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, sorcery.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Nature's Spiral cannot target card in opponent's graveyard")
+    void cannotTargetCardInOpponentGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new NaturesSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your graveyard");
+    }
+
+    @Test
+    @DisplayName("Nature's Spiral fizzles if targeted card leaves graveyard before resolution")
+    void fizzlesIfTargetLeavesGraveyardBeforeResolution() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new NaturesSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.getGameData().playerGraveyards.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Casting Nature's Spiral puts a graveyard-targeted sorcery spell on the stack")
+    void castingPutsGraveyardTargetedSpellOnStack() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new NaturesSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, creature.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
+        assertThat(entry.getTargetPermanentId()).isEqualTo(creature.getId());
+        assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
+    }
+}

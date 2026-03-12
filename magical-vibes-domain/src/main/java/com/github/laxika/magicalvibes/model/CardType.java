@@ -18,4 +18,7 @@ public enum CardType {
     @Getter
     private final String displayName;
 
+    public boolean isPermanentType() {
+        return this != INSTANT && this != SORCERY;
+    }
 }

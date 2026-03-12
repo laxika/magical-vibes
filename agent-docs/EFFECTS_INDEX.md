@@ -254,6 +254,7 @@ ReturnCardFromGraveyardEffect(
 | `CardKeywordPredicate` | `(Keyword keyword)` | cards with a given keyword (INFECT, FLYING, etc.) |
 | `CardIsSelfPredicate` | `()` | only the source card itself (Squee-style self-return) |
 | `CardIsAuraPredicate` | `()` | aura cards |
+| `CardIsPermanentPredicate` | `()` | permanent cards (creature, artifact, enchantment, planeswalker, land, kindred — not instant/sorcery) |
 | `CardNotPredicate` | `(CardPredicate predicate)` | NOT — inverts a predicate |
 | `CardAllOfPredicate` | `(List<CardPredicate> predicates)` | AND — all predicates must match |
 | `CardAnyOfPredicate` | `(List<CardPredicate> predicates)` | OR — any predicate matches |
