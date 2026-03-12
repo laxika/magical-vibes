@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
@@ -427,6 +428,113 @@ public class CardSpecificResolutionService {
 
         log.info("Game {} - {} sacrificed {}, {} enters the battlefield",
                 gameData.id, targetControllerName, targetName, foundCard.getName());
+    }
+
+    @HandlesEffect(ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect.class)
+    void resolveExileAllCreaturesYouControlThenRevealCreaturesToBattlefield(GameData gameData, StackEntry entry,
+                                                                            ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // Step 1: Find all creatures the controller controls
+        List<Permanent> creaturesToExile = new ArrayList<>(
+                gameData.playerBattlefields.get(controllerId).stream()
+                        .filter(p -> p.getCard().getType() == CardType.CREATURE
+                                || p.getCard().getAdditionalTypes().contains(CardType.CREATURE))
+                        .toList()
+        );
+
+        int creatureCount = creaturesToExile.size();
+
+        if (creatureCount == 0) {
+            String noCreaturesLog = controllerName + " controls no creatures — no cards are exiled or revealed.";
+            gameBroadcastService.logAndBroadcast(gameData, noCreaturesLog);
+            return;
+        }
+
+        // Step 2: Exile all creatures
+        for (Permanent creature : creaturesToExile) {
+            String creatureName = creature.getCard().getName();
+            permanentRemovalService.removePermanentToExile(gameData, creature);
+            String exileLog = controllerName + " exiles " + creatureName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+        }
+
+        // Step 3: Reveal cards from the top of the library until finding that many creature cards
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        List<Card> revealedCards = new ArrayList<>();
+        List<Card> foundCreatures = new ArrayList<>();
+
+        while (!deck.isEmpty() && foundCreatures.size() < creatureCount) {
+            Card card = deck.removeFirst();
+            revealedCards.add(card);
+            if (cardMatchesAnyType(card, Set.of(CardType.CREATURE))) {
+                foundCreatures.add(card);
+            }
+        }
+
+        if (revealedCards.isEmpty()) {
+            String emptyLog = controllerName + "'s library is empty — no cards are revealed.";
+            gameBroadcastService.logAndBroadcast(gameData, emptyLog);
+            return;
+        }
+
+        String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+        String revealLog = controllerName + " reveals " + revealedNames + ".";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+        if (foundCreatures.isEmpty()) {
+            // No creature cards found — shuffle all revealed cards back into the library
+            deck.addAll(revealedCards);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            String noMatchLog = controllerName + " reveals their entire library — no creature cards found. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
+            return;
+        }
+
+        // Step 4: Put all found creature cards onto the battlefield simultaneously (ruling 2010-08-15)
+        for (Card creatureCard : foundCreatures) {
+            Permanent perm = new Permanent(creatureCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+            String enterLog = creatureCard.getName() + " enters the battlefield under " + controllerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, enterLog);
+
+            // Handle planeswalkers (e.g. artifact creatures that are also planeswalkers)
+            if (creatureCard.getType() == CardType.PLANESWALKER && creatureCard.getLoyalty() != null) {
+                perm.setLoyaltyCounters(creatureCard.getLoyalty());
+                perm.setSummoningSick(false);
+            }
+        }
+
+        // Step 5: Shuffle all non-creature revealed cards back into the library
+        // This happens before ETB triggers are put on the stack (ruling 2010-08-15:
+        // "Any abilities that trigger during the resolution of Mass Polymorph will wait
+        // to be put onto the stack until Mass Polymorph finishes resolving.")
+        List<Card> nonCreatureCards = new ArrayList<>(revealedCards);
+        nonCreatureCards.removeAll(foundCreatures);
+        if (!nonCreatureCards.isEmpty()) {
+            deck.addAll(nonCreatureCards);
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+
+        String shuffleLog = controllerName + " shuffles their library.";
+        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+
+        // Step 6: Process ETB triggers after all creatures are on the battlefield and the
+        // spell has finished resolving. All creatures enter at the same time, so triggers
+        // see the full board state.
+        for (Card creatureCard : foundCreatures) {
+            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, creatureCard, null, false);
+        }
+
+        // Check legend rule for each creature that entered
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+
+        log.info("Game {} - {} exiled {} creatures, {} creature cards entered the battlefield",
+                gameData.id, controllerName, creatureCount, foundCreatures.size());
     }
 
     private boolean cardMatchesAnyType(Card card, Set<CardType> types) {

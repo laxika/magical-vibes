@@ -156,6 +156,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect` | `()` | "sacrifice this, then destroy target creature that player controls." Wrap in `MayEffect` for "you may" behavior. Used on ON_COMBAT_DAMAGE_TO_PLAYER triggers where "that player" is the damaged player. StackEntry context: targetPermanentId = damaged player, sourcePermanentId = source creature. Presents multi-permanent choice (max 1). Resolved by `DestructionResolutionService` |
 | `SacrificeAtEndOfCombatEffect` | `()` | sacrifice at end of combat |
 | `SacrificeTargetThenRevealUntilTypeToBattlefieldEffect` | `(Set<CardType> cardTypes)` | sacrifice the targeted permanent, then its controller reveals cards from the top of their library until a card matching one of the specified types is found; that card is put onto the battlefield under that player's control, and all other revealed cards are shuffled into their library. Polymorph-style effect (used by Shape Anew for artifact→artifact) |
+| `ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect` | `()` | exile all creatures you control, then reveal cards from the top of your library until you reveal that many creature cards; put all revealed creature cards onto the battlefield, then shuffle the rest into your library. Mass Polymorph-style effect |
 
 ### Sacrifice costs (for activated abilities)
 
