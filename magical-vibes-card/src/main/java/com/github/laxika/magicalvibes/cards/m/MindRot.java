@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "159")
+@CardRegistration(set = "M11", collectorNumber = "105")
 public class MindRot extends Card {
 
     public MindRot() {
