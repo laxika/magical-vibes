@@ -249,6 +249,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handlePendingAuraPlacement(GameData gameData, UUID playerId, UUID permanentId) {
         Card auraCard = gameData.interaction.consumePendingAuraCard();
+        UUID auraOwnerId = gameData.interaction.consumePendingAuraOwnerId();
+        // If an explicit aura owner was set (e.g. Necrotic Plague), use it instead of the chooser
+        UUID auraControllerId = auraOwnerId != null ? auraOwnerId : playerId;
 
         Permanent enchantTarget = gameQueryService.findPermanentById(gameData, permanentId);
         if (enchantTarget == null) {
@@ -257,7 +260,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         if (gameData.warpWorldOperation.sourceName != null) {
             gameData.warpWorldOperation.pendingEnchantmentPlacements.add(
-                    new WarpWorldEnchantmentPlacement(playerId, auraCard, enchantTarget.getId())
+                    new WarpWorldEnchantmentPlacement(auraControllerId, auraCard, enchantTarget.getId())
             );
 
             if (!gameData.warpWorldOperation.pendingAuraChoices.isEmpty()) {
@@ -276,15 +279,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         } else {
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(enchantTarget.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
 
             boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
             if (hasControlEffect) {
-                creatureControlService.stealPermanent(gameData, playerId, enchantTarget);
+                creatureControlService.stealPermanent(gameData, auraControllerId, enchantTarget);
             }
 
-            String playerName = gameData.playerIdToName.get(playerId);
+            String playerName = gameData.playerIdToName.get(auraControllerId);
             String logEntry = auraCard.getName() + " enters the battlefield attached to " + enchantTarget.getCard().getName() + " under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} puts {} onto battlefield attached to {}",

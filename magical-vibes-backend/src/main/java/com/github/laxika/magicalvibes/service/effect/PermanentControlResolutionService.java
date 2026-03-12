@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureAndCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
@@ -195,6 +196,43 @@ public class PermanentControlResolutionService {
 
         // Create token for the aura's controller
         applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect(), entry.getCard().getSetCode());
+    }
+
+    @HandlesEffect(SacrificeEnchantedCreatureEffect.class)
+    private void resolveSacrificeEnchantedCreature(GameData gameData, StackEntry entry,
+                                                    SacrificeEnchantedCreatureEffect effect) {
+        // Find the aura permanent via sourcePermanentId
+        Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (auraPerm == null) {
+            log.info("Game {} - Aura {} no longer on battlefield, skipping sacrifice trigger",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        // Find the enchanted creature
+        UUID enchantedId = auraPerm.getAttachedTo();
+        if (enchantedId == null) {
+            log.info("Game {} - {} is not attached to anything, skipping sacrifice trigger",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedId);
+        if (enchantedCreature == null) {
+            log.info("Game {} - Enchanted creature no longer on battlefield, skipping sacrifice",
+                    gameData.id);
+            return;
+        }
+
+        // Sacrifice the enchanted creature (its controller sacrifices it)
+        String sacrificeLog = enchantedCreature.getCard().getName() + " is sacrificed ("
+                + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, sacrificeLog);
+        log.info("Game {} - {} sacrificed by {}", gameData.id,
+                enchantedCreature.getCard().getName(), entry.getCard().getName());
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, enchantedCreature);
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token, String sourceSetCode) {

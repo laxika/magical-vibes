@@ -34,6 +34,7 @@ public class InteractionState {
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
     private Card pendingAuraCard;
+    private UUID pendingAuraOwnerId;
     private UUID pendingEquipmentAttachEquipmentId;
     private UUID pendingEquipmentAttachTargetId;
     private UUID awaitingMayAbilityPlayerId;
@@ -62,6 +63,7 @@ public class InteractionState {
         copy.multiSelection.setMultiZoneExile(msCopy.multiZoneExilePlayerId(), msCopy.multiZoneExileValidCardIds(), msCopy.multiZoneExileMaxCount());
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
+        copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
         copy.pendingEquipmentAttachEquipmentId = this.pendingEquipmentAttachEquipmentId;
         copy.pendingEquipmentAttachTargetId = this.pendingEquipmentAttachTargetId;
         copy.awaitingMayAbilityPlayerId = this.awaitingMayAbilityPlayerId;
@@ -237,6 +239,16 @@ public class InteractionState {
         Card auraCard = this.pendingAuraCard;
         this.pendingAuraCard = null;
         return auraCard;
+    }
+
+    public void setPendingAuraOwnerId(UUID ownerId) {
+        this.pendingAuraOwnerId = ownerId;
+    }
+
+    public UUID consumePendingAuraOwnerId() {
+        UUID ownerId = this.pendingAuraOwnerId;
+        this.pendingAuraOwnerId = null;
+        return ownerId;
     }
 
     // ========================================================================
