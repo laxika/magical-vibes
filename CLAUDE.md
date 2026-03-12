@@ -6,6 +6,7 @@
 - If you can recreate an effect by combining existing ones then do not create a new class for it. For example "Orcish Artillery deals 2 damage to any target and 3 damage to you." could be achieved by combining DealDamageToAnyTargetEffect with DealDamageToControllerEffect.
 - If you can reuse an effect by adding predicates to it then do so. Whenever creating new effect try to add parameters as predicates. Instead of DestroyTargetArtifactEffect create a DestroyTargetPermanentEffect that accepts a PermanentPredicate.
 - If you create new effects, etc then make sure to update the files in the agent-docs folder.
+- If you need to implement a new card, then start by checking that a version of it (from a different set) was already implemented. If that's the case then add the `@CardRegistration` annotation for the new printing but do nothing else (do not run/check tests, etc).
 
 ## Documentation
 
