@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "339")
+@CardRegistration(set = "M11", collectorNumber = "212")
 public class PlatinumAngel extends Card {
 
     public PlatinumAngel() {
