@@ -49,7 +49,7 @@ public class Card {
     @Setter private int maxTargets;
     @Setter private String setCode;
     @Setter private String collectorNumber;
-    @Setter private boolean shufflesIntoLibraryFromGraveyard;
+
     @Setter private boolean cantBeCountered;
     @Setter private boolean token;
     @Setter private boolean entersTapped;

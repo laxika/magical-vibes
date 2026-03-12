@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,8 @@ class LegacyWeaponTest extends BaseCardTest {
     void hasCorrectProperties() {
         LegacyWeapon card = new LegacyWeapon();
 
-        assertThat(card.isShufflesIntoLibraryFromGraveyard()).isTrue();
+        assertThat(card.getEffects(EffectSlot.STATIC))
+                .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
         assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();

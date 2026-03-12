@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -78,7 +79,7 @@ public class GraveyardService {
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         // CR 614.7 — self-replacement effects apply first
-        if (card.isShufflesIntoLibraryFromGraveyard()) {
+        if (hasShuffleIntoLibraryReplacementEffect(card)) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
@@ -144,6 +145,11 @@ public class GraveyardService {
     }
 
     // ===== Private helpers =====
+
+    private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
+    }
 
     private boolean opponentHasExileReplacementEffect(GameData gameData, UUID ownerId) {
         for (UUID playerId : gameData.orderedPlayerIds) {

@@ -121,7 +121,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/m/MagmaPhoenix.java`
 
 - Shuffle-into-library replacement effect ("if would be put into graveyard from anywhere, shuffle into library instead"):
-  - `setShufflesIntoLibraryFromGraveyard(true)` — Card property (not an effect), checked in `GameHelper.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution.
+  - `addEffect(EffectSlot.STATIC, new ShuffleIntoLibraryReplacementEffect())` — checked in `GraveyardService.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
 
 - Discard-to-battlefield replacement effect ("if opponent causes you to discard this card, put it onto the battlefield instead"):
