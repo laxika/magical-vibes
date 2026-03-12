@@ -47,7 +47,8 @@
       "Bash(./gradlew :magical-vibes-backend:compileJava:*)",
       "Bash(./gradlew :magical-vibes-card:compileJava:*)",
       "Bash(do echo:*)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "WebFetch(domain:ancestral.vision)"
     ]
   },
   "hooks": {
