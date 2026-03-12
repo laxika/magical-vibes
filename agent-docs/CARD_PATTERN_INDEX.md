@@ -185,7 +185,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Opponent dealt noncombat damage — self boost | `c/ChandrasSpitfire.java` | ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE BoostSelfEffect(3, 0) — +3/+0 whenever an opponent is dealt noncombat damage |
 | Opponent draws | `u/UnderworldDreams.java` | ON_OPPONENT_DRAWS DealDamageToTargetPlayerEffect |
 | Opponent loses life — mill | `m/Mindcrank.java` | ON_OPPONENT_LOSES_LIFE MillOpponentOnLifeLossEffect — whenever opponent loses life, mills that many cards. Trigger fires from damage (spell + combat) and life loss effects |
-| Opponent discards | `m/Megrim.java` | ON_OPPONENT_DISCARDS DealDamageToDiscardingPlayerEffect |
+| Opponent discards — damage | `m/Megrim.java` | ON_OPPONENT_DISCARDS DealDamageToDiscardingPlayerEffect |
+| Opponent discards — life loss | `l/LilianasCaress.java` | ON_OPPONENT_DISCARDS LoseLifeEffect |
 | Spell cast trigger | `q/QuirionDryad.java` | ON_ANY_PLAYER_CASTS_SPELL +1/+1 counter |
 | Knowledge Pool-style cast intercept | `k/KnowledgePool.java` | ON_ENTER_BATTLEFIELD EachPlayerExilesTopCardsToSourceEffect(3) + ON_ANY_PLAYER_CASTS_SPELL KnowledgePoolCastTriggerEffect — exiles cast-from-hand spells, lets caster pick a nonland card from pool to cast free. Uses per-permanent exile tracking (permanentExiledCards) and KNOWLEDGE_POOL_CAST_CHOICE awaiting input |
 | May gain life on spell cast | `a/AngelsFeather.java` | MayEffect(GainLifeOnSpellCastEffect(CardColorPredicate)) — also `g/GolemsHeart.java` with CardTypePredicate |

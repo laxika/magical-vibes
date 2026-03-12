@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -71,6 +72,32 @@ public class DiscardTriggerCollectorService {
             if (effectiveDamage > 0) {
                 gameData.playersDealtDamageThisTurn.add(discardingPlayerId);
             }
+        }
+
+        return true;
+    }
+
+    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleLifeLossOnDiscard(TriggerMatchContext match,
+            LoseLifeEffect trigger, TriggerContext ctx) {
+        TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
+        String cardName = match.permanent().getCard().getName();
+        int amount = trigger.amount();
+        var gameData = match.gameData();
+        var discardingPlayerId = dc.discardingPlayerId();
+
+        String logEntry = cardName + " triggers — " + gameData.playerIdToName.get(discardingPlayerId)
+                + " loses " + amount + " life.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} triggers on discard, {} loses {} life",
+                gameData.id, cardName, gameData.playerIdToName.get(discardingPlayerId), amount);
+
+        if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change.");
+        } else {
+            int currentLife = gameData.getLife(discardingPlayerId);
+            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - amount);
         }
 
         return true;
