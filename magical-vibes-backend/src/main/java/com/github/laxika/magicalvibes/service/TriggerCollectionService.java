@@ -264,6 +264,12 @@ public class TriggerCollectionService {
 
             collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent);
             collectBecomesTargetOfOpponentSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
+            // Check the targeted permanent itself for "when this becomes the target" triggers.
+            // Attached permanents (auras/equipment) use the loop below instead — their triggers
+            // monitor the enchanted/equipped creature, not themselves.
+            if (targetPermanent.getAttachedTo() == null) {
+                collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
+            }
 
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -308,6 +314,15 @@ public class TriggerCollectionService {
 
             Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
             if (targetPermanent == null) continue;
+
+            // Check the targeted permanent itself for "when this becomes the target" triggers.
+            // Attached permanents (auras/equipment) use the loop below instead.
+            if (targetPermanent.getAttachedTo() == null) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+                if (controllerId != null) {
+                    collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
+                }
+            }
 
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
