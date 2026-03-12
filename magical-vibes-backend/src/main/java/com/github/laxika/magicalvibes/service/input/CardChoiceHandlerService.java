@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -121,13 +123,27 @@ public class CardChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
 
-        graveyardService.addCardToGraveyard(gameData, playerId, card);
-
-        String logEntry = player.getUsername() + " discards " + card.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
+        boolean replacedByBattlefield = false;
+        if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
+            // Replacement effect: put onto battlefield instead of graveyard (e.g. Obstinate Baloth)
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+            String logEntry = player.getUsername() + " discards " + card.getName() + " — it enters the battlefield instead.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
+            replacedByBattlefield = true;
+        } else {
+            graveyardService.addCardToGraveyard(gameData, playerId, card);
+            String logEntry = player.getUsername() + " discards " + card.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
+        }
 
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+
+        if (replacedByBattlefield && card.getType() == CardType.CREATURE) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+        }
 
         // Check if a spell should return to hand based on the discarded card type (e.g. Psychic Miasma)
         checkPendingReturnToHandOnDiscard(gameData, card);
@@ -266,18 +282,40 @@ public class CardChoiceHandlerService {
             List<Card> chosenCards = gameData.interaction.revealedHandChoice().chosenCardsSnapshot();
 
             if (discardMode) {
-                // Discard chosen cards to graveyard
+                // Discard chosen cards to graveyard (or battlefield if replacement effect applies)
+                List<Card> replacedCards = new ArrayList<>();
                 for (Card discarded : chosenCards) {
-                    graveyardService.addCardToGraveyard(gameData, targetPlayerId, discarded);
+                    if (hasEnterBattlefieldOnDiscardEffect(discarded) && gameData.discardCausedByOpponent) {
+                        Permanent permanent = new Permanent(discarded);
+                        battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+                        replacedCards.add(discarded);
+                        String replaceLog = targetName + " discards " + discarded.getName() + " — it enters the battlefield instead.";
+                        gameBroadcastService.logAndBroadcast(gameData, replaceLog);
+                        log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
+                                gameData.id, targetName, discarded.getName());
+                    } else {
+                        graveyardService.addCardToGraveyard(gameData, targetPlayerId, discarded);
+                    }
                 }
 
-                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
-                String discardLog = targetName + " discards " + cardNames + ".";
-                gameBroadcastService.logAndBroadcast(gameData, discardLog);
-                log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+                List<Card> normallyDiscarded = chosenCards.stream()
+                        .filter(c -> !replacedCards.contains(c))
+                        .toList();
+                if (!normallyDiscarded.isEmpty()) {
+                    String cardNames = String.join(", ", normallyDiscarded.stream().map(Card::getName).toList());
+                    String discardLog = targetName + " discards " + cardNames + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, discardLog);
+                    log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+                }
 
                 for (Card discarded : chosenCards) {
                     triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, discarded);
+                }
+
+                for (Card replaced : replacedCards) {
+                    if (replaced.getType() == CardType.CREATURE) {
+                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, replaced, null, false);
+                    }
                 }
             } else {
                 // Put chosen cards on top of library
@@ -387,6 +425,11 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} returned to hand (land discarded)", gameData.id, pending.card().getName());
             gameData.pendingReturnToHandOnDiscardType = null;
         }
+    }
+
+    private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {
+        return card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                .anyMatch(e -> e instanceof EnterBattlefieldOnDiscardEffect);
     }
 
     private void finalizePendingReturnToHandOnDiscard(GameData gameData) {

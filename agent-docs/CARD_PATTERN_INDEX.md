@@ -109,6 +109,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Keyword creature + shuffle-into-library replacement | `b/BlightsteelColossus.java` | Keywords (infect, trample, indestructible) auto-loaded from Scryfall + `setShufflesIntoLibraryFromGraveyard(true)`. Replacement effect: when put into graveyard from anywhere, shuffled into owner's library instead. Also used by `l/LegacyWeapon.java`. |
 | Can't be countered + keyword + ability | `t/ThrunTheLastTroll.java` | `setCantBeCountered(true)` + hexproof from Scryfall + `{1}{G}` RegenerateEffect activated ability. Intrinsic uncounterable checked by `GameQueryService.isUncounterable()` via `Card.isCantBeCountered()`. |
 | Alternate casting cost (sacrifice + life) | `d/DemonOfDeathsGate.java` | `setAlternateCastingCost(new AlternateCastingCost(lifeCost, sacrificeCount, PermanentAllOfPredicate))` — "You may pay N life and sacrifice M [matching] creatures rather than pay this spell's mana cost." Frontend sends `alternateCostSacrificePermanentIds` in PlayCardRequest. Keywords (flying, trample) auto-loaded from Scryfall. |
+| ETB + discard-to-battlefield replacement | `o/ObstinateBaloth.java` | ON_SELF_DISCARDED_BY_OPPONENT `EnterBattlefieldOnDiscardEffect` + ON_ENTER_BATTLEFIELD GainLifeEffect. Replacement effect: if opponent causes you to discard this card, put it onto the battlefield instead of graveyard. ETB triggers still fire. |
 
 ## ETB creatures
 

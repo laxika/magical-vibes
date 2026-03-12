@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -143,8 +144,11 @@ public class TriggerCollectionService {
         }
 
         // Check the discarded card itself for self-discard triggers (e.g. Guerrilla Tactics)
+        // Skip EnterBattlefieldOnDiscardEffect — it's a replacement effect handled earlier in the discard flow
         if (discardedCard != null && gameData.discardCausedByOpponent) {
-            List<CardEffect> selfTriggers = discardedCard.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT);
+            List<CardEffect> selfTriggers = discardedCard.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                    .filter(e -> !(e instanceof EnterBattlefieldOnDiscardEffect))
+                    .toList();
             if (!selfTriggers.isEmpty()) {
                 gameData.pendingDiscardSelfTriggers.add(new PermanentChoiceContext.DiscardTriggerAnyTarget(
                         discardedCard, discardingPlayerId, new ArrayList<>(selfTriggers)
