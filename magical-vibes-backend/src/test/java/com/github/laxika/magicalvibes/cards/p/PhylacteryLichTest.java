@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ class PhylacteryLichTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Phylactery Lich has non-targeting ETB phylactery counter effect")
+    @DisplayName("Phylactery Lich has non-targeting ETB phylactery counter effect and state trigger")
     void hasCorrectAbilityStructure() {
         PhylacteryLich card = new PhylacteryLich();
 
@@ -31,12 +33,17 @@ class PhylacteryLichTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(PutPhylacteryCounterOnTargetPermanentEffect.class);
+
+        // State-triggered sacrifice ability (rule 603.8)
+        assertThat(card.getEffects(EffectSlot.STATE_TRIGGERED)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATE_TRIGGERED).getFirst())
+                .isInstanceOf(StateTriggerEffect.class);
     }
 
     // ===== ETB phylactery counter placement =====
 
     @Test
-    @DisplayName("Casting Phylactery Lich places a phylactery counter on target artifact")
+    @DisplayName("Casting Phylactery Lich places a phylactery counter on chosen artifact")
     void castingPlacesPhylacteryCounterOnTargetArtifact() {
         harness.addToBattlefield(player1, new TheHive());
         harness.setHand(player1, List.of(new PhylacteryLich()));
@@ -78,7 +85,7 @@ class PhylacteryLichTest extends BaseCardTest {
     // ===== Choice restriction (does not target) =====
 
     @Test
-    @DisplayName("Choosing opponent's artifact is ignored — no counter placed, Lich sacrificed")
+    @DisplayName("Choosing opponent's artifact is ignored — no counter placed, Lich sacrificed via state trigger")
     void choosingOpponentArtifactIsIgnored() {
         harness.addToBattlefield(player2, new TheHive());
         harness.setHand(player1, List.of(new PhylacteryLich()));
@@ -86,13 +93,19 @@ class PhylacteryLichTest extends BaseCardTest {
 
         UUID opponentArtifactId = harness.getPermanentId(player2, "The Hive");
         harness.castCreature(player1, 0, 0, opponentArtifactId);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → state trigger fires
 
         // Counter should NOT be placed on opponent's artifact
         Permanent artifact = gqs.findPermanentById(gd, opponentArtifactId);
         assertThat(artifact.getPhylacteryCounters()).isEqualTo(0);
 
-        // Lich enters but is immediately sacrificed (no phylactery counter permanents)
+        // State trigger is on the stack — Lich is still alive
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+
+        // Resolve state trigger → Lich is sacrificed
+        harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -100,7 +113,7 @@ class PhylacteryLichTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing a non-artifact permanent is ignored — no counter placed, Lich sacrificed")
+    @DisplayName("Choosing a non-artifact permanent is ignored — no counter placed, Lich sacrificed via state trigger")
     void choosingNonArtifactPermanentIsIgnored() {
         Card creature = new Card();
         creature.setName("Test Creature");
@@ -115,13 +128,14 @@ class PhylacteryLichTest extends BaseCardTest {
 
         UUID creatureId = harness.getPermanentId(player1, "Test Creature");
         harness.castCreature(player1, 0, 0, creatureId);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → state trigger fires
+        harness.passBothPriorities(); // resolve state trigger → Lich sacrificed
 
         // Counter should NOT be placed on a non-artifact
         Permanent perm = gqs.findPermanentById(gd, creatureId);
         assertThat(perm.getPhylacteryCounters()).isEqualTo(0);
 
-        // Lich enters but is immediately sacrificed
+        // Lich should be in graveyard
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -129,23 +143,48 @@ class PhylacteryLichTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casting without artifacts — counter not placed, Lich sacrificed")
+    @DisplayName("Casting without artifacts — state trigger fires, Lich sacrificed after resolution")
     void castWithoutArtifacts() {
         harness.setHand(player1, List.of(new PhylacteryLich()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         // Cast without choosing any artifact (no target)
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → state trigger fires
+        harness.passBothPriorities(); // resolve state trigger → Lich sacrificed
 
-        // Lich enters but no phylactery counter → sacrificed by SBA
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Phylactery Lich"));
     }
 
-    // ===== State-based sacrifice =====
+    // ===== State-triggered sacrifice (rule 603.8) =====
+
+    @Test
+    @DisplayName("State trigger goes on the stack and Lich survives until it resolves")
+    void stateTriggerGoesOnStack() {
+        harness.setHand(player1, List.of(new PhylacteryLich()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell → state trigger fires
+
+        // Lich is on the battlefield while trigger is on the stack
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+
+        // State trigger is on the stack
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack).anyMatch(e ->
+                e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && e.getDescription().contains("Phylactery Lich"));
+
+        // Resolve trigger → Lich is sacrificed
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
+    }
 
     @Test
     @DisplayName("Phylactery Lich is sacrificed when artifact with counter is destroyed by a spell")
@@ -168,7 +207,10 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castAndResolveInstant(player2, 0, artifactId);
 
-        // Artifact is destroyed → SBA runs → Lich is sacrificed
+        // State trigger is now on the stack — resolve it
+        harness.passBothPriorities();
+
+        // Artifact destroyed, state trigger resolved → Lich is sacrificed
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("The Hive"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -194,6 +236,9 @@ class PhylacteryLichTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("The Hive"));
         assertThat(gqs.findPermanentById(gd, artifactId).getPhylacteryCounters()).isEqualTo(1);
+
+        // No state trigger should fire
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -213,7 +258,7 @@ class PhylacteryLichTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         secondPerm.setPhylacteryCounters(1);
 
-        // Cast Lich targeting the first artifact
+        // Cast Lich choosing the first artifact
         harness.setHand(player1, List.of(new PhylacteryLich()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         UUID firstArtifactId = harness.getPermanentId(player1, "The Hive");
@@ -226,6 +271,7 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, firstArtifactId);
 
         // Lich should survive — second artifact still has phylactery counters
+        // No state trigger should fire
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
     }
@@ -249,6 +295,9 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shatter()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castAndResolveInstant(player2, 0, artifactId);
+
+        // Resolve state trigger
+        harness.passBothPriorities();
 
         // Indestructible does NOT prevent sacrifice — Lich goes to graveyard
         assertThat(gd.playerBattlefields.get(player1.getId()))

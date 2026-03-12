@@ -3,12 +3,10 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +25,7 @@ public class StateBasedActionService {
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
+    private final StateTriggerService stateTriggerService;
 
     public void performStateBasedActions(GameData gameData) {
         boolean anyDied = false;
@@ -96,29 +95,8 @@ public class StateBasedActionService {
             }
         });
 
-        // Phylactery Lich state-triggered sacrifice: if a creature placed phylactery counters
-        // and its controller controls no permanents with phylactery counters, sacrifice it.
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-
-            boolean hasPhylacteryPermanent = battlefield.stream()
-                    .anyMatch(p -> p.getPhylacteryCounters() > 0);
-
-            if (!hasPhylacteryPermanent) {
-                List<Permanent> toSacrifice = battlefield.stream()
-                        .filter(p -> p.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                                .anyMatch(e -> e instanceof PutPhylacteryCounterOnTargetPermanentEffect))
-                        .toList();
-                for (Permanent p : toSacrifice) {
-                    permanentRemovalService.removePermanentToGraveyard(gameData, p);
-                    String logEntry = p.getCard().getName() + " is sacrificed (no permanents with phylactery counters).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} sacrificed (no phylactery counter permanents)", gameData.id, p.getCard().getName());
-                    anyDied = true;
-                }
-            }
-        }
+        // CR 603.8 — check state-triggered abilities after SBAs
+        stateTriggerService.checkStateTriggers(gameData);
 
         // CR 704.5b — player who attempted to draw from an empty library loses the game
         if (!gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) {

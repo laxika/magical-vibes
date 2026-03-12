@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.service.ReconnectionService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.StateTriggerService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -211,8 +212,9 @@ public class GameSimulator {
         TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
                 triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
+        StateTriggerService stateTriggerService = new StateTriggerService(gameBroadcastService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
-                gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService);
+                gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         CombatAttackService combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, noOpSession, triggerCollectionService, combatTriggerService);
@@ -251,7 +253,7 @@ public class GameSimulator {
                 new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory),
                 new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, noOpSession, cardViewFactory),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
-                new CounterResolutionService(graveyardService, gameBroadcastService, gameQueryService),
+                new CounterResolutionService(graveyardService, gameBroadcastService, gameQueryService, stateTriggerService),
                 exileResolutionService,
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
@@ -278,7 +280,7 @@ public class GameSimulator {
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
         StackResolutionService stackResolutionService = new StackResolutionService(
                 battlefieldEntryService, cloneService, graveyardService, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
-                gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService);
+                gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService, stateTriggerService);
         UntapStepService untapStepService = new UntapStepService(gameQueryService, gameBroadcastService);
         StepTriggerService stepTriggerService = new StepTriggerService(drawService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, battlefieldEntryService);
         AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService);

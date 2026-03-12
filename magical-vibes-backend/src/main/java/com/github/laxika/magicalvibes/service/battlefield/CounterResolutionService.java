@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.StateTriggerService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -33,6 +34,7 @@ public class CounterResolutionService {
     private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
+    private final StateTriggerService stateTriggerService;
 
     /**
      * Resolves an unconditional counter spell (e.g. Cancel, Counterspell).
@@ -162,6 +164,9 @@ public class CounterResolutionService {
      */
     private void counterSpell(GameData gameData, StackEntry source, StackEntry target) {
         gameData.stack.remove(target);
+
+        // CR 603.8 — clean up state-trigger tracking when countered
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
 
         // Copies cease to exist per rule 707.10a — skip graveyard
         if (!target.isCopy()) {

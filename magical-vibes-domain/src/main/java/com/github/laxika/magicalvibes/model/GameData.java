@@ -204,6 +204,11 @@ public class GameData {
     // CR 704.5b — track players who attempted to draw from an empty library
     public final Set<UUID> playersAttemptedDrawFromEmptyLibrary = ConcurrentHashMap.newKeySet();
 
+    /** Tracks permanent IDs whose state-triggered abilities (rule 603.8) are currently on the
+     *  stack. Prevents re-triggering while the ability is pending. Cleaned up when the
+     *  ability resolves, is countered, or otherwise leaves the stack. */
+    public final Set<UUID> stateTriggerOnStack = ConcurrentHashMap.newKeySet();
+
     /** When true, this GameData is an MCTS simulation copy — suppress all external side effects
      *  (broadcasting, session messages, registry mutations, logging). */
     public boolean simulation;
@@ -362,6 +367,7 @@ public class GameData {
         copy.enchantmentDependentStolenCreatures.addAll(this.enchantmentDependentStolenCreatures);
         copy.permanentControlStolenCreatures.addAll(this.permanentControlStolenCreatures);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
+        copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);

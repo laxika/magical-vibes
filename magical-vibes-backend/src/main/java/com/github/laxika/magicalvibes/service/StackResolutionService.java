@@ -49,12 +49,16 @@ public class StackResolutionService {
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final CreatureControlService creatureControlService;
+    private final StateTriggerService stateTriggerService;
 
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
 
         StackEntry entry = gameData.stack.removeLast();
         gameData.priorityPassedBy.clear();
+
+        // CR 603.8 — clean up state-trigger tracking when the ability leaves the stack
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, entry);
 
         switch (entry.getEntryType()) {
             case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
