@@ -78,7 +78,7 @@ class ShimmeringWingsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Shimmering Wings")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
@@ -209,7 +209,7 @@ class ShimmeringWingsTest extends BaseCardTest {
         // Should be attached again
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Shimmering Wings")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }

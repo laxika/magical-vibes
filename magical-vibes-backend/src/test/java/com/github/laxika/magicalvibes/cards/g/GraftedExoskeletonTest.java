@@ -97,7 +97,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grafted Exoskeleton")
-                        && p.getAttachedTo() == null);
+                        && !p.isAttached());
     }
 
     // ===== Equip ability =====

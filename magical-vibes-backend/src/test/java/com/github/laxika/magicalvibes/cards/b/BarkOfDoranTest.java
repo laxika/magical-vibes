@@ -85,7 +85,7 @@ class BarkOfDoranTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Bark of Doran")
-                        && p.getAttachedTo() == null);
+                        && !p.isAttached());
     }
 
     // ===== Static effects: toughness boost =====

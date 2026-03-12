@@ -499,7 +499,7 @@ public class CombatDamageService {
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
             gameData.forEachPermanent((playerId, perm) -> {
-                if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+                if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof GainLifeEqualToDamageDealtEffect) {
                             lifeResolutionService.applyGainLife(gameData, playerId, damageDealt, perm.getCard().getName());
@@ -600,7 +600,7 @@ public class CombatDamageService {
 
     private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
         gameData.forEachPermanent((ownerId, perm) -> {
-            if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+            if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
                 if (!effects.isEmpty()) {
                     StackEntry se = new StackEntry(

@@ -546,7 +546,7 @@ public class CombatBlockService {
     private List<CanBeBlockedOnlyByFilterEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
         List<CanBeBlockedOnlyByFilterEffect> restrictions = new ArrayList<>();
         gameData.forEachPermanent((playerId, aura) -> {
-            if (aura.getAttachedTo() == null || !aura.getAttachedTo().equals(creature.getId())) {
+            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
                 return;
             }
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {

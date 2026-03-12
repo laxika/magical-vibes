@@ -47,7 +47,7 @@ public class AuraAttachmentService {
             Iterator<Permanent> it = battlefield.iterator();
             while (it.hasNext()) {
                 Permanent p = it.next();
-                if (p.getAttachedTo() != null && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
+                if (p.isAttached() && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
                     if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         // Equipment stays on the battlefield unattached when the equipped creature leaves
                         p.setAttachedTo(null);
@@ -127,7 +127,7 @@ public class AuraAttachmentService {
                     creature.setSummoningSick(true);
 
                     // Equipment that changes controllers must be unattached (CR 704.5p)
-                    if (creature.getAttachedTo() != null
+                    if (creature.isAttached()
                             && creature.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         creature.setAttachedTo(null);
                         String unattachLog = creature.getCard().getName() + " becomes unattached.";

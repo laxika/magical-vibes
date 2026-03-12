@@ -384,7 +384,7 @@ public class PermanentRemovalService {
      * with SacrificeOnUnattachEffect that is currently attached to a creature. Returns null otherwise.
      */
     private UUID getSacrificeOnUnattachCreatureId(Permanent equipment) {
-        if (equipment.getAttachedTo() == null) return null;
+        if (!equipment.isAttached()) return null;
         if (!equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return null;
         boolean hasEffect = equipment.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);

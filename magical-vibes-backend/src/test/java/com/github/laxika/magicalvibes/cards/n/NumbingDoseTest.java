@@ -81,7 +81,7 @@ class NumbingDoseTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Numbing Dose")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
     }
 
@@ -99,7 +99,7 @@ class NumbingDoseTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Numbing Dose")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(artifact.getId()));
     }
 

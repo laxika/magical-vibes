@@ -139,7 +139,7 @@ public class AnimationResolutionService {
         target.setPermanentAnimatedToughness(effect.toughness());
 
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
-        if (target.getAttachedTo() != null && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+        if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             target.setAttachedTo(null);
             String unattachLog = target.getCard().getName() + " becomes unattached.";
             gameBroadcastService.logAndBroadcast(gameData, unattachLog);

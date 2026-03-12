@@ -1107,7 +1107,7 @@ public class GameQueryService {
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
         return gameData.anyPermanentMatches(p ->
-                p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())
+                p.isAttached() && p.getAttachedTo().equals(creature.getId())
                         && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectClass::isInstance));
     }
 
@@ -1117,7 +1117,7 @@ public class GameQueryService {
     public boolean isEquipped(GameData gameData, Permanent creature) {
         return gameData.anyPermanentMatches(p ->
                 p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId()));
+                        && p.isAttached() && p.getAttachedTo().equals(creature.getId()));
     }
 
     /**
@@ -1140,7 +1140,7 @@ public class GameQueryService {
      */
     public boolean isEnchanted(GameData gameData, Permanent creature) {
         return gameData.anyPermanentMatches(p ->
-                p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())
+                p.isAttached() && p.getAttachedTo().equals(creature.getId())
                         && p.getCard().isAura());
     }
 
@@ -1153,7 +1153,7 @@ public class GameQueryService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent p : bf) {
-            if (p.getAttachedTo() != null) {
+            if (p.isAttached()) {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effectClass.isInstance(effect)) {
                         return findPermanentById(gameData, p.getAttachedTo());

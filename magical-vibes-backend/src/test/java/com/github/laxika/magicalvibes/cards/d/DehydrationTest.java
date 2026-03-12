@@ -71,7 +71,7 @@ class DehydrationTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Dehydration")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
@@ -258,7 +258,7 @@ class DehydrationTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Dehydration")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
@@ -360,7 +360,7 @@ class DehydrationTest extends BaseCardTest {
         // Verify Dehydration resolved and attached
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Dehydration")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
 
         // Advance to player2's turn (triggers untap step)

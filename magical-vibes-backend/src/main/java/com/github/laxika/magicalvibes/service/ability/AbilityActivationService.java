@@ -1131,7 +1131,7 @@ public class AbilityActivationService {
     private ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
         for (UUID pid : gameData.orderedPlayerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (p.getAttachedTo() != null && p.getAttachedTo().equals(permanent.getId())) {
+                if (p.isAttached() && p.getAttachedTo().equals(permanent.getId())) {
                     for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof EnchantedPermanentBecomesTypeEffect landTypeEffect) {
                             return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(

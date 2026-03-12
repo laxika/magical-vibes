@@ -75,7 +75,7 @@ class RobeOfMirrorsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Robe of Mirrors")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
@@ -223,7 +223,7 @@ class RobeOfMirrorsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Robe of Mirrors")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 }

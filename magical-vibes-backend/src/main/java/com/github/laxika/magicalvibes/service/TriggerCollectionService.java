@@ -267,7 +267,7 @@ public class TriggerCollectionService {
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead — their triggers
             // monitor the enchanted/equipped creature, not themselves.
-            if (targetPermanent.getAttachedTo() == null) {
+            if (!targetPermanent.isAttached()) {
                 collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
             }
 
@@ -275,7 +275,7 @@ public class TriggerCollectionService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield == null) continue;
                 for (Permanent attached : battlefield) {
-                    if (attached.getAttachedTo() != null
+                    if (attached.isAttached()
                             && attached.getAttachedTo().equals(targetPermanent.getId())) {
                         collectBecomesTargetTriggers(gameData, attached, controllerId, targetPermanent);
                         collectBecomesTargetOfOpponentSpellTriggers(gameData, attached, controllerId, spellEntry);
@@ -317,7 +317,7 @@ public class TriggerCollectionService {
 
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead.
-            if (targetPermanent.getAttachedTo() == null) {
+            if (!targetPermanent.isAttached()) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
                 if (controllerId != null) {
                     collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
@@ -328,7 +328,7 @@ public class TriggerCollectionService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield == null) continue;
                 for (Permanent attached : battlefield) {
-                    if (attached.getAttachedTo() != null
+                    if (attached.isAttached()
                             && attached.getAttachedTo().equals(targetPermanent.getId())) {
                         // CR 603.3b: triggered ability controlled by the aura/equipment's controller
                         collectBecomesTargetOfSpellOrAbilityTriggers(gameData, attached, playerId);
@@ -436,7 +436,7 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.EnchantedPermanentTap(tappedPermanent, tappedPermanentControllerId);
 
         gameData.forEachPermanent((auraOwnerId, perm) -> {
-            if (perm.getAttachedTo() == null || !perm.getAttachedTo().equals(tappedPermanent.getId())) {
+            if (!perm.isAttached() || !perm.getAttachedTo().equals(tappedPermanent.getId())) {
                 return;
             }
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)) {

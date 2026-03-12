@@ -77,7 +77,7 @@ class PersuasionTest extends BaseCardTest {
         // Persuasion aura should be on player1's battlefield attached to the creature
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Persuasion")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
 
         // Stolen creature should be summoning sick

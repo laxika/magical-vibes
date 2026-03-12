@@ -218,6 +218,10 @@ public class Permanent {
         this.summoningSick = summoningSick;
     }
 
+    public boolean isAttached() {
+        return attachedTo != null;
+    }
+
     public void clearCombatState() {
         this.attacking = false;
         this.attackTarget = null;

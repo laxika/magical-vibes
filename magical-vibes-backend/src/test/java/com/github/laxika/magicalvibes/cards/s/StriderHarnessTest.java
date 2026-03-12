@@ -86,7 +86,7 @@ class StriderHarnessTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Strider Harness")
-                        && p.getAttachedTo() == null);
+                        && !p.isAttached());
     }
 
     // ===== Equip ability: resolving =====

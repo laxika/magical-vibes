@@ -73,7 +73,7 @@ class WhispersilkCloakTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Whispersilk Cloak")
-                        && p.getAttachedTo() == null);
+                        && !p.isAttached());
     }
 
     // ===== Equip ability =====

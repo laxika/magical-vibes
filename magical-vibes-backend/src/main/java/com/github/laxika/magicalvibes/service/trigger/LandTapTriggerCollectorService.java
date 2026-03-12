@@ -80,7 +80,7 @@ public class LandTapTriggerCollectorService {
     private boolean handleAddManaOnEnchantedLandTap(TriggerMatchContext match,
             AddManaOnEnchantedLandTapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
-        if (match.permanent().getAttachedTo() == null
+        if (!match.permanent().isAttached()
                 || !match.permanent().getAttachedTo().equals(lt.tappedLandId())) {
             return false;
         }

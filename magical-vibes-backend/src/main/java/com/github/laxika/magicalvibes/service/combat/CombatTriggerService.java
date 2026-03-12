@@ -42,7 +42,7 @@ public class CombatTriggerService {
         final UUID finalCreatureControllerId = creatureControllerId;
 
         gameData.forEachPermanent((auraOwnerId, perm) -> {
-            if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(creature.getId())) {
+            if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                 List<EffectRegistration> auraRegs = perm.getCard().getEffectRegistrations(slot);
                 // Skip per-blocker effects — they are handled by checkAttachedPerBlockerTriggers
                 List<CardEffect> nonPerBlockerEffects = auraRegs.stream()
@@ -103,7 +103,7 @@ public class CombatTriggerService {
         final UUID finalControllerId = controllerId;
 
         gameData.forEachPermanent((ownerId, perm) -> {
-            if (perm.getAttachedTo() != null && perm.getAttachedTo().equals(attacker.getId())) {
+            if (perm.isAttached() && perm.getAttachedTo().equals(attacker.getId())) {
                 List<CardEffect> perBlockerEffects = perm.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).stream()
                         .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
                         .map(EffectRegistration::effect)

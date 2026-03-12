@@ -122,7 +122,7 @@ public class StaticEffectResolutionService {
         // Boost creatures with matching permanents attached
         if (isEffectivelyCreature(gameData, target, hasAnimateArtifacts)) {
             gameData.forEachPermanent((playerId, permanent) -> {
-                if (permanent.getAttachedTo() != null
+                if (permanent.isAttached()
                         && permanent.getAttachedTo().equals(target.getId())
                         && matchesStaticFilter(permanent, grant.filter())) {
                     accumulator.addPower(permanent.getCard().getManaValue());
@@ -134,7 +134,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(BoostAttachedCreatureEffect.class)
     private void resolveBoostAttachedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostAttachedCreatureEffect) effect;
-        if (context.source().getAttachedTo() != null
+        if (context.source().isAttached()
                 && context.source().getAttachedTo().equals(context.target().getId())) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
@@ -144,7 +144,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(BoostAttachedCreaturePerCardsInAllGraveyardsEffect.class)
     private void resolveBoostAttachedCreaturePerCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostAttachedCreaturePerCardsInAllGraveyardsEffect) effect;
-        if (context.source().getAttachedTo() == null
+        if (!context.source().isAttached()
                 || !context.source().getAttachedTo().equals(context.target().getId())) {
             return;
         }
@@ -157,7 +157,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(BoostAttachedCreaturePerMatchingLandNameEffect.class)
     private void resolveBoostAttachedCreaturePerMatchingLandName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostAttachedCreaturePerMatchingLandNameEffect) effect;
-        if (context.source().getAttachedTo() == null
+        if (!context.source().isAttached()
                 || !context.source().getAttachedTo().equals(context.target().getId())) {
             return;
         }
@@ -185,7 +185,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(BoostAttachedCreaturePerControlledSubtypeEffect.class)
     private void resolveBoostAttachedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostAttachedCreaturePerControlledSubtypeEffect) effect;
-        if (context.source().getAttachedTo() == null
+        if (!context.source().isAttached()
                 || !context.source().getAttachedTo().equals(context.target().getId())) {
             return;
         }
@@ -214,7 +214,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(ProtectionFromColorsEffect.class)
     private void resolveProtectionFromColors(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var protection = (ProtectionFromColorsEffect) effect;
-        if (context.source().getAttachedTo() != null
+        if (context.source().isAttached()
                 && context.source().getAttachedTo().equals(context.target().getId())) {
             accumulator.addProtectionColors(protection.colors());
         }
@@ -223,7 +223,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(BoostEnchantedCreaturePerControlledSubtypeEffect.class)
     private void resolveBoostEnchantedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostEnchantedCreaturePerControlledSubtypeEffect) effect;
-        if (context.source().getAttachedTo() == null
+        if (!context.source().isAttached()
                 || !context.source().getAttachedTo().equals(context.target().getId())) {
             return;
         }
@@ -302,7 +302,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(EnchantedPermanentBecomesTypeEffect.class)
     private void resolveEnchantedPermanentBecomesType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var becomesType = (EnchantedPermanentBecomesTypeEffect) effect;
-        if (context.source().getAttachedTo() != null
+        if (context.source().isAttached()
                 && context.source().getAttachedTo().equals(context.target().getId())) {
             accumulator.addGrantedSubtype(becomesType.subtype());
             accumulator.setSubtypeOverriding(true);
@@ -495,7 +495,7 @@ public class StaticEffectResolutionService {
      */
     private boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
         if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.EQUIPPED_CREATURE) {
-            return context.source().getAttachedTo() != null
+            return context.source().isAttached()
                     && context.source().getAttachedTo().equals(context.target().getId());
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
@@ -608,7 +608,7 @@ public class StaticEffectResolutionService {
         final int[] count = {0};
         context.gameData().forEachPermanent((playerId, permanent) -> {
             if (permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                    && permanent.getAttachedTo() != null
+                    && permanent.isAttached()
                     && permanent.getAttachedTo().equals(context.target().getId())) {
                 count[0]++;
             }
@@ -689,7 +689,7 @@ public class StaticEffectResolutionService {
             if (bf == null) continue;
             for (Permanent permanent : bf) {
                 if (permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && permanent.getAttachedTo() != null
+                        && permanent.isAttached()
                         && permanent.getAttachedTo().equals(context.target().getId())) {
                     return true;
                 }

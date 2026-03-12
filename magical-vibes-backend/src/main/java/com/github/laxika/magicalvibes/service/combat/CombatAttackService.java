@@ -400,7 +400,7 @@ public class CombatAttackService {
         }
 
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.getAttachedTo() != null
+            if (permanent.isAttached()
                     && permanent.getAttachedTo().equals(creature.getId())) {
                 count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(MustAttackEffect.class::isInstance)

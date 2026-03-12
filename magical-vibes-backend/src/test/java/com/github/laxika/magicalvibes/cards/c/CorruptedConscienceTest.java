@@ -89,7 +89,7 @@ class CorruptedConscienceTest extends BaseCardTest {
         // Corrupted Conscience aura should be on player1's battlefield attached to the creature
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Corrupted Conscience")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
 
         // Stolen creature should be summoning sick

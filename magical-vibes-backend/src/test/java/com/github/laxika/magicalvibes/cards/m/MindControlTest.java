@@ -76,7 +76,7 @@ class MindControlTest extends BaseCardTest {
         // Mind Control aura should be on player1's battlefield attached to the creature
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Mind Control")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
 
         // Stolen creature should be summoning sick

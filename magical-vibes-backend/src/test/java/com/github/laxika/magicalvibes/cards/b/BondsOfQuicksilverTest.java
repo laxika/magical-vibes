@@ -71,7 +71,7 @@ class BondsOfQuicksilverTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Bonds of Quicksilver")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
@@ -211,7 +211,7 @@ class BondsOfQuicksilverTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Bonds of Quicksilver")
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
 
         advanceToNextTurn(player1);

@@ -278,7 +278,7 @@ public class StepTriggerService {
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedControllerUpkeepEffects = perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED);
             if (enchantedControllerUpkeepEffects == null || enchantedControllerUpkeepEffects.isEmpty()) return;
-            if (perm.getAttachedTo() == null) return;
+            if (!perm.isAttached()) return;
 
             UUID enchantedPermanentControllerId = gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
             if (enchantedPermanentControllerId == null) return;

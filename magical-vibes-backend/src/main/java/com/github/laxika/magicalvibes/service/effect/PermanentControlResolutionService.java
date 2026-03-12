@@ -320,7 +320,7 @@ public class PermanentControlResolutionService {
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
                 if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && p.getAttachedTo() != null
+                        && p.isAttached()
                         && p.getAttachedTo().equals(sourcePermanentId)) {
                     equipmentCount++;
                 }

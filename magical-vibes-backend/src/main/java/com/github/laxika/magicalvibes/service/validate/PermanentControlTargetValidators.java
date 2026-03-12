@@ -52,7 +52,7 @@ public class PermanentControlTargetValidators {
         Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
         if (target == null || target.getCard().getType() != CardType.ENCHANTMENT
                 || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
-                || target.getAttachedTo() == null) {
+                || !target.isAttached()) {
             throw new IllegalStateException("Target must be an Aura attached to a permanent");
         }
     }
