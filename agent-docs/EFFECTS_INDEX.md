@@ -557,6 +557,7 @@ Pass `null` as filter to allow any card.
 | `PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect` | `()` | put a -1/-1 counter on each attacking creature (all players' attacking creatures) |
 | `PutMinusOneMinusOneCounterOnEachOtherCreatureEffect` | `()` | put a -1/-1 counter on each other creature (all players' creatures except the source permanent) |
 | `PutMinusOneMinusOneCounterOnEnchantedCreatureEffect` | `(int count)` / `()` | put N -1/-1 counters on enchanted creature (default 1). Use with UPKEEP_TRIGGERED for auras like Glistening Oil |
+| `PutPlusOnePlusOneCounterOnEnchantedCreatureEffect` | `(int count)` / `()` | put N +1/+1 counters on enchanted creature (default 1). Use with UPKEEP_TRIGGERED for auras like Primal Cocoon |
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
 | `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |

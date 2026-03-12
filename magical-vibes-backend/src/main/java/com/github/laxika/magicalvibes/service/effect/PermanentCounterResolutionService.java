@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEac
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutXMinusOneMinusOneCountersOnEachCreatureEffect;
@@ -333,6 +334,28 @@ public class PermanentCounterResolutionService {
         String logEntry = creature.getCard().getName() + " gets " + counterText + " from " + entry.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets {} -1/-1 counter(s) from {}", gameData.id, creature.getCard().getName(), count, entry.getCard().getName());
+    }
+
+    @HandlesEffect(PutPlusOnePlusOneCounterOnEnchantedCreatureEffect.class)
+    private void resolvePutPlusOnePlusOneCounterOnEnchantedCreature(GameData gameData, StackEntry entry,
+                                                                    PutPlusOnePlusOneCounterOnEnchantedCreatureEffect effect) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null || aura.getAttachedTo() == null) return;
+
+        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (creature == null) return;
+
+        if (gameQueryService.cantHaveCounters(gameData, creature)) {
+            return;
+        }
+
+        int count = effect.count();
+        creature.setPlusOnePlusOneCounters(creature.getPlusOnePlusOneCounters() + count);
+
+        String counterText = count == 1 ? "a +1/+1 counter" : count + " +1/+1 counters";
+        String logEntry = creature.getCard().getName() + " gets " + counterText + " from " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets {} +1/+1 counter(s) from {}", gameData.id, creature.getCard().getName(), count, entry.getCard().getName());
     }
 
     @HandlesEffect(ProliferateEffect.class)
