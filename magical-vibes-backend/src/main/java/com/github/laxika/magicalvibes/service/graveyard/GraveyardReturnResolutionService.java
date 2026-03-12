@@ -502,6 +502,10 @@ public class GraveyardReturnResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
             return;
         }
+        if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
+            return;
+        }
         int currentLife = gameData.getLife(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
         String logEntry = playerName + " gains " + amount + " life.";

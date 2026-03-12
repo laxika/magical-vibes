@@ -280,19 +280,22 @@ public class ActivatedAbilityExecutionService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
             } else if (effect instanceof GainLifeEffect gain) {
-                if (gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                if (gameQueryService.canPlayerLifeChange(gameData, playerId)
+                        && gameQueryService.canPlayerGainLife(gameData, playerId)) {
                     int currentLife = gameData.getLife(playerId);
                     gameData.playerLifeTotals.put(playerId, currentLife + gain.amount());
                     String logEntry = player.getUsername() + " gains " + gain.amount() + " life.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gain.amount());
                 }
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();
-                if (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
-                        && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
-                        && !gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
-                        && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
+                if (!gameQueryService.isDamagePreventable(gameData)
+                        || (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
+                            && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
+                            && !gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
+                            && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor()))) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
                     if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {

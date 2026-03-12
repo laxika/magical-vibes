@@ -29,8 +29,10 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCount
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
@@ -320,6 +322,25 @@ public class GameQueryService {
      */
     public boolean canPlayerLifeChange(GameData gameData, UUID playerId) {
         return !playerBattlefieldHasStaticEffect(gameData, playerId, LifeTotalCantChangeEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the player is able to gain life (i.e. no
+     * {@link PlayersCantGainLifeEffect} is present on any battlefield and
+     * no {@link LifeTotalCantChangeEffect} prevents life changes).
+     */
+    public boolean canPlayerGainLife(GameData gameData, UUID playerId) {
+        if (!canPlayerLifeChange(gameData, playerId)) return false;
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if damage can be prevented. Returns {@code false}
+     * when a {@link DamageCantBePreventedEffect} is on any battlefield
+     * (e.g. Leyline of Punishment).
+     */
+    public boolean isDamagePreventable(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class);
     }
 
     /**
@@ -1302,6 +1323,7 @@ public class GameQueryService {
      * a global color-based damage prevention effect, or a per-permanent damage prevention flag.
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
+        if (!isDamagePreventable(gameData)) return false;
         return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
                 || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor())
                 || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId());

@@ -312,6 +312,11 @@ public class DestructionResolutionService {
                     gameData.playerIdToName.get(playerId) + "'s life total can't change.");
             return;
         }
+        if (!gameQueryService.canPlayerGainLife(gameData, playerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(playerId) + " can't gain life.");
+            return;
+        }
         int currentLife = gameData.playerLifeTotals.get(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife + amount);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -328,8 +333,9 @@ public class DestructionResolutionService {
                                               String cardName, CardColor sourceColor) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
 
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
+        if (gameQueryService.isDamagePreventable(gameData)
+                && (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
+                    || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor))) {
             gameBroadcastService.logAndBroadcast(gameData,
                     cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;

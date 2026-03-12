@@ -369,7 +369,7 @@ public class CombatDamageService {
                     Permanent blk = defBf.get(blkIdx);
                     boolean blkParticipates = participatesInDamagePhase(gameData, blk, isFirstStrikePhase);
                     if (blkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
-                            && !gameQueryService.hasProtectionFromSource(gameData, atk, blk)) {
+                            && !(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, atk, blk))) {
                         int actualDmg = gameQueryService.applyDamageMultiplier(gameData, blockerDamage.getOrDefault(blkIdx, 0));
                         applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
                         state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
@@ -399,7 +399,7 @@ public class CombatDamageService {
                     ? Math.max(0, 1 - state.defDamageTaken.getOrDefault(blkIdx, 0))
                     : gameQueryService.getEffectiveToughness(gameData, blk) - state.defDamageTaken.getOrDefault(blkIdx, 0);
             int dmg = Math.min(remaining, Math.max(0, lethalNeeded));
-            if (!gameQueryService.hasProtectionFromSource(gameData, blk, atk)) {
+            if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, blk, atk))) {
                 int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                 applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                 state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
@@ -432,7 +432,7 @@ public class CombatDamageService {
                 for (int blkIdx : blkIndices) {
                     Permanent blk = defBf.get(blkIdx);
                     if (blk.getId().equals(targetId)) {
-                        if (!gameQueryService.hasProtectionFromSource(gameData, blk, atk)) {
+                        if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, blk, atk))) {
                             int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
                             applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                             state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);

@@ -497,6 +497,8 @@ Pass `null` as filter to allow any card.
 | `CantLoseGameFromLifeEffect` | `()` | you don't lose the game for having 0 or less life, but can still lose from poison or other effects (static) |
 | `DamageDealtAsInfectBelowZeroLifeEffect` | `()` | as long as you have 0 or less life, all damage dealt to you is dealt as though its source had infect (static) |
 | `LifeTotalCantChangeEffect` | `()` | controller's life total can't change (static) |
+| `PlayersCantGainLifeEffect` | `()` | no player can gain life (static, global — checked on any battlefield) |
+| `DamageCantBePreventedEffect` | `()` | damage can't be prevented by any means (static, global — bypasses shields, protection damage, color prevention) |
 
 ## Creature pump / boost
 

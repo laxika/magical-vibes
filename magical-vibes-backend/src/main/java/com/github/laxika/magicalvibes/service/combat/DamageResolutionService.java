@@ -178,7 +178,7 @@ public class DamageResolutionService {
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
             if (target == null) continue;
-            if (gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) continue;
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) continue;
 
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), entry);
             if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
@@ -289,7 +289,7 @@ public class DamageResolutionService {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             } else {
-                if (!gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard()))) {
                     if (dealCreatureDamage(gameData, entry, targetPermanent, rawDamage)) {
                         destroyed.add(targetPermanent);
                     }
@@ -487,7 +487,7 @@ public class DamageResolutionService {
             affectedPlayerId = gameQueryService.findPermanentController(gameData, targetId);
             if (affectedPlayerId == null) return;
 
-            if (gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard())) {
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard())) {
                 gameBroadcastService.logAndBroadcast(gameData,
                         cardName + "'s damage to " + targetPw.getCard().getName() + " is prevented.");
             } else {
@@ -505,7 +505,7 @@ public class DamageResolutionService {
                 if (!gameQueryService.isCreature(gameData, creature)) continue;
                 // Skip the planeswalker target (already dealt damage above)
                 if (!targetIsPlayer && creature.getId().equals(targetId)) continue;
-                if (gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
+                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
                     gameBroadcastService.logAndBroadcast(gameData,
                             cardName + "'s damage to " + creature.getCard().getName() + " is prevented.");
                     continue;
@@ -600,7 +600,7 @@ public class DamageResolutionService {
 
         // Source deals damage equal to its power to target
         if (sourcePower > 0) {
-            if (!gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) {
+            if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
                 int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
                 if (dealCreatureDamage(gameData, entry, target, sourceDamage)) {
                     gameData.pendingLethalDamageDestructions.add(target);
@@ -617,7 +617,7 @@ public class DamageResolutionService {
         if (source != null) {
             int targetPower = gameQueryService.getEffectivePower(gameData, target);
             if (targetPower > 0) {
-                if (!gameQueryService.hasProtectionFromSource(gameData, source, target.getCard())) {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard()))) {
                     int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
                     if (dealCreatureDamage(gameData, entry, source, targetDamage, target)) {
                         gameData.pendingLethalDamageDestructions.add(source);
@@ -663,7 +663,7 @@ public class DamageResolutionService {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, entry, targetId, damage);
             } else {
-                if (!gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard()))) {
                     if (dealCreatureDamage(gameData, entry, targetPermanent, damage)) {
                         destroyed.add(targetPermanent);
                     }
@@ -834,7 +834,8 @@ public class DamageResolutionService {
     }
 
     private boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
             return true;
         }
@@ -849,8 +850,9 @@ public class DamageResolutionService {
     }
 
     private boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
-                || gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) {
+        if (gameQueryService.isDamagePreventable(gameData)
+                && (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
+                    || gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getCard().getName() + "'s damage is prevented.");
             return true;
@@ -876,8 +878,9 @@ public class DamageResolutionService {
             // dealDamageToPlayer handles per-permanent prevention (permanentsPreventedFromDealingDamage)
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         } else {
-            if (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
-                    || gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
+            if (gameQueryService.isDamagePreventable(gameData)
+                    && (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
+                        || gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard()))) {
                 gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
                 return;
             }
@@ -900,7 +903,7 @@ public class DamageResolutionService {
         List<Permanent> destroyed = new ArrayList<>();
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
-            if (gameQueryService.hasProtectionFromSource(gameData, p, entry.getCard())) continue;
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, p, entry.getCard())) continue;
             if (dealCreatureDamage(gameData, entry, p, damage)) {
                 destroyed.add(p);
             }
@@ -976,14 +979,14 @@ public class DamageResolutionService {
         }
 
         // The biting creature deals the damage — check if it is prevented from dealing damage
-        if (gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
+        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
             String logEntry = biter.getCard().getName() + "'s damage is prevented.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
 
         // Use the biting creature's color for protection checks (not the spell's color)
-        if (gameQueryService.hasProtectionFromSource(gameData, target, biter)) {
+        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, biter)) {
             CardColor biterColor = biter.getEffectiveColor();
             String logEntry = target.getCard().getName() + " has protection from " + (biterColor != null ? biterColor.name().toLowerCase() : "source") + " — damage prevented.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -1246,7 +1249,7 @@ public class DamageResolutionService {
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, tempEntry, targetId, rawDamage);
             } else {
-                if (!gameQueryService.hasProtectionFromSource(gameData, targetPermanent, sourceCard)) {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, sourceCard))) {
                     if (dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage)) {
                         destroyed.add(targetPermanent);
                     }

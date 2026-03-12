@@ -26,6 +26,7 @@ public class DamagePreventionService {
     }
 
     int applyGlobalPreventionShield(GameData gameData, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
         int shield = gameData.globalDamagePreventionShield;
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
@@ -34,24 +35,28 @@ public class DamagePreventionService {
     }
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
-        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
-        if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
-        if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
-            if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
-                permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() + damage);
+        if (gameQueryService.isDamagePreventable(gameData)) {
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
+            if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
+            if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
+                if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
+                    permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() + damage);
+                }
+                return 0;
             }
-            return 0;
+            damage = applyGlobalPreventionShield(gameData, damage);
+            int shield = permanent.getDamagePreventionShield();
+            if (shield <= 0 || damage <= 0) return damage;
+            int prevented = Math.min(shield, damage);
+            permanent.setDamagePreventionShield(shield - prevented);
+            return damage - prevented;
         }
-        damage = applyGlobalPreventionShield(gameData, damage);
-        int shield = permanent.getDamagePreventionShield();
-        if (shield <= 0 || damage <= 0) return damage;
-        int prevented = Math.min(shield, damage);
-        permanent.setDamagePreventionShield(shield - prevented);
-        return damage - prevented;
+        return damage;
     }
 
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
         damage = applyGlobalPreventionShield(gameData, damage);
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;
@@ -61,12 +66,14 @@ public class DamagePreventionService {
     }
 
     public boolean isSourceDamagePreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return false;
         if (sourcePermanentId == null) return false;
         Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(playerId);
         return preventedSources != null && preventedSources.contains(sourcePermanentId);
     }
 
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return false;
         if (sourceColor == null) return false;
         Map<CardColor, Integer> colorMap = gameData.playerColorDamagePreventionCount.get(playerId);
         if (colorMap == null) return false;

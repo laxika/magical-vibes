@@ -91,7 +91,11 @@ public class LifeResolutionService {
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             new ManaCost("{0}").pay(pool, chosenValue);
 
-            if (gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            } else if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
+            } else {
                 int currentLife = gameData.getLife(controllerId);
                 gameData.playerLifeTotals.put(controllerId, currentLife + chosenValue);
 
@@ -99,8 +103,7 @@ public class LifeResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} pays {} mana and gains {} life from {}",
                         gameData.id, playerName, chosenValue, chosenValue, cardName);
-            } else {
-                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+                triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, chosenValue);
             }
             return;
         }
@@ -128,6 +131,11 @@ public class LifeResolutionService {
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            return;
+        }
+        if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
             return;
         }
         Integer currentLife = gameData.playerLifeTotals.get(controllerId);
@@ -267,6 +275,11 @@ public class LifeResolutionService {
                             gameData.playerIdToName.get(playerId) + "'s life total can't change.");
                     break;
                 }
+                if (!gameQueryService.canPlayerGainLife(gameData, playerId)) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            gameData.playerIdToName.get(playerId) + " can't gain life.");
+                    break;
+                }
                 int currentLife = gameData.getLife(playerId);
                 gameData.playerLifeTotals.put(playerId, currentLife + toughness);
 
@@ -275,6 +288,7 @@ public class LifeResolutionService {
 
                 log.info("Game {} - {} gains {} life (equal to {}'s toughness)",
                         gameData.id, gameData.playerIdToName.get(playerId), toughness, target.getCard().getName());
+                triggerCollectionService.checkLifeGainTriggers(gameData, playerId, toughness);
                 break;
             }
         }
@@ -297,6 +311,10 @@ public class LifeResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
             return;
         }
+        if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
+            return;
+        }
 
         int currentLife = gameData.getLife(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + count);
@@ -304,6 +322,7 @@ public class LifeResolutionService {
         String logEntry = playerName + " gains " + count + " life from " + entry.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains {} life from {}", gameData.id, playerName, count, entry.getCard().getName());
+        triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, count);
     }
 
     @HandlesEffect(DoubleTargetPlayerLifeEffect.class)
@@ -318,6 +337,15 @@ public class LifeResolutionService {
 
         int currentLife = gameData.getLife(targetPlayerId);
         int newLife = currentLife * 2;
+
+        // Per CR 119.5: Setting life total is defined as gaining or losing the necessary amount.
+        // If new total > current, the player would gain life — check canPlayerGainLife.
+        if (newLife > currentLife && !gameQueryService.canPlayerGainLife(gameData, targetPlayerId)) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life. Life total not doubled.");
+            return;
+        }
+
         gameData.playerLifeTotals.put(targetPlayerId, newLife);
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -325,6 +353,12 @@ public class LifeResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
+
+        if (newLife > currentLife) {
+            triggerCollectionService.checkLifeGainTriggers(gameData, targetPlayerId, newLife - currentLife);
+        } else if (newLife < currentLife) {
+            triggerCollectionService.checkLifeLossTriggers(gameData, targetPlayerId, currentLife - newLife);
+        }
     }
 
     @HandlesEffect(ExchangeTargetPlayersLifeTotalsEffect.class)
@@ -358,25 +392,51 @@ public class LifeResolutionService {
             return;
         }
 
+        // Per CR 119.7e: An exchange is implemented as each player gaining or losing life.
+        // If a player can't gain life, they can't move to a higher life total via exchange.
+        // The other player still loses/gains as applicable.
+        boolean aWouldGain = lifeB > lifeA;
+        boolean bWouldGain = lifeA > lifeB;
+        boolean aCantGain = aWouldGain && !gameQueryService.canPlayerGainLife(gameData, playerA);
+        boolean bCantGain = bWouldGain && !gameQueryService.canPlayerGainLife(gameData, playerB);
+
+        if (aCantGain && bCantGain) {
+            String nameA = gameData.playerIdToName.get(playerA);
+            String nameB = gameData.playerIdToName.get(playerB);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    nameA + " and " + nameB + " can't gain life. Exchange doesn't occur.");
+            return;
+        }
+
         String nameA = gameData.playerIdToName.get(playerA);
         String nameB = gameData.playerIdToName.get(playerB);
-        String logEntry = nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + lifeB + ", " + nameB + ": " + lifeB + " -> " + lifeA + ").";
+
+        int newLifeA = aCantGain ? lifeA : lifeB;
+        int newLifeB = bCantGain ? lifeB : lifeA;
+
+        if (aCantGain) {
+            gameBroadcastService.logAndBroadcast(gameData, nameA + " can't gain life.");
+        }
+        if (bCantGain) {
+            gameBroadcastService.logAndBroadcast(gameData, nameB + " can't gain life.");
+        }
+
+        String logEntry = nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + newLifeA + ", " + nameB + ": " + lifeB + " -> " + newLifeB + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        // Per Scryfall ruling: "each player gains or loses the amount of life necessary
-        // to equal the other player's previous life total." Apply as gain/loss so triggers fire.
-        String cardName = entry.getCard().getName();
-        gameData.playerLifeTotals.put(playerA, lifeB);
-        gameData.playerLifeTotals.put(playerB, lifeA);
+        gameData.playerLifeTotals.put(playerA, newLifeA);
+        gameData.playerLifeTotals.put(playerB, newLifeB);
 
-        // Fire life loss/gain triggers for the player(s) who lost or gained life
-        if (lifeB < lifeA) {
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerA, lifeA - lifeB);
-            triggerCollectionService.checkLifeGainTriggers(gameData, playerB, lifeA - lifeB);
+        // Fire life loss/gain triggers
+        if (newLifeA > lifeA) {
+            triggerCollectionService.checkLifeGainTriggers(gameData, playerA, newLifeA - lifeA);
+        } else if (newLifeA < lifeA) {
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerA, lifeA - newLifeA);
         }
-        if (lifeA < lifeB) {
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerB, lifeB - lifeA);
-            triggerCollectionService.checkLifeGainTriggers(gameData, playerA, lifeB - lifeA);
+        if (newLifeB > lifeB) {
+            triggerCollectionService.checkLifeGainTriggers(gameData, playerB, newLifeB - lifeB);
+        } else if (newLifeB < lifeB) {
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerB, lifeB - newLifeB);
         }
 
         log.info("Game {} - {} and {} exchange life totals ({} -> {}, {} -> {})",
