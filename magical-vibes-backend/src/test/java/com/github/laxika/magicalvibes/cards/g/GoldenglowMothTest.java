@@ -56,6 +56,7 @@ class GoldenglowMothTest extends BaseCardTest {
         // Resolve the trigger — should prompt for may ability
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
     }

@@ -80,7 +80,7 @@ class OvergrowthTest extends BaseCardTest {
         aura.setAttachedTo(forest.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
     }
@@ -96,7 +96,7 @@ class OvergrowthTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         // Tap second (non-enchanted) Forest at index 1.
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
@@ -110,7 +110,7 @@ class OvergrowthTest extends BaseCardTest {
         aura.setAttachedTo(opponentsForest.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
@@ -126,7 +126,7 @@ class OvergrowthTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }

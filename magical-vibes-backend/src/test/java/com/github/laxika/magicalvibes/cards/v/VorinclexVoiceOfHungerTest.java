@@ -42,7 +42,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VorinclexVoiceOfHunger());
         harness.addToBattlefield(player1, new Forest());
 
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         // 1 from Forest + 1 from Vorinclex trigger = 2
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
@@ -54,7 +54,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VorinclexVoiceOfHunger());
         harness.addToBattlefield(player1, new Mountain());
 
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
     }
@@ -66,8 +66,8 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
 
-        gs.tapPermanent(gd, player1, 1);
-        gs.tapPermanent(gd, player1, 2);
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
 
         // 2 Forests * 2 mana each = 4
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
@@ -79,7 +79,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VorinclexVoiceOfHunger());
         harness.addToBattlefield(player2, new Forest());
 
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         // Opponent should get only 1 green mana (no doubling from player1's Vorinclex)
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -94,7 +94,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         // Opponent taps their Forest
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(forest.isTapped()).isTrue();
@@ -116,7 +116,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         // Opponent taps their Forest
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
 
@@ -137,7 +137,7 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         // Controller taps their own Forest
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         Permanent forest = gd.playerBattlefields.get(player1.getId()).get(1);
         assertThat(forest.getSkipUntapCount()).isZero();
@@ -154,8 +154,8 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new Mountain());
 
-        gs.tapPermanent(gd, player2, 0);
-        gs.tapPermanent(gd, player2, 1);
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
 
         Permanent forest = gd.playerBattlefields.get(player2.getId()).get(0);
         Permanent mountain = gd.playerBattlefields.get(player2.getId()).get(1);
@@ -181,14 +181,14 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         // Controller taps — should get double mana, no lock
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
 
         Permanent controllerForest = gd.playerBattlefields.get(player1.getId()).get(1);
         assertThat(controllerForest.getSkipUntapCount()).isZero();
 
         // Opponent taps — should get normal mana, land gets locked
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
         Permanent opponentForest = gd.playerBattlefields.get(player2.getId()).getFirst();
@@ -206,11 +206,11 @@ class VorinclexVoiceOfHungerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeFirst();
 
         // Controller taps — should get only 1 mana
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
         // Opponent taps — should not get locked
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
         Permanent opponentForest = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(opponentForest.getSkipUntapCount()).isZero();
     }

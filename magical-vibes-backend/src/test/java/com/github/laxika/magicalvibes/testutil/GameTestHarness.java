@@ -403,94 +403,117 @@ public class GameTestHarness {
     }
 
     public void castCreature(Player player, int cardIndex) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
     public void castCreature(Player player, int cardIndex, int mode) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, mode, null, null);
     }
 
     public void castCreature(Player player, int cardIndex, int mode, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, mode, targetPermanentId, null);
     }
 
     public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
     public void castEnchantment(Player player, int cardIndex) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
     public void castEnchantment(Player player, int cardIndex, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
     }
 
     public void castArtifact(Player player, int cardIndex) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
     public void castArtifact(Player player, int cardIndex, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
     }
 
     public void playGraveyardLand(Player player, int cardIndex) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), true);
     }
 
     public void castPlaneswalker(Player player, int cardIndex) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
     public void castSorcery(Player player, int cardIndex, int xValue) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null);
     }
 
     public void castSorcery(Player player, int cardIndex, UUID targetPlayerId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetPlayerId, null);
     }
 
     public void castSorcery(Player player, int cardIndex, int xValue, UUID targetId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, targetId, null);
     }
 
     public void castSorcery(Player player, int cardIndex, List<UUID> targetPermanentIds) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, List.of());
     }
 
     public void castSorcery(Player player, int cardIndex, int xValue, List<UUID> targetPermanentIds) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetPermanentIds, List.of());
     }
 
     public void castSorceryWithSacrifice(Player player, int cardIndex, UUID sacrificePermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
     public void castSorceryWithSacrifice(Player player, int cardIndex, UUID targetPermanentId, UUID sacrificePermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
     public void castInstant(Player player, int cardIndex) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
     public void castInstant(Player player, int cardIndex, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
     }
 
     public void castInstant(Player player, int cardIndex, int xValue, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, null);
     }
 
     public void castInstant(Player player, int cardIndex, List<UUID> targetPermanentIds) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, List.of());
     }
 
     public void castInstantWithSacrifice(Player player, int cardIndex, UUID targetPermanentId, UUID sacrificePermanentId) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
     public void castInstantWithConvoke(Player player, int cardIndex, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
+        ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, convokeCreatureIds);
     }
 
@@ -530,38 +553,47 @@ public class GameTestHarness {
     }
 
     public void tapPermanent(Player player, int permanentIndex) {
+        ensurePriority(player);
         gameService.tapPermanent(gameData, player, permanentIndex);
     }
 
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.sacrificePermanent(gameData, player, permanentIndex, targetPermanentId);
     }
 
     public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, null);
     }
 
     public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, Zone Zone) {
+        ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, Zone);
     }
 
     public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetPermanentId) {
+        ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, null);
     }
 
     public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone) {
+        ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone);
     }
 
     public void activateAbilityWithMultiTargets(Player player, int permanentIndex, int abilityIndex, List<UUID> targetPermanentIds) {
+        ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null, targetPermanentIds);
     }
 
     public void activateGraveyardAbility(Player player, int graveyardCardIndex) {
+        ensurePriority(player);
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, 0);
     }
 
     public void activateGraveyardAbility(Player player, int graveyardCardIndex, int abilityIndex) {
+        ensurePriority(player);
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
     }
 
@@ -592,6 +624,9 @@ public class GameTestHarness {
     }
 
     public void passBothPriorities() {
+        // Reset priority so active player gets first chance
+        gameData.priorityPassedBy.clear();
+
         // Determine priority order based on active player
         Player first, second;
         if (gameData.activePlayerId != null && gameData.activePlayerId.equals(player2.getId())) {
@@ -609,8 +644,9 @@ public class GameTestHarness {
 
         // After auto-pass rework, the first pass may trigger an auto-pass cascade
         // that handles the second player too (advancing the step or resolving the stack).
-        // Only pass for the second player if the game state hasn't changed.
-        if (gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore) {
+        // Also stop if the game entered an awaiting-input state (e.g. may ability prompt).
+        if (gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
+                || gameData.interaction.isAwaitingInput()) {
             return;
         }
 
@@ -643,6 +679,26 @@ public class GameTestHarness {
 
     public void handleCombatDamageAssigned(Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         gameService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
+    }
+
+    /**
+     * Ensures the given player has priority without changing whose turn it is.
+     * If the player is the active player, clears their pass. If not, marks the
+     * active player as having passed so priority falls through to this player.
+     * Called automatically by harness action methods (cast, activate, tap) so
+     * tests don't need to manually set up priority state.
+     */
+    public void ensurePriority(Player player) {
+        if (gameData.activePlayerId == null) {
+            gameData.activePlayerId = player.getId();
+        }
+        if (player.getId().equals(gameData.activePlayerId)) {
+            gameData.priorityPassedBy.remove(player.getId());
+        } else {
+            gameData.priorityPassedBy.add(gameData.activePlayerId);
+            gameData.priorityPassedBy.remove(player.getId());
+        }
+        gameData.interaction.clearAwaitingInput();
     }
 
     public void forceActivePlayer(Player player) {

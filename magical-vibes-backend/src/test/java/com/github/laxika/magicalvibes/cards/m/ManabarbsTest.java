@@ -74,7 +74,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Mountain is at index 1 (Manabarbs at index 0)
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
@@ -88,7 +88,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.setLife(player2, 20);
 
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -105,9 +105,9 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Tap all three Mountains (indices 1, 2, 3)
-        gs.tapPermanent(gd, player1, 1);
-        gs.tapPermanent(gd, player1, 2);
-        gs.tapPermanent(gd, player1, 3);
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
+        harness.tapPermanent(player1, 3);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
@@ -122,7 +122,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.setLife(player2, 20);
 
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         // Two Manabarbs each deal 1 damage = 2 total
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -139,7 +139,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Player1 taps Mountain (index 1, after their Manabarbs)
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         // Both Manabarbs trigger, dealing 2 total damage to player1
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -156,7 +156,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Tap first Mountain (index 1) — takes 1 damage
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
 
         // Remove Manabarbs from battlefield
@@ -165,7 +165,7 @@ class ManabarbsTest extends BaseCardTest {
 
         // After removing Manabarbs (was index 0), Mountains are now at indices 0 (tapped) and 1 (untapped)
         // Tap second Mountain (index 1) — no damage since Manabarbs is gone
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
@@ -179,7 +179,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.setLife(player2, 20);
 
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         // 1 damage doubled to 2 by Furnace of Rath
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -194,7 +194,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.setLife(player2, 1);
 
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
     }

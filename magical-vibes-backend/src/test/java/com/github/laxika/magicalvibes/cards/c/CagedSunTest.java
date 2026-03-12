@@ -196,7 +196,7 @@ class CagedSunTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         // Forest is at index 1 (Caged Sun at index 0)
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         // Should get 2 green mana: 1 from Forest + 1 from Caged Sun trigger
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
@@ -213,7 +213,7 @@ class CagedSunTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
 
         // Mountain is at index 1 (Caged Sun at index 0)
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         // Should get 1 red mana (no bonus)
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
@@ -231,7 +231,7 @@ class CagedSunTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         // Opponent taps their Forest
-        gs.tapPermanent(gd, player2, 0);
+        harness.tapPermanent(player2, 0);
 
         // Opponent should get 1 green mana only (no bonus from player1's Caged Sun)
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -249,8 +249,8 @@ class CagedSunTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         // Tap both Forests (indices 1 and 2, Caged Sun at 0)
-        gs.tapPermanent(gd, player1, 1);
-        gs.tapPermanent(gd, player1, 2);
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
 
         // Should get 4 green mana: (1+1) + (1+1)
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
@@ -264,7 +264,7 @@ class CagedSunTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         // Forest is at index 1 (Caged Sun at index 0)
-        gs.tapPermanent(gd, player1, 1);
+        harness.tapPermanent(player1, 1);
 
         // Should get only 1 green mana (no bonus)
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -308,7 +308,7 @@ class CagedSunTest extends BaseCardTest {
         assertThat(forestIndex).isGreaterThanOrEqualTo(0);
 
         // Tap Forest for extra mana
-        gs.tapPermanent(gd, player1, forestIndex);
+        harness.tapPermanent(player1, forestIndex);
 
         // Should get 2 green mana: 1 from Forest + 1 from Caged Sun
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);

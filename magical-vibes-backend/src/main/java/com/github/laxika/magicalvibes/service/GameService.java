@@ -62,7 +62,27 @@ public class GameService {
     private final ExileResolutionService exileResolutionService;
 
     /**
-     * When Mindslaver control is active, remaps the controlling player to act as
+     * Validates that the game is running, no interaction is awaiting input, and the given player
+     * currently holds priority. Must be called inside the {@code synchronized(gameData)} block
+     * after {@link #resolveActingPlayer(GameData, Player)}.
+     *
+     * @throws IllegalStateException if the game is not running, input is awaited, or the player
+     *                               does not have priority
+     */
+    private void requirePriority(GameData gameData, Player player) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            throw new IllegalStateException("Cannot perform this action while awaiting input");
+        }
+        UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+        if (priorityHolder == null || !priorityHolder.equals(player.getId())) {
+            throw new IllegalStateException("You do not have priority");
+        }
+    }
+
+    /**
      * the controlled player when the controlled player should be acting (has priority
      * or is the expected respondent for an interaction).
      * If the controller is acting as themselves (e.g., passing their own priority as
@@ -116,21 +136,9 @@ public class GameService {
     }
 
     public void passPriority(GameData gameData, Player player) {
-        if (gameData.status != GameStatus.RUNNING) {
-            throw new IllegalStateException("Game is not running");
-        }
-
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-
-            if (gameData.interaction.isAwaitingInput()) {
-                throw new IllegalStateException("Cannot pass priority while awaiting input");
-            }
-
-            UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
-            if (priorityHolder == null || !priorityHolder.equals(player.getId())) {
-                throw new IllegalStateException("You do not have priority");
-            }
+            requirePriority(gameData, player);
 
             gameData.priorityPassedBy.add(player.getId());
             log.info("Game {} - {} passed priority on step {} (passed: {}/2)",
@@ -151,19 +159,8 @@ public class GameService {
     }
 
     public void paySearchTax(GameData gameData, Player player) {
-        if (gameData.status != GameStatus.RUNNING) {
-            throw new IllegalStateException("Game is not running");
-        }
-
         synchronized (gameData) {
-            if (gameData.interaction.isAwaitingInput()) {
-                throw new IllegalStateException("Cannot pay search tax while awaiting input");
-            }
-
-            UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
-            if (priorityHolder == null || !priorityHolder.equals(player.getId())) {
-                throw new IllegalStateException("You do not have priority");
-            }
+            requirePriority(gameData, player);
 
             // Find unpaid CantSearchLibrariesEffect permanents
             List<UUID> unpaidArbiterIds = new java.util.ArrayList<>();
@@ -245,6 +242,7 @@ public class GameService {
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, List.of(), List.of(), false, null);
         }
     }
@@ -252,6 +250,7 @@ public class GameService {
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, false, null);
         }
     }
@@ -259,6 +258,7 @@ public class GameService {
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, null);
         }
     }
@@ -266,6 +266,7 @@ public class GameService {
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId);
         }
     }
@@ -273,6 +274,7 @@ public class GameService {
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount);
         }
     }
@@ -280,6 +282,7 @@ public class GameService {
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds);
         }
     }
@@ -287,28 +290,23 @@ public class GameService {
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetPermanentId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetPermanentId);
         }
     }
 
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
-        if (gameData.status != GameStatus.RUNNING) {
-            throw new IllegalStateException("Game is not running");
-        }
-
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
         }
     }
 
     public void sacrificePermanent(GameData gameData, Player player, int permanentIndex, UUID targetPermanentId) {
-        if (gameData.status != GameStatus.RUNNING) {
-            throw new IllegalStateException("Game is not running");
-        }
-
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             abilityActivationService.sacrificePermanent(gameData, player, permanentIndex, targetPermanentId);
         }
     }
@@ -318,23 +316,17 @@ public class GameService {
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone, List<UUID> targetPermanentIds) {
-        if (gameData.status != GameStatus.RUNNING) {
-            throw new IllegalStateException("Game is not running");
-        }
-
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, targetPermanentIds);
         }
     }
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
-        if (gameData.status != GameStatus.RUNNING) {
-            throw new IllegalStateException("Game is not running");
-        }
-
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
             abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
         }
     }
