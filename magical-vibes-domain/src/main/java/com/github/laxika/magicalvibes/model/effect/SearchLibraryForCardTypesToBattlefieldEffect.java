@@ -5,5 +5,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import java.util.Set;
 
 public record SearchLibraryForCardTypesToBattlefieldEffect(Set<CardType> cardTypes, boolean requiresBasicSupertype,
-                                                           boolean entersTapped) implements CardEffect {
+                                                           boolean entersTapped, int maxCount) implements CardEffect {
+
+    public SearchLibraryForCardTypesToBattlefieldEffect(Set<CardType> cardTypes, boolean requiresBasicSupertype,
+                                                        boolean entersTapped) {
+        this(cardTypes, requiresBasicSupertype, entersTapped, 1);
+    }
 }

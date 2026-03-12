@@ -121,11 +121,17 @@ public class LibrarySearchResolutionService {
 
     /**
      * Searches the controller's library for a card matching the specified types and puts it
-     * onto the battlefield (optionally tapped). Used by cards like Rampant Growth and Cultivate.
+     * onto the battlefield (optionally tapped). Used by cards like Rampant Growth and Primeval Titan.
+     * When maxCount > 1, initiates a multi-pick search using remainingCount.
      */
     @HandlesEffect(SearchLibraryForCardTypesToBattlefieldEffect.class)
     void resolveSearchLibraryForCardTypesToBattlefield(GameData gameData, StackEntry entry,
                                                        SearchLibraryForCardTypesToBattlefieldEffect effect) {
+        if (effect.maxCount() > 1) {
+            resolveMultiPickSearchToBattlefield(gameData, entry, effect);
+            return;
+        }
+
         boolean basicLandOnly = isBasicLandOnlyFilter(effect);
         String filterText = basicLandOnly ? "basic land card" : "matching card";
         String noMatchDesc = basicLandOnly ? "basic land cards" : "matching cards";
@@ -149,6 +155,57 @@ public class LibrarySearchResolutionService {
                 true,
                 destination
         );
+    }
+
+    /**
+     * Multi-pick variant: searches the controller's library for up to N cards matching the
+     * specified types and puts each onto the battlefield (optionally tapped). Used by Primeval Titan.
+     */
+    private void resolveMultiPickSearchToBattlefield(GameData gameData, StackEntry entry,
+                                                      SearchLibraryForCardTypesToBattlefieldEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = deck.stream()
+                .filter(card -> {
+                    if (!matchesCardTypes(card, effect.cardTypes())) return false;
+                    return !effect.requiresBasicSupertype() || card.getSupertypes().contains(CardSupertype.BASIC);
+                })
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            boolean basicLandOnly = isBasicLandOnlyFilter(effect);
+            String noMatchDesc = basicLandOnly ? "basic land cards" : "matching cards";
+            String logMsg = playerName + " searches their library but finds no " + noMatchDesc + ". Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        LibrarySearchDestination destination = effect.entersTapped()
+                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                : LibrarySearchDestination.BATTLEFIELD;
+        String destinationText = effect.entersTapped() ? "onto the battlefield tapped" : "onto the battlefield";
+        String prompt = "Search your library for a land card to put " + destinationText
+                + " (" + effect.maxCount() + " remaining).";
+
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                .remainingCount(effect.maxCount())
+                .canFailToFind(true)
+                .destination(destination)
+                .filterCardTypes(effect.cardTypes())
+                .build(), prompt, true);
+
+        log.info("Game {} - {} searches library for up to {} cards", gameData.id, playerName, effect.maxCount());
     }
 
     /**

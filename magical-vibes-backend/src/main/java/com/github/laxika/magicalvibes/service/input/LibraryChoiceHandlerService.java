@@ -562,7 +562,7 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        if (targetPlayerId != null && remainingCount > 1) {
+        if (remainingCount > 1) {
             int newRemaining = remainingCount - 1;
             List<Card> newSearchCards = filterCardTypes != null
                     ? deck.stream().filter(c -> filterCardTypes.contains(c.getType()) || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains)).toList()
@@ -571,16 +571,31 @@ public class LibraryChoiceHandlerService {
             if (newSearchCards.isEmpty()) {
                 // No more matching cards — shuffle and finish
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
-                String targetName = gameData.playerIdToName.get(targetPlayerId);
-                String logMsg = player.getUsername() + " finds no more matching cards in " + targetName + "'s library. Library is shuffled.";
+                String logMsg;
+                if (targetPlayerId != null) {
+                    String targetName = gameData.playerIdToName.get(targetPlayerId);
+                    logMsg = player.getUsername() + " finds no more matching cards in " + targetName + "'s library. Library is shuffled.";
+                } else {
+                    logMsg = player.getUsername() + " finds no more matching cards. Library is shuffled.";
+                }
                 gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                if (toBattlefield) {
+                    stateBasedActionService.performStateBasedActions(gameData);
+                }
                 turnProgressionService.resolveAutoPass(gameData);
                 return;
             }
 
-            String targetName = gameData.playerIdToName.get(targetPlayerId);
-            String destinationDesc = toGraveyard ? "their graveyard" : "their hand";
-            String prompt = "Search " + targetName + "'s library for a card to put into " + destinationDesc + " (" + newRemaining + " remaining).";
+            String prompt;
+            if (targetPlayerId != null) {
+                String targetName = gameData.playerIdToName.get(targetPlayerId);
+                String destinationDesc = toGraveyard ? "their graveyard" : "their hand";
+                prompt = "Search " + targetName + "'s library for a card to put into " + destinationDesc + " (" + newRemaining + " remaining).";
+            } else {
+                String destinationDesc = toBattlefieldTapped ? "onto the battlefield tapped"
+                        : toBattlefield ? "onto the battlefield" : "into your hand";
+                prompt = "Search your library for a matching card to put " + destinationDesc + " (" + newRemaining + " remaining).";
+            }
 
             gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(playerId, new ArrayList<>(newSearchCards))
                     .targetPlayerId(targetPlayerId)
@@ -597,7 +612,7 @@ public class LibraryChoiceHandlerService {
                     toGraveyard || canFailToFind
             ));
 
-            log.info("Game {} - {} picks from target library, {} remaining", gameData.id, player.getUsername(), newRemaining);
+            log.info("Game {} - {} picks from library, {} remaining", gameData.id, player.getUsername(), newRemaining);
             return;
         }
 

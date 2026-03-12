@@ -358,7 +358,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForBasicLandToHandEffect` | `()` | search library for basic land to hand |
 | `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect` | `()` | search library for up to two basic lands: one to battlefield tapped, one to hand. Single search action (one Leonin Arbiter check). Used by Cultivate, Kodama's Reach |
 | `SearchLibraryForCardTypesToHandEffect` | `(Set<CardType> cardTypes)` or `(Set<CardType> cardTypes, int maxManaValue)` or `(Set<CardType> cardTypes, int minManaValue, int maxManaValue)` | search library for card of specific types to hand (optionally filtered by min/max mana value) |
-| `SearchLibraryForCardTypesToBattlefieldEffect` | `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped)` | search library for card to battlefield |
+| `SearchLibraryForCardTypesToBattlefieldEffect` | `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped)` or `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped, int maxCount)` | search library for card(s) to battlefield. When maxCount > 1, uses multi-pick (e.g. Primeval Titan searches for up to 2 lands) |
 | `SearchLibraryForCardTypeToExileAndImprintEffect` | `(Set<CardType> cardTypes)` | search library for card of specific types, exile it, and imprint on source permanent |
 | `SearchLibraryForCreatureWithMVXOrLessToHandEffect` | `()` | search library for creature with MV X or less to hand |
 | `SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect` | `(CardColor requiredColor)` | search library for creature of specified color with MV X or less to battlefield |

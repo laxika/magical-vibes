@@ -192,6 +192,13 @@ public class TurnProgressionService {
     }
 
     public void resolveAutoPass(GameData gameData) {
+        // Process pending may abilities before auto-passing (e.g. attack-triggered "you may" effects)
+        // Only when the stack is empty — otherwise stack items (e.g. Time Stop) must resolve first
+        if (gameData.stack.isEmpty() && !gameData.pendingMayAbilities.isEmpty()
+                && !gameData.interaction.isAwaitingInput()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
         autoPassService.resolveAutoPass(gameData, this::advanceStep);
     }
 
