@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -424,6 +425,13 @@ public class CombatBlockService {
     }
 
     private int getMaxBlocksForCreature(Permanent creature, List<Permanent> battlefield) {
+        // Check for "can block any number of creatures" on the creature itself
+        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBlockAnyNumberOfCreaturesEffect) {
+                return Integer.MAX_VALUE;
+            }
+        }
+
         int additionalBlocks = 0;
         for (Permanent p : battlefield) {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {

@@ -599,6 +599,7 @@ Pass `null` as filter to allow any card.
 | `CantBlockSourceEffect` | `(UUID sourcePermanentId)` | target creature can't block source permanent |
 | `CanBeBlockedOnlyByFilterEffect` | `(PermanentPredicate blockerPredicate, String allowedBlockersDescription)` | can only be blocked by matching creatures (static) |
 | `CanBeBlockedByAtMostNCreaturesEffect` | `(int maxBlockers)` | can be blocked by at most N creatures (static) |
+| `CanBlockAnyNumberOfCreaturesEffect` | `()` | this creature can block any number of creatures (static) |
 | `CanBlockOnlyIfAttackerMatchesPredicateEffect` | `(PermanentPredicate attackerPredicate, String allowedAttackersDescription)` | this creature can only block attackers matching predicate (static) |
 | `CantAttackOrBlockUnlessEquippedEffect` | `()` | this creature can't attack or block unless it's equipped (static) |
 | `CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect` | `(PermanentPredicate permanentPredicate, int minimumCount, String requirementDescription)` | can't attack unless there are N or more matching permanents across all battlefields (static) |
