@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -71,6 +72,7 @@ public class DestructionResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final LifeResolutionService lifeResolutionService;
 
     /**
      * Resolves a {@link DestroyAllPermanentsEffect}, destroying all permanents matching the
@@ -306,24 +308,6 @@ public class DestructionResolutionService {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
     }
 
-    private void gainLifeForPlayer(GameData gameData, UUID playerId, int amount, String reason) {
-        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(playerId) + "'s life total can't change.");
-            return;
-        }
-        if (!gameQueryService.canPlayerGainLife(gameData, playerId)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(playerId) + " can't gain life.");
-            return;
-        }
-        int currentLife = gameData.playerLifeTotals.get(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife + amount);
-        String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " gains " + amount + " life (" + reason + ").");
-        log.info("Game {} - {} gains {} life ({})", gameData.id, playerName, amount, reason);
-    }
 
     /**
      * Deals noncombat damage to a player with full prevention pipeline
@@ -962,7 +946,7 @@ public class DestructionResolutionService {
 
         // Gain life equal to mana value regardless of destruction result
         if (manaValue > 0) {
-            gainLifeForPlayer(gameData, entry.getControllerId(), manaValue,
+            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), manaValue,
                     "equal to " + target.getCard().getName() + "'s mana value");
         }
     }
@@ -985,7 +969,7 @@ public class DestructionResolutionService {
         tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Gain life equal to toughness regardless of destruction result
-        gainLifeForPlayer(gameData, entry.getControllerId(), toughness,
+        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), toughness,
                 "equal to " + target.getCard().getName() + "'s toughness");
     }
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -66,6 +67,7 @@ public class GraveyardReturnResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final LifeResolutionService lifeResolutionService;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -507,26 +509,10 @@ public class GraveyardReturnResolutionService {
     private void applyLifeGainEqualToManaValue(GameData gameData, UUID controllerId, Card card) {
         int manaValue = card.getManaValue();
         if (manaValue > 0) {
-            applyLifeGain(gameData, controllerId, manaValue);
+            lifeResolutionService.applyGainLife(gameData, controllerId, manaValue);
         }
     }
 
-    private void applyLifeGain(GameData gameData, UUID controllerId, int amount) {
-        String playerName = gameData.playerIdToName.get(controllerId);
-        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
-            return;
-        }
-        if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
-            return;
-        }
-        int currentLife = gameData.getLife(controllerId);
-        gameData.playerLifeTotals.put(controllerId, currentLife + amount);
-        String logEntry = playerName + " gains " + amount + " life.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
-    }
 
     private void trackStolenCreature(GameData gameData, UUID permanentId, UUID originalOwnerId) {
         gameData.stolenCreatures.put(permanentId, originalOwnerId);
@@ -670,7 +656,7 @@ public class GraveyardReturnResolutionService {
 
         // Gain life after exile
         if (effect.lifeGain() > 0) {
-            applyLifeGain(gameData, controllerId, effect.lifeGain());
+            lifeResolutionService.applyGainLife(gameData, controllerId, effect.lifeGain());
         }
     }
 

@@ -91,20 +91,10 @@ public class LifeResolutionService {
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             new ManaCost("{0}").pay(pool, chosenValue);
 
-            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
-            } else if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
-            } else {
-                int currentLife = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, currentLife + chosenValue);
-
-                String logEntry = playerName + " pays {" + chosenValue + "} and gains " + chosenValue + " life (" + cardName + ").";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} pays {} mana and gains {} life from {}",
-                        gameData.id, playerName, chosenValue, chosenValue, cardName);
-                triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, chosenValue);
-            }
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " pays {" + chosenValue + "} for " + cardName + ".");
+            log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
+            applyGainLife(gameData, controllerId, chosenValue, cardName);
             return;
         }
 
@@ -267,29 +257,12 @@ public class LifeResolutionService {
 
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
+        // Life goes to the target creature's controller, not the spell's controller
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
-                if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            gameData.playerIdToName.get(playerId) + "'s life total can't change.");
-                    break;
-                }
-                if (!gameQueryService.canPlayerGainLife(gameData, playerId)) {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            gameData.playerIdToName.get(playerId) + " can't gain life.");
-                    break;
-                }
-                int currentLife = gameData.getLife(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife + toughness);
-
-                String logEntry = gameData.playerIdToName.get(playerId) + " gains " + toughness + " life.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-                log.info("Game {} - {} gains {} life (equal to {}'s toughness)",
-                        gameData.id, gameData.playerIdToName.get(playerId), toughness, target.getCard().getName());
-                triggerCollectionService.checkLifeGainTriggers(gameData, playerId, toughness);
-                break;
+                applyGainLife(gameData, playerId, toughness);
+                return;
             }
         }
     }
@@ -307,57 +280,51 @@ public class LifeResolutionService {
             return;
         }
 
-        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+        applyGainLife(gameData, controllerId, count, entry.getCard().getName());
+    }
+
+    /**
+     * Sets a player's life total per CR 119.5: the change is applied as gaining or losing
+     * the necessary amount. Respects canPlayerLifeChange, canPlayerGainLife, and fires triggers.
+     *
+     * @return true if the life total was changed, false if blocked
+     */
+    private boolean applySetLifeTotal(GameData gameData, UUID playerId, int newLife) {
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            String playerName = gameData.playerIdToName.get(playerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
-            return;
-        }
-        if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
-            return;
+            return false;
         }
 
-        int currentLife = gameData.getLife(controllerId);
-        gameData.playerLifeTotals.put(controllerId, currentLife + count);
+        int currentLife = gameData.getLife(playerId);
+        if (newLife == currentLife) return true;
 
-        String logEntry = playerName + " gains " + count + " life from " + entry.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gains {} life from {}", gameData.id, playerName, count, entry.getCard().getName());
-        triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, count);
+        if (newLife > currentLife) {
+            if (!gameQueryService.canPlayerGainLife(gameData, playerId)) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
+                return false;
+            }
+            gameData.playerLifeTotals.put(playerId, newLife);
+            triggerCollectionService.checkLifeGainTriggers(gameData, playerId, newLife - currentLife);
+        } else {
+            gameData.playerLifeTotals.put(playerId, newLife);
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, currentLife - newLife);
+        }
+        return true;
     }
 
     @HandlesEffect(DoubleTargetPlayerLifeEffect.class)
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
         UUID targetPlayerId = entry.getTargetPermanentId();
-
-        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
-            return;
-        }
-
         int currentLife = gameData.getLife(targetPlayerId);
         int newLife = currentLife * 2;
 
-        // Per CR 119.5: Setting life total is defined as gaining or losing the necessary amount.
-        // If new total > current, the player would gain life — check canPlayerGainLife.
-        if (newLife > currentLife && !gameQueryService.canPlayerGainLife(gameData, targetPlayerId)) {
+        if (applySetLifeTotal(gameData, targetPlayerId, newLife)) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life. Life total not doubled.");
-            return;
-        }
-
-        gameData.playerLifeTotals.put(targetPlayerId, newLife);
-
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
-        String logEntry = playerName + "'s life total is doubled from " + currentLife + " to " + newLife + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-        log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
-
-        if (newLife > currentLife) {
-            triggerCollectionService.checkLifeGainTriggers(gameData, targetPlayerId, newLife - currentLife);
-        } else if (newLife < currentLife) {
-            triggerCollectionService.checkLifeLossTriggers(gameData, targetPlayerId, currentLife - newLife);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + "'s life total is doubled from " + currentLife + " to " + newLife + ".");
+            log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
         }
     }
 
@@ -387,14 +354,13 @@ public class LifeResolutionService {
         if (lifeA == lifeB) {
             String nameA = gameData.playerIdToName.get(playerA);
             String nameB = gameData.playerIdToName.get(playerB);
-            String logEntry = nameA + " and " + nameB + " exchange life totals (both at " + lifeA + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    nameA + " and " + nameB + " exchange life totals (both at " + lifeA + ").");
             return;
         }
 
         // Per CR 119.7e: An exchange is implemented as each player gaining or losing life.
         // If a player can't gain life, they can't move to a higher life total via exchange.
-        // The other player still loses/gains as applicable.
         boolean aWouldGain = lifeB > lifeA;
         boolean bWouldGain = lifeA > lifeB;
         boolean aCantGain = aWouldGain && !gameQueryService.canPlayerGainLife(gameData, playerA);
@@ -421,13 +387,14 @@ public class LifeResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, nameB + " can't gain life.");
         }
 
-        String logEntry = nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + newLifeA + ", " + nameB + ": " + lifeB + " -> " + newLifeB + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData,
+                nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + newLifeA
+                        + ", " + nameB + ": " + lifeB + " -> " + newLifeB + ").");
 
+        // Apply the new totals with triggers (bypass applySetLifeTotal since we already checked)
         gameData.playerLifeTotals.put(playerA, newLifeA);
         gameData.playerLifeTotals.put(playerB, newLifeB);
 
-        // Fire life loss/gain triggers
         if (newLifeA > lifeA) {
             triggerCollectionService.checkLifeGainTriggers(gameData, playerA, newLifeA - lifeA);
         } else if (newLifeA < lifeA) {
@@ -440,7 +407,7 @@ public class LifeResolutionService {
         }
 
         log.info("Game {} - {} and {} exchange life totals ({} -> {}, {} -> {})",
-                gameData.id, nameA, nameB, lifeA, lifeB, lifeB, lifeA);
+                gameData.id, nameA, nameB, lifeA, newLifeA, lifeB, newLifeB);
     }
 
     @HandlesEffect(EnchantedCreatureControllerLosesLifeEffect.class)

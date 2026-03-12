@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,7 @@ public class ActivatedAbilityExecutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
+    private final LifeResolutionService lifeResolutionService;
 
     /**
      * Completes an activated ability activation after all additional costs (mana, sacrifice creature,
@@ -280,14 +282,7 @@ public class ActivatedAbilityExecutionService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
             } else if (effect instanceof GainLifeEffect gain) {
-                if (gameQueryService.canPlayerLifeChange(gameData, playerId)
-                        && gameQueryService.canPlayerGainLife(gameData, playerId)) {
-                    int currentLife = gameData.getLife(playerId);
-                    gameData.playerLifeTotals.put(playerId, currentLife + gain.amount());
-                    String logEntry = player.getUsername() + " gains " + gain.amount() + " life.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gain.amount());
-                }
+                lifeResolutionService.applyGainLife(gameData, playerId, gain.amount());
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();

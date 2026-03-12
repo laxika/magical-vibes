@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class GraveyardChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
+    private final LifeResolutionService lifeResolutionService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
@@ -99,14 +101,8 @@ public class GraveyardChoiceHandlerService {
 
                     if (gainLifeEqualToManaValue) {
                         int manaValue = card.getManaValue();
-                        if (manaValue > 0 && gameQueryService.canPlayerLifeChange(gameData, playerId)
-                                && gameQueryService.canPlayerGainLife(gameData, playerId)) {
-                            int currentLife = gameData.getLife(playerId);
-                            gameData.playerLifeTotals.put(playerId, currentLife + manaValue);
-                            String lifeLog = player.getUsername() + " gains " + manaValue + " life.";
-                            gameBroadcastService.logAndBroadcast(gameData, lifeLog);
-                            log.info("Game {} - {} gains {} life (equal to {}'s mana value)",
-                                    gameData.id, player.getUsername(), manaValue, card.getName());
+                        if (manaValue > 0) {
+                            lifeResolutionService.applyGainLife(gameData, playerId, manaValue);
                         }
                     }
                 }
