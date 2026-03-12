@@ -315,8 +315,10 @@ public class GameTestHarness {
                 inputCompletionService, gameQueryService, cloneService, stateBasedActionService, gameBroadcastService, playerInputService, turnProgressionService, targetLegalityService, triggerCollectionService);
         MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService = new MayPenaltyChoiceHandlerService(
                 inputCompletionService, gameQueryService, graveyardService, drawService, gameBroadcastService, playerInputService, turnProgressionService, stateBasedActionService, permanentRemovalService);
+        MulliganService mulliganService = new MulliganService(
+                sessionManager, gameBroadcastService, turnProgressionService, battlefieldEntryService, playerInputService);
         MayMiscHandlerService mayMiscHandlerService = new MayMiscHandlerService(
-                inputCompletionService, gameQueryService, drawService, gameBroadcastService, playerInputService, turnProgressionService, sessionManager);
+                inputCompletionService, gameQueryService, drawService, gameBroadcastService, mulliganService, playerInputService, turnProgressionService, battlefieldEntryService, sessionManager);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
                 gameQueryService, gameBroadcastService, playerInputService, turnProgressionService);
@@ -326,8 +328,6 @@ public class GameTestHarness {
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 sessionManager, gameQueryService, graveyardService, warpWorldService, battlefieldEntryService, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService, effectResolutionService);
-        MulliganService mulliganService = new MulliganService(
-                sessionManager, gameBroadcastService, turnProgressionService, battlefieldEntryService);
         ReconnectionService reconnectionService = new ReconnectionService(
                 sessionManager, cardViewFactory, combatService, gameQueryService);
         gameService = new GameService(

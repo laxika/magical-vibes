@@ -318,8 +318,10 @@ public class GameSimulator {
                 inputCompletionService, gameQueryService, cloneService, stateBasedActionService, gameBroadcastService, playerInputService, turnProgressionService, targetLegalityService, triggerCollectionService);
         MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService = new MayPenaltyChoiceHandlerService(
                 inputCompletionService, gameQueryService, graveyardService, drawService, gameBroadcastService, playerInputService, turnProgressionService, stateBasedActionService, permanentRemovalService);
+        MulliganService mulliganService = new MulliganService(
+                noOpSession, gameBroadcastService, turnProgressionService, battlefieldEntryService, playerInputService);
         MayMiscHandlerService mayMiscHandlerService = new MayMiscHandlerService(
-                inputCompletionService, gameQueryService, drawService, gameBroadcastService, playerInputService, turnProgressionService, noOpSession);
+                inputCompletionService, gameQueryService, drawService, gameBroadcastService, mulliganService, playerInputService, turnProgressionService, battlefieldEntryService, noOpSession);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
                 gameQueryService, gameBroadcastService, playerInputService, turnProgressionService);
@@ -328,8 +330,6 @@ public class GameSimulator {
                 cardViewFactory, turnProgressionService, playerInputService, effectResolutionService);
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 gameBroadcastService, stateBasedActionService, playerInputService, turnProgressionService, effectResolutionService);
-        MulliganService mulliganService = new MulliganService(
-                noOpSession, gameBroadcastService, turnProgressionService, battlefieldEntryService);
         ReconnectionService reconnectionService = new ReconnectionService(
                 noOpSession, cardViewFactory, combatService, gameQueryService);
 

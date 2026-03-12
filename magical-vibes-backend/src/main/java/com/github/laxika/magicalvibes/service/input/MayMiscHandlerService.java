@@ -18,8 +18,10 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +41,10 @@ public class MayMiscHandlerService {
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
     private final GameBroadcastService gameBroadcastService;
+    private final MulliganService mulliganService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final SessionManager sessionManager;
 
     public void handleEquipmentAttachChoice(GameData gameData, Player player, boolean accepted,
@@ -232,6 +236,35 @@ public class MayMiscHandlerService {
                 gameBroadcastService.broadcastGameState(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
             }
+        }
+    }
+
+    public void handleLeylineChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        if (accepted) {
+            Card card = ability.sourceCard();
+            UUID controllerId = ability.controllerId();
+            List<Card> hand = gameData.playerHands.get(controllerId);
+            hand.remove(card);
+
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+            String logEntry = player.getUsername() + " begins the game with " + card.getName() + " on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} starts with {} on the battlefield (leyline)",
+                    gameData.id, player.getUsername(), card.getName());
+        } else {
+            String logEntry = player.getUsername() + " declines to put " + ability.sourceCard().getName() + " on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines leyline placement for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            // All leyline choices resolved — continue with game start
+            mulliganService.continueStartGame(gameData);
         }
     }
 }

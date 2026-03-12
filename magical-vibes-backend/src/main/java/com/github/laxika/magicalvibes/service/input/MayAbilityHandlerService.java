@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
@@ -111,6 +112,13 @@ public class MayAbilityHandlerService {
         boolean isMayNotUntap = ability.effects().stream().anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
         if (isMayNotUntap) {
             mayMiscHandlerService.handleMayNotUntapChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Leyline pregame choice (CR 103.6a) — put card onto battlefield from opening hand
+        boolean isLeyline = ability.effects().stream().anyMatch(e -> e instanceof LeylineStartOnBattlefieldEffect);
+        if (isLeyline) {
+            mayMiscHandlerService.handleLeylineChoice(gameData, player, accepted, ability);
             return;
         }
 

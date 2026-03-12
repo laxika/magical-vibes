@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
@@ -371,6 +372,12 @@ public class StepTriggerService {
                 if (openingHandEffects == null || openingHandEffects.isEmpty()) continue;
 
                 for (CardEffect effect : openingHandEffects) {
+                    // Leyline effects are handled during the pregame procedure
+                    // (MulliganService.startGame), not during the first upkeep.
+                    if (effect instanceof MayEffect may
+                            && may.wrapped() instanceof LeylineStartOnBattlefieldEffect) {
+                        continue;
+                    }
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(card, playerId, may);
                     } else {

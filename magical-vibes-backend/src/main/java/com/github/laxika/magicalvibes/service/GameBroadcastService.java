@@ -430,7 +430,8 @@ public class GameBroadcastService {
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantFlashToCardTypeEffect grant) {
-                    if (card.getType() == grant.cardType()
+                    if (grant.cardType() == null
+                            || card.getType() == grant.cardType()
                             || card.getAdditionalTypes().contains(grant.cardType())) {
                         return true;
                     }

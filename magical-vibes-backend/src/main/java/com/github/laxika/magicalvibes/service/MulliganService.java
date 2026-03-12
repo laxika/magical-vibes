@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
@@ -34,6 +38,7 @@ public class MulliganService {
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final PlayerInputService playerInputService;
 
     public void keepHand(GameData gameData, Player player) {
         if (gameData.playerKeptHand.contains(player.getId())) {
@@ -149,6 +154,35 @@ public class MulliganService {
     }
 
     private void startGame(GameData gameData) {
+        // Leyline mechanic (CR 103.6): if a card with the leyline ability is in a player's
+        // opening hand, the player may begin the game with it on the battlefield.
+        // Per CR 103.6, the starting player takes all such actions first, then each other player.
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand == null) continue;
+            for (Card card : hand) {
+                for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
+                    if (effect instanceof MayEffect may
+                            && may.wrapped() instanceof LeylineStartOnBattlefieldEffect) {
+                        gameData.queueMayAbility(card, playerId, may);
+                    }
+                }
+            }
+        }
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            gameBroadcastService.broadcastGameState(gameData);
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        continueStartGame(gameData);
+    }
+
+    /**
+     * Called after all leyline may-choices have been resolved to finish the game start
+     * (Karn restart, set game to RUNNING, begin turn 1).
+     */
+    public void continueStartGame(GameData gameData) {
         // Karn Liberated restart: put exiled cards onto battlefield before starting
         // Per ruling: "After the pregame procedure is complete but before the new game's
         // first turn, Karn's ability finishes resolving and the cards left in exile are
