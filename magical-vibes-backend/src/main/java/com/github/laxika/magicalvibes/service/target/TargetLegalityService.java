@@ -81,7 +81,7 @@ public class TargetLegalityService {
                 if (!gameData.playerIds.contains(targetId)) {
                     throw new IllegalStateException("Invalid player target");
                 }
-                validatePlayerTargetable(gameData, targetId);
+                validatePlayerTargetable(gameData, targetId, playerId);
                 validatePlayerPredicate(playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
                 continue;
             }
@@ -157,7 +157,7 @@ public class TargetLegalityService {
         }
 
         if (target == null && needsTarget && gameData.playerIds.contains(targetPermanentId)) {
-            validatePlayerTargetable(gameData, targetPermanentId);
+            validatePlayerTargetable(gameData, targetPermanentId, controllerId);
         }
 
         if (target == null
@@ -201,7 +201,7 @@ public class TargetLegalityService {
                     throw new IllegalStateException("This spell cannot target players");
                 }
                 if (card.isNeedsTarget()) {
-                    validatePlayerTargetable(gameData, targetId);
+                    validatePlayerTargetable(gameData, targetId, controllerId);
                 }
                 continue;
             }
@@ -341,9 +341,13 @@ public class TargetLegalityService {
         }
     }
 
-    private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId) {
+    private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {
         if (gameQueryService.playerHasShroud(gameData, targetPlayerId)) {
             throw new IllegalStateException(gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted");
+        }
+        if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
+                && gameQueryService.playerHasHexproof(gameData, targetPlayerId)) {
+            throw new IllegalStateException(gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted");
         }
     }
 
@@ -355,7 +359,7 @@ public class TargetLegalityService {
         if (target != null) {
             validatePermanentTargetable(gameData, target, sourcePlayerId);
         } else if (gameData.playerIds.contains(targetId)) {
-            validatePlayerTargetable(gameData, targetId);
+            validatePlayerTargetable(gameData, targetId, sourcePlayerId);
         }
     }
 

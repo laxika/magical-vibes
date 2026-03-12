@@ -670,6 +670,7 @@ Pass `null` as filter to allow any card.
 | `GrantEffectEffect` | `(CardEffect effect, GrantScope scope)` | grant a CardEffect to permanents matching scope (e.g. OWN_CREATURES) |
 | `RedirectPlayerDamageToEnchantedCreatureEffect` | `()` | redirect damage dealt to player to enchanted creature |
 | `RedirectUnblockedCombatDamageToSelfEffect` | `()` | redirect unblocked combat damage to this creature |
+| `GrantControllerHexproofEffect` | `()` | controller has hexproof (can't be targeted by opponents) (static) |
 | `GrantControllerShroudEffect` | `()` | controller has shroud (can't be targeted) (static) |
 | `GrantControllerSpellsCantBeCounteredByColorsEffect` | `(Set<CardColor> colors)` | controller's spells can't be countered by spells of specified colors this turn (one-shot, cleared at end of turn) |
 | `GrantControllerCreaturesCantBeTargetedByColorsEffect` | `(Set<CardColor> colors)` | controller's creatures can't be targeted by spells of specified colors this turn (one-shot, cleared at end of turn) |

@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCountered
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -1026,6 +1027,15 @@ public class GameQueryService {
      */
     public boolean playerHasShroud(GameData gameData, UUID playerId) {
         return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerShroudEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the player has hexproof (cannot be the target of spells or
+     * abilities opponents control), granted by a permanent they control with
+     * {@link GrantControllerHexproofEffect}.
+     */
+    public boolean playerHasHexproof(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerHexproofEffect.class);
     }
 
     /**

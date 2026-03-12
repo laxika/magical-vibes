@@ -256,6 +256,11 @@ public class ValidTargetService {
             return false;
         }
 
+        // Player hexproof (only blocks opponents)
+        if (!controllerId.equals(playerId) && gameQueryService.playerHasHexproof(gameData, playerId)) {
+            return false;
+        }
+
         // PlayerPredicateTargetFilter (e.g. "target opponent")
         if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
             if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
@@ -362,6 +367,11 @@ public class ValidTargetService {
 
     private boolean isValidAbilityPlayerTarget(GameData gameData, ActivatedAbility ability, UUID playerId, UUID controllerId) {
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
+            return false;
+        }
+
+        // Player hexproof (only blocks opponents)
+        if (!controllerId.equals(playerId) && gameQueryService.playerHasHexproof(gameData, playerId)) {
             return false;
         }
 
