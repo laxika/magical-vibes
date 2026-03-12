@@ -257,11 +257,15 @@ public class MayAbilityHandlerService {
         // Targeted may ability (e.g. "you may deal 3 damage to target creature", "you may destroy target Equipment")
         boolean isTargetedPermanentEffect = ability.effects().stream()
                 .anyMatch(CardEffect::canTargetPermanent);
+        boolean isTargetedPlayerEffect = ability.effects().stream()
+                .anyMatch(CardEffect::canTargetPlayer);
+        boolean isTargetedEffect = isTargetedPermanentEffect || isTargetedPlayerEffect;
 
-        // Pre-targeted may ability — target was already chosen (e.g. "You may tap or untap that creature")
-        if (accepted && isTargetedPermanentEffect && ability.targetCardId() != null) {
-            Permanent target = gameQueryService.findPermanentById(gameData, ability.targetCardId());
-            if (target != null) {
+        // Pre-targeted may ability — target was already chosen (e.g. "You may tap or untap that creature", "you may have that player lose 1 life")
+        if (accepted && isTargetedEffect && ability.targetCardId() != null) {
+            boolean isPreTargetedPlayer = gameData.playerIds.contains(ability.targetCardId());
+            Permanent target = isPreTargetedPlayer ? null : gameQueryService.findPermanentById(gameData, ability.targetCardId());
+            if (target != null || isPreTargetedPlayer) {
                 StackEntry entry;
                 if (ability.sourcePermanentId() != null) {
                     entry = new StackEntry(
@@ -286,9 +290,16 @@ public class MayAbilityHandlerService {
                 entry.setTargetPermanentId(ability.targetCardId());
                 gameData.stack.add(entry);
 
-                String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName()
-                        + "'s ability targets " + target.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                if (isPreTargetedPlayer) {
+                    String targetName = gameData.playerIdToName.get(ability.targetCardId());
+                    String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName()
+                            + "'s ability targets " + targetName + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                } else {
+                    String logEntry = player.getUsername() + " accepts — " + ability.sourceCard().getName()
+                            + "'s ability targets " + target.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
                 log.info("Game {} - {} accepts pre-targeted may ability from {}", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             } else {
@@ -301,7 +312,7 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        if (accepted && isTargetedPermanentEffect) {
+        if (accepted && isTargetedEffect) {
             handleTargetedMayAbilityAccepted(gameData, player, ability);
             return;
         }
@@ -375,21 +386,24 @@ public class MayAbilityHandlerService {
         // Collect valid permanent targets from all battlefields using card's target filter
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                    if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+        boolean canTargetPermanent = ability.effects().stream().anyMatch(CardEffect::canTargetPermanent);
+        if (canTargetPermanent) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                        if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                            validTargets.add(p.getId());
+                        }
+                    } else if (gameQueryService.isCreature(gameData, p)) {
                         validTargets.add(p.getId());
                     }
-                } else if (gameQueryService.isCreature(gameData, p)) {
-                    validTargets.add(p.getId());
                 }
             }
         }
 
-        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect)
+        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillTargetPlayerEffect)
         boolean canTargetPlayer = ability.effects().stream().anyMatch(CardEffect::canTargetPlayer);
         if (canTargetPlayer) {
             validTargets.addAll(gameData.orderedPlayerIds);
@@ -408,7 +422,9 @@ public class MayAbilityHandlerService {
                 ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())
         ));
         String targetDescription;
-        if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+        if (!canTargetPermanent && canTargetPlayer) {
+            targetDescription = "player";
+        } else if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
             targetDescription = filter.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
         } else if (canTargetPlayer) {
             targetDescription = "any target";
