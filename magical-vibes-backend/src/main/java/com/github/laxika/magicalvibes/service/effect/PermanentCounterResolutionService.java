@@ -366,7 +366,7 @@ public class PermanentCounterResolutionService {
     private void resolvePutPlusOnePlusOneCounterOnEnchantedCreature(GameData gameData, StackEntry entry,
                                                                     PutPlusOnePlusOneCounterOnEnchantedCreatureEffect effect) {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || aura.getAttachedTo() == null) return;
+        if (aura == null || !aura.isAttached()) return;
 
         Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (creature == null) return;
