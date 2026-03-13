@@ -234,7 +234,8 @@ ReturnCardFromGraveyardEffect(
     boolean exileAtEndStep,                  // true = exile at next end step (e.g. Postmortem Lunge)
     boolean requiresManaValueEqualsX,        // true = restrict to cards with MV = X (e.g. Postmortem Lunge)
     CardColor grantColor,                    // non-null = permanently grant this color "in addition to" (e.g. Rise from the Grave)
-    CardSubtype grantSubtype                 // non-null = permanently grant this subtype "in addition to" (e.g. Rise from the Grave)
+    CardSubtype grantSubtype,                // non-null = permanently grant this subtype "in addition to" (e.g. Rise from the Grave)
+    boolean enterTapped                      // true = enters the battlefield tapped (e.g. Reassembling Skeleton)
 )
 ```
 
@@ -311,6 +312,7 @@ Pass `null` as filter to allow any card.
 | Noxious Revival | `ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY, null, ALL_GRAVEYARDS, true, false, false, null, false, false)` — any card from any graveyard on top of owner's library |
 | Postmortem Lunge | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, true, false, false, null, false, false, true, true, true)` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |
 | Rise from the Grave | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), ALL_GRAVEYARDS, false, false, false, null, false, false, false, false, false, CardColor.BLACK, CardSubtype.ZOMBIE)` — creature from any graveyard to battlefield as a black Zombie in addition to other colors/types |
+| Reassembling Skeleton | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null, false, false, false, false, false, null, null, true)` — self-return to battlefield tapped (graveyard activated ability) |
 
 ### Other graveyard effects
 

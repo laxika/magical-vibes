@@ -164,7 +164,7 @@ public class GraveyardReturnResolutionService {
                     effect.grantHaste(), effect.exileAtEndStep());
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
-                    effect.grantColor(), effect.grantSubtype());
+                    effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
         }
 
         if (effect.gainLifeEqualToManaValue()) {
@@ -251,7 +251,7 @@ public class GraveyardReturnResolutionService {
                 if (effect.destination() == GraveyardChoiceDestination.HAND) {
                     gameData.playerHands.get(controllerId).add(card);
                 } else {
-                    putCardOntoBattlefield(gameData, controllerId, card);
+                    putCardOntoBattlefield(gameData, controllerId, card, null, null, effect.enterTapped());
                 }
                 returnedNames.add(card.getName());
             }
@@ -425,7 +425,8 @@ public class GraveyardReturnResolutionService {
 
     private void moveCardToDestination(GameData gameData, UUID playerId, Card card,
                                        GraveyardChoiceDestination destination,
-                                       CardColor grantColor, CardSubtype grantSubtype) {
+                                       CardColor grantColor, CardSubtype grantSubtype,
+                                       boolean enterTapped) {
         String playerName = gameData.playerIdToName.get(playerId);
         if (destination == GraveyardChoiceDestination.HAND) {
             gameData.playerHands.get(playerId).add(card);
@@ -436,7 +437,7 @@ public class GraveyardReturnResolutionService {
             String logEntry = playerName + " puts " + card.getName() + " on top of their library from a graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype);
+            putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype, enterTapped);
         }
     }
 
@@ -446,13 +447,22 @@ public class GraveyardReturnResolutionService {
 
     private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
                                          CardColor grantColor, CardSubtype grantSubtype) {
+        putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype, false);
+    }
+
+    private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype, boolean enterTapped) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         applyPermanentGrants(permanent, grantColor, grantSubtype);
+        if (enterTapped) {
+            permanent.tap();
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = playerName + " puts " + card.getName() + " onto the battlefield from a graveyard.";
+        String tappedText = enterTapped ? " tapped" : "";
+        String logEntry = playerName + " puts " + card.getName() + " onto the battlefield" + tappedText + " from a graveyard.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
