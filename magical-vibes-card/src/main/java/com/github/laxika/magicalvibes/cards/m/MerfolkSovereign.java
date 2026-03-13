@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "M10", collectorNumber = "62")
 @CardRegistration(set = "M11", collectorNumber = "65")
 public class MerfolkSovereign extends Card {
 
