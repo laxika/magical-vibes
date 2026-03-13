@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -121,11 +122,23 @@ public class StackResolutionService {
             perm.setPlusOnePlusOneCounters(entry.getXValue());
         }
 
+        // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
+        int fixedWishCountersCreature = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof EnterWithFixedWishCountersEffect)
+                .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
+                .findFirst().orElse(0);
+        if (fixedWishCountersCreature > 0 && !cantHaveCounters) {
+            perm.setWishCounters(fixedWishCountersCreature);
+        }
+
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         if (hasXPlusOneCounterEffect && entry.getXValue() > 0) {
             String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " +1/+1 counters under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (fixedWishCountersCreature > 0) {
+            String logEntry = card.getName() + " enters the battlefield with " + fixedWishCountersCreature + " wish counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             logEnterBattlefield(gameData, card, controllerId);
@@ -261,6 +274,15 @@ public class StackResolutionService {
             perm.setChargeCounters(fixedChargeCounters);
         }
 
+        // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
+        int fixedWishCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof EnterWithFixedWishCountersEffect)
+                .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
+                .findFirst().orElse(0);
+        if (fixedWishCounters > 0 && !cantHaveCounters) {
+            perm.setWishCounters(fixedWishCounters);
+        }
+
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -272,6 +294,9 @@ public class StackResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (fixedChargeCounters > 0) {
             String logEntry = card.getName() + " enters the battlefield with " + fixedChargeCounters + " charge counters under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (fixedWishCounters > 0) {
+            String logEntry = card.getName() + " enters the battlefield with " + fixedWishCounters + " wish counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";

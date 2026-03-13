@@ -375,6 +375,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect` | `(CardSubtype requiredSubtype)` | search library for creature card with specified subtype and put it onto the battlefield |
 | `SearchLibraryForCreatureWithExactMVToBattlefieldEffect` | `(int mvOffset)` | search library for creature with MV exactly equal to xValue + mvOffset, put onto battlefield. Used with `SacrificeCreatureCost(true)` which stores sacrificed creature's MV in xValue (e.g. Birthing Pod with mvOffset=1) |
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
+| `RevealTopCardMayPlayFreeOrExileEffect` | `()` | reveal top card of controller's library; may play it (any type, including lands) without paying its mana cost; if not played, exile it. Used by Djinn of Wishes |
 | `CastTargetInstantOrSorceryFromGraveyardEffect` | `(GraveyardSearchScope scope, boolean withoutPayingManaCost)` | ETB: target instant or sorcery from a graveyard matching scope, you may cast it (without paying mana cost if flag is true). Has `canTargetGraveyard()=true`. Graveyard targeting handled by GameHelper ETB flow |
 | `DistantMemoriesEffect` | `()` | search library for any card, exile it, shuffle; opponent may let you have it, otherwise draw 3 |
 | `SearchLibraryForCardToTopOfLibraryEffect` | `()` | search library for any card, then shuffle and put that card on top of library (unrestricted, no reveal) |
@@ -574,6 +575,7 @@ Pass `null` as filter to allow any card.
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
 | `EnterWithXPlusOnePlusOneCountersEffect` | `()` | enters battlefield with X +1/+1 counters (replacement effect, reads X from spell cast). Use for creatures like Protean Hydra |
 | `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
+| `EnterWithFixedWishCountersEffect` | `(int count)` | enters battlefield with N wish counters (replacement effect, fixed count). Used by Djinn of Wishes |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
 | `PutChargeCounterOnTargetPermanentEffect` | `()` | put a charge counter on target permanent (targets permanent, use with PermanentPredicateTargetFilter to restrict to artifacts etc.) |

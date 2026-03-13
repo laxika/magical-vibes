@@ -555,6 +555,7 @@ public class AbilityActivationService {
             int available = switch (ct) {
                 case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
                 case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
+                case WISH -> permanent.getWishCounters();
                 case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
             };
             if (available < required) {
@@ -622,6 +623,9 @@ public class AbilityActivationService {
                     removedPlus = count;
                     permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - count);
                 }
+                case WISH -> {
+                    permanent.setWishCounters(permanent.getWishCounters() - count);
+                }
                 case ANY -> {
                     removedMinus = Math.min(count, permanent.getMinusOneMinusOneCounters());
                     permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - removedMinus);
@@ -632,7 +636,16 @@ public class AbilityActivationService {
                     }
                 }
             }
-            String counterTypeLabel = removedMinus > 0 && removedPlus == 0 ? "-1/-1" : (removedPlus > 0 && removedMinus == 0 ? "+1/+1" : "");
+            String counterTypeLabel;
+            if (ct == CounterType.WISH) {
+                counterTypeLabel = "wish";
+            } else if (removedMinus > 0 && removedPlus == 0) {
+                counterTypeLabel = "-1/-1";
+            } else if (removedPlus > 0 && removedMinus == 0) {
+                counterTypeLabel = "+1/+1";
+            } else {
+                counterTypeLabel = "";
+            }
             String counterWord = count == 1 ? "a " + counterTypeLabel + " counter" : count + " " + counterTypeLabel + " counters";
             String counterLog = player.getUsername() + " removes " + counterWord + " from " + permanent.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, counterLog);

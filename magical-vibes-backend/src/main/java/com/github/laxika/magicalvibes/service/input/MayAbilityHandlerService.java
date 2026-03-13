@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -96,6 +97,14 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (castFromLibEffect != null && castFromLibEffect.castableTypes().contains(ability.sourceCard().getType())) {
             mayCastHandlerService.handleCastFromLibraryChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Play-from-library-or-exile — e.g. Djinn of Wishes (play any card or exile)
+        boolean isPlayFromLibraryOrExile = ability.effects().stream()
+                .anyMatch(e -> e instanceof RevealTopCardMayPlayFreeOrExileEffect);
+        if (isPlayFromLibraryOrExile) {
+            mayCastHandlerService.handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability);
             return;
         }
 

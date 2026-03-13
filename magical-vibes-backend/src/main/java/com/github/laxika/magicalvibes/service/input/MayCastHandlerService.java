@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
@@ -26,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,6 +45,7 @@ public class MayCastHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -124,6 +128,137 @@ public class MayCastHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Handles the "may play from library or exile" choice (e.g. Djinn of Wishes).
+     * If accepted: play the card (land → battlefield, spell → stack without paying mana cost).
+     * If declined: exile the card.
+     */
+    public void handlePlayFromLibraryOrExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        Card cardToPlay = ability.sourceCard();
+        String playerName = player.getUsername();
+        List<Card> deck = gameData.playerDecks.get(player.getId());
+
+        if (!accepted) {
+            // Declined — exile the card from library
+            exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Verify the card is still on top of the library
+        if (deck.isEmpty() || !deck.getFirst().getId().equals(cardToPlay.getId())) {
+            String logEntry = cardToPlay.getName() + " is no longer on top of the library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} no longer on top of library for play-from-library", gameData.id, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (cardToPlay.getType() == CardType.LAND) {
+            // Play the land: put onto battlefield, increment land play count
+            deck.removeFirst();
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
+            gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+
+            String logEntry = playerName + " plays " + cardToPlay.getName() + " without paying its mana cost.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} plays {} (land) from library", gameData.id, playerName, cardToPlay.getName());
+
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
+        } else {
+            // Cast the spell without paying its mana cost
+            deck.removeFirst();
+
+            StackEntryType spellType = switch (cardToPlay.getType()) {
+                case CREATURE -> StackEntryType.CREATURE_SPELL;
+                case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+                case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+                case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+                case SORCERY -> StackEntryType.SORCERY_SPELL;
+                case INSTANT -> StackEntryType.INSTANT_SPELL;
+                default -> throw new IllegalStateException("Unsupported card type: " + cardToPlay.getType());
+            };
+
+            // For permanent spells (creature/artifact/enchantment/planeswalker), effects are empty;
+            // ETB effects are processed when the permanent enters the battlefield.
+            // For instant/sorcery, use the SPELL slot effects.
+            boolean isPermanentSpell = cardToPlay.getType() == CardType.CREATURE
+                    || cardToPlay.getType() == CardType.ARTIFACT
+                    || cardToPlay.getType() == CardType.ENCHANTMENT
+                    || cardToPlay.getType() == CardType.PLANESWALKER;
+            List<CardEffect> spellEffects = isPermanentSpell
+                    ? List.of()
+                    : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
+
+            if (cardToPlay.isNeedsTarget()) {
+                // Targeted spell — need to choose target before putting on stack
+                List<UUID> validTargets = new ArrayList<>();
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (cardToPlay.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                validTargets.add(p.getId());
+                            }
+                        } else if (gameQueryService.isCreature(gameData, p)) {
+                            validTargets.add(p.getId());
+                        }
+                    }
+                }
+                boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+                if (canTargetPlayer) {
+                    validTargets.addAll(gameData.orderedPlayerIds);
+                }
+
+                if (validTargets.isEmpty()) {
+                    // No valid targets — exile the card instead
+                    gameData.playerExiledCards.computeIfAbsent(player.getId(), k -> Collections.synchronizedList(new ArrayList<>())).add(cardToPlay);
+                    String logEntry = cardToPlay.getName() + " has no valid targets and is exiled.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
+                } else {
+                    gameData.interaction.setPermanentChoiceContext(
+                            new PermanentChoiceContext.LibraryCastSpellTarget(cardToPlay, player.getId(), spellEffects, spellType));
+                    playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                            "Choose a target for " + cardToPlay.getName() + ".");
+
+                    String logEntry = playerName + " casts " + cardToPlay.getName() + " without paying its mana cost — choosing target.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} casts {} from library, choosing target", gameData.id, playerName, cardToPlay.getName());
+                    return; // Wait for target choice
+                }
+            } else {
+                // Non-targeted spell — put directly on stack
+                gameData.stack.add(new StackEntry(
+                        spellType, cardToPlay, player.getId(), cardToPlay.getName(),
+                        spellEffects, 0, (UUID) null, null
+                ));
+
+                gameData.spellsCastThisTurn.merge(player.getId(), 1, Integer::sum);
+                gameData.priorityPassedBy.clear();
+
+                String logEntry = playerName + " casts " + cardToPlay.getName() + " without paying its mana cost.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToPlay.getName());
+
+                triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
+            }
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void exileTopCardFromLibrary(GameData gameData, UUID playerId, List<Card> deck, Card card, String playerName) {
+        if (!deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
+            deck.removeFirst();
+        }
+        gameData.playerExiledCards.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
+        String logEntry = playerName + " exiles " + card.getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles {} from library", gameData.id, playerName, card.getName());
     }
 
     public void handleCastFromGraveyardChoice(GameData gameData, Player player, boolean accepted,

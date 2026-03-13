@@ -81,6 +81,7 @@ public class PermanentViewFactory {
                 p.getLoyaltyCounters(),
                 p.getChargeCounters(),
                 p.getPhylacteryCounters(),
+                p.getWishCounters(),
                 p.getAttackTarget(),
                 p.getMarkedDamage()
         );

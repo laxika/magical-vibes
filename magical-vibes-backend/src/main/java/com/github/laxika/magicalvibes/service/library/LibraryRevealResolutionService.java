@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreatu
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -118,6 +119,57 @@ public class LibraryRevealResolutionService {
                 controllerId,
                 List.of(effect),
                 sourceName + " — Cast " + topCard.getName() + " without paying its mana cost?"
+        ));
+    }
+
+    /**
+     * Reveals the top card of the controller's library. If the card can be played, queues a "may" ability
+     * to play it without paying its mana cost. If the player declines or the card can't be played
+     * (e.g. a land when the player has already played a land this turn), the card is exiled.
+     * Used by Djinn of Wishes.
+     */
+    @HandlesEffect(RevealTopCardMayPlayFreeOrExileEffect.class)
+    void resolveRevealTopCardMayPlayFreeOrExile(GameData gameData, StackEntry entry, RevealTopCardMayPlayFreeOrExileEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty (" + sourceName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+
+        String revealLog = playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        log.info("Game {} - {} reveals top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
+
+        // Lands can only be played if it's the controller's turn and they haven't played a land this turn
+        if (topCard.getType() == CardType.LAND) {
+            boolean isControllersTurn = controllerId.equals(gameData.activePlayerId);
+            int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
+            if (!isControllersTurn || landsPlayed >= 1) {
+                // Can't play the land — exile it
+                deck.removeFirst();
+                gameData.playerExiledCards.computeIfAbsent(controllerId, k -> Collections.synchronizedList(new ArrayList<>())).add(topCard);
+                String exileLog = topCard.getName() + " can't be played (" +
+                        (!isControllersTurn ? "not controller's turn" : "land already played this turn") + ") and is exiled.";
+                gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                log.info("Game {} - {} exiled (can't play land: {})", gameData.id, topCard.getName(),
+                        !isControllersTurn ? "not controller's turn" : "already played this turn");
+                return;
+            }
+        }
+
+        // Card can be played — queue may ability
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                topCard,
+                controllerId,
+                List.of(effect),
+                sourceName + " — Play " + topCard.getName() + " without paying its mana cost?"
         ));
     }
 

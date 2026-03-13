@@ -315,7 +315,7 @@ public class GameSimulator {
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
                 gameQueryService, battlefieldEntryService, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService, playerInputService, lifeResolutionService);
         MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
-                inputCompletionService, gameQueryService, graveyardService, gameBroadcastService, playerInputService, turnProgressionService, permanentRemovalService, triggerCollectionService);
+                inputCompletionService, gameQueryService, graveyardService, gameBroadcastService, playerInputService, turnProgressionService, permanentRemovalService, triggerCollectionService, battlefieldEntryService);
         MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(
                 inputCompletionService, gameQueryService, cloneService, stateBasedActionService, gameBroadcastService, playerInputService, turnProgressionService, targetLegalityService, triggerCollectionService);
         MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService = new MayPenaltyChoiceHandlerService(

@@ -61,6 +61,7 @@ public class Permanent {
     @Setter private int chargeCounters;
     @Setter private int phylacteryCounters;
     @Setter private int awakeningCounters;
+    @Setter private int wishCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
@@ -161,6 +162,7 @@ public class Permanent {
         this.chargeCounters = source.chargeCounters;
         this.phylacteryCounters = source.phylacteryCounters;
         this.awakeningCounters = source.awakeningCounters;
+        this.wishCounters = source.wishCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);
