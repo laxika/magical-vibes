@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "M10", collectorNumber = "5")
 @CardRegistration(set = "M11", collectorNumber = "8")
 public class BlindingMage extends Card {
 
