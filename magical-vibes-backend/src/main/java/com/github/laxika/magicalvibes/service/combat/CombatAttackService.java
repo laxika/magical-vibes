@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderContr
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessOpponentDealtDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -353,6 +354,7 @@ public class CombatAttackService {
         if (isCantAttackUnlessBattlefieldCount(gameData, creature)) return false;
         if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
         if (isCantAttackUnlessOpponentDealtDamage(gameData, creature)) return false;
+        if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
         return true;
     }
 
@@ -407,6 +409,20 @@ public class CombatAttackService {
             }
         }
         return false;
+    }
+
+    private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {
+        boolean[] restricted = {false};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
+                    if (!gameQueryService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
+                        restricted[0] = true;
+                    }
+                }
+            }
+        });
+        return restricted[0];
     }
 
     private int getMustAttackRequirementCount(GameData gameData, Permanent creature) {
