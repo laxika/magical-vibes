@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesE
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
@@ -244,7 +245,8 @@ public class CombatBlockService {
                 boolean needsAttackerTarget = blockEffects.stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
                                 || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect
-                                || e instanceof SkipNextUntapOnTargetEffect);
+                                || e instanceof SkipNextUntapOnTargetEffect
+                                || e instanceof DealDamageToTargetCreatureEffect);
                 StackEntry blockTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         blocker.getCard(),
