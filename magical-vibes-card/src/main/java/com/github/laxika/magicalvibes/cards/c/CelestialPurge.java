@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.Set;
 
+@CardRegistration(set = "M10", collectorNumber = "7")
 @CardRegistration(set = "M11", collectorNumber = "9")
 public class CelestialPurge extends Card {
 
