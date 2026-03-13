@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "22")
+@CardRegistration(set = "M10", collectorNumber = "15")
 @CardRegistration(set = "M11", collectorNumber = "16")
 public class HolyStrength extends Card {
 
