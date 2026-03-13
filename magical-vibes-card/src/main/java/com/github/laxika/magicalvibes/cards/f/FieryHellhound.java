@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "M10", collectorNumber = "135")
 @CardRegistration(set = "M11", collectorNumber = "136")
 public class FieryHellhound extends Card {
 
