@@ -25,13 +25,14 @@ public class LibrarySearchState {
     private final String prompt;
     private final LibrarySearchDestination destination;
     private final Set<CardType> filterCardTypes;
+    private final List<Card> accumulatedCards;
 
     public LibrarySearchState(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                               UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
                               boolean reorderRemainingToBottom, boolean reorderRemainingToTop,
                               boolean shuffleAfterSelection,
                               String prompt, LibrarySearchDestination destination,
-                              Set<CardType> filterCardTypes) {
+                              Set<CardType> filterCardTypes, List<Card> accumulatedCards) {
         this.playerId = playerId;
         this.cards = cards;
         this.reveals = reveals;
@@ -45,6 +46,7 @@ public class LibrarySearchState {
         this.prompt = prompt;
         this.destination = destination;
         this.filterCardTypes = filterCardTypes;
+        this.accumulatedCards = accumulatedCards;
     }
 
     public UUID playerId() {
@@ -99,6 +101,10 @@ public class LibrarySearchState {
         return filterCardTypes;
     }
 
+    public List<Card> accumulatedCards() {
+        return accumulatedCards;
+    }
+
     public LibrarySearchState deepCopy() {
         return new LibrarySearchState(
                 playerId,
@@ -106,7 +112,8 @@ public class LibrarySearchState {
                 reveals, canFailToFind, targetPlayerId, remainingCount,
                 sourceCards != null ? new ArrayList<>(sourceCards) : null,
                 reorderRemainingToBottom, reorderRemainingToTop, shuffleAfterSelection, prompt, destination,
-                filterCardTypes != null ? new HashSet<>(filterCardTypes) : null
+                filterCardTypes != null ? new HashSet<>(filterCardTypes) : null,
+                accumulatedCards != null ? new ArrayList<>(accumulatedCards) : null
         );
     }
 }

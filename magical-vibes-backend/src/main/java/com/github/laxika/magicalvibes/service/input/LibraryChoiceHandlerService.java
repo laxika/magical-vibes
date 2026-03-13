@@ -292,6 +292,8 @@ public class LibraryChoiceHandlerService {
         boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
+        List<Card> accumulatedCards = librarySearch.accumulatedCards() != null
+                ? new ArrayList<>(librarySearch.accumulatedCards()) : new ArrayList<>();
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -414,6 +416,10 @@ public class LibraryChoiceHandlerService {
         if (cardIndex == -1) {
             if (!canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+            // CR 608.2f: Place any accumulated battlefield cards before finishing
+            if (!accumulatedCards.isEmpty() && toBattlefield) {
+                placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped);
             }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -538,27 +544,14 @@ public class LibraryChoiceHandlerService {
                 gameData.imprintSourcePermanentId = null;
             }
         } else {
-            Permanent perm = new Permanent(chosenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, handOwnerId, perm);
-            if (toBattlefieldTapped) {
-                perm.tap();
-            }
-
-            String battlefieldOwner = gameData.playerIdToName.get(handOwnerId);
-            String entersLog = toBattlefieldTapped
-                    ? chosenCard.getName() + " enters the battlefield tapped under " + battlefieldOwner + "'s control."
-                    : chosenCard.getName() + " enters the battlefield under " + battlefieldOwner + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, entersLog);
-
-            if (chosenCard.getType() == CardType.CREATURE) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, handOwnerId, chosenCard, null, false);
-            }
-            if (chosenCard.getType() == CardType.PLANESWALKER && chosenCard.getLoyalty() != null) {
-                perm.setLoyaltyCounters(chosenCard.getLoyalty());
-                perm.setSummoningSick(false);
-            }
-            if (!gameData.interaction.isAwaitingInput()) {
-                legendRuleService.checkLegendRule(gameData, handOwnerId);
+            if (remainingCount > 1) {
+                // CR 608.2f: Accumulate for simultaneous battlefield entry
+                accumulatedCards.add(chosenCard);
+            } else {
+                // Final pick (or single pick) — place all accumulated + current simultaneously
+                List<Card> allCards = new ArrayList<>(accumulatedCards);
+                allCards.add(chosenCard);
+                placeCardsOnBattlefieldSimultaneously(gameData, allCards, handOwnerId, toBattlefieldTapped);
             }
         }
 
@@ -569,6 +562,10 @@ public class LibraryChoiceHandlerService {
                     : new ArrayList<>(deck);
 
             if (newSearchCards.isEmpty()) {
+                // CR 608.2f: Place any accumulated battlefield cards before finishing
+                if (!accumulatedCards.isEmpty() && toBattlefield) {
+                    placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped);
+                }
                 // No more matching cards — shuffle and finish
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 String logMsg;
@@ -603,6 +600,7 @@ public class LibraryChoiceHandlerService {
                     .canFailToFind(toGraveyard || canFailToFind)
                     .destination(destination)
                     .filterCardTypes(filterCardTypes)
+                    .accumulatedCards(accumulatedCards)
                     .build());
 
             List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
@@ -620,33 +618,41 @@ public class LibraryChoiceHandlerService {
             LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
         }
 
-        String destinationText = switch (destination) {
-            case BATTLEFIELD -> "onto the battlefield";
-            case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
-            case HAND -> "into their hand";
-            case EXILE_IMPRINT -> "into exile (imprint)";
-            case EXILE, EXILE_PLAYABLE -> "into exile";
-            case TOP_OF_LIBRARY -> "on top of their library";
-            case GRAVEYARD -> "into their graveyard";
-        };
-        String logEntry;
-        if (targetPlayerId != null) {
-            String targetName = gameData.playerIdToName.get(targetPlayerId);
-            logEntry = shuffleAfterSelection
-                    ? player.getUsername() + " puts cards " + destinationText + " for " + targetName + ". " + targetName + "'s library is shuffled."
-                    : player.getUsername() + " puts cards " + destinationText + " for " + targetName + ".";
-        } else if (reveals) {
-            logEntry = shuffleAfterSelection
-                    ? player.getUsername() + " reveals " + chosenCard.getName() + " and puts it " + destinationText + ". Library is shuffled."
-                    : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it " + destinationText + ".";
+        // When simultaneous placement was done, individual entry logs were already emitted
+        if (!accumulatedCards.isEmpty() && toBattlefield) {
+            if (shuffleAfterSelection) {
+                String shuffleLog = player.getUsername() + "'s library is shuffled.";
+                gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+            }
         } else {
-            logEntry = shuffleAfterSelection
-                    ? player.getUsername() + " puts a card " + destinationText + ". Library is shuffled."
-                    : player.getUsername() + " puts a card " + destinationText + ".";
+            String destinationText = switch (destination) {
+                case BATTLEFIELD -> "onto the battlefield";
+                case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
+                case HAND -> "into their hand";
+                case EXILE_IMPRINT -> "into exile (imprint)";
+                case EXILE, EXILE_PLAYABLE -> "into exile";
+                case TOP_OF_LIBRARY -> "on top of their library";
+                case GRAVEYARD -> "into their graveyard";
+            };
+            String logEntry;
+            if (targetPlayerId != null) {
+                String targetName = gameData.playerIdToName.get(targetPlayerId);
+                logEntry = shuffleAfterSelection
+                        ? player.getUsername() + " puts cards " + destinationText + " for " + targetName + ". " + targetName + "'s library is shuffled."
+                        : player.getUsername() + " puts cards " + destinationText + " for " + targetName + ".";
+            } else if (reveals) {
+                logEntry = shuffleAfterSelection
+                        ? player.getUsername() + " reveals " + chosenCard.getName() + " and puts it " + destinationText + ". Library is shuffled."
+                        : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it " + destinationText + ".";
+            } else {
+                logEntry = shuffleAfterSelection
+                        ? player.getUsername() + " puts a card " + destinationText + ". Library is shuffled."
+                        : player.getUsername() + " puts a card " + destinationText + ".";
+            }
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} searches library and puts {} {}",
+                    gameData.id, player.getUsername(), chosenCard.getName(), destinationText);
         }
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} searches library and puts {} {}",
-                gameData.id, player.getUsername(), chosenCard.getName(), destinationText);
 
         if (toBattlefield) {
             stateBasedActionService.performStateBasedActions(gameData);
@@ -655,6 +661,52 @@ public class LibraryChoiceHandlerService {
         if (startPendingBasicLandToHandSearch(gameData, playerId)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
+    /**
+     * Places multiple cards onto the battlefield simultaneously per CR 608.2f.
+     * All permanents are added first, then ETB triggers are processed after all are on the battlefield.
+     */
+    private void placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
+                                                        UUID ownerId, boolean tapped) {
+        List<Permanent> permanents = new ArrayList<>();
+        String ownerName = gameData.playerIdToName.get(ownerId);
+
+        // Snapshot enter-tapped types ONCE before any permanent enters (CR 608.2f)
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+
+        // Phase 1: Place all permanents on the battlefield simultaneously
+        for (Card card : cards) {
+            Permanent perm = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes);
+            if (tapped) {
+                perm.tap();
+            }
+            permanents.add(perm);
+
+            String entersLog = tapped
+                    ? card.getName() + " enters the battlefield tapped under " + ownerName + "'s control."
+                    : card.getName() + " enters the battlefield under " + ownerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, entersLog);
+        }
+
+        // Phase 2: Process ETB triggers after all permanents are on the battlefield (CR 608.2f)
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.get(i);
+            Permanent perm = permanents.get(i);
+
+            if (card.getType() == CardType.CREATURE) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
+            }
+            if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
+                perm.setLoyaltyCounters(card.getLoyalty());
+                perm.setSummoningSick(false);
+            }
+        }
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, ownerId);
+        }
+    }
+
     /**
      * If a pending basic-land-to-hand search is queued (e.g. Cultivate second pick),
      * starts the follow-up library search and returns true. Otherwise returns false.

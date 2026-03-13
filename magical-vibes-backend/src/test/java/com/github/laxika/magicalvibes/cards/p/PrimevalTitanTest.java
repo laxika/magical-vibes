@@ -108,6 +108,26 @@ class PrimevalTitanTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("CR 608.2f: Lands enter battlefield simultaneously after all picks, not one at a time")
+        void landsEnterSimultaneously() {
+            castPrimevalTitan();
+            setupLibrary();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+
+            int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+
+            // Pick first land — it should NOT be on the battlefield yet (accumulated)
+            gs.handleLibraryCardChosen(gd, player1, 0);
+            assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
+
+            // Pick second land — now BOTH should enter simultaneously
+            gs.handleLibraryCardChosen(gd, player1, 0);
+            assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
+        }
+
+        @Test
         @DisplayName("Declining may ability skips the library search")
         void decliningMaySkipsSearch() {
             castPrimevalTitan();

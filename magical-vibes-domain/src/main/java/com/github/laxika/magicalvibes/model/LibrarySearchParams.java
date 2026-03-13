@@ -21,7 +21,8 @@ public record LibrarySearchParams(
         boolean shuffleAfterSelection,
         String prompt,
         LibrarySearchDestination destination,
-        Set<CardType> filterCardTypes
+        Set<CardType> filterCardTypes,
+        List<Card> accumulatedCards
 ) {
     public static Builder builder(UUID playerId, List<Card> cards) {
         return new Builder(playerId, cards);
@@ -41,6 +42,7 @@ public record LibrarySearchParams(
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
         private Set<CardType> filterCardTypes;
+        private List<Card> accumulatedCards = List.of();
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -102,10 +104,15 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder accumulatedCards(List<Card> accumulatedCards) {
+            this.accumulatedCards = accumulatedCards;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                    shuffleAfterSelection, prompt, destination, filterCardTypes);
+                    shuffleAfterSelection, prompt, destination, filterCardTypes, accumulatedCards);
         }
     }
 }
