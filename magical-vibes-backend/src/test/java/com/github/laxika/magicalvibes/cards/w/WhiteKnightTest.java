@@ -1,0 +1,298 @@
+package com.github.laxika.magicalvibes.cards.w;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class WhiteKnightTest extends BaseCardTest {
+
+    private static Card createCreature(String name, int power, int toughness, CardColor color) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}");
+        card.setColor(color);
+        card.setPower(power);
+        card.setToughness(toughness);
+        return card;
+    }
+
+    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.INSTANT);
+        card.setManaCost(manaCost);
+        card.setColor(color);
+        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
+        return card;
+    }
+
+    // ===== Card properties =====
+
+    @Test
+    @DisplayName("White Knight has protection from black static effect")
+    void hasCorrectProperties() {
+        WhiteKnight card = new WhiteKnight();
+
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromColorsEffect.class);
+
+        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(protection.colors()).containsExactly(CardColor.BLACK);
+    }
+
+    // ===== Casting =====
+
+    @Test
+    @DisplayName("Casting White Knight puts it on the stack")
+    void castingPutsOnStack() {
+        harness.setHand(player1, List.of(new WhiteKnight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("White Knight");
+    }
+
+    // ===== Resolving =====
+
+    @Test
+    @DisplayName("Resolving puts White Knight on the battlefield")
+    void resolvingPutsOnBattlefield() {
+        harness.setHand(player1, List.of(new WhiteKnight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("White Knight"));
+    }
+
+    // ===== First strike in combat =====
+
+    @Test
+    @DisplayName("First strike kills 2/2 blocker before it deals regular damage")
+    void firstStrikeKillsBlockerBeforeRegularDamage() {
+        Permanent attacker = new Permanent(new WhiteKnight());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        // First strike kills Bears before it deals damage; White Knight survives
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("White Knight"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    // ===== Protection - blocking =====
+
+    @Test
+    @DisplayName("Black creature cannot block White Knight")
+    void blackCreatureCannotBlockWhiteKnight() {
+        Permanent attacker = new Permanent(new WhiteKnight());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Permanent blocker = new Permanent(createCreature("Black Knight", 2, 2, CardColor.BLACK));
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Green creature can block White Knight")
+    void greenCreatureCanBlockWhiteKnight() {
+        Permanent attacker = new Permanent(new WhiteKnight());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    // ===== Protection - combat damage =====
+
+    @Test
+    @DisplayName("White Knight takes no combat damage from black creature")
+    void takesNoDamageFromBlackCreature() {
+        Permanent attacker = new Permanent(createCreature("Black Knight", 3, 3, CardColor.BLACK));
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Permanent blocker = new Permanent(new WhiteKnight());
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        // White Knight has first strike: deals 2 to Black Knight (3/3 survives)
+        // Black Knight's 3 regular damage to White Knight is prevented (protection)
+        // Both survive
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Black Knight"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("White Knight"));
+    }
+
+    @Test
+    @DisplayName("White Knight takes normal combat damage from green creature")
+    void takesNormalDamageFromGreenCreature() {
+        Permanent attacker = new Permanent(createCreature("Big Green", 3, 3, CardColor.GREEN));
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        Permanent blocker = new Permanent(new WhiteKnight());
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        // White Knight deals 2 first strike (2 < 3, green survives)
+        // Green deals 3 regular damage (3 >= 2, White Knight dies — no protection from green)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Big Green"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("White Knight"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("White Knight"));
+    }
+
+    // ===== Protection - targeting =====
+
+    @Test
+    @DisplayName("Cannot be targeted by black instant")
+    void cannotBeTargetedByBlackInstant() {
+        Permanent knight = new Permanent(new WhiteKnight());
+        knight.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(knight);
+
+        harness.setHand(player1, List.of(createTargetedInstant("Black Removal", CardColor.BLACK, "{B}")));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, knight.getId(), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Can be targeted by white instant")
+    void canBeTargetedByWhiteInstant() {
+        Permanent knight = new Permanent(new WhiteKnight());
+        knight.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(knight);
+
+        harness.setHand(player1, List.of(createTargetedInstant("White Blast", CardColor.WHITE, "{W}")));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        gs.playCard(gd, player1, 0, 0, knight.getId(), null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("White Blast");
+    }
+
+    // ===== Protection - aura enchantment =====
+
+    @Test
+    @DisplayName("Cannot be enchanted by black aura")
+    void cannotBeEnchantedByBlackAura() {
+        Permanent knight = new Permanent(new WhiteKnight());
+        knight.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(knight);
+
+        harness.setHand(player1, List.of(new UnholyStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, knight.getId(), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Can be enchanted by white aura")
+    void canBeEnchantedByWhiteAura() {
+        Permanent knight = new Permanent(new WhiteKnight());
+        knight.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(knight);
+
+        harness.setHand(player1, List.of(new HolyStrength()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        gs.playCard(gd, player1, 0, 0, knight.getId(), null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Holy Strength");
+    }
+}
