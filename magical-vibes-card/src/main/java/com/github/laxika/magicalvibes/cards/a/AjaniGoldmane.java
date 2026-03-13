@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEac
 
 import java.util.List;
 
+@CardRegistration(set = "M10", collectorNumber = "1")
 @CardRegistration(set = "M11", collectorNumber = "1")
 public class AjaniGoldmane extends Card {
 
