@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -885,6 +886,56 @@ public class CombatDamageService {
         }
     }
 
+    /**
+     * Processes pending source-specific redirect damage entries (e.g. Harm's Way).
+     * The prevented damage is dealt to the redirect target, which can be a player or permanent.
+     */
+    private void processSourceRedirectDamage(GameData gameData) {
+        if (gameData.pendingSourceRedirectDamage.isEmpty()) return;
+
+        List<SourceDamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingSourceRedirectDamage);
+        gameData.pendingSourceRedirectDamage.clear();
+
+        for (SourceDamageRedirectShield redirect : toProcess) {
+            UUID targetId = redirect.redirectTargetId();
+            int damage = redirect.remainingAmount();
+            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+
+            if (targetIsPlayer) {
+                String targetName = gameData.playerIdToName.get(targetId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        damage + " damage is redirected to " + targetName + ".");
+
+                int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+                processPendingRedirectDamage(gameData);
+
+                if (redirectEffective > 0) {
+                    if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                        int currentLife = gameData.getLife(targetId);
+                        gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
+                    }
+                    gameData.playersDealtDamageThisTurn.add(targetId);
+                }
+            } else {
+                Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
+                if (targetPerm == null) continue;
+
+                gameBroadcastService.logAndBroadcast(gameData,
+                        damage + " damage is redirected to " + targetPerm.getCard().getName() + ".");
+
+                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
+                if (effectiveDamage > 0) {
+                    targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
+                    int effToughness = gameQueryService.getEffectiveToughness(gameData, targetPerm);
+                    if (gameQueryService.isLethalDamage(targetPerm.getMarkedDamage(), effToughness, false)
+                            && !gameQueryService.hasKeyword(gameData, targetPerm, Keyword.INDESTRUCTIBLE)) {
+                        permanentRemovalService.removePermanentToGraveyard(gameData, targetPerm);
+                    }
+                }
+            }
+        }
+    }
+
     // ===== Damage computation helpers =====
 
     private void determineCasualties(GameData gameData, List<Integer> indices,
@@ -942,13 +993,19 @@ public class CombatDamageService {
             }
         } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
             // Source-specific damage prevention — skip this damage
-        } else if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
-            UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
-            damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
-            if (atkHasInfect) {
-                state.poisonDamageToDefendingPlayer += damage;
-            } else {
-                state.damageToDefendingPlayer += damage;
+        } else {
+            // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
+            // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
+            damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
+            if (damage > 0 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
+                UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
+                damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
+                if (atkHasInfect) {
+                    state.poisonDamageToDefendingPlayer += damage;
+                } else {
+                    state.damageToDefendingPlayer += damage;
+                }
             }
         }
         state.combatDamageDealt.merge(atk, damage, Integer::sum);
@@ -983,6 +1040,12 @@ public class CombatDamageService {
     private void applyCombatCreatureDamage(GameData gameData, Permanent source, Permanent target,
                                            int targetIdx, int damage, Map<Integer, Integer> damageTakenMap,
                                            Set<Integer> deathtouchDamagedSet) {
+        // Apply source-specific redirect shields (e.g. Harm's Way) per-source for creature targets
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetControllerId != null) {
+            damage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, source.getId(), damage);
+            processSourceRedirectDamage(gameData);
+        }
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)

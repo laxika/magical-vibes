@@ -40,6 +40,8 @@ public sealed interface PermanentChoiceContext {
 
     record PreventDamageSourceChoice(UUID controllerId) implements PermanentChoiceContext {}
 
+    record RedirectDamageSourceChoice(UUID controllerId, int amount, UUID redirectTargetId) implements PermanentChoiceContext {}
+
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, boolean playerTargetOnly) implements PermanentChoiceContext {

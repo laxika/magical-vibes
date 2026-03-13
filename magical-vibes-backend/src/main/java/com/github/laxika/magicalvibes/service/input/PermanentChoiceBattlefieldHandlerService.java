@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -206,6 +207,28 @@ public class PermanentChoiceBattlefieldHandlerService {
         String logEntry = "All damage " + chosenPermanent.getCard().getName() + " would deal to " + playerName + " is prevented this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, chosenPermanent.getCard().getName());
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleRedirectDamageSourceChoice(GameData gameData, UUID permanentId,
+                                                  PermanentChoiceContext.RedirectDamageSourceChoice redirectSource) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID controllerId = redirectSource.controllerId();
+        gameData.sourceDamageRedirectShields.add(new SourceDamageRedirectShield(
+                controllerId, permanentId, redirectSource.amount(), redirectSource.redirectTargetId()));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = "The next " + redirectSource.amount() + " damage " + chosenPermanent.getCard().getName()
+                + " would deal to " + playerName + " or permanents " + playerName + " controls is dealt to another target instead.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as redirect damage source (up to {} damage redirected)",
+                gameData.id, playerName, chosenPermanent.getCard().getName(), redirectSource.amount());
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);

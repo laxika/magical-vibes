@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -715,6 +716,13 @@ public class DamageResolutionService {
      * and keywords are checked directly on it. When null, falls back to entry-based lookup.
      */
     private boolean dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
+        // Apply source-specific redirect shields (e.g. Harm's Way) before creature prevention
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID sourcePermId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
+        if (targetControllerId != null && sourcePermId != null) {
+            rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
+            processSourceRedirectDamage(gameData);
+        }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
         if (damageSource != null) {
@@ -919,6 +927,10 @@ public class DamageResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;
         }
+        // Apply source-specific redirect shields (e.g. Harm's Way) before general prevention
+        rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+        processSourceRedirectDamage(gameData);
+        if (rawDamage <= 0) return;
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
@@ -993,6 +1005,56 @@ public class DamageResolutionService {
                     gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                 }
                 gameData.playersDealtDamageThisTurn.add(targetId);
+            }
+        }
+    }
+
+    /**
+     * Processes pending source-specific redirect damage entries (e.g. Harm's Way).
+     * The prevented damage is dealt to the redirect target, which can be a player or permanent.
+     */
+    void processSourceRedirectDamage(GameData gameData) {
+        if (gameData.pendingSourceRedirectDamage.isEmpty()) return;
+
+        List<SourceDamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingSourceRedirectDamage);
+        gameData.pendingSourceRedirectDamage.clear();
+
+        for (SourceDamageRedirectShield redirect : toProcess) {
+            UUID targetId = redirect.redirectTargetId();
+            int damage = redirect.remainingAmount();
+            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+
+            if (targetIsPlayer) {
+                String targetName = gameData.playerIdToName.get(targetId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        damage + " damage is redirected to " + targetName + ".");
+
+                int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+                processPendingRedirectDamage(gameData);
+
+                if (redirectEffective > 0) {
+                    if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                        int currentLife = gameData.getLife(targetId);
+                        gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
+                    }
+                    gameData.playersDealtDamageThisTurn.add(targetId);
+                }
+            } else {
+                Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
+                if (targetPerm == null) continue;
+
+                gameBroadcastService.logAndBroadcast(gameData,
+                        damage + " damage is redirected to " + targetPerm.getCard().getName() + ".");
+
+                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
+                if (effectiveDamage > 0) {
+                    targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
+                    int effToughness = gameQueryService.getEffectiveToughness(gameData, targetPerm);
+                    if (gameQueryService.isLethalDamage(targetPerm.getMarkedDamage(), effToughness, false)
+                            && !gameQueryService.hasKeyword(gameData, targetPerm, Keyword.INDESTRUCTIBLE)) {
+                        permanentRemovalService.removePermanentToGraveyard(gameData, targetPerm);
+                    }
+                }
             }
         }
     }

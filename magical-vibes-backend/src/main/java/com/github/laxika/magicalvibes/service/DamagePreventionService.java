@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -152,6 +153,49 @@ public class DamagePreventionService {
         if (sourcePermanentId == null) return false;
         Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(playerId);
         return preventedSources != null && preventedSources.contains(sourcePermanentId);
+    }
+
+    /**
+     * Checks source-specific damage redirect shields (e.g. Harm's Way) for damage dealt to a player
+     * or permanents they control. This is a redirection effect (replacement), NOT a prevention effect,
+     * so it applies even when damage can't be prevented (e.g. Leyline of Punishment).
+     * If a matching shield is found, consumes up to the shield's remaining amount, stores
+     * the redirect damage in {@link GameData#pendingSourceRedirectDamage}, and returns the remaining damage.
+     *
+     * @param protectedPlayerId the player (or permanent's controller) receiving damage
+     * @param sourcePermanentId the permanent dealing the damage
+     * @param damage            the raw damage amount
+     * @return the remaining damage after redirection
+     */
+    public int applySourceRedirectShields(GameData gameData, UUID protectedPlayerId, UUID sourcePermanentId, int damage) {
+        // No isDamagePreventable check — this is redirection (replacement), not prevention
+        if (damage <= 0 || sourcePermanentId == null || gameData.sourceDamageRedirectShields.isEmpty()) return damage;
+
+        int remaining = damage;
+        List<SourceDamageRedirectShield> toReAdd = new ArrayList<>();
+        Iterator<SourceDamageRedirectShield> it = gameData.sourceDamageRedirectShields.iterator();
+
+        while (it.hasNext() && remaining > 0) {
+            SourceDamageRedirectShield shield = it.next();
+            if (!shield.protectedPlayerId().equals(protectedPlayerId) || !shield.damageSourceId().equals(sourcePermanentId))
+                continue;
+
+            int prevented = Math.min(shield.remainingAmount(), remaining);
+            remaining -= prevented;
+            it.remove();
+
+            if (prevented < shield.remainingAmount()) {
+                toReAdd.add(shield.withReducedAmount(prevented));
+            }
+
+            if (prevented > 0) {
+                gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                        protectedPlayerId, sourcePermanentId, prevented, shield.redirectTargetId()));
+            }
+        }
+
+        gameData.sourceDamageRedirectShields.addAll(toReAdd);
+        return remaining;
     }
 
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {

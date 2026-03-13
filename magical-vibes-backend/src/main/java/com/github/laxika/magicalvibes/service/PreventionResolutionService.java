@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -203,6 +204,29 @@ public class PreventionResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - Damage redirect shield {} added: protecting {} → redirecting to {}",
                 gameData.id, xValue, controllerName, targetName);
+    }
+
+    @HandlesEffect(PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect.class)
+    void resolvePreventDamageFromChosenSourceAndRedirect(GameData gameData, StackEntry entry,
+                                                         PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID redirectTargetId = entry.getTargetPermanentId();
+        if (redirectTargetId == null) return;
+
+        // Collect all permanents on all battlefields as valid source choices
+        List<UUID> validIds = new ArrayList<>();
+        gameData.forEachPermanent((playerId, perm) -> validIds.add(perm.getId()));
+
+        if (validIds.isEmpty()) {
+            String logEntry = "No permanents on the battlefield to choose as a damage source.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.RedirectDamageSourceChoice(controllerId, effect.amount(), redirectTargetId));
+        playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                "Choose a source. The next " + effect.amount() + " damage it would deal to you or your permanents is redirected.");
     }
 
     @HandlesEffect(PreventAllDamageFromChosenSourceEffect.class)
