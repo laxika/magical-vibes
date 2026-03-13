@@ -796,6 +796,7 @@ Pass `null` as filter to allow any card.
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static, implements `ReplacementEffect`) |
 | `OpponentsCantAttackIfCastSpellThisTurnEffect` | `()` | each opponent who cast a spell this turn can't attack with creatures (static, Angelic Arbiter) |
 | `OpponentsCantCastSpellsIfAttackedThisTurnEffect` | `()` | each opponent who attacked with a creature this turn can't cast spells (static, Angelic Arbiter) |
+| `OpponentsCantCastSpellsThisTurnEffect` | `()` | opponents of the controller can't cast spells this turn (spell, Silence) |
 
 ## Choose / name
 

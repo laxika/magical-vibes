@@ -471,6 +471,8 @@ public class GameBroadcastService {
      * "Each opponent who attacked with a creature this turn can't cast spells").
      */
     boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
+        if (gameData.playersSilencedThisTurn.contains(playerId)) return true;
+
         if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {

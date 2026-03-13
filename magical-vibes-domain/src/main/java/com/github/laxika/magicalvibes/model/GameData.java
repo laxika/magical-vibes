@@ -148,6 +148,9 @@ public class GameData {
     /** Per-player: creatures controlled by this player can't be the targets of spells of these colors this turn. Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerCreaturesCantBeTargetedByColorsThisTurn = new ConcurrentHashMap<>();
 
+    /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
+    public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -542,6 +545,9 @@ public class GameData {
             s.addAll(v);
             copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, s);
         });
+
+        // --- Silence-style "opponents can't cast" flag ---
+        copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
 
         // --- Per-permanent exile tracking (Knowledge Pool, etc.) ---
         this.permanentExiledCards.forEach((k, v) ->

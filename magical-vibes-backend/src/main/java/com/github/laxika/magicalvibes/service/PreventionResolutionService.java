@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
@@ -165,6 +166,19 @@ public class PreventionResolutionService {
                 .reduce((a, b) -> a + " or " + b)
                 .orElse("");
         String logEntry = "Creatures " + gameData.playerIdToName.get(controllerId) + " controls can't be the targets of " + colorNames + " spells this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+    }
+
+    @HandlesEffect(OpponentsCantCastSpellsThisTurnEffect.class)
+    void resolveOpponentsCantCastSpellsThisTurn(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (!pid.equals(controllerId)) {
+                gameData.playersSilencedThisTurn.add(pid);
+            }
+        }
+
+        String logEntry = gameData.playerIdToName.get(controllerId) + "'s opponents can't cast spells this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 

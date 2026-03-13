@@ -83,6 +83,7 @@ public class TurnCleanupService {
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
+        gameData.playersSilencedThisTurn.clear();
     }
 
     /**
