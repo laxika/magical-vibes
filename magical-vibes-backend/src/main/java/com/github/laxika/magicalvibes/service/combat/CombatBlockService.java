@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainL
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -242,7 +243,8 @@ public class CombatBlockService {
                 // Set target: attacker ID for effects that need it, otherwise blocker's own ID
                 boolean needsAttackerTarget = blockEffects.stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
-                                || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect);
+                                || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect
+                                || e instanceof SkipNextUntapOnTargetEffect);
                 StackEntry blockTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         blocker.getCard(),
