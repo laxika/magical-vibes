@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "M10", collectorNumber = "4")
 @CardRegistration(set = "M11", collectorNumber = "7")
 public class BaneslayerAngel extends Card {
 
