@@ -365,6 +365,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Sacrifice subtype for effect | `s/SiegeGangCommander.java` | SacrificeSubtypeCreatureCost + DealDamageToAnyTargetEffect |
 | Sacrifice artifact for effect | `b/BarrageOgre.java` | SacrificeArtifactCost + DealDamageToAnyTargetEffect (tap + sac artifact) |
 | Sacrifice multiple permanents for tutor | `k/KuldothaForgemaster.java` | SacrificeMultiplePermanentsCost(3, PermanentIsArtifactPredicate) + SearchLibraryForCardTypesToBattlefieldEffect(ARTIFACT) (tap + sac 3 artifacts) |
+| Tap to +1/+1 counters on controlled filtered permanents | `s/SteelOverseer.java` | `(true, null, PutPlusOnePlusOneCounterOnEachControlledPermanentEffect(PermanentAllOfPredicate(artifact+creature)))` — no target, affects all matching permanents you control |
 | Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
 | Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |
 | Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffectEffect(CantBeTargetOfSpellsOrAbilitiesEffect, GrantScope.OWN_CREATURES)` |

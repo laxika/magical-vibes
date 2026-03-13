@@ -557,6 +557,7 @@ Pass `null` as filter to allow any card.
 | `PowerToughnessEqualToCardsInHandEffect` | `()` | P/T = number of cards in controller's hand (static) |
 | `PowerToughnessEqualToControllerLifeTotalEffect` | `()` | P/T = controller's life total (static CDA, e.g. Ajani Goldmane's Avatar token, Serra Avatar) |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
+| `PutPlusOnePlusOneCounterOnEachControlledPermanentEffect` | `(PermanentPredicate predicate)` | put a +1/+1 counter on each permanent you control matching the predicate. Use `PermanentAllOfPredicate` to combine filters (e.g. artifact + creature) |
 | `PutPlusOnePlusOneCounterOnEachOwnCreatureEffect` | `()` | put a +1/+1 counter on each creature you control |
 | `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect` | `(Set<CardColor> triggerColors, int amount, boolean onlyOwnSpells)` | put +1/+1 counters when spell of matching color is cast. Use `ON_CONTROLLER_CASTS_SPELL` with `onlyOwnSpells=true` for "whenever you cast" cards; use `ON_ANY_PLAYER_CASTS_SPELL` with `onlyOwnSpells=false` for "whenever a player casts" cards |
 | `PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect` | `()` | put a -1/-1 counter on each attacking creature (all players' attacking creatures) |

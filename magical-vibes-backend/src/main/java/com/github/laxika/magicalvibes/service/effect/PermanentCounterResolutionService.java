@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
@@ -432,6 +433,26 @@ public class PermanentCounterResolutionService {
         String logEntry = entry.getCard().getName() + " puts a +1/+1 counter on " + count + " creature(s) you control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts +1/+1 counter on {} own creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class)
+    private void resolvePutPlusOnePlusOneCounterOnEachControlledPermanent(GameData gameData, StackEntry entry,
+                                                                          PutPlusOnePlusOneCounterOnEachControlledPermanentEffect effect) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        if (battlefield == null) return;
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (!gameQueryService.matchesPermanentPredicate(gameData, p, effect.predicate())) continue;
+            if (gameQueryService.cantHaveCounters(gameData, p)) continue;
+
+            p.setPlusOnePlusOneCounters(p.getPlusOnePlusOneCounters() + 1);
+            count++;
+        }
+
+        String logEntry = entry.getCard().getName() + " puts a +1/+1 counter on " + count + " permanent(s) you control.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} puts +1/+1 counter on {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     @HandlesEffect(UnattachEquipmentFromTargetPermanentsEffect.class)
