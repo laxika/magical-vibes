@@ -239,6 +239,27 @@ public class MayMiscHandlerService {
         }
     }
 
+    public void handleRevealTopCardMayBottomChoice(GameData gameData, Player player, boolean accepted) {
+        UUID controllerId = player.getId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (accepted && !deck.isEmpty()) {
+            Card topCard = deck.removeFirst();
+            deck.add(topCard);
+            String logEntry = player.getUsername() + " puts " + topCard.getName()
+                    + " on the bottom of their library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} puts {} on the bottom of library",
+                    gameData.id, player.getUsername(), topCard.getName());
+        } else {
+            String logEntry = player.getUsername() + " leaves the revealed card on top of their library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} leaves revealed card on top", gameData.id, player.getUsername());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleLeylineChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted) {
             Card card = ability.sourceCard();

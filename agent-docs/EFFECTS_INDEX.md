@@ -395,6 +395,7 @@ Pass `null` as filter to allow any card.
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |
 | `RevealTopCardPutIntoHandAndLoseLifeEffect` | `()` | reveal top card of controller's library, put into hand, lose life equal to mana value (Dark Confidant/Dark Tutelage style) |
 | `RevealTopCardOfLibraryEffect` | `()` | reveal top card of library (static/continuous) |
+| `RevealTopCardCreatureToBattlefieldOrMayBottomEffect` | `()` | reveal top card of controller's library; if creature, put onto battlefield; otherwise, may put on bottom of library. Used by Lurking Predators (ON_OPPONENT_CASTS_SPELL trigger) |
 | `EachPlayerNameCardRevealTopEffect` | `()` | each player names a card, then each reveals top card — match goes to hand, mismatch goes to bottom (ON_ATTACK trigger, Conundrum Sphinx) |
 | `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
@@ -105,6 +106,14 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof RevealTopCardMayPlayFreeOrExileEffect);
         if (isPlayFromLibraryOrExile) {
             mayCastHandlerService.handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Reveal top card creature-to-battlefield or may-bottom — e.g. Lurking Predators
+        boolean isRevealCreatureOrBottom = ability.effects().stream()
+                .anyMatch(e -> e instanceof RevealTopCardCreatureToBattlefieldOrMayBottomEffect);
+        if (isRevealCreatureOrBottom) {
+            mayMiscHandlerService.handleRevealTopCardMayBottomChoice(gameData, player, accepted);
             return;
         }
 

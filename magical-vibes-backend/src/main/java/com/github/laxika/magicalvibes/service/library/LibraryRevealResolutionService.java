@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMess
 import com.github.laxika.magicalvibes.networking.message.ScryMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,6 +61,7 @@ public class LibraryRevealResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     /**
      * Reveals the top card of the target player's library to all players without removing it.
@@ -723,6 +726,60 @@ public class LibraryRevealResolutionService {
         }
         gameData.stack.forEach(se -> names.add(se.getCard().getName()));
         return new ArrayList<>(names);
+    }
+
+    /**
+     * Reveals the top card of the controller's library. If it's a creature card, puts it onto the
+     * battlefield. Otherwise, queues a "may" ability for the controller to put it on the bottom
+     * of their library.
+     * Used by Lurking Predators.
+     */
+    @HandlesEffect(RevealTopCardCreatureToBattlefieldOrMayBottomEffect.class)
+    void resolveRevealTopCardCreatureToBattlefieldOrMayBottom(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty (" + sourceName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+
+        // Reveal the card to all players
+        String revealLog = playerName + " reveals " + topCard.getName()
+                + " from the top of their library (" + sourceName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+        boolean isCreature = topCard.getType() == CardType.CREATURE
+                || topCard.getAdditionalTypes().contains(CardType.CREATURE);
+
+        if (isCreature) {
+            deck.removeFirst();
+            Permanent perm = new Permanent(topCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+            String enterLog = topCard.getName() + " enters the battlefield under "
+                    + playerName + "'s control (" + sourceName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, enterLog);
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, controllerId, topCard, null, false);
+
+            log.info("Game {} - {} puts {} onto the battlefield ({})",
+                    gameData.id, playerName, topCard.getName(), sourceName);
+        } else {
+            // Not a creature — ask controller if they want to put it on the bottom
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), controllerId,
+                    List.of(new RevealTopCardCreatureToBattlefieldOrMayBottomEffect()),
+                    sourceName + " — Put " + topCard.getName()
+                            + " on the bottom of your library?"
+            ));
+        }
     }
 
     // =========================================================================

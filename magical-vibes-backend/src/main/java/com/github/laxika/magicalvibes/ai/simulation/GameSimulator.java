@@ -251,7 +251,7 @@ public class GameSimulator {
                 new MillResolutionService(graveyardService, gameBroadcastService),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory),
-                new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, noOpSession, cardViewFactory),
+                new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, battlefieldEntryService),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, gameBroadcastService, gameQueryService, stateTriggerService),
                 exileResolutionService,
