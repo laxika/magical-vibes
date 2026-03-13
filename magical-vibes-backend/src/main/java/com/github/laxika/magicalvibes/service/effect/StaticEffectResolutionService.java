@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreatureP
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
@@ -775,6 +776,26 @@ public class StaticEffectResolutionService {
         int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 0);
         accumulator.addPower(lifeTotal);
         accumulator.addToughness(lifeTotal);
+    }
+
+    @HandlesStaticEffect(value = ControllerLifeThresholdConditionalEffect.class, selfOnly = true)
+    private void resolveControllerLifeThresholdConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControllerLifeThresholdConditionalEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 20);
+        if (lifeTotal >= conditional.lifeThreshold()) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            } else if (wrapped instanceof GrantKeywordEffect grant) {
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addKeyword(grant.keyword());
+                }
+            }
+        }
     }
 
     private int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter) {
