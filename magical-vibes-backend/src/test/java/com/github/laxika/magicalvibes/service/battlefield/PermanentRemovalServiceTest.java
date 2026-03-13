@@ -621,7 +621,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             Permanent creature = addPermanent(player1, new SerraAngel());
             when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1.getId()), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
                     .thenReturn(creature);
-            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3)).thenReturn(3);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3, false)).thenReturn(3);
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(5);
 
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1.getId(), 3, "Lightning Bolt");
@@ -637,7 +637,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             Permanent creature = addPermanent(player1, new SerraAngel());
             when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1.getId()), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
                     .thenReturn(creature);
-            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 4)).thenReturn(4);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 4, false)).thenReturn(4);
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(4);
             // tryDestroyPermanent stubs
             when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
@@ -657,7 +657,7 @@ class PermanentRemovalServiceTest extends BaseCardTest {
             Permanent creature = addPermanent(player1, indestructibleCreature());
             when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1.getId()), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
                     .thenReturn(creature);
-            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 5)).thenReturn(5);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 5, false)).thenReturn(5);
             when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(2);
             when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 

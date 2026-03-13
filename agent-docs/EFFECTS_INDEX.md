@@ -695,6 +695,7 @@ Pass `null` as filter to allow any card.
 | `PreventAllCombatDamageEffect` | `()` | prevent all combat damage this turn |
 | `PreventAllDamageEffect` | `()` | prevent all damage (e.g. Fog-style) |
 | `PreventAllDamageToAndByEnchantedCreatureEffect` | `()` | prevent all damage to and dealt by enchanted creature |
+| `PreventAllNoncombatDamageToAttachedCreatureEffect` | `()` | prevent all noncombat damage to attached (equipped/enchanted) creature (e.g. Magebane Armor) |
 | `PreventDamageFromColorsEffect` | `(Set<CardColor> colors)` | prevent all damage from sources of specified colors (static) |
 | `PreventNextColorDamageToControllerEffect` | `(CardColor chosenColor)` | prevent next damage of chosen color to controller |
 | `PreventAllDamageToControllerAndCreaturesEffect` | `()` | prevent all damage to controller and creatures controller controls this turn (Safe Passage-style) |

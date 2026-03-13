@@ -289,11 +289,15 @@ public class PermanentRemovalService {
      * @return {@code 0} if damage was redirected, or the original damage amount if no redirect applies
      */
     public int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName) {
+        return redirectPlayerDamageToEnchantedCreature(gameData, playerId, damage, sourceName, false);
+    }
+
+    public int redirectPlayerDamageToEnchantedCreature(GameData gameData, UUID playerId, int damage, String sourceName, boolean isCombatDamage) {
         if (damage <= 0) return damage;
         Permanent target = gameQueryService.findEnchantedCreatureByAuraEffect(gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
         if (target == null) return damage;
 
-        int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage);
+        int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, isCombatDamage);
         String logEntry = target.getCard().getName() + " absorbs " + effectiveDamage + " redirected " + sourceName + " damage.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 

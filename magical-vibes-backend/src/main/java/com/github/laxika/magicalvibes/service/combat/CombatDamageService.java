@@ -472,7 +472,7 @@ public class CombatDamageService {
     private void resolveRedirectedDamage(GameData gameData, CombatDamageState state,
                                           Permanent redirectTarget) {
         if (redirectTarget != null && state.infectDamageRedirectedToGuard > 0) {
-            state.infectDamageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard);
+            state.infectDamageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard, true);
             if (state.infectDamageRedirectedToGuard > 0 && !gameQueryService.cantHaveCounters(gameData, redirectTarget)) {
                 redirectTarget.setMinusOneMinusOneCounters(redirectTarget.getMinusOneMinusOneCounters() + state.infectDamageRedirectedToGuard);
                 String redirectLog = redirectTarget.getCard().getName() + " gets " + state.infectDamageRedirectedToGuard + " -1/-1 counters from redirected infect damage.";
@@ -481,7 +481,7 @@ public class CombatDamageService {
         }
 
         if (redirectTarget != null && (state.damageRedirectedToGuard > 0 || (state.infectDamageRedirectedToGuard > 0 && gameQueryService.getEffectiveToughness(gameData, redirectTarget) <= 0))) {
-            state.damageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard);
+            state.damageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard, true);
             if (state.damageRedirectedToGuard > 0) {
                 String redirectLog = redirectTarget.getCard().getName() + " absorbs " + state.damageRedirectedToGuard + " redirected combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, redirectLog);
@@ -816,7 +816,7 @@ public class CombatDamageService {
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
         processPendingRedirectDamage(gameData);
-        state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat");
+        state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         // Phyrexian Unlife: convert normal combat damage to poison when at 0 or less life
         if (state.damageToDefendingPlayer > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId)) {
             state.poisonDamageToDefendingPlayer += state.damageToDefendingPlayer;
@@ -935,7 +935,7 @@ public class CombatDamageService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         damage + " damage is redirected to " + targetPerm.getCard().getName() + ".");
 
-                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
+                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage, true);
                 if (effectiveDamage > 0) {
                     targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
                     int effToughness = gameQueryService.getEffectiveToughness(gameData, targetPerm);
@@ -957,7 +957,7 @@ public class CombatDamageService {
         for (int idx : indices) {
             if (skipAlreadyDead && deadSet.contains(idx)) continue;
             int dmg = damageTaken.getOrDefault(idx, 0);
-            dmg = damagePreventionService.applyCreaturePreventionShield(gameData, battlefield.get(idx), dmg);
+            dmg = damagePreventionService.applyCreaturePreventionShield(gameData, battlefield.get(idx), dmg, true);
             damageTaken.put(idx, dmg);
             int effToughness = gameQueryService.getEffectiveToughness(gameData, battlefield.get(idx));
             if (effToughness <= 0) {
@@ -1059,7 +1059,7 @@ public class CombatDamageService {
             processSourceRedirectDamage(gameData);
         }
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
-            int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage);
+            int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + afterShield);
