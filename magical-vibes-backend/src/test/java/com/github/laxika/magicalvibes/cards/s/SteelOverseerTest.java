@@ -112,7 +112,7 @@ class SteelOverseerTest extends BaseCardTest {
         assertThat(ornithopter.getPlusOnePlusOneCounters()).isEqualTo(1);
 
         // Untap overseer for second activation
-        overseer.setTapped(false);
+        overseer.untap();
 
         // Second activation
         harness.activateAbility(player1, 0, null, null);

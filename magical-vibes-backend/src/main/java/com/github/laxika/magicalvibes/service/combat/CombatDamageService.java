@@ -333,6 +333,9 @@ public class CombatDamageService {
         Map<Integer, Integer> blockerDamage = precomputeBlockerDamage(
                 gameData, blockerMap, defBf, state.deadDefenderIndices, isFirstStrikePhase);
 
+        // Track remaining damage for multi-blocking creatures (CR 510.1c-d)
+        Map<Integer, Integer> blockerRemainingDamage = new HashMap<>(blockerDamage);
+
         for (var entry : blockerMap.entrySet()) {
             int atkIdx = entry.getKey();
             List<Integer> blkIndices = entry.getValue();
@@ -371,7 +374,24 @@ public class CombatDamageService {
                     boolean blkParticipates = participatesInDamagePhase(gameData, blk, isFirstStrikePhase);
                     if (blkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
                             && !(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, atk, blk))) {
-                        int actualDmg = gameQueryService.applyDamageMultiplier(gameData, blockerDamage.getOrDefault(blkIdx, 0));
+                        // For multi-blocking creatures, distribute damage per CR 510.1c-d:
+                        // assign lethal to each attacker in order before moving on
+                        int blkTargetCount = blk.getBlockingTargets().size();
+                        int assignedDmg;
+                        if (blkTargetCount <= 1) {
+                            assignedDmg = blockerDamage.getOrDefault(blkIdx, 0);
+                        } else {
+                            int blkRemaining = blockerRemainingDamage.getOrDefault(blkIdx, 0);
+                            boolean blkHasDeathtouch = gameQueryService.hasKeyword(gameData, blk, Keyword.DEATHTOUCH);
+                            int atkToughness = gameQueryService.getEffectiveToughness(gameData, atk);
+                            int atkDamageSoFar = state.atkDamageTaken.getOrDefault(atkIdx, 0);
+                            int lethalNeeded = blkHasDeathtouch
+                                    ? Math.max(0, 1 - atkDamageSoFar)
+                                    : Math.max(0, atkToughness - atkDamageSoFar);
+                            assignedDmg = Math.min(blkRemaining, lethalNeeded);
+                            blockerRemainingDamage.put(blkIdx, blkRemaining - assignedDmg);
+                        }
+                        int actualDmg = gameQueryService.applyDamageMultiplier(gameData, assignedDmg);
                         applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
                         state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                         recordCombatDamageToCreature(gameData, state, blk, defenderId, atk, actualDmg);
