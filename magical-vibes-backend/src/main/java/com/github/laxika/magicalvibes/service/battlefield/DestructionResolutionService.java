@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEf
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentsEffect;
@@ -49,6 +50,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.EnumSet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 /**
@@ -390,6 +392,40 @@ public class DestructionResolutionService {
         // Create token for the target's controller if specified
         if (destroy.tokenForController() != null && controllerId != null) {
             createTokenForPlayer(gameData, controllerId, destroy.tokenForController(), entry.getCard().getName());
+        }
+    }
+
+    /**
+     * Resolves a {@link DestroyOneOfTargetsAtRandomEffect}, picking one permanent at random
+     * from {@code targetPermanentIds} and destroying it. Targets that have left the battlefield
+     * are removed before the random selection.
+     */
+    @HandlesEffect(DestroyOneOfTargetsAtRandomEffect.class)
+    void resolveDestroyOneOfTargetsAtRandom(GameData gameData, StackEntry entry) {
+        List<UUID> targetIds = entry.getTargetPermanentIds();
+        if (targetIds == null || targetIds.isEmpty()) {
+            return;
+        }
+
+        // Filter to still-valid targets (still on the battlefield)
+        List<UUID> validTargetIds = new ArrayList<>();
+        for (UUID targetId : targetIds) {
+            if (gameQueryService.findPermanentById(gameData, targetId) != null) {
+                validTargetIds.add(targetId);
+            }
+        }
+
+        if (validTargetIds.isEmpty()) {
+            log.info("Game {} - {} random destroy fizzles — all targets have left the battlefield",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        int randomIndex = ThreadLocalRandom.current().nextInt(validTargetIds.size());
+        UUID chosenId = validTargetIds.get(randomIndex);
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenId);
+        if (chosen != null) {
+            tryDestroyAndLog(gameData, chosen, entry.getCard().getName(), false);
         }
     }
 

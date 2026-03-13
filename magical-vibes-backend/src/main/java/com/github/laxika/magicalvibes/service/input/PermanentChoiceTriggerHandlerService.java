@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -268,6 +271,81 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
             turnProgressionService.processNextUpkeepCopyTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+            turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleCapriciousEfreetOwnTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.CapriciousEfreetOwnTarget ceo) {
+        // Step 1 complete: own nonland permanent chosen. Now collect opponent nonland permanents for step 2.
+        UUID controllerId = ceo.controllerId();
+        List<UUID> validOpponentTargets = new ArrayList<>();
+
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(controllerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getCard().getType() != CardType.LAND
+                        && !p.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                    validOpponentTargets.add(p.getId());
+                }
+            }
+        }
+
+        if (validOpponentTargets.isEmpty()) {
+            // No opponent nonland permanents — push onto stack with just the own target
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ceo.sourceCard(),
+                    controllerId,
+                    ceo.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new DestroyOneOfTargetsAtRandomEffect())),
+                    0,
+                    List.of(permanentId)
+            );
+            gameData.stack.add(entry);
+
+            Permanent ownTarget = gameQueryService.findPermanentById(gameData, permanentId);
+            String ownName = ownTarget != null ? ownTarget.getCard().getName() : permanentId.toString();
+            String logEntry = ceo.sourceCard().getName() + "'s ability targets " + ownName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} upkeep trigger targets own {} (no opponent targets available)",
+                    gameData.id, ceo.sourceCard().getName(), ownName);
+
+            continueAfterCapriciousEfreet(gameData);
+            return;
+        }
+
+        // Store state for step 2 and present opponent target selection
+        gameData.pendingCapriciousEfreetState = new PendingCapriciousEfreetState(
+                ceo.sourceCard(), controllerId, ceo.sourcePermanentId(), permanentId);
+
+        int maxOpponentTargets = Math.min(2, validOpponentTargets.size());
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, validOpponentTargets,
+                maxOpponentTargets, ceo.sourceCard().getName()
+                        + " — Choose up to 2 nonland permanents you don't control.");
+
+        log.info("Game {} - {} upkeep trigger awaiting opponent target selection (up to {})",
+                gameData.id, ceo.sourceCard().getName(), maxOpponentTargets);
+    }
+
+    void continueAfterCapriciousEfreet(GameData gameData) {
+        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+            turnProgressionService.processNextCapriciousEfreetTarget(gameData);
             return;
         }
 

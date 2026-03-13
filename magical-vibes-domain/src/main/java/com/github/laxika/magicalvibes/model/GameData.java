@@ -102,6 +102,8 @@ public class GameData {
     public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.CapriciousEfreetOwnTarget> pendingCapriciousEfreetTargets = new ArrayDeque<>();
+    public PendingCapriciousEfreetState pendingCapriciousEfreetState;
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     /** Queue of player IDs still needing to discard for an "each player discards" effect (APNAP order). */
@@ -517,6 +519,8 @@ public class GameData {
         copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
         copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
         copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);
+        copy.pendingCapriciousEfreetTargets.addAll(this.pendingCapriciousEfreetTargets);
+        copy.pendingCapriciousEfreetState = this.pendingCapriciousEfreetState;
         copy.extraTurns.addAll(this.extraTurns);
         copy.pendingEachPlayerDiscardQueue.addAll(this.pendingEachPlayerDiscardQueue);
         copy.pendingEachPlayerDiscardControllerId = this.pendingEachPlayerDiscardControllerId;

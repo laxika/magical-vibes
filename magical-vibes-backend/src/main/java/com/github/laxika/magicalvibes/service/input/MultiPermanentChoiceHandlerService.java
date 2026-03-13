@@ -8,8 +8,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -101,6 +105,8 @@ public class MultiPermanentChoiceHandlerService {
             handleProliferate(gameData, playerId, permanentIds);
         } else if (gameData.pendingTapSubtypeBoostSourcePermanentId != null) {
             handleTapSubtypeBoost(gameData, playerId, permanentIds);
+        } else if (gameData.pendingCapriciousEfreetState != null) {
+            handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }
@@ -507,5 +513,50 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleCapriciousEfreetOpponentTargets(GameData gameData, List<UUID> permanentIds) {
+        PendingCapriciousEfreetState state = gameData.pendingCapriciousEfreetState;
+        gameData.pendingCapriciousEfreetState = null;
+
+        // Combine own target + opponent targets
+        List<UUID> allTargets = new ArrayList<>();
+        allTargets.add(state.ownTargetId());
+        allTargets.addAll(permanentIds);
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                state.sourceCard(),
+                state.controllerId(),
+                state.sourceCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DestroyOneOfTargetsAtRandomEffect())),
+                0,
+                allTargets
+        );
+        gameData.stack.add(entry);
+
+        List<String> targetNames = new ArrayList<>();
+        for (UUID targetId : allTargets) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            targetNames.add(target != null ? target.getCard().getName() : targetId.toString());
+        }
+        String logEntry = state.sourceCard().getName() + "'s ability targets " + String.join(", ", targetNames) + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep trigger targets: {}", gameData.id, state.sourceCard().getName(), targetNames);
+
+        // Continue processing: more Efreet triggers → may abilities → priority
+        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+            turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 }

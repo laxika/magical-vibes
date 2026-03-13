@@ -210,4 +210,8 @@ public class TurnProgressionService {
     public void processNextUpkeepCopyTarget(GameData gameData) {
         stepTriggerService.processNextUpkeepCopyTarget(gameData);
     }
+
+    public void processNextCapriciousEfreetTarget(GameData gameData) {
+        stepTriggerService.processNextCapriciousEfreetTarget(gameData);
+    }
 }

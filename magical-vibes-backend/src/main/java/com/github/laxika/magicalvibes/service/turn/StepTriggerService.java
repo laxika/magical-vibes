@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -115,6 +116,12 @@ public class StepTriggerService {
                         gameData.pendingUpkeepCopyTargets.add(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
                                 perm.getCard(), activePlayerId, perm.getId()));
                     }
+                } else if (effect instanceof DestroyOneOfTargetsAtRandomEffect) {
+                    // Targeted upkeep trigger: targets chosen at trigger time (CR 603.3d).
+                    // The Efreet itself is a valid "nonland permanent you control" target,
+                    // so this always triggers as long as it's on the battlefield.
+                    gameData.pendingCapriciousEfreetTargets.add(new PermanentChoiceContext.CapriciousEfreetOwnTarget(
+                            perm.getCard(), activePlayerId, perm.getId()));
                 } else if (effect instanceof NoOtherSubtypeConditionalEffect noOtherSubtype) {
                     // Intervening-if: only trigger if controller has no other permanents with the subtype
                     boolean hasOtherWithSubtype = battlefield.stream()
@@ -316,6 +323,11 @@ public class StepTriggerService {
             return;
         }
 
+        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+            processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
         playerInputService.processNextMayAbility(gameData);
     }
 
@@ -328,8 +340,8 @@ public class StepTriggerService {
      */
     public void processNextUpkeepCopyTarget(GameData gameData) {
         if (gameData.pendingUpkeepCopyTargets.isEmpty()) {
-            // All copy triggers targeted, continue with may abilities
-            playerInputService.processNextMayAbility(gameData);
+            // All copy triggers targeted, continue with Capricious Efreet targets then may abilities
+            processNextCapriciousEfreetTarget(gameData);
             return;
         }
 
@@ -363,6 +375,45 @@ public class StepTriggerService {
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} upkeep copy trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
+    }
+
+    /**
+     * Processes the next pending Capricious Efreet upkeep trigger target selection.
+     * Step 1: controller chooses one nonland permanent they control.
+     */
+    public void processNextCapriciousEfreetTarget(GameData gameData) {
+        if (gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.CapriciousEfreetOwnTarget trigger = gameData.pendingCapriciousEfreetTargets.removeFirst();
+
+        // Collect valid own nonland permanents (Efreet itself is a valid target)
+        List<UUID> validOwnTargets = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getType() != CardType.LAND
+                        && !p.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                    validOwnTargets.add(p.getId());
+                }
+            }
+        }
+
+        if (validOwnTargets.isEmpty()) {
+            // No valid own targets — skip this trigger
+            processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validOwnTargets,
+                trigger.sourceCard().getName() + " — Choose a nonland permanent you control.");
+
+        String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep trigger awaiting own target selection", gameData.id, trigger.sourceCard().getName());
     }
 
     private void handleOpeningHandTriggers(GameData gameData) {
