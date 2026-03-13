@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "M10", collectorNumber = "139")
 @CardRegistration(set = "M11", collectorNumber = "141")
 public class GoblinChieftain extends Card {
 
