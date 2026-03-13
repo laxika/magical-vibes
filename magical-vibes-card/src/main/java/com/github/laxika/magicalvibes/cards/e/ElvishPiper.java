@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "262")
+@CardRegistration(set = "M10", collectorNumber = "177")
 public class ElvishPiper extends Card {
 
     public ElvishPiper() {
