@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public enum CardSet {
 
     TENTH_EDITION("10E"),
+    MAGIC_2010("M10"),
     MAGIC_2011("M11"),
     LORWYN_ECLIPSED("ECL"),
     SCARS_OF_MIRRODIN("SOM"),
