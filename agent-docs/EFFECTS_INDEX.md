@@ -460,6 +460,7 @@ Pass `null` as filter to allow any card.
 | `PayXManaGainXLifeEffect` | `()` | on resolution, pays all available mana from the controller's pool as X and gains X life. Used for "you may pay {X}. If you do, you gain X life" triggered abilities where payment happens during resolution (e.g. Vigil for the Lost) |
 | `GainLifeForEachSubtypeOnBattlefieldEffect` | `(CardSubtype subtype)` | gain 1 life per permanent with given subtype on the battlefield (all players) |
 | `GainLifePerControlledCreatureEffect` | `()` | gain 1 life per creature you control |
+| `GainLifePerControlledMatchingPermanentEffect` | `(List<PermanentPredicate> predicates)` | gain life equal to sum of permanents you control matching each predicate; controller-only version of GainLifePerMatchingPermanentOnBattlefieldEffect |
 | `GainLifePerCreatureOnBattlefieldEffect` | `()` | gain 1 life per creature on the battlefield (all players) |
 | `GainLifePerMatchingPermanentOnBattlefieldEffect` | `(List<PermanentPredicate> predicates)` | gain life equal to sum of permanents matching each predicate on the battlefield (all players); a permanent matching multiple predicates is counted once per match (e.g. artifact creature counts twice with creature+artifact predicates) |
 | `GainLifePerCardsInHandEffect` | `()` | gain 1 life per card in controller's hand (upkeep trigger) |
