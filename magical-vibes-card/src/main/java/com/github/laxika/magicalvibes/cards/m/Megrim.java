@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerE
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "157")
+@CardRegistration(set = "M10", collectorNumber = "104")
 public class Megrim extends Card {
 
     public Megrim() {
