@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
@@ -145,6 +146,8 @@ public class EffectResolutionService {
                     isDefendingPlayerPoisoned(gameData, entry.getControllerId());
             case NoOtherSubtypeConditionalEffect noOther ->
                     isNoOtherSubtypeConditionMet(gameData, entry, noOther);
+            case ActivationCountConditionalEffect acc ->
+                    isActivationCountConditionMet(gameData, entry, acc);
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;
@@ -207,5 +210,15 @@ public class EffectResolutionService {
                 .filter(c -> gameQueryService.matchesCardPredicate(c, petc.predicate(), null))
                 .count();
         return matchCount >= petc.minCount();
+    }
+
+    private boolean isActivationCountConditionMet(GameData gameData, StackEntry entry,
+                                                  ActivationCountConditionalEffect acc) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) return false;
+        var perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(sourcePermanentId);
+        if (perAbilityCounts == null) return false;
+        int count = perAbilityCounts.getOrDefault(acc.abilityIndex(), 0);
+        return count >= acc.threshold();
     }
 }
