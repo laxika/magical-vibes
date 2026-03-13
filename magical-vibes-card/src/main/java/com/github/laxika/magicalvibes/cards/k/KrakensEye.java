@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "329")
+@CardRegistration(set = "M10", collectorNumber = "213")
 @CardRegistration(set = "M11", collectorNumber = "210")
 public class KrakensEye extends Card {
 
