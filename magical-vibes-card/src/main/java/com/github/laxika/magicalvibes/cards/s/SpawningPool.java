@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.Set;
 public class SpawningPool extends Card {
 
     public SpawningPool() {
-        setEntersTapped(true);
+        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.BLACK));
         // {1}{B}: Spawning Pool becomes a 1/1 black Skeleton creature with "{B}: Regenerate this creature" until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(

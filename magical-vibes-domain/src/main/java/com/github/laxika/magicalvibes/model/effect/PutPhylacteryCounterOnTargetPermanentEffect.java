@@ -9,5 +9,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * prevent it). The artifact is chosen as the creature enters, not when the spell
  * is cast. If the controller has no artifacts, the ability does nothing.</p>
  */
-public record PutPhylacteryCounterOnTargetPermanentEffect() implements CardEffect {
+public record PutPhylacteryCounterOnTargetPermanentEffect() implements ReplacementEffect {
 }

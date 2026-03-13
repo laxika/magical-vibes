@@ -13,14 +13,12 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -142,7 +140,9 @@ public class BattlefieldEntryService {
     }
 
     private void applySelfEnterTapped(Permanent enteringPermanent) {
-        if (enteringPermanent.getCard().isEntersTapped()) {
+        boolean entersTapped = enteringPermanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof EntersTappedEffect);
+        if (entersTapped) {
             enteringPermanent.tap();
         }
     }
@@ -231,11 +231,7 @@ public class BattlefieldEntryService {
 
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
-                .filter(e -> !(e instanceof CopyPermanentOnEnterEffect))
-                .filter(e -> !(e instanceof EnterWithXChargeCountersEffect))
-                .filter(e -> !(e instanceof EnterWithXPlusOnePlusOneCountersEffect))
-                .filter(e -> !(e instanceof EnterWithFixedChargeCountersEffect))
-                .filter(e -> !(e instanceof PutPhylacteryCounterOnTargetPermanentEffect))
+                .filter(e -> !(e instanceof ReplacementEffect))
                 .toList();
         if (!triggeredEffects.isEmpty()) {
             // Extract per-mode targetFilter from ChooseOneEffect (if present)

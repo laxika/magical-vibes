@@ -52,7 +52,6 @@ public class Card {
 
     @Setter private boolean cantBeCountered;
     @Setter private boolean token;
-    @Setter private boolean entersTapped;
     @Setter private List<TargetFilter> multiTargetFilters = List.of();
     @Setter private boolean requiresCreatureMana;
     @Setter private int additionalCostPerExtraTarget;

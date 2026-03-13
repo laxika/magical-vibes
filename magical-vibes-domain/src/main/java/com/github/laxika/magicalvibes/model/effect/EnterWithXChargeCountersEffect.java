@@ -1,4 +1,4 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record EnterWithXChargeCountersEffect() implements CardEffect {
+public record EnterWithXChargeCountersEffect() implements ReplacementEffect {
 }

@@ -21,13 +21,6 @@ class InkmothNexusTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Inkmoth Nexus does not enter tapped")
-    void doesNotEnterTapped() {
-        InkmothNexus card = new InkmothNexus();
-        assertThat(card.isEntersTapped()).isFalse();
-    }
-
-    @Test
     @DisplayName("Inkmoth Nexus has one activated ability costing {1}")
     void hasCorrectAbility() {
         InkmothNexus card = new InkmothNexus();

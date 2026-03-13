@@ -7,7 +7,7 @@ import java.util.Set;
 
 public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                          Integer toughnessOverride,
-                                         Set<CardType> additionalTypesOverride) implements CardEffect {
+                                         Set<CardType> additionalTypesOverride) implements ReplacementEffect {
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel) {
         this(filter, typeLabel, null, null, Set.of());
