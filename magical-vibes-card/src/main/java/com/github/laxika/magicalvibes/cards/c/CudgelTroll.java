@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "M10", collectorNumber = "174")
 @CardRegistration(set = "M11", collectorNumber = "167")
 public class CudgelTroll extends Card {
 
