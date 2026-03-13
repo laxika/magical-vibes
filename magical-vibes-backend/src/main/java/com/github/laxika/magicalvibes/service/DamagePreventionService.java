@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -161,5 +163,31 @@ public class DamagePreventionService {
         if (count == null || count <= 0) return false;
         colorMap.put(sourceColor, count - 1);
         return true;
+    }
+
+    /**
+     * Applies static damage reduction from permanents with {@link PreventDamageFromOpponentSourcesEffect}
+     * on the receiving player's battlefield (e.g. Guardian Seraph).
+     * Only reduces damage from opponent-controlled sources. Returns the damage after reduction (min 0).
+     */
+    public int applyOpponentSourceDamageReduction(GameData gameData, UUID playerId, UUID sourceControllerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (damage <= 0) return damage;
+        if (sourceControllerId == null || sourceControllerId.equals(playerId)) return damage;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return damage;
+
+        int totalReduction = 0;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PreventDamageFromOpponentSourcesEffect e) {
+                    totalReduction += e.amount();
+                }
+            }
+        }
+
+        if (totalReduction <= 0) return damage;
+        return Math.max(0, damage - totalReduction);
     }
 }

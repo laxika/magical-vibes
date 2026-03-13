@@ -943,6 +943,8 @@ public class CombatDamageService {
         } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
             // Source-specific damage prevention — skip this damage
         } else if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
+            UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
+            damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
             if (atkHasInfect) {
                 state.poisonDamageToDefendingPlayer += damage;
             } else {

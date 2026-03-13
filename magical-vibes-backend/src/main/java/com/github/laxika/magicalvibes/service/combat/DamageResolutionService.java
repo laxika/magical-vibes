@@ -920,6 +920,7 @@ public class DamageResolutionService {
             return;
         }
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
+            rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
