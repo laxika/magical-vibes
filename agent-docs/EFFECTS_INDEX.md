@@ -354,6 +354,7 @@ Pass `null` as filter to allow any card.
 | `HeadGamesEffect` | `()` | exchange target player's hand with cards from your library (Head Games) |
 | `RedirectDrawsEffect` | `()` | redirect opponent's draws to controller (static, e.g. Plagiarize-style) |
 | `ShuffleHandIntoLibraryAndDrawEffect` | `()` | each player shuffles cards from their hand into their library, then draws that many cards (wheel effect) |
+| `EachPlayerShufflesHandAndGraveyardIntoLibraryEffect` | `()` | each player shuffles their hand and graveyard into their library. Used by Timetwister-family cards (Time Reversal, Timetwister). Combine with EachPlayerDrawsCardEffect for the draw portion |
 
 ## Library manipulation
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -130,6 +131,44 @@ public class LibraryShuffleResolutionService {
 
         log.info("Game {} - {} shuffles self={} + graveyard ({} cards) into library",
                 gameData.id, playerName, selfShuffled, graveyardCount);
+    }
+
+    /**
+     * Each player shuffles their hand and graveyard into their library.
+     * Used by Timetwister-family cards (Time Reversal, Timetwister, etc.).
+     */
+    @HandlesEffect(EachPlayerShufflesHandAndGraveyardIntoLibraryEffect.class)
+    void resolveEachPlayerShufflesHandAndGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
+        String cardName = entry.getCard().getName();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            String playerName = gameData.playerIdToName.get(playerId);
+
+            int handCount = (hand != null) ? hand.size() : 0;
+            int graveyardCount = (graveyard != null) ? graveyard.size() : 0;
+
+            if (hand != null && !hand.isEmpty()) {
+                deck.addAll(hand);
+                hand.clear();
+            }
+
+            if (graveyard != null && !graveyard.isEmpty()) {
+                deck.addAll(graveyard);
+                graveyard.clear();
+            }
+
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " shuffles their hand (" + pluralCards(handCount)
+                            + ") and graveyard (" + pluralCards(graveyardCount)
+                            + ") into their library (" + cardName + ").");
+            log.info("Game {} - {} shuffles hand ({}) and graveyard ({}) into library ({})",
+                    gameData.id, playerName, handCount, graveyardCount, cardName);
+        }
     }
 
     private static String pluralCards(int count) {
