@@ -190,6 +190,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `RegisterDelayedManaTriggerEffect` | `(ManaColor color, int amount)` | registers a delayed trigger (opening hand reveal) that adds N mana of the given color at the beginning of the revealing player's first precombat main phase. Handled by MayAbilityHandlerService, not GameService |
 | `LeylineStartOnBattlefieldEffect` | `()` | marker effect for leyline cards: if in opening hand, player may begin the game with the card on the battlefield (CR 103.6a). Used as wrapped effect inside MayEffect, queued in MulliganService.startGame(), handled by MayMiscHandlerService.handleLeylineChoice(). Used by Leyline of Anticipation, Leyline of the Void |
 | `ExileOpponentCardsInsteadOfGraveyardEffect` | `()` | static replacement effect: if a card would be put into an opponent's graveyard from anywhere, exile it instead (CR 614.1). Checked in GraveyardService.addCardToGraveyard(). Used by Leyline of the Void |
+| `CantBeCounteredEffect` | `()` | this spell can't be countered (static). Replaces `setCantBeCountered(true)` |
 | `CreatureSpellsCantBeCounteredEffect` | `()` | creature spells can't be countered (static) |
 | `CreatureEnteringDontCauseTriggersEffect` | `()` | creatures entering don't cause abilities to trigger (static, e.g. Torpor Orb) |
 

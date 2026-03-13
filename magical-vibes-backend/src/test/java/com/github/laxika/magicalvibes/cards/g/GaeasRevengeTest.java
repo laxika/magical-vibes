@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -27,12 +28,12 @@ class GaeasRevengeTest extends BaseCardTest {
     void hasCorrectProperties() {
         GaeasRevenge card = new GaeasRevenge();
 
-        assertThat(card.isCantBeCountered()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantBeTargetedByNonColorSourcesEffect.class);
-        CantBeTargetedByNonColorSourcesEffect effect =
-                (CantBeTargetedByNonColorSourcesEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeCounteredEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeTargetedByNonColorSourcesEffect.class);
+        CantBeTargetedByNonColorSourcesEffect effect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof CantBeTargetedByNonColorSourcesEffect)
+                .map(e -> (CantBeTargetedByNonColorSourcesEffect) e)
+                .findFirst().orElseThrow();
         assertThat(effect.allowedColor()).isEqualTo(CardColor.GREEN);
     }
 

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
@@ -1065,11 +1066,11 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the given card cannot be countered, either because it has
-     * its own "can't be countered" ability ({@link Card#isCantBeCountered()}), or because
+     * its own "can't be countered" ability ({@link CantBeCounteredEffect}), or because
      * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
-        if (card.isCantBeCountered()) {
+        if (card.getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof CantBeCounteredEffect)) {
             return true;
         }
         if (!hasCardType(card, CardType.CREATURE)) {

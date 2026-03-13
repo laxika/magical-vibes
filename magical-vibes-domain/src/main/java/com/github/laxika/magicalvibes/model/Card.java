@@ -50,7 +50,6 @@ public class Card {
     @Setter private String setCode;
     @Setter private String collectorNumber;
 
-    @Setter private boolean cantBeCountered;
     @Setter private boolean token;
     @Setter private List<TargetFilter> multiTargetFilters = List.of();
     @Setter private boolean requiresCreatureMana;

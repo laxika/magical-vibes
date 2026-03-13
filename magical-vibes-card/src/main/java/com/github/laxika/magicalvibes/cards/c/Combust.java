@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -14,7 +15,7 @@ import java.util.Set;
 public class Combust extends Card {
 
     public Combust() {
-        setCantBeCountered(true);
+        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5, true));
         setTargetFilter(new PermanentPredicateTargetFilter(
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE)),
