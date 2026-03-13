@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -580,6 +581,17 @@ public class CombatDamageService {
                         if (!hasCreatureTargets) {
                             gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
                                     + "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no creatures.");
+                            continue;
+                        }
+                    }
+                    if (may.wrapped() instanceof ExilePermanentDamagedPlayerControlsEffect exileEffect) {
+                        List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
+                        boolean hasValidTargets = defenderBf != null && defenderBf.stream()
+                                .anyMatch(p -> exileEffect.predicate() == null
+                                        || gameQueryService.matchesPermanentPredicate(gameData, p, exileEffect.predicate()));
+                        if (!hasValidTargets) {
+                            gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
+                                    + "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no valid targets.");
                             continue;
                         }
                     }

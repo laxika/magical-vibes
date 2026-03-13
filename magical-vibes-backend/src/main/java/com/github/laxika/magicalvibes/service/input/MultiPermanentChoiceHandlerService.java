@@ -37,9 +37,9 @@ import java.util.UUID;
  * Handles multi-permanent choice inputs where the player selects
  * zero or more permanents from a list.
  *
- * <p>Covers sacrifice-self-to-destroy, sacrifice attacking creatures,
- * combat damage bounce, awakening counter placement, proliferate,
- * and tap-subtype-boost (e.g. Myr Battlesphere).
+ * <p>Covers exile-damaged-player-permanent, sacrifice-self-to-destroy,
+ * sacrifice attacking creatures, combat damage bounce, awakening counter
+ * placement, proliferate, and tap-subtype-boost (e.g. Myr Battlesphere).
  */
 @Slf4j
 @Service
@@ -91,7 +91,9 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        if (gameData.pendingSacrificeSelfToDestroySourceId != null) {
+        if (gameData.pendingExileDamagedPlayerControlsPermanent) {
+            handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
+        } else if (gameData.pendingSacrificeSelfToDestroySourceId != null) {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds);
         } else if (gameData.pendingSacrificeAttackingCreature) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
@@ -143,6 +145,28 @@ public class MultiPermanentChoiceHandlerService {
             } else {
                 String logEntry = "Source creature no longer exists — sacrifice trigger fizzles.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
+        }
+
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleExileDamagedPlayerControlsPermanent(GameData gameData, UUID playerId, List<UUID> permanentIds) {
+        gameData.pendingExileDamagedPlayerControlsPermanent = false;
+
+        if (permanentIds.isEmpty()) {
+            String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to exile a permanent.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            UUID chosenPermId = permanentIds.getFirst();
+            Permanent target = gameQueryService.findPermanentById(gameData, chosenPermId);
+            if (target != null) {
+                permanentRemovalService.removePermanentToExile(gameData, target);
+                String logEntry = target.getCard().getName() + " is exiled.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} exiled by combat damage trigger", gameData.id, target.getCard().getName());
+
+                permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
 

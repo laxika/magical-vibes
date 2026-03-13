@@ -418,6 +418,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `ExileTargetPermanentEffect` | `()` | exile target permanent (also handles multi-target via targetPermanentIds) |
+| `ExilePermanentDamagedPlayerControlsEffect` | `(PermanentPredicate predicate)` | exile target permanent controlled by the damaged player (combat damage trigger); use inside MayEffect with ON_COMBAT_DAMAGE_TO_PLAYER |
 | `ExileCardsFromGraveyardEffect` | `(int maxTargets, int lifeGain)` | exile up to N cards from graveyard, gain lifeGain per card |
 | `ExileCreaturesFromGraveyardAndCreateTokensEffect` | `()` | exile creature cards from graveyard, create tokens for each |
 | `ExileTopCardsRepeatOnDuplicateEffect` | `(int count)` | exile top N cards, repeat if duplicate names found |

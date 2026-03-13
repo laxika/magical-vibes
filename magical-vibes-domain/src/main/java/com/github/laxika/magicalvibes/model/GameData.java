@@ -81,6 +81,7 @@ public class GameData {
     public PendingOpponentExileChoice pendingOpponentExileChoice;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID pendingSacrificeSelfToDestroySourceId;
+    public boolean pendingExileDamagedPlayerControlsPermanent;
     public int pendingProliferateCount;
     /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
     public final List<Permanent> pendingLethalDamageDestructions = new ArrayList<>();
@@ -355,6 +356,7 @@ public class GameData {
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
         copy.pendingSacrificeSelfToDestroySourceId = this.pendingSacrificeSelfToDestroySourceId;
+        copy.pendingExileDamagedPlayerControlsPermanent = this.pendingExileDamagedPlayerControlsPermanent;
         copy.pendingProliferateCount = this.pendingProliferateCount;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;

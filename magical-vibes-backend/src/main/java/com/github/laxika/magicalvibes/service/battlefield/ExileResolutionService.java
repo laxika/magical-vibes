@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
@@ -81,6 +82,48 @@ public class ExileResolutionService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Exiles a permanent controlled by the player who was dealt combat damage.
+     * Presents a multi-permanent choice filtered by the effect's predicate.
+     * Context: StackEntry.targetPermanentId = damaged player ID.
+     */
+    @HandlesEffect(ExilePermanentDamagedPlayerControlsEffect.class)
+    void resolveExilePermanentDamagedPlayerControls(GameData gameData, StackEntry entry) {
+        ExilePermanentDamagedPlayerControlsEffect effect =
+                (ExilePermanentDamagedPlayerControlsEffect) entry.getEffectsToResolve().stream()
+                        .filter(e -> e instanceof ExilePermanentDamagedPlayerControlsEffect)
+                        .findFirst().orElse(null);
+        if (effect == null) return;
+
+        UUID defenderId = entry.getTargetPermanentId();
+        UUID controllerId = entry.getControllerId();
+
+        if (defenderId == null) return;
+
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<UUID> validIds = new ArrayList<>();
+        if (defenderBattlefield != null) {
+            for (Permanent perm : defenderBattlefield) {
+                if (effect.predicate() == null
+                        || gameQueryService.matchesPermanentPredicate(gameData, perm, effect.predicate())) {
+                    validIds.add(perm.getId());
+                }
+            }
+        }
+
+        if (validIds.isEmpty()) {
+            String logEntry = entry.getCard().getName() + "'s ability resolves, but "
+                    + gameData.playerIdToName.get(defenderId) + " has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.pendingExileDamagedPlayerControlsPermanent = true;
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, validIds, 1,
+                entry.getCard().getName() + "'s ability — Choose a permanent "
+                        + gameData.playerIdToName.get(defenderId) + " controls to exile.");
     }
 
     /**
