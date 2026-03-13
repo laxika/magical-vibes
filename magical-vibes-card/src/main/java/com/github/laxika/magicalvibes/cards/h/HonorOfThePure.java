@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 import java.util.Set;
 
+@CardRegistration(set = "M10", collectorNumber = "16")
 @CardRegistration(set = "M11", collectorNumber = "17")
 public class HonorOfThePure extends Card {
 
