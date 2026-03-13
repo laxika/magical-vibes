@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "M10", collectorNumber = "3")
 @CardRegistration(set = "M11", collectorNumber = "5")
 public class ArmoredAscension extends Card {
 
