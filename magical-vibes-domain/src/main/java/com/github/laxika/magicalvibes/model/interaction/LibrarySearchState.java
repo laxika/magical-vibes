@@ -26,13 +26,15 @@ public class LibrarySearchState {
     private final LibrarySearchDestination destination;
     private final Set<CardType> filterCardTypes;
     private final List<Card> accumulatedCards;
+    private final String filterCardName;
 
     public LibrarySearchState(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                               UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
                               boolean reorderRemainingToBottom, boolean reorderRemainingToTop,
                               boolean shuffleAfterSelection,
                               String prompt, LibrarySearchDestination destination,
-                              Set<CardType> filterCardTypes, List<Card> accumulatedCards) {
+                              Set<CardType> filterCardTypes, List<Card> accumulatedCards,
+                              String filterCardName) {
         this.playerId = playerId;
         this.cards = cards;
         this.reveals = reveals;
@@ -47,6 +49,7 @@ public class LibrarySearchState {
         this.destination = destination;
         this.filterCardTypes = filterCardTypes;
         this.accumulatedCards = accumulatedCards;
+        this.filterCardName = filterCardName;
     }
 
     public UUID playerId() {
@@ -105,6 +108,10 @@ public class LibrarySearchState {
         return accumulatedCards;
     }
 
+    public String filterCardName() {
+        return filterCardName;
+    }
+
     public LibrarySearchState deepCopy() {
         return new LibrarySearchState(
                 playerId,
@@ -113,7 +120,8 @@ public class LibrarySearchState {
                 sourceCards != null ? new ArrayList<>(sourceCards) : null,
                 reorderRemainingToBottom, reorderRemainingToTop, shuffleAfterSelection, prompt, destination,
                 filterCardTypes != null ? new HashSet<>(filterCardTypes) : null,
-                accumulatedCards != null ? new ArrayList<>(accumulatedCards) : null
+                accumulatedCards != null ? new ArrayList<>(accumulatedCards) : null,
+                filterCardName
         );
     }
 }

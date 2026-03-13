@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAndSearchLibraryForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsByNameToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
@@ -295,6 +296,48 @@ public class LibrarySearchResolutionService {
                 false,
                 LibrarySearchDestination.HAND
         );
+    }
+
+    /**
+     * Searches the controller's library for up to N cards with the specified name, reveals them,
+     * and puts them into the controller's hand. Used by cards like Squadron Hawk.
+     */
+    @HandlesEffect(SearchLibraryForCardsByNameToHandEffect.class)
+    void resolveSearchLibraryForCardsByNameToHand(GameData gameData, StackEntry entry,
+                                                   SearchLibraryForCardsByNameToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = deck.stream()
+                .filter(card -> effect.cardName().equals(card.getName()))
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            String logMsg = playerName + " searches their library but finds no cards named " + effect.cardName() + ". Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        String prompt = "Search your library for a card named " + effect.cardName() + " to reveal and put into your hand (" + effect.maxCount() + " remaining).";
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                .remainingCount(effect.maxCount())
+                .reveals(true)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.HAND)
+                .filterCardName(effect.cardName())
+                .build(), prompt, true);
+
+        log.info("Game {} - {} searches library for up to {} cards named {}", gameData.id, playerName, effect.maxCount(), effect.cardName());
     }
 
     /**

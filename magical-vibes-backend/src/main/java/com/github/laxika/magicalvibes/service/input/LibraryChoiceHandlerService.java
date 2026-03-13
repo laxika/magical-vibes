@@ -292,6 +292,7 @@ public class LibraryChoiceHandlerService {
         boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
+        String filterCardName = librarySearch.filterCardName();
         List<Card> accumulatedCards = librarySearch.accumulatedCards() != null
                 ? new ArrayList<>(librarySearch.accumulatedCards()) : new ArrayList<>();
 
@@ -557,9 +558,14 @@ public class LibraryChoiceHandlerService {
 
         if (remainingCount > 1) {
             int newRemaining = remainingCount - 1;
-            List<Card> newSearchCards = filterCardTypes != null
-                    ? deck.stream().filter(c -> filterCardTypes.contains(c.getType()) || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains)).toList()
-                    : new ArrayList<>(deck);
+            List<Card> newSearchCards;
+            if (filterCardName != null) {
+                newSearchCards = deck.stream().filter(c -> filterCardName.equals(c.getName())).toList();
+            } else if (filterCardTypes != null) {
+                newSearchCards = deck.stream().filter(c -> filterCardTypes.contains(c.getType()) || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains)).toList();
+            } else {
+                newSearchCards = new ArrayList<>(deck);
+            }
 
             if (newSearchCards.isEmpty()) {
                 // CR 608.2f: Place any accumulated battlefield cards before finishing
@@ -600,6 +606,7 @@ public class LibraryChoiceHandlerService {
                     .canFailToFind(toGraveyard || canFailToFind)
                     .destination(destination)
                     .filterCardTypes(filterCardTypes)
+                    .filterCardName(filterCardName)
                     .accumulatedCards(accumulatedCards)
                     .build());
 
