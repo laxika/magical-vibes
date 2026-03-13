@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 import java.util.List;
 
+@CardRegistration(set = "M10", collectorNumber = "167")
 @CardRegistration(set = "M11", collectorNumber = "163")
 public class AwakenerDruid extends Card {
 
