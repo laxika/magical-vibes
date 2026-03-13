@@ -199,6 +199,47 @@ public class PermanentChoiceSpellHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleHandCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.HandCastSpellTarget hct) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+
+        if (target != null || isPlayerTarget) {
+            StackEntry entry = new StackEntry(
+                    hct.spellType(),
+                    hct.cardToCast(),
+                    hct.controllerId(),
+                    hct.cardToCast().getName(),
+                    new ArrayList<>(hct.spellEffects()),
+                    0,
+                    permanentId,
+                    null
+            );
+            gameData.stack.add(entry);
+
+            gameData.spellsCastThisTurn.merge(hct.controllerId(), 1, Integer::sum);
+            gameData.priorityPassedBy.clear();
+
+            String targetName = isPlayerTarget
+                    ? gameData.playerIdToName.get(permanentId)
+                    : target.getCard().getName();
+            String logEntry = hct.cardToCast().getName() + " targets " + targetName + " (Wild Evocation).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
+
+            triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(), false);
+            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        } else {
+            graveyardService.addCardToGraveyard(gameData, hct.controllerId(), hct.cardToCast());
+            String logEntry = hct.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} cast-from-hand target no longer exists", gameData.id, hct.cardToCast().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     private String getTargetDisplayName(GameData gameData, UUID targetId) {
         String playerName = gameData.playerIdToName.get(targetId);
         if (playerName != null) return playerName;

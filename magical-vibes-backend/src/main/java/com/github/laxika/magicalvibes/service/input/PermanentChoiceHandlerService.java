@@ -83,6 +83,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleExileCastSpellTarget(gameData, permanentId, ect);
         } else if (context instanceof PermanentChoiceContext.GraveyardCastSpellTarget gct) {
             spellHandler.handleGraveyardCastSpellTarget(gameData, permanentId, gct);
+        } else if (context instanceof PermanentChoiceContext.HandCastSpellTarget hct) {
+            spellHandler.handleHandCastSpellTarget(gameData, permanentId, hct);
         } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
         } else if (context instanceof PermanentChoiceContext.EmblemTriggerTarget ett) {
