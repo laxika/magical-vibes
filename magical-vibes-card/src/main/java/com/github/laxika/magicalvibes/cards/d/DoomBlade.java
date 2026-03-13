@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "M10", collectorNumber = "93")
 @CardRegistration(set = "M11", collectorNumber = "95")
 public class DoomBlade extends Card {
 
