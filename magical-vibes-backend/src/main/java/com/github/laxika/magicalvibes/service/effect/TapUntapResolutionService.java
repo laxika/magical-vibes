@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapPermanentsOfTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
@@ -243,6 +245,64 @@ public class TapUntapResolutionService {
         String logEntry = entry.getCard().getName() + " untaps " + count + " other creature(s) you control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} other creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(TapPermanentsOfTargetPlayerEffect.class)
+    private void resolveTapPermanentsOfTargetPlayer(GameData gameData, StackEntry entry, TapPermanentsOfTargetPlayerEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null) return;
+
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (!gameQueryService.matchesPermanentPredicate(p, effect.filter(), filterContext)) continue;
+
+            boolean wasTapped = p.isTapped();
+            p.tap();
+            if (!wasTapped) {
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, p);
+                count++;
+            }
+        }
+
+        String logMsg = entry.getCard().getName() + " taps " + count + " permanent(s).";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} taps {} permanent(s) of target player", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(SkipNextUntapPermanentsOfTargetPlayerEffect.class)
+    private void resolveSkipNextUntapPermanentsOfTargetPlayer(GameData gameData, StackEntry entry, SkipNextUntapPermanentsOfTargetPlayerEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null) return;
+
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (!gameQueryService.matchesPermanentPredicate(p, effect.filter(), filterContext)) continue;
+
+            p.setSkipUntapCount(p.getSkipUntapCount() + 1);
+            count++;
+        }
+
+        String logMsg = entry.getCard().getName() + " prevents " + count + " permanent(s) from untapping during their controller's next untap step.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} skip next untap set on {} permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     @HandlesEffect(UntapAllControlledPermanentsEffect.class)

@@ -649,6 +649,8 @@ Pass `null` as filter to allow any card.
 | `MayNotUntapDuringUntapStepEffect` | `()` | controller may choose not to untap this permanent during untap step (static); prompts player via may-ability system |
 | `PreventTargetUntapWhileSourceTappedEffect` | `()` | target permanent doesn't untap during its controller's untap step for as long as the source permanent remains tapped; piggybacks on companion targeting effect (e.g. `TapTargetPermanentEffect`) |
 | `SkipNextUntapOnTargetEffect` | `()` | target permanent doesn't untap during its controller's next untap step; increments `skipUntapCount` which is decremented each untap step; piggybacks on companion targeting effect (e.g. `TapTargetPermanentEffect`) |
+| `TapPermanentsOfTargetPlayerEffect` | `(PermanentPredicate filter)` | tap all permanents matching filter that target player controls; targets a player |
+| `SkipNextUntapPermanentsOfTargetPlayerEffect` | `(PermanentPredicate filter)` | all permanents matching filter that target player controls don't untap during that player's next untap step; increments `skipUntapCount`; targets a player |
 | `AttachedCreatureDoesntUntapEffect` | `()` | attached creature (aura or equipment) doesn't untap during untap step (static) |
 | `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` | `(TurnStep step)` or `(TurnStep step, PermanentPredicate filter)` | untap permanents you control during each other player's step. `filter=null` (1-arg form) untaps all; provide a predicate (e.g. `PermanentIsArtifactPredicate`) to untap only matching permanents |
 | `UntapAllControlledPermanentsEffect` | `(PermanentPredicate filter)` | untap all permanents you control matching filter (e.g. `PermanentIsLandPredicate` for "untap all lands you control") |
