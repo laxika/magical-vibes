@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLand
 
 import java.util.List;
 
+@CardRegistration(set = "M10", collectorNumber = "223")
 @CardRegistration(set = "M11", collectorNumber = "223")
 public class DragonskullSummit extends Card {
 
