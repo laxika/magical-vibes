@@ -342,6 +342,7 @@ Pass `null` as filter to allow any card.
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
 | `EachPlayerDiscardsEffect` | `(int amount)` | each player discards N cards in APNAP order (active player first). Uses queued sequential discard interaction. Controller's discard has `discardCausedByOpponent=false`; others have `true`. |
 | `EachOpponentDiscardsEffect` | `(int amount)` | each opponent discards N cards in APNAP order (skips controller). Uses same queued sequential discard interaction as EachPlayerDiscardsEffect. All discards have `discardCausedByOpponent=true`. Convenience ctor: `()` defaults to amount=1. |
+| `EachPlayerRandomDiscardEffect` | `(int amount)` | each player discards N cards at random in APNAP order. No player interaction required (random selection). Controller's discard has `discardCausedByOpponent=false`; others have `true`. Used by Burning Inquiry. |
 | `TargetPlayerDiscardsByChargeCountersEffect` | `()` | target player discards X cards where X = charge counters on source (snapshotted into xValue at activation time) |
 | `TargetPlayerDiscardsEffect` | `(int amount)` | target player discards N cards |
 | `TargetPlayerDiscardsReturnSelfIfCardTypeEffect` | `(int amount, CardType returnIfType)` | target player discards N cards; if a discarded card matches the type, return the source spell from graveyard to owner's hand (e.g. Psychic Miasma) |

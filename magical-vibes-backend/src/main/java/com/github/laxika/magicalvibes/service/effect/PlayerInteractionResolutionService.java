@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
@@ -475,6 +476,22 @@ public class PlayerInteractionResolutionService {
         gameData.discardCausedByOpponent = effect.causedByOpponent();
         UUID playerId = effect.causedByOpponent() ? entry.getTargetPermanentId() : entry.getControllerId();
         resolveRandomDiscardCards(gameData, playerId, entry.getCard().getName(), effect.amount());
+    }
+
+    @HandlesEffect(EachPlayerRandomDiscardEffect.class)
+    private void resolveEachPlayerRandomDiscard(GameData gameData, StackEntry entry, EachPlayerRandomDiscardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String sourceName = entry.getCard().getName();
+        // APNAP order: active player first, then others in turn order
+        UUID activePlayerId = gameData.activePlayerId;
+        gameData.discardCausedByOpponent = !activePlayerId.equals(controllerId);
+        resolveRandomDiscardCards(gameData, activePlayerId, sourceName, effect.amount());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId)) {
+                gameData.discardCausedByOpponent = !playerId.equals(controllerId);
+                resolveRandomDiscardCards(gameData, playerId, sourceName, effect.amount());
+            }
+        }
     }
 
     @HandlesEffect(ReturnPermanentsOnCombatDamageToPlayerEffect.class)
