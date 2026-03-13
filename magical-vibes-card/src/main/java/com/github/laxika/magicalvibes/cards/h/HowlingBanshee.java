@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
+@CardRegistration(set = "M10", collectorNumber = "99")
 @CardRegistration(set = "M11", collectorNumber = "100")
 public class HowlingBanshee extends Card {
 
