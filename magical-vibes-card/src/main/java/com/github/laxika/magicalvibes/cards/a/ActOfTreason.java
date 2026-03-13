@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "M10", collectorNumber = "124")
 @CardRegistration(set = "M11", collectorNumber = "121")
 public class ActOfTreason extends Card {
 
