@@ -171,6 +171,87 @@ public class MayCopyHandlerService {
                 "Choose a new target for the copy of " + copiedCard.getName() + ".");
     }
 
+    public void handleRedirectRetargetChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        // Find the target spell on the stack
+        UUID spellCardId = ability.targetCardId();
+        StackEntry targetSpellEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(spellCardId)) {
+                targetSpellEntry = se;
+                break;
+            }
+        }
+
+        String spellName = targetSpellEntry != null ? targetSpellEntry.getCard().getName() : "spell";
+
+        if (!accepted) {
+            String logEntry = player.getUsername() + " declines to change targets for " + spellName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to redirect spell targets", gameData.id, player.getUsername());
+
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (targetSpellEntry == null) {
+            log.info("Game {} - Target spell no longer on stack for redirect", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card spellCard = targetSpellEntry.getCard();
+        List<UUID> validTargets = new ArrayList<>();
+
+        if (spellCard.isNeedsSpellTarget()) {
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCardId)) continue;
+                try {
+                    targetLegalityService.validateSpellTargetOnStack(gameData, se.getCard().getId(), spellCard.getTargetFilter(), targetSpellEntry.getControllerId());
+                    validTargets.add(se.getCard().getId());
+                } catch (IllegalStateException ignored) {
+                }
+            }
+        } else if (spellCard.isNeedsTarget()) {
+            Zone targetZone = targetSpellEntry.getTargetZone() != null ? targetSpellEntry.getTargetZone() : Zone.BATTLEFIELD;
+
+            List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    candidateTargets.add(p.getId());
+                }
+            }
+
+            for (UUID candidate : candidateTargets) {
+                try {
+                    targetLegalityService.validateSpellTargeting(
+                            gameData,
+                            spellCard,
+                            candidate,
+                            targetZone,
+                            targetSpellEntry.getControllerId()
+                    );
+                    validTargets.add(candidate);
+                } catch (IllegalStateException ignored) {
+                }
+            }
+        }
+
+        if (validTargets.isEmpty()) {
+            String logEntry = "No valid new targets for " + spellCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - No valid targets for redirect retarget", gameData.id);
+
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(spellCardId));
+        playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
+                "Choose a new target for " + spellCard.getName() + ".");
+    }
+
     public void handleBecomeCopyChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card sourceCard = ability.sourceCard();
 

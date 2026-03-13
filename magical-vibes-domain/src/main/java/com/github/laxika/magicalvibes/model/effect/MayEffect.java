@@ -11,4 +11,14 @@ public record MayEffect(CardEffect wrapped, String prompt) implements CardEffect
     public boolean canTargetPlayer() {
         return wrapped.canTargetPlayer();
     }
+
+    @Override
+    public boolean canTargetSpell() {
+        return wrapped.canTargetSpell();
+    }
+
+    @Override
+    public boolean canTargetGraveyard() {
+        return wrapped.canTargetGraveyard();
+    }
 }

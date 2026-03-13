@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -195,6 +196,13 @@ public class MayAbilityHandlerService {
                 .orElse(null);
         if (replaceSingleDrawEffect != null) {
             mayMiscHandlerService.handleSingleDrawReplacementChoice(gameData, player, accepted, ability, replaceSingleDrawEffect);
+            return;
+        }
+
+        // Redirect retarget — choose new targets for target spell (e.g. Redirect)
+        boolean isRedirectRetarget = ability.effects().stream().anyMatch(e -> e instanceof ChooseNewTargetsForTargetSpellEffect);
+        if (isRedirectRetarget) {
+            mayCopyHandlerService.handleRedirectRetargetChoice(gameData, player, accepted, ability);
             return;
         }
 
