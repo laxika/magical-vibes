@@ -167,6 +167,11 @@ public class GameData {
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
 
+    /** Delayed trigger: permanent ID → total +1/+1 counters to put on it at the beginning of the next end step.
+     *  Used by Protean Hydra's regrowth ability: "Whenever a +1/+1 counter is removed from this creature,
+     *  put two +1/+1 counters on it at the beginning of the next end step." */
+    public final Map<UUID, Integer> pendingDelayedPlusOnePlusOneCounters = new ConcurrentHashMap<>();
+
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
@@ -395,6 +400,7 @@ public class GameData {
             copy.combatDamageToPlayersThisTurn.put(k, s);
         });
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
+        copy.pendingDelayedPlusOnePlusOneCounters.putAll(this.pendingDelayedPlusOnePlusOneCounters);
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, ConcurrentHashMap.newKeySet()));

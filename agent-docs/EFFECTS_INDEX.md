@@ -559,6 +559,7 @@ Pass `null` as filter to allow any card.
 | `PutMinusOneMinusOneCounterOnEnchantedCreatureEffect` | `(int count)` / `()` | put N -1/-1 counters on enchanted creature (default 1). Use with UPKEEP_TRIGGERED for auras like Glistening Oil |
 | `PutPlusOnePlusOneCounterOnEnchantedCreatureEffect` | `(int count)` / `()` | put N +1/+1 counters on enchanted creature (default 1). Use with UPKEEP_TRIGGERED for auras like Primal Cocoon |
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
+| `EnterWithXPlusOnePlusOneCountersEffect` | `()` | enters battlefield with X +1/+1 counters (replacement effect, reads X from spell cast). Use for creatures like Protean Hydra |
 | `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
 | `PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect` | `()` | put a -1/-1 counter on each creature target player controls (targets player) |
 | `PutChargeCounterOnSelfEffect` | `()` | put a charge counter on this permanent (self-target, used as activated ability effect) |
@@ -675,6 +676,8 @@ Pass `null` as filter to allow any card.
 | `PreventAllDamageByTargetCreatureEffect` | `()` | prevent all damage target creature(s) would deal this turn (multi-target via targetPermanentIds) |
 | `PreventAllDamageFromChosenSourceEffect` | `()` | prevent all damage a chosen source would deal to controller this turn (prompts permanent choice on resolution) |
 | `PreventDamageAndAddMinusCountersEffect` | `()` | prevent all damage to this creature and put a -1/-1 counter for each 1 damage prevented (static, e.g. Phyrexian Hydra) |
+| `PreventDamageAndRemovePlusOnePlusOneCountersEffect` | `()` | prevent all damage to this creature and remove that many +1/+1 counters (static, e.g. Protean Hydra). Can only remove counters up to the number currently on the creature |
+| `DelayedPlusOnePlusOneCounterRegrowthEffect` | `()` | whenever a +1/+1 counter is removed from this creature, put two +1/+1 counters on it at the beginning of the next end step (static, e.g. Protean Hydra). Works with PreventDamageAndRemovePlusOnePlusOneCountersEffect. Registers delayed triggers in GameData.pendingDelayedPlusOnePlusOneCounters |
 | `ProtectionFromCardTypesEffect` | `(Set<CardType> cardTypes)` | protection from specified card types (static, permanent). Unlike `GrantProtectionFromCardTypeUntilEndOfTurnEffect`, this is NOT cleared by `resetModifiers()` — it lives on the card's STATIC effects. Checked by `GameQueryService.hasProtectionFromSourceCardTypes()` in both overloads (permanent source and card source) |
 | `ProtectionFromColorsEffect` | `(Set<CardColor> colors)` | protection from specified colors (static) |
 | `ProtectionFromSubtypesEffect` | `(Set<CardSubtype> subtypes)` | protection from specified creature subtypes (static). Prevents blocking, damage, targeting, and enchanting/equipping by sources with any of the listed subtypes. Also checks transient/granted subtypes and Changeling. Checked by `GameQueryService.hasProtectionFromSourceSubtypes()`. Used by Baneslayer Angel (DEMON, DRAGON) |

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -33,8 +34,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -574,6 +577,42 @@ public class StepTriggerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+            }
+        }
+
+        // Process delayed +1/+1 counter regrowth triggers (e.g. Protean Hydra)
+        // Ruling: "If multiple +1/+1 counters are removed at once, its last ability will trigger that many times."
+        // Each removed counter creates a separate delayed trigger that adds 2 +1/+1 counters.
+        // The pending map stores countersRemoved * 2 (total counters to add), so we divide by 2
+        // to get the number of individual triggers, each adding 2 counters.
+        if (!gameData.pendingDelayedPlusOnePlusOneCounters.isEmpty()) {
+            Map<UUID, Integer> pendingCounters = new HashMap<>(gameData.pendingDelayedPlusOnePlusOneCounters);
+            gameData.pendingDelayedPlusOnePlusOneCounters.clear();
+            for (Map.Entry<UUID, Integer> counterEntry : pendingCounters.entrySet()) {
+                UUID permanentId = counterEntry.getKey();
+                int totalCountersToAdd = counterEntry.getValue();
+                Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
+                if (perm == null) continue;
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
+                if (controllerId == null) continue;
+
+                int triggerCount = totalCountersToAdd / 2; // each trigger adds 2 counters
+                for (int i = 0; i < triggerCount; i++) {
+                    PutCountersOnSourceEffect effect = new PutCountersOnSourceEffect(1, 1, 2);
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s delayed +1/+1 counter trigger",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
+                    ));
+                }
+
+                String logEntry = perm.getCard().getName() + "'s delayed trigger — " + triggerCount + " trigger(s), adding " + totalCountersToAdd + " +1/+1 counter(s).";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} delayed +1/+1 counter regrowth: {} trigger(s) pushed onto stack", gameData.id, perm.getCard().getName(), triggerCount);
             }
         }
 

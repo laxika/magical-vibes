@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -108,8 +109,26 @@ public class StackResolutionService {
             return;
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
-        logEnterBattlefield(gameData, card, controllerId);
+        Permanent perm = new Permanent(card);
+
+        // "Enters with X +1/+1 counters" — replacement effect (MTG Rule 614.1c)
+        boolean cantHaveCounters = card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantHaveCountersEffect);
+        boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
+        if (hasXPlusOneCounterEffect && !cantHaveCounters) {
+            perm.setPlusOnePlusOneCounters(entry.getXValue());
+        }
+
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        if (hasXPlusOneCounterEffect && entry.getXValue() > 0) {
+            String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " +1/+1 counters under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            logEnterBattlefield(gameData, card, controllerId);
+        }
 
         // "As enters" phylactery counter placement — replacement effect (MTG Rule 614.1c),
         // happens as part of the entering process before state-based actions are checked.
@@ -216,6 +235,13 @@ public class StackResolutionService {
             perm.setChargeCounters(entry.getXValue());
         }
 
+        // "Enters with X +1/+1 counters" — replacement effect (MTG Rule 614.1c)
+        boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
+        if (hasXPlusOneCounterEffect && !cantHaveCounters) {
+            perm.setPlusOnePlusOneCounters(entry.getXValue());
+        }
+
         // "Enters with N charge counters" — replacement effect for fixed count (MTG Rule 614.1c)
         int fixedChargeCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof EnterWithFixedChargeCountersEffect)
@@ -230,6 +256,9 @@ public class StackResolutionService {
         String playerName = gameData.playerIdToName.get(controllerId);
         if (hasXChargeCounterEffect && entry.getXValue() > 0) {
             String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " charge counters under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (hasXPlusOneCounterEffect && entry.getXValue() > 0) {
+            String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (fixedChargeCounters > 0) {
             String logEntry = card.getName() + " enters the battlefield with " + fixedChargeCounters + " charge counters under " + playerName + "'s control.";

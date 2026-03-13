@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -92,6 +94,13 @@ public class StateBasedActionService {
                 int cancelled = Math.min(plus, minus);
                 p.setPlusOnePlusOneCounters(plus - cancelled);
                 p.setMinusOneMinusOneCounters(minus - cancelled);
+                // Protean Hydra ruling: "its last ability triggers whenever a +1/+1 counter is removed
+                // from it for any reason" — SBA counter annihilation triggers regrowth
+                if (cancelled > 0 && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
+                    int pending = gameData.pendingDelayedPlusOnePlusOneCounters.getOrDefault(p.getId(), 0);
+                    gameData.pendingDelayedPlusOnePlusOneCounters.put(p.getId(), pending + cancelled * 2);
+                }
             }
         });
 

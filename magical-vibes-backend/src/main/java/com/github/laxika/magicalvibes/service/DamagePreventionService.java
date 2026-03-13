@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,6 +37,22 @@ public class DamagePreventionService {
     }
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
+        // Protean Hydra ruling: "If unpreventable damage is dealt, the second ability will try to prevent
+        // it and fail (meaning that damage has its normal results), and it will also remove that many +1/+1
+        // counters from Protean Hydra." — counters are removed regardless of whether damage is preventable.
+        if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect)) {
+            int countersToRemove = Math.min(damage, permanent.getPlusOnePlusOneCounters());
+            if (countersToRemove > 0 && !gameQueryService.cantHaveCounters(gameData, permanent)) {
+                permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - countersToRemove);
+                registerDelayedRegrowth(gameData, permanent, countersToRemove);
+            }
+            // Prevention only applies if damage is preventable
+            if (gameQueryService.isDamagePreventable(gameData)) {
+                return 0;
+            }
+            return damage;
+        }
         if (gameQueryService.isDamagePreventable(gameData)) {
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
@@ -53,6 +71,19 @@ public class DamagePreventionService {
             return damage - prevented;
         }
         return damage;
+    }
+
+    /**
+     * Registers delayed +1/+1 counter regrowth triggers for Protean Hydra-style effects.
+     * Each removed counter creates a separate delayed trigger that adds 2 +1/+1 counters
+     * at the beginning of the next end step (ruling: "its last ability will trigger that many times").
+     */
+    void registerDelayedRegrowth(GameData gameData, Permanent permanent, int countersRemoved) {
+        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
+            int pending = gameData.pendingDelayedPlusOnePlusOneCounters.getOrDefault(permanent.getId(), 0);
+            gameData.pendingDelayedPlusOnePlusOneCounters.put(permanent.getId(), pending + countersRemoved * 2);
+        }
     }
 
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {

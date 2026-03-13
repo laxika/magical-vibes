@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -232,6 +233,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof CopyPermanentOnEnterEffect))
                 .filter(e -> !(e instanceof EnterWithXChargeCountersEffect))
+                .filter(e -> !(e instanceof EnterWithXPlusOnePlusOneCountersEffect))
                 .filter(e -> !(e instanceof EnterWithFixedChargeCountersEffect))
                 .filter(e -> !(e instanceof PutPhylacteryCounterOnTargetPermanentEffect))
                 .toList();
