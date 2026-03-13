@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "215")
+@CardRegistration(set = "M10", collectorNumber = "145")
 @CardRegistration(set = "M11", collectorNumber = "147")
 public class LavaAxe extends Card {
 
