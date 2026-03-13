@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "M10", collectorNumber = "10")
 @CardRegistration(set = "M11", collectorNumber = "14")
 public class Excommunicate extends Card {
 
