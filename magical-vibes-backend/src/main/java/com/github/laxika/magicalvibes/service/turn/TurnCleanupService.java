@@ -71,6 +71,7 @@ public class TurnCleanupService {
         });
 
         gameData.playerDamagePreventionShields.clear();
+        gameData.damageRedirectShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
         gameData.allPermanentsEnterTappedThisTurn = false;

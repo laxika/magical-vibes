@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -920,6 +921,7 @@ public class DamageResolutionService {
         }
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
+            processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
@@ -953,6 +955,43 @@ public class DamageResolutionService {
                 gameData.playersDealtDamageThisTurn.add(playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
+            }
+        }
+    }
+
+    /**
+     * Processes pending redirect damage entries populated by {@link DamagePreventionService}
+     * when damage redirect shields (e.g. Vengeful Archon) prevent damage. The source permanent
+     * deals the prevented amount to the redirect target player.
+     */
+    void processPendingRedirectDamage(GameData gameData) {
+        if (gameData.pendingRedirectDamage.isEmpty()) return;
+
+        List<DamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingRedirectDamage);
+        gameData.pendingRedirectDamage.clear();
+
+        for (DamageRedirectShield redirect : toProcess) {
+            UUID targetId = redirect.redirectTargetPlayerId();
+            int damage = redirect.remainingAmount();
+            String targetName = gameData.playerIdToName.get(targetId);
+            String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    redirect.sourceCard().getName() + " prevents " + damage + " damage to " + protectedName + ".");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    redirect.sourceCard().getName() + " deals " + damage + " damage to " + targetName + ".");
+
+            // Apply prevention shields on the redirect target (they may also have shields)
+            int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+            // Recursively process any redirects triggered by the target's shields
+            processPendingRedirectDamage(gameData);
+
+            if (redirectEffective > 0) {
+                if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                    int currentLife = gameData.getLife(targetId);
+                    gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
+                }
+                gameData.playersDealtDamageThisTurn.add(targetId);
             }
         }
     }

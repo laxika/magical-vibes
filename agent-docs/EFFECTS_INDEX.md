@@ -688,6 +688,7 @@ Pass `null` as filter to allow any card.
 | `PreventAllDamageToControllerAndCreaturesEffect` | `()` | prevent all damage to controller and creatures controller controls this turn (Safe Passage-style) |
 | `PreventAllDamageByTargetCreatureEffect` | `()` | prevent all damage target creature(s) would deal this turn (multi-target via targetPermanentIds) |
 | `PreventAllDamageFromChosenSourceEffect` | `()` | prevent all damage a chosen source would deal to controller this turn (prompts permanent choice on resolution) |
+| `PreventXDamageToControllerAndRedirectToTargetPlayerEffect` | `()` | prevent next X damage to controller this turn; if prevented, source creature deals that much to target player (e.g. Vengeful Archon). Uses X-cost ability. `canTargetPlayer()=true` |
 | `PreventDamageAndAddMinusCountersEffect` | `()` | prevent all damage to this creature and put a -1/-1 counter for each 1 damage prevented (static, e.g. Phyrexian Hydra) |
 | `PreventDamageAndRemovePlusOnePlusOneCountersEffect` | `()` | prevent all damage to this creature and remove that many +1/+1 counters (static, e.g. Protean Hydra). Can only remove counters up to the number currently on the creature |
 | `DelayedPlusOnePlusOneCounterRegrowthEffect` | `()` | whenever a +1/+1 counter is removed from this creature, put two +1/+1 counters on it at the beginning of the next end step (static, e.g. Protean Hydra). Works with PreventDamageAndRemovePlusOnePlusOneCountersEffect. Registers delayed triggers in GameData.pendingDelayedPlusOnePlusOneCounters |

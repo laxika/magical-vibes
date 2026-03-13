@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventXDamageToControllerAndRedirectToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -180,6 +182,27 @@ public class PreventionResolutionService {
 
         String logEntry = gameData.playerIdToName.get(controllerId) + "'s opponents can't cast spells this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
+    }
+
+    @HandlesEffect(PreventXDamageToControllerAndRedirectToTargetPlayerEffect.class)
+    void resolvePreventXDamageAndRedirect(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        int xValue = entry.getXValue();
+
+        if (xValue <= 0 || targetPlayerId == null) return;
+
+        gameData.damageRedirectShields.add(new DamageRedirectShield(
+                controllerId, xValue, entry.getSourcePermanentId(), entry.getCard(), targetPlayerId));
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String logEntry = entry.getCard().getName() + " — the next " + xValue + " damage that would be dealt to "
+                + controllerName + " this turn is prevented. If prevented, " + entry.getCard().getName()
+                + " deals that much damage to " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - Damage redirect shield {} added: protecting {} → redirecting to {}",
+                gameData.id, xValue, controllerName, targetName);
     }
 
     @HandlesEffect(PreventAllDamageFromChosenSourceEffect.class)

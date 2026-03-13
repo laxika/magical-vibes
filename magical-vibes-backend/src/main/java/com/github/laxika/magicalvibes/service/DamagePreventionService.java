@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -13,6 +14,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -94,12 +98,51 @@ public class DamagePreventionService {
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
+        // Process redirect shields first (e.g. Vengeful Archon)
+        damage = applyRedirectShields(gameData, playerId, damage);
         damage = applyGlobalPreventionShield(gameData, damage);
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;
         int prevented = Math.min(shield, damage);
         gameData.playerDamagePreventionShields.put(playerId, shield - prevented);
         return damage - prevented;
+    }
+
+    /**
+     * Consumes damage redirect shields for the given player. Prevented damage is tracked
+     * in {@link GameData#pendingRedirectDamage} for the caller to deal after damage processing.
+     * Returns the remaining damage after redirect shield prevention.
+     */
+    private int applyRedirectShields(GameData gameData, UUID playerId, int damage) {
+        if (damage <= 0 || gameData.damageRedirectShields.isEmpty()) return damage;
+
+        int remaining = damage;
+        List<DamageRedirectShield> toReAdd = new ArrayList<>();
+        Iterator<DamageRedirectShield> it = gameData.damageRedirectShields.iterator();
+
+        while (it.hasNext() && remaining > 0) {
+            DamageRedirectShield shield = it.next();
+            if (!shield.protectedPlayerId().equals(playerId)) continue;
+
+            int prevented = Math.min(shield.remainingAmount(), remaining);
+            remaining -= prevented;
+            it.remove();
+
+            // If shield is not fully consumed, save reduced version to re-add after iteration
+            if (prevented < shield.remainingAmount()) {
+                toReAdd.add(shield.withReducedAmount(prevented));
+            }
+
+            if (prevented > 0) {
+                gameData.pendingRedirectDamage.add(new DamageRedirectShield(
+                        playerId, prevented, shield.sourcePermanentId(), shield.sourceCard(), shield.redirectTargetPlayerId()));
+            }
+        }
+
+        // Re-add partially consumed shields after iteration is complete
+        gameData.damageRedirectShields.addAll(toReAdd);
+
+        return remaining;
     }
 
     public boolean isSourceDamagePreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {

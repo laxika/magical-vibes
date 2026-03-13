@@ -743,6 +743,7 @@ public class CardSpecificResolutionService {
         gameData.pendingEachPlayerDiscardAmount = 0;
         gameData.combatDamageRedirectTarget = null;
         gameData.globalDamagePreventionShield = 0;
+        gameData.damageRedirectShields.clear();
         gameData.preventAllCombatDamage = false;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.endTurnRequested = false;

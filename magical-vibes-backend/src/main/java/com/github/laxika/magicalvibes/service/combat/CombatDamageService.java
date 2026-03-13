@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
+import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -801,6 +802,7 @@ public class CombatDamageService {
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
+        processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat");
         // Phyrexian Unlife: convert normal combat damage to poison when at 0 or less life
         if (state.damageToDefendingPlayer > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId)) {
@@ -831,6 +833,40 @@ public class CombatDamageService {
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
         if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
             gameData.playersDealtDamageThisTurn.add(defenderId);
+        }
+    }
+
+    /**
+     * Processes pending redirect damage entries populated by {@link DamagePreventionService}
+     * when damage redirect shields (e.g. Vengeful Archon) prevent damage.
+     */
+    private void processPendingRedirectDamage(GameData gameData) {
+        if (gameData.pendingRedirectDamage.isEmpty()) return;
+
+        List<DamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingRedirectDamage);
+        gameData.pendingRedirectDamage.clear();
+
+        for (DamageRedirectShield redirect : toProcess) {
+            UUID targetId = redirect.redirectTargetPlayerId();
+            int damage = redirect.remainingAmount();
+            String targetName = gameData.playerIdToName.get(targetId);
+            String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    redirect.sourceCard().getName() + " prevents " + damage + " damage to " + protectedName + ".");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    redirect.sourceCard().getName() + " deals " + damage + " damage to " + targetName + ".");
+
+            int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+            processPendingRedirectDamage(gameData);
+
+            if (redirectEffective > 0) {
+                if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                    int currentLife = gameData.getLife(targetId);
+                    gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
+                }
+                gameData.playersDealtDamageThisTurn.add(targetId);
+            }
         }
     }
 
