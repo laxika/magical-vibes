@@ -241,7 +241,7 @@ public class GameTestHarness {
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService);
-        PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory, permanentRemovalService, triggerCollectionService, effectHandlerRegistry);
+        PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory, permanentRemovalService, battlefieldEntryService, triggerCollectionService, effectHandlerRegistry);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         List<Object> effectServices = List.of(
                 damageResolutionService,

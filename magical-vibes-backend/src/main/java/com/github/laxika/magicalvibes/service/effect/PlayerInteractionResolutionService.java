@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDis
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;

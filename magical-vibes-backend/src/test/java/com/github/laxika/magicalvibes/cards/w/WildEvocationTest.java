@@ -92,7 +92,7 @@ class WildEvocationTest extends BaseCardTest {
         // Grizzly Bears should be on the stack
         assertThat(gd.stack)
                 .anyMatch(se -> se.getCard().getName().equals("Grizzly Bears")
-                        && se.getType() == StackEntryType.CREATURE_SPELL);
+                        && se.getEntryType() == StackEntryType.CREATURE_SPELL);
         // Hand should be empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
