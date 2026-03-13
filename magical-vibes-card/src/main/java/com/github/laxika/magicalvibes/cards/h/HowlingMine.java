@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "325")
+@CardRegistration(set = "M10", collectorNumber = "212")
 public class HowlingMine extends Card {
 
     public HowlingMine() {
