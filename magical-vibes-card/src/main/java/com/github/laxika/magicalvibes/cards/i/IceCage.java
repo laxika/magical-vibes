@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "M10", collectorNumber = "56")
 @CardRegistration(set = "M11", collectorNumber = "57")
 public class IceCage extends Card {
 
