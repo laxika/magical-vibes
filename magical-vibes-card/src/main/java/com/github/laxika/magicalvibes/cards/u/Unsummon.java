@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "122")
+@CardRegistration(set = "M11", collectorNumber = "78")
 public class Unsummon extends Card {
 
     public Unsummon() {
