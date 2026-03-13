@@ -260,6 +260,7 @@ ReturnCardFromGraveyardEffect(
 | `CardIsSelfPredicate` | `()` | only the source card itself (Squee-style self-return) |
 | `CardIsAuraPredicate` | `()` | aura cards |
 | `CardIsPermanentPredicate` | `()` | permanent cards (creature, artifact, enchantment, planeswalker, land, kindred — not instant/sorcery) |
+| `CardMaxManaValuePredicate` | `(int maxManaValue)` | cards with mana value ≤ maxManaValue |
 | `CardNotPredicate` | `(CardPredicate predicate)` | NOT — inverts a predicate |
 | `CardAllOfPredicate` | `(List<CardPredicate> predicates)` | AND — all predicates must match |
 | `CardAnyOfPredicate` | `(List<CardPredicate> predicates)` | OR — any predicate matches |
