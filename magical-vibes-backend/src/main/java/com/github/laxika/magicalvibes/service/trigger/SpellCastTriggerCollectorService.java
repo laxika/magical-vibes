@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
@@ -121,6 +122,39 @@ public class SpellCastTriggerCollectorService {
         CopySpellForEachOtherSubtypePermanentEffect resolutionEffect =
                 new CopySpellForEachOtherSubtypePermanentEffect(
                         trigger.subtype(), snapshot, sc.castingPlayerId(), singleTargetId);
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolutionEffect))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CopySpellForEachOtherPlayerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCopySpellForEachOtherPlayer(TriggerMatchContext match,
+            CopySpellForEachOtherPlayerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellSnapshot() != null) return false;
+
+        Card spellCard = sc.spellCard();
+        if (spellCard.getType() != CardType.INSTANT && spellCard.getType() != CardType.SORCERY) return false;
+
+        // Find the spell on the stack
+        StackEntry spellEntry = null;
+        for (StackEntry se : match.gameData().stack) {
+            if (se.getCard().getId().equals(spellCard.getId())) {
+                spellEntry = se;
+                break;
+            }
+        }
+        if (spellEntry == null) return false;
+
+        StackEntry snapshot = new StackEntry(spellEntry);
+        CopySpellForEachOtherPlayerEffect resolutionEffect =
+                new CopySpellForEachOtherPlayerEffect(snapshot, sc.castingPlayerId());
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

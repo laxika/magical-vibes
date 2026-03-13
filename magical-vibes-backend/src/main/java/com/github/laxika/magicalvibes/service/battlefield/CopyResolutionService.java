@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.ValidTargetService;
@@ -106,6 +107,44 @@ public class CopyResolutionService {
         log.info("Game {} - {} triggers, creating {} copies of {} for each other {}",
                 gameData.id, entry.getCard().getName(), eligibleTargets.size(),
                 spellCard.getName(), subtype.getDisplayName());
+    }
+
+    @HandlesEffect(CopySpellForEachOtherPlayerEffect.class)
+    void resolveCopyForEachOtherPlayer(GameData gameData, StackEntry entry,
+                                       CopySpellForEachOtherPlayerEffect effect) {
+        if (effect.spellSnapshot() == null) return;
+
+        StackEntry spellSnapshot = effect.spellSnapshot();
+        UUID castingPlayerId = effect.castingPlayerId();
+        Card spellCard = spellSnapshot.getCard();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(castingPlayerId)) continue;
+
+            Card copyCard = createCopyCard(spellCard);
+            StackEntry copyEntry = createCopyStackEntry(spellSnapshot, copyCard, playerId, spellSnapshot.getTargetPermanentId());
+
+            gameData.stack.add(copyEntry);
+
+            String logMsg = "A copy of " + spellCard.getName() + " is created for "
+                    + gameData.playerIdToName.get(playerId) + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+            // If the copy has a target, offer the controller a chance to choose new targets
+            if (copyEntry.getTargetPermanentId() != null) {
+                PendingMayAbility retargetAbility = new PendingMayAbility(
+                        entry.getCard(),
+                        playerId,
+                        List.of(new CopySpellEffect()),
+                        "Choose new targets for the copy of " + spellCard.getName() + "?",
+                        copyCard.getId()
+                );
+                gameData.pendingMayAbilities.addFirst(retargetAbility);
+            }
+        }
+
+        log.info("Game {} - {} triggers, copying {} for each other player",
+                gameData.id, entry.getCard().getName(), spellCard.getName());
     }
 
     @HandlesEffect(BecomeCopyOfTargetCreatureEffect.class)
