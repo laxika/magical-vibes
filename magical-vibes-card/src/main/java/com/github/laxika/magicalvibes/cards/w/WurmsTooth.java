@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "346")
+@CardRegistration(set = "M11", collectorNumber = "222")
 public class WurmsTooth extends Card {
 
     public WurmsTooth() {
