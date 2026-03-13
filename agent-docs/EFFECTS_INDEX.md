@@ -676,6 +676,7 @@ Pass `null` as filter to allow any card.
 | `PreventAllDamageToAndByEnchantedCreatureEffect` | `()` | prevent all damage to and dealt by enchanted creature |
 | `PreventDamageFromColorsEffect` | `(Set<CardColor> colors)` | prevent all damage from sources of specified colors (static) |
 | `PreventNextColorDamageToControllerEffect` | `(CardColor chosenColor)` | prevent next damage of chosen color to controller |
+| `PreventAllDamageToControllerAndCreaturesEffect` | `()` | prevent all damage to controller and creatures controller controls this turn (Safe Passage-style) |
 | `PreventAllDamageByTargetCreatureEffect` | `()` | prevent all damage target creature(s) would deal this turn (multi-target via targetPermanentIds) |
 | `PreventAllDamageFromChosenSourceEffect` | `()` | prevent all damage a chosen source would deal to controller this turn (prompts permanent choice on resolution) |
 | `PreventDamageAndAddMinusCountersEffect` | `()` | prevent all damage to this creature and put a -1/-1 counter for each 1 damage prevented (static, e.g. Phyrexian Hydra) |

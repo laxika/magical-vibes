@@ -123,6 +123,8 @@ public class GameData {
     public final Set<UUID> pendingTokenExilesAtEndStep = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
+    /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
+    public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     public boolean pendingSacrificeAttackingCreature;
     public int pendingForcedSacrificeCount;
     public UUID pendingForcedSacrificePlayerId;
@@ -372,6 +374,7 @@ public class GameData {
         copy.enchantmentDependentStolenCreatures.addAll(this.enchantmentDependentStolenCreatures);
         copy.permanentControlStolenCreatures.addAll(this.permanentControlStolenCreatures);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
+        copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
 
         // --- List<UUID> (synchronized) ---

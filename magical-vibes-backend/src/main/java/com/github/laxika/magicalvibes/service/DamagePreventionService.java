@@ -37,6 +37,11 @@ public class DamagePreventionService {
     }
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {
+        // Safe Passage: prevent all damage to creatures controlled by a player with full prevention
+        if (gameQueryService.isDamagePreventable(gameData)) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (controllerId != null && gameData.playersWithAllDamagePrevented.contains(controllerId)) return 0;
+        }
         // Protean Hydra ruling: "If unpreventable damage is dealt, the second ability will try to prevent
         // it and fail (meaning that damage has its normal results), and it will also remove that many +1/+1
         // counters from Protean Hydra." — counters are removed regardless of whether damage is preventable.
@@ -88,6 +93,7 @@ public class DamagePreventionService {
 
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;
         damage = applyGlobalPreventionShield(gameData, damage);
         int shield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
         if (shield <= 0 || damage <= 0) return damage;

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCo
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
@@ -74,6 +75,16 @@ public class PreventionResolutionService {
         gameData.preventAllCombatDamage = true;
 
         String logEntry = "All combat damage will be prevented this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+    }
+
+    @HandlesEffect(PreventAllDamageToControllerAndCreaturesEffect.class)
+    void resolvePreventAllDamageToControllerAndCreatures(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        gameData.playersWithAllDamagePrevented.add(controllerId);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = "All damage that would be dealt to " + playerName + " and creatures " + playerName + " controls this turn is prevented.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 
