@@ -618,6 +618,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `CantBeBlockedEffect` | `()` | can't be blocked (static) |
+| `CantAttackOrBlockAloneEffect` | `()` | this creature can't attack or block alone (CR 508.1b/509.1b, static) |
 | `CantBlockEffect` | `()` | this creature can't block (static) |
 | `CantBlockSourceEffect` | `(UUID sourcePermanentId)` | target creature can't block source permanent |
 | `CanBeBlockedOnlyByFilterEffect` | `(PermanentPredicate blockerPredicate, String allowedBlockersDescription)` | can only be blocked by matching creatures (static) |

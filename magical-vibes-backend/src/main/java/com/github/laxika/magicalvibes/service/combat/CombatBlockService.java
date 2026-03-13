@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -70,6 +71,13 @@ public class CombatBlockService {
         for (int i = 0; i < battlefield.size(); i++) {
             if (gameQueryService.canBlock(gameData, battlefield.get(i))) {
                 indices.add(i);
+            }
+        }
+        // CR 509.1b: if only one creature can block and it has "can't block alone", remove it
+        if (indices.size() == 1) {
+            Permanent sole = battlefield.get(indices.getFirst());
+            if (hasCantAttackOrBlockAlone(sole)) {
+                return List.of();
             }
         }
         return indices;
@@ -196,6 +204,10 @@ public class CombatBlockService {
                 }
             }
         }
+
+        // CR 509.1b: validate "can't block alone" — if any declared blocker has this restriction,
+        // there must be at least 2 total blockers
+        validateCantBlockAlone(defenderBattlefield, blockerAssignments);
 
         validateMaximumBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
@@ -545,6 +557,27 @@ public class CombatBlockService {
                 throw new IllegalStateException(blocker.getCard().getName() + " must block target creature this turn if able");
             }
         }
+    }
+
+    private void validateCantBlockAlone(List<Permanent> defenderBattlefield,
+                                         List<BlockerAssignment> blockerAssignments) {
+        if (blockerAssignments.isEmpty()) return;
+        Set<Integer> uniqueBlockerIndices = new HashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            uniqueBlockerIndices.add(assignment.blockerIndex());
+        }
+        if (uniqueBlockerIndices.size() == 1) {
+            int soleIdx = uniqueBlockerIndices.iterator().next();
+            Permanent sole = defenderBattlefield.get(soleIdx);
+            if (hasCantAttackOrBlockAlone(sole)) {
+                throw new IllegalStateException(sole.getCard().getName() + " can't block alone");
+            }
+        }
+    }
+
+    private boolean hasCantAttackOrBlockAlone(Permanent creature) {
+        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
     }
 
     private List<CanBeBlockedOnlyByFilterEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {

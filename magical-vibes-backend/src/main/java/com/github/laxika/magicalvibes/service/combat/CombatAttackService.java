@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
@@ -69,6 +70,13 @@ public class CombatAttackService {
             Permanent p = battlefield.get(i);
             if (canCreatureAttack(gameData, p, defenderId, defenderBattlefield)) {
                 indices.add(i);
+            }
+        }
+        // CR 508.1b: if only one creature can attack and it has "can't attack alone", remove it
+        if (indices.size() == 1) {
+            Permanent sole = battlefield.get(indices.getFirst());
+            if (hasCantAttackOrBlockAlone(sole)) {
+                return List.of();
             }
         }
         return indices;
@@ -143,6 +151,10 @@ public class CombatAttackService {
                 throw new IllegalStateException("Invalid attacker index: " + idx);
             }
         }
+
+        // CR 508.1b: validate "can't attack alone" — if any declared attacker has this restriction,
+        // there must be at least 2 total attackers
+        validateCantAttackAlone(battlefield, attackerIndices);
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
@@ -538,6 +550,20 @@ public class CombatAttackService {
             }
         }
         return validIds;
+    }
+
+    private void validateCantAttackAlone(List<Permanent> battlefield, List<Integer> attackerIndices) {
+        if (attackerIndices.size() == 1) {
+            Permanent sole = battlefield.get(attackerIndices.getFirst());
+            if (hasCantAttackOrBlockAlone(sole)) {
+                throw new IllegalStateException(sole.getCard().getName() + " can't attack alone");
+            }
+        }
+    }
+
+    private boolean hasCantAttackOrBlockAlone(Permanent creature) {
+        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
     }
 
     private void payGenericMana(ManaPool pool, int amount) {
