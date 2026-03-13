@@ -509,6 +509,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, List.of());
     }
 
+    public void castInstant(Player player, int cardIndex, Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments);
+    }
+
     public void castInstantWithSacrifice(Player player, int cardIndex, UUID targetPermanentId, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, sacrificePermanentId);

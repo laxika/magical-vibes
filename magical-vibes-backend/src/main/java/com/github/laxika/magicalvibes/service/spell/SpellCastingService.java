@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
@@ -489,17 +490,47 @@ public class SpellCastingService {
                 if (damageAssignments == null || damageAssignments.isEmpty()) {
                     throw new IllegalStateException("Damage assignments required");
                 }
+
+                DealDividedDamageAmongTargetCreaturesEffect dividedCreatureEffect = filteredSpellEffects.stream()
+                        .filter(e -> e instanceof DealDividedDamageAmongTargetCreaturesEffect)
+                        .map(DealDividedDamageAmongTargetCreaturesEffect.class::cast)
+                        .findFirst().orElse(null);
+
                 int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
-                if (totalDamage != resolvedXValue) {
-                    throw new IllegalStateException("Damage assignments must sum to X (" + resolvedXValue + ")");
-                }
-                for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                    Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                    if (target == null || !gameQueryService.isCreature(gameData, target) || !target.isAttacking()) {
-                        throw new IllegalStateException("All targets must be attacking creatures");
+
+                if (dividedCreatureEffect != null) {
+                    // Fixed-damage divided damage spell (e.g. Ignite Disorder)
+                    if (totalDamage != dividedCreatureEffect.totalDamage()) {
+                        throw new IllegalStateException("Damage assignments must sum to " + dividedCreatureEffect.totalDamage());
                     }
-                    if (assignment.getValue() <= 0) {
-                        throw new IllegalStateException("Each damage assignment must be positive");
+                    if (damageAssignments.size() > card.getMaxTargets()) {
+                        throw new IllegalStateException("Too many targets");
+                    }
+                    for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                        Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+                            throw new IllegalStateException("All targets must be creatures");
+                        }
+                        if (card.getTargetFilter() != null) {
+                            gameQueryService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                        }
+                        if (assignment.getValue() <= 0) {
+                            throw new IllegalStateException("Each damage assignment must be positive");
+                        }
+                    }
+                } else {
+                    // X-damage attacking creature divided damage spell (e.g. Hail of Arrows)
+                    if (totalDamage != resolvedXValue) {
+                        throw new IllegalStateException("Damage assignments must sum to X (" + resolvedXValue + ")");
+                    }
+                    for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                        Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                        if (target == null || !gameQueryService.isCreature(gameData, target) || !target.isAttacking()) {
+                            throw new IllegalStateException("All targets must be attacking creatures");
+                        }
+                        if (assignment.getValue() <= 0) {
+                            throw new IllegalStateException("Each damage assignment must be positive");
+                        }
                     }
                 }
                 gameData.stack.add(new StackEntry(

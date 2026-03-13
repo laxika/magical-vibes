@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -152,10 +153,12 @@ public class Card {
 
     public boolean isNeedsDamageDistribution() {
         boolean inSpell = getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect);
+                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
+                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect);
         boolean inAbility = activatedAbilities.stream()
                 .flatMap(a -> a.getEffects().stream())
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect);
+                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
+                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect);
         return inSpell || inAbility;
     }
 }
