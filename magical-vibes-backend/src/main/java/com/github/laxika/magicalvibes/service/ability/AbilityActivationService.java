@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
@@ -1136,6 +1137,11 @@ public class AbilityActivationService {
                         if (effect instanceof EnchantedPermanentBecomesTypeEffect landTypeEffect) {
                             return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
                                     landTypeEffect.subtype());
+                        }
+                        if (effect instanceof EnchantedPermanentBecomesChosenTypeEffect
+                                && p.getChosenSubtype() != null) {
+                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
+                                    p.getChosenSubtype());
                         }
                     }
                 }

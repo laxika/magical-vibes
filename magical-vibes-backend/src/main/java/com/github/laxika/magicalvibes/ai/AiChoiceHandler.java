@@ -236,6 +236,14 @@ class AiChoiceHandler {
             return;
         }
 
+        if (colorChoice.context() instanceof ColorChoiceContext.BasicLandTypeChoice) {
+            String chosenType = "ISLAND";
+            log.info("AI: Choosing basic land type {} in game {}", chosenType, gameId);
+            final String landType = chosenType;
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, landType)));
+            return;
+        }
+
         if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
             UUID targetId = ctx.targetPlayerId();
             List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());

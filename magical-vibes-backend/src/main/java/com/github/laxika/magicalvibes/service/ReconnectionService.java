@@ -292,6 +292,9 @@ public class ReconnectionService {
                             .map(CardSubtype::name)
                             .toList();
                     prompt = "Choose a creature type.";
+                } else if (cc.context() instanceof ColorChoiceContext.BasicLandTypeChoice) {
+                    options = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+                    prompt = "Choose a basic land type.";
                 } else if (cc.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice) {
                     options = collectAllCardNamesInGame(gameData);
                     prompt = "Choose a card name.";

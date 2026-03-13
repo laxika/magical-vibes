@@ -103,6 +103,10 @@ public class ColorChoiceHandlerService {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ColorChoiceContext.BasicLandTypeChoice ctx) {
+            handleBasicLandTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice ctx) {
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
             return;
@@ -412,6 +416,26 @@ public class ColorChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + " for " + perm.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ColorChoiceContext.BasicLandTypeChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setChosenSubtype(subtype);
+
+            String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + " for " + perm.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses basic land type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
         }
 
         gameData.priorityPassedBy.clear();

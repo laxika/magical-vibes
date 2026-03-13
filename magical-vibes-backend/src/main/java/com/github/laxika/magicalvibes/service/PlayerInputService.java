@@ -160,6 +160,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
     }
 
+    public void beginBasicLandTypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        ColorChoiceContext.BasicLandTypeChoice choiceContext = new ColorChoiceContext.BasicLandTypeChoice(permanentId);
+        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+
+        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(basicLandTypes, "Choose a basic land type."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a basic land type", gameData.id, playerName);
+    }
+
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
             CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.AURA,

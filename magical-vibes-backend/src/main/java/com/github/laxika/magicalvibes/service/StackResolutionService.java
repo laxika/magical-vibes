@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
@@ -166,6 +167,15 @@ public class StackResolutionService {
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
                     creatureControlService.stealPermanent(gameData, controllerId, target);
+                }
+
+                // Check if aura has "as enters" basic land type choice (e.g. Convincing Mirage)
+                boolean needsBasicLandTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(e -> e instanceof ChooseBasicLandTypeOnEnterEffect);
+                if (needsBasicLandTypeChoice) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                    Permanent justEntered = bf.get(bf.size() - 1);
+                    playerInputService.beginBasicLandTypeChoice(gameData, controllerId, justEntered.getId());
                 }
 
                 // Process aura ETB effects (e.g., Volition Reins)

@@ -24,6 +24,8 @@ public sealed interface ColorChoiceContext {
 
     record SubtypeChoice(UUID permanentId) implements ColorChoiceContext {}
 
+    record BasicLandTypeChoice(UUID permanentId) implements ColorChoiceContext {}
+
     /**
      * Tracks the sequential "each player names a card" flow for Conundrum Sphinx etc.
      * Players name in APNAP order. After all have named, top cards are revealed and

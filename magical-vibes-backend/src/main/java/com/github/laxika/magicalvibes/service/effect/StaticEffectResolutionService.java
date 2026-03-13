@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtype
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
@@ -310,6 +311,18 @@ public class StaticEffectResolutionService {
             if (becomesType.isBasicLandSubtype()) {
                 accumulator.setLandSubtypeOverriding(true);
             }
+        }
+    }
+
+    @HandlesStaticEffect(EnchantedPermanentBecomesChosenTypeEffect.class)
+    private void resolveEnchantedPermanentBecomesChosenType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        CardSubtype chosenSubtype = context.source().getChosenSubtype();
+        if (chosenSubtype == null) return;
+        if (context.source().isAttached()
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addGrantedSubtype(chosenSubtype);
+            accumulator.setSubtypeOverriding(true);
+            accumulator.setLandSubtypeOverriding(true);
         }
     }
 
