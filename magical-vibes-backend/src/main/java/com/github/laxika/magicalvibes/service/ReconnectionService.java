@@ -193,6 +193,12 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, kpc);
                 }
             }
+            case MIRROR_OF_FATE_CHOICE -> {
+                InteractionContext.MirrorOfFateChoice mfc = gameData.interaction.mirrorOfFateChoiceContext();
+                if (mfc != null) {
+                    resendFromContext(gameData, playerId, mfc);
+                }
+            }
         }
     }
 
@@ -479,6 +485,20 @@ public class ReconnectionService {
                 sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
                         validCardIds, cardViews, 1,
                         "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
+            }
+            case InteractionContext.MirrorOfFateChoice mfc -> {
+                if (!playerId.equals(mfc.playerId())) {
+                    return;
+                }
+                List<Card> exiledCards = gameData.playerExiledCards.getOrDefault(playerId, List.of());
+                List<UUID> validCardIds = new ArrayList<>(mfc.validCardIds());
+                List<CardView> cardViews = exiledCards.stream()
+                        .filter(c -> mfc.validCardIds().contains(c.getId()))
+                        .map(cardViewFactory::create)
+                        .toList();
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                        validCardIds, cardViews, mfc.maxCount(),
+                        "Choose up to seven face-up exiled cards you own to put on top of your library."));
             }
         }
     }

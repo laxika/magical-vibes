@@ -26,5 +26,6 @@ public enum AwaitingInput {
     X_VALUE_CHOICE,
     KNOWLEDGE_POOL_CAST_CHOICE,
     EXILE_FROM_HAND_CHOICE,
+    MIRROR_OF_FATE_CHOICE,
     SCRY
 }

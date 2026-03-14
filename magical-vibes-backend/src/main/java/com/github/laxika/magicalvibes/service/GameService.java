@@ -132,6 +132,7 @@ public class GameService {
             case InteractionContext.XValueChoice xvc -> controlledId.equals(xvc.playerId());
             case InteractionContext.Scry sc -> controlledId.equals(sc.playerId());
             case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
+            case InteractionContext.MirrorOfFateChoice mfc -> controlledId.equals(mfc.playerId());
         };
     }
 
@@ -396,6 +397,8 @@ public class GameService {
                 colorChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
                 exileResolutionService.handleKnowledgePoolCastChoice(gameData, player, cardIds);
+            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
+                exileResolutionService.handleMirrorOfFateChoice(gameData, player, cardIds);
             } else {
                 graveyardChoiceHandlerService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);
             }

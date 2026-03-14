@@ -682,6 +682,9 @@ public class GameData {
             case InteractionContext.KnowledgePoolCastChoice kpc ->
                     targetInteraction.beginKnowledgePoolCastChoice(kpc.playerId(),
                             kpc.validCardIds() != null ? new HashSet<>(kpc.validCardIds()) : null, kpc.maxCount());
+            case InteractionContext.MirrorOfFateChoice mfc ->
+                    targetInteraction.beginMirrorOfFateChoice(mfc.playerId(),
+                            mfc.validCardIds() != null ? new HashSet<>(mfc.validCardIds()) : null, mfc.maxCount());
         }
 
         // Copy discard remaining count (not part of context reconstruction)

@@ -23,7 +23,8 @@ public sealed interface InteractionContext permits
         InteractionContext.CombatDamageAssignment,
         InteractionContext.XValueChoice,
         InteractionContext.Scry,
-        InteractionContext.KnowledgePoolCastChoice {
+        InteractionContext.KnowledgePoolCastChoice,
+        InteractionContext.MirrorOfFateChoice {
 
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
 
@@ -92,4 +93,6 @@ public sealed interface InteractionContext permits
     record Scry(UUID playerId, List<Card> cards) implements InteractionContext {}
 
     record KnowledgePoolCastChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
+
+    record MirrorOfFateChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
 }

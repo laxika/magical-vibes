@@ -699,4 +699,25 @@ public class InteractionState {
         return new InteractionContext.KnowledgePoolCastChoice(multiSelection.multiGraveyardPlayerId(),
                 multiSelection.multiGraveyardValidCardIds(), multiSelection.multiGraveyardMaxCount());
     }
+
+    // ========================================================================
+    // Mirror of Fate choice
+    // ========================================================================
+
+    public void beginMirrorOfFateChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) {
+        this.awaitingInput = AwaitingInput.MIRROR_OF_FATE_CHOICE;
+        this.multiSelection.setMultiZoneExile(playerId, new HashSet<>(validCardIds), maxCount);
+        this.context = new InteractionContext.MirrorOfFateChoice(playerId, new HashSet<>(validCardIds), maxCount);
+    }
+
+    public void clearMirrorOfFateChoice() {
+        this.multiSelection.clearMultiZoneExile();
+    }
+
+    public InteractionContext.MirrorOfFateChoice mirrorOfFateChoiceContext() {
+        if (context instanceof InteractionContext.MirrorOfFateChoice mfc) return mfc;
+        if (multiSelection.multiZoneExilePlayerId() == null || multiSelection.multiZoneExileValidCardIds() == null) return null;
+        return new InteractionContext.MirrorOfFateChoice(multiSelection.multiZoneExilePlayerId(),
+                multiSelection.multiZoneExileValidCardIds(), multiSelection.multiZoneExileMaxCount());
+    }
 }

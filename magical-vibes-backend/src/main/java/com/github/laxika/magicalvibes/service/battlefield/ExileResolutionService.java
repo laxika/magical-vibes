@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -24,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
 import com.github.laxika.magicalvibes.model.effect.OmenMachineDrawStepEffect;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -33,7 +37,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -746,6 +752,123 @@ public class ExileResolutionService {
 
                 triggerCollectionService.checkSpellCastTriggers(gameData, topCard, targetPlayerId, false);
             }
+        }
+    }
+
+    @HandlesEffect(MirrorOfFateEffect.class)
+    void resolveMirrorOfFate(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
+        if (exiledCards == null || exiledCards.isEmpty()) {
+            // No exiled cards to choose — just exile the entire library
+            exileLibraryAndPutChosenOnTop(gameData, controllerId, List.of());
+            return;
+        }
+
+        // Present up to 7 face-up exiled cards the player owns for selection
+        int maxCount = Math.min(7, exiledCards.size());
+        List<UUID> validCardIds = exiledCards.stream().map(Card::getId).toList();
+        List<CardView> cardViews = exiledCards.stream().map(cardViewFactory::create).toList();
+
+        gameData.interaction.beginMirrorOfFateChoice(controllerId, new HashSet<>(validCardIds), maxCount);
+        playerInputService.sendMirrorOfFateChoice(gameData, controllerId, validCardIds, cardViews, maxCount);
+
+        log.info("Game {} - Awaiting {} to choose exiled cards for Mirror of Fate (up to {})",
+                gameData.id, controllerName, maxCount);
+    }
+
+    /**
+     * Handles the player's Mirror of Fate exiled card choice.
+     * Called from GameService.handleMultipleGraveyardCardsChosen dispatch.
+     */
+    public void handleMirrorOfFateChoice(GameData gameData, Player player, List<UUID> cardIds) {
+        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MIRROR_OF_FATE_CHOICE)) {
+            throw new IllegalStateException("Not awaiting Mirror of Fate choice");
+        }
+        InteractionContext.MirrorOfFateChoice ctx = gameData.interaction.mirrorOfFateChoiceContext();
+        if (ctx == null || !player.getId().equals(ctx.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        // Validate selected card IDs against valid set
+        Set<UUID> validIds = ctx.validCardIds();
+        for (UUID id : cardIds) {
+            if (!validIds.contains(id)) {
+                throw new IllegalStateException("Invalid card ID: " + id);
+            }
+        }
+        if (cardIds.size() > ctx.maxCount()) {
+            throw new IllegalStateException("Too many cards selected (max " + ctx.maxCount() + ")");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearMirrorOfFateChoice();
+
+        exileLibraryAndPutChosenOnTop(gameData, player.getId(), cardIds);
+    }
+
+    private void exileLibraryAndPutChosenOnTop(GameData gameData, UUID controllerId, List<UUID> chosenCardIds) {
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // Collect the chosen cards from the exile zone before exiling the library
+        List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
+        List<Card> chosenCards = new ArrayList<>();
+        for (UUID cardId : chosenCardIds) {
+            for (Card c : exiledCards) {
+                if (c.getId().equals(cardId)) {
+                    chosenCards.add(c);
+                    break;
+                }
+            }
+        }
+
+        // Exile all cards from the library
+        List<Card> library = gameData.playerDecks.get(controllerId);
+        if (library != null && !library.isEmpty()) {
+            int exiledCount = library.size();
+            exiledCards.addAll(library);
+            library.clear();
+            String exileLog = controllerName + " exiles " + exiledCount + " card"
+                    + (exiledCount != 1 ? "s" : "") + " from their library (Mirror of Fate).";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            log.info("Game {} - {} exiles {} cards from library (Mirror of Fate)",
+                    gameData.id, controllerName, exiledCount);
+        }
+
+        // Remove the chosen cards from exile and also from permanentExiledCards if tracked there
+        for (Card card : chosenCards) {
+            exiledCards.remove(card);
+            for (List<Card> pool : gameData.permanentExiledCards.values()) {
+                pool.remove(card);
+            }
+        }
+
+        if (chosenCards.isEmpty()) {
+            String emptyLog = controllerName + "'s library is now empty (Mirror of Fate).";
+            gameBroadcastService.logAndBroadcast(gameData, emptyLog);
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+        } else if (chosenCards.size() == 1) {
+            // Single card: put directly on top, no ordering needed
+            library.addFirst(chosenCards.getFirst());
+            String putLog = controllerName + " puts " + chosenCards.getFirst().getName()
+                    + " on top of their library (Mirror of Fate).";
+            gameBroadcastService.logAndBroadcast(gameData, putLog);
+            log.info("Game {} - {} puts 1 exiled card on top of library (Mirror of Fate)",
+                    gameData.id, controllerName);
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+        } else {
+            // Multiple cards: player chooses the order via library reorder interaction
+            String putLog = controllerName + " puts " + chosenCards.size()
+                    + " cards on top of their library (Mirror of Fate) — choosing order.";
+            gameBroadcastService.logAndBroadcast(gameData, putLog);
+            log.info("Game {} - {} puts {} exiled cards on top of library, awaiting order (Mirror of Fate)",
+                    gameData.id, controllerName, chosenCards.size());
+            playerInputService.beginLibraryReorderFromExile(gameData, controllerId, chosenCards);
+            gameBroadcastService.broadcastGameState(gameData);
         }
     }
 

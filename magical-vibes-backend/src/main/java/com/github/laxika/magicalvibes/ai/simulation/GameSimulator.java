@@ -696,6 +696,13 @@ public class GameSimulator {
                     gameService.handleMultipleGraveyardCardsChosen(gd, player, chosen);
                 }
             }
+            case MIRROR_OF_FATE_CHOICE -> {
+                var mfc = gd.interaction.mirrorOfFateChoiceContext();
+                if (mfc != null && mfc.validCardIds() != null && !mfc.validCardIds().isEmpty()) {
+                    List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
+                    gameService.handleMultipleGraveyardCardsChosen(gd, player, chosen);
+                }
+            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 var cda = gd.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -767,6 +774,7 @@ public class GameSimulator {
             case InteractionContext.XValueChoice xvc -> xvc.playerId();
             case InteractionContext.Scry sc -> sc.playerId();
             case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
+            case InteractionContext.MirrorOfFateChoice mfc -> mfc.playerId();
         };
     }
 

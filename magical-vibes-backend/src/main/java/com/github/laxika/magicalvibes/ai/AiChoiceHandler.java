@@ -467,6 +467,17 @@ class AiChoiceHandler {
             return;
         }
 
+        // Mirror of Fate choice
+        if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
+            InteractionContext.MirrorOfFateChoice mfc = gameData.interaction.mirrorOfFateChoiceContext();
+            if (mfc != null && aiPlayerId.equals(mfc.playerId())) {
+                List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
+                log.info("AI: Choosing {} exiled cards for Mirror of Fate in game {}", chosen.size(), gameId);
+                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+            }
+            return;
+        }
+
         // Multi-zone exile choice (Memoricide, etc.)
         if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
             InteractionContext.MultiZoneExileChoice mzec = gameData.interaction.multiZoneExileChoiceContext();

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFrom
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
+import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -349,6 +350,26 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card from Knowledge Pool", gameData.id, playerName);
+    }
+
+    public void sendMirrorOfFateChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount) {
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
+                new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount,
+                        "Choose up to seven face-up exiled cards you own to put on top of your library."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose exiled cards for Mirror of Fate (up to {})", gameData.id, playerName, maxCount);
+    }
+
+    public void beginLibraryReorderFromExile(GameData gameData, UUID playerId, List<Card> cards) {
+        gameData.interaction.beginLibraryReorder(playerId, cards, false);
+        List<CardView> cardViews = cards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
+                new ReorderLibraryCardsMessage(cardViews,
+                        "Put these cards on top of your library in any order (top to bottom)."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to order {} cards on top of library", gameData.id, playerName, cards.size());
     }
 
     public void processNextMayAbility(GameData gameData) {
