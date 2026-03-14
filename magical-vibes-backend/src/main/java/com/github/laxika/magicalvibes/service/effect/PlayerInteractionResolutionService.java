@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffe
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawXCardsForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -218,6 +219,13 @@ public class PlayerInteractionResolutionService {
                 + " (" + cardName + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} draws {} from {}", gameData.id, playerName, amount, cardName);
+    }
+
+    @HandlesEffect(DrawXCardsEffect.class)
+    private void resolveDrawXCards(GameData gameData, StackEntry entry) {
+        int amount = entry.getXValue();
+        UUID controllerId = entry.getControllerId();
+        applyDrawCards(gameData, controllerId, amount);
     }
 
     @HandlesEffect(ShuffleHandIntoLibraryAndDrawEffect.class)

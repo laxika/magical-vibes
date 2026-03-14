@@ -340,6 +340,7 @@ Pass `null` as filter to allow any card.
 | `DrawCardEffect` | `(int amount)` | draw N cards |
 | `EachPlayerDrawsCardEffect` | `(int amount)` | each player draws N cards |
 | `DrawCardForTargetPlayerEffect` | `(int amount, boolean requireSourceUntapped, boolean targetsPlayer)` | target player draws N cards; optionally requires source untapped; when `targetsPlayer=true`, auto-derives player targeting for activated abilities. Compact: `(int amount)` defaults to `(amount, false, false)` |
+| `DrawXCardsEffect` | `()` | controller draws X cards (reads X from stack entry xValue; non-targeting) |
 | `DrawXCardsForTargetPlayerEffect` | `()` | target player draws X cards (reads X from stack entry xValue; targets player) |
 | `DrawCardsEqualToChargeCountersOnSourceEffect` | `()` | draw cards equal to charge counters on source (reads snapshotted count from xValue) |
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |

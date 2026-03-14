@@ -100,6 +100,7 @@ class LightwielderPaladinTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Shivan Dragon"));
+<<<<<<< HEAD
         assertThat(gd.playerExiledCards.getOrDefault(player2.getId(), List.of())).anyMatch(c -> c.getName().equals("Shivan Dragon"));
     }
 
