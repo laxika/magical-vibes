@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
 import com.github.laxika.magicalvibes.cards.b.BlightMamba;
+import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.c.CullingDais;
 import com.github.laxika.magicalvibes.cards.d.DoublingCube;
 import com.github.laxika.magicalvibes.cards.d.DrossHopper;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.cards.g.Grindclock;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MyrReservoir;
 import com.github.laxika.magicalvibes.cards.n.NeurokReplica;
+import com.github.laxika.magicalvibes.cards.n.NihilSpellbomb;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TreetopVillage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -23,6 +26,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -418,6 +424,112 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
             int idx = indexOf(player1, replica);
             harness.activateAbility(player1, idx, null, target.getId());
 
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        }
+    }
+
+    // =========================================================================
+    // Death trigger ordering after sacrifice-as-cost (CR 603.3)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("death trigger ordering after sacrifice-as-cost (CR 603.3)")
+    class SacrificeDeathTriggerOrdering {
+
+        @Test
+        @DisplayName("Death trigger from sacrifice is on top of activated ability on the stack")
+        void deathTriggerOnTopOfActivatedAbility() {
+            harness.addToBattlefield(player1, new NihilSpellbomb());
+            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears()));
+
+            harness.activateAbility(player1, 0, null, player2.getId());
+
+            // Per CR 602.2a/601.2h/603.3: ability goes on stack first, sacrifice
+            // pays cost, death triggers go on top
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        }
+
+        @Test
+        @DisplayName("Activated ability is bottom of stack with correct effect")
+        void activatedAbilityIsBottomWithCorrectEffect() {
+            harness.addToBattlefield(player1, new NihilSpellbomb());
+            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears()));
+
+            harness.activateAbility(player1, 0, null, player2.getId());
+
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .anyMatch(e -> e instanceof ExileTargetPlayerGraveyardEffect);
+        }
+
+        @Test
+        @DisplayName("Death trigger is top of stack with MayPayManaEffect")
+        void deathTriggerIsTopWithMayPayManaEffect() {
+            harness.addToBattlefield(player1, new NihilSpellbomb());
+            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears()));
+
+            harness.activateAbility(player1, 0, null, player2.getId());
+
+            assertThat(gd.stack.getLast().getEffectsToResolve())
+                    .anyMatch(e -> e instanceof MayPayManaEffect);
+        }
+
+        @Test
+        @DisplayName("Death trigger resolves before activated ability")
+        void deathTriggerResolvesFirst() {
+            harness.addToBattlefield(player1, new NihilSpellbomb());
+            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears(), new Shock()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+
+            int handBefore = gd.playerHands.get(player1.getId()).size();
+
+            harness.activateAbility(player1, 0, null, player2.getId());
+
+            // Death trigger resolves first (top of stack)
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true); // pay {B}, draw a card
+
+            assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
+            // Graveyard NOT yet exiled — activated ability hasn't resolved yet
+            assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+
+            // Now the activated ability resolves
+            harness.passBothPriorities();
+
+            assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+            assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("Mana ability with sacrifice: death trigger goes on stack, mana resolves immediately")
+        void manaAbilityDeathTriggerOnStack() {
+            harness.addToBattlefield(player1, new ChromaticStar());
+            harness.addMana(player1, ManaColor.WHITE, 1);
+
+            harness.activateAbility(player1, 0, null, null);
+
+            // Mana ability resolves immediately (no stack entry)
+            // Only the death trigger should be on the stack
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .anyMatch(e -> e instanceof DrawCardEffect);
+        }
+
+        @Test
+        @DisplayName("Sacrifice without death trigger: only activated ability on stack")
+        void sacrificeWithoutDeathTriggerOnlyAbilityOnStack() {
+            Permanent replica = addReadyPermanent(player1, new NeurokReplica());
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+
+            int idx = indexOf(player1, replica);
+            harness.activateAbility(player1, idx, null, target.getId());
+
+            // No death trigger — only the activated ability
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         }

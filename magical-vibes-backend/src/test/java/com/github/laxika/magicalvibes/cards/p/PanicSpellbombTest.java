@@ -31,10 +31,7 @@ class PanicSpellbombTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Panic Spellbomb"));
 
-        // Resolve the can't-block ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top of stack per CR 603.3)
         harness.passBothPriorities();
 
         // Death trigger may ability should prompt
@@ -50,14 +47,14 @@ class PanicSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve the can't-block ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline the death trigger draw
         harness.handleMayAbilityChosen(player1, false);
+
+        // Resolve the can't-block ability
+        harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.isCantBlockThisTurn()).isTrue();
@@ -72,14 +69,14 @@ class PanicSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve the can't-block ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline the death trigger draw
         harness.handleMayAbilityChosen(player1, false);
+
+        // Resolve the can't-block ability
+        harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isCantBlockThisTurn()).isTrue();
@@ -99,10 +96,7 @@ class PanicSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve the can't-block ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger — pay {R} (draw resolves inline)
@@ -112,6 +106,9 @@ class PanicSpellbombTest extends BaseCardTest {
 
         // Red mana should be spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
+
+        // Resolve the can't-block ability
+        harness.passBothPriorities();
     }
 
     @Test
@@ -126,10 +123,7 @@ class PanicSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve the can't-block ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline death trigger
@@ -140,6 +134,9 @@ class PanicSpellbombTest extends BaseCardTest {
 
         // Red mana should not be spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+
+        // Resolve the can't-block ability
+        harness.passBothPriorities();
     }
 
     @Test
@@ -154,10 +151,7 @@ class PanicSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve the can't-block ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept but cannot pay {R}
@@ -165,6 +159,9 @@ class PanicSpellbombTest extends BaseCardTest {
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
+
+        // Resolve the can't-block ability
+        harness.passBothPriorities();
     }
 
     // ===== Both abilities interact correctly =====
@@ -181,10 +178,7 @@ class PanicSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Resolve the can't-block ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger — pay {R} to draw (resolves inline)
@@ -192,6 +186,9 @@ class PanicSpellbombTest extends BaseCardTest {
 
         // Card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
+
+        // Resolve the can't-block ability
+        harness.passBothPriorities();
 
         // Creature can't block
         Permanent bears = findPermanent(player2, "Grizzly Bears");

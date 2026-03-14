@@ -25,7 +25,11 @@ class NihilSpellbombTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        // Stack: [ExileGraveyard (top), MayPayMana death trigger (bottom)]
+        // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
+        // Per CR 603.3, death triggers from sacrifice resolve first
+
+        harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
+        harness.handleMayAbilityChosen(player1, false); // decline death trigger
 
         harness.passBothPriorities(); // resolve ExileGraveyard ability
 
@@ -34,9 +38,6 @@ class NihilSpellbombTest extends BaseCardTest {
 
         // Cards should be in exile
         assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
-
-        harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline death trigger
     }
 
     @Test
@@ -61,7 +62,10 @@ class NihilSpellbombTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, player1.getId());
-        // Stack: [ExileGraveyard (top), MayPayMana death trigger (bottom)]
+        // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
+
+        harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
+        harness.handleMayAbilityChosen(player1, false); // decline
 
         harness.passBothPriorities(); // resolve ExileGraveyard
 
@@ -71,9 +75,6 @@ class NihilSpellbombTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerExiledCards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Nihil Spellbomb"));
-
-        harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
     }
 
     @Test
@@ -84,14 +85,14 @@ class NihilSpellbombTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        // Stack: [ExileGraveyard (top), MayPayMana death trigger (bottom)]
+        // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
+
+        harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
+        harness.handleMayAbilityChosen(player1, false); // decline
 
         harness.passBothPriorities(); // resolve ExileGraveyard - should not error
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-
-        harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
     }
 
     // ===== Death trigger: may pay {B} to draw =====
@@ -106,9 +107,8 @@ class NihilSpellbombTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        // Stack: [ExileGraveyard (top), MayPayMana death trigger (bottom)]
+        // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
 
-        harness.passBothPriorities(); // resolve ExileGraveyard
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
 
         // Accept death trigger - pay {B}, inner DrawCardEffect resolves inline
@@ -118,6 +118,8 @@ class NihilSpellbombTest extends BaseCardTest {
 
         // Black mana should be spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(0);
+
+        harness.passBothPriorities(); // resolve ExileGraveyard
     }
 
     @Test
@@ -130,9 +132,8 @@ class NihilSpellbombTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        // Stack: [ExileGraveyard (top), MayPayMana death trigger (bottom)]
+        // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
 
-        harness.passBothPriorities(); // resolve ExileGraveyard
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
 
         // Decline death trigger
@@ -143,6 +144,8 @@ class NihilSpellbombTest extends BaseCardTest {
 
         // Black mana unspent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+
+        harness.passBothPriorities(); // resolve ExileGraveyard
     }
 
     @Test
@@ -155,9 +158,8 @@ class NihilSpellbombTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        // Stack: [ExileGraveyard (top), MayPayMana death trigger (bottom)]
+        // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
 
-        harness.passBothPriorities(); // resolve ExileGraveyard
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
 
         // Accept but cannot pay {B} — treated as decline
@@ -165,6 +167,8 @@ class NihilSpellbombTest extends BaseCardTest {
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
+
+        harness.passBothPriorities(); // resolve ExileGraveyard
     }
 
     // ===== Both abilities interact correctly =====
@@ -179,13 +183,7 @@ class NihilSpellbombTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        // Stack: [ExileGraveyard (top), MayPayMana death trigger (bottom)]
-
-        harness.passBothPriorities(); // resolve ExileGraveyard
-
-        // Graveyard exiled
-        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        // Stack: [ExileGraveyard (bottom), MayPayMana death trigger (top)]
 
         harness.passBothPriorities(); // resolve MayPayMana death trigger -> may prompt
 
@@ -194,5 +192,11 @@ class NihilSpellbombTest extends BaseCardTest {
 
         // Card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
+
+        harness.passBothPriorities(); // resolve ExileGraveyard
+
+        // Graveyard exiled
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
     }
 }

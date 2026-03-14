@@ -304,10 +304,10 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
             // Activate: {T}, Sacrifice Nihil Spellbomb: Exile target player's graveyard
             harness.activateAbility(player1, 0, null, player2.getId());
 
-            // CR 603.5 — activated ability is on top (pushed after sacrifice), death trigger below
-            harness.passBothPriorities(); // resolve activated ability (exile graveyard)
+            // Per CR 603.3 death triggers from sacrifice go on top of the activated ability
             harness.passBothPriorities(); // resolve death trigger MayPayManaEffect → MAY prompt
             harness.handleMayAbilityChosen(player1, false); // decline draw
+            harness.passBothPriorities(); // resolve activated ability (exile graveyard)
 
             // Player2's graveyard should be empty
             assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -325,10 +325,10 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
 
             harness.activateAbility(player1, 0, null, player2.getId());
 
-            // CR 603.5 — activated ability is on top (pushed after sacrifice), death trigger below
-            harness.passBothPriorities(); // resolve activated ability
+            // Per CR 603.3 death triggers from sacrifice go on top of the activated ability
             harness.passBothPriorities(); // resolve death trigger MayPayManaEffect → MAY prompt
             harness.handleMayAbilityChosen(player1, false); // decline draw
+            harness.passBothPriorities(); // resolve activated ability
 
             assertThat(gd.gameLog).anyMatch(log -> log.contains("already empty"));
         }

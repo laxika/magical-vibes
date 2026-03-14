@@ -38,9 +38,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Horizon Spellbomb"));
 
-        // First passBothPriorities resolves the search ability (top of stack, finds nothing)
-        harness.passBothPriorities();
-        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
+        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Death trigger may ability should prompt
@@ -56,7 +54,11 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve the search ability (top of stack)
+        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false); // decline death trigger
+
+        // Resolve the search ability
         harness.passBothPriorities();
 
         // Should be awaiting library search
@@ -75,7 +77,11 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve the search ability (top of stack)
+        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false); // decline death trigger
+
+        // Resolve the search ability
         harness.passBothPriorities();
 
         List<Card> offered = gd.interaction.librarySearch().cards();
@@ -84,12 +90,6 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
-
-        // Resolve the death trigger's MayPayManaEffect (still on stack)
-        harness.passBothPriorities();
-
-        // Decline the death trigger (no green mana)
-        harness.handleMayAbilityChosen(player1, false);
     }
 
     // ===== Death trigger: may pay {G} to draw =====
@@ -107,9 +107,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // First passBothPriorities resolves the search ability (top of stack, finds no basic lands)
-        harness.passBothPriorities();
-        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
+        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger — pay {G}, inner draw resolves inline
@@ -119,6 +117,9 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         // Green mana should be spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+
+        // Resolve the search ability (finds no basic lands, auto-completes)
+        harness.passBothPriorities();
     }
 
     @Test
@@ -132,9 +133,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // First passBothPriorities resolves the search ability (top of stack, finds nothing)
-        harness.passBothPriorities();
-        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
+        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline death trigger
@@ -142,6 +141,9 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         // Green mana should not be spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+
+        // Resolve the search ability (finds nothing)
+        harness.passBothPriorities();
     }
 
     @Test
@@ -157,9 +159,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // First passBothPriorities resolves the search ability (top of stack, finds nothing)
-        harness.passBothPriorities();
-        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
+        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept but cannot pay {G} — auto-treats as decline
@@ -167,6 +167,9 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         // No card drawn
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+
+        // Resolve the search ability (finds nothing)
+        harness.passBothPriorities();
     }
 
     // ===== Both abilities interact correctly =====
@@ -183,7 +186,15 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve search ability (top of stack)
+        // Death trigger MayPayManaEffect resolves first (on top per CR 603.3)
+        harness.passBothPriorities();
+
+        // Accept death trigger — pay {G} to draw, inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
+
+        // Resolve search ability
         harness.passBothPriorities();
 
         // Should be awaiting library search
@@ -192,15 +203,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
-
-        // Resolve the death trigger's MayPayManaEffect (still on stack)
-        harness.passBothPriorities();
-
-        // Accept death trigger — pay {G} to draw, inner effect resolves inline
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Hand should have grown by 2 (search + draw)
+        // Hand should have grown by 2 (draw + search)
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 2);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
     }

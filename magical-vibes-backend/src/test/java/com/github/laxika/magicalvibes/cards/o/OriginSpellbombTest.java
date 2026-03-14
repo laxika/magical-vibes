@@ -22,14 +22,14 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve the token creation ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline death trigger
         harness.handleMayAbilityChosen(player1, false);
+
+        // Resolve the token creation ability
+        harness.passBothPriorities();
 
         assertThat(countMyrTokens()).isEqualTo(1);
     }
@@ -41,9 +41,9 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities(); // Resolve token creation ability
-        harness.passBothPriorities(); // Resolve death trigger MayEffect
+        harness.passBothPriorities(); // Resolve death trigger MayEffect (on top per CR 603.3)
         harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities(); // Resolve token creation ability
 
         Permanent myrToken = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Myr"))
@@ -85,10 +85,7 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve the token creation ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger - pay {W} (draw resolves inline)
@@ -98,6 +95,9 @@ class OriginSpellbombTest extends BaseCardTest {
 
         // White mana should be spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
+
+        // Resolve the token creation ability
+        harness.passBothPriorities();
     }
 
     @Test
@@ -111,10 +111,7 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve the token creation ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Decline death trigger
@@ -125,6 +122,9 @@ class OriginSpellbombTest extends BaseCardTest {
 
         // White mana unspent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+
+        // Resolve the token creation ability
+        harness.passBothPriorities();
     }
 
     @Test
@@ -138,10 +138,7 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve the token creation ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept but cannot pay {W}
@@ -149,6 +146,9 @@ class OriginSpellbombTest extends BaseCardTest {
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
+
+        // Resolve the token creation ability
+        harness.passBothPriorities();
     }
 
     // ===== Both abilities interact correctly =====
@@ -164,10 +164,7 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Resolve the token creation ability (on top of stack)
-        harness.passBothPriorities();
-
-        // Resolve the death trigger MayEffect
+        // Resolve the death trigger MayEffect (on top per CR 603.3)
         harness.passBothPriorities();
 
         // Accept death trigger - pay {W} to draw (resolves inline)
@@ -175,6 +172,9 @@ class OriginSpellbombTest extends BaseCardTest {
 
         // Card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
+
+        // Resolve the token creation ability
+        harness.passBothPriorities();
 
         // Myr token created
         assertThat(countMyrTokens()).isEqualTo(1);

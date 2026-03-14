@@ -167,6 +167,13 @@ public class ActivatedAbilityExecutionService {
             effectiveXValue = permanent.getChargeCounters();
         }
 
+        // Per CR 602.2a the ability goes on the stack during announcement, then CR 601.2h
+        // costs (including sacrifice) are paid.  CR 603.3 says death triggers from the
+        // sacrifice wait until a player would receive priority and then go on top.
+        // We defer any stack entries added by sacrifice/exile so they end up ON TOP of
+        // the activated ability — matching the same pattern used for tap triggers above.
+        int stackBeforeCosts = gameData.stack.size();
+
         boolean shouldExileSelf = abilityEffects.stream().anyMatch(e -> e instanceof ExileSelfCost);
         if (shouldExileSelf) {
             permanentRemovalService.removePermanentToExile(gameData, permanent);
@@ -175,6 +182,12 @@ public class ActivatedAbilityExecutionService {
         boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
         if (shouldSacrifice) {
             permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
+        }
+
+        List<StackEntry> deferredCostTriggers = List.of();
+        if (gameData.stack.size() > stackBeforeCosts) {
+            deferredCostTriggers = new ArrayList<>(gameData.stack.subList(stackBeforeCosts, gameData.stack.size()));
+            gameData.stack.subList(stackBeforeCosts, gameData.stack.size()).clear();
         }
 
         String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
@@ -192,8 +205,9 @@ public class ActivatedAbilityExecutionService {
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
-            // Mana resolves immediately, then "becomes tapped" triggers go on the stack
+            // Mana resolves immediately, then deferred triggers go on the stack
             gameData.stack.addAll(deferredTapTriggers);
+            gameData.stack.addAll(deferredCostTriggers);
             return;
         }
 
@@ -203,6 +217,8 @@ public class ActivatedAbilityExecutionService {
         }
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
         gameData.stack.addAll(deferredTapTriggers);
+        // Add death triggers from sacrifice/exile ON TOP so they resolve first (per CR 603.3)
+        gameData.stack.addAll(deferredCostTriggers);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
