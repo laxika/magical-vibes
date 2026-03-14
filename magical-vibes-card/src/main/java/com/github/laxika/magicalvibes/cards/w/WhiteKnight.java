@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "M10", collectorNumber = "41")
 @CardRegistration(set = "M11", collectorNumber = "39")
 public class WhiteKnight extends Card {
 
