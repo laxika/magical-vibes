@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtype
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -846,6 +847,26 @@ public class StaticEffectResolutionService {
             if (!isTopCardOfLibraryColor(context, conditional.color())) return;
             if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
                 accumulator.addKeyword(grant.keyword());
+            }
+        }
+    }
+
+    @HandlesStaticEffect(value = ControlsSubtypeConditionalEffect.class, selfOnly = true)
+    private void resolveControlsSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControlsSubtypeConditionalEffect) effect;
+        int subtypeCount = countControlledPermanents(context, p -> p.getCard().getSubtypes().contains(conditional.subtype()));
+        if (subtypeCount > 0) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof GrantKeywordEffect grant) {
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addKeyword(grant.keyword());
+                }
+            } else if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
+                accumulator.addProtectionColors(protection.colors());
             }
         }
     }
