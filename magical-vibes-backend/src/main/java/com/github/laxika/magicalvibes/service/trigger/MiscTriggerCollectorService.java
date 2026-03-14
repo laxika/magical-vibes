@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Trigger collectors for sacrifice, enchanted-permanent-tap, life-loss, and life-gain events.
@@ -28,11 +32,14 @@ public class MiscTriggerCollectorService {
 
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
 
     public MiscTriggerCollectorService(GameBroadcastService gameBroadcastService,
-                                       @Lazy GraveyardService graveyardService) {
+                                       @Lazy GraveyardService graveyardService,
+                                       GameQueryService gameQueryService) {
         this.gameBroadcastService = gameBroadcastService;
         this.graveyardService = graveyardService;
+        this.gameQueryService = gameQueryService;
     }
 
     // ── ON_ALLY_PERMANENT_SACRIFICED ───────────────────────────────────
@@ -131,6 +138,32 @@ public class MiscTriggerCollectorService {
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
         log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = TargetPlayerLosesLifeEqualToLifeGainedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainTargetPlayerLosesLife(TriggerMatchContext match,
+            TargetPlayerLosesLifeEqualToLifeGainedEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        UUID opponentId = gameQueryService.getOpponentId(gameData, match.controllerId());
+
+        TargetPlayerLosesLifeEffect resolved = new TargetPlayerLosesLifeEffect(lg.lifeGainedAmount());
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(resolved)),
+                opponentId,
+                match.permanent().getId()
+        ));
+
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on life gain ({} life), target opponent loses that much",
+                gameData.id, cardName, lg.lifeGainedAmount());
         return true;
     }
 

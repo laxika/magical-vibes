@@ -495,6 +495,7 @@ Pass `null` as filter to allow any card.
 | `EachOpponentLosesXLifeAndControllerGainsLifeLostEffect` | `()` | each opponent loses X life, controller gains total life lost |
 | `TargetPlayerLosesLifeEffect` | `(int amount)` | target player loses N life |
 | `TargetPlayerLosesLifeEqualToPowerEffect` | `()` | ON_DEATH marker: target player loses life equal to dying creature's last-known power. DeathTriggerService bakes the power into a TargetPlayerLosesLifeEffect at trigger time |
+| `TargetPlayerLosesLifeEqualToLifeGainedEffect` | `()` | ON_CONTROLLER_GAINS_LIFE marker: target opponent loses life equal to life gained. MiscTriggerCollectorService bakes the amount into a TargetPlayerLosesLifeEffect at trigger time |
 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `(int lifeLoss, int lifeGain)` | drain: target loses N, you gain M |
 | `DrainLifePerControlledPermanentEffect` | `(PermanentPredicate filter, int multiplier)` | target player loses X life, controller gains X life, where X = multiplier × matching permanents controlled (e.g. Tezzeret -4: twice artifacts) |
 | `EnchantedCreatureControllerLosesLifeEffect` | `(int amount, UUID affectedPlayerId)` | enchanted creature's controller loses N life (trigger) |
