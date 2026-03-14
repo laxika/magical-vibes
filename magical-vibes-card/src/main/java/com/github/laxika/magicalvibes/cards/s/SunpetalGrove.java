@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLand
 
 import java.util.List;
 
+@CardRegistration(set = "M10", collectorNumber = "228")
 @CardRegistration(set = "M11", collectorNumber = "228")
 public class SunpetalGrove extends Card {
 
