@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -173,16 +175,18 @@ public class GraveyardService {
                 && !card.isToken()
                 && card.hasType(CardType.CREATURE)) {
             tracked.add(card.getId());
-            triggerDamagedCreatureDiesAbilities(gameData, card.getId());
+            triggerDamagedCreatureDiesAbilities(gameData, card);
         } else {
             tracked.remove(card.getId());
         }
     }
 
-    private void triggerDamagedCreatureDiesAbilities(GameData gameData, UUID dyingCreatureCardId) {
-        if (dyingCreatureCardId == null) {
+    private void triggerDamagedCreatureDiesAbilities(GameData gameData, Card dyingCreatureCard) {
+        if (dyingCreatureCard == null) {
             return;
         }
+
+        UUID dyingCreatureCardId = dyingCreatureCard.getId();
 
         for (Map.Entry<UUID, Set<UUID>> entry : gameData.creatureCardsDamagedThisTurnBySourcePermanent.entrySet()) {
             UUID sourcePermanentId = entry.getKey();
@@ -207,12 +211,19 @@ public class GraveyardService {
             }
 
             for (CardEffect effect : effects) {
+                // Convert GainLifeEqualToToughnessEffect to a concrete GainLifeEffect
+                // using the dying creature's toughness (last known information)
+                CardEffect resolvedEffect = effect;
+                if (effect instanceof GainLifeEqualToToughnessEffect) {
+                    resolvedEffect = new GainLifeEffect(dyingCreatureCard.getToughness());
+                }
+
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source.getCard(),
                         controllerId,
                         source.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(List.of(resolvedEffect)),
                         null,
                         sourcePermanentId
                 ));
