@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 
 @CardRegistration(set = "10E", collectorNumber = "248")
+@CardRegistration(set = "M10", collectorNumber = "163")
 public class WarpWorld extends Card {
 
     public WarpWorld() {
