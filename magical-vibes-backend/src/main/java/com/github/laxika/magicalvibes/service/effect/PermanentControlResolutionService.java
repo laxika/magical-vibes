@@ -297,6 +297,8 @@ public class PermanentControlResolutionService {
             if (token.tappedAndAttacking()) {
                 tokenPermanent.tap();
                 tokenPermanent.setAttacking(true);
+            } else if (token.tapped()) {
+                tokenPermanent.tap();
             }
 
             String colorDesc;
@@ -308,7 +310,7 @@ public class PermanentControlResolutionService {
             } else {
                 colorDesc = "";
             }
-            String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : "";
+            String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : (token.tapped() ? " tapped" : "");
             String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 

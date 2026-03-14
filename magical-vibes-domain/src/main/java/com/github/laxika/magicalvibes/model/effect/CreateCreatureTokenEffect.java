@@ -21,6 +21,7 @@ public record CreateCreatureTokenEffect(
         Set<Keyword> keywords,
         Set<CardType> additionalTypes,
         boolean tappedAndAttacking,
+        boolean tapped,
         Map<EffectSlot, CardEffect> tokenEffects
 ) implements CardEffect {
 
@@ -28,35 +29,35 @@ public record CreateCreatureTokenEffect(
     public CreateCreatureTokenEffect(String tokenName, int power, int toughness,
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, Set<CardType> additionalTypes) {
-        this(1, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, Map.of());
+        this(1, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of());
     }
 
     /** Single-color token with amount */
     public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, Set<CardType> additionalTypes) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, Map.of());
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of());
     }
 
     /** Multi-color token */
     public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
                                      CardColor color, Set<CardColor> colors,
                                      List<CardSubtype> subtypes) {
-        this(amount, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, Map.of());
+        this(amount, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, false, Map.of());
     }
 
     /** Multi-color token (single) */
     public CreateCreatureTokenEffect(String tokenName, int power, int toughness,
                                      CardColor color, Set<CardColor> colors,
                                      List<CardSubtype> subtypes) {
-        this(1, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, Map.of());
+        this(1, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, false, Map.of());
     }
 
     /** Single-color token, tapped and attacking */
     public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
                                      CardColor color, List<CardSubtype> subtypes,
                                      boolean tappedAndAttacking) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, Set.of(), Set.of(), tappedAndAttacking, Map.of());
+        this(amount, tokenName, power, toughness, color, null, subtypes, Set.of(), Set.of(), tappedAndAttacking, false, Map.of());
     }
 
     /** Single-color token with amount and token effects */
@@ -64,6 +65,14 @@ public record CreateCreatureTokenEffect(
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, Set<CardType> additionalTypes,
                                      Map<EffectSlot, CardEffect> tokenEffects) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, tokenEffects);
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, tokenEffects);
+    }
+
+    /** Single-color token, enters tapped (not attacking) */
+    public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
+                                     CardColor color, List<CardSubtype> subtypes,
+                                     Set<Keyword> keywords, Set<CardType> additionalTypes,
+                                     boolean tapped) {
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, tapped, Map.of());
     }
 }
