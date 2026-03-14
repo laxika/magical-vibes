@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainL
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentsEffect;
@@ -1059,5 +1060,23 @@ public class DestructionResolutionService {
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, validCreatureIds, 1,
                 entry.getCard().getName() + "'s ability — Choose a creature "
                         + gameData.playerIdToName.get(defenderId) + " controls to destroy.");
+    }
+
+    /**
+     * Resolves a {@link DestroyTargetPermanentAtEndStepEffect} by scheduling the target permanent
+     * for destruction at the beginning of the next end step.
+     */
+    @HandlesEffect(DestroyTargetPermanentAtEndStepEffect.class)
+    void resolveDestroyTargetPermanentAtEndStep(GameData gameData, StackEntry entry, DestroyTargetPermanentAtEndStepEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        gameData.pendingDestroyAtEndStep.add(target.getId());
+
+        String logEntry = target.getCard().getName() + " will be destroyed at the beginning of the next end step.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} scheduled for destruction at end step", gameData.id, target.getCard().getName());
     }
 }

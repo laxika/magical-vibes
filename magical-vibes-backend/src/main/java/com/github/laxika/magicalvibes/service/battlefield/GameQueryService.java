@@ -80,6 +80,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -669,6 +670,31 @@ public class GameQueryService {
             }
             List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
             return controllerBattlefield != null && controllerBattlefield.contains(permanent);
+        }
+        if (predicate instanceof PermanentToughnessLessThanSourcePowerPredicate) {
+            if (gameData == null || sourceCardId == null) {
+                return false;
+            }
+            // Find the source permanent by its card ID
+            Permanent sourcePermanent = null;
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        if (p.getOriginalCard().getId().equals(sourceCardId)) {
+                            sourcePermanent = p;
+                            break;
+                        }
+                    }
+                }
+                if (sourcePermanent != null) break;
+            }
+            if (sourcePermanent == null) {
+                return false;
+            }
+            int sourcePower = getEffectivePower(gameData, sourcePermanent);
+            int targetToughness = getEffectiveToughness(gameData, permanent);
+            return targetToughness < sourcePower;
         }
         if (predicate instanceof PermanentTruePredicate) {
             return true;

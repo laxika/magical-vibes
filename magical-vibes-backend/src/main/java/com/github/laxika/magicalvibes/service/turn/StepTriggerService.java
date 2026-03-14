@@ -605,6 +605,22 @@ public class StepTriggerService {
             }
         }
 
+        // Process pending end-step destructions (e.g. Stone Giant)
+        if (!gameData.pendingDestroyAtEndStep.isEmpty()) {
+            Set<UUID> toDestroy = new HashSet<>(gameData.pendingDestroyAtEndStep);
+            gameData.pendingDestroyAtEndStep.clear();
+            for (UUID permId : toDestroy) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null) {
+                    if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
+                        String logEntry = perm.getCard().getName() + " is destroyed at end step.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} destroyed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
+                    }
+                }
+            }
+        }
+
         // Process pending exile returns (e.g. Argent Sphinx)
         if (!gameData.pendingExileReturns.isEmpty()) {
             List<PendingExileReturn> returns = new ArrayList<>(gameData.pendingExileReturns);

@@ -131,6 +131,8 @@ public class GameData {
      *  When the source permanent leaves the battlefield, the exiled card returns. */
     public final Map<UUID, PendingExileReturn> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
     public final Set<UUID> pendingTokenExilesAtEndStep = ConcurrentHashMap.newKeySet();
+    /** Permanent IDs scheduled for destruction at the beginning of the next end step (e.g. Stone Giant). */
+    public final Set<UUID> pendingDestroyAtEndStep = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
@@ -496,6 +498,9 @@ public class GameData {
 
         // --- Pending token exiles at end step (Mimic Vat) ---
         copy.pendingTokenExilesAtEndStep.addAll(this.pendingTokenExilesAtEndStep);
+
+        // --- Pending destroy at end step (Stone Giant) ---
+        copy.pendingDestroyAtEndStep.addAll(this.pendingDestroyAtEndStep);
 
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
         this.playerSourceDamagePreventionIds.forEach((k, v) -> {
