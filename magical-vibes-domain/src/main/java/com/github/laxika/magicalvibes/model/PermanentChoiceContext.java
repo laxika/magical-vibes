@@ -23,6 +23,8 @@ public sealed interface PermanentChoiceContext {
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
+    record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
+
     record ActivatedAbilityCostChoice(UUID activatingPlayerId,
                                       UUID sourcePermanentId,
                                       Integer abilityIndex,

@@ -550,7 +550,7 @@ public class LifeResolutionService {
         });
     }
 
-    private void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {
+    public void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");

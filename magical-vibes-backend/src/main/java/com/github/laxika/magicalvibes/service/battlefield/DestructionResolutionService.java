@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -905,6 +906,65 @@ public class DestructionResolutionService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SacrificeCreature(controllerId));
         playerInputService.beginPermanentChoice(gameData, controllerId, otherCreatureIds,
                 "Choose a creature other than " + cardName + " to sacrifice.");
+    }
+
+    /**
+     * Resolves a {@link SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect}.
+     * The controller must sacrifice a creature other than the source, then each opponent
+     * loses life equal to the sacrificed creature's power. If no other creatures exist,
+     * the source is tapped and the controller loses {@code lifeLoss} life.
+     */
+    @HandlesEffect(SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect.class)
+    void resolveSacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLife(GameData gameData, StackEntry entry,
+                                                                        SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String cardName = entry.getCard().getName();
+        UUID sourceCardId = entry.getCard().getId();
+
+        List<UUID> otherCreatureIds = collectCreatureIds(gameData, controllerId,
+                p -> !p.getCard().getId().equals(sourceCardId));
+
+        if (otherCreatureIds.isEmpty()) {
+            // Can't sacrifice — tap source and controller loses life
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (sourcePermanent != null) {
+                sourcePermanent.tap();
+                String tapLog = cardName + " is tapped.";
+                gameBroadcastService.logAndBroadcast(gameData, tapLog);
+                log.info("Game {} - {} is tapped (no creature to sacrifice)", gameData.id, cardName);
+            }
+            lifeResolutionService.applyLifeLoss(gameData, controllerId, effect.lifeLoss(), cardName);
+            gameOutcomeService.checkWinCondition(gameData);
+            return;
+        }
+
+        if (otherCreatureIds.size() == 1) {
+            // Only one other creature — sacrifice it automatically
+            Permanent creature = gameQueryService.findPermanentById(gameData, otherCreatureIds.getFirst());
+            if (creature != null) {
+                int power = gameQueryService.getEffectivePower(gameData, creature);
+                sacrificeAndLog(gameData, creature, controllerId);
+                applyOpponentsLoseLife(gameData, controllerId, power, cardName);
+            }
+            return;
+        }
+
+        // Multiple other creatures — prompt player to choose
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife(controllerId, cardName));
+        playerInputService.beginPermanentChoice(gameData, controllerId, otherCreatureIds,
+                "Choose a creature other than " + cardName + " to sacrifice.");
+    }
+
+    /**
+     * Applies life loss to each opponent of the controller equal to the given amount.
+     */
+    public void applyOpponentsLoseLife(GameData gameData, UUID controllerId, int amount, String sourceName) {
+        if (amount <= 0) return;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            lifeResolutionService.applyLifeLoss(gameData, playerId, amount, sourceName);
+        }
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**

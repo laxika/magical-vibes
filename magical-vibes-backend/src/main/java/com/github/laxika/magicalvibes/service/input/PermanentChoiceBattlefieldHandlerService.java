@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
@@ -60,6 +61,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final DamageResolutionService damageResolutionService;
+    private final DestructionResolutionService destructionResolutionService;
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -141,6 +143,38 @@ public class PermanentChoiceBattlefieldHandlerService {
         String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleSacrificeCreatureOpponentsLoseLife(GameData gameData, UUID permanentId,
+                                                         PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target creature no longer exists");
+        }
+
+        UUID sacrificingPlayerId = context.sacrificingPlayerId();
+
+        // Capture effective power before removing from battlefield (static bonuses still apply)
+        int power = gameQueryService.getEffectivePower(gameData, target);
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+
+        String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
+        String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+
+        // Each opponent loses life equal to the sacrificed creature's power
+        destructionResolutionService.applyOpponentsLoseLife(gameData, sacrificingPlayerId, power, context.sourceCardName());
 
         stateBasedActionService.performStateBasedActions(gameData);
 
