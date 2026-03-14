@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "96")
+@CardRegistration(set = "M10", collectorNumber = "66")
 public class PhantomWarrior extends Card {
 
     public PhantomWarrior() {
