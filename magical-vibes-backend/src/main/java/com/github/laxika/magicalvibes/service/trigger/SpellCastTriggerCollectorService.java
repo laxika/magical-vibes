@@ -290,6 +290,15 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleOpponentColorCounter(TriggerMatchContext match,
+            PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (sc.spellCard().getColor() == null) return false;
+        if (!trigger.triggerColors().contains(sc.spellCard().getColor())) return false;
+        return addColorCounterTrigger(match, trigger);
+    }
+
     // ── Shared helpers ─────────────────────────────────────────────────
 
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, Card spellCard) {
