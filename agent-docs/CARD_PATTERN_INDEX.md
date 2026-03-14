@@ -50,6 +50,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentAndControllerLosesLifeEffect(1) + artifact filter |
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
 | Board wipe + opponent library search to graveyard | `l/LifesFinale.java` | DestroyAllPermanentsEffect + SearchTargetLibraryForCardsToGraveyardEffect(3, CREATURE) + PlayerPredicateTargetFilter(OPPONENT) |
+| Opponent land edict | `y/YawningFissure.java` | EachOpponentSacrificesPermanentsEffect(1, PermanentIsLandPredicate) — each opponent sacrifices a land, controller unaffected |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter (filtered by mana value) | `m/MentalMisstep.java` | StackEntryPredicateTargetFilter + StackEntryManaValuePredicate. Phyrexian mana cost |

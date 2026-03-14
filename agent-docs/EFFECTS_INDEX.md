@@ -149,6 +149,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `SacrificeCreatureEffect` | `()` | controller sacrifices a creature |
 | `SacrificeAttackingCreaturesEffect` | `(int baseCount, int metalcraftCount)` | target player sacrifices attacking creatures; metalcraft upgrades count |
 | `EachOpponentSacrificesCreatureEffect` | `()` | each opponent sacrifices a creature |
+| `EachOpponentSacrificesPermanentsEffect` | `(int count, PermanentPredicate filter)` | each opponent sacrifices N permanents matching filter. Controller is excluded. Same APNAP simultaneous-sacrifice logic as EachPlayerSacrificesPermanentsEffect. Used by Yawning Fissure |
 | `EachPlayerSacrificesPermanentsEffect` | `(int count, PermanentPredicate filter)` | each player sacrifices N permanents matching filter. Players with fewer than N matching permanents sacrifice all. Players with more are prompted to choose in APNAP order. Used by Destructive Force |
 | `DamageSourceControllerGetsPoisonCounterEffect` | `(UUID damageSourceControllerId)` | damage source's controller gets a poison counter (e.g. Reaper of Sheoldred). Register as marker (null) on ON_DEALT_DAMAGE; actual UUID filled at trigger time |
 | `DamageSourceControllerSacrificesPermanentsEffect` | `(int count, UUID sacrificingPlayerId)` | damage source's controller sacrifices that many permanents of their choice (e.g. Phyrexian Obliterator). Register as marker (0, null) on ON_DEALT_DAMAGE; actual values filled at trigger time |
