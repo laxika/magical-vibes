@@ -704,6 +704,19 @@
     </div>
   }
 
+  @if (showSurrenderConfirm()) {
+    <div class="game-over-overlay">
+      <div class="game-over-card surrender-confirm-card">
+        <h2>Surrender</h2>
+        <p class="winner-text">Do you want to surrender?</p>
+        <div class="surrender-confirm-buttons">
+          <button class="btn-surrender-yes" (click)="confirmSurrender()">Yes</button>
+          <button class="btn-keep" (click)="cancelSurrender()">No</button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (gameOverWinner()) {
     <div class="game-over-overlay">
       <div class="game-over-card">
@@ -820,8 +833,10 @@
       [getPlayerName]="boundGetPlayerName"
       [getStackEntryTargetName]="boundGetStackEntryTargetName"
       [searchTaxCost]="searchTaxCost()"
+      [myPlayerIndex]="myPlayerIndex"
       (passPriority)="passPriority()"
       (paySearchTax)="paySearchTax()"
+      (surrenderClick)="onSurrenderClick()"
       (confirmAttackers)="confirmAttackers()"
       (confirmBlockers)="confirmBlockers()"
       (playerBadgeClick)="onPlayerBadgeClick($event)"

@@ -176,7 +176,8 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
       watermark: null,
       hasAlternateCastingCost: false,
       alternateCostLifePayment: 0,
-      alternateCostSacrificeCount: 0
+      alternateCostSacrificeCount: 0,
+      graveyardActivatedAbilities: []
     };
   }
 

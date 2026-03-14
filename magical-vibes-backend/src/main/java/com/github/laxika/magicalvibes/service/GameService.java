@@ -60,6 +60,7 @@ public class GameService {
     private final MulliganService mulliganService;
     private final ReconnectionService reconnectionService;
     private final ExileResolutionService exileResolutionService;
+    private final GameOutcomeService gameOutcomeService;
 
     /**
      * Validates that the game is running, no interaction is awaiting input, and the given player
@@ -200,6 +201,18 @@ public class GameService {
                     gameData.id, player.getUsername(), totalCost);
 
             gameBroadcastService.broadcastGameState(gameData);
+        }
+    }
+
+    public void surrender(GameData gameData, Player player) {
+        synchronized (gameData) {
+            if (gameData.status == GameStatus.FINISHED) {
+                throw new IllegalStateException("Game is already finished");
+            }
+            UUID opponentId = gameQueryService.getOpponentId(gameData, player.getId());
+            String logEntry = player.getUsername() + " surrenders!";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameOutcomeService.declareWinner(gameData, opponentId);
         }
     }
 

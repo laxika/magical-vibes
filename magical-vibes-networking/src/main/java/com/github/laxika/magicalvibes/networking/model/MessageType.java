@@ -87,6 +87,7 @@ public enum MessageType {
     X_VALUE_CHOSEN,
     SCRY,
     SCRY_COMPLETED,
+    SURRENDER,
     LEAVE_GAME,
     LOBBY_GAMES_RESPONSE
 }

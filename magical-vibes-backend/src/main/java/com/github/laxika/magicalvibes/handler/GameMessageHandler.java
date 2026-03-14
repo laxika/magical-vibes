@@ -969,6 +969,27 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
+    public void handleSurrender(Connection connection) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.surrender(gameData, player);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
     public void handleLeaveGame(Connection connection) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {

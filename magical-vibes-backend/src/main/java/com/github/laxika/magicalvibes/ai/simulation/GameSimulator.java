@@ -347,7 +347,7 @@ public class GameSimulator {
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService,
-                exileResolutionService);
+                exileResolutionService, gameOutcomeService);
 
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);

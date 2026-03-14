@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, inject, HostListener } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
@@ -54,12 +54,14 @@ export class SidePanelComponent {
   @Input() getPlayerName!: (playerId: string) => string;
   @Input() getStackEntryTargetName!: (entry: StackEntry) => string | null;
   @Input() searchTaxCost = 0;
+  @Input() myPlayerIndex = 0;
 
   @Output() passPriority = new EventEmitter<void>();
   @Output() paySearchTax = new EventEmitter<void>();
   @Output() confirmAttackers = new EventEmitter<void>();
   @Output() confirmBlockers = new EventEmitter<void>();
   @Output() playerBadgeClick = new EventEmitter<number>();
+  @Output() surrenderClick = new EventEmitter<void>();
   @Output() cardHover = new EventEmitter<{ card: Card; permanent?: Permanent | null }>();
   @Output() cardHoverEnd = new EventEmitter<void>();
   @Output() stackEntryHover = new EventEmitter<StackEntry>();
@@ -69,6 +71,7 @@ export class SidePanelComponent {
   @Output() flashbackPlay = new EventEmitter<number>();
 
   activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
+  showPlayerMenu = signal(false);
 
   switchToStackTab(): void {
     this.activeTab.set('stack');
@@ -93,6 +96,27 @@ export class SidePanelComponent {
     return this.sanitizer.bypassSecurityTrustHtml(
       this.manaSymbolService.replaceSymbols(description)
     );
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showPlayerMenu.set(false);
+  }
+
+  onPlayerBadgeClick(event: MouseEvent, playerIndex: number): void {
+    const isTargeting = this.choice.targeting.selectingTarget || this.choice.targeting.multiTargeting || this.choice.choosingPermanent;
+    if (playerIndex === this.myPlayerIndex && !isTargeting) {
+      event.stopPropagation();
+      this.showPlayerMenu.update(v => !v);
+    } else {
+      this.showPlayerMenu.set(false);
+      this.playerBadgeClick.emit(playerIndex);
+    }
+  }
+
+  onSurrenderClick(): void {
+    this.showPlayerMenu.set(false);
+    this.surrenderClick.emit();
   }
 
   onCardHover(card: Card, permanent?: Permanent | null): void {

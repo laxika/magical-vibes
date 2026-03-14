@@ -105,6 +105,8 @@ public interface MessageHandler {
 
     void handleXValueChosen(Connection connection, XValueChosenRequest request) throws Exception;
 
+    void handleSurrender(Connection connection) throws Exception;
+
     void handleLeaveGame(Connection connection) throws Exception;
 
     void handleTimeout(Connection connection);

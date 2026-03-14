@@ -589,6 +589,7 @@ export class GameComponent implements OnInit, OnDestroy {
   selectedBlockerIndex = signal<number | null>(null);
   gameOverWinner = signal<string | null>(null);
   gameOverWinnerId = signal<string | null>(null);
+  showSurrenderConfirm = signal(false);
 
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
     this.declaringAttackers.set(true);
@@ -990,6 +991,19 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   // ========== Hover & navigation ==========
+
+  onSurrenderClick(): void {
+    this.showSurrenderConfirm.set(true);
+  }
+
+  confirmSurrender(): void {
+    this.showSurrenderConfirm.set(false);
+    this.websocketService.send({ type: MessageType.SURRENDER });
+  }
+
+  cancelSurrender(): void {
+    this.showSurrenderConfirm.set(false);
+  }
 
   backToLobby(): void {
     this.websocketService.currentGame = null;
