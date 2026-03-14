@@ -23,8 +23,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
@@ -659,6 +661,89 @@ public class DamageResolutionService {
                 } else {
                     gameBroadcastService.logAndBroadcast(gameData,
                             target.getCard().getName() + "'s damage to " + cardName + " is prevented.");
+                }
+            }
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link PackHuntEffect} — pack hunt mechanic:
+     * <ol>
+     *   <li>Tap all untapped creatures of the given subtype the controller controls.</li>
+     *   <li>Each creature tapped this way deals damage equal to its power to the target creature.</li>
+     *   <li>The target creature deals damage equal to its power divided evenly among those creatures.</li>
+     * </ol>
+     *
+     * <p>All damage is applied before lethal-damage destructions, matching MTG state-based action timing.
+     */
+    @HandlesEffect(PackHuntEffect.class)
+    void resolvePackHunt(GameData gameData, StackEntry entry, PackHuntEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) return;
+
+        UUID controllerId = entry.getControllerId();
+        CardSubtype huntSubtype = effect.creatureSubtype();
+
+        // Step 1: Tap all untapped creatures of the given subtype the controller controls
+        List<Permanent> tappedHunters = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (!p.isTapped()
+                        && gameQueryService.isCreature(gameData, p)
+                        && p.getCard().getSubtypes().contains(huntSubtype)) {
+                    p.tap();
+                    tappedHunters.add(p);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            entry.getCard().getName() + " taps " + p.getCard().getName() + ".");
+                }
+            }
+        }
+
+        if (tappedHunters.isEmpty()) return;
+
+        // Step 2: Each creature tapped this way deals damage equal to its power to target creature
+        for (Permanent hunter : tappedHunters) {
+            int hunterPower = gameQueryService.getEffectivePower(gameData, hunter);
+            if (hunterPower > 0) {
+                if (!(gameQueryService.isDamagePreventable(gameData)
+                        && gameQueryService.hasProtectionFromSource(gameData, target, hunter.getCard()))) {
+                    int damage = gameQueryService.applyDamageMultiplier(gameData, hunterPower, entry);
+                    if (dealCreatureDamage(gameData, entry, target, damage, hunter)) {
+                        gameData.pendingLethalDamageDestructions.add(target);
+                    }
+                } else {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            hunter.getCard().getName() + "'s damage to " + target.getCard().getName() + " is prevented.");
+                }
+            }
+        }
+
+        // Step 3: Target creature deals damage equal to its power divided evenly among tapped creatures
+        int targetPower = gameQueryService.getEffectivePower(gameData, target);
+        if (targetPower > 0) {
+            int baseDamage = targetPower / tappedHunters.size();
+            int remainder = targetPower % tappedHunters.size();
+
+            for (int i = 0; i < tappedHunters.size(); i++) {
+                Permanent hunter = tappedHunters.get(i);
+                int damage = baseDamage + (i < remainder ? 1 : 0);
+                if (damage > 0) {
+                    if (!(gameQueryService.isDamagePreventable(gameData)
+                            && gameQueryService.hasProtectionFromSource(gameData, hunter, target.getCard()))) {
+                        int actualDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+                        if (dealCreatureDamage(gameData, entry, hunter, actualDamage, target)) {
+                            gameData.pendingLethalDamageDestructions.add(hunter);
+                        }
+                    } else {
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                target.getCard().getName() + "'s damage to " + hunter.getCard().getName() + " is prevented.");
+                    }
                 }
             }
         }
