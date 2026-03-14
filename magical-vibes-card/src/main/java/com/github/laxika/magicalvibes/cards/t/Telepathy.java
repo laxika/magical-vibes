@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "113")
+@CardRegistration(set = "M10", collectorNumber = "74")
 public class Telepathy extends Card {
 
     public Telepathy() {
