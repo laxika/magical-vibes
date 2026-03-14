@@ -57,7 +57,8 @@ class PrototypePortalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrototypePortal(), new GolemsHeart()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Portal → ETB trigger
+        harness.passBothPriorities(); // Resolve Portal → MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -69,11 +70,11 @@ class PrototypePortalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrototypePortal(), new GolemsHeart()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Portal → ETB may trigger
+        harness.passBothPriorities(); // Resolve Portal → MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect → may prompt
 
-        // Accept the may ability
+        // Accept the may ability (inner effect resolves inline)
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve the imprint effect
 
         GameData gd = harness.getGameData();
 
@@ -105,7 +106,8 @@ class PrototypePortalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrototypePortal(), new GolemsHeart()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Portal → ETB may trigger
+        harness.passBothPriorities(); // Resolve Portal → MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect → may prompt
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
@@ -129,11 +131,11 @@ class PrototypePortalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PrototypePortal(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Portal → ETB may trigger
+        harness.passBothPriorities(); // Resolve Portal → MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect → may prompt
 
-        // Accept may — but there are no artifacts in hand
+        // Accept may — but there are no artifacts in hand (inner effect resolves inline → no artifacts → skip)
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve the imprint effect → no artifacts → skip
 
         GameData gd = harness.getGameData();
 

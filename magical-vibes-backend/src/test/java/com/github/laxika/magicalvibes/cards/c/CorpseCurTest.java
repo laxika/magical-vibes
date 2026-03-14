@@ -31,8 +31,9 @@ class CorpseCurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
     }
 
     // ===== Card properties =====
@@ -61,7 +62,8 @@ class CorpseCurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve → may prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
@@ -76,7 +78,8 @@ class CorpseCurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve → may prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -92,7 +95,7 @@ class CorpseCurTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new BlightMamba()));
         castAndAcceptMay();
 
-        harness.passBothPriorities(); // resolve ETB → graveyard choice
+        // Inner effect resolved inline → graveyard choice
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         harness.handleGraveyardCardChosen(player1, 0);
@@ -108,8 +111,6 @@ class CorpseCurTest extends BaseCardTest {
     void choosesSpecificInfectCreature() {
         harness.setGraveyard(player1, List.of(new BlightMamba(), new ContagiousNim()));
         castAndAcceptMay();
-
-        harness.passBothPriorities();
 
         // Choose Contagious Nim (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
@@ -130,8 +131,6 @@ class CorpseCurTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new BlightMamba()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
-
         // Index 0 is Grizzly Bears (no infect) — not a valid choice
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -144,8 +143,6 @@ class CorpseCurTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HolyDay()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
-
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature card with infect"));
     }
@@ -154,8 +151,6 @@ class CorpseCurTest extends BaseCardTest {
     @DisplayName("No effect if graveyard is empty")
     void noEffectWithEmptyGraveyard() {
         castAndAcceptMay();
-
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature card with infect"));
@@ -167,7 +162,6 @@ class CorpseCurTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new BlightMamba()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, -1);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))

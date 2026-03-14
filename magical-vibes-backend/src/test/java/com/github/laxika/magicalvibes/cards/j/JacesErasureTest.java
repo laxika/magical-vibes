@@ -47,24 +47,20 @@ class JacesErasureTest extends BaseCardTest {
 
         advanceToDraw(player1);
 
+        // Resolve MayEffect from stack
+        harness.passBothPriorities();
+
         // May prompt should be awaiting input
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        // Accept the may ability
+        // Accept the may ability — target selection happens inline
         harness.handleMayAbilityChosen(player1, true);
 
         // Should prompt for target player selection
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
-        // Choose opponent as target
+        // Choose opponent as target — mill resolves inline
         harness.handlePermanentChosen(player1, player2.getId());
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Jace's Erasure"));
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
 
         // Opponent should have milled 1 card
         assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(deckSizeBefore - 1);
@@ -83,14 +79,14 @@ class JacesErasureTest extends BaseCardTest {
         int deckSizeAfterDraw = gd.playerDecks.get(player1.getId()).size();
         int graveyardSizeAfterDraw = gd.playerGraveyards.get(player1.getId()).size();
 
-        // Accept the may ability
+        // Resolve MayEffect from stack
+        harness.passBothPriorities();
+
+        // Accept the may ability — target selection happens inline
         harness.handleMayAbilityChosen(player1, true);
 
-        // Choose self as target
+        // Choose self as target — mill resolves inline
         harness.handlePermanentChosen(player1, player1.getId());
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
 
         // Controller should have milled 1 card
         assertThat(gd.playerDecks.get(player1.getId()).size()).isEqualTo(deckSizeAfterDraw - 1);
@@ -107,12 +103,11 @@ class JacesErasureTest extends BaseCardTest {
 
         advanceToDraw(player1);
 
+        // Resolve MayEffect from stack
+        harness.passBothPriorities();
+
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
-
-        // No triggered ability on stack
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Jace's Erasure"));
 
         // Opponent's deck unchanged
         assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(opponentDeckBefore);
@@ -136,19 +131,17 @@ class JacesErasureTest extends BaseCardTest {
         int opponentDeckBefore = gd.playerDecks.get(player2.getId()).size();
 
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // resolve Counsel (draws 2, triggers 2 may prompts)
+        harness.passBothPriorities(); // resolve Counsel (draws 2, triggers 2 MayEffects on stack)
 
-        // First may prompt — after choosing target, second may prompt is auto-presented
+        // Resolve first MayEffect (top of stack) -> MAY prompt
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId()); // mill resolves inline
 
-        // Second may prompt — auto-presented before first trigger resolves
+        // Resolve second MayEffect -> MAY prompt
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
-
-        // Both triggers now on stack — resolve them
-        harness.passBothPriorities(); // resolve second trigger (LIFO)
-        harness.passBothPriorities(); // resolve first trigger
+        harness.handlePermanentChosen(player1, player2.getId()); // mill resolves inline
 
         // Opponent should have milled 2 cards total
         assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(opponentDeckBefore - 2);

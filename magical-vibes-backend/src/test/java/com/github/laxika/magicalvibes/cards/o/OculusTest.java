@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -68,17 +67,13 @@ class OculusTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Oculus"));
 
+        // Resolve the MayEffect from the stack
+        harness.passBothPriorities();
+
         // Player1 should be prompted for the may ability
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Oculus"));
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
 
         // Player1 should have drawn a card
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
@@ -113,12 +108,11 @@ class OculusTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Oculus"));
 
+        // Resolve the MayEffect from the stack
+        harness.passBothPriorities();
+
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
-
-        // No triggered ability on the stack
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Oculus"));
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -147,11 +141,12 @@ class OculusTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Oculus"));
 
+        // Resolve the MayEffect from the stack
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-
-        harness.passBothPriorities();
 
         // Hand should be empty (Wrath went to graveyard) + 1 drawn card
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1 + 1);
@@ -171,6 +166,9 @@ class OculusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+
+        // Resolve the MayEffect from the stack
+        harness.passBothPriorities();
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);

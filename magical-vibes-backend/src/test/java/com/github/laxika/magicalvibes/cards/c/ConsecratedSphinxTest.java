@@ -44,6 +44,7 @@ class ConsecratedSphinxTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ConsecratedSphinx());
 
         advanceToDraw(player2);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -58,8 +59,8 @@ class ConsecratedSphinxTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToDraw(player2);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve the DrawCardEffect on the stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
@@ -71,6 +72,7 @@ class ConsecratedSphinxTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToDraw(player2);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -100,15 +102,15 @@ class ConsecratedSphinxTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // resolve Counsel of the Soratami (opponent draws 2)
+        harness.passBothPriorities(); // resolve Counsel of the Soratami (opponent draws 2) → two MayEffects on stack
 
         // Two may ability prompts are queued (one per card drawn)
+        harness.passBothPriorities(); // resolve first MayEffect → may prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
 
-        harness.handleMayAbilityChosen(player1, true); // accept first trigger (next presented immediately)
-        harness.handleMayAbilityChosen(player1, true); // accept second trigger
-        harness.passBothPriorities(); // resolve one DrawCardEffect
-        harness.passBothPriorities(); // resolve other DrawCardEffect
+        harness.handleMayAbilityChosen(player1, true); // accept first → inner resolves inline (draws 2)
+        harness.passBothPriorities(); // resolve second MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept second → inner resolves inline (draws 2)
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 4);
     }
@@ -122,11 +124,11 @@ class ConsecratedSphinxTest extends BaseCardTest {
 
         advanceToDraw(player2);
 
-        // Both sphinxes trigger, creating 2 may ability prompts
-        harness.handleMayAbilityChosen(player1, true); // accept first sphinx trigger (next presented immediately)
-        harness.handleMayAbilityChosen(player1, true); // accept second sphinx trigger
-        harness.passBothPriorities(); // resolve one DrawCardEffect
-        harness.passBothPriorities(); // resolve other DrawCardEffect
+        // Both sphinxes trigger, creating 2 MayEffects on stack
+        harness.passBothPriorities(); // resolve first MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept first → inner resolves inline (draws 2)
+        harness.passBothPriorities(); // resolve second MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept second → inner resolves inline (draws 2)
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 4);
     }

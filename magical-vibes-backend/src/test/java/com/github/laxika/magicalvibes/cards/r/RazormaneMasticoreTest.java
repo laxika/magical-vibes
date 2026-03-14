@@ -185,6 +185,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -197,6 +198,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -212,15 +214,10 @@ class RazormaneMasticoreTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bearsId);
-
-        harness.passBothPriorities(); // resolve the triggered ability
 
         // Grizzly Bears (2/2) should be destroyed by 3 damage
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -236,6 +233,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -270,10 +268,10 @@ class RazormaneMasticoreTest extends BaseCardTest {
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
         advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, elvesId);
-        harness.passBothPriorities(); // resolve
 
         // Llanowar Elves (1/1) should be destroyed by 3 damage
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -292,6 +290,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).clear();
 
         advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         // May ability prompt should appear — Masticore itself is a valid target
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);

@@ -41,6 +41,7 @@ class SqueeGoblinNabobTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SqueeGoblinNabob()));
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -67,8 +68,8 @@ class SqueeGoblinNabobTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(squee.getId()));
@@ -83,6 +84,7 @@ class SqueeGoblinNabobTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);

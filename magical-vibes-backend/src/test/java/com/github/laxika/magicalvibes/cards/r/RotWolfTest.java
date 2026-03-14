@@ -79,14 +79,7 @@ class RotWolfTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // Triggered ability on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Rot Wolf"));
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
-
-        // Player1 should have drawn a card
+        // CR 603.5: MayEffect resolves inline — draw happens immediately
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
     }
 

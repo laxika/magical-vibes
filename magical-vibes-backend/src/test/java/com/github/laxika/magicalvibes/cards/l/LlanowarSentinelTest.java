@@ -35,10 +35,11 @@ class LlanowarSentinelTest extends BaseCardTest {
     void resolvingCreatesMayPrompt() {
         setupAndCast(3);
 
-        harness.passBothPriorities();
-
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Llanowar Sentinel"));
+
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
@@ -49,7 +50,8 @@ class LlanowarSentinelTest extends BaseCardTest {
         setupAndCast(5);
         setupLibraryWithSentinels();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -63,9 +65,9 @@ class LlanowarSentinelTest extends BaseCardTest {
         setupAndCast(3);
         setupLibraryWithSentinels();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (can't pay)
 
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
@@ -78,9 +80,9 @@ class LlanowarSentinelTest extends BaseCardTest {
         setupAndCast(5);
         setupLibraryWithSentinels();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (pays mana, shows search)
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards())
@@ -94,9 +96,9 @@ class LlanowarSentinelTest extends BaseCardTest {
         setupAndCast(5);
         setupLibraryWithSentinels();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (pays mana, shows search)
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);

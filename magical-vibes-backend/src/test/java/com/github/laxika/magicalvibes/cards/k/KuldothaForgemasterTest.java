@@ -130,9 +130,9 @@ class KuldothaForgemasterTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         harness.handlePermanentChosen(player1, spellbombId);
 
-        // Ability should now be on the stack
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        // Ability should now be on the stack (Flight Spellbomb's death trigger also adds a MayPayManaEffect)
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);
 
         // Sacrificed artifacts should be in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))

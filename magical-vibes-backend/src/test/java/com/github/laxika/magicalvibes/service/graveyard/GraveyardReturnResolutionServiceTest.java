@@ -304,11 +304,10 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
             // Activate: {T}, Sacrifice Nihil Spellbomb: Exile target player's graveyard
             harness.activateAbility(player1, 0, null, player2.getId());
 
-            // Sacrificing triggers ON_DEATH may-ability (Pay {B} to draw a card?) — decline it
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-            harness.handleMayAbilityChosen(player1, false);
-
-            harness.passBothPriorities();
+            // CR 603.5 — activated ability is on top (pushed after sacrifice), death trigger below
+            harness.passBothPriorities(); // resolve activated ability (exile graveyard)
+            harness.passBothPriorities(); // resolve death trigger MayPayManaEffect → MAY prompt
+            harness.handleMayAbilityChosen(player1, false); // decline draw
 
             // Player2's graveyard should be empty
             assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -326,11 +325,10 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
 
             harness.activateAbility(player1, 0, null, player2.getId());
 
-            // Sacrificing triggers ON_DEATH may-ability — decline it
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-            harness.handleMayAbilityChosen(player1, false);
-
-            harness.passBothPriorities();
+            // CR 603.5 — activated ability is on top (pushed after sacrifice), death trigger below
+            harness.passBothPriorities(); // resolve activated ability
+            harness.passBothPriorities(); // resolve death trigger MayPayManaEffect → MAY prompt
+            harness.handleMayAbilityChosen(player1, false); // decline draw
 
             assertThat(gd.gameLog).anyMatch(log -> log.contains("already empty"));
         }

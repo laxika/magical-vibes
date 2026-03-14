@@ -50,7 +50,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // Resolve Cruel Edict
 
-        // Glissa's may ability should be offered
+        // Glissa's MayEffect goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
 
@@ -89,8 +90,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
 
         harness.passBothPriorities(); // Resolve Cruel Edict → trigger
-        harness.handleMayAbilityChosen(player1, true); // Accept
-        harness.passBothPriorities(); // Resolve triggered ability → graveyard choice
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // Accept — inner resolves inline → graveyard choice
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         harness.handleGraveyardCardChosen(player1, 0); // Choose Leonin Scimitar
@@ -113,6 +114,7 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
 
         harness.passBothPriorities(); // Resolve Cruel Edict → trigger
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, false); // Decline
 
         // Artifact stays in graveyard
@@ -134,8 +136,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
 
         harness.passBothPriorities(); // Resolve Cruel Edict → trigger
-        harness.handleMayAbilityChosen(player1, true); // Accept
-        harness.passBothPriorities(); // Resolve triggered ability → no artifacts
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // Accept — inner resolves inline → no artifacts
 
         // Should resolve with no effect (no graveyard choice prompt)
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no artifact cards in graveyard"));
@@ -157,7 +159,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities(); // Resolve first Shock (2 damage kills 2/2)
 
-        // Grizzly Bears dies → Glissa triggers
+        // Grizzly Bears dies → Glissa's MayEffect goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
 

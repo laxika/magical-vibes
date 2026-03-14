@@ -39,12 +39,14 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         // Cast creature
         harness.castCreature(player1, 0);
 
-        // Resolve creature spell → MayEffect queues may prompt
+        // Resolve creature spell
+        harness.passBothPriorities();
+        // Resolve MayEffect from stack
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
 
-        // Accept sacrifice
+        // Accept sacrifice — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
@@ -74,7 +76,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
 
@@ -101,7 +104,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
 
@@ -134,7 +138,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
@@ -159,7 +164,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
@@ -185,7 +191,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
@@ -214,7 +221,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ornithopterId);
@@ -240,7 +248,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         // May prompt should still appear (controller has artifacts)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -275,7 +284,8 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, true);
 

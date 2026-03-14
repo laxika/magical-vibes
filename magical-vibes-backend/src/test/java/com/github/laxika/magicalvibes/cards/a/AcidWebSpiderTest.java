@@ -33,7 +33,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
         harness.handlePermanentChosen(player1, equipmentId); // choose target -> ETB on stack
     }
@@ -90,7 +91,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
@@ -105,23 +107,25 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }
 
     @Test
-    @DisplayName("Choosing Equipment target puts ETB triggered ability on stack")
-    void choosingTargetPutsEtbOnStack() {
+    @DisplayName("Accepting may and choosing Equipment resolves destruction inline")
+    void choosingTargetDestroysInline() {
         harness.addToBattlefield(player2, new LeoninScimitar());
         UUID equipmentId = harness.getPermanentId(player2, "Leonin Scimitar");
         castAndAcceptMay(equipmentId);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Acid Web Spider");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(equipmentId);
+        // Inner effect resolves inline — Equipment is already destroyed
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
 
     @Test
@@ -151,7 +155,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -196,7 +201,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may prompt
+        harness.passBothPriorities(); // resolve creature -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
@@ -210,7 +216,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may prompt
+        harness.passBothPriorities(); // resolve creature -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> no targets
 
         // Stack should be empty since there are no valid Equipment targets
@@ -227,7 +234,8 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may prompt
+        harness.passBothPriorities(); // resolve creature -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -238,20 +246,34 @@ class AcidWebSpiderTest extends BaseCardTest {
     // ===== Fizzle =====
 
     @Test
-    @DisplayName("ETB fizzles if target Equipment is removed before resolution")
-    void etbFizzlesIfTargetRemoved() {
+    @DisplayName("ETB does nothing if target Equipment is removed before permanent choice")
+    void etbDoesNothingIfTargetRemoved() {
         harness.addToBattlefield(player2, new LeoninScimitar());
         UUID equipmentId = harness.getPermanentId(player2, "Leonin Scimitar");
-        castAndAcceptMay(equipmentId);
 
-        // Remove Equipment before ETB resolves
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AcidWebSpider()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → permanent choice prompt
+
+        // Remove Equipment before choosing target
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        // Resolve ETB -> fizzles
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, equipmentId); // target gone → destruction silently does nothing
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        // Equipment was already removed from battlefield, graveyard should not contain it
+        // (it was removed manually, not destroyed)
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
+        // Acid Web Spider remains on battlefield
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));
     }
 
     // ===== Can target own Equipment =====

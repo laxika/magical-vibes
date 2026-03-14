@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,11 +22,14 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Death trigger prompt fires first
-        harness.handleMayAbilityChosen(player1, false);
-
-        // Resolve the token creation ability
+        // Resolve the token creation ability (on top of stack)
         harness.passBothPriorities();
+
+        // Resolve the death trigger MayEffect
+        harness.passBothPriorities();
+
+        // Decline death trigger
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countMyrTokens()).isEqualTo(1);
     }
@@ -39,8 +41,9 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities(); // Resolve token creation ability
+        harness.passBothPriorities(); // Resolve death trigger MayEffect
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
 
         Permanent myrToken = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Myr"))
@@ -82,14 +85,14 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Accept death trigger - pay {W}
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Draw triggered ability should be on stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-
-        // Resolve draw triggered ability
+        // Resolve the token creation ability (on top of stack)
         harness.passBothPriorities();
+
+        // Resolve the death trigger MayEffect
+        harness.passBothPriorities();
+
+        // Accept death trigger - pay {W} (draw resolves inline)
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
 
@@ -108,11 +111,14 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
+        // Resolve the token creation ability (on top of stack)
+        harness.passBothPriorities();
+
+        // Resolve the death trigger MayEffect
+        harness.passBothPriorities();
+
         // Decline death trigger
         harness.handleMayAbilityChosen(player1, false);
-
-        // Resolve token creation ability
-        harness.passBothPriorities();
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -132,11 +138,14 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
+        // Resolve the token creation ability (on top of stack)
+        harness.passBothPriorities();
+
+        // Resolve the death trigger MayEffect
+        harness.passBothPriorities();
+
         // Accept but cannot pay {W}
         harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve token creation ability
-        harness.passBothPriorities();
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -155,14 +164,14 @@ class OriginSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Accept death trigger - pay {W} to draw
+        // Resolve the token creation ability (on top of stack)
+        harness.passBothPriorities();
+
+        // Resolve the death trigger MayEffect
+        harness.passBothPriorities();
+
+        // Accept death trigger - pay {W} to draw (resolves inline)
         harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve draw (top of stack)
-        harness.passBothPriorities();
-
-        // Resolve token creation (next on stack)
-        harness.passBothPriorities();
 
         // Card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);

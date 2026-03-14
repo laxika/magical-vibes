@@ -24,7 +24,7 @@ class GravediggerTest extends BaseCardTest {
 
     /**
      * Casts Gravedigger and resolves it onto the battlefield, then accepts the may ability
-     * so the ETB triggered ability is placed on the stack.
+     * so the ETB inner effect resolves inline.
      */
     private void castAndAcceptMay() {
         harness.forceActivePlayer(player1);
@@ -33,8 +33,9 @@ class GravediggerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner resolves inline
     }
 
     // ===== Card properties =====
@@ -100,20 +101,20 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
 
     @Test
-    @DisplayName("Accepting may ability puts ETB triggered ability on stack")
-    void acceptingMayPutsEtbOnStack() {
+    @DisplayName("Accepting may ability resolves ETB inline and prompts graveyard choice")
+    void acceptingMayResolvesEtbInline() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Gravedigger");
+        // Inner effect resolves inline — graveyard choice should be prompted
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
     }
 
     @Test
@@ -126,7 +127,8 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve → may prompt
+        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -146,8 +148,7 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        // Resolve ETB trigger → graveyard choice prompt
-        harness.passBothPriorities();
+        // Inner effect resolved inline — graveyard choice prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Choose the creature (index 0)
@@ -166,7 +167,6 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Decline with -1
@@ -184,8 +184,6 @@ class GravediggerTest extends BaseCardTest {
     void choosesSpecificCreatureFromGraveyard() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new AngelOfMercy()));
         castAndAcceptMay();
-
-        harness.passBothPriorities();
 
         // Choose Angel of Mercy (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
@@ -207,9 +205,7 @@ class GravediggerTest extends BaseCardTest {
         // No graveyard set — empty by default
         castAndAcceptMay();
 
-        // Resolve ETB trigger — should resolve without graveyard choice
-        harness.passBothPriorities();
-
+        // Inner effect resolved inline — no graveyard choice since graveyard is empty
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
@@ -220,8 +216,7 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new HolyDay()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
-
+        // Inner effect resolved inline — no graveyard choice since no creatures
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // Holy Day stays in graveyard untouched
@@ -237,8 +232,6 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new HolyDay(), new GrizzlyBears()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
-
         // Index 0 is HolyDay (instant, not creature) — not a valid choice
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -250,8 +243,6 @@ class GravediggerTest extends BaseCardTest {
     void opponentCannotChoose() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
-
-        harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -266,7 +257,6 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
@@ -278,7 +268,6 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

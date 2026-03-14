@@ -50,6 +50,11 @@ class FurnaceCelebrationTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, bears.getId());
 
+        // Resolve Dross Hopper ability (on top)
+        harness.passBothPriorities();
+        // Resolve Furnace Celebration MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
 
@@ -67,21 +72,19 @@ class FurnaceCelebrationTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, bears.getId());
 
-        // Accept the may ability
+        // Resolve Dross Hopper ability (on top)
+        harness.passBothPriorities();
+        // Resolve Furnace Celebration MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
+        // Accept the may ability — pays {2}, inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
 
         // Should be prompting for target selection
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
-        // Choose the creature target
+        // Choose the creature target — damage resolves inline
         harness.handlePermanentChosen(player1, hawkId);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Furnace Celebration"));
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
 
         // Suntail Hawk (1/1) should be destroyed by 2 damage
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -106,16 +109,17 @@ class FurnaceCelebrationTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.activateAbility(player1, 1, null, bears.getId());
+
+        // Resolve Dross Hopper ability (on top)
+        harness.passBothPriorities();
+        // Resolve Furnace Celebration MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
+        // Accept — pays {2}, inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
 
-        // Choose opponent as target
+        // Choose opponent as target — damage resolves inline
         harness.handlePermanentChosen(player1, player2.getId());
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
-
-        // Resolve Dross Hopper ability
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
@@ -133,6 +137,12 @@ class FurnaceCelebrationTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.activateAbility(player1, 1, null, bears.getId());
+
+        // Resolve Dross Hopper ability (on top)
+        harness.passBothPriorities();
+        // Resolve Furnace Celebration MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
         harness.handleMayAbilityChosen(player1, false);
 
         // No triggered ability on stack from Furnace Celebration
@@ -158,10 +168,15 @@ class FurnaceCelebrationTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, bears.getId());
 
+        // Resolve Dross Hopper ability (on top)
+        harness.passBothPriorities();
+        // Resolve Furnace Celebration MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
         // May prompt fires
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        // Accept, but cannot pay
+        // Accept, but cannot pay — auto-treated as decline
         harness.handleMayAbilityChosen(player1, true);
 
         // No triggered ability on stack

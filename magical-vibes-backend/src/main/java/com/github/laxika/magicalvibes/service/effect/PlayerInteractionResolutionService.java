@@ -36,11 +36,13 @@ import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomHandCardAndPlayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
@@ -74,6 +76,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -591,6 +594,9 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(MayEffect.class)
     private void resolveMayEffect(GameData gameData, StackEntry entry, MayEffect mayEffect) {
+        // CR 603.5 — "you may" choice happens at resolution time.
+        // Set flag so the resolution loop re-runs this effect after the player responds.
+        gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 entry.getControllerId(),
@@ -600,6 +606,59 @@ public class PlayerInteractionResolutionService {
                 null,
                 entry.getSourcePermanentId()
         ));
+    }
+
+    @HandlesEffect(MayPayManaEffect.class)
+    private void resolveMayPayManaEffect(GameData gameData, StackEntry entry, MayPayManaEffect mayPayEffect) {
+        // CR 603.5 — "you may pay" choice happens at resolution time.
+        gameData.resolvingMayEffectFromStack = true;
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(),
+                entry.getControllerId(),
+                List.of(mayPayEffect.wrapped()),
+                entry.getCard().getName() + " - " + mayPayEffect.prompt(),
+                entry.getTargetPermanentId(),
+                mayPayEffect.manaCost(),
+                entry.getSourcePermanentId()
+        ));
+    }
+
+    @HandlesEffect(SacrificeArtifactThenDealDividedDamageEffect.class)
+    private void resolveSacrificeArtifactThenDealDividedDamage(GameData gameData, StackEntry entry,
+                                                                SacrificeArtifactThenDealDividedDamageEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        List<UUID> validArtifactIds = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isArtifact(p)) {
+                    validArtifactIds.add(p.getId());
+                }
+            }
+        }
+
+        if (validArtifactIds.isEmpty()) {
+            String logEntry = playerName + " has no artifacts to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no artifacts to sacrifice for {}",
+                    gameData.id, playerName, entry.getCard().getName());
+            gameData.pendingETBDamageAssignments = Map.of();
+            return;
+        }
+
+        Map<UUID, Integer> damageAssignments = gameData.pendingETBDamageAssignments;
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SacrificeArtifactForDividedDamage(
+                        controllerId, entry.getCard(), damageAssignments));
+        playerInputService.beginPermanentChoice(gameData, controllerId, validArtifactIds,
+                entry.getCard().getName() + " — Choose an artifact to sacrifice.");
+
+        String logEntry = playerName + " is choosing an artifact to sacrifice.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} choosing artifact to sacrifice for divided damage",
+                gameData.id, playerName);
     }
 
     private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {

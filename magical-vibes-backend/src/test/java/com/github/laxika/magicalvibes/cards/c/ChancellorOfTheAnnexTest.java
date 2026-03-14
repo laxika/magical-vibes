@@ -246,6 +246,9 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         h.setHand(p1, List.of(new ChancellorOfTheAnnex()));
         h.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        h.passBothPriorities();
+
         // Game should be awaiting may ability choice from p1
         assertThat(gameData.interaction.isAwaitingInput()).isTrue();
         assertThat(gameData.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -260,6 +263,9 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
 
         h.setHand(p1, List.of(new ChancellorOfTheAnnex()));
         h.skipMulligan();
+
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        h.passBothPriorities();
 
         h.handleMayAbilityChosen(p1, true);
 
@@ -280,6 +286,9 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         h.setHand(p1, List.of(new ChancellorOfTheAnnex()));
         h.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        h.passBothPriorities();
+
         h.handleMayAbilityChosen(p1, false);
 
         assertThat(gameData.openingHandRevealTriggers).isEmpty();
@@ -295,6 +304,9 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
 
         h.setHand(p1, List.of(new ChancellorOfTheAnnex()));
         h.skipMulligan();
+
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        h.passBothPriorities();
 
         // Accept the reveal
         h.handleMayAbilityChosen(p1, true);
@@ -330,6 +342,9 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
 
         h.setHand(p1, List.of(new ChancellorOfTheAnnex()));
         h.skipMulligan();
+
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        h.passBothPriorities();
 
         // Accept the reveal
         h.handleMayAbilityChosen(p1, true);
@@ -380,8 +395,10 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         h.setHand(p1, List.of(new ChancellorOfTheAnnex(), new ChancellorOfTheAnnex()));
         h.skipMulligan();
 
-        // Accept both may abilities
+        // CR 603.5: MayEffects go on the stack, resolve each one to get the may prompt
+        h.passBothPriorities();
         h.handleMayAbilityChosen(p1, true);
+        h.passBothPriorities();
         h.handleMayAbilityChosen(p1, true);
 
         assertThat(gameData.openingHandRevealTriggers).hasSize(2);
@@ -413,6 +430,9 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
 
         h.setHand(p1, List.of(new ChancellorOfTheAnnex()));
         h.skipMulligan();
+
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        h.passBothPriorities();
 
         // Accept the reveal
         h.handleMayAbilityChosen(p1, true);

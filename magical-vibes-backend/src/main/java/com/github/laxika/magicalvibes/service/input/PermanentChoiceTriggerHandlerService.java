@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,8 @@ public class PermanentChoiceTriggerHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final EffectResolutionService effectResolutionService;
+    private final InputCompletionService inputCompletionService;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         StackEntry entry = new StackEntry(
@@ -136,6 +139,34 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleMayAbilityTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.MayAbilityTriggerTarget mat) {
+        // CR 603.5 — resolution-time target selection: the target was chosen during
+        // resolution of a MayEffect on the stack.  Set it on the pending entry and
+        // resume the effect resolution loop.
+        if (gameData.resolvedMayTargetingEntry != null) {
+            StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
+            gameData.resolvedMayTargetingEntry = null;
+            pendingEntry.setTargetPermanentId(permanentId);
+
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+            boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+            if (isPlayerTarget) {
+                String playerName = gameData.playerIdToName.get(permanentId);
+                gameBroadcastService.logAndBroadcast(gameData, mat.sourceCard().getName() + "'s ability targets " + playerName + ".");
+            } else if (target != null) {
+                gameBroadcastService.logAndBroadcast(gameData, mat.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".");
+            }
+
+            gameData.resolvedMayAccepted = true;
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+            }
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
 

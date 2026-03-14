@@ -40,11 +40,14 @@ class CivicWayfinderTest extends BaseCardTest {
     void resolvingCreatesMayPrompt() {
         setupAndCast();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Civic Wayfinder"));
+
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
@@ -55,9 +58,9 @@ class CivicWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -72,9 +75,9 @@ class CivicWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         List<Card> offered = gd.interaction.librarySearch().cards();
@@ -92,7 +95,8 @@ class CivicWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();

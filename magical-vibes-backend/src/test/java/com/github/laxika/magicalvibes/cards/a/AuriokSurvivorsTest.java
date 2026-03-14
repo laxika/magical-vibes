@@ -34,8 +34,9 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
     }
 
     // ===== Card properties =====
@@ -64,20 +65,20 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve → may prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
 
     @Test
-    @DisplayName("Accepting may ability puts ETB triggered ability on stack")
-    void acceptingMayPutsEtbOnStack() {
+    @DisplayName("Accepting may ability resolves inner effect inline — graveyard choice prompt appears")
+    void acceptingMayResolvesInline() {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
         castAndAcceptMay();
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Auriok Survivors");
+        // Inner effect resolved inline — graveyard choice prompt appears immediately
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
     }
 
     @Test
@@ -90,7 +91,8 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve → may prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -106,8 +108,7 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
         castAndAcceptMay();
 
-        // Resolve ETB trigger → graveyard choice prompt
-        harness.passBothPriorities();
+        // Inner effect resolved inline → graveyard choice prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Choose the Equipment (index 0) → triggers second may prompt for attachment
@@ -138,7 +139,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Decline attachment
@@ -158,8 +158,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
     void choosesSpecificEquipmentFromGraveyard() {
         harness.setGraveyard(player1, List.of(new DarksteelAxe(), new LeoninScimitar()));
         castAndAcceptMay();
-
-        harness.passBothPriorities();
 
         // Choose Leonin Scimitar (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
@@ -186,8 +184,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
-
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no Equipment"));
     }
@@ -197,8 +193,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
     void noEffectWithEmptyGraveyard() {
         castAndAcceptMay();
 
-        harness.passBothPriorities();
-
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
     }
 
@@ -207,8 +201,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
     void onlyEquipmentCardsAreValid() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new DarksteelAxe()));
         castAndAcceptMay();
-
-        harness.passBothPriorities();
 
         // Index 0 is Grizzly Bears (creature, not equipment) — not a valid choice
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
@@ -224,10 +216,9 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
         castAndAcceptMay();
 
-        // Remove Auriok Survivors from battlefield before ETB resolves
+        // Remove Auriok Survivors from battlefield — inner effect already resolved inline
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getName().equals("Auriok Survivors"));
 
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Equipment is on battlefield but NOT attached — no second may prompt since source is gone
@@ -247,7 +238,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true); // accept attachment
 
@@ -260,7 +250,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DarksteelAxe()));
         castAndAcceptMay();
 
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
 

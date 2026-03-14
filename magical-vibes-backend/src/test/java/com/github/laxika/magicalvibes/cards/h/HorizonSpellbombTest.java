@@ -27,6 +27,8 @@ class HorizonSpellbombTest extends BaseCardTest {
     void activateAbilitySacrificesAndPromptsMayAbility() {
         harness.addToBattlefield(player1, new HorizonSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        // Clear deck so the search ability finds nothing and auto-completes
+        gd.playerDecks.get(player1.getId()).clear();
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -35,6 +37,11 @@ class HorizonSpellbombTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Horizon Spellbomb"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Horizon Spellbomb"));
+
+        // First passBothPriorities resolves the search ability (top of stack, finds nothing)
+        harness.passBothPriorities();
+        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
+        harness.passBothPriorities();
 
         // Death trigger may ability should prompt
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -49,10 +56,7 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Decline the death trigger draw
-        harness.handleMayAbilityChosen(player1, false);
-
-        // Resolve the search ability
+        // Resolve the search ability (top of stack)
         harness.passBothPriorities();
 
         // Should be awaiting library search
@@ -70,7 +74,8 @@ class HorizonSpellbombTest extends BaseCardTest {
         setupLibraryWithBasicLands();
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handleMayAbilityChosen(player1, false);
+
+        // Resolve the search ability (top of stack)
         harness.passBothPriorities();
 
         List<Card> offered = gd.interaction.librarySearch().cards();
@@ -79,7 +84,12 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+
+        // Resolve the death trigger's MayPayManaEffect (still on stack)
+        harness.passBothPriorities();
+
+        // Decline the death trigger (no green mana)
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     // ===== Death trigger: may pay {G} to draw =====
@@ -90,20 +100,20 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HorizonSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        setupLibraryWithBasicLands();
+        // Use non-basic-land library so search auto-completes (test focuses on death trigger)
+        setupLibraryWithNonBasicLands();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Accept death trigger — pay {G}
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Draw triggered ability should be on stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-
-        // Resolve the draw triggered ability
+        // First passBothPriorities resolves the search ability (top of stack, finds no basic lands)
         harness.passBothPriorities();
+        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
+        harness.passBothPriorities();
+
+        // Accept death trigger — pay {G}, inner draw resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
 
@@ -117,16 +127,18 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HorizonSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        // Clear deck so search auto-completes (test focuses on death trigger)
+        gd.playerDecks.get(player1.getId()).clear();
 
         harness.activateAbility(player1, 0, null, null);
 
+        // First passBothPriorities resolves the search ability (top of stack, finds nothing)
+        harness.passBothPriorities();
+        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
+        harness.passBothPriorities();
+
         // Decline death trigger
         harness.handleMayAbilityChosen(player1, false);
-
-        // Resolve the search ability
-        harness.passBothPriorities();
 
         // Green mana should not be spent
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -138,19 +150,22 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HorizonSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         // No green mana added
+        // Clear deck so search auto-completes (test focuses on death trigger)
+        gd.playerDecks.get(player1.getId()).clear();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Accept but cannot pay {G}
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve the search ability (no draw triggered ability should be on stack)
+        // First passBothPriorities resolves the search ability (top of stack, finds nothing)
+        harness.passBothPriorities();
+        // Second passBothPriorities resolves the death trigger's MayPayManaEffect
         harness.passBothPriorities();
 
-        // No card drawn (hand size may increase from search, but no extra draw)
-        // Just verify no green mana was spent (there was none)
+        // Accept but cannot pay {G} — auto-treats as decline
+        harness.handleMayAbilityChosen(player1, true);
+
+        // No card drawn
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
 
@@ -168,25 +183,24 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Accept death trigger — pay {G} to draw
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve draw (top of stack)
-        harness.passBothPriorities();
-
-        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
-
-        // Resolve search ability
+        // Resolve search ability (top of stack)
         harness.passBothPriorities();
 
         // Should be awaiting library search
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
-        // Choose a land
         String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
-        // Hand should have grown by 2 (draw + search)
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
+
+        // Resolve the death trigger's MayPayManaEffect (still on stack)
+        harness.passBothPriorities();
+
+        // Accept death trigger — pay {G} to draw, inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
+
+        // Hand should have grown by 2 (search + draw)
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 2);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
     }
@@ -195,5 +209,11 @@ class HorizonSpellbombTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
         deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+    }
+
+    private void setupLibraryWithNonBasicLands() {
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        deck.clear();
+        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
     }
 }

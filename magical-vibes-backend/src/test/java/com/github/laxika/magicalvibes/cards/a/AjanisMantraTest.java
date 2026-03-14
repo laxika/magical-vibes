@@ -17,9 +17,9 @@ class AjanisMantraTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve GainLifeEffect
+        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
@@ -32,7 +32,8 @@ class AjanisMantraTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
+        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -61,8 +62,8 @@ class AjanisMantraTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
 
@@ -71,8 +72,8 @@ class AjanisMantraTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }

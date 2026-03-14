@@ -58,7 +58,8 @@ class PrimevalTitanTest extends BaseCardTest {
         @DisplayName("Casting Primeval Titan triggers may ability prompt")
         void etbTriggersMayPrompt() {
             castPrimevalTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
             assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -69,9 +70,9 @@ class PrimevalTitanTest extends BaseCardTest {
         void acceptingPresentsLandCards() {
             castPrimevalTitan();
             setupLibrary();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability → library search
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().cards())
@@ -84,9 +85,9 @@ class PrimevalTitanTest extends BaseCardTest {
         void pickingTwoLandsPutsBothOnBattlefieldTapped() {
             castPrimevalTitan();
             setupLibrary();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability → library search
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -112,9 +113,9 @@ class PrimevalTitanTest extends BaseCardTest {
         void landsEnterSimultaneously() {
             castPrimevalTitan();
             setupLibrary();
-            harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -132,7 +133,8 @@ class PrimevalTitanTest extends BaseCardTest {
         void decliningMaySkipsSearch() {
             castPrimevalTitan();
             setupLibrary();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -143,9 +145,9 @@ class PrimevalTitanTest extends BaseCardTest {
         void canFailToFindAfterFirstPick() {
             castPrimevalTitan();
             setupLibrary();
-            harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -165,9 +167,9 @@ class PrimevalTitanTest extends BaseCardTest {
         void canFailToFindOnFirstPick() {
             castPrimevalTitan();
             setupLibrary();
-            harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -188,9 +190,9 @@ class PrimevalTitanTest extends BaseCardTest {
             deck.clear();
             deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-            harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
             // No lands to search for, search fails
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -210,6 +212,7 @@ class PrimevalTitanTest extends BaseCardTest {
             addReadyPrimevalTitan(player1);
 
             declareAttackers(List.of(0));
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
             assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -222,8 +225,8 @@ class PrimevalTitanTest extends BaseCardTest {
             setupLibrary();
 
             declareAttackers(List.of(0));
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -247,6 +250,7 @@ class PrimevalTitanTest extends BaseCardTest {
             setupLibrary();
 
             declareAttackers(List.of(0));
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);

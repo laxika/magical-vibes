@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
@@ -95,6 +97,36 @@ public class EffectResolutionService {
                         : replacement.baseEffect();
             }
 
+            // CR 603.5 — resolution-time "you may" re-entry after player responded
+            if (effectToResolve instanceof MayEffect may && gameData.resolvedMayAccepted != null) {
+                boolean accepted = gameData.resolvedMayAccepted;
+                gameData.resolvedMayAccepted = null;
+                if (accepted) {
+                    effectToResolve = may.wrapped();
+                    log.info("Game {} - Player accepted may ability from {} — resolving inner effect",
+                            gameData.id, entry.getCard().getName());
+                } else {
+                    log.info("Game {} - Player declined may ability from {} — skipping",
+                            gameData.id, entry.getCard().getName());
+                    continue;
+                }
+            }
+
+            // CR 603.5 — resolution-time "you may pay" re-entry after player responded
+            if (effectToResolve instanceof MayPayManaEffect mayPay && gameData.resolvedMayAccepted != null) {
+                boolean accepted = gameData.resolvedMayAccepted;
+                gameData.resolvedMayAccepted = null;
+                if (accepted) {
+                    effectToResolve = mayPay.wrapped();
+                    log.info("Game {} - Player accepted may-pay ability from {} — resolving inner effect",
+                            gameData.id, entry.getCard().getName());
+                } else {
+                    log.info("Game {} - Player declined may-pay ability from {} — skipping",
+                            gameData.id, entry.getCard().getName());
+                    continue;
+                }
+            }
+
             EffectHandler handler = registry.getHandler(effectToResolve);
             if (handler != null) {
                 handler.resolve(gameData, entry, effectToResolve);
@@ -103,8 +135,9 @@ public class EffectResolutionService {
             }
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 // Store state for resumption after async input completes.
-                // X_VALUE_CHOICE re-runs the same effect (it checks chosenXValue on re-entry).
-                boolean rerunCurrentEffect = gameData.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE);
+                // X_VALUE_CHOICE and resolution-time MayEffect re-run the same effect on re-entry.
+                boolean rerunCurrentEffect = gameData.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)
+                        || gameData.resolvingMayEffectFromStack;
                 gameData.pendingEffectResolutionEntry = entry;
                 gameData.pendingEffectResolutionIndex = rerunCurrentEffect ? i : i + 1;
                 return;

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +34,11 @@ class FlightSpellbombTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Flight Spellbomb"));
 
+        // Resolve flying ability (on top of stack)
+        harness.passBothPriorities();
+        // Resolve death trigger MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
         // Death trigger may ability should prompt
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
@@ -47,11 +52,13 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
+        // Resolve flying ability (on top)
+        harness.passBothPriorities();
+        // Resolve death trigger MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
         // Decline the death trigger draw
         harness.handleMayAbilityChosen(player1, false);
-
-        // Resolve the flying ability
-        harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
@@ -66,11 +73,13 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
+        // Resolve flying ability (on top)
+        harness.passBothPriorities();
+        // Resolve death trigger MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
         // Decline the death trigger draw
         harness.handleMayAbilityChosen(player1, false);
-
-        // Resolve the flying ability
-        harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
@@ -90,14 +99,13 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Accept death trigger — pay {U}
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Draw triggered ability should be on stack (on top of the flying ability)
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-
-        // Resolve the draw triggered ability
+        // Resolve flying ability (on top)
         harness.passBothPriorities();
+        // Resolve death trigger MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
+        // Accept death trigger — pay {U}, draw resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
 
@@ -117,11 +125,13 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
+        // Resolve flying ability (on top)
+        harness.passBothPriorities();
+        // Resolve death trigger MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
         // Decline death trigger
         harness.handleMayAbilityChosen(player1, false);
-
-        // Resolve the flying ability
-        harness.passBothPriorities();
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -142,11 +152,13 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Accept but cannot pay {U}
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve the flying ability (no draw triggered ability should be on stack)
+        // Resolve flying ability (on top)
         harness.passBothPriorities();
+        // Resolve death trigger MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
+        // Accept but cannot pay {U} — auto-treated as decline
+        harness.handleMayAbilityChosen(player1, true);
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -166,14 +178,13 @@ class FlightSpellbombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
 
-        // Accept death trigger — pay {U} to draw
+        // Resolve flying ability (on top)
+        harness.passBothPriorities();
+        // Resolve death trigger MayPayManaEffect — shows may prompt
+        harness.passBothPriorities();
+
+        // Accept death trigger — pay {U} to draw, resolves inline
         harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve draw (top of stack)
-        harness.passBothPriorities();
-
-        // Resolve flying grant
-        harness.passBothPriorities();
 
         // Card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);

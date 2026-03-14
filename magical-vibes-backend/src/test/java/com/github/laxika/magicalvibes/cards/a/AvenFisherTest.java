@@ -98,17 +98,14 @@ class AvenFisherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Aven Fisher"));
 
+        // Resolve MayEffect from stack → may prompt
+        harness.passBothPriorities();
+
         // Player1 should be prompted for the may ability
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
+        // Accept — inner effect (DrawCardEffect) resolves inline
         harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Aven Fisher"));
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
 
         // Player1 should have drawn a card
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
@@ -147,12 +144,11 @@ class AvenFisherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Aven Fisher"));
 
+        // Resolve MayEffect from stack → may prompt
+        harness.passBothPriorities();
+
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
-
-        // No triggered ability on the stack
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Aven Fisher"));
 
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -193,12 +189,12 @@ class AvenFisherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Aven Fisher"));
 
-        // Accept the may ability
+        // Resolve MayEffect from stack → may prompt
+        harness.passBothPriorities();
+
+        // Accept the may ability — inner effect resolves inline
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
 
         // Player1 should have drawn a card
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
@@ -231,13 +227,14 @@ class AvenFisherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Aven Fisher"));
 
+        // Resolve MayEffect from stack → may prompt
+        harness.passBothPriorities();
+
         // Player1 should be prompted for Aven Fisher's death trigger
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
+        // Accept — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
 
         // Hand should be empty (Wrath went to graveyard) + 1 drawn card
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1 + 1);
@@ -257,6 +254,9 @@ class AvenFisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+
+        // Resolve MayEffect from stack → may prompt
+        harness.passBothPriorities();
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);

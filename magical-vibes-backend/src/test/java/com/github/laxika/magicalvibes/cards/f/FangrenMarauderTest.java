@@ -57,7 +57,8 @@ class FangrenMarauderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Memnite"));
 
-        // Fangren Marauder's may ability should prompt
+        // Fangren Marauder's may ability goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
 
@@ -78,7 +79,8 @@ class FangrenMarauderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Mind Stone"));
 
-        // Fangren Marauder's may ability should prompt
+        // Fangren Marauder's may ability goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
 
@@ -103,7 +105,8 @@ class FangrenMarauderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Mind Stone"));
 
-        // Fangren Marauder triggers even for own artifact
+        // Fangren Marauder's may ability goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
 
@@ -142,16 +145,11 @@ class FangrenMarauderTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        // Accept the may ability
-        harness.handleMayAbilityChosen(player1, true);
-
-        GameData gd = harness.getGameData();
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Fangren Marauder"));
-
-        // Resolve the triggered ability
+        // May ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
+
+        // Accept the may ability — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         // Player1 should have gained 5 life
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 5);
@@ -170,6 +168,9 @@ class FangrenMarauderTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // Resolve Cruel Edict
+
+        // May ability goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
@@ -203,9 +204,11 @@ class FangrenMarauderTest extends BaseCardTest {
         harness.castInstant(player1, 0, memniteId);
         harness.passBothPriorities(); // Resolve Naturalize
 
-        // Accept the may ability and resolve
-        harness.handleMayAbilityChosen(player1, true);
+        // May ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
+
+        // Accept the may ability — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 5);
 
@@ -215,9 +218,11 @@ class FangrenMarauderTest extends BaseCardTest {
         harness.castInstant(player1, 0, mindStoneId);
         harness.passBothPriorities(); // Resolve Naturalize
 
-        // Accept the may ability and resolve
-        harness.handleMayAbilityChosen(player1, true);
+        // May ability goes on stack — resolve it to get prompt
         harness.passBothPriorities();
+
+        // Accept the may ability — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         // Should have gained 5 life twice = 10 total
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 10);

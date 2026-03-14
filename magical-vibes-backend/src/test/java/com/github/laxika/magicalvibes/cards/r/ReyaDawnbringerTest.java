@@ -27,14 +27,16 @@ class ReyaDawnbringerTest extends BaseCardTest {
 
     /**
      * Advances from UNTAP to UPKEEP, triggering upkeep abilities.
-     * Accepts the may ability prompt so Reya's triggered ability is on the stack.
+     * Resolves the MayEffect from the stack and accepts the may choice.
+     * Inner effects resolve inline during acceptance.
      */
     private void advanceToUpkeepAndTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ability on stack
+        harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effects resolve inline
     }
 
     // ===== Card properties =====
@@ -103,7 +105,10 @@ class ReyaDawnbringerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(reya);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
-        advanceToUpkeepAndTrigger();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -118,7 +123,10 @@ class ReyaDawnbringerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(reya);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
-        advanceToUpkeepAndTrigger();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reya Dawnbringer");
@@ -154,8 +162,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
 
         advanceToUpkeepAndTrigger();
 
-        // Resolve trigger → graveyard choice prompt
-        harness.passBothPriorities();
+        // Inner effects resolve inline → graveyard choice prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Choose the creature (index 0)
@@ -177,7 +184,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         advanceToUpkeepAndTrigger();
-        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
         // Decline with -1
@@ -199,7 +205,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new AngelOfMercy()));
 
         advanceToUpkeepAndTrigger();
-        harness.passBothPriorities();
 
         // Choose Angel of Mercy (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
@@ -224,11 +229,8 @@ class ReyaDawnbringerTest extends BaseCardTest {
         // Empty graveyard — no cards at all
 
         advanceToUpkeepAndTrigger();
-        assertThat(gd.stack).hasSize(1);
 
-        // Resolve trigger — should resolve without graveyard choice
-        harness.passBothPriorities();
-
+        // Inner effects resolved inline — no graveyard choice since graveyard is empty
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
@@ -243,7 +245,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new HolyDay()));
 
         advanceToUpkeepAndTrigger();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
@@ -264,7 +265,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         advanceToUpkeepAndTrigger();
-        harness.passBothPriorities(); // resolve Reya's trigger → graveyard choice
         harness.handleGraveyardCardChosen(player1, 0); // return Angel of Mercy
 
         // Angel of Mercy's ETB (gain 3 life) should be on the stack
@@ -289,7 +289,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new HolyDay(), new GrizzlyBears()));
 
         advanceToUpkeepAndTrigger();
-        harness.passBothPriorities();
 
         // Index 0 is HolyDay (not a creature) → not in valid indices
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
@@ -306,7 +305,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         advanceToUpkeepAndTrigger();
-        harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 0))
                 .isInstanceOf(IllegalStateException.class)

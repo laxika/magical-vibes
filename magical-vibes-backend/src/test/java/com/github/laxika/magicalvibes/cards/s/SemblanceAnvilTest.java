@@ -51,7 +51,8 @@ class SemblanceAnvilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SemblanceAnvil(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Anvil → ETB trigger
+        harness.passBothPriorities(); // Resolve Anvil → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -63,11 +64,11 @@ class SemblanceAnvilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SemblanceAnvil(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Anvil → ETB may trigger
+        harness.passBothPriorities(); // Resolve Anvil → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
-        // Accept the may ability
+        // Accept the may ability — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve the imprint effect
 
         GameData gd = harness.getGameData();
 
@@ -99,7 +100,8 @@ class SemblanceAnvilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SemblanceAnvil(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Anvil → ETB may trigger
+        harness.passBothPriorities(); // Resolve Anvil → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
@@ -123,11 +125,11 @@ class SemblanceAnvilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SemblanceAnvil(), new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // Resolve Anvil → ETB may trigger
+        harness.passBothPriorities(); // Resolve Anvil → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
-        // Accept may — but there are no nonland cards in hand
+        // Accept may — inner effect resolves inline, but no nonland cards → skip
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve the imprint effect → no nonland cards → skip
 
         GameData gd = harness.getGameData();
 

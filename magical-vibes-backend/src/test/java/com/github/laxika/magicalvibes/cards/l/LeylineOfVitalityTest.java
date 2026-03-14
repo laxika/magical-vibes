@@ -227,20 +227,16 @@ class LeylineOfVitalityTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castCreature(player1, 0);
-        // Resolve creature spell — creature enters, trigger goes on stack
+        // Resolve creature spell — creature enters, MayEffect trigger goes on stack
+        harness.passBothPriorities();
+        // Resolve MayEffect from stack -> may prompt
         harness.passBothPriorities();
 
         // May prompt should be awaiting input
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
+        // Accept — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Leyline of Vitality"));
-
-        // Resolve triggered ability
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -257,14 +253,12 @@ class LeylineOfVitalityTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castCreature(player1, 0);
-        // Resolve creature spell — creature enters, trigger fires
+        // Resolve creature spell — creature enters, MayEffect trigger goes on stack
+        harness.passBothPriorities();
+        // Resolve MayEffect from stack -> may prompt
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
-
-        // No triggered ability on stack
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Leyline of Vitality"));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }

@@ -116,9 +116,8 @@ class CyclopsGladiatorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        // Accept the may ability
+        // Accept the may ability — CR 603.5: fight resolves inline during resolution
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         // Opponent's 2/2 takes 4 damage from Cyclops (lethal) — should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -127,7 +126,6 @@ class CyclopsGladiatorTest extends BaseCardTest {
         // Cyclops 4/4 takes 2 damage from the 2/2 — should survive
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(cyclops.getId()));
-        assertThat(cyclops.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test

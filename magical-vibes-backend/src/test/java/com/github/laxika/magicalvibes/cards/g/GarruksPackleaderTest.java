@@ -26,9 +26,11 @@ class GarruksPackleaderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // Resolve Hill Giant
 
-        // May ability should be queued — accept it
+        // MayEffect goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
+
+        // May ability should be queued — accept it, inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve draw
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -45,6 +47,9 @@ class GarruksPackleaderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // Resolve Hill Giant
+
+        // MayEffect goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
@@ -117,9 +122,11 @@ class GarruksPackleaderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // Resolve Garruk's Companion
 
-        // May ability should be queued — accept it
+        // MayEffect goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
+
+        // May ability should be queued — accept it, inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve draw
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();

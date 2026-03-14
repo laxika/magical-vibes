@@ -39,7 +39,8 @@ class SquadronHawkTest extends BaseCardTest {
     void resolvingCreatesMayPrompt() {
         setupAndCast();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Squadron Hawk"));
@@ -53,7 +54,8 @@ class SquadronHawkTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithHawks(3);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -66,9 +68,9 @@ class SquadronHawkTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithHawks(2);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards())
@@ -82,9 +84,9 @@ class SquadronHawkTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithHawks(3);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -100,9 +102,9 @@ class SquadronHawkTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithHawks(3);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -130,9 +132,9 @@ class SquadronHawkTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithHawks(3);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -154,9 +156,9 @@ class SquadronHawkTest extends BaseCardTest {
         deck.clear();
         deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no cards named Squadron Hawk"));
@@ -168,9 +170,9 @@ class SquadronHawkTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithHawks(1);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // Resolve creature → ETB MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.librarySearch().reveals()).isTrue();
     }

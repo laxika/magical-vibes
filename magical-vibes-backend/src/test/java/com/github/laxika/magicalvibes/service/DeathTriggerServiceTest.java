@@ -138,11 +138,12 @@ class DeathTriggerServiceTest extends BaseCardTest {
 
             svc.collectDeathTrigger(gd, card, player1.getId(), true);
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            PendingMayAbility pending = gd.pendingMayAbilities.get(0);
-            assertThat(pending.sourceCard()).isEqualTo(card);
-            assertThat(pending.controllerId()).isEqualTo(player1.getId());
+            // CR 603.5 — "you may" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getCard()).isEqualTo(card);
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
         }
 
         @Test
@@ -154,11 +155,11 @@ class DeathTriggerServiceTest extends BaseCardTest {
 
             svc.collectDeathTrigger(gd, card, player1.getId(), true);
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            PendingMayAbility pending = gd.pendingMayAbilities.get(0);
-            assertThat(pending.sourceCard()).isEqualTo(card);
-            assertThat(pending.manaCost()).isEqualTo("{2}");
+            // CR 603.5 — "you may pay" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getCard()).isEqualTo(card);
+            assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
         }
 
         @Test
@@ -432,8 +433,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
 
             svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
+            // CR 603.5 — "you may" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
         }
 
         @Test
@@ -445,8 +447,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
 
             svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
+            // CR 603.5 — "you may pay" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
         }
 
         @Test
@@ -675,7 +678,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("MayEffect queues may ability instead of stack")
+        @DisplayName("MayEffect queues may ability on stack")
         void mayEffect_queuesMayAbility() {
             Card watcher = createArtifact("Optional Watcher");
             watcher.addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
@@ -684,8 +687,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
 
             svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1.getId(), player1.getId());
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
+            // CR 603.5 — "you may" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
         }
 
         @Test
@@ -864,8 +868,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
 
             svc.checkOpponentCreatureDeathTriggers(gd, player1.getId());
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
+            // CR 603.5 — "you may" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
         }
 
         @Test

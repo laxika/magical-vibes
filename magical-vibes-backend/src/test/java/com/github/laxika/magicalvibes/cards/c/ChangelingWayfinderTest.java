@@ -67,13 +67,15 @@ class ChangelingWayfinderTest extends BaseCardTest {
     @DisplayName("Resolving Changeling Wayfinder puts it on the battlefield with may prompt")
     void resolvingPutsItOnBattlefieldWithMayPrompt() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
 
         GameData gd = harness.getGameData();
 
         // Changeling Wayfinder is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Changeling Wayfinder"));
+
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // May ability prompt is pending
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -83,17 +85,17 @@ class ChangelingWayfinderTest extends BaseCardTest {
     // ===== ETB: Accept and search =====
 
     @Test
-    @DisplayName("Accepting may ability puts ETB triggered ability on stack")
-    void acceptingMayPutsEtbOnStack() {
+    @DisplayName("Accepting may ability resolves inner effect inline — library search proceeds")
+    void acceptingMayResolvesInline() {
         setupAndCast();
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
+        setupLibraryWithBasicLands();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).hasSize(1);
-        StackEntry etbEntry = gd.stack.getFirst();
-        assertThat(etbEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(etbEntry.getCard().getName()).isEqualTo("Changeling Wayfinder");
+        // Inner effect resolved inline — library search prompt appears immediately
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
     }
 
     @Test
@@ -102,9 +104,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
-        harness.passBothPriorities(); // resolve ETB → library search prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -120,9 +122,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
-        harness.passBothPriorities(); // resolve ETB → library search prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -151,9 +153,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         List<Card> searchCards = gd.interaction.librarySearch().cards();
@@ -173,9 +175,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -203,7 +205,8 @@ class ChangelingWayfinderTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities(); // resolve creature spell → may prompt
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         GameData gd = harness.getGameData();
@@ -223,9 +226,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
         deck.clear();
         deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
-        harness.passBothPriorities(); // resolve ETB → no basic lands
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -240,9 +243,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
         // Clear the library
         harness.getGameData().playerDecks.get(player1.getId()).clear();
 
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → ETB on stack
-        harness.passBothPriorities(); // resolve ETB → empty library
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -260,9 +263,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
         deck.clear();
         deck.addAll(List.of(new GrizzlyBears(), new Plains(), new GrizzlyBears(), new Mountain()));
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);

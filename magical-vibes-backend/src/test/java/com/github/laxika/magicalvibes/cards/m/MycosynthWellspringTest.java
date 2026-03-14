@@ -63,9 +63,10 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell
-
+        harness.passBothPriorities(); // resolve artifact spell -> artifact enters, MayEffect on stack
         harness.assertOnBattlefield(player1, "Mycosynth Wellspring");
+
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
@@ -78,9 +79,9 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve search trigger
+        harness.passBothPriorities(); // resolve artifact spell -> artifact enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline -> library search
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards())
@@ -95,9 +96,9 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve artifact spell -> artifact enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline -> library search
 
         List<Card> offered = gd.interaction.librarySearch().cards();
         String chosenName = offered.getFirst().getName();
@@ -116,7 +117,8 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve artifact spell -> artifact enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -139,14 +141,14 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.clearPriorityPassed();
         var targetId = harness.getPermanentId(player1, "Mycosynth Wellspring");
         harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities(); // resolve Shatter — destroys Wellspring
+        harness.passBothPriorities(); // resolve Shatter — destroys Wellspring, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
 
         // Death trigger should present may prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve search trigger
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline -> library search
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
@@ -171,7 +173,8 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.clearPriorityPassed();
         var targetId = harness.getPermanentId(player1, "Mycosynth Wellspring");
         harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities(); // resolve Shatter
+        harness.passBothPriorities(); // resolve Shatter — destroys Wellspring, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
 
         harness.handleMayAbilityChosen(player1, false);
 

@@ -29,8 +29,8 @@ class MiscTriggerCollectorServiceTest extends BaseCardTest {
 
             harness.getTriggerCollectionService().checkAllyPermanentSacrificedTriggers(gd, player1.getId());
 
-            // Furnace Celebration uses MayPayManaEffect — should be queued
-            assertThat(gd.pendingMayAbilities).isNotEmpty();
+            // CR 603.5 — "you may" triggered abilities go on the stack immediately
+            assertThat(gd.stack).isNotEmpty();
         }
 
         @Test

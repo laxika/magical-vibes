@@ -45,6 +45,7 @@ class TreasureMageTest extends BaseCardTest {
         setupAndCast();
 
         harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -60,8 +61,8 @@ class TreasureMageTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -82,8 +83,8 @@ class TreasureMageTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -102,6 +103,7 @@ class TreasureMageTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -119,8 +121,8 @@ class TreasureMageTest extends BaseCardTest {
         deck.addAll(List.of(new GolemsHeart(), new GrizzlyBears()));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -137,8 +139,8 @@ class TreasureMageTest extends BaseCardTest {
         deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -152,8 +154,8 @@ class TreasureMageTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);

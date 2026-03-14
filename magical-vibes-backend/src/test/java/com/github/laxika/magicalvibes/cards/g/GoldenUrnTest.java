@@ -50,9 +50,9 @@ class GoldenUrnTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
+        harness.passBothPriorities(); // advance to UPKEEP
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
     }
@@ -65,7 +65,8 @@ class GoldenUrnTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // advance to UPKEEP
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(urn.getChargeCounters()).isEqualTo(0);
@@ -80,9 +81,9 @@ class GoldenUrnTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
+        harness.passBothPriorities(); // advance to UPKEEP
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
 
@@ -90,9 +91,9 @@ class GoldenUrnTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
+        harness.passBothPriorities(); // advance to UPKEEP
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
         assertThat(urn.getChargeCounters()).isEqualTo(2);
     }
@@ -159,9 +160,9 @@ class GoldenUrnTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
+        harness.passBothPriorities(); // advance to UPKEEP
+        harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
         assertThat(urn.getChargeCounters()).isEqualTo(1);
 

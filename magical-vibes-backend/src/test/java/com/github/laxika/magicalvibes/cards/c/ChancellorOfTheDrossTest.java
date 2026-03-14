@@ -63,18 +63,20 @@ class ChancellorOfTheDrossTest {
         harness.setHand(player1, List.of(new ChancellorOfTheDross()));
         harness.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
+
         // Game should be awaiting may ability choice from player1
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
     @Test
-    @DisplayName("Accepting Chancellor reveal puts triggered ability on the stack")
-    void acceptingRevealPutsAbilityOnStack() {
+    @DisplayName("CR 603.5: MayEffect triggered ability goes on the stack at first upkeep")
+    void mayEffectGoesOnStackAtFirstUpkeep() {
         harness.setHand(player1, List.of(new ChancellorOfTheDross()));
         harness.skipMulligan();
 
-        harness.handleMayAbilityChosen(player1, true);
-
+        // CR 603.5: MayEffect goes on the stack immediately (not as a pending may ability)
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chancellor of the Dross");
@@ -88,10 +90,11 @@ class ChancellorOfTheDrossTest {
         harness.setLife(player2, 20);
         harness.skipMulligan();
 
-        // Accept the may ability
-        harness.handleMayAbilityChosen(player1, true);
-        // Resolve the trigger
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
+
+        // Accept the may ability — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         // Opponent loses 3 life: 20 - 3 = 17
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -106,6 +109,9 @@ class ChancellorOfTheDrossTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.skipMulligan();
+
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
@@ -123,16 +129,11 @@ class ChancellorOfTheDrossTest {
         harness.setLife(player2, 20);
         harness.skipMulligan();
 
-        // Accept both may abilities
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Both triggers should be on the stack
-        assertThat(gd.stack).hasSize(2);
-
-        // Resolve both triggers
+        // CR 603.5: Both MayEffects go on the stack, resolve each one
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Opponent loses 6 life total: 20 - 6 = 14
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -149,13 +150,11 @@ class ChancellorOfTheDrossTest {
         harness.setLife(player2, 20);
         harness.skipMulligan();
 
-        // Accept both may abilities (player1 first since orderedPlayerIds order)
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.5: Both MayEffects go on the stack (player2's on top, resolved first)
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-
-        // Resolve both triggers
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Each player loses 3 from opponent's trigger and gains 3 from their own trigger
         // Net effect: each player is at 20 - 3 + 3 = 20
@@ -197,9 +196,11 @@ class ChancellorOfTheDrossTest {
         harness.setHand(player1, List.of(new ChancellorOfTheDross()));
         harness.skipMulligan();
 
-        // Accept and resolve the trigger
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
+
+        // Accept — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         // Chancellor should still be in hand
         assertThat(gd.playerHands.get(player1.getId()))

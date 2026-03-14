@@ -50,7 +50,8 @@ class GalvanothTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Galvanoth());
 
         advanceToUpkeep(player1);
-        // MayEffect goes directly into pendingMayAbilities — already awaiting choice
+        // MayEffect goes on the stack — resolve it to get prompt
+        harness.passBothPriorities();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
@@ -65,6 +66,7 @@ class GalvanothTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(shock);
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve MayEffect from stack
         harness.handleMayAbilityChosen(player1, false); // decline to look
 
         // Card is still on top of library
@@ -81,9 +83,8 @@ class GalvanothTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(bears);
 
         advanceToUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true); // accept look
-        // Wrapped effect goes on stack
-        harness.passBothPriorities(); // resolve → sees creature on top, no second may prompt
+        harness.passBothPriorities(); // resolve MayEffect from stack
+        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline, sees creature on top, no second may prompt
 
         // Card is still on top of library
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
@@ -102,12 +103,12 @@ class GalvanothTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
+        // MayEffect goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
+
         // First may: look at top card
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Wrapped effect goes on stack — resolve it
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Pyroclasm → second may
 
         // Second may: cast Pyroclasm
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -148,12 +149,12 @@ class GalvanothTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
+        // MayEffect goes on stack — resolve it to get prompt
+        harness.passBothPriorities();
+
         // First may: look at top card
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Wrapped effect goes on stack — resolve it
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Shock → second may
 
         // Second may: cast Shock
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -192,8 +193,8 @@ class GalvanothTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(shock);
 
         advanceToUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true); // accept look
-        harness.passBothPriorities(); // resolve → sees Shock → second may prompt
+        harness.passBothPriorities(); // resolve MayEffect from stack
+        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → sees Shock → second may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         harness.handleMayAbilityChosen(player1, false); // decline to cast
@@ -211,8 +212,8 @@ class GalvanothTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
 
         advanceToUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true); // accept look
-        harness.passBothPriorities(); // resolve → library empty, nothing happens
+        harness.passBothPriorities(); // resolve MayEffect from stack
+        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline, library empty, nothing happens
 
         // No errors, game continues normally
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -229,8 +230,8 @@ class GalvanothTest extends BaseCardTest {
         gd.spellsCastThisTurn.put(player1.getId(), 0);
 
         advanceToUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true); // accept look
-        harness.passBothPriorities(); // resolve → second may prompt
+        harness.passBothPriorities(); // resolve MayEffect from stack
+        harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → second may prompt
         harness.handleMayAbilityChosen(player1, true); // cast Pyroclasm
 
         assertThat(gd.spellsCastThisTurn.get(player1.getId())).isEqualTo(1);

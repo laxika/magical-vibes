@@ -57,14 +57,14 @@ class SuturePriestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
 
-        // Resolve creature spell → Suture Priest triggers
+        // Resolve creature spell → Suture Priest triggers, MayEffect on stack
         harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // May ability prompt for Suture Priest's controller
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve triggered ability
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         harness.assertLife(player1, 21);
     }
@@ -82,6 +82,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
@@ -122,14 +123,14 @@ class SuturePriestTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castCreature(player2, 0);
 
-        // Resolve creature spell → Suture Priest triggers for opponent creature
+        // Resolve creature spell → Suture Priest triggers for opponent creature, MayEffect on stack
         harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // May ability prompt for Suture Priest's controller (player1)
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve triggered ability
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         harness.assertLife(player2, 19);
     }
@@ -151,6 +152,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
@@ -173,11 +175,11 @@ class SuturePriestTest extends BaseCardTest {
 
         // Resolve creature spell → only ally trigger, no opponent trigger
         harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Only the ally may ability should trigger (gain life), not the opponent one (lose life)
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Player 1 gained 1 life from ally trigger
         harness.assertLife(player1, 21);

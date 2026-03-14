@@ -296,12 +296,12 @@ public class GameTestHarness {
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 gameQueryService, graveyardService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService, playerInteractionResolutionService);
-        PermanentChoiceTriggerHandlerService permanentChoiceTriggerHandler = new PermanentChoiceTriggerHandlerService(
-                gameQueryService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
-        PermanentChoiceSpellHandlerService permanentChoiceSpellHandler = new PermanentChoiceSpellHandlerService(
-                gameQueryService, graveyardService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
         InputCompletionService inputCompletionService = new InputCompletionService(
                 playerInputService, gameBroadcastService, turnProgressionService, stateBasedActionService, effectResolutionService);
+        PermanentChoiceTriggerHandlerService permanentChoiceTriggerHandler = new PermanentChoiceTriggerHandlerService(
+                gameQueryService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService, effectResolutionService, inputCompletionService);
+        PermanentChoiceSpellHandlerService permanentChoiceSpellHandler = new PermanentChoiceSpellHandlerService(
+                gameQueryService, graveyardService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
         PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
                 inputCompletionService, gameQueryService, battlefieldEntryService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);
@@ -323,7 +323,7 @@ public class GameTestHarness {
                 inputCompletionService, gameQueryService, drawService, gameBroadcastService, mulliganService, playerInputService, turnProgressionService, battlefieldEntryService, sessionManager);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
-                gameQueryService, gameBroadcastService, playerInputService, turnProgressionService);
+                gameQueryService, gameBroadcastService, playerInputService, turnProgressionService, effectResolutionService);
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 gameBroadcastService, stateBasedActionService,
                 playerInputService, turnProgressionService, effectResolutionService);
@@ -631,6 +631,11 @@ public class GameTestHarness {
     }
 
     public void passBothPriorities() {
+        // CR 603.5: If already awaiting input (e.g. may ability prompt), return immediately.
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
         // Reset priority so active player gets first chance
         gameData.priorityPassedBy.clear();
 

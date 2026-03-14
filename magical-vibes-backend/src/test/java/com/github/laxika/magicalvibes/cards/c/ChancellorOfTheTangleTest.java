@@ -64,6 +64,9 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
@@ -72,6 +75,9 @@ class ChancellorOfTheTangleTest {
     void acceptingRevealFiresTriggeredAbilityAtPrecombatMain() {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
+
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
 
         // Accept reveal — auto-pass advances through UPKEEP → DRAW → PRECOMBAT_MAIN,
         // where the delayed trigger fires and puts the ability on the stack
@@ -90,6 +96,9 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
+
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.openingHandManaTriggers).isEmpty();
@@ -101,6 +110,10 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
+
+        // Accept reveal — registers delayed trigger, auto-advances to PRECOMBAT_MAIN
         harness.handleMayAbilityChosen(player1, true);
 
         // Trigger is on the stack at PRECOMBAT_MAIN — resolve it
@@ -115,10 +128,13 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle(), new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // Accept both may abilities — auto-pass fires both triggers at PRECOMBAT_MAIN
+        // CR 603.5: Both MayEffects go on the stack, resolve each one
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        // Both delayed triggers fire at PRECOMBAT_MAIN
         assertThat(gd.stack).hasSize(2);
 
         // Resolve both triggers
@@ -134,7 +150,13 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
+
+        // Accept reveal — registers delayed trigger
         harness.handleMayAbilityChosen(player1, true);
+
+        // Resolve the AwardMana trigger at PRECOMBAT_MAIN
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -159,9 +181,11 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player2, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // Accept both may abilities
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.5: Both MayEffects go on the stack (player2's on top, resolved first)
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Player 1's trigger fired at their first PRECOMBAT_MAIN (active player is player1 on turn 1)
         assertThat(gd.stack).hasSize(1);

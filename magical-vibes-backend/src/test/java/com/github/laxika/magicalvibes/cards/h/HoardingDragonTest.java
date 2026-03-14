@@ -59,6 +59,7 @@ class HoardingDragonTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -76,8 +77,8 @@ class HoardingDragonTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve search trigger
+        harness.passBothPriorities(); // resolve MayEffect from stack
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
@@ -98,8 +99,8 @@ class HoardingDragonTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve search trigger
+        harness.passBothPriorities(); // resolve MayEffect from stack
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Choose the artifact (Spellbook)
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -124,6 +125,7 @@ class HoardingDragonTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve MayEffect from stack
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player1, "Hoarding Dragon");
@@ -153,13 +155,13 @@ class HoardingDragonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.castInstant(player2, 0, dragonId);
         harness.passBothPriorities(); // resolve Doom Blade — Dragon dies
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         // Death trigger should present may prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve death trigger
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Spellbook should be in player1's hand
         assertThat(gd.playerHands.get(player1.getId()))
@@ -194,6 +196,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.castInstant(player2, 0, dragonId);
         harness.passBothPriorities(); // resolve Doom Blade — Dragon dies
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -223,11 +226,11 @@ class HoardingDragonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.castInstant(player2, 0, dragonId);
         harness.passBothPriorities(); // resolve Doom Blade — Dragon dies
+        harness.passBothPriorities(); // resolve MayEffect from stack
 
         // May prompt should still fire
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve death trigger
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Hand should be unchanged
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);

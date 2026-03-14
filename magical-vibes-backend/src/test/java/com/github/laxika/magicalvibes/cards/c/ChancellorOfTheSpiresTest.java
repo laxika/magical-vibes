@@ -80,17 +80,19 @@ class ChancellorOfTheSpiresTest {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
         harness.skipMulligan();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
     @Test
-    @DisplayName("Accepting reveal puts triggered ability on the stack")
-    void acceptingRevealPutsAbilityOnStack() {
+    @DisplayName("CR 603.5: MayEffect triggered ability goes on the stack at first upkeep")
+    void mayEffectGoesOnStackAtFirstUpkeep() {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
         harness.skipMulligan();
 
-        harness.handleMayAbilityChosen(player1, true);
-
+        // CR 603.5: MayEffect goes on the stack immediately (not as a pending may ability)
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chancellor of the Spires");
@@ -104,8 +106,11 @@ class ChancellorOfTheSpiresTest {
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
+
+        // Accept — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         int deckSizeAfter = gd.playerDecks.get(player2.getId()).size();
         assertThat(deckSizeBefore - deckSizeAfter).isEqualTo(7);
@@ -120,6 +125,9 @@ class ChancellorOfTheSpiresTest {
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        harness.passBothPriorities();
+
         harness.handleMayAbilityChosen(player1, false);
 
         int deckSizeAfter = gd.playerDecks.get(player2.getId()).size();
@@ -132,8 +140,11 @@ class ChancellorOfTheSpiresTest {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
         harness.skipMulligan();
 
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
+
+        // Accept — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Chancellor of the Spires"));

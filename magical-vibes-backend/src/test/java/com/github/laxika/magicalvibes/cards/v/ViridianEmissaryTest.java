@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
@@ -68,7 +67,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // combat damage — emissary dies, MayEffect on stack
 
         GameData gd = harness.getGameData();
 
@@ -76,17 +75,12 @@ class ViridianEmissaryTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Viridian Emissary"));
 
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+
         // Player1 should be prompted for the may ability
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Viridian Emissary"));
-
-        // Resolve the triggered ability — should prompt for library search
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
@@ -123,19 +117,17 @@ class ViridianEmissaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // combat damage — emissary dies, MayEffect on stack
 
         GameData gd = harness.getGameData();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Viridian Emissary"));
 
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
-
-        // No triggered ability on the stack
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Viridian Emissary"));
 
         // No new permanents on battlefield (emissary died, nothing added)
         assertThat(gd.playerBattlefields.get(player1.getId()).size()).isLessThanOrEqualTo(battlefieldBefore);
@@ -155,17 +147,18 @@ class ViridianEmissaryTest extends BaseCardTest {
         setupLibrary(player1);
 
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve Wrath — emissary dies, MayEffect on stack
 
         GameData gd = harness.getGameData();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Viridian Emissary"));
 
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
@@ -191,12 +184,12 @@ class ViridianEmissaryTest extends BaseCardTest {
         deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve Wrath — emissary dies, MayEffect on stack
 
         GameData gd = harness.getGameData();
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // No library search prompt since no basic lands exist
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);

@@ -52,6 +52,8 @@ class KuldothaPhoenixTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new KuldothaPhoenix()));
 
         advanceToUpkeep(player1);
+        // Resolve MayPayManaEffect from stack
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -96,8 +98,10 @@ class KuldothaPhoenixTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.handleMayAbilityChosen(player1, true);
+        // Resolve MayPayManaEffect from stack
         harness.passBothPriorities();
+        // Accept — inner effect resolves inline
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(phoenix.getId()));
@@ -116,6 +120,8 @@ class KuldothaPhoenixTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
+        // Resolve MayPayManaEffect from stack
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -135,6 +141,8 @@ class KuldothaPhoenixTest extends BaseCardTest {
         // No mana added
 
         advanceToUpkeep(player1);
+        // Resolve MayPayManaEffect from stack
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         // Phoenix stays in graveyard because mana cannot be paid

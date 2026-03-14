@@ -87,6 +87,12 @@ public class GameData {
     public final List<Permanent> pendingLethalDamageDestructions = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
+    /** CR 603.5 — set when a MayEffect is encountered during stack resolution, cleared after player responds. */
+    public boolean resolvingMayEffectFromStack;
+    /** CR 603.5 — stores the player's response to a resolution-time MayEffect (true=accepted, false=declined, null=no pending choice). */
+    public Boolean resolvedMayAccepted;
+    /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
+    public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public PendingAbilityActivation pendingAbilityActivation;
@@ -292,44 +298,53 @@ public class GameData {
     }
 
     /**
-     * Queues a standard "may" triggered ability for player choice.
-     * Covers the common pattern: source card name + em-dash + prompt.
+     * CR 603.5 — Puts a "you may" triggered ability directly onto the stack with the
+     * MayEffect wrapper intact.  The may choice happens at resolution time, not trigger time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may) {
-        pendingMayAbilities.add(new PendingMayAbility(
-                sourceCard, controllerId,
-                List.of(may.wrapped()),
-                sourceCard.getName() + " — " + may.prompt()
+        stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(may))
         ));
     }
 
     /**
-     * Queues a "may" triggered ability with source permanent and target context.
-     * Used for combat damage triggers that need to pass both the source creature and the damaged player.
+     * CR 603.5 — Puts a "you may" triggered ability with source permanent and target context
+     * directly onto the stack.  The may choice happens at resolution time, not trigger time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId) {
-        pendingMayAbilities.add(new PendingMayAbility(
-                sourceCard, controllerId,
-                List.of(may.wrapped()),
-                sourceCard.getName() + " — " + may.prompt(),
+        stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(may)),
                 targetCardId,
-                null,
                 sourcePermanentId
         ));
     }
 
     /**
-     * Queues a standard "may pay mana" triggered ability for player choice.
-     * Covers the common pattern: source card name + em-dash + prompt, with mana cost gate.
+     * CR 603.5 — Puts a "you may pay" triggered ability directly onto the stack with the
+     * MayPayManaEffect wrapper intact.  The may choice happens at resolution time.
+     * The targetCardId (e.g. the entering permanent for Mirrorworks) is preserved on the
+     * stack entry so that the wrapped effect can reference it at resolution time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay, UUID targetCardId) {
-        pendingMayAbilities.add(new PendingMayAbility(
-                sourceCard, controllerId,
-                List.of(mayPay.wrapped()),
-                sourceCard.getName() + " — " + mayPay.prompt(),
-                targetCardId,
-                mayPay.manaCost()
-        ));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(mayPay))
+        );
+        if (targetCardId != null) {
+            entry.setTargetPermanentId(targetCardId);
+        }
+        stack.add(entry);
     }
 
     /**
@@ -361,6 +376,10 @@ public class GameData {
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
+        copy.resolvingMayEffectFromStack = this.resolvingMayEffectFromStack;
+        copy.resolvedMayAccepted = this.resolvedMayAccepted;
+        copy.resolvedMayTargetingEntry = this.resolvedMayTargetingEntry != null
+                ? new StackEntry(this.resolvedMayTargetingEntry) : null;
         copy.chosenXValue = this.chosenXValue;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;

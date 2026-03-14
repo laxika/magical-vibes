@@ -65,13 +65,13 @@ class SangromancerTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
+        harness.passBothPriorities(); // Resolve Shock → bears die → MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         // May ability prompt for Sangromancer's controller
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve triggered ability
 
         harness.assertLife(player1, 23);
     }
@@ -90,7 +90,8 @@ class SangromancerTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
+        harness.passBothPriorities(); // Resolve Shock → bears die → MayEffect on stack
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
@@ -143,11 +144,13 @@ class SangromancerTest extends BaseCardTest {
         // Player1 chooses card from player2's revealed hand
         harness.handleCardChosen(player1, 0);
 
+        // MayEffect goes on stack after discard trigger
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
+
         // May ability prompt for Sangromancer's controller
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // Resolve triggered ability
 
         harness.assertLife(player1, 23);
     }
@@ -169,6 +172,7 @@ class SangromancerTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
+        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 

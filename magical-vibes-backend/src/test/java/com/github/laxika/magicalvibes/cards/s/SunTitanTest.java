@@ -50,7 +50,8 @@ class SunTitanTest extends BaseCardTest {
         void etbTriggersMayPrompt() {
             harness.setGraveyard(player1, List.of(new GrizzlyBears()));
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
             assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -62,9 +63,9 @@ class SunTitanTest extends BaseCardTest {
             Card bears = new GrizzlyBears();
             harness.setGraveyard(player1, List.of(bears));
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability → graveyard choice
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → graveyard choice
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
             harness.handleGraveyardCardChosen(player1, 0);
@@ -82,9 +83,9 @@ class SunTitanTest extends BaseCardTest {
             Card plains = new Plains();
             harness.setGraveyard(player1, List.of(plains));
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability → graveyard choice
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → graveyard choice
 
             harness.handleGraveyardCardChosen(player1, 0);
 
@@ -97,9 +98,9 @@ class SunTitanTest extends BaseCardTest {
         void cannotReturnNonPermanent() {
             harness.setGraveyard(player1, List.of(new HolyDay()));
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
             // No valid targets — should skip graveyard choice
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
@@ -110,9 +111,9 @@ class SunTitanTest extends BaseCardTest {
         void cannotReturnHighManaValuePermanent() {
             harness.setGraveyard(player1, List.of(new StoneGolem())); // MV 5
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
             // No valid targets — should skip graveyard choice
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
@@ -124,7 +125,8 @@ class SunTitanTest extends BaseCardTest {
             Card bears = new GrizzlyBears();
             harness.setGraveyard(player1, List.of(bears));
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
@@ -137,9 +139,9 @@ class SunTitanTest extends BaseCardTest {
         @DisplayName("ETB resolves with no effect if graveyard is empty")
         void noEffectWithEmptyGraveyard() {
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         }
@@ -154,9 +156,9 @@ class SunTitanTest extends BaseCardTest {
             Card plains = new Plains(); // land, MV 0 — valid
             harness.setGraveyard(player1, List.of(bears, holyDay, stoneGolem, plains));
             castSunTitan();
-            harness.passBothPriorities(); // resolve creature spell → may prompt
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability → graveyard choice
+            harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → graveyard choice
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
 
@@ -182,6 +184,7 @@ class SunTitanTest extends BaseCardTest {
             addReadySunTitan(player1);
 
             declareAttackers(List.of(0));
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
             assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
@@ -195,8 +198,8 @@ class SunTitanTest extends BaseCardTest {
             addReadySunTitan(player1);
 
             declareAttackers(List.of(0));
-            harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities(); // resolve triggered ability → graveyard choice
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
+            harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → graveyard choice
 
             harness.handleGraveyardCardChosen(player1, 0);
 
@@ -214,6 +217,7 @@ class SunTitanTest extends BaseCardTest {
             addReadySunTitan(player1);
 
             declareAttackers(List.of(0));
+            harness.passBothPriorities(); // resolve MayEffect → may prompt
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);

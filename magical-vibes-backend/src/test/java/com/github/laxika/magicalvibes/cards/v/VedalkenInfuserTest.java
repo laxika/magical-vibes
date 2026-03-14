@@ -44,9 +44,9 @@ class VedalkenInfuserTest extends BaseCardTest {
         Permanent artifact = addReadyArtifact(player1);
 
         triggerUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities(); // resolve the effect
 
         assertThat(artifact.getChargeCounters()).isEqualTo(1);
     }
@@ -58,6 +58,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         Permanent artifact = addReadyArtifact(player1);
 
         triggerUpkeep(player1);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(artifact.getChargeCounters()).isEqualTo(0);
@@ -70,9 +71,9 @@ class VedalkenInfuserTest extends BaseCardTest {
         Permanent opponentArtifact = addReadyArtifact(player2);
 
         triggerUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, opponentArtifact.getId());
-        harness.passBothPriorities();
 
         assertThat(opponentArtifact.getChargeCounters()).isEqualTo(1);
     }
@@ -85,17 +86,17 @@ class VedalkenInfuserTest extends BaseCardTest {
 
         // First upkeep
         triggerUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         assertThat(artifact.getChargeCounters()).isEqualTo(1);
 
         // Second upkeep
         triggerUpkeep(player1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         assertThat(artifact.getChargeCounters()).isEqualTo(2);
     }
@@ -107,6 +108,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         // No artifacts on any battlefield
 
         triggerUpkeep(player1);
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // The may ability is still prompted (player must choose yes/no)
         assertThat(gd.interaction.isAwaitingInput()).isTrue();

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
@@ -164,7 +165,13 @@ public class MulliganService {
                 for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
                     if (effect instanceof MayEffect may
                             && may.wrapped() instanceof LeylineStartOnBattlefieldEffect) {
-                        gameData.queueMayAbility(card, playerId, may);
+                        // Leyline is a pregame action (CR 103.6), not a triggered ability —
+                        // bypasses the stack, so add directly to pendingMayAbilities.
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                card, playerId,
+                                List.of(may.wrapped()),
+                                card.getName() + " — " + may.prompt()
+                        ));
                     }
                 }
             }

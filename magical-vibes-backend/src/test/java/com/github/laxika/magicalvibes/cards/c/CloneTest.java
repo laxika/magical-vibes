@@ -56,11 +56,12 @@ class CloneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Should be prompted for may ability
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         // Should be prompted to choose a creature
         assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
@@ -88,9 +89,10 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         UUID targetId = harness.getPermanentId(player2, "Air Elemental");
         harness.handlePermanentChosen(player1, targetId);
@@ -114,9 +116,10 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
@@ -141,9 +144,10 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
@@ -176,9 +180,10 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
@@ -211,9 +216,10 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        // Accept to copy
+        // Accept to copy — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
 
         // Choose to copy Cho-Manno
@@ -239,7 +245,8 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Decline to copy
         harness.handleMayAbilityChosen(player1, false);
@@ -289,9 +296,10 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         UUID angelId = harness.getPermanentId(player2, "Angel of Mercy");
         harness.handlePermanentChosen(player1, angelId);
@@ -329,9 +337,10 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
@@ -360,12 +369,13 @@ class CloneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell → may on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // First may prompt: Clone's own "you may copy" prompt
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         // Choose to copy Treasure Hunter
         UUID hunterId = harness.getPermanentId(player2, "Treasure Hunter");
@@ -378,7 +388,8 @@ class CloneTest extends BaseCardTest {
         assertThat(clonePerm).isNotNull();
         assertThat(clonePerm.getCard().getName()).isEqualTo("Treasure Hunter");
 
-        // Second may prompt: copied Treasure Hunter's may ETB should now be presented
+        // Second may prompt: copied Treasure Hunter's may ETB goes on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 

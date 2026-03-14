@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +73,7 @@ public class MayAbilityHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final EffectResolutionService effectResolutionService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -84,6 +87,12 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMayAbilityChoice();
+
+        // CR 603.5: resolution-time "you may" choice for triggered abilities on the stack.
+        if (gameData.resolvingMayEffectFromStack) {
+            handleResolutionTimeMayChoice(gameData, player, accepted, ability);
+            return;
+        }
 
         // Pending equipment attach — e.g. Auriok Survivors "you may attach it to this creature"
         UUID pendingEquipId = gameData.interaction.pendingEquipmentAttachEquipmentId();
@@ -493,5 +502,90 @@ public class MayAbilityHandlerService {
         String logEntry = player.getUsername() + " accepts — choosing a target for " + ability.sourceCard().getName() + "'s ability.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} accepts targeted may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+    }
+
+    private void handleResolutionTimeMayChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        gameData.resolvingMayEffectFromStack = false;
+        RegisterDelayedCounterTriggerEffect dct = ability.effects().stream().filter(e -> e instanceof RegisterDelayedCounterTriggerEffect).map(e -> (RegisterDelayedCounterTriggerEffect) e).findFirst().orElse(null);
+        if (dct != null) { gameData.pendingEffectResolutionEntry = null; gameData.pendingEffectResolutionIndex = 0; mayMiscHandlerService.handleOpeningHandDelayedCounterTrigger(gameData, player, accepted, ability, dct); return; }
+        RegisterDelayedManaTriggerEffect dmt = ability.effects().stream().filter(e -> e instanceof RegisterDelayedManaTriggerEffect).map(e -> (RegisterDelayedManaTriggerEffect) e).findFirst().orElse(null);
+        if (dmt != null) { gameData.pendingEffectResolutionEntry = null; gameData.pendingEffectResolutionIndex = 0; mayMiscHandlerService.handleOpeningHandDelayedManaTrigger(gameData, player, accepted, ability, dmt); return; }
+        // Redirect retarget — ChooseNewTargetsForTargetSpellEffect needs the full retarget UI flow
+        boolean isRedirectRetarget = ability.effects().stream().anyMatch(e -> e instanceof ChooseNewTargetsForTargetSpellEffect);
+        if (isRedirectRetarget) {
+            gameData.pendingEffectResolutionEntry = null;
+            gameData.pendingEffectResolutionIndex = 0;
+            mayCopyHandlerService.handleRedirectRetargetChoice(gameData, player, accepted, ability);
+            return;
+        }
+        if (accepted) {
+            if (ability.manaCost() != null) {
+                ManaCost cost = new ManaCost(ability.manaCost());
+                ManaPool pool = gameData.playerManaPools.get(player.getId());
+                if (!cost.canPay(pool)) {
+                    gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " cannot pay " + ability.manaCost() + " for " + ability.sourceCard().getName() + "'s ability.");
+                    gameData.resolvedMayAccepted = false;
+                    if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
+                    if (gameData.interaction.isAwaitingInput()) { return; }
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+                cost.pay(pool);
+            }
+            gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " accepts — resolving " + ability.sourceCard().getName() + "'s ability.");
+            CardEffect innerEffect = extractInnerEffect(ability);
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            boolean isTargetedPermanent = innerEffect != null && innerEffect.canTargetPermanent();
+            boolean isTargetedPlayer = innerEffect != null && innerEffect.canTargetPlayer();
+            boolean targetAlreadySet = pendingEntry != null && pendingEntry.getTargetPermanentId() != null;
+            if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
+                gameData.resolvedMayAccepted = true;
+                handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);
+                return;
+            }
+            if (pendingEntry != null) { setUpSelfTargetIfNeeded(gameData, ability, pendingEntry, innerEffect); }
+            gameData.resolvedMayAccepted = true;
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declines " + ability.sourceCard().getName() + "'s ability.");
+            gameData.resolvedMayAccepted = false;
+        }
+        if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
+        if (gameData.interaction.isAwaitingInput()) { return; }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private CardEffect extractInnerEffect(PendingMayAbility ability) {
+        if (ability.effects().isEmpty()) return null;
+        CardEffect first = ability.effects().getFirst();
+        if (first instanceof MayEffect may) { return may.wrapped(); }
+        return first;
+    }
+
+    private void setUpSelfTargetIfNeeded(GameData gameData, PendingMayAbility ability, StackEntry pendingEntry, CardEffect innerEffect) {
+        if (innerEffect == null) return;
+        boolean needsSelfTarget = innerEffect instanceof PutChargeCounterOnSelfEffect || innerEffect instanceof AnimateSelfEffect || innerEffect instanceof AnimateSelfByChargeCountersEffect || innerEffect instanceof AnimateSelfWithStatsEffect || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+        if (needsSelfTarget && pendingEntry.getTargetPermanentId() == null) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
+            if (battlefield != null) { for (Permanent p : battlefield) { if (p.getCard() == ability.sourceCard()) { pendingEntry.setTargetPermanentId(p.getId()); break; } } }
+        }
+    }
+
+    private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {
+        List<UUID> validTargets = new ArrayList<>();
+        Card sourceCard = ability.sourceCard();
+        if (canTargetPermanent) { for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) { if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
+        if (canTargetPlayer) { validTargets.addAll(gameData.orderedPlayerIds); }
+        if (validTargets.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, ability.sourceCard().getName() + "'s ability has no valid targets.");
+            gameData.resolvedMayAccepted = false;
+            if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
+            if (gameData.interaction.isAwaitingInput()) return;
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        gameData.resolvedMayTargetingEntry = pendingEntry;
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())));
+        playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets, ability.sourceCard().getName() + "'s ability — Choose target.");
+        gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " accepts — choosing a target for " + ability.sourceCard().getName() + "'s ability.");
     }
 }

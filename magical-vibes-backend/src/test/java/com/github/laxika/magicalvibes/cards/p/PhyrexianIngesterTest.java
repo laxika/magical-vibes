@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,10 +26,10 @@ class PhyrexianIngesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → target selection
-        harness.handlePermanentChosen(player1, targetId); // choose target → ETB on stack
-        harness.passBothPriorities(); // resolve ETB → exile + imprint
+        harness.passBothPriorities(); // resolve creature spell → ETB trigger, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept → target selection (inner effect inline)
+        harness.handlePermanentChosen(player1, targetId); // choose target → exile + imprint inline
     }
 
     // ===== Card structure =====
@@ -114,7 +113,8 @@ class PhyrexianIngesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve → may prompt
+        harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         Permanent ingester = gd.playerBattlefields.get(player1.getId()).stream()

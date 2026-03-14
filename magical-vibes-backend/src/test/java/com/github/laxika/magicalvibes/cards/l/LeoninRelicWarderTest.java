@@ -32,10 +32,10 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-        harness.handlePermanentChosen(player1, targetId); // choose target -> ETB on stack
-        harness.passBothPriorities(); // resolve ETB trigger
+        harness.handlePermanentChosen(player1, targetId); // choose target -> effect resolves inline
     }
 
     /**
@@ -71,7 +71,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
@@ -114,7 +115,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -226,7 +228,8 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         // Reset for follow-up spell
@@ -259,20 +262,22 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
+        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-        harness.handlePermanentChosen(player1, artifactId); // choose target -> ETB on stack
 
-        // Remove target before ETB resolves
+        // Remove target before choosing it
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        // Resolve ETB -> fizzles
-        harness.passBothPriorities();
+        // Choose removed target -> effect does nothing during inline resolution
+        harness.handlePermanentChosen(player1, artifactId);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        // No exile-return tracking should exist
+        // No exile-return tracking should exist since target was gone
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+        // Nothing was exiled
+        assertThat(gd.playerExiledCards.get(player2.getId()))
+                .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
 
     @Test

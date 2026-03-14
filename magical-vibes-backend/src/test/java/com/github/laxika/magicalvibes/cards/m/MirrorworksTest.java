@@ -40,7 +40,8 @@ class MirrorworksTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlintHawkIdol()));
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell, artifact enters, trigger fires
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
+        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
         // Should be prompted with may ability to pay {2}
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -54,11 +55,11 @@ class MirrorworksTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlintHawkIdol()));
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell, trigger fires
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
+        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
-        // Accept and pay {2}
+        // Accept and pay {2} — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve the token copy effect
 
         // Should have Mirrorworks + original Glint Hawk Idol + token copy = 3 permanents
         long idolCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -81,7 +82,8 @@ class MirrorworksTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlintHawkIdol()));
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell, trigger fires
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
+        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
         // Decline
         harness.handleMayAbilityChosen(player1, false);
@@ -101,7 +103,8 @@ class MirrorworksTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlintHawkIdol()));
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell, trigger fires
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
+        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
         // Try to accept but can't afford it
         harness.handleMayAbilityChosen(player1, true);
@@ -121,11 +124,11 @@ class MirrorworksTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlintHawkIdol()));
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell, trigger fires
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
+        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
-        // Accept and pay {2} to create token copy
+        // Accept and pay {2} — inner effect resolves inline, creating token copy
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve the token copy effect
 
         // The token entering should NOT trigger Mirrorworks again (nontoken restriction)
         // Check that we don't have another may ability prompt
@@ -154,11 +157,11 @@ class MirrorworksTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlintHawkIdol()));
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact spell, trigger fires
+        harness.passBothPriorities(); // resolve artifact spell, artifact enters, MayPayManaEffect on stack
+        harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
-        // Accept and pay {2}
+        // Accept and pay {2} — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve the token copy effect
 
         // Find the token copy
         Permanent tokenCopy = gd.playerBattlefields.get(player1.getId()).stream()
