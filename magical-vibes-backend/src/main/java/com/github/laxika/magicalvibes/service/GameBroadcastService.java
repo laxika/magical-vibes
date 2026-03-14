@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -673,6 +674,10 @@ public class GameBroadcastService {
                     reduction += metalcraftReduce.amount();
                 }
             }
+            if (effect instanceof ReduceOwnCastCostPerCreatureOnBattlefieldEffect perCreatureReduce) {
+                int totalCreatures = countCreaturesOnAllBattlefields(gameData);
+                reduction += perCreatureReduce.amountPerCreature() * totalCreatures;
+            }
         }
 
         // Cost reduction from battlefield permanents with imprinted cards (e.g. Semblance Anvil)
@@ -734,6 +739,14 @@ public class GameBroadcastService {
             }
         }
         return count;
+    }
+
+    private int countCreaturesOnAllBattlefields(GameData gameData) {
+        int total = 0;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            total += countCreaturesControlled(gameData, pid);
+        }
+        return total;
     }
 
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {

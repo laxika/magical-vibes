@@ -829,6 +829,7 @@ Pass `null` as filter to allow any card.
 | `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect` | `(int minimumCreatureDifference, int amount)` | reduce cast cost by N if opponent has M+ more creatures |
 | `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` | `(int amount)` | reduce cast cost of controller's spells by N if they share a card type with the imprinted card (static, Semblance Anvil) |
 | `ReduceOwnCastCostIfMetalcraftEffect` | `(int amount)` | reduce this spell's cast cost by N if controller has metalcraft (3+ artifacts) (static, Stoic Rebuttal) |
+| `ReduceOwnCastCostPerCreatureOnBattlefieldEffect` | `(int amountPerCreature)` | reduce this spell's cast cost by N for each creature on the battlefield across all players (static, Blasphemous Act) |
 | `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static, requires permanent on battlefield) |
 | `GrantPermanentNoMaxHandSizeEffect` | `()` | you have no maximum hand size for the rest of the game (one-shot spell effect, persists via GameData.playersWithNoMaximumHandSize) |
 | `ReduceOpponentMaxHandSizeEffect` | `(int reduction)` | each opponent's maximum hand size is reduced by N (static, checked during cleanup discard) |
