@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.Set;
 
+@CardRegistration(set = "M10", collectorNumber = "65")
 @CardRegistration(set = "M11", collectorNumber = "68")
 public class Negate extends Card {
 
