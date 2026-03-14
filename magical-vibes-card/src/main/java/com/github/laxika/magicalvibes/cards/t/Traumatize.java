@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "119")
+@CardRegistration(set = "M10", collectorNumber = "77")
 @CardRegistration(set = "M11", collectorNumber = "77")
 public class Traumatize extends Card {
 
