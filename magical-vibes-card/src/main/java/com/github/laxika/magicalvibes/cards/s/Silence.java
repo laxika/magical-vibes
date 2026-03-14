@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 
+@CardRegistration(set = "M10", collectorNumber = "31")
 @CardRegistration(set = "M11", collectorNumber = "30")
 public class Silence extends Card {
 
