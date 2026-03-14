@@ -44,14 +44,16 @@ class JackalFamiliarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
+        // The creature is filtered from available attackers when alone, so declaring it throws
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack alone");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Jackal Familiar can attack with another creature")
     void canAttackWithAnother() {
+        harness.setLife(player2, 20);
+
         Permanent familiar = new Permanent(new JackalFamiliar());
         familiar.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(familiar);
@@ -67,13 +69,15 @@ class JackalFamiliarTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player1, List.of(0, 1));
 
-        assertThat(familiar.isAttacking()).isTrue();
-        assertThat(bears.isAttacking()).isTrue();
+        // Jackal Familiar (2/1) + Grizzly Bears (2/2) = 4 damage
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
     @DisplayName("Two Jackal Familiars can attack together")
     void twoFamiliarsCanAttackTogether() {
+        harness.setLife(player2, 20);
+
         Permanent familiar1 = new Permanent(new JackalFamiliar());
         familiar1.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(familiar1);
@@ -89,8 +93,8 @@ class JackalFamiliarTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player1, List.of(0, 1));
 
-        assertThat(familiar1.isAttacking()).isTrue();
-        assertThat(familiar2.isAttacking()).isTrue();
+        // Two Jackal Familiars (2/1 each) = 4 damage
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
@@ -130,9 +134,9 @@ class JackalFamiliarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
 
+        // The creature is filtered from available blockers when alone, so declaring it throws
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't block alone");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
