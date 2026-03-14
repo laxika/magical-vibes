@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEf
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardXEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -476,6 +477,22 @@ public class PlayerInteractionResolutionService {
         gameData.discardCausedByOpponent = effect.causedByOpponent();
         UUID playerId = effect.causedByOpponent() ? entry.getTargetPermanentId() : entry.getControllerId();
         resolveRandomDiscardCards(gameData, playerId, entry.getCard().getName(), effect.amount());
+    }
+
+    @HandlesEffect(TargetPlayerRandomDiscardXEffect.class)
+    private void resolveTargetPlayerRandomDiscardX(GameData gameData, StackEntry entry) {
+        int x = entry.getXValue();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+
+        if (x <= 0) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " discards 0 cards (X is 0).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.discardCausedByOpponent = true;
+        resolveRandomDiscardCards(gameData, targetPlayerId, entry.getCard().getName(), x);
     }
 
     @HandlesEffect(EachPlayerRandomDiscardEffect.class)
