@@ -132,7 +132,7 @@ public class PermanentRemovalService {
             return false;
         }
         UUID ownerId = removed.get().ownerId();
-        gameData.playerHands.get(ownerId).add(target.getOriginalCard());
+        gameData.addCardToHand(ownerId, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;
     }

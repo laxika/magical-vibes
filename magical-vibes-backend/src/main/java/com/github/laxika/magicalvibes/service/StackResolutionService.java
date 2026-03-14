@@ -389,8 +389,7 @@ public class StackResolutionService {
             String exileLog = entry.getCard().getName() + " is exiled (flashback).";
             gameBroadcastService.logAndBroadcast(gameData, exileLog);
         } else if (entry.isReturnToHandAfterResolving()) {
-            List<Card> hand = gameData.playerHands.get(entry.getControllerId());
-            hand.add(entry.getCard());
+            gameData.addCardToHand(entry.getControllerId(), entry.getCard());
             String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";
             gameBroadcastService.logAndBroadcast(gameData, returnLog);
         } else if (gameData.pendingReturnToHandOnDiscardType != null) {

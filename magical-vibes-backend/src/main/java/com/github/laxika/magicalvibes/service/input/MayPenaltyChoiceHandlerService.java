@@ -298,7 +298,7 @@ public class MayPenaltyChoiceHandlerService {
             }
 
             if (exiledCard != null) {
-                gameData.playerHands.get(controllerId).add(exiledCard);
+                gameData.addCardToHand(controllerId, exiledCard);
                 String logEntry = opponentName + " allows it. " + controllerName + " puts " + exiledCard.getName() + " into their hand.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} allows exile return, {} gets {}", gameData.id, opponentName, controllerName, exiledCard.getName());

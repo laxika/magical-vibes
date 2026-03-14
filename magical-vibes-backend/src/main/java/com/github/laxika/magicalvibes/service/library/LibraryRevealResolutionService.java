@@ -357,7 +357,7 @@ public class LibraryRevealResolutionService {
 
         if (count == 1) {
             // Only 1 card: it goes to hand
-            gameData.playerHands.get(controllerId).add(topCards.getFirst());
+            gameData.addCardToHand(controllerId, topCards.getFirst());
             String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
@@ -404,7 +404,7 @@ public class LibraryRevealResolutionService {
         List<Card> topCards = takeTopCards(deck, actual);
 
         if (actual == 1) {
-            gameData.playerHands.get(controllerId).add(topCards.getFirst());
+            gameData.addCardToHand(controllerId, topCards.getFirst());
             String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
@@ -660,7 +660,7 @@ public class LibraryRevealResolutionService {
                 playerName + " reveals " + topCard.getName() + " (mana value " + manaValue + ") from the top of their library.");
 
         // Put it into hand
-        gameData.playerHands.get(controllerId).add(topCard);
+        gameData.addCardToHand(controllerId, topCard);
 
         // Lose life equal to mana value
         if (manaValue > 0) {

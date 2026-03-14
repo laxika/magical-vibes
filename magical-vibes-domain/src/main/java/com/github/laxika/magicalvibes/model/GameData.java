@@ -260,6 +260,13 @@ public class GameData {
     }
 
     /**
+     * Adds a card to the given player's hand.
+     */
+    public void addCardToHand(UUID playerId, Card card) {
+        playerHands.get(playerId).add(card);
+    }
+
+    /**
      * Iterates over each player's battlefield list in player order.
      * Skips null battlefields.
      */

@@ -397,7 +397,7 @@ public class CardChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
         } else {
-            hand.add(card);
+            gameData.addCardToHand(playerId, card);
             String logEntry = card.getName() + " can't be attached (target left the battlefield).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
@@ -420,7 +420,7 @@ public class CardChoiceHandlerService {
             return;
         }
         if (discardedCard.hasType(pending.requiredType())) {
-            gameData.playerHands.get(pending.controllerId()).add(pending.card());
+            gameData.addCardToHand(pending.controllerId(), pending.card());
             String logEntry = pending.card().getName() + " is returned to its owner's hand.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} returned to hand (land discarded)", gameData.id, pending.card().getName());

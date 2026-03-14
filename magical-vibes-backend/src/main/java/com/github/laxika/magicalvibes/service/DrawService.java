@@ -124,7 +124,6 @@ public class DrawService {
 
     void performDrawCard(GameData gameData, UUID playerId) {
         List<Card> deck = gameData.playerDecks.get(playerId);
-        List<Card> hand = gameData.playerHands.get(playerId);
 
         if (deck == null || deck.isEmpty()) {
             gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
@@ -143,7 +142,7 @@ public class DrawService {
         }
 
         Card drawn = deck.removeFirst();
-        hand.add(drawn);
+        gameData.addCardToHand(playerId, drawn);
 
         // Track cards drawn this turn (for Molten Psyche, etc.)
         gameData.cardsDrawnThisTurn.merge(playerId, 1, Integer::sum);

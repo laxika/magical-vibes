@@ -882,10 +882,9 @@ public class CardSpecificResolutionService {
         // Step 4: Each player draws 7 cards (CR 726 — pregame procedure)
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> deck = gameData.playerDecks.get(playerId);
-            List<Card> hand = gameData.playerHands.get(playerId);
             int toDraw = Math.min(7, deck.size());
             for (int i = 0; i < toDraw; i++) {
-                hand.add(deck.removeFirst());
+                gameData.addCardToHand(playerId, deck.removeFirst());
             }
             String drawLog = gameData.playerIdToName.get(playerId) + " draws 7 cards.";
             gameBroadcastService.logAndBroadcast(gameData, drawLog);

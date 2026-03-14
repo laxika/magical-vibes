@@ -251,7 +251,7 @@ public class LibraryChoiceHandlerService {
 
         // Put the chosen card into hand
         Card handCard = handTopBottomCards.get(handCardIndex);
-        gameData.playerHands.get(playerId).add(handCard);
+        gameData.addCardToHand(playerId, handCard);
 
         // Put the chosen card on top of library
         Card topCard = handTopBottomCards.get(topCardIndex);
@@ -361,7 +361,7 @@ public class LibraryChoiceHandlerService {
                         legendRuleService.checkLegendRule(gameData, playerId);
                     }
                 } else {
-                    gameData.playerHands.get(handOwnerId).add(chosenCard);
+                    gameData.addCardToHand(handOwnerId, chosenCard);
                 }
                 for (int i = 0; i < sourceCards.size(); i++) {
                     if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
@@ -897,7 +897,7 @@ public class LibraryChoiceHandlerService {
                                               boolean reorderRemainingToBottom) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
-            gameData.playerHands.get(controllerId).add(card);
+            gameData.addCardToHand(controllerId, card);
         }
 
         // Log the result

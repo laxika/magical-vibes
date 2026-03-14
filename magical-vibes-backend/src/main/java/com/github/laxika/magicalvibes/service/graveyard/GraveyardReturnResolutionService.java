@@ -203,11 +203,10 @@ public class GraveyardReturnResolutionService {
                 return;
             }
 
-            List<Card> hand = gameData.playerHands.get(controllerId);
             List<String> returnedNames = new ArrayList<>();
             for (Card card : toReturn) {
                 graveyard.remove(card);
-                hand.add(card);
+                gameData.addCardToHand(controllerId, card);
                 returnedNames.add(card.getName());
                 trackedIds.remove(card.getId());
             }
@@ -252,7 +251,7 @@ public class GraveyardReturnResolutionService {
                 gy.remove(card);
                 UUID targetPlayerId = effect.underOwnersControl() ? gyEntry.getKey() : controllerId;
                 if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                    gameData.playerHands.get(targetPlayerId).add(card);
+                    gameData.addCardToHand(targetPlayerId, card);
                 } else {
                     putCardOntoBattlefield(gameData, targetPlayerId, card, null, null, effect.enterTapped());
                 }
@@ -392,9 +391,8 @@ public class GraveyardReturnResolutionService {
     @HandlesEffect(ReturnTargetCardsFromGraveyardToHandEffect.class)
     void resolveReturnTargetCardsFromGraveyardToHand(GameData gameData, StackEntry entry,
                                                      ReturnTargetCardsFromGraveyardToHandEffect effect) {
-        List<Card> hand = gameData.playerHands.get(entry.getControllerId());
         processTargetedGraveyardCards(gameData, entry,
-                (graveyard, card) -> hand.add(card),
+                (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
                 movedNames -> " returns " + String.join(", ", movedNames) + " from graveyard to hand.");
     }
 
@@ -432,7 +430,7 @@ public class GraveyardReturnResolutionService {
                                        boolean enterTapped) {
         String playerName = gameData.playerIdToName.get(playerId);
         if (destination == GraveyardChoiceDestination.HAND) {
-            gameData.playerHands.get(playerId).add(card);
+            gameData.addCardToHand(playerId, card);
             String logEntry = playerName + " returns " + card.getName() + " from graveyard to hand.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
@@ -1007,8 +1005,7 @@ public class GraveyardReturnResolutionService {
         gameData.playerExiledCards.get(ownerId).removeIf(c -> c.getId().equals(imprintedCard.getId()));
 
         // Put into owner's hand
-        List<Card> hand = gameData.playerHands.get(ownerId);
-        hand.add(imprintedCard);
+        gameData.addCardToHand(ownerId, imprintedCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logMsg = imprintedCard.getName() + " is returned to " + ownerName + "'s hand.";

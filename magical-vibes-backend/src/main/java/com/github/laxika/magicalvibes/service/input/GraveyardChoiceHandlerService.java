@@ -93,7 +93,7 @@ public class GraveyardChoiceHandlerService {
 
             switch (destination) {
                 case HAND -> {
-                    gameData.playerHands.get(playerId).add(card);
+                    gameData.addCardToHand(playerId, card);
 
                     String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);

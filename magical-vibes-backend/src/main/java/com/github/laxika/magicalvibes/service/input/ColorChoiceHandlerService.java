@@ -321,7 +321,6 @@ public class ColorChoiceHandlerService {
 
         UUID playerId = ctx.playerId();
         List<Card> deck = gameData.playerDecks.get(playerId);
-        List<Card> hand = gameData.playerHands.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
 
         gameData.interaction.clearAwaitingInput();
@@ -350,7 +349,7 @@ public class ColorChoiceHandlerService {
 
         List<Card> toBottom = new ArrayList<>(revealed);
         if (chosenCard != null) {
-            hand.add(chosenCard);
+            gameData.addCardToHand(playerId, chosenCard);
             toBottom.remove(chosenCard);
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + " puts " + chosenCard.getName() + " into their hand.");
@@ -510,7 +509,7 @@ public class ColorChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, revealLog);
 
             if (topCard.getName().equals(chosenName)) {
-                gameData.playerHands.get(pid).add(topCard);
+                gameData.addCardToHand(pid, topCard);
                 String handLog = playerName + " puts " + topCard.getName() + " into their hand.";
                 gameBroadcastService.logAndBroadcast(gameData, handLog);
                 log.info("Game {} - {} guessed correctly, {} goes to hand", gameData.id, playerName, topCard.getName());
