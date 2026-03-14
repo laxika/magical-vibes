@@ -12,6 +12,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,8 +58,7 @@ public class Card {
     @Setter private int additionalCostPerExtraTarget;
     @Setter private Card imprintedCard;
     @Setter private String watermark;
-    @Setter private AlternateCastingCost alternateCastingCost;
-    @Setter private String flashbackCost;
+    private List<CastingOption> castingOptions = new ArrayList<>();
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
@@ -101,6 +101,17 @@ public class Card {
 
     public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect, triggerMode));
+    }
+
+    public void addCastingOption(CastingOption option) {
+        castingOptions.add(option);
+    }
+
+    public <T extends CastingOption> Optional<T> getCastingOption(Class<T> type) {
+        return castingOptions.stream()
+                .filter(type::isInstance)
+                .map(type::cast)
+                .findFirst();
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {

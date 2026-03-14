@@ -98,7 +98,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Mass exile + reveal creatures to battlefield | `m/MassPolymorph.java` | ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect — exile all your creatures, reveal from library until that many creature cards found, put onto battlefield, shuffle rest back |
 
 | Static self-boost per controlled subtype | `e/EarthServant.java` | STATIC BoostSelfPerControlledSubtypeEffect(MOUNTAIN, 0, 1) — +0/+1 for each Mountain you control |
-| Flashback spell | `a/AncientGrudge.java` | `setFlashbackCost("{G}")` + normal effects/targeting. Cast from graveyard for flashback cost, exiled after resolving or fizzling. Flashback is a spell cast (counterable, triggers "whenever you cast"), not an activated ability. |
+| Flashback spell | `a/AncientGrudge.java` | `addCastingOption(new FlashbackCast("{G}"))` + normal effects/targeting. Cast from graveyard for flashback cost, exiled after resolving or fizzling. Flashback is a spell cast (counterable, triggers "whenever you cast"), not an activated ability. |
 
 ## Vanilla creatures (empty body, all from Scryfall)
 
@@ -113,7 +113,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Intimidate creature + activated ability | `g/GethLordOfTheVault.java` | Intimidate from Scryfall + X-cost graveyard-targeting activated ability. PutCardFromOpponentGraveyardOntoBattlefieldEffect(tapped=true) |
 | Keyword creature + shuffle-into-library replacement | `b/BlightsteelColossus.java` | Keywords (infect, trample, indestructible) auto-loaded from Scryfall + STATIC `ShuffleIntoLibraryReplacementEffect`. Replacement effect: when put into graveyard from anywhere, shuffled into owner's library instead. Also used by `l/LegacyWeapon.java`. |
 | Can't be countered + keyword + ability | `t/ThrunTheLastTroll.java` | STATIC `CantBeCounteredEffect` + hexproof from Scryfall + `{1}{G}` RegenerateEffect activated ability. Checked by `GameQueryService.isUncounterable()`. |
-| Alternate casting cost (sacrifice + life) | `d/DemonOfDeathsGate.java` | `setAlternateCastingCost(new AlternateCastingCost(lifeCost, sacrificeCount, PermanentAllOfPredicate))` — "You may pay N life and sacrifice M [matching] creatures rather than pay this spell's mana cost." Frontend sends `alternateCostSacrificePermanentIds` in PlayCardRequest. Keywords (flying, trample) auto-loaded from Scryfall. |
+| Alternate casting cost (sacrifice + life) | `d/DemonOfDeathsGate.java` | `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(M, predicate))))` — "You may pay N life and sacrifice M [matching] creatures rather than pay this spell's mana cost." Frontend sends `alternateCostSacrificePermanentIds` in PlayCardRequest. Keywords (flying, trample) auto-loaded from Scryfall. |
 | ETB + discard-to-battlefield replacement | `o/ObstinateBaloth.java` | ON_SELF_DISCARDED_BY_OPPONENT `EnterBattlefieldOnDiscardEffect` + ON_ENTER_BATTLEFIELD GainLifeEffect. Replacement effect: if opponent causes you to discard this card, put it onto the battlefield instead of graveyard. ETB triggers still fire. |
 
 ## ETB creatures

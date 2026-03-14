@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.model.AlternateCastingCost;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -414,7 +418,8 @@ public class GameBroadcastService {
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
-            if (card.getFlashbackCost() == null || spellLimitReached || cantCastDueToAttack) {
+            var flashback = card.getCastingOption(FlashbackCast.class);
+            if (flashback.isEmpty() || spellLimitReached || cantCastDueToAttack) {
                 continue;
             }
 
@@ -424,7 +429,11 @@ public class GameBroadcastService {
                 continue;
             }
 
-            ManaCost cost = new ManaCost(card.getFlashbackCost());
+            var manaCostOpt = flashback.get().getCost(ManaCastingCost.class);
+            if (manaCostOpt.isEmpty()) {
+                continue;
+            }
+            ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = getCastCostModifier(gameData, playerId, card);
             if (cost.canPay(pool, additionalCost)) {
@@ -524,15 +533,23 @@ public class GameBroadcastService {
     }
 
     private boolean canAlternateCast(GameData gameData, UUID playerId, Card card, List<Permanent> battlefield) {
-        AlternateCastingCost altCost = card.getAlternateCastingCost();
-        if (altCost == null) return false;
-        int currentLife = gameData.getLife(playerId);
-        if (currentLife < altCost.lifeCost()) return false;
-        if (battlefield == null) return false;
-        long matchingCount = battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, altCost.sacrificeFilter()))
-                .count();
-        return matchingCount >= altCost.sacrificeCount();
+        var altCastOpt = card.getCastingOption(AlternateHandCast.class);
+        if (altCastOpt.isEmpty()) return false;
+        AlternateHandCast altCast = altCastOpt.get();
+
+        var lifeCost = altCast.getCost(LifeCastingCost.class);
+        if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) return false;
+
+        var sacCost = altCast.getCost(SacrificePermanentsCost.class);
+        if (sacCost.isPresent()) {
+            if (battlefield == null) return false;
+            long matchingCount = battlefield.stream()
+                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
+                    .count();
+            if (matchingCount < sacCost.get().count()) return false;
+        }
+
+        return true;
     }
 
     private boolean canPlayLandsFromGraveyard(GameData gameData, UUID playerId) {

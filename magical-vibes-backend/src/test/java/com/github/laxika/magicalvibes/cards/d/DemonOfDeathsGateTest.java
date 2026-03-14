@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NantukoHusk;
 import com.github.laxika.magicalvibes.cards.r.RavenousRats;
-import com.github.laxika.magicalvibes.model.AlternateCastingCost;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -25,11 +27,10 @@ class DemonOfDeathsGateTest extends BaseCardTest {
     void hasAlternateCastingCost() {
         DemonOfDeathsGate card = new DemonOfDeathsGate();
 
-        AlternateCastingCost altCost = card.getAlternateCastingCost();
-        assertThat(altCost).isNotNull();
-        assertThat(altCost.lifeCost()).isEqualTo(6);
-        assertThat(altCost.sacrificeCount()).isEqualTo(3);
-        assertThat(altCost.sacrificeFilter()).isInstanceOf(PermanentAllOfPredicate.class);
+        AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class).orElseThrow();
+        assertThat(altCast.getCost(LifeCastingCost.class).orElseThrow().amount()).isEqualTo(6);
+        assertThat(altCast.getCost(SacrificePermanentsCost.class).orElseThrow().count()).isEqualTo(3);
+        assertThat(altCast.getCost(SacrificePermanentsCost.class).orElseThrow().filter()).isInstanceOf(PermanentAllOfPredicate.class);
     }
 
     @Test

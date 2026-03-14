@@ -7,7 +7,11 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
-import com.github.laxika.magicalvibes.model.AlternateCastingCost;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -187,7 +191,7 @@ public class SpellCastingService {
             // Re-check with convoke if card has convoke keyword
             List<Card> handCheck = gameData.playerHands.get(playerId);
             Card cardCheck = handCheck.get(cardIndex);
-            if (usingAlternateCost && cardCheck.getAlternateCastingCost() != null) {
+            if (usingAlternateCost && cardCheck.getCastingOption(AlternateHandCast.class).isPresent()) {
                 // Allow — alternate cost bypasses mana check; validated below
             } else if (cardCheck.getKeywords().contains(Keyword.CONVOKE) && !convokeCreatureIds.isEmpty()) {
                 // Allow convoke-assisted casting even if not in basic playable list
@@ -220,29 +224,34 @@ public class SpellCastingService {
 
         // Validate alternate casting cost if used (e.g. Demon of Death's Gate)
         if (usingAlternateCost) {
-            AlternateCastingCost altCost = card.getAlternateCastingCost();
-            if (altCost == null) {
-                throw new IllegalStateException("Card does not have an alternate casting cost");
-            }
-            if (alternateCostSacrificePermanentIds.size() != altCost.sacrificeCount()) {
-                throw new IllegalStateException("Must sacrifice exactly " + altCost.sacrificeCount() + " permanents");
-            }
-            int currentLife = gameData.getLife(playerId);
-            if (currentLife < altCost.lifeCost()) {
-                throw new IllegalStateException("Not enough life to pay alternate cost");
-            }
-            // Validate each sacrifice target
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            for (UUID sacId : alternateCostSacrificePermanentIds) {
-                Permanent toSacrifice = battlefield.stream()
-                        .filter(p -> p.getId().equals(sacId))
-                        .findFirst()
-                        .orElse(null);
-                if (toSacrifice == null) {
-                    throw new IllegalStateException("Sacrifice target not found on your battlefield");
+            AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
+                    .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
+
+            var sacCost = altCast.getCost(SacrificePermanentsCost.class);
+            if (sacCost.isPresent()) {
+                if (alternateCostSacrificePermanentIds.size() != sacCost.get().count()) {
+                    throw new IllegalStateException("Must sacrifice exactly " + sacCost.get().count() + " permanents");
                 }
-                if (!gameQueryService.matchesPermanentPredicate(gameData, toSacrifice, altCost.sacrificeFilter())) {
-                    throw new IllegalStateException("Sacrifice target does not match the required filter");
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                for (UUID sacId : alternateCostSacrificePermanentIds) {
+                    Permanent toSacrifice = battlefield.stream()
+                            .filter(p -> p.getId().equals(sacId))
+                            .findFirst()
+                            .orElse(null);
+                    if (toSacrifice == null) {
+                        throw new IllegalStateException("Sacrifice target not found on your battlefield");
+                    }
+                    if (!gameQueryService.matchesPermanentPredicate(gameData, toSacrifice, sacCost.get().filter())) {
+                        throw new IllegalStateException("Sacrifice target does not match the required filter");
+                    }
+                }
+            }
+
+            var lifeCost = altCast.getCost(LifeCastingCost.class);
+            if (lifeCost.isPresent()) {
+                int currentLife = gameData.getLife(playerId);
+                if (currentLife < lifeCost.get().amount()) {
+                    throw new IllegalStateException("Not enough life to pay alternate cost");
                 }
             }
         }
@@ -655,9 +664,8 @@ public class SpellCastingService {
         }
 
         Card card = graveyard.get(graveyardCardIndex);
-        if (card.getFlashbackCost() == null) {
-            throw new IllegalStateException("Card does not have flashback");
-        }
+        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class)
+                .orElseThrow(() -> new IllegalStateException("Card does not have flashback"));
 
         // Validate timing
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
@@ -670,7 +678,10 @@ public class SpellCastingService {
         }
 
         // Validate and pay flashback cost
-        ManaCost cost = new ManaCost(card.getFlashbackCost());
+        String manaCostStr = flashback.getCost(ManaCastingCost.class)
+                .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))
+                .manaCost();
+        ManaCost cost = new ManaCost(manaCostStr);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
         if (!cost.canPay(pool, additionalCost)) {
@@ -836,24 +847,29 @@ public class SpellCastingService {
     }
 
     private void payAlternateCastingCost(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds) {
-        AlternateCastingCost altCost = card.getAlternateCastingCost();
+        AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
+                .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
         UUID playerId = player.getId();
 
         // Sacrifice all required permanents
-        for (UUID sacId : sacrificePermanentIds) {
-            Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacId);
-            if (toSacrifice != null && permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
-                                + " for " + card.getName() + ".");
+        if (altCast.getCost(SacrificePermanentsCost.class).isPresent()) {
+            for (UUID sacId : sacrificePermanentIds) {
+                Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacId);
+                if (toSacrifice != null && permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                                    + " for " + card.getName() + ".");
+                }
             }
         }
 
         // Pay life
-        int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - altCost.lifeCost());
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " pays " + altCost.lifeCost() + " life for " + card.getName() + ".");
+        altCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
+            int currentLife = gameData.getLife(playerId);
+            gameData.playerLifeTotals.put(playerId, currentLife - lifeCost.amount());
+            gameBroadcastService.logAndBroadcast(gameData,
+                    player.getUsername() + " pays " + lifeCost.amount() + " life for " + card.getName() + ".");
+        });
     }
 
     public void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card) {

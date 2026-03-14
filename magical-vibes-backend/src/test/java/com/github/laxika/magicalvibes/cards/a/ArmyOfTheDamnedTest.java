@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
@@ -27,7 +29,8 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         assertThat(effect.amount()).isEqualTo(13);
         assertThat(effect.tapped()).isTrue();
 
-        assertThat(card.getFlashbackCost()).isEqualTo("{7}{B}{B}{B}");
+        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
+        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{7}{B}{B}{B}");
     }
 
     @Test

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.networking.service;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AlternateCastingCost;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -36,10 +38,10 @@ public class CardViewFactory {
                 .map(this::createAbilityView)
                 .toList();
 
-        AlternateCastingCost altCost = card.getAlternateCastingCost();
-        boolean hasAlternateCastingCost = altCost != null;
-        int alternateCostLifePayment = altCost != null ? altCost.lifeCost() : 0;
-        int alternateCostSacrificeCount = altCost != null ? altCost.sacrificeCount() : 0;
+        var altCastOpt = card.getCastingOption(AlternateHandCast.class);
+        boolean hasAlternateCastingCost = altCastOpt.isPresent();
+        int alternateCostLifePayment = altCastOpt.flatMap(a -> a.getCost(LifeCastingCost.class)).map(LifeCastingCost::amount).orElse(0);
+        int alternateCostSacrificeCount = altCastOpt.flatMap(a -> a.getCost(SacrificePermanentsCost.class)).map(SacrificePermanentsCost::count).orElse(0);
 
         return new CardView(
                 card.getId(),

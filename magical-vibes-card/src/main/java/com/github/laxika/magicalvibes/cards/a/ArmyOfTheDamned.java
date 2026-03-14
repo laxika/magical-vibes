@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 
 import java.util.List;
@@ -25,6 +26,6 @@ public class ArmyOfTheDamned extends Card {
                 Set.of(),
                 true
         ));
-        setFlashbackCost("{7}{B}{B}{B}");
+        addCastingOption(new FlashbackCast("{7}{B}{B}{B}"));
     }
 }

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.AlternateCastingCost;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,12 +17,13 @@ import java.util.Set;
 public class DemonOfDeathsGate extends Card {
 
     public DemonOfDeathsGate() {
-        setAlternateCastingCost(new AlternateCastingCost(
-                6, 3,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentColorInPredicate(Set.of(CardColor.BLACK))
-                ))
-        ));
+        addCastingOption(new AlternateHandCast(List.of(
+                new LifeCastingCost(6),
+                new SacrificePermanentsCost(3,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentColorInPredicate(Set.of(CardColor.BLACK))
+                        )))
+        )));
     }
 }
