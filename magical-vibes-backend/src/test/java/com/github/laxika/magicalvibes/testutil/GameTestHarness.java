@@ -344,7 +344,7 @@ public class GameTestHarness {
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService,
-                exileResolutionService);
+                exileResolutionService, gameOutcomeService);
         lobbyService = new LobbyService(gameRegistry, gameBroadcastService);
 
         // Create the MessageHandler (GameMessageHandler) for AI tests

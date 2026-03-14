@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerCo
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
@@ -608,6 +609,9 @@ public class CombatDamageService {
                         || effect instanceof DealDamageToEachCreatureDamagedPlayerControlsEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), damageDealt, defenderId, null);
+                } else if (effect instanceof PutCountersOnSourceEffect) {
+                    se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
+                            desc, List.of(effect), null, creature.getId());
                 } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect
                         || effect instanceof TargetPlayerRandomDiscardEffect
                         || effect instanceof RevealRandomCardFromTargetPlayerHandEffect
