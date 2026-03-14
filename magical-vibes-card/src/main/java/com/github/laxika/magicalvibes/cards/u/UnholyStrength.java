@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "10E", collectorNumber = "185")
+@CardRegistration(set = "M10", collectorNumber = "116")
 @CardRegistration(set = "M11", collectorNumber = "119")
 public class UnholyStrength extends Card {
 
