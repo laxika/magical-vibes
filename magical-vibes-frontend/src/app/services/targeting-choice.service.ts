@@ -74,6 +74,8 @@ export class TargetingChoiceService {
     this.convokeSelectedCreatureIds.set([]);
     this.pendingMultiTargetIds = [];
     this.pendingConvokeCard = null;
+    // Flashback
+    this.pendingFlashback = false;
     // Alternate casting cost
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
@@ -141,6 +143,9 @@ export class TargetingChoiceService {
   convokeSelectedCreatureIds = signal<string[]>([]);
   private pendingMultiTargetIds: string[] = [];
   private pendingConvokeCard: Card | null = null;
+
+  // --- Flashback state ---
+  private pendingFlashback = false;
 
   // --- Alternate casting cost state ---
   choosingAlternateCost = false;
@@ -286,6 +291,33 @@ export class TargetingChoiceService {
     this.pendingPhyrexianLifeCount = null;
   }
 
+  startFlashbackTargeting(graveyardIndex: number, card: Card): void {
+    this.pendingFlashback = true;
+    this.targetingCardIndex = graveyardIndex;
+    this.targetingCardName = card.name;
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
+    this.pendingAbilityXValue = null;
+    this.pendingConvokeCard = null;
+    this.sendValidTargetsRequest(null, null, null);
+    // Use the card's targeting info — request valid targets from graveyard card
+    // The backend ValidTargets handler uses cardIndex from hand. For flashback,
+    // we manually set valid targets based on battlefield artifacts.
+    // Actually, we can piggyback on the existing targeting: the user clicks a permanent.
+    // For simplicity, enter selectingTarget mode and let the backend validate on cast.
+    this.selectingTarget = true;
+    this.pendingTargetRequest = false;
+    // Accept all permanents as potential targets — backend validates on cast
+    const allIds = new Set<string>();
+    const myBf = this.myBattlefieldFn();
+    const opBf = this.opponentBattlefieldFn();
+    for (const p of myBf) allIds.add(p.id);
+    for (const p of opBf) allIds.add(p.id);
+    this.validTargetPermanentIds.set(allIds);
+    this.validTargetPlayerIds.set(new Set());
+    this.targetingPrompt = 'Choose a target for ' + card.name + ' (flashback).';
+  }
+
   private sendPlayCardMessage(cardIndex: number, targetPermanentId: string | null, extra?: Record<string, any>): void {
     const msg: any = {
       type: MessageType.PLAY_CARD,
@@ -294,6 +326,10 @@ export class TargetingChoiceService {
     };
     if (this.pendingPhyrexianLifeCount != null) {
       msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
+    }
+    if (this.pendingFlashback) {
+      msg.flashback = true;
+      this.pendingFlashback = false;
     }
     if (extra) {
       Object.assign(msg, extra);

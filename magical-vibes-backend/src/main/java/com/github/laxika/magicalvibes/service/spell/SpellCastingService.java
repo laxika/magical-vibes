@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
@@ -638,6 +639,66 @@ public class SpellCastingService {
             }
         }
         return Math.max(0, totalPower);
+    }
+
+    // --- Play with flashback from graveyard ---
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, UUID targetPermanentId) {
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {
+            throw new IllegalArgumentException("Invalid graveyard card index");
+        }
+
+        Card card = graveyard.get(graveyardCardIndex);
+        if (card.getFlashbackCost() == null) {
+            throw new IllegalStateException("Card does not have flashback");
+        }
+
+        // Validate timing
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        boolean stackEmpty = gameData.stack.isEmpty();
+        boolean isInstantSpeed = card.hasType(CardType.INSTANT);
+        if (!isInstantSpeed && !(isActivePlayer && isMainPhase && stackEmpty)) {
+            throw new IllegalStateException("Cannot cast sorcery-speed flashback spell now");
+        }
+
+        // Validate and pay flashback cost
+        ManaCost cost = new ManaCost(card.getFlashbackCost());
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+        if (!cost.canPay(pool, additionalCost)) {
+            throw new IllegalStateException("Not enough mana to pay flashback cost");
+        }
+        cost.pay(pool, additionalCost);
+
+        // Remove card from graveyard
+        graveyard.remove(graveyardCardIndex);
+
+        // Validate target
+        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        if (targetPermanentId != null && card.isNeedsTarget()) {
+            targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, true);
+        } else if (card.isNeedsTarget() && targetPermanentId == null) {
+            throw new IllegalStateException("Spell requires a target");
+        }
+
+        // Create stack entry
+        StackEntryType entryType = card.hasType(CardType.INSTANT) ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+        StackEntry stackEntry = new StackEntry(
+                entryType, card, playerId, card.getName(),
+                spellEffects, 0, targetPermanentId, null
+        );
+        stackEntry.setCastWithFlashback(true);
+        gameData.stack.add(stackEntry);
+
+        finishSpellCast(gameData, playerId, player, graveyard, card);
     }
 
     // --- Play from exile ---

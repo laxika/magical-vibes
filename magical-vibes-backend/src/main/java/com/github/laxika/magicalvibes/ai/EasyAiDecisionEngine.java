@@ -130,7 +130,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null)));
         return true;
     }
 

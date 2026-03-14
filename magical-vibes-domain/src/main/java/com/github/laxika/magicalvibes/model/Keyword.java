@@ -29,5 +29,6 @@ public enum Keyword {
     BATTLE_CRY,
     LIVING_WEAPON,
     DEATHTOUCH,
-    SCRY
+    SCRY,
+    FLASHBACK
 }

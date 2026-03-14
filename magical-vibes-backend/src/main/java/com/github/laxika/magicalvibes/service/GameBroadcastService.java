@@ -87,6 +87,7 @@ public class GameBroadcastService {
             List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
             List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
             List<CardView> playableExileCards = getPlayableExileCards(gameData, playerId);
+            List<Integer> playableFlashbackIndices = getPlayableFlashbackIndices(gameData, playerId);
             int searchTaxCost = getSearchTaxCost(gameData, playerId);
 
             // Mindslaver: controller sees the controlled player's hand and playable indices
@@ -98,6 +99,7 @@ public class GameBroadcastService {
                     playableCardIndices = getPlayableCardIndices(gameData, controlledId);
                     playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, controlledId);
                     playableExileCards = getPlayableExileCards(gameData, controlledId);
+                    playableFlashbackIndices = getPlayableFlashbackIndices(gameData, controlledId);
                 }
             }
 
@@ -107,7 +109,7 @@ public class GameBroadcastService {
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
-                    gameData.mindControlledPlayerId, revealedLibraryTopCards
+                    gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices
             ));
         }
     }
@@ -378,6 +380,54 @@ public class GameBroadcastService {
 
         for (int i = 0; i < graveyard.size(); i++) {
             if (graveyard.get(i).hasType(CardType.LAND)) {
+                playable.add(i);
+            }
+        }
+
+        return playable;
+    }
+
+    public List<Integer> getPlayableFlashbackIndices(GameData gameData, UUID playerId) {
+        List<Integer> playable = new ArrayList<>();
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
+            return playable;
+        }
+
+        UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+        if (!playerId.equals(priorityHolder)) {
+            return playable;
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            return playable;
+        }
+
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        boolean stackEmpty = gameData.stack.isEmpty();
+        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int maxSpells = getMaxSpellsPerTurn(gameData);
+        boolean spellLimitReached = spellsCast >= maxSpells;
+        boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
+
+        for (int i = 0; i < graveyard.size(); i++) {
+            Card card = graveyard.get(i);
+            if (card.getFlashbackCost() == null || spellLimitReached || cantCastDueToAttack) {
+                continue;
+            }
+
+            boolean isInstantSpeed = card.hasType(CardType.INSTANT);
+            boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+            if (!canCastTiming) {
+                continue;
+            }
+
+            ManaCost cost = new ManaCost(card.getFlashbackCost());
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int additionalCost = getCastCostModifier(gameData, playerId, card);
+            if (cost.canPay(pool, additionalCost)) {
                 playable.add(i);
             }
         }

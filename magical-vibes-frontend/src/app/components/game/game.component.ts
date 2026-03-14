@@ -44,6 +44,7 @@ export class GameComponent implements OnInit, OnDestroy {
   readonly boundUnassignDamage = (permanentId: string) => this.choice.damage.unassignDamage(permanentId);
   readonly boundIsGraveyardLandPlayable = (index: number) => this.isGraveyardLandPlayable(index);
   readonly boundIsGraveyardAbilityActivatable = (index: number) => this.isGraveyardAbilityActivatable(index);
+  readonly boundIsFlashbackPlayable = (index: number) => this.isFlashbackPlayable(index);
   readonly boundGetPlayerName = (playerId: string) => this.getPlayerName(playerId);
   readonly boundGetStackEntryTargetName = (entry: StackEntry) => this.getStackEntryTargetName(entry);
 
@@ -75,6 +76,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.selectedBlockerIndex.set(null);
     this.playableCardIndices.set(new Set());
     this.playableGraveyardLandIndices.set(new Set());
+    this.playableFlashbackIndices.set(new Set());
     this.playableExileCards.set([]);
     this.searchTaxCost.set(0);
     this.hoveredCard.set(null);
@@ -427,6 +429,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.playableCardIndices.set(new Set(state.playableCardIndices));
     this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
+    this.playableFlashbackIndices.set(new Set(state.playableFlashbackIndices ?? []));
     this.playableExileCards.set(state.playableExileCards ?? []);
     this.autoStopSteps.set(new Set(state.autoStopSteps));
 
@@ -475,6 +478,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playableCardIndices = signal(new Set<number>());
   playableGraveyardLandIndices = signal(new Set<number>());
+  playableFlashbackIndices = signal(new Set<number>());
   playableExileCards = signal<Card[]>([]);
   autoStopSteps = signal(new Set<string>());
   searchTaxCost = signal(0);
@@ -506,6 +510,21 @@ export class GameComponent implements OnInit, OnDestroy {
     const card = this.myGraveyard[index];
     if (card?.graveyardActivatedAbilities?.length > 0) {
       this.websocketService.send({ type: MessageType.ACTIVATE_GRAVEYARD_ABILITY, graveyardCardIndex: index, abilityIndex: 0 });
+    }
+  }
+
+  isFlashbackPlayable(index: number): boolean {
+    return this.playableFlashbackIndices().has(index);
+  }
+
+  playFlashback(index: number): void {
+    if (this.isFlashbackPlayable(index)) {
+      const card = this.myGraveyard[index];
+      if (card?.needsTarget) {
+        this.choice.targeting.startFlashbackTargeting(index, card);
+      } else {
+        this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null, flashback: true });
+      }
     }
   }
 

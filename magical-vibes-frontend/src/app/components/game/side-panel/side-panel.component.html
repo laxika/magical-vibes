@@ -120,8 +120,8 @@
             <div class="graveyard-tab-cards">
               @for (card of myGraveyard; track $index) {
                 <app-card-display [card]="card" class="graveyard-card"
-                  [class.playable]="isGraveyardLandPlayable($index) || isGraveyardAbilityActivatable($index)"
-                  (click)="isGraveyardAbilityActivatable($index) ? graveyardAbilityActivate.emit($index) : graveyardLandPlay.emit($index)"
+                  [class.playable]="isGraveyardLandPlayable($index) || isGraveyardAbilityActivatable($index) || isFlashbackPlayable($index)"
+                  (click)="isFlashbackPlayable($index) ? flashbackPlay.emit($index) : isGraveyardAbilityActivatable($index) ? graveyardAbilityActivate.emit($index) : graveyardLandPlay.emit($index)"
                   (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
               }
             </div>

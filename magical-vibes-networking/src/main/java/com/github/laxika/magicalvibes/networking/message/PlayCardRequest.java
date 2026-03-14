@@ -7,5 +7,5 @@ import java.util.UUID;
 public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
                               List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,
                               UUID sacrificePermanentId, Integer phyrexianLifeCount, UUID fromExileCardId,
-                              List<UUID> alternateCostSacrificePermanentIds) {
+                              List<UUID> alternateCostSacrificePermanentIds, Boolean flashback) {
 }

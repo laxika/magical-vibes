@@ -525,6 +525,21 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, convokeCreatureIds);
     }
 
+    public void castFlashback(Player player, int graveyardCardIndex, UUID targetPermanentId) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, targetPermanentId);
+    }
+
+    public void castFlashback(Player player, int graveyardCardIndex) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null);
+    }
+
+    public void castAndResolveFlashback(Player player, int graveyardCardIndex, UUID targetPermanentId) {
+        castFlashback(player, graveyardCardIndex, targetPermanentId);
+        passBothPriorities();
+    }
+
     public void castAndResolveInstant(Player player, int cardIndex) {
         castInstant(player, cardIndex);
         passBothPriorities();

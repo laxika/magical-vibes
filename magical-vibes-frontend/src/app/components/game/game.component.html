@@ -816,6 +816,7 @@
       [stackTargetId]="stackTargetId()"
       [isGraveyardLandPlayable]="boundIsGraveyardLandPlayable"
       [isGraveyardAbilityActivatable]="boundIsGraveyardAbilityActivatable"
+      [isFlashbackPlayable]="boundIsFlashbackPlayable"
       [getPlayerName]="boundGetPlayerName"
       [getStackEntryTargetName]="boundGetStackEntryTargetName"
       [searchTaxCost]="searchTaxCost()"
@@ -829,6 +830,7 @@
       (stackEntryHover)="onStackEntryHover($event)"
       (stackEntryHoverEnd)="onStackEntryHoverEnd()"
       (graveyardLandPlay)="playGraveyardLand($event)"
-      (graveyardAbilityActivate)="activateGraveyardAbility($event)" />
+      (graveyardAbilityActivate)="activateGraveyardAbility($event)"
+      (flashbackPlay)="playFlashback($event)" />
   </div>
 </div>

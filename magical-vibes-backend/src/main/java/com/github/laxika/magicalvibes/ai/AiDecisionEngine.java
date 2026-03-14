@@ -180,7 +180,7 @@ public abstract class AiDecisionEngine {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null)));
                 return true;
             }
         }

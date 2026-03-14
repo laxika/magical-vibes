@@ -349,7 +349,9 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            if (request.fromExileCardId() != null) {
+            if (Boolean.TRUE.equals(request.flashback())) {
+                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.targetPermanentId());
+            } else if (request.fromExileCardId() != null) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetPermanentId());
             } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),

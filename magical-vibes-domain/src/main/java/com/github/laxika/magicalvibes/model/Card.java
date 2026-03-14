@@ -58,6 +58,7 @@ public class Card {
     @Setter private Card imprintedCard;
     @Setter private String watermark;
     @Setter private AlternateCastingCost alternateCastingCost;
+    @Setter private String flashbackCost;
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);

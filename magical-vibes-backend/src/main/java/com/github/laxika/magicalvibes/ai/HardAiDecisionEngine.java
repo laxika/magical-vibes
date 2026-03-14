@@ -131,7 +131,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 final UUID targetId = pc.targetPermanentId();
                 final Integer finalXValue = xValue;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null, null, null, null, null, null)));
                 return true;
             }
 
@@ -216,7 +216,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null)));
         return true;
     }
 

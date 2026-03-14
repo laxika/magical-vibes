@@ -288,6 +288,14 @@ public class GameService {
         }
     }
 
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, UUID targetPermanentId) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, targetPermanentId);
+        }
+    }
+
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetPermanentId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);

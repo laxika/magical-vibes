@@ -114,6 +114,12 @@ public class ExampleCard extends Card {
   - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
   - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`
 
+- Flashback spell (cast from graveyard for alternate cost, then exile):
+  - `setFlashbackCost("{cost}")` + normal effects/targeting
+  - Card is cast as a spell from the graveyard (counterable, triggers "whenever you cast"), then exiled whether it resolves or fizzles
+  - Distinct from graveyard activated abilities (which put ABILITIES on stack, not spells)
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AncientGrudge.java`
+
 - Graveyard activated ability (pay mana from graveyard zone):
   - `addGraveyardActivatedAbility(new ActivatedAbility(false, cost, List.of(effect), description))` — activated ability usable while card is in graveyard
   - Distinct from `GRAVEYARD_UPKEEP_TRIGGERED` which is a triggered ability firing on upkeep

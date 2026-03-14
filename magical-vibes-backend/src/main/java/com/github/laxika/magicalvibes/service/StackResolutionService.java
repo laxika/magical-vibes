@@ -339,8 +339,15 @@ public class StackResolutionService {
                     gameData.id, entry.getDescription(), entry.getTargetPermanentId());
 
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
+            // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
-                graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
+                if (entry.isCastWithFlashback()) {
+                    gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+                    String exileLog = entry.getCard().getName() + " is exiled (flashback).";
+                    gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                } else {
+                    graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
+                }
             }
         } else {
             String logEntry = entry.getDescription() + " resolves.";
@@ -372,7 +379,14 @@ public class StackResolutionService {
             return;
         }
 
-        if (entry.isReturnToHandAfterResolving()) {
+        // CR 702.33a: "If the flashback cost was paid, exile this card instead of
+        // putting it anywhere else any time it would leave the stack." This overrides
+        // return-to-hand, shuffle-into-library, and all other disposition effects.
+        if (entry.isCastWithFlashback()) {
+            gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+            String exileLog = entry.getCard().getName() + " is exiled (flashback).";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+        } else if (entry.isReturnToHandAfterResolving()) {
             List<Card> hand = gameData.playerHands.get(entry.getControllerId());
             hand.add(entry.getCard());
             String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";

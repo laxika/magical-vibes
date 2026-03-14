@@ -312,6 +312,7 @@ export interface GameStateNotification {
   autoStopSteps: string[];
   playableCardIndices: number[];
   playableGraveyardLandIndices: number[];
+  playableFlashbackIndices: number[];
   playableExileCards: Card[];
   newLogEntries: string[];
   searchTaxCost: number;

@@ -28,6 +28,7 @@ public class StackEntry {
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
     @Setter private boolean returnToHandAfterResolving;
+    @Setter private boolean castWithFlashback;
     private final List<UUID> targetPermanentIds;
 
     // Creature spell constructor
@@ -189,6 +190,7 @@ public class StackEntry {
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
+        this.castWithFlashback = source.castWithFlashback;
         this.targetPermanentIds = source.targetPermanentIds.isEmpty() ? List.of() : new ArrayList<>(source.targetPermanentIds);
     }
 

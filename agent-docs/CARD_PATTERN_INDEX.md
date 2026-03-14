@@ -98,6 +98,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Mass exile + reveal creatures to battlefield | `m/MassPolymorph.java` | ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect — exile all your creatures, reveal from library until that many creature cards found, put onto battlefield, shuffle rest back |
 
 | Static self-boost per controlled subtype | `e/EarthServant.java` | STATIC BoostSelfPerControlledSubtypeEffect(MOUNTAIN, 0, 1) — +0/+1 for each Mountain you control |
+| Flashback spell | `a/AncientGrudge.java` | `setFlashbackCost("{G}")` + normal effects/targeting. Cast from graveyard for flashback cost, exiled after resolving or fizzling. Flashback is a spell cast (counterable, triggers "whenever you cast"), not an activated ability. |
 
 ## Vanilla creatures (empty body, all from Scryfall)
 
