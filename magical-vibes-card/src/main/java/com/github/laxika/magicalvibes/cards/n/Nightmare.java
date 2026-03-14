@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "164")
+@CardRegistration(set = "M10", collectorNumber = "107")
 public class Nightmare extends Card {
 
     public Nightmare() {
