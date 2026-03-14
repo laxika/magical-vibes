@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBa
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "288")
+@CardRegistration(set = "M10", collectorNumber = "201")
 public class RampantGrowth extends Card {
 
     public RampantGrowth() {
