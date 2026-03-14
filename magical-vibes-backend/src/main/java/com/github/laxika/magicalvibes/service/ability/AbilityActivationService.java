@@ -526,6 +526,13 @@ public class AbilityActivationService {
                         exileGraveyardCost.requiredType(), validExileIndices);
                 return;
             }
+            // Handle "exile and pay its mana cost" abilities (e.g. Back from the Brink)
+            if (exileGraveyardCost.payExiledCardManaCost()) {
+                abilityCost = graveyard.get(exileGraveyardCardIndex).getManaCost();
+            }
+            if (exileGraveyardCost.imprintOnSource()) {
+                permanent.getCard().setImprintedCard(graveyard.get(exileGraveyardCardIndex));
+            }
         }
 
         DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()

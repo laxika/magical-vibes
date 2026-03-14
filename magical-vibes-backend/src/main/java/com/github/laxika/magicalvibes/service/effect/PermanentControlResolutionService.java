@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlled
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerOwnCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureAndCreateTokenEffect;
@@ -805,6 +806,11 @@ public class PermanentControlResolutionService {
         log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+    }
+
+    @HandlesEffect(CreateTokenCopyOfExiledCostCardEffect.class)
+    private void resolveCreateTokenCopyOfExiledCostCard(GameData gameData, StackEntry entry) {
+        resolveCreateTokenCopyOfImprinted(gameData, entry, new CreateTokenCopyOfImprintedCardEffect(false, false));
     }
 
     @HandlesEffect(CreateTokenCopyOfSourceEffect.class)
