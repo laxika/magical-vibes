@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "M10", collectorNumber = "109")
 @CardRegistration(set = "M11", collectorNumber = "114")
 public class RiseFromTheGrave extends Card {
 
