@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedEvenlyAmong
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -550,6 +551,44 @@ public class DamageResolutionService {
                     continue;
                 }
                 if (dealCreatureDamage(gameData, entry, creature, rawDamage)) {
+                    destroyed.add(creature);
+                }
+            }
+            destroyAllLethal(gameData, destroyed);
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToEachCreatureDamagedPlayerControlsEffect} — deals damage equal to
+     * the combat damage dealt (stored in xValue) to each creature the damaged player controls
+     * (stored in targetPermanentId). Used by Balefire Dragon.
+     */
+    @HandlesEffect(DealDamageToEachCreatureDamagedPlayerControlsEffect.class)
+    void resolveDealDamageToEachCreatureDamagedPlayerControls(GameData gameData, StackEntry entry) {
+        UUID damagedPlayerId = entry.getTargetPermanentId();
+        if (damagedPlayerId == null) return;
+
+        int damageDealt = entry.getXValue();
+        if (damageDealt <= 0) return;
+
+        int damage = gameQueryService.applyDamageMultiplier(gameData, damageDealt, entry);
+        String cardName = entry.getCard().getName();
+
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(damagedPlayerId);
+        if (battlefield != null) {
+            List<Permanent> destroyed = new ArrayList<>();
+            for (Permanent creature : new ArrayList<>(battlefield)) {
+                if (!gameQueryService.isCreature(gameData, creature)) continue;
+                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            cardName + "'s damage to " + creature.getCard().getName() + " is prevented.");
+                    continue;
+                }
+                if (dealCreatureDamage(gameData, entry, creature, damage)) {
                     destroyed.add(creature);
                 }
             }

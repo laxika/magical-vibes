@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
@@ -603,7 +604,8 @@ public class CombatDamageService {
 
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry se;
-                if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect) {
+                if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect
+                        || effect instanceof DealDamageToEachCreatureDamagedPlayerControlsEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), damageDealt, defenderId, null);
                 } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect
