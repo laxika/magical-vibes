@@ -96,12 +96,8 @@ public class ExileResolutionService {
      * Context: StackEntry.targetPermanentId = damaged player ID.
      */
     @HandlesEffect(ExilePermanentDamagedPlayerControlsEffect.class)
-    void resolveExilePermanentDamagedPlayerControls(GameData gameData, StackEntry entry) {
-        ExilePermanentDamagedPlayerControlsEffect effect =
-                (ExilePermanentDamagedPlayerControlsEffect) entry.getEffectsToResolve().stream()
-                        .filter(e -> e instanceof ExilePermanentDamagedPlayerControlsEffect)
-                        .findFirst().orElse(null);
-        if (effect == null) return;
+    void resolveExilePermanentDamagedPlayerControls(GameData gameData, StackEntry entry,
+                                                     ExilePermanentDamagedPlayerControlsEffect effect) {
 
         UUID defenderId = entry.getTargetPermanentId();
         UUID controllerId = entry.getControllerId();

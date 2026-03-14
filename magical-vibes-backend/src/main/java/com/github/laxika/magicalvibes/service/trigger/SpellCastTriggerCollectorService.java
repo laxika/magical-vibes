@@ -335,7 +335,10 @@ public class SpellCastTriggerCollectorService {
                     match.permanent().getCard(),
                     match.controllerId(),
                     resolvedEffects,
-                    match.permanent().getCard().getName() + " — " + may.prompt()
+                    match.permanent().getCard().getName() + " — " + may.prompt(),
+                    null,
+                    null,
+                    match.permanent().getId()
             ));
         } else {
             match.gameData().stack.add(new StackEntry(

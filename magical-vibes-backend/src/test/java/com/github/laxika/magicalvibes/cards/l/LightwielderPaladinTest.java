@@ -56,6 +56,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         addReadyCreature(player2, new BlackKnight());
 
         resolveCombat();
+        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
@@ -68,9 +69,8 @@ class LightwielderPaladinTest extends BaseCardTest {
         Permanent blackKnight = addReadyCreature(player2, new BlackKnight());
 
         resolveCombat();
-
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
         assertThat(gd.interaction.multiPermanentChoiceContext().validIds())
@@ -91,9 +91,8 @@ class LightwielderPaladinTest extends BaseCardTest {
         Permanent dragon = addReadyCreature(player2, new ShivanDragon());
 
         resolveCombat();
-
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
         harness.handleMultiplePermanentsChosen(player1, List.of(dragon.getId()));
@@ -111,7 +110,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         Permanent blackKnight = addReadyCreature(player2, new BlackKnight());
 
         resolveCombat();
-
+        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -152,9 +151,8 @@ class LightwielderPaladinTest extends BaseCardTest {
         Permanent enemyBlack = addReadyCreature(player2, new BlackKnight()); // enemy black
 
         resolveCombat();
-
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
         assertThat(gd.interaction.multiPermanentChoiceContext().validIds())
@@ -172,7 +170,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         addReadyCreature(player2, new BlackKnight());
 
         resolveCombat();
-
+        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         // Lightwielder Paladin is 4/4, should deal 4 damage
@@ -187,9 +185,8 @@ class LightwielderPaladinTest extends BaseCardTest {
         Permanent blackKnight = addReadyCreature(player2, new BlackKnight());
 
         resolveCombat();
-
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
         harness.handleMultiplePermanentsChosen(player1, List.of(blackKnight.getId()));
 
         assertThat(gd.interaction.awaitingInputType()).isNull();

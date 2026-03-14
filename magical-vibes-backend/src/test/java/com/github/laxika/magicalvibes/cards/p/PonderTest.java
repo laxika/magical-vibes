@@ -225,6 +225,6 @@ class PonderTest extends BaseCardTest {
         gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses not to shuffle"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));
     }
 }

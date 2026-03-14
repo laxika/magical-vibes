@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Telepathy;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -31,7 +31,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
         harness.handlePermanentChosen(player1, enchantmentId); // choose target -> ETB on stack
     }
@@ -60,7 +61,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
@@ -75,23 +77,26 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }
 
     @Test
-    @DisplayName("Choosing enchantment target puts ETB triggered ability on stack")
-    void choosingTargetPutsEtbOnStack() {
+    @DisplayName("Choosing enchantment target resolves destroy effect inline")
+    void choosingTargetResolvesDestroyInline() {
         harness.addToBattlefield(player2, new AngelicChorus());
         UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
         castAndAcceptMay(enchantmentId);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("War Priest of Thune");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(enchantmentId);
+        // CR 603.5 — inner effect resolves inline when target is chosen
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
     }
 
     @Test
@@ -121,7 +126,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -141,7 +147,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
@@ -155,7 +162,8 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> no targets
 
         assertThat(gd.stack).isEmpty();
@@ -165,20 +173,25 @@ class WarPriestOfThuneTest extends BaseCardTest {
     // ===== Fizzle =====
 
     @Test
-    @DisplayName("ETB fizzles if target enchantment is removed before resolution")
-    void etbFizzlesIfTargetRemoved() {
+    @DisplayName("Accepting may with target removed before resolution results in no valid targets")
+    void acceptingMayAfterTargetRemovedHasNoValidTargets() {
         harness.addToBattlefield(player2, new AngelicChorus());
-        UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
-        castAndAcceptMay(enchantmentId);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new WarPriestOfThune()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
-        // Remove enchantment before ETB resolves
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell -> MayEffect on stack
+
+        // Remove enchantment before MayEffect resolves
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        // Resolve ETB -> fizzles
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept -> no valid targets
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
     }
 
     // ===== Can target own enchantment =====
@@ -186,17 +199,15 @@ class WarPriestOfThuneTest extends BaseCardTest {
     @Test
     @DisplayName("Can target own enchantment")
     void canTargetOwnEnchantment() {
-        harness.addToBattlefield(player1, new AngelicChorus());
-        UUID enchantmentId = harness.getPermanentId(player1, "Angelic Chorus");
+        harness.addToBattlefield(player1, new Telepathy());
+        UUID enchantmentId = harness.getPermanentId(player1, "Telepathy");
         castAndAcceptMay(enchantmentId);
 
-        // Resolve ETB
-        harness.passBothPriorities();
-
+        // CR 603.5 — inner effect resolves inline
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Angelic Chorus"));
+                .noneMatch(p -> p.getCard().getName().equals("Telepathy"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Angelic Chorus"));
+                .anyMatch(c -> c.getName().equals("Telepathy"));
     }
 
     // ===== War Priest stays on battlefield =====

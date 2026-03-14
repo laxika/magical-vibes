@@ -203,7 +203,7 @@ public class GameTestHarness {
                 new DiscardTriggerCollectorService(gameBroadcastService, gameQueryService, damagePreventionService, permanentRemovalService),
                 new LandTapTriggerCollectorService(gameQueryService, gameBroadcastService, damagePreventionService, permanentRemovalService),
                 new DamageTriggerCollectorService(gameQueryService, gameBroadcastService, permanentRemovalService, creatureControlService),
-                new MiscTriggerCollectorService(gameBroadcastService, graveyardService)
+                new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService)
         );
         for (Object bean : triggerCollectorBeans) {
             TriggerCollectorRegistry.scanBean(bean, triggerCollectorRegistry);

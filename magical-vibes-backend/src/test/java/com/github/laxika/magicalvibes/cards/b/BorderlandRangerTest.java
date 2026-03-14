@@ -39,7 +39,8 @@ class BorderlandRangerTest extends BaseCardTest {
     void resolvingCreatesMayPrompt() {
         setupAndCast();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -54,9 +55,9 @@ class BorderlandRangerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept -> library search inline
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -71,9 +72,9 @@ class BorderlandRangerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.handleMayAbilityChosen(player1, true); // accept -> library search inline
 
         GameData gd = harness.getGameData();
         List<Card> offered = gd.interaction.librarySearch().cards();
@@ -91,7 +92,8 @@ class BorderlandRangerTest extends BaseCardTest {
         setupAndCast();
         setupLibraryWithBasicLands();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve creature spell -> may on stack
+        harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
