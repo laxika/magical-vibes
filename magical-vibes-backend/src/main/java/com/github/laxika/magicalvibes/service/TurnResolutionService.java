@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEf
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class TurnResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final AuraAttachmentService auraAttachmentService;
     private final TurnCleanupService turnCleanupService;
+    private final ExileService exileService;
 
     @HandlesEffect(ExtraTurnEffect.class)
     private void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
@@ -70,7 +72,7 @@ public class TurnResolutionService {
         for (StackEntry se : remaining) {
             if (SPELL_TYPES.contains(se.getEntryType())) {
                 Card card = se.getCard();
-                gameData.playerExiledCards.get(se.getControllerId()).add(card);
+                exileService.exileCard(gameData, se.getControllerId(), card);
                 String logEntry = card.getName() + " is exiled.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} exiled from stack (end the turn)", gameData.id, card.getName());

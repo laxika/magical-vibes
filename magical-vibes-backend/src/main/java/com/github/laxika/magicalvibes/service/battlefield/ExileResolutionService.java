@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -63,6 +64,7 @@ public class ExileResolutionService {
     private final CardViewFactory cardViewFactory;
     private final TriggerCollectionService triggerCollectionService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final ExileService exileService;
 
     /**
      * Exiles one or more target permanents. Supports both single-target and multi-target modes.
@@ -369,7 +371,7 @@ public class ExileResolutionService {
         gameData.playerGraveyards.get(graveyardOwnerId).remove(dyingCard);
 
         // Exile the dying card (add to card owner's exile zone)
-        gameData.playerExiledCards.get(graveyardOwnerId).add(dyingCard);
+        exileService.exileCard(gameData, graveyardOwnerId, dyingCard);
 
         // Set as imprinted on the source permanent
         sourcePermanent.getCard().setImprintedCard(dyingCard);
@@ -456,7 +458,7 @@ public class ExileResolutionService {
             for (int i = 0; i < toExile; i++) {
                 Card card = deck.removeFirst();
                 pool.add(card);
-                gameData.playerExiledCards.get(playerId).add(card);
+                exileService.exileCard(gameData, playerId, card);
                 exiledNames.add(card.getName());
             }
 
@@ -509,7 +511,7 @@ public class ExileResolutionService {
         List<Card> pool = gameData.permanentExiledCards.computeIfAbsent(kpPermanentId,
                 k -> Collections.synchronizedList(new ArrayList<>()));
         pool.add(originalCard);
-        gameData.playerExiledCards.get(castingPlayerId).add(originalCard);
+        exileService.exileCard(gameData, castingPlayerId, originalCard);
 
         String playerName = gameData.playerIdToName.get(castingPlayerId);
         String exileLog = playerName + " exiles " + originalCard.getName() + " (Knowledge Pool).";
@@ -671,7 +673,7 @@ public class ExileResolutionService {
 
         // Exile the top card
         Card topCard = deck.removeFirst();
-        gameData.playerExiledCards.get(targetPlayerId).add(topCard);
+        exileService.exileCard(gameData, targetPlayerId, topCard);
 
         String exileLog = playerName + " exiles " + topCard.getName() + " (" + sourceName + ").";
         gameBroadcastService.logAndBroadcast(gameData, exileLog);
@@ -717,7 +719,7 @@ public class ExileResolutionService {
 
                 if (validTargets.isEmpty()) {
                     // Can't cast — card stays in exile
-                    gameData.playerExiledCards.get(targetPlayerId).add(topCard);
+                    exileService.exileCard(gameData, targetPlayerId, topCard);
                     String noTargetLog = topCard.getName() + " has no valid targets and remains in exile.";
                     gameBroadcastService.logAndBroadcast(gameData, noTargetLog);
                     log.info("Game {} - {} can't be cast (no targets), stays in exile", gameData.id, topCard.getName());

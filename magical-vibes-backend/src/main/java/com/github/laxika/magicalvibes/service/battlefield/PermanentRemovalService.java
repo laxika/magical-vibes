@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -46,6 +47,7 @@ public class PermanentRemovalService {
     private final AuraAttachmentService auraAttachmentService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final ExileService exileService;
 
     /**
      * Removes a permanent from the battlefield and puts its card into the owner's graveyard.
@@ -153,7 +155,7 @@ public class PermanentRemovalService {
             return false;
         }
         UUID ownerId = removed.get().ownerId();
-        gameData.playerExiledCards.get(ownerId).add(target.getOriginalCard());
+        exileService.exileCard(gameData, ownerId, target.getOriginalCard());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;

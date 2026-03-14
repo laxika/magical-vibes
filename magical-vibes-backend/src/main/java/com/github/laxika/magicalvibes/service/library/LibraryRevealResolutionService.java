@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.networking.message.ScryMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,6 +63,7 @@ public class LibraryRevealResolutionService {
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final ExileService exileService;
 
     /**
      * Reveals the top card of the target player's library to all players without removing it.
@@ -157,7 +159,7 @@ public class LibraryRevealResolutionService {
             if (!isControllersTurn || landsPlayed >= 1) {
                 // Can't play the land — exile it
                 deck.removeFirst();
-                gameData.playerExiledCards.computeIfAbsent(controllerId, k -> Collections.synchronizedList(new ArrayList<>())).add(topCard);
+                exileService.exileCard(gameData, controllerId, topCard);
                 String exileLog = topCard.getName() + " can't be played (" +
                         (!isControllersTurn ? "not controller's turn" : "land already played this turn") + ") and is exiled.";
                 gameBroadcastService.logAndBroadcast(gameData, exileLog);
@@ -551,7 +553,7 @@ public class LibraryRevealResolutionService {
 
         if (topCards.size() == 1) {
             // Only one card — must exile it, nothing to reorder
-            gameData.playerExiledCards.get(controllerId).add(topCards.getFirst());
+            exileService.exileCard(gameData, controllerId, topCards.getFirst());
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());

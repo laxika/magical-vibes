@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -44,6 +45,7 @@ public class CardChoiceHandlerService {
     private final AbilityActivationService abilityActivationService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInteractionResolutionService playerInteractionResolutionService;
+    private final ExileService exileService;
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         AwaitingInput awaitingInput = gameData.interaction.awaitingInputType();
@@ -205,7 +207,7 @@ public class CardChoiceHandlerService {
         Card card = hand.remove(cardIndex);
 
         // Add to player's exile zone
-        gameData.playerExiledCards.computeIfAbsent(playerId, k -> new ArrayList<>()).add(card);
+        exileService.exileCard(gameData, playerId, card);
 
         // Track with source permanent (e.g. Karn Liberated)
         if (sourcePermanentId != null) {
@@ -365,7 +367,7 @@ public class CardChoiceHandlerService {
         Card card = hand.remove(cardIndex);
 
         // Add to controller's exile zone
-        gameData.playerExiledCards.computeIfAbsent(playerId, k -> new ArrayList<>()).add(card);
+        exileService.exileCard(gameData, playerId, card);
 
         // Imprint on source permanent
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);

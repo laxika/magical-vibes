@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -34,15 +35,18 @@ public class GraveyardService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final ExileService exileService;
     // @Lazy to break indirect circular dependency:
     // GraveyardService → TriggerCollectionService → PermanentRemovalService → GraveyardService
     private TriggerCollectionService triggerCollectionService;
 
     public GraveyardService(GameQueryService gameQueryService,
                             GameBroadcastService gameBroadcastService,
+                            ExileService exileService,
                             @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
+        this.exileService = exileService;
         this.triggerCollectionService = triggerCollectionService;
     }
 
@@ -95,7 +99,7 @@ public class GraveyardService {
         // Leyline of the Void — if an opponent controls a permanent with
         // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
         if (opponentHasExileReplacementEffect(gameData, ownerId)) {
-            gameData.playerExiledCards.get(ownerId).add(card);
+            exileService.exileCard(gameData, ownerId, card);
             String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, exileLog);
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());

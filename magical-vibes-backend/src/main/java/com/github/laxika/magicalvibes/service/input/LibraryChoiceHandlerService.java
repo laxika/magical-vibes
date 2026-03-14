@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMess
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
@@ -59,6 +60,7 @@ public class LibraryChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
+    private final ExileService exileService;
 
     public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.SCRY)) {
@@ -334,14 +336,14 @@ public class LibraryChoiceHandlerService {
                 }
                 chosenCard = searchCards.get(cardIndex);
                 if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
-                    gameData.playerExiledCards.get(playerId).add(chosenCard);
+                    exileService.exileCard(gameData, playerId, chosenCard);
                     UUID sourcePermanentId = gameData.imprintSourcePermanentId;
                     if (sourcePermanentId != null) {
                         gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                         gameData.imprintSourcePermanentId = null;
                     }
                 } else if (destination == LibrarySearchDestination.EXILE) {
-                    gameData.playerExiledCards.get(deckOwnerId).add(chosenCard);
+                    exileService.exileCard(gameData, deckOwnerId, chosenCard);
                 } else if (toBattlefield) {
                     Permanent perm = new Permanent(chosenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
@@ -477,7 +479,7 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE) {
-            gameData.playerExiledCards.get(playerId).add(chosenCard);
+            exileService.exileCard(gameData, playerId, chosenCard);
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
@@ -518,7 +520,7 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE) {
-            gameData.playerExiledCards.get(playerId).add(chosenCard);
+            exileService.exileCard(gameData, playerId, chosenCard);
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -573,7 +575,7 @@ public class LibraryChoiceHandlerService {
         } else if (destination == LibrarySearchDestination.HAND) {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
-            gameData.playerExiledCards.get(playerId).add(chosenCard);
+            exileService.exileCard(gameData, playerId, chosenCard);
             UUID sourcePermanentId = gameData.imprintSourcePermanentId;
             if (sourcePermanentId != null) {
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);

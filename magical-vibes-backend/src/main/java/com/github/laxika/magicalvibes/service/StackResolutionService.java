@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,6 +54,7 @@ public class StackResolutionService {
     private final TriggerCollectionService triggerCollectionService;
     private final CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
+    private final ExileService exileService;
 
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
@@ -342,7 +344,7 @@ public class StackResolutionService {
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
                 if (entry.isCastWithFlashback()) {
-                    gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+                    exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
                     String exileLog = entry.getCard().getName() + " is exiled (flashback).";
                     gameBroadcastService.logAndBroadcast(gameData, exileLog);
                 } else {
@@ -360,7 +362,7 @@ public class StackResolutionService {
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
                 if (isNonCopySpell(entry)) {
-                    gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+                    exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
                 }
                 gameBroadcastService.broadcastGameState(gameData);
                 return;

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -101,6 +102,7 @@ public class AbilityActivationService {
     private final SessionManager sessionManager;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final ExileService exileService;
 
     /**
      * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
@@ -1085,7 +1087,7 @@ public class AbilityActivationService {
         }
 
         Card exiled = graveyard.remove((int) exileCardIndex);
-        gameData.playerExiledCards.computeIfAbsent(playerId, k -> new ArrayList<>()).add(exiled);
+        exileService.exileCard(gameData, playerId, exiled);
 
         String logEntry = player.getUsername() + " exiles " + exiled.getName() + " from graveyard as an activation cost.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

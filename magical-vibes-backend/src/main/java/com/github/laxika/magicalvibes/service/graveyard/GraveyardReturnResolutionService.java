@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
@@ -69,6 +70,7 @@ public class GraveyardReturnResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final LifeResolutionService lifeResolutionService;
+    private final ExileService exileService;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -502,7 +504,7 @@ public class GraveyardReturnResolutionService {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                gameData.playerExiledCards.get(pid).add(card);
+                exileService.exileCard(gameData, pid, card);
                 return true;
             }
         }
@@ -705,7 +707,7 @@ public class GraveyardReturnResolutionService {
 
         // Add to graveyard owner's exiled cards
         if (graveyardOwnerId != null) {
-            gameData.playerExiledCards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(targetCard);
+            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
         }
 
         // Track as imprinted on source permanent
@@ -754,7 +756,7 @@ public class GraveyardReturnResolutionService {
 
         // Add to graveyard owner's exiled cards
         if (graveyardOwnerId != null) {
-            gameData.playerExiledCards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(targetCard);
+            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ public class MayCastHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final ExileService exileService;
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -215,7 +217,7 @@ public class MayCastHandlerService {
 
                 if (validTargets.isEmpty()) {
                     // No valid targets — exile the card instead
-                    gameData.playerExiledCards.computeIfAbsent(player.getId(), k -> Collections.synchronizedList(new ArrayList<>())).add(cardToPlay);
+                    exileService.exileCard(gameData, player.getId(), cardToPlay);
                     String logEntry = cardToPlay.getName() + " has no valid targets and is exiled.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
@@ -255,7 +257,7 @@ public class MayCastHandlerService {
         if (!deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
         }
-        gameData.playerExiledCards.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
+        exileService.exileCard(gameData, playerId, card);
         String logEntry = playerName + " exiles " + card.getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} exiles {} from library", gameData.id, playerName, card.getName());
