@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -386,6 +387,10 @@ public class PlayerInputService {
 
     public void processNextMayAbility(GameData gameData) {
         if (gameData.pendingMayAbilities.isEmpty()) {
+            return;
+        }
+        if (gameData.status == GameStatus.FINISHED) {
+            gameData.pendingMayAbilities.clear();
             return;
         }
 

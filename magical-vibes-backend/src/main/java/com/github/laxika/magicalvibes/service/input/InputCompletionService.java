@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
@@ -36,6 +37,7 @@ public class InputCompletionService {
      * penalty-choice handlers, and misc input handlers.
      */
     public void processMayAbilitiesThenAutoPass(GameData gameData) {
+        if (gameData.status == GameStatus.FINISHED) return;
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             // Resume resolving remaining effects on the same spell/ability
@@ -64,6 +66,7 @@ public class InputCompletionService {
      */
     public void sbaProcessMayAbilitiesThenAutoPass(GameData gameData) {
         stateBasedActionService.performStateBasedActions(gameData);
+        if (gameData.status == GameStatus.FINISHED) return;
         processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -77,6 +80,7 @@ public class InputCompletionService {
      */
     public void sbaMayAbilitiesThenBroadcastAutoPass(GameData gameData) {
         stateBasedActionService.performStateBasedActions(gameData);
+        if (gameData.status == GameStatus.FINISHED) return;
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;

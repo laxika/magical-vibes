@@ -615,6 +615,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private handleGameOver(msg: GameOverNotification): void {
     this.gameOverWinner.set(msg.winnerName);
     this.gameOverWinnerId.set(msg.winnerId);
+    this.choice.reset();
     const g = this.game();
     if (!g) return;
     const updated = { ...g, status: GameStatus.FINISHED };
