@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "345")
+@CardRegistration(set = "M10", collectorNumber = "221")
 @CardRegistration(set = "M11", collectorNumber = "221")
 public class WhispersilkCloak extends Card {
 
