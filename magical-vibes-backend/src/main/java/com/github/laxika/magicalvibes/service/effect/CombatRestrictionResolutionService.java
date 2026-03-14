@@ -91,6 +91,22 @@ public class CombatRestrictionResolutionService {
 
     @HandlesEffect(TargetCreatureCantBlockThisTurnEffect.class)
     private void resolveCantBlockTargetCreature(GameData gameData, StackEntry entry) {
+        // Multi-target: apply to each valid target
+        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetPermanentIds()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue;
+                }
+                target.setCantBlockThisTurn(true);
+                String logMsg = target.getCard().getName() + " can't block this turn.";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
+            }
+            return;
+        }
+
+        // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             return;
