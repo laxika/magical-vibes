@@ -244,6 +244,20 @@ class AiChoiceHandler {
             return;
         }
 
+        if (colorChoice.context() instanceof ColorChoiceContext.SphinxAmbassadorNameChoice) {
+            // AI names the best creature card from its own library to try to guess what was picked
+            List<Card> ownDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
+            String chosenName = ownDeck.stream()
+                    .filter(c -> c.getType() == CardType.CREATURE || c.getAdditionalTypes().contains(CardType.CREATURE))
+                    .max(java.util.Comparator.comparingInt(Card::getManaValue))
+                    .map(Card::getName)
+                    .orElse("Sphinx Ambassador");
+            log.info("AI: Choosing card name \"{}\" for Sphinx Ambassador in game {}", chosenName, gameId);
+            final String name = chosenName;
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, name)));
+            return;
+        }
+
         if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
             UUID targetId = ctx.targetPlayerId();
             List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());

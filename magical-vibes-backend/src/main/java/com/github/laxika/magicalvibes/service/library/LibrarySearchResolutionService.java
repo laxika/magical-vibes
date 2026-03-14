@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithC
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithExactMVToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardToExileWithPlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -413,6 +414,46 @@ public class LibrarySearchResolutionService {
                 .build(), prompt, false, controllerName + " searches " + targetName + "'s library.");
 
         log.info("Game {} - {} searching {}'s library for Praetor's Grasp ({} cards in library)",
+                gameData.id, controllerName, targetName, allCards.size());
+    }
+
+    /**
+     * Sphinx Ambassador's combat damage trigger: search the damaged player's library for a card.
+     * The controller selects a card (set aside), then the damaged player names a card.
+     * If the selected card is a creature with a different name, the controller may put it
+     * onto the battlefield. Then the library is shuffled.
+     */
+    @HandlesEffect(SphinxAmbassadorEffect.class)
+    void resolveSphinxAmbassador(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> allCards = new ArrayList<>(deck);
+
+        // Store the source card for the may ability description later
+        gameData.pendingSphinxAmbassadorChoice = new com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice(
+                null, controllerId, targetPlayerId, entry.getCard());
+
+        String prompt = "Search " + targetName + "'s library for a card.";
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, allCards)
+                .targetPlayerId(targetPlayerId)
+                .destination(LibrarySearchDestination.SPHINX_AMBASSADOR)
+                .shuffleAfterSelection(false)
+                .build(), prompt, false, controllerName + " searches " + targetName + "'s library.");
+
+        log.info("Game {} - {} searching {}'s library for Sphinx Ambassador ({} cards in library)",
                 gameData.id, controllerName, targetName, allCards.size());
     }
 

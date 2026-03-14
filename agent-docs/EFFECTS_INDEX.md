@@ -869,6 +869,8 @@ Pass `null` as filter to allow any card.
 | `ExileTargetOnControllerSpellCastEffect` | `()` | Marker effect stored in Emblem.staticEffects. Triggers when controller casts a spell, prompting target permanent choice then exiling it |
 | `KarnRestartGameEffect` | `()` | Karn's ultimate: restart the game per CR 727, leaving non-Aura permanent cards exiled with Karn in exile, then put them onto battlefield under controller's control. Resets life totals, hands, libraries, graveyards, exile zones, battlefields, and all game state. Controller goes first, no mulligans |
 | `GenesisWaveEffect` | `()` | reveal top X cards, put any number of permanent cards with MV ≤ X onto battlefield, rest to graveyard. X read from `StackEntry.getXValue()` |
+| `SphinxAmbassadorEffect` | `()` | ON_COMBAT_DAMAGE_TO_PLAYER trigger: search damaged player's library for a card, that player names a card, if you found a creature with a different name you may put it onto battlefield under your control, then shuffle |
+| `SphinxAmbassadorPutOnBattlefieldEffect` | `()` | Marker effect used in PendingMayAbility for the "you may put it onto the battlefield" step of Sphinx Ambassador's trigger |
 
 ---
 

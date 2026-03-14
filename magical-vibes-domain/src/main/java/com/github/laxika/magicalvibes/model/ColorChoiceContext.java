@@ -36,4 +36,11 @@ public sealed interface ColorChoiceContext {
      */
     record EachPlayerCardNameRevealChoice(List<UUID> playerOrder,
                                           Map<UUID, String> chosenNames) implements ColorChoiceContext {}
+
+    /**
+     * Sphinx Ambassador: the damaged player names a card after the controller has selected
+     * a card from their library. The selected card is stored in
+     * {@code GameData.pendingSphinxAmbassadorChoice}.
+     */
+    record SphinxAmbassadorNameChoice(UUID namingPlayerId, UUID controllerId) implements ColorChoiceContext {}
 }

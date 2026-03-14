@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
+import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -533,6 +534,27 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.SPHINX_AMBASSADOR) {
+            // Card is "set aside" (already removed from deck above).
+            // Update the pending choice with the selected card, then prompt the opponent to name a card.
+            PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
+            gameData.pendingSphinxAmbassadorChoice = new PendingSphinxAmbassadorChoice(
+                    chosenCard, pending.controllerId(), pending.targetPlayerId(), pending.sourceCard());
+
+            UUID opponentId = pending.targetPlayerId();
+            String controllerName = gameData.playerIdToName.get(pending.controllerId());
+            String opponentName = gameData.playerIdToName.get(opponentId);
+
+            String logMsg = controllerName + " selects a card from " + opponentName + "'s library.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} selects {} from {}'s library for Sphinx Ambassador",
+                    gameData.id, controllerName, chosenCard.getName(), opponentName);
+
+            // Prompt the opponent to name a card
+            playerInputService.beginSphinxAmbassadorCardNameChoice(gameData, opponentId, pending.controllerId());
+            return;
+        }
+
         if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
             // Shuffle library first, then put the card on top (MTG rule: "shuffle and put on top")
             if (shuffleAfterSelection) {
@@ -653,6 +675,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE, EXILE_PLAYABLE -> "into exile";
                 case TOP_OF_LIBRARY -> "on top of their library";
                 case GRAVEYARD -> "into their graveyard";
+                case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
             };
             String logEntry;
             if (targetPlayerId != null) {

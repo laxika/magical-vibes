@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDivi
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -264,6 +265,14 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof SacrificeArtifactThenDealDividedDamageEffect);
         if (isSacrificeArtifact) {
             mayMiscHandlerService.handleMaySacrificeArtifactForDividedDamage(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Sphinx Ambassador — put selected card onto battlefield or return to library
+        boolean isSphinxAmbassador = ability.effects().stream()
+                .anyMatch(e -> e instanceof SphinxAmbassadorPutOnBattlefieldEffect);
+        if (isSphinxAmbassador) {
+            mayMiscHandlerService.handleSphinxAmbassadorChoice(gameData, player, accepted, ability);
             return;
         }
 

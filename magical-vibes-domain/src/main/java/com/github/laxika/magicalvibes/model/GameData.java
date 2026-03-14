@@ -79,6 +79,7 @@ public class GameData {
     public List<Card> pendingKarnRestartCards;
     public UUID karnRestartControllerId;
     public PendingOpponentExileChoice pendingOpponentExileChoice;
+    public PendingSphinxAmbassadorChoice pendingSphinxAmbassadorChoice;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID pendingSacrificeSelfToDestroySourceId;
     public boolean pendingExileDamagedPlayerControlsPermanent;
@@ -519,6 +520,7 @@ public class GameData {
 
         // --- Post-exile search ---
         copy.pendingOpponentExileChoice = this.pendingOpponentExileChoice; // record — immutable
+        copy.pendingSphinxAmbassadorChoice = this.pendingSphinxAmbassadorChoice; // record — immutable
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;

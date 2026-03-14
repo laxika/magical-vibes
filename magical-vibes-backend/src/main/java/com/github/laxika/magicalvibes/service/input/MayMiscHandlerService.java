@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -287,5 +289,44 @@ public class MayMiscHandlerService {
             // All leyline choices resolved — continue with game start
             mulliganService.continueStartGame(gameData);
         }
+    }
+
+    public void handleSphinxAmbassadorChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
+        if (pending == null || pending.selectedCard() == null) {
+            throw new IllegalStateException("No pending Sphinx Ambassador choice");
+        }
+
+        Card selectedCard = pending.selectedCard();
+        UUID controllerId = pending.controllerId();
+        UUID targetPlayerId = pending.targetPlayerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (accepted) {
+            // Put creature onto battlefield under controller's control
+            Permanent perm = new Permanent(selectedCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, selectedCard, null, false);
+
+            String logEntry = controllerName + " puts " + selectedCard.getName()
+                    + " onto the battlefield under their control. " + targetName + "'s library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} puts {} onto battlefield from Sphinx Ambassador",
+                    gameData.id, controllerName, selectedCard.getName());
+        } else {
+            // Return card to library
+            gameData.playerDecks.get(targetPlayerId).add(selectedCard);
+
+            String logEntry = controllerName + " declines to put the card onto the battlefield. "
+                    + targetName + "'s library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines Sphinx Ambassador placement", gameData.id, controllerName);
+        }
+
+        LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+        gameData.pendingSphinxAmbassadorChoice = null;
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

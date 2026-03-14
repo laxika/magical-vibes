@@ -12,8 +12,11 @@ import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -26,6 +29,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -109,6 +113,10 @@ public class ColorChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice ctx) {
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ColorChoiceContext.SphinxAmbassadorNameChoice ctx) {
+            handleSphinxAmbassadorNameChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -588,6 +596,57 @@ public class ColorChoiceHandlerService {
         // Present matching cards for "any number" selection
         playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, targetPlayerId, cardName);
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ColorChoiceContext.SphinxAmbassadorNameChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
+        if (pending == null || pending.selectedCard() == null) {
+            throw new IllegalStateException("No pending Sphinx Ambassador choice");
+        }
+
+        Card selectedCard = pending.selectedCard();
+        UUID controllerId = pending.controllerId();
+        UUID targetPlayerId = pending.targetPlayerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        String choiceLog = targetName + " chooses \"" + cardName + "\".";
+        gameBroadcastService.logAndBroadcast(gameData, choiceLog);
+        log.info("Game {} - {} chooses card name \"{}\" for Sphinx Ambassador", gameData.id, targetName, cardName);
+
+        boolean isCreature = selectedCard.getType() == CardType.CREATURE
+                || selectedCard.getAdditionalTypes().contains(CardType.CREATURE);
+        boolean nameDoesNotMatch = !selectedCard.getName().equals(cardName);
+
+        if (isCreature && nameDoesNotMatch) {
+            // Conditions met — present may ability to controller: "You may put it onto the battlefield"
+            String prompt = pending.sourceCard().getName() + " — Put " + selectedCard.getName()
+                    + " onto the battlefield under your control?";
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    pending.sourceCard(), controllerId,
+                    List.of(new SphinxAmbassadorPutOnBattlefieldEffect()),
+                    prompt
+            ));
+            playerInputService.processNextMayAbility(gameData);
+        } else {
+            // Conditions not met — card stays in library without being revealed (per ruling)
+            String logMsg = "The conditions for " + pending.sourceCard().getName() + " are not met. "
+                    + targetName + "'s library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - Sphinx Ambassador: selected card does not match conditions (creature={}, nameMatch={})",
+                    gameData.id, isCreature, !nameDoesNotMatch);
+
+            gameData.playerDecks.get(targetPlayerId).add(selectedCard);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+            gameData.pendingSphinxAmbassadorChoice = null;
+
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 
     public void handleMultiZoneExileCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {

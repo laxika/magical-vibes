@@ -8,5 +8,6 @@ public enum LibrarySearchDestination {
     EXILE,
     EXILE_PLAYABLE,
     TOP_OF_LIBRARY,
-    GRAVEYARD
+    GRAVEYARD,
+    SPHINX_AMBASSADOR
 }

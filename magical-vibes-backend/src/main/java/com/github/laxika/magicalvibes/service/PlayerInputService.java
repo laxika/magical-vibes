@@ -211,6 +211,18 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card name (exile from zones)", gameData.id, playerName);
     }
 
+    public void beginSphinxAmbassadorCardNameChoice(GameData gameData, UUID namingPlayerId, UUID controllerId) {
+        ColorChoiceContext.SphinxAmbassadorNameChoice choiceContext = new ColorChoiceContext.SphinxAmbassadorNameChoice(namingPlayerId, controllerId);
+        gameData.interaction.beginColorChoice(namingPlayerId, null, null, choiceContext);
+
+        List<String> cardNames = collectAllCardNamesInGame(gameData);
+        String prompt = "Choose a card name.";
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, namingPlayerId), new ChooseColorMessage(cardNames, prompt));
+
+        String playerName = gameData.playerIdToName.get(namingPlayerId);
+        log.info("Game {} - Awaiting {} to choose a card name (Sphinx Ambassador)", gameData.id, playerName);
+    }
+
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
