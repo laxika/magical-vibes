@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtype
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -806,6 +807,55 @@ public class StaticEffectResolutionService {
                 }
             }
         }
+    }
+
+    @HandlesStaticEffect(value = TopCardOfLibraryColorConditionalEffect.class, selfOnly = true)
+    private void resolveTopCardColorConditionalSelf(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (TopCardOfLibraryColorConditionalEffect) effect;
+        if (!isTopCardOfLibraryColor(context, conditional.color())) return;
+        // Cards with "CARDNAME and other [type]" always buff themselves regardless of filter (CR 201.5).
+        // The filter only applies to "other" creatures via the non-self handler.
+        CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof StaticBoostEffect boost) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
+            accumulator.addKeywords(boost.grantedKeywords());
+        } else if (wrapped instanceof GrantKeywordEffect grant) {
+            accumulator.addKeyword(grant.keyword());
+        }
+    }
+
+    @HandlesStaticEffect(TopCardOfLibraryColorConditionalEffect.class)
+    private void resolveTopCardColorConditionalOthers(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (TopCardOfLibraryColorConditionalEffect) effect;
+        CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof StaticBoostEffect boost && boost.scope() != GrantScope.SELF) {
+            if (!isTopCardOfLibraryColor(context, conditional.color())) return;
+            boolean scopeMatch = switch (boost.scope()) {
+                case OWN_CREATURES -> context.targetOnSameBattlefield();
+                case OPPONENT_CREATURES -> !context.targetOnSameBattlefield();
+                case ALL_CREATURES -> true;
+                default -> false;
+            };
+            if (scopeMatch && matchesStaticFilter(context.target(), boost.filter())) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            }
+        } else if (wrapped instanceof GrantKeywordEffect grant && grant.scope() != GrantScope.SELF) {
+            if (!isTopCardOfLibraryColor(context, conditional.color())) return;
+            if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
+                accumulator.addKeyword(grant.keyword());
+            }
+        }
+    }
+
+    private boolean isTopCardOfLibraryColor(StaticEffectContext context, CardColor color) {
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return false;
+        List<Card> deck = context.gameData().playerDecks.get(controllerId);
+        if (deck == null || deck.isEmpty()) return false;
+        return deck.getFirst().getColors().contains(color);
     }
 
     private int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter) {

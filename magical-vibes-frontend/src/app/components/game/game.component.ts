@@ -287,6 +287,14 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.graveyards?.[this.opponentPlayerIndex] ?? [];
   }
 
+  get myRevealedTopCard(): Card[] {
+    return this.game()?.revealedLibraryTopCards?.[this.myPlayerIndex] ?? [];
+  }
+
+  get opponentRevealedTopCard(): Card[] {
+    return this.game()?.revealedLibraryTopCards?.[this.opponentPlayerIndex] ?? [];
+  }
+
   get isMindControlling(): boolean {
     const g = this.game();
     return g != null && g.mindControlledPlayerId != null;
@@ -411,7 +419,8 @@ export class GameComponent implements OnInit, OnDestroy {
       manaPool: state.manaPool,
       autoStopSteps: state.autoStopSteps,
       gameLog: [...g.gameLog, ...state.newLogEntries],
-      mindControlledPlayerId: state.mindControlledPlayerId ?? null
+      mindControlledPlayerId: state.mindControlledPlayerId ?? null,
+      revealedLibraryTopCards: state.revealedLibraryTopCards ?? []
     };
     this.game.set(updated);
     this.websocketService.currentGame = updated;

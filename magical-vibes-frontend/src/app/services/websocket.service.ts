@@ -241,6 +241,7 @@ export interface Game {
   poisonCounters: number[];
   stack: StackEntry[];
   graveyards: Card[][];
+  revealedLibraryTopCards: Card[][];
   mindControlledPlayerId?: string | null;
 }
 
@@ -315,6 +316,7 @@ export interface GameStateNotification {
   newLogEntries: string[];
   searchTaxCost: number;
   mindControlledPlayerId?: string | null;
+  revealedLibraryTopCards: Card[][];
 }
 
 export interface MulliganResolvedNotification {

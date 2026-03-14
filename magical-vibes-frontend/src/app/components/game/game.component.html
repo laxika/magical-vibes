@@ -426,6 +426,16 @@
             </div>
           </div>
         }
+        @if (opponentRevealedTopCard.length > 0) {
+          <div class="revealed-hand-row">
+            <div class="revealed-hand-label">Revealed Library Top</div>
+            <div class="revealed-hand-cards">
+              @for (card of opponentRevealedTopCard; track $index) {
+                <app-card-display [card]="card" class="revealed-hand-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
+        }
       </div>
 
       @if (showCombatZone) {
@@ -580,6 +590,16 @@
         </div>
         @if (myBattlefield.length === 0) {
           <div class="battlefield-empty">No permanents</div>
+        }
+        @if (myRevealedTopCard.length > 0) {
+          <div class="revealed-hand-row">
+            <div class="revealed-hand-label">Revealed Library Top</div>
+            <div class="revealed-hand-cards">
+              @for (card of myRevealedTopCard; track $index) {
+                <app-card-display [card]="card" class="revealed-hand-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
         }
       </div>
     </div>

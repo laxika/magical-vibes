@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentCo
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
@@ -71,6 +72,7 @@ public class GameBroadcastService {
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
         List<Integer> poisonCounters = getPoisonCounters(gameData);
+        List<List<CardView>> revealedLibraryTopCards = getRevealedLibraryTopCards(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -105,7 +107,7 @@ public class GameBroadcastService {
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
-                    gameData.mindControlledPlayerId
+                    gameData.mindControlledPlayerId, revealedLibraryTopCards
             ));
         }
     }
@@ -174,6 +176,39 @@ public class GameBroadcastService {
             }
         }
         return List.of();
+    }
+
+    List<List<CardView>> getRevealedLibraryTopCards(GameData data) {
+        // Determine which players have their top card revealed (e.g. Vampire Nocturnus)
+        Set<UUID> revealedPlayerIds = new HashSet<>();
+        for (UUID pid : data.orderedPlayerIds) {
+            List<Permanent> bf = data.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PlayWithTopCardRevealedEffect) {
+                        revealedPlayerIds.add(pid);
+                        break;
+                    }
+                }
+                if (revealedPlayerIds.contains(pid)) break;
+            }
+        }
+
+        List<List<CardView>> result = new ArrayList<>();
+        for (UUID pid : data.orderedPlayerIds) {
+            if (revealedPlayerIds.contains(pid)) {
+                List<Card> deck = data.playerDecks.get(pid);
+                if (deck != null && !deck.isEmpty()) {
+                    result.add(List.of(cardViewFactory.create(deck.getFirst())));
+                } else {
+                    result.add(List.of());
+                }
+            } else {
+                result.add(List.of());
+            }
+        }
+        return result;
     }
 
     List<Integer> getDeckSizes(GameData data) {
