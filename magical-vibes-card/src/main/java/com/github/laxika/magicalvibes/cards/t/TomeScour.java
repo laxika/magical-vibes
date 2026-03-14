@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 
+@CardRegistration(set = "M10", collectorNumber = "76")
 @CardRegistration(set = "M11", collectorNumber = "76")
 public class TomeScour extends Card {
 
