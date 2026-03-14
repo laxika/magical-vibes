@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "282")
+@CardRegistration(set = "M10", collectorNumber = "195")
 @CardRegistration(set = "M11", collectorNumber = "186")
 public class Naturalize extends Card {
 
