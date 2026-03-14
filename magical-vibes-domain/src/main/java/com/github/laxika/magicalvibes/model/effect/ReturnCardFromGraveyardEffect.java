@@ -61,6 +61,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                             "in addition to its other types" (e.g. Rise from the Grave)
  * @param enterTapped          {@code true} if the returned permanent enters the battlefield tapped
  *                             (e.g. Reassembling Skeleton)
+ * @param underOwnersControl   {@code true} to put each returned card onto the battlefield under
+ *                             its owner's control (the player whose graveyard it was in) rather
+ *                             than the spell controller's control (e.g. Open the Vaults)
  */
 public record ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
@@ -77,7 +80,8 @@ public record ReturnCardFromGraveyardEffect(
         boolean requiresManaValueEqualsX,
         CardColor grantColor,
         CardSubtype grantSubtype,
-        boolean enterTapped
+        boolean enterTapped,
+        boolean underOwnersControl
 ) implements CardEffect {
 
     /**
@@ -87,7 +91,7 @@ public record ReturnCardFromGraveyardEffect(
      * @param filter      predicate restricting which cards qualify
      */
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter) {
-        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, null, false, false, false, false, false, null, null, false);
+        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, null, false, false, false, false, false, null, null, false, false);
     }
 
     /**
@@ -99,7 +103,7 @@ public record ReturnCardFromGraveyardEffect(
      */
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
                                          GraveyardSearchScope source) {
-        this(destination, filter, source, false, false, false, null, false, false, false, false, false, null, null, false);
+        this(destination, filter, source, false, false, false, null, false, false, false, false, false, null, null, false, false);
     }
 
     /**
@@ -111,7 +115,7 @@ public record ReturnCardFromGraveyardEffect(
      */
     public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
                                          boolean targetGraveyard) {
-        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null, false, false, false, false, false, null, null, false);
+        this(destination, filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null, false, false, false, false, false, null, null, false, false);
     }
 
     /**
@@ -122,7 +126,7 @@ public record ReturnCardFromGraveyardEffect(
                                          GraveyardSearchScope source, boolean targetGraveyard, boolean returnAll,
                                          boolean thisTurnOnly, PermanentPredicate attachmentTarget,
                                          boolean gainLifeEqualToManaValue) {
-        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, false, false, false, false, null, null, false);
+        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, false, false, false, false, null, null, false, false);
     }
 
     /**
@@ -132,7 +136,7 @@ public record ReturnCardFromGraveyardEffect(
                                          GraveyardSearchScope source, boolean targetGraveyard, boolean returnAll,
                                          boolean thisTurnOnly, PermanentPredicate attachmentTarget,
                                          boolean gainLifeEqualToManaValue, boolean attachToSource) {
-        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, false, false, false, null, null, false);
+        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, false, false, false, null, null, false, false);
     }
 
     /**
@@ -143,7 +147,7 @@ public record ReturnCardFromGraveyardEffect(
                                          boolean thisTurnOnly, PermanentPredicate attachmentTarget,
                                          boolean gainLifeEqualToManaValue, boolean attachToSource,
                                          boolean grantHaste, boolean exileAtEndStep, boolean requiresManaValueEqualsX) {
-        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, grantHaste, exileAtEndStep, requiresManaValueEqualsX, null, null, false);
+        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, grantHaste, exileAtEndStep, requiresManaValueEqualsX, null, null, false, false);
     }
 
     /**
@@ -155,7 +159,19 @@ public record ReturnCardFromGraveyardEffect(
                                          boolean gainLifeEqualToManaValue, boolean attachToSource,
                                          boolean grantHaste, boolean exileAtEndStep, boolean requiresManaValueEqualsX,
                                          CardColor grantColor, CardSubtype grantSubtype) {
-        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, grantHaste, exileAtEndStep, requiresManaValueEqualsX, grantColor, grantSubtype, false);
+        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, grantHaste, exileAtEndStep, requiresManaValueEqualsX, grantColor, grantSubtype, false, false);
+    }
+
+    /**
+     * Backward-compatible 15-parameter constructor (pre-{@code underOwnersControl}).
+     */
+    public ReturnCardFromGraveyardEffect(GraveyardChoiceDestination destination, CardPredicate filter,
+                                         GraveyardSearchScope source, boolean targetGraveyard, boolean returnAll,
+                                         boolean thisTurnOnly, PermanentPredicate attachmentTarget,
+                                         boolean gainLifeEqualToManaValue, boolean attachToSource,
+                                         boolean grantHaste, boolean exileAtEndStep, boolean requiresManaValueEqualsX,
+                                         CardColor grantColor, CardSubtype grantSubtype, boolean enterTapped) {
+        this(destination, filter, source, targetGraveyard, returnAll, thisTurnOnly, attachmentTarget, gainLifeEqualToManaValue, attachToSource, grantHaste, exileAtEndStep, requiresManaValueEqualsX, grantColor, grantSubtype, enterTapped, false);
     }
 
     @Override

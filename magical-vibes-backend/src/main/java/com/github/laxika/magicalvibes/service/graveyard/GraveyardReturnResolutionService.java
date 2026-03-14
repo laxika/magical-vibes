@@ -248,10 +248,11 @@ public class GraveyardReturnResolutionService {
             }
             for (Card card : toReturn) {
                 gy.remove(card);
+                UUID targetPlayerId = effect.underOwnersControl() ? gyEntry.getKey() : controllerId;
                 if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                    gameData.playerHands.get(controllerId).add(card);
+                    gameData.playerHands.get(targetPlayerId).add(card);
                 } else {
-                    putCardOntoBattlefield(gameData, controllerId, card, null, null, effect.enterTapped());
+                    putCardOntoBattlefield(gameData, targetPlayerId, card, null, null, effect.enterTapped());
                 }
                 returnedNames.add(card.getName());
             }

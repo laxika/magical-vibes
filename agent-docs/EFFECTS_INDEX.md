@@ -241,7 +241,8 @@ ReturnCardFromGraveyardEffect(
     boolean requiresManaValueEqualsX,        // true = restrict to cards with MV = X (e.g. Postmortem Lunge)
     CardColor grantColor,                    // non-null = permanently grant this color "in addition to" (e.g. Rise from the Grave)
     CardSubtype grantSubtype,                // non-null = permanently grant this subtype "in addition to" (e.g. Rise from the Grave)
-    boolean enterTapped                      // true = enters the battlefield tapped (e.g. Reassembling Skeleton)
+    boolean enterTapped,                     // true = enters the battlefield tapped (e.g. Reassembling Skeleton)
+    boolean underOwnersControl               // true = put each card onto battlefield under its owner's control, not spell controller's (e.g. Open the Vaults)
 )
 ```
 
@@ -320,6 +321,7 @@ Pass `null` as filter to allow any card.
 | Postmortem Lunge | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, true, false, false, null, false, false, true, true, true)` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |
 | Rise from the Grave | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), ALL_GRAVEYARDS, false, false, false, null, false, false, false, false, false, CardColor.BLACK, CardSubtype.ZOMBIE)` — creature from any graveyard to battlefield as a black Zombie in addition to other colors/types |
 | Reassembling Skeleton | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null, false, false, false, false, false, null, null, true)` — self-return to battlefield tapped (graveyard activated ability) |
+| Open the Vaults | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(ENCHANTMENT))), ALL_GRAVEYARDS, false, true, false, null, false, false, false, false, false, null, null, false, true)` — return all artifacts and enchantments from all graveyards under their owners' control |
 
 ### Other graveyard effects
 
