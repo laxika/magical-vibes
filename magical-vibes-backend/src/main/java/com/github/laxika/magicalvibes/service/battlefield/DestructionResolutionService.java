@@ -94,7 +94,7 @@ public class DestructionResolutionService {
                 return;
             }
             for (Permanent perm : battlefield) {
-                if (matchesDestroyAllTargetType(gameData, perm, effect.targetTypes())
+                if (matchesDestroyAllTargetType(gameData, perm, effect)
                         && (effect.filter() == null
                             || gameQueryService.matchesPermanentPredicate(perm, effect.filter(), filterContext))) {
                     toDestroy.add(perm);
@@ -102,7 +102,8 @@ public class DestructionResolutionService {
             }
         });
 
-        boolean skipRegeneration = effect.cannotBeRegenerated() || !canAttemptRegeneration(effect.targetTypes());
+        boolean canRegen = !effect.excludedTypes().isEmpty() || canAttemptRegeneration(effect.targetTypes());
+        boolean skipRegeneration = effect.cannotBeRegenerated() || !canRegen;
         destroyBatch(gameData, toDestroy, entry.getCard().getName(), skipRegeneration);
     }
 
@@ -242,8 +243,25 @@ public class DestructionResolutionService {
         destroyBatch(gameData, toDestroy, cardName, false);
     }
 
-    private boolean matchesDestroyAllTargetType(GameData gameData, Permanent permanent, Set<CardType> targetTypes) {
-        for (CardType targetType : targetTypes) {
+    private boolean matchesDestroyAllTargetType(GameData gameData, Permanent permanent, DestroyAllPermanentsEffect effect) {
+        // Exclusion mode: destroy everything except excluded types
+        if (!effect.excludedTypes().isEmpty()) {
+            for (CardType excludedType : effect.excludedTypes()) {
+                if (excludedType == CardType.CREATURE && gameQueryService.isCreature(gameData, permanent)) {
+                    return false;
+                }
+                if (excludedType == CardType.ARTIFACT && gameQueryService.isArtifact(permanent)) {
+                    return false;
+                }
+                if (permanent.getCard().getType() == excludedType) {
+                    return false;
+                }
+            }
+            return permanent.getCard().getType().isPermanentType();
+        }
+
+        // Inclusion mode: destroy only matching types
+        for (CardType targetType : effect.targetTypes()) {
             if (targetType == CardType.CREATURE && gameQueryService.isCreature(gameData, permanent)) {
                 return true;
             }

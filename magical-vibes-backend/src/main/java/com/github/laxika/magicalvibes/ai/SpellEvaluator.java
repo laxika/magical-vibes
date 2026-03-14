@@ -331,7 +331,7 @@ public class SpellEvaluator {
                                            UUID aiPlayerId, UUID opponentId,
                                            List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
         double oppValue = oppBattlefield.stream()
-                .filter(p -> wipe.targetTypes().contains(p.getCard().getType()))
+                .filter(p -> matchesWipe(p, wipe))
                 .filter(p -> !wipe.onlyOpponents() || true)
                 .mapToDouble(p -> {
                     if (gameQueryService.isCreature(gameData, p)) {
@@ -344,7 +344,7 @@ public class SpellEvaluator {
         double aiValue = 0;
         if (!wipe.onlyOpponents()) {
             aiValue = aiBattlefield.stream()
-                    .filter(p -> wipe.targetTypes().contains(p.getCard().getType()))
+                    .filter(p -> matchesWipe(p, wipe))
                     .mapToDouble(p -> {
                         if (gameQueryService.isCreature(gameData, p)) {
                             return boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId);
@@ -355,6 +355,14 @@ public class SpellEvaluator {
         }
 
         return oppValue - aiValue;
+    }
+
+    private boolean matchesWipe(Permanent p, DestroyAllPermanentsEffect wipe) {
+        if (!wipe.excludedTypes().isEmpty()) {
+            return !wipe.excludedTypes().contains(p.getCard().getType())
+                    && p.getCard().getType().isPermanentType();
+        }
+        return wipe.targetTypes().contains(p.getCard().getType());
     }
 
     private double bestTargetCreatureValue(GameData gameData, List<Permanent> battlefield,
