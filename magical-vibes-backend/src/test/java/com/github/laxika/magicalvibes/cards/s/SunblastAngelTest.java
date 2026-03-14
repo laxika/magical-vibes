@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,10 +30,8 @@ class SunblastAngelTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(DestroyAllPermanentsEffect.class);
         DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.targetTypes()).containsExactly(CardType.CREATURE);
-        assertThat(effect.onlyOpponents()).isFalse();
+        assertThat(effect.filter()).isInstanceOf(PermanentAllOfPredicate.class);
         assertThat(effect.cannotBeRegenerated()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsTappedPredicate.class);
     }
 
     @Test

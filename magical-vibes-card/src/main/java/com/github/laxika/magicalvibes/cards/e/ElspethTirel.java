@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -44,10 +44,8 @@ public class ElspethTirel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -5,
                 List.of(new DestroyAllPermanentsEffect(
-                        Set.of(CardType.CREATURE, CardType.ARTIFACT, CardType.ENCHANTMENT, CardType.PLANESWALKER),
-                        false,
-                        false,
                         new PermanentAllOfPredicate(List.of(
+                                new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
                         ))

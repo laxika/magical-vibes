@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -16,7 +17,7 @@ import java.util.Set;
 public class LifesFinale extends Card {
 
     public LifesFinale() {
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(Set.of(CardType.CREATURE)));
+        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
         addEffect(EffectSlot.SPELL, new SearchTargetLibraryForCardsToGraveyardEffect(3, Set.of(CardType.CREATURE)));
         setTargetFilter(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffec
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -330,9 +331,10 @@ public class SpellEvaluator {
     private double evaluateDestroyAllValue(GameData gameData, DestroyAllPermanentsEffect wipe,
                                            UUID aiPlayerId, UUID opponentId,
                                            List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
+
         double oppValue = oppBattlefield.stream()
-                .filter(p -> matchesWipe(p, wipe))
-                .filter(p -> !wipe.onlyOpponents() || true)
+                .filter(p -> gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
                 .mapToDouble(p -> {
                     if (gameQueryService.isCreature(gameData, p)) {
                         return boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId);
@@ -341,28 +343,17 @@ public class SpellEvaluator {
                 })
                 .sum();
 
-        double aiValue = 0;
-        if (!wipe.onlyOpponents()) {
-            aiValue = aiBattlefield.stream()
-                    .filter(p -> matchesWipe(p, wipe))
-                    .mapToDouble(p -> {
-                        if (gameQueryService.isCreature(gameData, p)) {
-                            return boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId);
-                        }
-                        return p.getCard().getManaValue() * 3.0;
-                    })
-                    .sum();
-        }
+        double aiValue = aiBattlefield.stream()
+                .filter(p -> gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .mapToDouble(p -> {
+                    if (gameQueryService.isCreature(gameData, p)) {
+                        return boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId);
+                    }
+                    return p.getCard().getManaValue() * 3.0;
+                })
+                .sum();
 
         return oppValue - aiValue;
-    }
-
-    private boolean matchesWipe(Permanent p, DestroyAllPermanentsEffect wipe) {
-        if (!wipe.excludedTypes().isEmpty()) {
-            return !wipe.excludedTypes().contains(p.getCard().getType())
-                    && p.getCard().getType().isPermanentType();
-        }
-        return wipe.targetTypes().contains(p.getCard().getType());
     }
 
     private double bestTargetCreatureValue(GameData gameData, List<Permanent> battlefield,
