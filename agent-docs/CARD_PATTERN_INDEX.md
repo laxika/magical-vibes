@@ -122,6 +122,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
+| ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillControllerEffect(4) — controller mills N cards, no target |
 | ETB draw + downside | `p/PhyrexianRager.java` | Draw + LoseLifeEffect |
 | ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
 | ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |

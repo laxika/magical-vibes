@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -51,6 +52,15 @@ public class MillResolutionService {
         }
 
         graveyardService.resolveMillPlayer(gameData, targetPlayerId, handSize);
+    }
+
+    /**
+     * Mills the controller for a fixed number of cards (self-mill, no target).
+     * Used by cards like Armored Skaab.
+     */
+    @HandlesEffect(MillControllerEffect.class)
+    void resolveMillController(GameData gameData, StackEntry entry, MillControllerEffect effect) {
+        graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), effect.count());
     }
 
     /**
