@@ -94,7 +94,7 @@ class LifesFinaleTest extends BaseCardTest {
 
         // Only creature cards should appear in the search
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.CREATURE);
+                .allMatch(c -> c.hasType(CardType.CREATURE));
         assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
     }
 

@@ -519,7 +519,7 @@ public class ExileResolutionService {
         // Step 4: Collect eligible cards — nonland, not the just-exiled card, from KP's pool
         List<Card> eligible = pool.stream()
                 .filter(c -> !c.getId().equals(originalCard.getId()))
-                .filter(c -> c.getType() != CardType.LAND)
+                .filter(c -> !c.hasType(CardType.LAND))
                 .collect(Collectors.toList());
 
         if (eligible.isEmpty()) {
@@ -677,7 +677,7 @@ public class ExileResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, exileLog);
         log.info("Game {} - {} exiles {} (Omen Machine)", gameData.id, playerName, topCard.getName());
 
-        if (topCard.getType() == CardType.LAND) {
+        if (topCard.hasType(CardType.LAND)) {
             // Land — put onto the battlefield
             gameData.playerExiledCards.get(targetPlayerId).remove(topCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(topCard));

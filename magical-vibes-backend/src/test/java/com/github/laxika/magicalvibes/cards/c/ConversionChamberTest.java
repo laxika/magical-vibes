@@ -250,7 +250,7 @@ class ConversionChamberTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Golem")
                         && p.getCard().getPower() == 3
                         && p.getCard().getToughness() == 3
-                        && p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+                        && p.getCard().hasType(CardType.ARTIFACT));
     }
 
     @Test
@@ -355,7 +355,7 @@ class ConversionChamberTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Golem")
                         && p.getCard().getPower() == 3
                         && p.getCard().getToughness() == 3
-                        && p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+                        && p.getCard().hasType(CardType.ARTIFACT));
     }
 
     // ===== Helper methods =====

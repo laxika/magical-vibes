@@ -50,7 +50,7 @@ public class PermanentControlTargetValidators {
     public void validateGainControlOfTargetAura(TargetValidationContext ctx) {
         tvs.requireTarget(ctx);
         Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
-        if (target == null || target.getCard().getType() != CardType.ENCHANTMENT
+        if (target == null || !target.getCard().hasType(CardType.ENCHANTMENT)
                 || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
                 || !target.isAttached()) {
             throw new IllegalStateException("Target must be an Aura attached to a permanent");

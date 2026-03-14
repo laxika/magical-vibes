@@ -566,8 +566,7 @@ public class PlayerInteractionResolutionService {
         List<UUID> validLandIds = new ArrayList<>();
         if (attackerBattlefield != null) {
             for (Permanent perm : attackerBattlefield) {
-                if (perm.getCard().getType() == CardType.LAND
-                        || perm.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                if (perm.getCard().hasType(CardType.LAND)) {
                     validLandIds.add(perm.getId());
                 }
             }
@@ -667,7 +666,7 @@ public class PlayerInteractionResolutionService {
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
                 Card handCard = hand.get(i);
-                if (handCard.getType() == effect.cardType() || handCard.getAdditionalTypes().contains(effect.cardType())) {
+                if (handCard.hasType(effect.cardType())) {
                     validIndices.add(i);
                 }
             }
@@ -693,7 +692,7 @@ public class PlayerInteractionResolutionService {
         List<Integer> creatureIndices = new ArrayList<>();
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
-                if (hand.get(i).getType() == CardType.CREATURE) {
+                if (hand.get(i).hasType(CardType.CREATURE)) {
                     creatureIndices.add(i);
                 }
             }
@@ -1167,8 +1166,7 @@ public class PlayerInteractionResolutionService {
         boolean hasValidPermanent = false;
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard().getType() == effect.permanentType()
-                        || p.getCard().getAdditionalTypes().contains(effect.permanentType())) {
+                if (p.getCard().hasType(effect.permanentType())) {
                     hasValidPermanent = true;
                     break;
                 }
@@ -1238,7 +1236,7 @@ public class PlayerInteractionResolutionService {
 
         log.info("Game {} - {} trigger: {} reveals {}", gameData.id, sourceName, playerName, revealed.getName());
 
-        if (revealed.getType() == CardType.LAND) {
+        if (revealed.hasType(CardType.LAND)) {
             // Land — remove from hand and put onto the battlefield
             hand.remove(randomIndex);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(revealed));

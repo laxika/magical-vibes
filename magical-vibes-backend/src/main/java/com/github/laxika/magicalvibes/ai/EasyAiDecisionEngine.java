@@ -73,10 +73,10 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         List<int[]> castableSpells = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.getType() == CardType.LAND) {
+            if (card.hasType(CardType.LAND)) {
                 continue;
             }
-            if (card.getType() == CardType.INSTANT) {
+            if (card.hasType(CardType.INSTANT)) {
                 continue;
             }
             if (card.getManaCost() == null) {
@@ -137,7 +137,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     protected int scoreCard(GameData gameData, Card card) {
         int score = card.getManaValue() * 10;
 
-        if (card.getType() == CardType.CREATURE) {
+        if (card.hasType(CardType.CREATURE)) {
             int power = card.getPower() != null ? card.getPower() : 0;
             int toughness = card.getToughness() != null ? card.getToughness() : 0;
             score += (power + toughness) * 5;
@@ -147,7 +147,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             if (card.getKeywords().contains(Keyword.DOUBLE_STRIKE)) score += 20;
             if (card.getKeywords().contains(Keyword.TRAMPLE)) score += 10;
             if (card.getKeywords().contains(Keyword.VIGILANCE)) score += 5;
-        } else if (card.getType() == CardType.ENCHANTMENT) {
+        } else if (card.hasType(CardType.ENCHANTMENT)) {
             score += 20;
         }
 

@@ -65,7 +65,7 @@ class InspiredChargeTest extends BaseCardTest {
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
-            if (p.getCard().getType() == CardType.CREATURE) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.getPowerModifier()).isEqualTo(2);
                 assertThat(p.getToughnessModifier()).isEqualTo(1);
                 assertThat(p.getEffectivePower()).isEqualTo(4);
@@ -88,7 +88,7 @@ class InspiredChargeTest extends BaseCardTest {
         // Player1's creature is boosted
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : p1Battlefield) {
-            if (p.getCard().getType() == CardType.CREATURE) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.getPowerModifier()).isEqualTo(2);
                 assertThat(p.getToughnessModifier()).isEqualTo(1);
             }
@@ -97,7 +97,7 @@ class InspiredChargeTest extends BaseCardTest {
         // Player2's creature is NOT boosted
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
-            if (p.getCard().getType() == CardType.CREATURE) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.getPowerModifier()).isEqualTo(0);
                 assertThat(p.getToughnessModifier()).isEqualTo(0);
             }
@@ -121,7 +121,7 @@ class InspiredChargeTest extends BaseCardTest {
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
-            if (p.getCard().getType() == CardType.CREATURE) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.getPowerModifier()).isEqualTo(0);
                 assertThat(p.getToughnessModifier()).isEqualTo(0);
                 assertThat(p.getEffectivePower()).isEqualTo(2);

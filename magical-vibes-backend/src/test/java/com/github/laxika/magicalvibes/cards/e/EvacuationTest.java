@@ -66,9 +66,9 @@ class EvacuationTest extends BaseCardTest {
 
         // No creatures should remain on either battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.CREATURE);
+                .noneMatch(p -> p.getCard().hasType(CardType.CREATURE));
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.CREATURE);
+                .noneMatch(p -> p.getCard().hasType(CardType.CREATURE));
 
         // Player 1's creatures returned to player 1's hand
         assertThat(gd.playerHands.get(player1.getId()))

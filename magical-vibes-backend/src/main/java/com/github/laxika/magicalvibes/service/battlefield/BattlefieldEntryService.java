@@ -155,8 +155,7 @@ public class BattlefieldEntryService {
                 int otherLandCount = 0;
                 if (battlefield != null) {
                     for (Permanent p : battlefield) {
-                        if (p.getCard().getType() == CardType.LAND
-                                || p.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                        if (p.getCard().hasType(CardType.LAND)) {
                             otherLandCount++;
                         }
                     }
@@ -337,7 +336,7 @@ public class BattlefieldEntryService {
         checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
-        if (card.getType() == CardType.LAND) {
+        if (card.hasType(CardType.LAND)) {
             checkOpponentLandEntersTriggers(gameData, controllerId, card);
         }
     }
@@ -401,7 +400,7 @@ public class BattlefieldEntryService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
-                if (graveyardCard.getType() == CardType.INSTANT || graveyardCard.getType() == CardType.SORCERY) {
+                if (graveyardCard.hasType(CardType.INSTANT) || graveyardCard.hasType(CardType.SORCERY)) {
                     eligibleCardIds.add(graveyardCard.getId());
                     cardViews.add(cardViewFactory.create(graveyardCard));
                 }
@@ -433,7 +432,7 @@ public class BattlefieldEntryService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             for (Card graveyardCard : graveyard) {
-                if (graveyardCard.getType() == CardType.CREATURE) {
+                if (graveyardCard.hasType(CardType.CREATURE)) {
                     creatureCardIds.add(graveyardCard.getId());
                     cardViews.add(cardViewFactory.create(graveyardCard));
                 }
@@ -567,9 +566,7 @@ public class BattlefieldEntryService {
     }
 
     void checkAllyArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
-        boolean isArtifact = enteringCard.getType() == CardType.ARTIFACT
-                || (enteringCard.getAdditionalTypes() != null && enteringCard.getAdditionalTypes().contains(CardType.ARTIFACT));
-        if (!isArtifact) return;
+        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         for (Permanent perm : battlefield) {
@@ -627,9 +624,7 @@ public class BattlefieldEntryService {
     void checkAllyNontokenArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
         if (enteringCard.isToken()) return;
 
-        boolean isArtifact = enteringCard.getType() == CardType.ARTIFACT
-                || (enteringCard.getAdditionalTypes() != null && enteringCard.getAdditionalTypes().contains(CardType.ARTIFACT));
-        if (!isArtifact) return;
+        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
 

@@ -202,12 +202,11 @@ public class MulliganService {
                 perm.setSummoningSick(false);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-                if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
+                if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
                     perm.setLoyaltyCounters(card.getLoyalty());
                 }
 
-                boolean isCreature = card.getType() == CardType.CREATURE
-                        || card.getAdditionalTypes().contains(CardType.CREATURE);
+                boolean isCreature = card.hasType(CardType.CREATURE);
                 if (isCreature) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
                 }

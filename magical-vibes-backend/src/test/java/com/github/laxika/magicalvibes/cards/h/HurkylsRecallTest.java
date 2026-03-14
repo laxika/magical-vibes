@@ -65,7 +65,7 @@ class HurkylsRecallTest extends BaseCardTest {
 
         // No artifacts on player2's battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.ARTIFACT);
+                .noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT));
 
         // Both artifacts in player2's hand
         assertThat(gd.playerHands.get(player2.getId()))
@@ -84,7 +84,7 @@ class HurkylsRecallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.ARTIFACT);
+                .noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT));
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())

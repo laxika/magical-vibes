@@ -76,7 +76,7 @@ class PrimevalTitanTest extends BaseCardTest {
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().cards())
-                    .allMatch(c -> c.getType() == CardType.LAND);
+                    .allMatch(c -> c.hasType(CardType.LAND));
             assertThat(gd.interaction.librarySearch().cards()).hasSize(3); // Forest, Island, Plains
         }
 
@@ -103,7 +103,7 @@ class PrimevalTitanTest extends BaseCardTest {
             // Both lands should be on the battlefield tapped
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
             long tappedLandCount = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getType() == CardType.LAND && p.isTapped())
+                    .filter(p -> p.getCard().hasType(CardType.LAND) && p.isTapped())
                     .count();
             assertThat(tappedLandCount).isGreaterThanOrEqualTo(2);
         }
@@ -238,7 +238,7 @@ class PrimevalTitanTest extends BaseCardTest {
 
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
             long tappedLandCount = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getType() == CardType.LAND && p.isTapped())
+                    .filter(p -> p.getCard().hasType(CardType.LAND) && p.isTapped())
                     .count();
             assertThat(tappedLandCount).isGreaterThanOrEqualTo(2);
         }

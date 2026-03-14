@@ -53,7 +53,7 @@ public class DamageTargetValidators {
         }
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         boolean validPermanentType = gameQueryService.isCreature(ctx.gameData(), target)
-                || target.getCard().getType() == CardType.PLANESWALKER;
+                || target.getCard().hasType(CardType.PLANESWALKER);
         if (!validPermanentType) {
             throw new IllegalStateException("Target must be a creature, planeswalker, or player");
         }
@@ -67,8 +67,7 @@ public class DamageTargetValidators {
             return;
         }
         Permanent target = tvs.requireBattlefieldTarget(ctx);
-        if (target.getCard().getType() != CardType.PLANESWALKER
-                && !target.getCard().getAdditionalTypes().contains(CardType.PLANESWALKER)) {
+        if (!target.getCard().hasType(CardType.PLANESWALKER)) {
             throw new IllegalStateException("Target must be a player or planeswalker");
         }
         tvs.checkProtection(ctx, target);
@@ -82,7 +81,7 @@ public class DamageTargetValidators {
         }
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         boolean validPermanentType = gameQueryService.isCreature(ctx.gameData(), target)
-                || target.getCard().getType() == CardType.PLANESWALKER;
+                || target.getCard().hasType(CardType.PLANESWALKER);
         if (!validPermanentType) {
             throw new IllegalStateException("Target must be a creature, planeswalker, or player");
         }

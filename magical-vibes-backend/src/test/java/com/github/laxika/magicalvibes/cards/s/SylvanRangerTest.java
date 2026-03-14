@@ -63,7 +63,7 @@ class SylvanRangerTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+                .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
     @Test

@@ -400,7 +400,7 @@ public class DamageResolutionService {
             int count = 0;
             if (graveyard != null) {
                 for (Card card : graveyard) {
-                    if (card.getType() == effect.cardType() || card.getAdditionalTypes().contains(effect.cardType())) {
+                    if (card.hasType(effect.cardType())) {
                         count++;
                     }
                 }
@@ -1266,7 +1266,7 @@ public class DamageResolutionService {
             gameOutcomeService.checkWinCondition(gameData);
         }
 
-        if (effect.returnToHandIfLand() && topCard.getType() == CardType.LAND) {
+        if (effect.returnToHandIfLand() && topCard.hasType(CardType.LAND)) {
             gameBroadcastService.logAndBroadcast(gameData,
                     "A land card was revealed — " + cardName + " is returned to its owner's hand.");
             entry.setReturnToHandAfterResolving(true);

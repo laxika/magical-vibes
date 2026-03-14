@@ -348,10 +348,10 @@ public class LibraryChoiceHandlerService {
                     if (toBattlefieldTapped) {
                         perm.tap();
                     }
-                    if (chosenCard.getType() == CardType.CREATURE) {
+                    if (chosenCard.hasType(CardType.CREATURE)) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                     }
-                    if (chosenCard.getType() == CardType.PLANESWALKER && chosenCard.getLoyalty() != null) {
+                    if (chosenCard.hasType(CardType.PLANESWALKER) && chosenCard.getLoyalty() != null) {
                         perm.setLoyaltyCounters(chosenCard.getLoyalty());
                         perm.setSummoningSick(false);
                     }
@@ -736,10 +736,10 @@ public class LibraryChoiceHandlerService {
             Card card = cards.get(i);
             Permanent perm = permanents.get(i);
 
-            if (card.getType() == CardType.CREATURE) {
+            if (card.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
             }
-            if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
+            if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
                 perm.setLoyaltyCounters(card.getLoyalty());
                 perm.setSummoningSick(false);
             }
@@ -762,7 +762,7 @@ public class LibraryChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(playerId);
 
         List<Card> basicLands = deck.stream()
-                .filter(card -> card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC))
+                .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
                 .toList();
 
         if (basicLands.isEmpty()) {
@@ -843,10 +843,10 @@ public class LibraryChoiceHandlerService {
             String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-            if (card.getType() == CardType.CREATURE) {
+            if (card.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
             }
-            if (card.getType() == CardType.PLANESWALKER && card.getLoyalty() != null) {
+            if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
                 perm.setLoyaltyCounters(card.getLoyalty());
                 perm.setSummoningSick(false);
             }

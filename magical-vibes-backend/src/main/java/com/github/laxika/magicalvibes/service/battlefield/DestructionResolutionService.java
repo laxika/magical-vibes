@@ -216,8 +216,7 @@ public class DestructionResolutionService {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerFilter != null && !playerFilter.contains(playerId)) return;
             for (Permanent perm : battlefield) {
-                if (perm.getCard().getType() == CardType.LAND
-                        || perm.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                if (perm.getCard().hasType(CardType.LAND)) {
                     continue;
                 }
                 if (perm.getCard().getManaValue() == targetManaValue) {
@@ -487,7 +486,7 @@ public class DestructionResolutionService {
             return;
         }
 
-        if (target.getCard().getType() != CardType.LAND) {
+        if (!target.getCard().hasType(CardType.LAND)) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (invalid target type).";
             gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             return;

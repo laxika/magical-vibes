@@ -120,8 +120,7 @@ class FaunaShamanTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.CREATURE
-                        || c.getAdditionalTypes().contains(CardType.CREATURE));
+                .allMatch(c -> c.hasType(CardType.CREATURE));
         assertThat(gd.interaction.librarySearch().reveals()).isTrue();
         assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
     }

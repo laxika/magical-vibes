@@ -70,7 +70,7 @@ class ParasiticImplantTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Phyrexian Myr")
                         && p.getCard().getPower() == 1
                         && p.getCard().getToughness() == 1
-                        && p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT)
+                        && p.getCard().hasType(CardType.ARTIFACT)
                         && p.getCard().isToken())).isTrue();
     }
 

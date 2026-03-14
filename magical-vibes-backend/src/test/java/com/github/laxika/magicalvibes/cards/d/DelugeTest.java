@@ -63,14 +63,14 @@ class DelugeTest extends BaseCardTest {
 
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : p1Battlefield) {
-            if (p.getCard().getType() == CardType.CREATURE) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.isTapped()).isTrue();
             }
         }
 
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
-            if (p.getCard().getType() == CardType.CREATURE) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.isTapped()).isTrue();
             }
         }

@@ -115,6 +115,10 @@ public class Card {
         return new ManaCost(manaCost).getManaValue();
     }
 
+    public boolean hasType(CardType cardType) {
+        return type == cardType || additionalTypes.contains(cardType);
+    }
+
     public boolean isAura() {
         return subtypes.contains(CardSubtype.AURA);
     }

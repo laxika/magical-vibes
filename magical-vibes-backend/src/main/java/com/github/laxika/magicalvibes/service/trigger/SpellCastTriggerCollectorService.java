@@ -89,7 +89,7 @@ public class SpellCastTriggerCollectorService {
         if (trigger.spellSnapshot() != null) return false;
 
         Card spellCard = sc.spellCard();
-        if (spellCard.getType() != CardType.INSTANT && spellCard.getType() != CardType.SORCERY) return false;
+        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return false;
 
         // Find the spell on the stack
         StackEntry spellEntry = null;
@@ -141,7 +141,7 @@ public class SpellCastTriggerCollectorService {
         if (trigger.spellSnapshot() != null) return false;
 
         Card spellCard = sc.spellCard();
-        if (spellCard.getType() != CardType.INSTANT && spellCard.getType() != CardType.SORCERY) return false;
+        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return false;
 
         // Find the spell on the stack
         StackEntry spellEntry = null;

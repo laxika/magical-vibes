@@ -172,8 +172,7 @@ public class StaticEffectResolutionService {
         String imprintedName = imprintedCard.getName();
         final int[] count = {0};
         context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (permanent.getCard().getType() == CardType.LAND
-                    || permanent.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+            if (permanent.getCard().hasType(CardType.LAND)) {
                 if (imprintedName.equals(permanent.getCard().getName())) {
                     count[0]++;
                 }
@@ -532,8 +531,7 @@ public class StaticEffectResolutionService {
     }
 
     private boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
-        if (permanent.getCard().getType() == CardType.CREATURE) return true;
-        if (permanent.getCard().getAdditionalTypes().contains(CardType.CREATURE)) return true;
+        if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.getAwakeningCounters() > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
@@ -563,7 +561,7 @@ public class StaticEffectResolutionService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
-                if (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE)) {
+                if (card.hasType(CardType.CREATURE)) {
                     for (var ability : card.getActivatedAbilities()) {
                         accumulator.addActivatedAbility(ability);
                     }
@@ -607,8 +605,7 @@ public class StaticEffectResolutionService {
         var boost = (BoostSelfPerEnchantmentOnBattlefieldEffect) effect;
         final int[] count = {0};
         context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (permanent.getCard().getType() == CardType.ENCHANTMENT
-                    || permanent.getCard().getAdditionalTypes().contains(CardType.ENCHANTMENT)) {
+            if (permanent.getCard().hasType(CardType.ENCHANTMENT)) {
                 count[0]++;
             }
         });
@@ -750,7 +747,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(value = PowerToughnessEqualToControlledLandCountEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToControlledLandCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         int count = countControlledPermanents(context,
-                p -> p.getCard().getType() == CardType.LAND || p.getCard().getAdditionalTypes().contains(CardType.LAND));
+                p -> p.getCard().hasType(CardType.LAND));
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }
@@ -871,18 +868,15 @@ public class StaticEffectResolutionService {
         if (filter instanceof PermanentHasKeywordPredicate p)
             return target.hasKeyword(p.keyword());
         if (filter instanceof PermanentIsCreaturePredicate)
-            return target.getCard().getType() == CardType.CREATURE
-                    || target.getCard().getAdditionalTypes().contains(CardType.CREATURE)
+            return target.getCard().hasType(CardType.CREATURE)
                     || target.isAnimatedUntilEndOfTurn()
                     || target.getAwakeningCounters() > 0;
         if (filter instanceof PermanentIsArtifactPredicate)
             return gameQueryService.isArtifact(target);
         if (filter instanceof PermanentIsLandPredicate)
-            return target.getCard().getType() == CardType.LAND
-                    || target.getCard().getAdditionalTypes().contains(CardType.LAND);
+            return target.getCard().hasType(CardType.LAND);
         if (filter instanceof PermanentIsPlaneswalkerPredicate)
-            return target.getCard().getType() == CardType.PLANESWALKER
-                    || target.getCard().getAdditionalTypes().contains(CardType.PLANESWALKER);
+            return target.getCard().hasType(CardType.PLANESWALKER);
         if (filter instanceof PermanentNotPredicate p)
             return !matchesStaticFilter(target, p.predicate());
         if (filter instanceof PermanentAllOfPredicate p)

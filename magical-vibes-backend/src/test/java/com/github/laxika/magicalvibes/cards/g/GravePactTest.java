@@ -330,9 +330,9 @@ class GravePactTest extends BaseCardTest {
 
         // All creatures should be dead
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.CREATURE);
+                .noneMatch(p -> p.getCard().hasType(CardType.CREATURE));
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.CREATURE);
+                .noneMatch(p -> p.getCard().hasType(CardType.CREATURE));
 
         // Grave Pact should still be on the battlefield (it's an enchantment)
         assertThat(gd.playerBattlefields.get(player1.getId()))

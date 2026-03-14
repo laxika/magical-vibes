@@ -151,7 +151,7 @@ public class LibraryRevealResolutionService {
         log.info("Game {} - {} reveals top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         // Lands can only be played if it's the controller's turn and they haven't played a land this turn
-        if (topCard.getType() == CardType.LAND) {
+        if (topCard.hasType(CardType.LAND)) {
             boolean isControllersTurn = controllerId.equals(gameData.activePlayerId);
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
             if (!isControllersTurn || landsPlayed >= 1) {
@@ -301,9 +301,9 @@ public class LibraryRevealResolutionService {
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : revealedCards) {
             if (card.getType() != null
-                    && card.getType() != CardType.LAND
-                    && card.getType() != CardType.INSTANT
-                    && card.getType() != CardType.SORCERY
+                    && !card.hasType(CardType.LAND)
+                    && !card.hasType(CardType.INSTANT)
+                    && !card.hasType(CardType.SORCERY)
                     && card.getManaValue() <= 3) {
                 eligibleCards.add(card);
             }
@@ -754,8 +754,7 @@ public class LibraryRevealResolutionService {
                 + " from the top of their library (" + sourceName + ").";
         gameBroadcastService.logAndBroadcast(gameData, revealLog);
 
-        boolean isCreature = topCard.getType() == CardType.CREATURE
-                || topCard.getAdditionalTypes().contains(CardType.CREATURE);
+        boolean isCreature = topCard.hasType(CardType.CREATURE);
 
         if (isCreature) {
             deck.removeFirst();

@@ -59,19 +59,19 @@ public class AiDraftEngine {
     private double scoreCardForDraft(Card card) {
         double score;
 
-        if (card.getType() == CardType.CREATURE) {
+        if (card.hasType(CardType.CREATURE)) {
             int mv = card.getManaValue();
             int power = card.getPower() != null ? card.getPower() : 0;
             int toughness = card.getToughness() != null ? card.getToughness() : 0;
             score = mv * 10.0 + (power + toughness) * 5.0;
             score += keywordBonus(card);
-        } else if (card.getType() == CardType.INSTANT || card.getType() == CardType.SORCERY) {
+        } else if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
             score = card.getManaValue() * 8.0 + 15;
-        } else if (card.getType() == CardType.ENCHANTMENT) {
+        } else if (card.hasType(CardType.ENCHANTMENT)) {
             score = card.getManaValue() * 7.0 + 10;
-        } else if (card.getType() == CardType.ARTIFACT) {
+        } else if (card.hasType(CardType.ARTIFACT)) {
             score = card.getManaValue() * 8.0 + 5;
-        } else if (card.getType() == CardType.PLANESWALKER) {
+        } else if (card.hasType(CardType.PLANESWALKER)) {
             score = card.getManaValue() * 12.0 + 30;
         } else {
             // Land or other
@@ -145,7 +145,7 @@ public class AiDraftEngine {
         // Take best 23 non-land cards
         List<Integer> cardIndices = new ArrayList<>();
         for (IndexedCard ic : onColorCards) {
-            if (ic.card().getType() != CardType.LAND && cardIndices.size() < 23) {
+            if (!ic.card().hasType(CardType.LAND) && cardIndices.size() < 23) {
                 cardIndices.add(ic.index());
             }
         }
@@ -153,7 +153,7 @@ public class AiDraftEngine {
         // If we don't have 23 non-land cards, add off-color ones
         if (cardIndices.size() < 23) {
             for (int i = 0; i < pool.size(); i++) {
-                if (!cardIndices.contains(i) && pool.get(i).getType() != CardType.LAND) {
+                if (!cardIndices.contains(i) && !pool.get(i).hasType(CardType.LAND)) {
                     cardIndices.add(i);
                     if (cardIndices.size() >= 23) break;
                 }

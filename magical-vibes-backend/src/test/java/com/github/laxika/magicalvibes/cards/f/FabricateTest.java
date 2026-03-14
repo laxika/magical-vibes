@@ -63,7 +63,7 @@ class FabricateTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.ARTIFACT || c.getAdditionalTypes().contains(CardType.ARTIFACT));
+                .allMatch(c -> c.hasType(CardType.ARTIFACT));
         assertThat(gd.interaction.librarySearch().reveals()).isTrue();
         assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
     }
@@ -84,7 +84,7 @@ class FabricateTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getType() == CardType.ARTIFACT || c.getAdditionalTypes().contains(CardType.ARTIFACT));
+                .anyMatch(c -> c.hasType(CardType.ARTIFACT));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
     }
 

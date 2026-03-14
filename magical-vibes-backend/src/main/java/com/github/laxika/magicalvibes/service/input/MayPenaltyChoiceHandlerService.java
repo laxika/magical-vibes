@@ -344,8 +344,7 @@ public class MayPenaltyChoiceHandlerService {
             List<UUID> validIds = new ArrayList<>();
             if (battlefield != null) {
                 for (Permanent p : battlefield) {
-                    if (p.getCard().getType() == effect.permanentType()
-                            || p.getCard().getAdditionalTypes().contains(effect.permanentType())) {
+                    if (p.getCard().hasType(effect.permanentType())) {
                         validIds.add(p.getId());
                     }
                 }

@@ -230,7 +230,7 @@ class CitanulFluteTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Plains (basic land) and Swamp (basic land) should NOT appear despite high X
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.CREATURE);
+                .allMatch(c -> c.hasType(CardType.CREATURE));
     }
 
     // ===== Choosing a card =====

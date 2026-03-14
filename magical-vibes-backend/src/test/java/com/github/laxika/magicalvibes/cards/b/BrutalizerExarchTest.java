@@ -57,7 +57,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             // Only creature cards should be shown
             assertThat(gd.interaction.librarySearch().cards())
-                    .allMatch(c -> c.getType() == CardType.CREATURE);
+                    .allMatch(c -> c.hasType(CardType.CREATURE));
         }
 
         @Test

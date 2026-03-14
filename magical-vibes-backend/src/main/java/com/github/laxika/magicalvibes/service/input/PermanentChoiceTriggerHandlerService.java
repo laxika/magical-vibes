@@ -330,8 +330,7 @@ public class PermanentChoiceTriggerHandlerService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (p.getCard().getType() != CardType.LAND
-                        && !p.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                if (!p.getCard().hasType(CardType.LAND)) {
                     validOpponentTargets.add(p.getId());
                 }
             }

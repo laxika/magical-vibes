@@ -137,7 +137,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Myr")
                         && p.getCard().getPower() == 1
                         && p.getCard().getToughness() == 1
-                        && p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT))
+                        && p.getCard().hasType(CardType.ARTIFACT))
                 .count();
         assertThat(myrCount).isEqualTo(3);
     }

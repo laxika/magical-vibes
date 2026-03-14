@@ -133,7 +133,7 @@ public class GraveyardChoiceHandlerService {
                         }
                     }
 
-                    if (card.getType() == CardType.CREATURE) {
+                    if (card.hasType(CardType.CREATURE)) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {

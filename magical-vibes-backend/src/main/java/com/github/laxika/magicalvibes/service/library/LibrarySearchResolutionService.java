@@ -76,7 +76,7 @@ public class LibrarySearchResolutionService {
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC),
+                card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC),
                 "basic land cards",
                 "Search your library for a basic land card to put into your hand.",
                 true,
@@ -235,7 +235,7 @@ public class LibrarySearchResolutionService {
         }
 
         List<Card> basicLands = deck.stream()
-                .filter(card -> card.getType() == CardType.LAND && card.getSupertypes().contains(CardSupertype.BASIC))
+                .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
                 .toList();
 
         if (basicLands.isEmpty()) {
@@ -502,7 +502,7 @@ public class LibrarySearchResolutionService {
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> card.getType() == CardType.CREATURE && card.getManaValue() <= maxMV,
+                card -> card.hasType(CardType.CREATURE) && card.getManaValue() <= maxMV,
                 "creature card with mana value " + maxMV + " or less",
                 "Search your library for a creature card with mana value " + maxMV + " or less to reveal and put into your hand.",
                 true,
@@ -521,7 +521,7 @@ public class LibrarySearchResolutionService {
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> card.getType() == CardType.CREATURE,
+                card -> card.hasType(CardType.CREATURE),
                 "creature cards",
                 "Search your library for a creature card, reveal it, then shuffle and put that card on top.",
                 true,
@@ -561,7 +561,7 @@ public class LibrarySearchResolutionService {
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> card.getType() == CardType.CREATURE
+                card -> card.hasType(CardType.CREATURE)
                         && card.getColors().contains(effect.requiredColor())
                         && card.getManaValue() <= maxMV,
                 colorName + " creature card with mana value " + maxMV + " or less",
@@ -586,8 +586,7 @@ public class LibrarySearchResolutionService {
                 gameData,
                 entry.getControllerId(),
                 card -> {
-                    boolean isCreatureCard = card.getType() == CardType.CREATURE
-                            || card.getAdditionalTypes().contains(CardType.CREATURE);
+                    boolean isCreatureCard = card.hasType(CardType.CREATURE);
                     return isCreatureCard && card.getSubtypes().contains(requiredSubtype);
                 },
                 subtypeName + " creature card",
@@ -606,7 +605,7 @@ public class LibrarySearchResolutionService {
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE))
+                card -> (card.hasType(CardType.CREATURE))
                         && card.getManaValue() == targetMV,
                 "creature card with mana value " + targetMV,
                 "Search your library for a creature card with mana value " + targetMV + " and put it onto the battlefield.",

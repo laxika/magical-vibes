@@ -149,7 +149,7 @@ public abstract class AiDecisionEngine {
             return true;
         }
 
-        long landCount = hand.stream().filter(c -> c.getType() == CardType.LAND).count();
+        long landCount = hand.stream().filter(c -> c.hasType(CardType.LAND)).count();
 
         if (mulliganCount >= 2) {
             return landCount >= 1;
@@ -176,7 +176,7 @@ public abstract class AiDecisionEngine {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.getType() == CardType.LAND) {
+            if (card.hasType(CardType.LAND)) {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
                 send(() -> messageHandler.handlePlayCard(selfConnection,

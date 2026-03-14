@@ -46,7 +46,7 @@ public class StateBasedActionService {
                         && !graveyardService.tryRegenerate(gameData, p)) {
                     // CR 704.5g — creature with damage >= toughness is destroyed (regeneration can replace this)
                     toDie.add(p);
-                } else if (p.getCard().getType() == CardType.PLANESWALKER && p.getLoyaltyCounters() <= 0) {
+                } else if (p.getCard().hasType(CardType.PLANESWALKER) && p.getLoyaltyCounters() <= 0) {
                     toDie.add(p);
                 }
             }

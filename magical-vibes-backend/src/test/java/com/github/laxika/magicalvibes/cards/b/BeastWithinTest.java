@@ -62,7 +62,7 @@ class BeastWithinTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Beast")
                         && p.getCard().isToken()
-                        && p.getCard().getType() == CardType.CREATURE
+                        && p.getCard().hasType(CardType.CREATURE)
                         && p.getCard().getPower() == 3
                         && p.getCard().getToughness() == 3
                         && p.getCard().getSubtypes().contains(CardSubtype.BEAST));

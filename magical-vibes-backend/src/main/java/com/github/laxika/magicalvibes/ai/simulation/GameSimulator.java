@@ -372,8 +372,8 @@ public class GameSimulator {
                     ManaPool virtualPool = buildVirtualManaPool(gd, playerId);
                     for (int i = 0; i < hand.size(); i++) {
                         Card card = hand.get(i);
-                        if (card.getType() == CardType.LAND) continue;
-                        if (card.getType() == CardType.INSTANT) continue;
+                        if (card.hasType(CardType.LAND)) continue;
+                        if (card.hasType(CardType.INSTANT)) continue;
                         if (card.getManaCost() == null) continue;
                         ManaCost cost = new ManaCost(card.getManaCost());
                         if (cost.hasX()) {

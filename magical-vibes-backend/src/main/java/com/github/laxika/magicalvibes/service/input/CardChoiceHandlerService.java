@@ -141,7 +141,7 @@ public class CardChoiceHandlerService {
 
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
-        if (replacedByBattlefield && card.getType() == CardType.CREATURE) {
+        if (replacedByBattlefield && card.hasType(CardType.CREATURE)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
         }
 
@@ -313,7 +313,7 @@ public class CardChoiceHandlerService {
                 }
 
                 for (Card replaced : replacedCards) {
-                    if (replaced.getType() == CardType.CREATURE) {
+                    if (replaced.hasType(CardType.CREATURE)) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, replaced, null, false);
                     }
                 }
@@ -417,8 +417,7 @@ public class CardChoiceHandlerService {
         if (pending == null) {
             return;
         }
-        if (discardedCard.getType() == pending.requiredType()
-                || discardedCard.getAdditionalTypes().contains(pending.requiredType())) {
+        if (discardedCard.hasType(pending.requiredType())) {
             gameData.playerHands.get(pending.controllerId()).add(pending.card());
             String logEntry = pending.card().getName() + " is returned to its owner's hand.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

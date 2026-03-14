@@ -111,7 +111,7 @@ class MolimoMaroSorcererTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, molimo)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, molimo)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().getType() == CardType.LAND);
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard().hasType(CardType.LAND));
         assertThat(gqs.getEffectivePower(gd, molimo)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, molimo)).isEqualTo(0);
     }

@@ -132,7 +132,7 @@ public class TriggeredAbilityQueueService {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (gameQueryService.isCreature(gameData, p)
-                            || p.getCard().getType() == CardType.PLANESWALKER) {
+                            || p.getCard().hasType(CardType.PLANESWALKER)) {
                         validPermanentTargets.add(p.getId());
                     }
                 }
@@ -166,7 +166,7 @@ public class TriggeredAbilityQueueService {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (gameQueryService.isCreature(gameData, p)
-                                || p.getCard().getType() == CardType.PLANESWALKER) {
+                                || p.getCard().hasType(CardType.PLANESWALKER)) {
                             validPermanentTargets.add(p.getId());
                         }
                     }

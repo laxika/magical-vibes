@@ -85,7 +85,7 @@ class HoardingDragonTest extends BaseCardTest {
         // Only artifact cards should be presented (Spellbook, not Grizzly Bears)
         assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.ARTIFACT);
+                .allMatch(c -> c.hasType(CardType.ARTIFACT));
     }
 
     @Test

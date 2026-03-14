@@ -105,10 +105,9 @@ public class SpellCastingService {
     }
 
     private ManaRestrictionFlags computeManaRestrictionFlags(Card card) {
-        boolean isArtifact = card.getType() == CardType.ARTIFACT
-                || card.getAdditionalTypes().contains(CardType.ARTIFACT);
+        boolean isArtifact = card.hasType(CardType.ARTIFACT);
         boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
-        boolean hasRestrictedRedContext = isArtifact || card.getType() == CardType.CREATURE;
+        boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
         return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext);
     }
 
@@ -163,7 +162,7 @@ public class SpellCastingService {
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             Card graveyardCard = graveyard.get(cardIndex);
-            if (graveyardCard.getType() != CardType.LAND) {
+            if (!graveyardCard.hasType(CardType.LAND)) {
                 throw new IllegalStateException("Only lands can be played from graveyard");
             }
             graveyard.remove(cardIndex);
@@ -377,7 +376,7 @@ public class SpellCastingService {
                 .anyMatch(e -> e instanceof ExileCreaturesFromGraveyardAndCreateTokensEffect);
         if (needsGraveyardCreatureTargeting && effectiveXValue > 0) {
             long creatureCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                    .filter(c -> c.getType() == CardType.CREATURE)
+                    .filter(c -> c.hasType(CardType.CREATURE))
                     .count();
             if (effectiveXValue > creatureCount) {
                 throw new IllegalStateException("Not enough creature cards in graveyard (need " + effectiveXValue + ", have " + creatureCount + ")");
@@ -386,7 +385,7 @@ public class SpellCastingService {
 
         hand.remove(cardIndex);
 
-        if (card.getType() == CardType.LAND) {
+        if (card.hasType(CardType.LAND)) {
             // Lands bypass the stack — go directly onto battlefield
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
@@ -400,13 +399,13 @@ public class SpellCastingService {
             battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
 
             turnProgressionService.resolveAutoPass(gameData);
-        } else if (card.getType() == CardType.CREATURE || card.getType() == CardType.ENCHANTMENT
-                || card.getType() == CardType.ARTIFACT || card.getType() == CardType.PLANESWALKER) {
+        } else if (card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT)
+                || card.hasType(CardType.ARTIFACT) || card.hasType(CardType.PLANESWALKER)) {
             // Permanent spells: pay mana (or alternate cost), put on stack, finish
-            int manaCostX = (card.getType() == CardType.ARTIFACT) ? effectiveXValue : 0;
-            int stackX = (card.getType() == CardType.CREATURE || card.getType() == CardType.ARTIFACT)
+            int manaCostX = (card.hasType(CardType.ARTIFACT)) ? effectiveXValue : 0;
+            int stackX = (card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT))
                     ? effectiveXValue : 0;
-            UUID stackTarget = (card.getType() == CardType.PLANESWALKER) ? null : targetPermanentId;
+            UUID stackTarget = (card.hasType(CardType.PLANESWALKER)) ? null : targetPermanentId;
 
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
@@ -418,7 +417,7 @@ public class SpellCastingService {
                     List.of(), stackX, stackTarget, null
             ));
             finishSpellCast(gameData, playerId, player, hand, card);
-        } else if (card.getType() == CardType.SORCERY || card.getType() == CardType.INSTANT) {
+        } else if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
             // Sorcery/Instant spells: pay mana + sacrifice costs, handle targeting, put on stack
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());
             int resolvedXValue = effectiveXValue;
@@ -679,7 +678,7 @@ public class SpellCastingService {
         exiledCards.remove(cardIndex);
         gameData.exilePlayPermissions.remove(exileCardId);
 
-        if (card.getType() == CardType.LAND) {
+        if (card.hasType(CardType.LAND)) {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
@@ -701,7 +700,7 @@ public class SpellCastingService {
         // permanent spells (creature, enchantment, artifact, planeswalker) use List.of()
         // because they resolve by entering the battlefield, not via effects.
         List<CardEffect> effectsToResolve;
-        if (card.getType() == CardType.SORCERY || card.getType() == CardType.INSTANT) {
+        if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             extractAndRemoveSacrificeCosts(effectsToResolve);
             effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);

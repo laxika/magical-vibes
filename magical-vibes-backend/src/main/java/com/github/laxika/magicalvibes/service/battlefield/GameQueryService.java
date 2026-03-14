@@ -174,7 +174,7 @@ public class GameQueryService {
     }
 
     private boolean hasCardType(Card card, CardType type) {
-        return card.getType() == type || card.getAdditionalTypes().contains(type);
+        return card.hasType(type);
     }
 
     private boolean hasCardType(Permanent permanent, CardType type) {

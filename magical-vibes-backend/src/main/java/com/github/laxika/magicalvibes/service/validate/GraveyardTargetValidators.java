@@ -63,8 +63,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (graveyardCard.getType() != CardType.CREATURE
-                && !graveyardCard.getAdditionalTypes().contains(CardType.CREATURE)) {
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
             throw new IllegalStateException("Target must be a creature card");
         }
         // Opponent-graveyard check is enforced in SpellCastingService (which has playerId context)
@@ -82,8 +81,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.requiredType() != null && graveyardCard.getType() != effect.requiredType()
-                && !graveyardCard.getAdditionalTypes().contains(effect.requiredType())) {
+        if (effect.requiredType() != null && !graveyardCard.hasType(effect.requiredType())) {
             throw new IllegalStateException("Target must be a " + effect.requiredType().name().toLowerCase() + " card");
         }
     }
@@ -100,8 +98,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.requiredType() != null && graveyardCard.getType() != effect.requiredType()
-                && !graveyardCard.getAdditionalTypes().contains(effect.requiredType())) {
+        if (effect.requiredType() != null && !graveyardCard.hasType(effect.requiredType())) {
             throw new IllegalStateException("Target must be a " + effect.requiredType().name().toLowerCase() + " card");
         }
     }
@@ -118,7 +115,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (graveyardCard.getType() == CardType.LAND
+        if (graveyardCard.hasType(CardType.LAND)
                 && graveyardCard.getSupertypes().contains(CardSupertype.BASIC)) {
             throw new IllegalStateException("Target must not be a basic land card");
         }
@@ -136,7 +133,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (graveyardCard.getType() != CardType.ARTIFACT && graveyardCard.getType() != CardType.CREATURE) {
+        if (!graveyardCard.hasType(CardType.ARTIFACT) && !graveyardCard.hasType(CardType.CREATURE)) {
             throw new IllegalStateException("Target must be an artifact or creature card");
         }
         if (graveyardCard.getManaValue() != ctx.xValue()) {

@@ -63,7 +63,7 @@ public class MayCastHandlerService {
                 deck.removeFirst();
 
                 List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
-                StackEntryType spellType = cardToCast.getType() == CardType.INSTANT
+                StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
                         ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
 
                 if (cardToCast.isNeedsTarget()) {
@@ -156,7 +156,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (cardToPlay.getType() == CardType.LAND) {
+        if (cardToPlay.hasType(CardType.LAND)) {
             // Play the land: put onto battlefield, increment land play count
             deck.removeFirst();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
@@ -184,10 +184,10 @@ public class MayCastHandlerService {
             // For permanent spells (creature/artifact/enchantment/planeswalker), effects are empty;
             // ETB effects are processed when the permanent enters the battlefield.
             // For instant/sorcery, use the SPELL slot effects.
-            boolean isPermanentSpell = cardToPlay.getType() == CardType.CREATURE
-                    || cardToPlay.getType() == CardType.ARTIFACT
-                    || cardToPlay.getType() == CardType.ENCHANTMENT
-                    || cardToPlay.getType() == CardType.PLANESWALKER;
+            boolean isPermanentSpell = cardToPlay.hasType(CardType.CREATURE)
+                    || cardToPlay.hasType(CardType.ARTIFACT)
+                    || cardToPlay.hasType(CardType.ENCHANTMENT)
+                    || cardToPlay.hasType(CardType.PLANESWALKER);
             List<CardEffect> spellEffects = isPermanentSpell
                     ? List.of()
                     : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
@@ -291,7 +291,7 @@ public class MayCastHandlerService {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
 
                     List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
-                    StackEntryType spellType = cardToCast.getType() == CardType.INSTANT
+                    StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
                             ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
 
                     if (cardToCast.isNeedsTarget()) {

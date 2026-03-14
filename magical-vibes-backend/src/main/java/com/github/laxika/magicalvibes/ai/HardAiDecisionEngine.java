@@ -91,7 +91,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Count castable spells
         int castableCount = 0;
         for (Card card : hand) {
-            if (card.getType() == CardType.LAND || card.getType() == CardType.INSTANT) continue;
+            if (card.hasType(CardType.LAND) || card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
             ManaCost cost = new ManaCost(card.getManaCost());
             if (cost.hasX()) {
@@ -162,8 +162,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.getType() == CardType.LAND) continue;
-            if (card.getType() == CardType.INSTANT) continue;
+            if (card.hasType(CardType.LAND)) continue;
+            if (card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
 
             ManaCost cost = new ManaCost(card.getManaCost());
@@ -347,14 +347,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         int mulliganCount = gameData.mulliganCounts.getOrDefault(aiPlayer.getId(), 0);
         if (mulliganCount >= 3) return true;
 
-        long landCount = hand.stream().filter(c -> c.getType() == CardType.LAND).count();
+        long landCount = hand.stream().filter(c -> c.hasType(CardType.LAND)).count();
 
         if (landCount == 0 && mulliganCount < 2) return false;
         if (landCount > 5) return false;
 
         double handScore = 0;
         for (Card card : hand) {
-            if (card.getType() == CardType.LAND) {
+            if (card.hasType(CardType.LAND)) {
                 handScore += 1.5;
                 continue;
             }

@@ -150,8 +150,7 @@ public class StepTriggerService {
                     long creatureCount = 0;
                     if (graveyard != null) {
                         creatureCount = graveyard.stream()
-                                .filter(c -> c.getType() == CardType.CREATURE
-                                        || c.getAdditionalTypes().contains(CardType.CREATURE))
+                                .filter(c -> c.hasType(CardType.CREATURE))
                                 .count();
                     }
                     if (creatureCount >= winEffect.threshold()) {
@@ -394,8 +393,7 @@ public class StepTriggerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard().getType() != CardType.LAND
-                        && !p.getCard().getAdditionalTypes().contains(CardType.LAND)) {
+                if (!p.getCard().hasType(CardType.LAND)) {
                     validOwnTargets.add(p.getId());
                 }
             }

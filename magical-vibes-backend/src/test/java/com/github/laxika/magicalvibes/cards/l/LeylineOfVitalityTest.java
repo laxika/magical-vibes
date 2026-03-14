@@ -167,7 +167,7 @@ class LeylineOfVitalityTest {
         harness.addToBattlefield(player1, new GiantSpider());
 
         for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
-            if (p.getCard().getType() == CardType.CREATURE) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(gqs.getEffectivePower(gd, p))
                         .isEqualTo(p.getCard().getPower());
                 assertThat(gqs.getEffectiveToughness(gd, p))

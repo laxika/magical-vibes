@@ -92,7 +92,7 @@ class StrataScytheTest extends BaseCardTest {
         // Only land cards should be presented (Plains and Forest, not Grizzly Bears)
         assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.LAND);
+                .allMatch(c -> c.hasType(CardType.LAND));
     }
 
     @Test

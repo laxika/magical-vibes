@@ -261,7 +261,7 @@ public class Permanent {
             basePower = animatedPower;
         } else if (permanentlyAnimated) {
             basePower = permanentAnimatedPower;
-        } else if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
+        } else if (awakeningCounters > 0 && !card.hasType(CardType.CREATURE)) {
             basePower = 8;
         } else {
             basePower = card.getPower() != null ? card.getPower() : 0;
@@ -278,7 +278,7 @@ public class Permanent {
             baseToughness = animatedToughness;
         } else if (permanentlyAnimated) {
             baseToughness = permanentAnimatedToughness;
-        } else if (awakeningCounters > 0 && card.getType() != CardType.CREATURE) {
+        } else if (awakeningCounters > 0 && !card.hasType(CardType.CREATURE)) {
             baseToughness = 8;
         } else {
             baseToughness = card.getToughness() != null ? card.getToughness() : 0;

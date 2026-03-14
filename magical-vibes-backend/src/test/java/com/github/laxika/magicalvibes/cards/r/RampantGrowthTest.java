@@ -69,7 +69,7 @@ class RampantGrowthTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+                .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(gd.interaction.librarySearch().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
     }
@@ -88,7 +88,7 @@ class RampantGrowthTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND && p.isTapped());
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
         assertThat(gd.interaction.awaitingInputType()).isNull();
     }
 
@@ -104,7 +104,7 @@ class RampantGrowthTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.LAND && p.isTapped());
+                .noneMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
         assertThat(gd.interaction.awaitingInputType()).isNull();
     }
 

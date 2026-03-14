@@ -131,7 +131,7 @@ class WarpWorldTest extends BaseCardTest {
         assertThat(battlefield).hasSize(2);
 
         Permanent creature = battlefield.stream()
-                .filter(p -> p.getCard().getType() == CardType.CREATURE)
+                .filter(p -> p.getCard().hasType(CardType.CREATURE))
                 .findFirst()
                 .orElseThrow();
         Permanent aura = battlefield.stream()
@@ -228,7 +228,7 @@ class WarpWorldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> p.getCard().getType() == CardType.CREATURE);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> p.getCard().hasType(CardType.CREATURE));
 
         UUID chosenTarget = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, chosenTarget);

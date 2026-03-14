@@ -61,7 +61,7 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+                .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(gd.interaction.librarySearch().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
         assertThat(gd.pendingBasicLandToHandSearch).isTrue();
@@ -84,7 +84,7 @@ class CultivateTest extends BaseCardTest {
         // First card enters battlefield tapped
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND && p.isTapped());
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
 
         // Second search begins for hand
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -111,7 +111,7 @@ class CultivateTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+                .anyMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(gd.interaction.awaitingInputType()).isNull();
     }
 
@@ -154,7 +154,7 @@ class CultivateTest extends BaseCardTest {
         // No more basic lands for hand search — should finish
         assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND && p.isTapped());
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
     }
 
     @Test
@@ -201,7 +201,7 @@ class CultivateTest extends BaseCardTest {
         // One land on battlefield tapped, no new cards in hand
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND && p.isTapped());
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.interaction.awaitingInputType()).isNull();
     }

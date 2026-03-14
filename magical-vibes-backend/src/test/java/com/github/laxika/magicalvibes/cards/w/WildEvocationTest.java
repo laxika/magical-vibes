@@ -56,7 +56,7 @@ class WildEvocationTest extends BaseCardTest {
 
         // Forest should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND);
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND));
         // Hand should be empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -73,7 +73,7 @@ class WildEvocationTest extends BaseCardTest {
 
         // Forest should be on player2's battlefield, not player1's
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND);
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND));
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 

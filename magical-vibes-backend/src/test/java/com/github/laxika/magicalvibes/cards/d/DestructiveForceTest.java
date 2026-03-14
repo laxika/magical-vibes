@@ -155,14 +155,14 @@ class DestructiveForceTest extends BaseCardTest {
 
         // First player chooses 5 lands — no sacrifice happens yet (deferred)
         List<Permanent> p1Lands = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND)
+                .filter(p -> p.getCard().hasType(CardType.LAND))
                 .toList();
         List<UUID> firstChosen = p1Lands.stream().limit(5).map(Permanent::getId).toList();
         harness.handleMultiplePermanentsChosen(player1, firstChosen);
 
         // All 7 of player1's lands are still on the battlefield (sacrifice is deferred)
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND).count()).isEqualTo(7);
+                .filter(p -> p.getCard().hasType(CardType.LAND)).count()).isEqualTo(7);
 
         // Second player should now be prompted
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
@@ -170,16 +170,16 @@ class DestructiveForceTest extends BaseCardTest {
 
         // Second player chooses 5 lands — now ALL chosen lands are sacrificed simultaneously
         List<Permanent> p2Lands = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND)
+                .filter(p -> p.getCard().hasType(CardType.LAND))
                 .toList();
         List<UUID> secondChosen = p2Lands.stream().limit(5).map(Permanent::getId).toList();
         harness.handleMultiplePermanentsChosen(player2, secondChosen);
 
         // Both players should have remaining lands after simultaneous sacrifice
         long p1Remaining = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND).count();
+                .filter(p -> p.getCard().hasType(CardType.LAND)).count();
         long p2Remaining = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND).count();
+                .filter(p -> p.getCard().hasType(CardType.LAND)).count();
         assertThat(p1Remaining).isEqualTo(2);
         assertThat(p2Remaining).isEqualTo(1);
     }

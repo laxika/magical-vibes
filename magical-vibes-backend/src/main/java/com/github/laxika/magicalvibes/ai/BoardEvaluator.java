@@ -82,10 +82,10 @@ public class BoardEvaluator {
             if (gameQueryService.isCreature(gameData, perm)) {
                 aiCreatureQuality += creatureScore(gameData, perm, aiPlayerId, opponentId);
             }
-            if (perm.getCard().getType() == CardType.LAND) {
+            if (perm.getCard().hasType(CardType.LAND)) {
                 aiLandCount++;
             }
-            if (perm.getCard().getType() == CardType.ENCHANTMENT || perm.getCard().getType() == CardType.ARTIFACT) {
+            if (perm.getCard().hasType(CardType.ENCHANTMENT) || perm.getCard().hasType(CardType.ARTIFACT)) {
                 if (!gameQueryService.isCreature(gameData, perm)) {
                     aiNonCreatureValue += perm.getCard().getManaValue() * 3.0;
                 }
@@ -96,10 +96,10 @@ public class BoardEvaluator {
             if (gameQueryService.isCreature(gameData, perm)) {
                 oppCreatureQuality += creatureScore(gameData, perm, opponentId, aiPlayerId);
             }
-            if (perm.getCard().getType() == CardType.LAND) {
+            if (perm.getCard().hasType(CardType.LAND)) {
                 oppLandCount++;
             }
-            if (perm.getCard().getType() == CardType.ENCHANTMENT || perm.getCard().getType() == CardType.ARTIFACT) {
+            if (perm.getCard().hasType(CardType.ENCHANTMENT) || perm.getCard().hasType(CardType.ARTIFACT)) {
                 if (!gameQueryService.isCreature(gameData, perm)) {
                     oppNonCreatureValue += perm.getCard().getManaValue() * 3.0;
                 }

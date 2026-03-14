@@ -538,7 +538,7 @@ public class LifeResolutionService {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             int creatureCount = 0;
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getType() == CardType.CREATURE) {
+                if (permanent.getCard().hasType(CardType.CREATURE)) {
                     creatureCount++;
                 }
             }

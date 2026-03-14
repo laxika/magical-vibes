@@ -283,10 +283,10 @@ class ElspethTirelTest extends BaseCardTest {
         // Count lands before
         GameData gd = harness.getGameData();
         long landsBefore = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND)
+                .filter(p -> p.getCard().hasType(CardType.LAND))
                 .count();
         long landsBeforeP2 = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND)
+                .filter(p -> p.getCard().hasType(CardType.LAND))
                 .count();
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -294,10 +294,10 @@ class ElspethTirelTest extends BaseCardTest {
 
         gd = harness.getGameData();
         long landsAfter = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND)
+                .filter(p -> p.getCard().hasType(CardType.LAND))
                 .count();
         long landsAfterP2 = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getType() == CardType.LAND)
+                .filter(p -> p.getCard().hasType(CardType.LAND))
                 .count();
 
         assertThat(landsAfter).isEqualTo(landsBefore);

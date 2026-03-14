@@ -101,7 +101,7 @@ class GreenSunsZenithTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.CREATURE);
+                .allMatch(c -> c.hasType(CardType.CREATURE));
     }
 
     @Test

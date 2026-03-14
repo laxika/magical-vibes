@@ -158,7 +158,7 @@ public class AbilityActivationService {
         log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         // Check for "whenever a player taps a land for mana" triggers (e.g. Manabarbs)
-        if (permanent.getCard().getType() == CardType.LAND) {
+        if (permanent.getCard().hasType(CardType.LAND)) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
 

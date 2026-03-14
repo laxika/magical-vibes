@@ -338,7 +338,7 @@ public class ColorChoiceHandlerService {
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
             revealed.add(top);
-            boolean isLand = top.getType() == CardType.LAND || top.getAdditionalTypes().contains(CardType.LAND);
+            boolean isLand = top.hasType(CardType.LAND);
             if ((chooseLand && isLand) || (!chooseLand && !isLand)) {
                 chosenCard = top;
                 break;
@@ -617,8 +617,7 @@ public class ColorChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, choiceLog);
         log.info("Game {} - {} chooses card name \"{}\" for Sphinx Ambassador", gameData.id, targetName, cardName);
 
-        boolean isCreature = selectedCard.getType() == CardType.CREATURE
-                || selectedCard.getAdditionalTypes().contains(CardType.CREATURE);
+        boolean isCreature = selectedCard.hasType(CardType.CREATURE);
         boolean nameDoesNotMatch = !selectedCard.getName().equals(cardName);
 
         if (isCreature && nameDoesNotMatch) {

@@ -255,7 +255,7 @@ public class GameBroadcastService {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.getType() == CardType.LAND && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
+            if (card.hasType(CardType.LAND) && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
                 playable.add(i);
             }
             if (card.getManaCost() != null && !spellLimitReached && !cantCastDueToAttack) {
@@ -263,7 +263,7 @@ public class GameBroadcastService {
                         || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
                 if (forbiddenCardNames.contains(card.getName())) continue;
 
-                boolean isInstantSpeed = card.getType() == CardType.INSTANT
+                boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                         || card.getKeywords().contains(Keyword.FLASH)
                         || hasFlashGrantForCard(gameData, playerId, card);
                 boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
@@ -272,11 +272,10 @@ public class GameBroadcastService {
                     ManaCost cost = new ManaCost(card.getManaCost());
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     int additionalCost = getCastCostModifier(gameData, playerId, card);
-                    boolean isArtifact = card.getType() == CardType.ARTIFACT
-                            || card.getAdditionalTypes().contains(CardType.ARTIFACT);
+                    boolean isArtifact = card.hasType(CardType.ARTIFACT);
                     boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
                     boolean hasRestrictedRedContext = isArtifact
-                            || card.getType() == CardType.CREATURE;
+                            || card.hasType(CardType.CREATURE);
                     boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
                             ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
                             : cost.canPay(pool, additionalCost);
@@ -299,7 +298,7 @@ public class GameBroadcastService {
                 }
             } else if (card.getManaCost() == null && canAlternateCast(gameData, playerId, card, battlefield)) {
                 // Card with no mana cost but has alternate cost (e.g. some future cards)
-                boolean isInstantSpeed = card.getType() == CardType.INSTANT
+                boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                         || card.getKeywords().contains(Keyword.FLASH)
                         || hasFlashGrantForCard(gameData, playerId, card);
                 boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
@@ -343,7 +342,7 @@ public class GameBroadcastService {
         }
 
         for (int i = 0; i < graveyard.size(); i++) {
-            if (graveyard.get(i).getType() == CardType.LAND) {
+            if (graveyard.get(i).hasType(CardType.LAND)) {
                 playable.add(i);
             }
         }
@@ -387,7 +386,7 @@ public class GameBroadcastService {
                 continue;
             }
 
-            if (card.getType() == CardType.LAND) {
+            if (card.hasType(CardType.LAND)) {
                 if (isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
                     playable.add(cardViewFactory.create(card));
                 }
@@ -399,7 +398,7 @@ public class GameBroadcastService {
                     || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
             if (forbiddenCardNames.contains(card.getName())) continue;
 
-            boolean isInstantSpeed = card.getType() == CardType.INSTANT
+            boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                     || card.getKeywords().contains(Keyword.FLASH)
                     || hasFlashGrantForCard(gameData, playerId, card);
             boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
@@ -407,11 +406,10 @@ public class GameBroadcastService {
             if (canCastTiming) {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 int additionalCost = getCastCostModifier(gameData, playerId, card);
-                boolean isArtifact = card.getType() == CardType.ARTIFACT
-                        || card.getAdditionalTypes().contains(CardType.ARTIFACT);
+                boolean isArtifact = card.hasType(CardType.ARTIFACT);
                 boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
                 boolean hasRestrictedRedContext = isArtifact
-                        || card.getType() == CardType.CREATURE;
+                        || card.hasType(CardType.CREATURE);
                 boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
                         ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
                         : cost.canPay(pool, additionalCost);
@@ -431,8 +429,7 @@ public class GameBroadcastService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantFlashToCardTypeEffect grant) {
                     if (grant.cardType() == null
-                            || card.getType() == grant.cardType()
-                            || card.getAdditionalTypes().contains(grant.cardType())) {
+                            || card.hasType(grant.cardType())) {
                         return true;
                     }
                 }

@@ -85,8 +85,8 @@ class MyrsmithTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Myr")
                         && p.getCard().isToken()
-                        && p.getCard().getType() == CardType.CREATURE
-                        && p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT)
+                        && p.getCard().hasType(CardType.CREATURE)
+                        && p.getCard().hasType(CardType.ARTIFACT)
                         && p.getCard().getPower() == 1
                         && p.getCard().getToughness() == 1);
 

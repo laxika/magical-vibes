@@ -297,7 +297,7 @@ class BounceResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getType() == CardType.ARTIFACT);
+                    .noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT));
             assertThat(gd.playerHands.get(player2.getId()))
                     .extracting(c -> c.getName())
                     .contains("Angel's Feather", "Icy Manipulator");
@@ -420,7 +420,7 @@ class BounceResolutionServiceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getType() == CardType.ARTIFACT);
+                    .noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT));
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Angel's Feather"));
         }

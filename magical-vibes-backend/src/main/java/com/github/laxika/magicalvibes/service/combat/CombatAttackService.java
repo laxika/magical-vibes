@@ -526,7 +526,7 @@ public class CombatAttackService {
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
         if (defBf != null) {
             for (Permanent p : defBf) {
-                if (p.getCard().getType() == CardType.PLANESWALKER) {
+                if (p.getCard().hasType(CardType.PLANESWALKER)) {
                     targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
                 }
             }
@@ -544,7 +544,7 @@ public class CombatAttackService {
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
         if (defBf != null) {
             for (Permanent p : defBf) {
-                if (p.getCard().getType() == CardType.PLANESWALKER) {
+                if (p.getCard().hasType(CardType.PLANESWALKER)) {
                     validIds.add(p.getId());
                 }
             }

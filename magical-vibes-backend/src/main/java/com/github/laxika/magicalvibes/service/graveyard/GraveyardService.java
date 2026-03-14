@@ -171,7 +171,7 @@ public class GraveyardService {
                 .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet());
         if (sourceZone == Zone.BATTLEFIELD
                 && !card.isToken()
-                && (card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE))) {
+                && card.hasType(CardType.CREATURE)) {
             tracked.add(card.getId());
             triggerDamagedCreatureDiesAbilities(gameData, card.getId());
         } else {

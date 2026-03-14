@@ -210,7 +210,7 @@ class KnowledgePoolTest extends BaseCardTest {
         List<Card> pool = gd.permanentExiledCards.get(kpPermId);
 
         Card nonlandCard = pool.stream()
-                .filter(c -> c.getType() != CardType.LAND)
+                .filter(c -> !c.hasType(CardType.LAND))
                 .findFirst().orElseThrow();
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));

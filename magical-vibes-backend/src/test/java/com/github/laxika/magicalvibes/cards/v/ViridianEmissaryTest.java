@@ -90,7 +90,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         // Chosen land should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND && p.isTapped());
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
     }
 
     // ===== Death trigger: combat (blocker dies), decline =====
@@ -165,7 +165,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getType() == CardType.LAND && p.isTapped());
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
     }
 
     // ===== Death trigger: accept may, fail to find =====
@@ -194,7 +194,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         // No library search prompt since no basic lands exist
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getType() == CardType.LAND);
+                .noneMatch(p -> p.getCard().hasType(CardType.LAND));
     }
 
     private void setupLibrary(com.github.laxika.magicalvibes.model.Player player) {

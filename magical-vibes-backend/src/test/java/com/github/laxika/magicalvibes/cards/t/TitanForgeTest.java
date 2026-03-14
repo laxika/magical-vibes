@@ -145,7 +145,7 @@ class TitanForgeTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Golem")
                         && p.getCard().getPower() == 9
                         && p.getCard().getToughness() == 9
-                        && p.getCard().getAdditionalTypes().contains(CardType.ARTIFACT));
+                        && p.getCard().hasType(CardType.ARTIFACT));
     }
 
     @Test

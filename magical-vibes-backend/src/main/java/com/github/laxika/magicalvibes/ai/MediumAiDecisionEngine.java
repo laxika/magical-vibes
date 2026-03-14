@@ -84,8 +84,8 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.getType() == CardType.LAND) continue;
-            if (card.getType() == CardType.INSTANT) continue;
+            if (card.hasType(CardType.LAND)) continue;
+            if (card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
 
             ManaCost cost = new ManaCost(card.getManaCost());
@@ -245,7 +245,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         int mulliganCount = gameData.mulliganCounts.getOrDefault(aiPlayer.getId(), 0);
         if (mulliganCount >= 3) return true;
 
-        long landCount = hand.stream().filter(c -> c.getType() == CardType.LAND).count();
+        long landCount = hand.stream().filter(c -> c.hasType(CardType.LAND)).count();
 
         // Basic land check first
         if (landCount == 0 && mulliganCount < 2) return false;
@@ -254,7 +254,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // Score hand by counting playable spells in turns 1-3
         double handScore = 0;
         for (Card card : hand) {
-            if (card.getType() == CardType.LAND) {
+            if (card.hasType(CardType.LAND)) {
                 handScore += 1.5; // Lands have base value
                 continue;
             }

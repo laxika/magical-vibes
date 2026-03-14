@@ -168,7 +168,7 @@ public class CardSpecificResolutionService {
             List<Card> revealed = revealedByPlayer.getOrDefault(playerId, List.of());
 
             for (Card card : revealed) {
-                if (card.getType() == CardType.ENCHANTMENT) {
+                if (card.hasType(CardType.ENCHANTMENT)) {
                     if (card.isAura()) {
                         List<UUID> validTargets = findLegalAuraAttachments(gameData, card, playerId, auraLegalBaseTargetIds);
                         if (validTargets.size() == 1) {
@@ -221,7 +221,7 @@ public class CardSpecificResolutionService {
         gameData.warpWorldOperation.enterTappedTypesSnapshot.addAll(enterTappedTypesSnapshot);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> creatures = putOntoBattlefieldByPlayer.get(playerId).stream()
-                    .filter(card -> card.getType() == CardType.CREATURE)
+                    .filter(card -> card.hasType(CardType.CREATURE))
                     .toList();
             gameData.warpWorldOperation.pendingCreaturesByPlayer.put(playerId, new ArrayList<>(creatures));
         }
@@ -260,8 +260,8 @@ public class CardSpecificResolutionService {
 
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : revealedCards) {
-            boolean isPermanent = card.getType() != CardType.INSTANT
-                    && card.getType() != CardType.SORCERY;
+            boolean isPermanent = !card.hasType(CardType.INSTANT)
+                    && !card.hasType(CardType.SORCERY);
             if (isPermanent && card.getManaValue() <= xValue) {
                 eligibleCards.add(card);
             }
@@ -400,14 +400,13 @@ public class CardSpecificResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, enterLog);
 
         // Handle ETB effects for creatures
-        boolean isCreature = foundCard.getType() == CardType.CREATURE
-                || foundCard.getAdditionalTypes().contains(CardType.CREATURE);
+        boolean isCreature = foundCard.hasType(CardType.CREATURE);
         if (isCreature) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetControllerId, foundCard, null, false);
         }
 
         // Handle planeswalkers
-        if (foundCard.getType() == CardType.PLANESWALKER && foundCard.getLoyalty() != null) {
+        if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {
             perm.setLoyaltyCounters(foundCard.getLoyalty());
             perm.setSummoningSick(false);
         }
@@ -497,14 +496,13 @@ public class CardSpecificResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, enterLog);
 
         // Handle ETB effects for creatures
-        boolean isCreature = foundCard.getType() == CardType.CREATURE
-                || foundCard.getAdditionalTypes().contains(CardType.CREATURE);
+        boolean isCreature = foundCard.hasType(CardType.CREATURE);
         if (isCreature) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetControllerId, foundCard, null, false);
         }
 
         // Handle planeswalkers
-        if (foundCard.getType() == CardType.PLANESWALKER && foundCard.getLoyalty() != null) {
+        if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {
             perm.setLoyaltyCounters(foundCard.getLoyalty());
             perm.setSummoningSick(false);
         }
@@ -537,8 +535,7 @@ public class CardSpecificResolutionService {
         // Step 1: Find all creatures the controller controls
         List<Permanent> creaturesToExile = new ArrayList<>(
                 gameData.playerBattlefields.get(controllerId).stream()
-                        .filter(p -> p.getCard().getType() == CardType.CREATURE
-                                || p.getCard().getAdditionalTypes().contains(CardType.CREATURE))
+                        .filter(p -> p.getCard().hasType(CardType.CREATURE))
                         .toList()
         );
 
@@ -599,7 +596,7 @@ public class CardSpecificResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, enterLog);
 
             // Handle planeswalkers (e.g. artifact creatures that are also planeswalkers)
-            if (creatureCard.getType() == CardType.PLANESWALKER && creatureCard.getLoyalty() != null) {
+            if (creatureCard.hasType(CardType.PLANESWALKER) && creatureCard.getLoyalty() != null) {
                 perm.setLoyaltyCounters(creatureCard.getLoyalty());
                 perm.setSummoningSick(false);
             }
@@ -694,8 +691,8 @@ public class CardSpecificResolutionService {
             if (pool != null) {
                 for (Card card : pool) {
                     boolean isAura = card.getSubtypes().contains(CardSubtype.AURA);
-                    boolean isPermanent = card.getType() != CardType.INSTANT
-                            && card.getType() != CardType.SORCERY;
+                    boolean isPermanent = !card.hasType(CardType.INSTANT)
+                            && !card.hasType(CardType.SORCERY);
                     if (isPermanent && !isAura) {
                         karnExiledCards.add(card);
                     }

@@ -64,7 +64,7 @@ public class SpellEvaluator {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
 
-        if (card.getType() == CardType.CREATURE) {
+        if (card.hasType(CardType.CREATURE)) {
             return evaluateCreature(gameData, card, aiPlayerId, opponentId);
         }
 

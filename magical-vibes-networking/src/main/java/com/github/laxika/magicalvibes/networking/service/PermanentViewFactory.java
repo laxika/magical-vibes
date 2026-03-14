@@ -119,7 +119,7 @@ public class PermanentViewFactory {
     }
 
     private CardView applyAwakeningCounterSubtype(CardView cardView, Permanent p) {
-        if (p.getAwakeningCounters() <= 0 || p.getCard().getType() == CardType.CREATURE) {
+        if (p.getAwakeningCounters() <= 0 || p.getCard().hasType(CardType.CREATURE)) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());

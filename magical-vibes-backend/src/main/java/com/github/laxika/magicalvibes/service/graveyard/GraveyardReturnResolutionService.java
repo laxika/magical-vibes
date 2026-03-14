@@ -189,7 +189,7 @@ public class GraveyardReturnResolutionService {
 
             List<Card> toReturn = new ArrayList<>();
             for (Card card : graveyard) {
-                boolean isCreatureCard = card.getType() == CardType.CREATURE || card.getAdditionalTypes().contains(CardType.CREATURE);
+                boolean isCreatureCard = card.hasType(CardType.CREATURE);
                 if (!card.isToken() && isCreatureCard && trackedIds.contains(card.getId())) {
                     toReturn.add(card);
                 }
@@ -692,8 +692,7 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        if (effect.requiredType() != null && targetCard.getType() != effect.requiredType()
-                && !targetCard.getAdditionalTypes().contains(effect.requiredType())) {
+        if (effect.requiredType() != null && !targetCard.hasType(effect.requiredType())) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getDescription() + " fizzles (target is no longer a valid "
                             + effect.requiredType().name().toLowerCase() + " card).");
@@ -742,8 +741,7 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        if (effect.requiredType() != null && targetCard.getType() != effect.requiredType()
-                && !targetCard.getAdditionalTypes().contains(effect.requiredType())) {
+        if (effect.requiredType() != null && !targetCard.hasType(effect.requiredType())) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getDescription() + " fizzles (target is no longer a valid "
                             + effect.requiredType().name().toLowerCase() + " card).");
@@ -867,7 +865,7 @@ public class GraveyardReturnResolutionService {
         // Separate basic land cards from non-basic-land cards in the graveyard
         List<Card> toExile = new ArrayList<>();
         for (Card card : graveyard) {
-            boolean isBasicLand = card.getType() == CardType.LAND
+            boolean isBasicLand = card.hasType(CardType.LAND)
                     && card.getSupertypes().contains(CardSupertype.BASIC);
             if (!isBasicLand) {
                 toExile.add(card);
@@ -942,8 +940,7 @@ public class GraveyardReturnResolutionService {
         String revealLog = playerName + " turns the exiled card face up: " + imprintedCard.getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, revealLog);
 
-        boolean isCreature = imprintedCard.getType() == CardType.CREATURE
-                || imprintedCard.getAdditionalTypes().contains(CardType.CREATURE);
+        boolean isCreature = imprintedCard.hasType(CardType.CREATURE);
 
         if (!isCreature) {
             String notCreatureLog = imprintedCard.getName() + " is not a creature card. It remains in exile.";
@@ -1107,7 +1104,7 @@ public class GraveyardReturnResolutionService {
         }
 
         // Verify target is still an instant or sorcery
-        if (targetCard.getType() != CardType.INSTANT && targetCard.getType() != CardType.SORCERY) {
+        if (!targetCard.hasType(CardType.INSTANT) && !targetCard.hasType(CardType.SORCERY)) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target is not an instant or sorcery).");
             return;
         }

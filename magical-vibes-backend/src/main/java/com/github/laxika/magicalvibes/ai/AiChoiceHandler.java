@@ -248,7 +248,7 @@ class AiChoiceHandler {
             // AI names the best creature card from its own library to try to guess what was picked
             List<Card> ownDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
             String chosenName = ownDeck.stream()
-                    .filter(c -> c.getType() == CardType.CREATURE || c.getAdditionalTypes().contains(CardType.CREATURE))
+                    .filter(c -> c.hasType(CardType.CREATURE))
                     .max(java.util.Comparator.comparingInt(Card::getManaValue))
                     .map(Card::getName)
                     .orElse("Sphinx Ambassador");
@@ -356,7 +356,7 @@ class AiChoiceHandler {
         List<Integer> bottomOrder = new ArrayList<>();
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.get(i);
-            if (card.getType() == CardType.LAND) {
+            if (card.hasType(CardType.LAND)) {
                 bottomOrder.add(i);
             } else {
                 topOrder.add(i);
@@ -389,7 +389,7 @@ class AiChoiceHandler {
         List<int[]> indexedCards = new ArrayList<>();
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.get(i);
-            int priority = card.getType() == CardType.LAND ? 1000 + i : card.getManaValue();
+            int priority = card.hasType(CardType.LAND) ? 1000 + i : card.getManaValue();
             indexedCards.add(new int[]{i, priority});
         }
         indexedCards.sort(Comparator.comparingInt(a -> a[1]));
@@ -423,7 +423,7 @@ class AiChoiceHandler {
         int bestScore = -1;
         for (int i = 0; i < searchCards.size(); i++) {
             Card card = searchCards.get(i);
-            int score = card.getType() == CardType.LAND ? card.getManaValue() : card.getManaValue() * 2 + 10;
+            int score = card.hasType(CardType.LAND) ? card.getManaValue() : card.getManaValue() * 2 + 10;
             if (score > bestScore) {
                 bestScore = score;
                 bestIndex = i;
@@ -549,8 +549,8 @@ class AiChoiceHandler {
         Card card0 = cards.get(0);
         Card card1 = cards.get(1);
 
-        boolean card0IsLand = card0.getType() == CardType.LAND;
-        boolean card1IsLand = card1.getType() == CardType.LAND;
+        boolean card0IsLand = card0.hasType(CardType.LAND);
+        boolean card1IsLand = card1.hasType(CardType.LAND);
 
         if (card0IsLand && !card1IsLand) {
             handCardIndex = 1;
@@ -617,12 +617,12 @@ class AiChoiceHandler {
         }
 
         List<int[]> scoredIndices = new ArrayList<>();
-        long landCount = hand.stream().filter(c -> c.getType() == CardType.LAND).count();
+        long landCount = hand.stream().filter(c -> c.hasType(CardType.LAND)).count();
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
             int score;
-            if (card.getType() == CardType.LAND) {
+            if (card.hasType(CardType.LAND)) {
                 score = landCount > 2 ? 1000 : -1000;
                 if (landCount > 2) {
                     landCount--;

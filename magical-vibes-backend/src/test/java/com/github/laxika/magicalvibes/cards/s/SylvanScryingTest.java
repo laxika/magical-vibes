@@ -65,7 +65,7 @@ class SylvanScryingTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
         assertThat(gd.interaction.librarySearch().cards())
-                .allMatch(c -> c.getType() == CardType.LAND || c.getAdditionalTypes().contains(CardType.LAND));
+                .allMatch(c -> c.hasType(CardType.LAND));
         assertThat(gd.interaction.librarySearch().reveals()).isTrue();
         assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
     }
@@ -86,7 +86,7 @@ class SylvanScryingTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getType() == CardType.LAND || c.getAdditionalTypes().contains(CardType.LAND));
+                .anyMatch(c -> c.hasType(CardType.LAND));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
     }
 

@@ -35,8 +35,7 @@ public class WinConditionResolutionService {
         long creatureCount = 0;
         if (graveyard != null) {
             creatureCount = graveyard.stream()
-                    .filter(c -> c.getType() == CardType.CREATURE
-                            || c.getAdditionalTypes().contains(CardType.CREATURE))
+                    .filter(c -> c.hasType(CardType.CREATURE))
                     .count();
         }
 

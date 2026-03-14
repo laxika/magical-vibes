@@ -479,7 +479,7 @@ public class DraftService {
         Map<String, String> result = new HashMap<>();
         for (CardPrinting printing : cardSet.getPrintings()) {
             Card test = printing.createCard();
-            if (test.getSupertypes().contains(CardSupertype.BASIC) && test.getType() == CardType.LAND) {
+            if (test.getSupertypes().contains(CardSupertype.BASIC) && test.hasType(CardType.LAND)) {
                 // Use the first collector number found for each basic land name
                 result.putIfAbsent(test.getName(), printing.collectorNumber());
             }

@@ -391,7 +391,6 @@ public class ValidTargetService {
     }
 
     private boolean isPlaneswalker(Permanent perm) {
-        return perm.getCard().getType() == CardType.PLANESWALKER
-                || perm.getCard().getAdditionalTypes().contains(CardType.PLANESWALKER);
+        return perm.getCard().hasType(CardType.PLANESWALKER);
     }
 }

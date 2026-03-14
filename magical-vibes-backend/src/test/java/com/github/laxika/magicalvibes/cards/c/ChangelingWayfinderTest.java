@@ -134,7 +134,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+                .anyMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
 
         // Library lost one card
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -270,7 +270,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards()).allMatch(c -> c.getType() == CardType.LAND && c.getSupertypes().contains(CardSupertype.BASIC));
+        assertThat(gd.interaction.librarySearch().cards()).allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
     // ===== Changeling keyword: counts as every creature type =====
