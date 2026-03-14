@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellC
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -427,6 +428,103 @@ public class CardSpecificResolutionService {
         }
 
         log.info("Game {} - {} sacrificed {}, {} enters the battlefield",
+                gameData.id, targetControllerName, targetName, foundCard.getName());
+    }
+
+    @HandlesEffect(DestroyTargetThenRevealUntilTypeToBattlefieldEffect.class)
+    void resolveDestroyTargetThenRevealUntilTypeToBattlefield(GameData gameData, StackEntry entry,
+                                                              DestroyTargetThenRevealUntilTypeToBattlefieldEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetPermanentId());
+        if (targetControllerId == null) {
+            return;
+        }
+
+        String targetControllerName = gameData.playerIdToName.get(targetControllerId);
+        String targetName = target.getCard().getName();
+
+        // Destroy the targeted permanent (may fail due to indestructible)
+        boolean destroyed = permanentRemovalService.tryDestroyPermanent(gameData, target, effect.cannotBeRegenerated());
+        if (destroyed) {
+            String destroyLog = targetName + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, destroyLog);
+            log.info("Game {} - {} is destroyed by {}", gameData.id, targetName, entry.getCard().getName());
+        }
+
+        // Reveal cards from the top of the controller's library until a matching card is found
+        // This happens regardless of whether the destruction succeeded
+        List<Card> deck = gameData.playerDecks.get(targetControllerId);
+        List<Card> revealedCards = new ArrayList<>();
+        Card foundCard = null;
+
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            revealedCards.add(card);
+            if (cardMatchesAnyType(card, effect.cardTypes())) {
+                foundCard = card;
+                break;
+            }
+        }
+
+        if (revealedCards.isEmpty()) {
+            String emptyLog = targetControllerName + "'s library is empty — no cards are revealed.";
+            gameBroadcastService.logAndBroadcast(gameData, emptyLog);
+            return;
+        }
+
+        String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+        String revealLog = targetControllerName + " reveals " + revealedNames + ".";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+        if (foundCard == null) {
+            // No matching card found — shuffle all revealed cards back into the library
+            deck.addAll(revealedCards);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
+            String noMatchLog = targetControllerName + " reveals their entire library — no matching card found. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
+            return;
+        }
+
+        // Put the found card onto the battlefield under the controller's control
+        Permanent perm = new Permanent(foundCard);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetControllerId, perm);
+
+        String enterLog = foundCard.getName() + " enters the battlefield under " + targetControllerName + "'s control.";
+        gameBroadcastService.logAndBroadcast(gameData, enterLog);
+
+        // Handle ETB effects for creatures
+        boolean isCreature = foundCard.getType() == CardType.CREATURE
+                || foundCard.getAdditionalTypes().contains(CardType.CREATURE);
+        if (isCreature) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetControllerId, foundCard, null, false);
+        }
+
+        // Handle planeswalkers
+        if (foundCard.getType() == CardType.PLANESWALKER && foundCard.getLoyalty() != null) {
+            perm.setLoyaltyCounters(foundCard.getLoyalty());
+            perm.setSummoningSick(false);
+        }
+
+        // Shuffle all other revealed cards back into the library
+        revealedCards.remove(foundCard);
+        if (!revealedCards.isEmpty()) {
+            deck.addAll(revealedCards);
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
+
+        String shuffleLog = targetControllerName + " shuffles their library.";
+        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+
+        // Check legend rule
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, targetControllerId);
+        }
+
+        log.info("Game {} - {} destroyed {}, {} enters the battlefield",
                 gameData.id, targetControllerName, targetName, foundCard.getName());
     }
 
