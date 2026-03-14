@@ -104,7 +104,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DealDamageToTargetCreatureControllerEffect` | `(int damage)` | deal N damage to targeted creature's controller unconditionally |
 | `DealDamageToDiscardingPlayerEffect` | `(int damage)` | deal N damage to any player who discards (trigger) |
 | `DealDamageToTriggeringPermanentControllerEffect` | `(int damage)` | deal N damage to the controller of the permanent that caused the trigger (target pre-set at trigger-collection time) |
-| `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | deal damage to target creature equal to number of controlled permanents of subtype |
+| `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype, boolean gainLife)` | deal damage to target creature equal to number of controlled permanents of subtype; when gainLife=true, gain life equal to the damage amount. Convenience ctor `(subtype)` defaults gainLife=false |
 | `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect` | `(CardSubtype subtype, boolean gainLife)` | deal damage to any target equal to number of controlled permanents of subtype; when gainLife=true, gain life equal to the damage amount. Used by Corrupt |
 | `DealDamageIfFewCardsInHandEffect` | `(int maxCards, int damage)` | deal N damage to target player if they have maxCards or fewer in hand |
 | `DealDamageOnLandTapEffect` | `(int damage)` | deal N damage to a player whenever they tap a land (Manabarbs-style) |

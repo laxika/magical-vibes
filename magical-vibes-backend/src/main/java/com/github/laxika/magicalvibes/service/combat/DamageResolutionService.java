@@ -127,6 +127,7 @@ public class DamageResolutionService {
     /**
      * Resolves {@link DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect} — deals damage to the
      * targeted creature equal to the number of permanents the controller has of a specific subtype.
+     * When {@code gainLife} is true, the controller also gains life equal to the subtype count.
      */
     @HandlesEffect(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class)
     void resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(
@@ -136,6 +137,10 @@ public class DamageResolutionService {
     ) {
         int count = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
         resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, count, entry));
+
+        if (effect.gainLife() && count > 0) {
+            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), count);
+        }
     }
 
     /**
