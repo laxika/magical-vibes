@@ -304,7 +304,7 @@ public class GameSimulator {
         PermanentChoiceSpellHandlerService permanentChoiceSpellHandler = new PermanentChoiceSpellHandlerService(
                 gameQueryService, graveyardService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
         InputCompletionService inputCompletionService = new InputCompletionService(
-                playerInputService, gameBroadcastService, turnProgressionService, stateBasedActionService);
+                playerInputService, gameBroadcastService, turnProgressionService, stateBasedActionService, effectResolutionService);
         PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
                 inputCompletionService, gameQueryService, battlefieldEntryService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService);

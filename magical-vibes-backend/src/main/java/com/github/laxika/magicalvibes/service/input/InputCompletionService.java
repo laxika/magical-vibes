@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ public class InputCompletionService {
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
     private final StateBasedActionService stateBasedActionService;
+    private final EffectResolutionService effectResolutionService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -36,6 +38,18 @@ public class InputCompletionService {
     public void processMayAbilitiesThenAutoPass(GameData gameData) {
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            // Resume resolving remaining effects on the same spell/ability
+            // (e.g. Ponder: after "you may shuffle" resolves, continue with "draw a card")
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
+            }
+
+            if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
             turnProgressionService.resolveAutoPass(gameData);

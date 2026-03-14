@@ -205,6 +205,19 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        // Resume resolving remaining effects on the same spell/ability
+        // (e.g. Ponder: "Look at top 3, reorder, you may shuffle, then draw a card.")
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
         turnProgressionService.resolveAutoPass(gameData);
     }
 

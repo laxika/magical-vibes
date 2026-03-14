@@ -406,6 +406,7 @@ Pass `null` as filter to allow any card.
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |
 | `ShuffleGraveyardIntoLibraryEffect` | `()` | shuffle graveyard into library |
 | `ShuffleSelfAndGraveyardIntoLibraryEffect` | `()` | shuffle source permanent and controller's graveyard into library |
+| `ShuffleLibraryEffect` | `()` | shuffle controller's library (no cards moved) — used with MayEffect for "you may shuffle" |
 
 ## Mill
 

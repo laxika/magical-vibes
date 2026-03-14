@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -48,6 +49,22 @@ public class LibraryShuffleResolutionService {
 
         String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
         gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+    }
+
+    /**
+     * Shuffles the controller's library without moving any cards into it.
+     * Used by cards like Ponder ("You may shuffle your library").
+     */
+    @HandlesEffect(ShuffleLibraryEffect.class)
+    void resolveShuffleLibrary(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+
+        String logEntry = playerName + " shuffles their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} shuffles their library", gameData.id, playerName);
     }
 
     /**

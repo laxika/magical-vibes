@@ -42,11 +42,13 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -253,6 +255,26 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof SacrificeArtifactThenDealDividedDamageEffect);
         if (isSacrificeArtifact) {
             mayMiscHandlerService.handleMaySacrificeArtifactForDividedDamage(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Shuffle library — resolved directly without creating a stack entry (e.g. Ponder "You may shuffle")
+        boolean isShuffleLibrary = ability.effects().stream()
+                .anyMatch(e -> e instanceof ShuffleLibraryEffect);
+        if (isShuffleLibrary) {
+            if (accepted) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, ability.controllerId());
+                String logEntry = player.getUsername() + " shuffles their library.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} shuffles their library ({})", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+            } else {
+                String logEntry = player.getUsername() + " chooses not to shuffle.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} declines shuffle ({})", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
