@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControll
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -552,6 +553,25 @@ public class StaticEffectResolutionService {
     private void resolvePowerToughnessEqualToCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var ptEffect = (PowerToughnessEqualToCardsInAllGraveyardsEffect) effect;
         int count = countCardsInAllGraveyards(context.gameData(), ptEffect.filter());
+        accumulator.addPower(count);
+        accumulator.addToughness(count);
+    }
+
+    @HandlesStaticEffect(value = PowerToughnessEqualToCardsInControllerGraveyardEffect.class, selfOnly = true)
+    private void resolvePowerToughnessEqualToCardsInControllerGraveyard(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var ptEffect = (PowerToughnessEqualToCardsInControllerGraveyardEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        List<Card> graveyard = context.gameData().playerGraveyards.get(controllerId);
+        int count = 0;
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                if (gameQueryService.matchesCardPredicate(card, ptEffect.filter(), null)) {
+                    count++;
+                }
+            }
+        }
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }

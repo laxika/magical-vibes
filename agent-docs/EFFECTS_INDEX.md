@@ -30,7 +30,7 @@ Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` 
 
 Effects that are characteristic-defining abilities (CDAs) for power/toughness (`*/*` effects) override `isPowerToughnessDefining()` to return `true`. Per CR 707.9d, when a copy effect provides specific P/T values (e.g. "except it's 7/7"), CDAs that define P/T are not copied. Used by `CopyPermanentOnEnterEffect` with `powerOverride`/`toughnessOverride`.
 
-Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInHandEffect`, `PowerToughnessEqualToControllerLifeTotalEffect`.
+Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInControllerGraveyardEffect`, `PowerToughnessEqualToCardsInHandEffect`, `PowerToughnessEqualToControllerLifeTotalEffect`.
 
 ---
 
@@ -585,6 +585,7 @@ Pass `null` as filter to allow any card.
 | `PowerToughnessEqualToControlledSubtypeCountEffect` | `(CardSubtype subtype)` | P/T = number of permanents of subtype you control (static) |
 | `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect` | `()` | P/T = number of creature cards in all graveyards (static) |
 | `PowerToughnessEqualToCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | P/T = number of cards matching filter in all graveyards (static). E.g. `new CardTypePredicate(CardType.ARTIFACT)` for artifact cards |
+| `PowerToughnessEqualToCardsInControllerGraveyardEffect` | `(CardPredicate filter)` | P/T = number of cards matching filter in controller's graveyard only (static). E.g. `new CardTypePredicate(CardType.CREATURE)` for creature cards |
 | `PowerToughnessEqualToCardsInHandEffect` | `()` | P/T = number of cards in controller's hand (static) |
 | `PowerToughnessEqualToControllerLifeTotalEffect` | `()` | P/T = controller's life total (static CDA, e.g. Ajani Goldmane's Avatar token, Serra Avatar) |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
