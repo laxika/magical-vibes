@@ -541,7 +541,8 @@ public class StaticEffectResolutionService {
     private boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
         if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.EQUIPPED_CREATURE) {
             return context.source().isAttached()
-                    && context.source().getAttachedTo().equals(context.target().getId());
+                    && context.source().getAttachedTo().equals(context.target().getId())
+                    && matchesStaticFilter(context.target(), filter);
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
             return context.targetOnSameBattlefield() && context.target().isTapped();
