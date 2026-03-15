@@ -46,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -104,7 +105,13 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        // Case 3: Search and choose at resolution
+        // Case 3: Return a random matching card (no choice)
+        if (effect.returnAtRandom()) {
+            resolveReturnAtRandom(gameData, entry, effect, controllerId, sourceCardId);
+            return;
+        }
+
+        // Case 4: Search and choose at resolution
         if (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS) {
             resolveFromAllGraveyards(gameData, entry, effect, controllerId, sourceCardId);
         } else {
@@ -270,6 +277,47 @@ public class GraveyardReturnResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 String.join(", ", returnedNames), destName);
+    }
+
+    private void resolveReturnAtRandom(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
+                                        UUID controllerId, UUID sourceCardId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (Card card : graveyard) {
+            if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                matchingCards.add(card);
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
+        graveyard.remove(randomCard);
+
+        if (effect.destination() == GraveyardChoiceDestination.HAND) {
+            gameData.addCardToHand(controllerId, randomCard);
+        } else {
+            putCardOntoBattlefield(gameData, controllerId, randomCard, null, null, effect.enterTapped());
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
+        String logEntry = playerName + " returns " + randomCard.getName() + " at random from graveyard to " + destText + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} returns {} at random from graveyard to {}",
+                gameData.id, playerName, randomCard.getName(), destText);
     }
 
     private void resolveFromControllersGraveyard(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,

@@ -252,7 +252,8 @@ ReturnCardFromGraveyardEffect(
     CardColor grantColor,                    // non-null = permanently grant this color "in addition to" (e.g. Rise from the Grave)
     CardSubtype grantSubtype,                // non-null = permanently grant this subtype "in addition to" (e.g. Rise from the Grave)
     boolean enterTapped,                     // true = enters the battlefield tapped (e.g. Reassembling Skeleton)
-    boolean underOwnersControl               // true = put each card onto battlefield under its owner's control, not spell controller's (e.g. Open the Vaults)
+    boolean underOwnersControl,              // true = put each card onto battlefield under its owner's control, not spell controller's (e.g. Open the Vaults)
+    boolean returnAtRandom                   // true = return a random matching card instead of player choice (e.g. Charmbreaker Devils)
 )
 ```
 
@@ -332,6 +333,7 @@ Pass `null` as filter to allow any card.
 | Rise from the Grave | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), ALL_GRAVEYARDS, false, false, false, null, false, false, false, false, false, CardColor.BLACK, CardSubtype.ZOMBIE)` — creature from any graveyard to battlefield as a black Zombie in addition to other colors/types |
 | Reassembling Skeleton | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null, false, false, false, false, false, null, null, true)` — self-return to battlefield tapped (graveyard activated ability) |
 | Open the Vaults | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(ENCHANTMENT))), ALL_GRAVEYARDS, false, true, false, null, false, false, false, false, false, null, null, false, true)` — return all artifacts and enchantments from all graveyards under their owners' control |
+| Charmbreaker Devils | `ReturnCardFromGraveyardEffect(HAND, new CardAnyOfPredicate(List.of(new CardTypePredicate(INSTANT), new CardTypePredicate(SORCERY))), CONTROLLERS_GRAVEYARD, false, false, false, null, false, false, false, false, false, null, null, false, false, true)` — return a random instant or sorcery from your graveyard to hand |
 
 ### Other graveyard effects
 
