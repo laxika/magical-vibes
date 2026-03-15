@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -182,6 +183,36 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard());
+    }
+
+    @CollectsTrigger(value = CastFromGraveyardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCastFromGraveyardTrigger(TriggerMatchContext match,
+            CastFromGraveyardTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (sc.castFromHand()) return false;
+
+        boolean needsAnyTarget = trigger.resolvedEffects().stream()
+                .anyMatch(e -> e.canTargetPlayer() || e.canTargetPermanent());
+
+        if (needsAnyTarget) {
+            match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(trigger.resolvedEffects())
+            ));
+            String logEntry = match.permanent().getCard().getName()
+                    + "'s triggered ability triggers — choose a target.";
+            gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+        } else {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(trigger.resolvedEffects())
+            ));
+        }
+        log.info("Game {} - {} cast-from-graveyard trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = DealDamageEqualToSpellManaValueToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
