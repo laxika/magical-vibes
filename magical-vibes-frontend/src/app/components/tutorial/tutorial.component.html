@@ -1,0 +1,213 @@
+<div class="game-container">
+  <div class="game-layout">
+    <div class="game-area">
+
+    <div class="battlefield-area">
+      <!-- Opponent's battlefield -->
+      <div class="battlefield-row opponent-battlefield">
+        <div class="battlefield-label">{{ game().playerNames[1] }}'s Battlefield</div>
+        <div class="battlefield-sub-row lands-row">
+          @for (item of opponentLandStacks; track landStackTrackKey(item)) {
+            @if (isLandStack(item)) {
+              <div class="land-stack" [attr.data-stack-size]="item.lands.length">
+                @for (ip of item.lands; track ip.originalIndex) {
+                  <div class="land-stack-item">
+                    <app-card-display
+                      [card]="ip.perm.card"
+                      [permanent]="ip.perm"
+                      [class.tapped]="ip.perm.tapped"
+                      (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                      (mouseleave)="onCardHoverEnd()" />
+                  </div>
+                }
+              </div>
+            } @else {
+              <app-card-display
+                [card]="item.perm.card"
+                [permanent]="item.perm"
+                [class.tapped]="item.perm.tapped"
+                (mouseenter)="onCardHover(item.perm.card, item.perm)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          }
+        </div>
+        <div class="battlefield-sub-row creatures-row">
+          @for (ip of opponentCreatures; track ip.originalIndex) {
+            <app-card-display
+              [card]="ip.perm.card"
+              [permanent]="ip.perm"
+              [class.tapped]="ip.perm.tapped"
+              [class.summoning-sick]="ip.perm.summoningSick"
+              (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+        @if (opponentBattlefield.length === 0) {
+          <div class="battlefield-empty">No permanents</div>
+        }
+      </div>
+
+      <div class="battlefield-divider"></div>
+
+      <!-- Your battlefield -->
+      <div class="battlefield-row">
+        <div class="battlefield-label">Your Battlefield</div>
+        <div class="battlefield-sub-row creatures-row my-creatures-row">
+          @for (ip of myCreatures; track ip.originalIndex) {
+            <app-card-display
+              [card]="ip.perm.card"
+              [permanent]="ip.perm"
+              [class.tapped]="ip.perm.tapped"
+              [class.summoning-sick]="ip.perm.summoningSick"
+              (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+        <div class="battlefield-sub-row lands-row my-lands-row">
+          @for (item of myLandStacks; track landStackTrackKey(item)) {
+            @if (isLandStack(item)) {
+              <div class="land-stack" [attr.data-stack-size]="item.lands.length">
+                @for (ip of item.lands; track ip.originalIndex) {
+                  <div class="land-stack-item">
+                    <app-card-display
+                      [card]="ip.perm.card"
+                      [permanent]="ip.perm"
+                      [class.tapped]="ip.perm.tapped"
+                      [class.tutorial-interactive-target]="isTutorialInteractiveTarget(ip.originalIndex)"
+                      (click)="onTutorialCardClick(ip.originalIndex)"
+                      (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                      (mouseleave)="onCardHoverEnd()" />
+                  </div>
+                }
+              </div>
+            } @else {
+              <app-card-display
+                [card]="item.perm.card"
+                [permanent]="item.perm"
+                [class.tapped]="item.perm.tapped"
+                [class.tutorial-interactive-target]="isTutorialInteractiveTarget(item.originalIndex)"
+                (click)="onTutorialCardClick(item.originalIndex)"
+                (mouseenter)="onCardHover(item.perm.card, item.perm)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          }
+        </div>
+        @if (myBattlefield.length === 0) {
+          <div class="battlefield-empty">No permanents</div>
+        }
+      </div>
+    </div>
+
+    <!-- Phase tracker -->
+    <div class="phase-tracker">
+      @for (group of phaseGroups; track group.phaseName) {
+        <div class="phase-group">
+          <div class="phase-label">{{ group.phaseName }}</div>
+          <div class="phase-steps">
+            @for (stepInfo of group.steps; track stepInfo.step) {
+              <div class="step-pip"
+                   [class.active]="game().currentStep === stepInfo.step"
+                   [class.force-stop]="stepInfo.step === TurnStep.PRECOMBAT_MAIN || stepInfo.step === TurnStep.POSTCOMBAT_MAIN"
+                   [title]="stepInfo.displayName">
+                {{ stepInfo.displayName }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Mana pool -->
+    @if (totalMana > 0) {
+      <div class="mana-pool-bar">
+        <div class="mana-pool">
+          @for (entry of manaEntries; track entry.color) {
+            <div class="mana-pip" [attr.data-color]="entry.color">
+              <span class="mana-count">{{ entry.count }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Hand -->
+    <div class="hand-area">
+      <div class="hand-label">Your Hand ({{ game().hand.length }} cards)</div>
+      <div class="hand-cards">
+        @for (card of game().hand; track $index) {
+          <app-card-display
+            [card]="card"
+            [class.playable]="isTutorialCardPlayable($index)"
+            (mouseenter)="onCardHover(card)"
+            (mouseleave)="onCardHoverEnd()" />
+        }
+      </div>
+    </div>
+
+    </div>
+
+    <!-- Side panel -->
+    <app-side-panel
+      [hoveredCard]="hoveredCard()"
+      [hoveredPermanent]="hoveredPermanent()"
+      [player1Name]="game().playerNames[0]"
+      [player2Name]="game().playerNames[1]"
+      [player1HandSize]="game().handSizes[0]"
+      [player2HandSize]="game().handSizes[1]"
+      [player1DeckSize]="game().deckSizes[0]"
+      [player2DeckSize]="game().deckSizes[1]"
+      [turnNumber]="game().turnNumber"
+      [stackEntries]="[]"
+      [isStackEmpty]="true"
+      [myGraveyard]="[]"
+      [opponentGraveyard]="[]"
+      [opponentPlayerName]="game().playerNames[1]"
+      [gameLog]="game().gameLog"
+      [declaringAttackers]="false"
+      [declaringBlockers]="false"
+      [hasPriority]="false"
+      [isActivePlayer0]="true"
+      [isActivePlayer1]="false"
+      [holdsPriority0]="true"
+      [holdsPriority1]="false"
+      [lifeTotal0]="game().lifeTotals[0]"
+      [lifeTotal1]="game().lifeTotals[1]"
+      [poisonCounters0]="0"
+      [poisonCounters1]="0"
+      [playerId0]="game().playerIds[0]"
+      [playerId1]="game().playerIds[1]"
+      [stackTargetId]="null"
+      [isGraveyardLandPlayable]="boundIsGraveyardLandPlayable"
+      [isGraveyardAbilityActivatable]="boundIsGraveyardAbilityActivatable"
+      [isFlashbackPlayable]="boundIsFlashbackPlayable"
+      [getPlayerName]="boundGetPlayerName"
+      [getStackEntryTargetName]="boundGetStackEntryTargetName"
+      [searchTaxCost]="0"
+      [myPlayerIndex]="0"
+      (cardHover)="onCardHover($event.card, $event.permanent ?? null)"
+      (cardHoverEnd)="onCardHoverEnd()" />
+  </div>
+
+  <!-- Transparent click-blocker — prevents interaction with game elements -->
+  <div class="tutorial-backdrop" [class.interactive-step]="currentStep().interactive"></div>
+
+  <div class="tutorial-tooltip"
+       [class.center]="currentStep().tooltipPosition === 'center'"
+       [ngStyle]="tooltipStyle()">
+    <div class="tutorial-step-counter">Step {{ currentStepIndex() + 1 }} of {{ steps.length }}</div>
+    <h3>{{ currentStep().title }}</h3>
+    <p>{{ currentStep().description }}</p>
+    @if (currentStep().interactive) {
+      <p class="tutorial-hint">{{ currentStep().interactionHint }}</p>
+    } @else {
+      <div class="tutorial-buttons">
+        @if (currentStepIndex() > 0) {
+          <button class="tutorial-btn-back" (click)="prevStep()">Back</button>
+        }
+        <button class="tutorial-btn-next" (click)="nextStep()">{{ currentStep().advanceButtonText ?? 'Got it' }}</button>
+      </div>
+    }
+  </div>
+
+  <button class="tutorial-exit-btn" (click)="exitTutorial()">Exit Tutorial</button>
+</div>

@@ -139,8 +139,13 @@ h1 {
 .actions {
   display: flex;
   justify-content: space-between;
-  gap: 15px;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.actions-right {
+  display: flex;
+  gap: 15px;
 }
 
 .btn-primary, .btn-secondary {

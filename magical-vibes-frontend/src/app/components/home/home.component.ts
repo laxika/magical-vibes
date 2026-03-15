@@ -173,6 +173,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/cards']);
   }
 
+  startTutorial() {
+    this.router.navigate(['/tutorial']);
+  }
+
   logout() {
     this.websocketService.disconnect();
     this.router.navigate(['/']);
