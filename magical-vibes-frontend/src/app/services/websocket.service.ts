@@ -180,6 +180,7 @@ export interface Card {
   alternateCostLifePayment: number;
   alternateCostSacrificeCount: number;
   graveyardActivatedAbilities: ActivatedAbilityView[];
+  transformable: boolean;
 }
 
 export interface Permanent {
@@ -208,6 +209,7 @@ export interface Permanent {
   wishCounters: number;
   attackTargetId: string | null;
   markedDamage: number;
+  transformed: boolean;
 }
 
 export interface StackEntry {

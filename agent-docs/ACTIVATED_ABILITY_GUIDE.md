@@ -15,6 +15,8 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `variableLoyaltyCost` | `boolean` | `true` for -X loyalty abilities where X is chosen by the player. The chosen X is passed as xValue |
 | `maxActivationsPerTurn` | `Integer` | Maximum activations per turn. `null` for unlimited |
 | `timingRestriction` | `ActivationTimingRestriction` | When the ability can be activated. `null` for default (instant speed) |
+| `requiredControlledSubtype` | `CardSubtype` | Subtype you must control N+ of to activate (e.g. `CardSubtype.VAMPIRE`). `null` for no restriction |
+| `requiredControlledSubtypeCount` | `int` | Minimum count of `requiredControlledSubtype` permanents you must control. `0` when unused |
 
 **Targeting is computed from effects** — `isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
 
@@ -204,7 +206,27 @@ Cards: `ChandraNalaar`
 
 ---
 
-### 8. Equipment ability (equip with sorcery speed + controlled creature filter)
+### 8. Ability with subtype count restriction
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, description, requiredControlledSubtype, requiredControlledSubtypeCount)
+```
+
+**Use when:** Ability text says "Activate only if you control N or more [subtype]" (e.g. "Activate only if you control five or more Vampires").
+
+```java
+// {B}: Transform Bloodline Keeper. Activate only if you control five or more Vampires.
+new ActivatedAbility(false, "{B}",
+    List.of(new TransformSelfEffect()),
+    "{B}: Transform Bloodline Keeper. Activate only if you control five or more Vampires.",
+    CardSubtype.VAMPIRE, 5)
+```
+
+Cards: `BloodlineKeeper`
+
+---
+
+### 9. Equipment ability (equip with sorcery speed + controlled creature filter)
 
 ```java
 new EquipActivatedAbility(manaCost)
@@ -216,7 +238,7 @@ Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `W
 
 ---
 
-### 9. Full constructor (all parameters)
+### 10. Full constructor (all parameters)
 
 ```java
 new ActivatedAbility(requiresTap, manaCost, effects,
@@ -227,7 +249,7 @@ new ActivatedAbility(requiresTap, manaCost, effects,
 
 ---
 
-### 10. Multi-target ability constructor
+### 11. Multi-target ability constructor
 
 ```java
 new ActivatedAbility(requiresTap, manaCost, effects, description,
@@ -240,7 +262,7 @@ Cards: `BrassSquire` (2 targets: Equipment + creature), `SoulConduit` (2 targets
 
 ---
 
-### 11. Graveyard activated ability
+### 12. Graveyard activated ability
 
 ```java
 addGraveyardActivatedAbility(new ActivatedAbility(requiresTap, manaCost, effects, description))

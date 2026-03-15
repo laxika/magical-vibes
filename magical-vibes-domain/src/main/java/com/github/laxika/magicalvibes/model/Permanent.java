@@ -103,6 +103,7 @@ public class Permanent {
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  For transient subtype grants from static effects, see {@link #transientSubtypes}. */
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
+    @Setter private boolean transformed;
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -181,6 +182,7 @@ public class Permanent {
         this.markedDamage = source.markedDamage;
         this.grantedColors.addAll(source.grantedColors);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
+        this.transformed = source.transformed;
     }
 
     public Card getOriginalCard() {

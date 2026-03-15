@@ -30,5 +30,6 @@ public enum Keyword {
     LIVING_WEAPON,
     DEATHTOUCH,
     SCRY,
-    FLASHBACK
+    FLASHBACK,
+    TRANSFORM
 }

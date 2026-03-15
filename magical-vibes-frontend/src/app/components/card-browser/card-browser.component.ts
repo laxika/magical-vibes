@@ -177,7 +177,8 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
       hasAlternateCastingCost: false,
       alternateCostLifePayment: 0,
       alternateCostSacrificeCount: 0,
-      graveyardActivatedAbilities: []
+      graveyardActivatedAbilities: [],
+      transformable: false
     };
   }
 

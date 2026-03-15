@@ -26,5 +26,6 @@ public record PermanentView(
         int phylacteryCounters,
         int wishCounters,
         UUID attackTargetId,
-        int markedDamage
+        int markedDamage,
+        boolean transformed
 ) {}

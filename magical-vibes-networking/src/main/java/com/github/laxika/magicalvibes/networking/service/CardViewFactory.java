@@ -72,7 +72,8 @@ public class CardViewFactory {
                 hasAlternateCastingCost,
                 alternateCostLifePayment,
                 alternateCostSacrificeCount,
-                graveyardAbilityViews);
+                graveyardAbilityViews,
+                card.getBackFaceCard() != null);
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {

@@ -903,6 +903,15 @@ public class AbilityActivationService {
                 }
             }
         }
+
+        // Subtype count restriction (e.g. "Activate only if you control five or more Vampires")
+        if (ability.getRequiredControlledSubtype() != null) {
+            int count = gameQueryService.countControlledSubtypePermanents(gameData, playerId, ability.getRequiredControlledSubtype());
+            if (count < ability.getRequiredControlledSubtypeCount()) {
+                throw new IllegalStateException("Activate only if you control " + ability.getRequiredControlledSubtypeCount()
+                        + " or more " + ability.getRequiredControlledSubtype().name() + "s");
+            }
+        }
     }
 
     private void validateAndPayLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {

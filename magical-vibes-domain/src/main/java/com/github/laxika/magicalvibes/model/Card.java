@@ -58,6 +58,7 @@ public class Card {
     @Setter private int additionalCostPerExtraTarget;
     @Setter private Card imprintedCard;
     @Setter private String watermark;
+    @Setter private Card backFaceCard;
     private List<CastingOption> castingOptions = new ArrayList<>();
 
     @Getter(AccessLevel.NONE)
@@ -120,6 +121,10 @@ public class Card {
 
     public void addGraveyardActivatedAbility(ActivatedAbility ability) {
         graveyardActivatedAbilities.add(ability);
+    }
+
+    public String getBackFaceClassName() {
+        return null;
     }
 
     public int getManaValue() {

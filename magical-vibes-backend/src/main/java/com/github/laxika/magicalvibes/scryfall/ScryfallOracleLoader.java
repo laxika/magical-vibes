@@ -76,6 +76,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
+        KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
     }
 
     public static void loadAll(String cacheDir) {
@@ -117,6 +118,15 @@ public class ScryfallOracleLoader {
                     // Only register once per class name (same card in multiple printings)
                     OracleData oracleData = parseOracleData(cardNode);
                     Card.registerOracle(className, oracleData);
+
+                    // Register back face oracle data for double-faced cards
+                    String backFaceClassName = tempCard.getBackFaceClassName();
+                    if (backFaceClassName != null) {
+                        OracleData backFaceData = parseBackFaceOracleData(cardNode);
+                        if (backFaceData != null) {
+                            Card.registerOracle(backFaceClassName, backFaceData);
+                        }
+                    }
                 }
             }
 
@@ -282,16 +292,20 @@ public class ScryfallOracleLoader {
     }
 
     private static OracleData parseOracleData(JsonNode card) {
+        // For transform DFCs, face-specific fields (power, toughness, oracle_text) are in card_faces, not top-level
+        JsonNode faceNode = getFrontFaceNode(card);
+
         // Name: handle double-faced cards
         String name = card.get("name").asText();
         if (name.contains(" // ")) {
             name = name.substring(0, name.indexOf(" // "));
         }
 
-        // Mana cost
+        // Mana cost — prefer face node for DFCs
         String manaCost = null;
-        if (card.has("mana_cost") && !card.get("mana_cost").asText().isEmpty()) {
-            manaCost = card.get("mana_cost").asText();
+        JsonNode manaCostSource = faceNode.has("mana_cost") ? faceNode : card;
+        if (manaCostSource.has("mana_cost") && !manaCostSource.get("mana_cost").asText().isEmpty()) {
+            manaCost = manaCostSource.get("mana_cost").asText();
             // Handle double-faced mana costs
             if (manaCost.contains(" // ")) {
                 manaCost = manaCost.substring(0, manaCost.indexOf(" // "));
@@ -302,63 +316,24 @@ public class ScryfallOracleLoader {
         String typeLine = card.get("type_line").asText();
         ScryfallTypeLineParser.ParsedTypeLine parsed = ScryfallTypeLineParser.parse(typeLine);
 
-        // Color
-        CardColor color = parseColor(card);
-        List<CardColor> colors = parseColors(card);
+        // Color — prefer face node for DFCs
+        JsonNode colorSource = faceNode.has("colors") ? faceNode : card;
+        CardColor color = parseColor(colorSource);
+        List<CardColor> colors = parseColors(colorSource);
 
-        // Oracle text (strip reminder text in parentheses)
-        String cardText = null;
-        if (card.has("oracle_text") && !card.get("oracle_text").asText().isEmpty()) {
-            String rawText = card.get("oracle_text").asText()
-                    .replaceAll(" *\\([^)]*\\)", "")
-                    .replaceAll(" +\n", "\n")
-                    .strip();
-            if (!rawText.isEmpty()) {
-                cardText = rawText;
-            }
-        }
+        // Oracle text (strip reminder text in parentheses) — prefer face node for DFCs
+        String cardText = parseCardText(faceNode.has("oracle_text") ? faceNode : card);
 
-        // Power/toughness (creatures only)
-        Integer power = null;
-        Integer toughness = null;
-        if (card.has("power")) {
-            try {
-                power = Integer.parseInt(card.get("power").asText());
-            } catch (NumberFormatException e) {
-                // Handle * or other non-numeric power (e.g., Clone)
-                power = 0;
-            }
-        }
-        if (card.has("toughness")) {
-            try {
-                toughness = Integer.parseInt(card.get("toughness").asText());
-            } catch (NumberFormatException e) {
-                toughness = 0;
-            }
-        }
+        // Power/toughness (creatures only) — prefer face node for DFCs
+        JsonNode ptSource = faceNode.has("power") ? faceNode : card;
+        Integer power = parseIntField(ptSource, "power");
+        Integer toughness = parseIntField(ptSource, "toughness");
 
         // Loyalty (planeswalkers only)
-        Integer loyalty = null;
-        if (card.has("loyalty")) {
-            try {
-                loyalty = Integer.parseInt(card.get("loyalty").asText());
-            } catch (NumberFormatException e) {
-                loyalty = 0;
-            }
-        }
+        Integer loyalty = parseIntField(card, "loyalty");
 
-        // Keywords
-        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-        if (card.has("keywords")) {
-            for (JsonNode kw : card.get("keywords")) {
-                Keyword keyword = KEYWORD_MAP.get(kw.asText());
-                if (keyword != null) {
-                    keywords.add(keyword);
-                } else {
-                    LOG.fine("Unknown keyword from Scryfall: " + kw.asText());
-                }
-            }
-        }
+        // Keywords — from top level (combined for both faces)
+        Set<Keyword> keywords = parseKeywords(card);
 
         // Watermark
         String watermark = null;
@@ -382,6 +357,114 @@ public class ScryfallOracleLoader {
                 loyalty,
                 watermark
         );
+    }
+
+    /**
+     * Parses oracle data for the back face of a double-faced card.
+     * Returns null if the card is not a DFC or has no back face.
+     */
+    private static OracleData parseBackFaceOracleData(JsonNode card) {
+        if (!card.has("card_faces") || !card.get("card_faces").isArray()
+                || card.get("card_faces").size() < 2) {
+            return null;
+        }
+
+        JsonNode face = card.get("card_faces").get(1);
+
+        String name = face.get("name").asText();
+
+        String manaCost = null;
+        if (face.has("mana_cost") && !face.get("mana_cost").asText().isEmpty()) {
+            manaCost = face.get("mana_cost").asText();
+        }
+
+        // Parse type line from back face
+        String typeLine = face.has("type_line") ? face.get("type_line").asText() : "";
+        ScryfallTypeLineParser.ParsedTypeLine parsed = ScryfallTypeLineParser.parse(typeLine);
+
+        // Color — use color_indicator if present, otherwise colors
+        CardColor color = null;
+        List<CardColor> colors = List.of();
+        if (face.has("color_indicator") && face.get("color_indicator").isArray()
+                && !face.get("color_indicator").isEmpty()) {
+            String firstColor = face.get("color_indicator").get(0).asText();
+            color = COLOR_MAP.get(firstColor);
+            List<CardColor> indicatorColors = new ArrayList<>();
+            for (JsonNode colorNode : face.get("color_indicator")) {
+                CardColor mapped = COLOR_MAP.get(colorNode.asText());
+                if (mapped != null) indicatorColors.add(mapped);
+            }
+            colors = List.copyOf(indicatorColors);
+        } else if (face.has("colors")) {
+            color = parseColor(face);
+            colors = parseColors(face);
+        }
+
+        String cardText = parseCardText(face);
+
+        Integer power = parseIntField(face, "power");
+        Integer toughness = parseIntField(face, "toughness");
+
+        // Back faces use front face keywords minus Transform, plus their own abilities
+        // Scryfall keywords at top level cover both faces; we re-parse from top level
+        Set<Keyword> keywords = parseKeywords(card);
+        keywords.remove(Keyword.TRANSFORM);
+
+        return new OracleData(
+                name,
+                parsed.type(),
+                parsed.additionalTypes(),
+                manaCost,
+                color,
+                colors,
+                parsed.supertypes(),
+                parsed.subtypes(),
+                cardText,
+                power,
+                toughness,
+                keywords,
+                null,
+                null
+        );
+    }
+
+    /**
+     * Returns card_faces[0] for transform DFCs, or the card itself for normal cards.
+     */
+    private static JsonNode getFrontFaceNode(JsonNode card) {
+        if (card.has("card_faces") && card.has("layout")
+                && "transform".equals(card.get("layout").asText())) {
+            return card.get("card_faces").get(0);
+        }
+        return card;
+    }
+
+    private static String parseCardText(JsonNode node) {
+        if (node.has("oracle_text") && !node.get("oracle_text").asText().isEmpty()) {
+            String rawText = node.get("oracle_text").asText()
+                    .replaceAll(" *\\([^)]*\\)", "")
+                    .replaceAll(" +\n", "\n")
+                    .strip();
+            if (!rawText.isEmpty()) {
+                return rawText;
+            }
+        }
+        return null;
+    }
+
+    private static Set<Keyword> parseKeywords(JsonNode card) {
+        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+        if (card.has("keywords")) {
+            for (JsonNode kw : card.get("keywords")) {
+                Keyword keyword = KEYWORD_MAP.get(kw.asText());
+                if (keyword != null) {
+                    keywords.add(keyword);
+                } else {
+                    LOG.fine("Unknown keyword from Scryfall: " + kw.asText());
+                }
+            }
+        }
+        return keywords;
     }
 
     private static CardColor parseColor(JsonNode card) {

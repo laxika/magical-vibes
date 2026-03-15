@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -150,6 +152,38 @@ public class AnimationResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes a {}/{} artifact creature permanently", gameData.id, target.getCard().getName(), effect.power(), effect.toughness());
+    }
+
+    @HandlesEffect(TransformSelfEffect.class)
+    private void resolveTransformSelf(GameData gameData, StackEntry entry, TransformSelfEffect effect) {
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return;
+        }
+
+        Card originalCard = self.getOriginalCard();
+        if (!self.isTransformed()) {
+            // Transform to back face
+            Card backFace = originalCard.getBackFaceCard();
+            if (backFace == null) {
+                log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
+                return;
+            }
+            String frontName = self.getCard().getName();
+            self.setCard(backFace);
+            self.setTransformed(true);
+            String logEntry = frontName + " transforms into " + backFace.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
+        } else {
+            // Transform back to front face
+            String backName = self.getCard().getName();
+            self.setCard(originalCard);
+            self.setTransformed(false);
+            String logEntry = backName + " transforms into " + originalCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+        }
     }
 
     @HandlesEffect(AnimateTargetLandWhileSourceOnBattlefieldEffect.class)

@@ -22,53 +22,55 @@ public class ActivatedAbility {
     private final int maxTargets;
     private final boolean variableLoyaltyCost;
     private final UUID grantSourcePermanentId;
+    private final CardSubtype requiredControlledSubtype;
+    private final int requiredControlledSubtypeCount;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
-        this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false);
+        this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, TargetFilter targetFilter) {
-        this(requiresTap, manaCost, effects, description, targetFilter, null, null, null, List.of(), 1, 1, false);
+        this(requiresTap, manaCost, effects, description, targetFilter, null, null, null, List.of(), 1, 1, false, null, null, 0);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, Integer maxActivationsPerTurn) {
-        this(requiresTap, manaCost, effects, description, null, null, maxActivationsPerTurn, null, List.of(), 1, 1, false);
+        this(requiresTap, manaCost, effects, description, null, null, maxActivationsPerTurn, null, List.of(), 1, 1, false, null, null, 0);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, ActivationTimingRestriction timingRestriction) {
-        this(requiresTap, manaCost, effects, description, null, null, null, timingRestriction, List.of(), 1, 1, false);
+        this(requiresTap, manaCost, effects, description, null, null, null, timingRestriction, List.of(), 1, 1, false, null, null, 0);
     }
 
     // Loyalty ability constructor
     public ActivatedAbility(int loyaltyCost, List<CardEffect> effects, String description) {
-        this(false, null, effects, description, null, loyaltyCost, null, null, List.of(), 1, 1, false);
+        this(false, null, effects, description, null, loyaltyCost, null, null, List.of(), 1, 1, false, null, null, 0);
     }
 
     // Loyalty ability constructor with target filter
     public ActivatedAbility(int loyaltyCost, List<CardEffect> effects, String description, TargetFilter targetFilter) {
-        this(false, null, effects, description, targetFilter, loyaltyCost, null, null, List.of(), 1, 1, false);
+        this(false, null, effects, description, targetFilter, loyaltyCost, null, null, List.of(), 1, 1, false, null, null, 0);
     }
 
     // Variable loyalty ability (-X) with target filter
     public static ActivatedAbility variableLoyaltyAbility(List<CardEffect> effects, String description, TargetFilter targetFilter) {
-        return new ActivatedAbility(false, null, effects, description, targetFilter, 0, null, null, List.of(), 1, 1, true);
+        return new ActivatedAbility(false, null, effects, description, targetFilter, 0, null, null, List.of(), 1, 1, true, null, null, 0);
     }
 
     // Multi-target ability constructor (e.g. Brass Squire: target Equipment + target creature)
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
                             List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets) {
-        this(requiresTap, manaCost, effects, description, null, null, null, null, multiTargetFilters, minTargets, maxTargets, false);
+        this(requiresTap, manaCost, effects, description, null, null, null, null, multiTargetFilters, minTargets, maxTargets, false, null, null, 0);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description, TargetFilter targetFilter, Integer loyaltyCost, Integer maxActivationsPerTurn, ActivationTimingRestriction timingRestriction) {
-        this(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost, maxActivationsPerTurn, timingRestriction, List.of(), 1, 1, false);
+        this(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost, maxActivationsPerTurn, timingRestriction, List.of(), 1, 1, false, null, null, 0);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
                             TargetFilter targetFilter, Integer loyaltyCost, Integer maxActivationsPerTurn,
                             ActivationTimingRestriction timingRestriction,
                             List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets) {
-        this(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost, maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets, false);
+        this(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost, maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets, false, null, null, 0);
     }
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
@@ -77,14 +79,21 @@ public class ActivatedAbility {
                             List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets,
                             boolean variableLoyaltyCost) {
         this(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost, maxActivationsPerTurn,
-                timingRestriction, multiTargetFilters, minTargets, maxTargets, variableLoyaltyCost, null);
+                timingRestriction, multiTargetFilters, minTargets, maxTargets, variableLoyaltyCost, null, null, 0);
+    }
+
+    // Ability with subtype count restriction (e.g. "Activate only if you control five or more Vampires")
+    public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
+                            CardSubtype requiredControlledSubtype, int requiredControlledSubtypeCount) {
+        this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, requiredControlledSubtype, requiredControlledSubtypeCount);
     }
 
     private ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
                              TargetFilter targetFilter, Integer loyaltyCost, Integer maxActivationsPerTurn,
                              ActivationTimingRestriction timingRestriction,
                              List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets,
-                             boolean variableLoyaltyCost, UUID grantSourcePermanentId) {
+                             boolean variableLoyaltyCost, UUID grantSourcePermanentId,
+                             CardSubtype requiredControlledSubtype, int requiredControlledSubtypeCount) {
         this.requiresTap = requiresTap;
         this.manaCost = manaCost;
         this.effects = effects;
@@ -98,6 +107,8 @@ public class ActivatedAbility {
         this.maxTargets = maxTargets;
         this.variableLoyaltyCost = variableLoyaltyCost;
         this.grantSourcePermanentId = grantSourcePermanentId;
+        this.requiredControlledSubtype = requiredControlledSubtype;
+        this.requiredControlledSubtypeCount = requiredControlledSubtypeCount;
     }
 
     /**
@@ -107,7 +118,7 @@ public class ActivatedAbility {
     public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
         return new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
                 maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
-                variableLoyaltyCost, sourcePermanentId);
+                variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
     }
 
     public boolean isNeedsTarget() {
