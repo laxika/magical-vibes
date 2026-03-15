@@ -177,7 +177,7 @@ public class GameTestHarness {
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         gameQueryService = new GameQueryService(staticEffectHandlerRegistry);
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(gameQueryService);
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(gameQueryService, staticEffectHandlerRegistry);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
         playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
         gameBroadcastService = new GameBroadcastService(

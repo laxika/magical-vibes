@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerControlledSubtypeEffect;
@@ -90,6 +91,7 @@ import java.util.function.Predicate;
 public class StaticEffectResolutionService {
 
     private final GameQueryService gameQueryService;
+    private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
 
     @HandlesStaticEffect(AnimateNoncreatureArtifactsEffect.class)
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -144,6 +146,33 @@ public class StaticEffectResolutionService {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
         }
+    }
+
+    @HandlesStaticEffect(EnchantedCreatureSubtypeConditionalEffect.class)
+    private void resolveEnchantedCreatureSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (EnchantedCreatureSubtypeConditionalEffect) effect;
+        if (!context.source().isAttached()
+                || !context.source().getAttachedTo().equals(context.target().getId())) {
+            return;
+        }
+        boolean hasSubtype = permanentHasSubtype(context.target(), conditional.subtype());
+        CardEffect activeEffect = hasSubtype ? conditional.ifMatch() : conditional.ifNotMatch();
+        StaticEffectHandler handler = staticEffectHandlerRegistry.getHandler(activeEffect);
+        if (handler != null) {
+            handler.apply(context, activeEffect, accumulator);
+        }
+    }
+
+    /**
+     * Checks whether a permanent has a given subtype without triggering {@code computeStaticBonus}
+     * (which would cause infinite recursion when called from within a static effect handler).
+     * Checks base subtypes, transient subtypes, granted subtypes, and the intrinsic Changeling keyword.
+     */
+    private static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
+        return permanent.getCard().getSubtypes().contains(subtype)
+                || permanent.getTransientSubtypes().contains(subtype)
+                || permanent.getGrantedSubtypes().contains(subtype)
+                || permanent.hasKeyword(Keyword.CHANGELING);
     }
 
     @HandlesStaticEffect(BoostAttachedCreaturePerCardsInAllGraveyardsEffect.class)

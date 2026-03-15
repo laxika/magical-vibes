@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquipp
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -1143,12 +1144,37 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the given permanent has an aura or equipment attached to it
-     * that carries a static effect of the given type.
+     * that carries a static effect of the given type. Also unwraps
+     * {@link EnchantedCreatureSubtypeConditionalEffect} wrappers: if the currently active
+     * inner effect (based on the creature's subtype) matches, returns {@code true}.
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
-                        && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectClass::isInstance));
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> isActiveEffect(gameData, creature, e, effectClass)));
+    }
+
+    private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect, Class<? extends CardEffect> effectClass) {
+        if (effectClass.isInstance(effect)) return true;
+        if (effect instanceof EnchantedCreatureSubtypeConditionalEffect cond) {
+            boolean hasSubtype = permanentHasSubtype(creature, cond.subtype());
+            CardEffect activeEffect = hasSubtype ? cond.ifMatch() : cond.ifNotMatch();
+            return effectClass.isInstance(activeEffect);
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether a permanent has a given subtype without triggering {@code computeStaticBonus}
+     * (which would cause infinite recursion). Checks base subtypes, transient subtypes,
+     * granted subtypes, and the intrinsic Changeling keyword.
+     */
+    private static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
+        return permanent.getCard().getSubtypes().contains(subtype)
+                || permanent.getTransientSubtypes().contains(subtype)
+                || permanent.getGrantedSubtypes().contains(subtype)
+                || permanent.hasKeyword(Keyword.CHANGELING);
     }
 
     /**

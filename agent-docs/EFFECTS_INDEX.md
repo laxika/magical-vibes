@@ -669,6 +669,7 @@ Pass `null` as filter to allow any card.
 | `TargetPlayerCreaturesCantBlockThisTurnEffect` | `()` | all creatures controlled by target player (or planeswalker's controller) can't block this turn — uses shared target, no own targeting |
 | `CantBlockThisTurnEffect` | `(PermanentPredicate filter)` | all creatures on all battlefields matching the predicate can't block this turn — non-targeted mass effect, pass `null` for all creatures |
 | `EnchantedCreatureCantAttackOrBlockEffect` | `()` | enchanted creature can't attack or block (static, Pacifism-style) |
+| `EnchantedCreatureSubtypeConditionalEffect` | `(CardSubtype subtype, CardEffect ifMatch, CardEffect ifNotMatch)` | conditional wrapper for auras: if enchanted creature has the subtype, `ifMatch` is active; otherwise `ifNotMatch` is active. Composes existing effects (e.g. `BoostAttachedCreatureEffect` + `EnchantedCreatureCantAttackOrBlockEffect`). Static handler delegates to inner effect's handler; combat system unwraps automatically via `hasAuraWithEffect` |
 | `EnchantedCreatureCantAttackEffect` | `()` | enchanted creature can't attack but can still block (static, Forced Worship-style) |
 | `EnchantedCreatureCantActivateAbilitiesEffect` | `()` | enchanted creature's activated abilities can't be activated (static, Arrest-style) |
 
