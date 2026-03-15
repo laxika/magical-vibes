@@ -4,9 +4,13 @@ import com.github.laxika.magicalvibes.networking.model.MessageType;
 
 import java.util.List;
 
-public record ChooseCardFromHandMessage(MessageType type, List<Integer> cardIndices, String prompt) {
+public record ChooseCardFromHandMessage(MessageType type, List<Integer> cardIndices, String prompt, boolean canDecline) {
 
     public ChooseCardFromHandMessage(List<Integer> cardIndices, String prompt) {
-        this(MessageType.CHOOSE_CARD_FROM_HAND, cardIndices, prompt);
+        this(MessageType.CHOOSE_CARD_FROM_HAND, cardIndices, prompt, false);
+    }
+
+    public ChooseCardFromHandMessage(List<Integer> cardIndices, String prompt, boolean canDecline) {
+        this(MessageType.CHOOSE_CARD_FROM_HAND, cardIndices, prompt, canDecline);
     }
 }

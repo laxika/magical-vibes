@@ -639,7 +639,9 @@
     @if (choice.choosingFromHand) {
       <div class="combat-banner hand-choice-banner">
         <span>{{ choice.handChoicePrompt }}</span>
-        <button class="btn-confirm-combat" (click)="choice.declineHandChoice()">Decline</button>
+        @if (choice.handChoiceCanDecline) {
+          <button class="btn-confirm-combat" (click)="choice.declineHandChoice()">Decline</button>
+        }
       </div>
     }
 

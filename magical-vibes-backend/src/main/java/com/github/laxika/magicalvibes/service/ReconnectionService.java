@@ -236,8 +236,9 @@ public class ReconnectionService {
                             : "Choose a card from your hand.";
                     default -> "Choose a card from your hand.";
                 };
+                boolean canDecline = cc.type() == AwaitingInput.CARD_CHOICE || cc.type() == AwaitingInput.TARGETED_CARD_CHOICE;
                 sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
-                        new ArrayList<>(cc.validIndices()), prompt));
+                        new ArrayList<>(cc.validIndices()), prompt, canDecline));
             }
             case InteractionContext.PermanentChoice pc -> {
                 if (playerId.equals(pc.playerId())) {

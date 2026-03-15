@@ -118,7 +118,10 @@ public class CardChoiceHandlerService {
 
         Set<Integer> validIndices = cardChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
+            // Invalid index (e.g. player clicked "Decline" sending -1) — re-prompt the discard choice
+            log.warn("Game {} - {} sent invalid discard card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
+            playerInputService.beginDiscardChoice(gameData, player.getId());
+            return;
         }
 
         UUID playerId = player.getId();
@@ -198,7 +201,9 @@ public class CardChoiceHandlerService {
 
         Set<Integer> validIndices = cardChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
+            log.warn("Game {} - {} sent invalid exile card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
+            playerInputService.beginExileFromHandChoice(gameData, player.getId(), cardChoice.targetPermanentId());
+            return;
         }
 
         UUID playerId = player.getId();
@@ -354,7 +359,10 @@ public class CardChoiceHandlerService {
 
         Set<Integer> validIndices = cardChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
+            log.warn("Game {} - {} sent invalid imprint card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
+            playerInputService.beginImprintFromHandChoice(gameData, player.getId(),
+                    new ArrayList<>(validIndices), "Choose a card from your hand.", cardChoice.targetPermanentId());
+            return;
         }
 
         UUID playerId = player.getId();

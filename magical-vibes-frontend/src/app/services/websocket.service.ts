@@ -366,6 +366,7 @@ export interface ChooseCardFromHandNotification {
   type: MessageType;
   cardIndices: number[];
   prompt: string;
+  canDecline: boolean;
 }
 
 export interface ChooseColorNotification {

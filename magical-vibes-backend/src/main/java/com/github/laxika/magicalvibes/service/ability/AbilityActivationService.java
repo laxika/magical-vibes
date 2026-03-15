@@ -362,7 +362,15 @@ public class AbilityActivationService {
             throw new IllegalStateException("No pending ability activation");
         }
         if (cardChoice.validIndices() == null || !cardChoice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
+            // Invalid index — re-prompt the discard cost choice
+            log.warn("Game {} - {} sent invalid discard cost card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
+            PendingAbilityActivation pending = gameData.pendingAbilityActivation;
+            CardType requiredType = pending.discardCostType();
+            sessionManager.sendToPlayer(player.getId(), new ChooseCardFromHandMessage(
+                    new ArrayList<>(cardChoice.validIndices()),
+                    "Choose a " + requiredType.name().toLowerCase() + " card to discard as an activation cost."
+            ));
+            return;
         }
 
         PendingAbilityActivation pending = gameData.pendingAbilityActivation;

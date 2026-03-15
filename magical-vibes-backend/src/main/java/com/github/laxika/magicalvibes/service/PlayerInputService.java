@@ -55,7 +55,7 @@ public class PlayerInputService {
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         gameData.interaction.beginCardChoice(AwaitingInput.CARD_CHOICE, playerId, new HashSet<>(validIndices), null);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt, true));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
@@ -63,7 +63,7 @@ public class PlayerInputService {
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
         gameData.interaction.beginCardChoice(AwaitingInput.TARGETED_CARD_CHOICE, playerId, new HashSet<>(validIndices), targetPermanentId);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt, true));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card from hand (targeted)", gameData.id, playerName);

@@ -41,6 +41,7 @@ export class GameChoiceService {
     this.choosingFromHand = false;
     this.choosableHandIndices.set(new Set());
     this.handChoicePrompt = '';
+    this.handChoiceCanDecline = false;
     // Color choice
     this.choosingColor = false;
     this.colorChoices = [];
@@ -96,6 +97,7 @@ export class GameChoiceService {
   choosingFromHand = false;
   choosableHandIndices = signal(new Set<number>());
   handChoicePrompt = '';
+  handChoiceCanDecline = false;
 
   // --- Color choice state ---
   choosingColor = false;
@@ -157,6 +159,7 @@ export class GameChoiceService {
     this.choosingFromHand = true;
     this.choosableHandIndices.set(new Set(msg.cardIndices));
     this.handChoicePrompt = msg.prompt;
+    this.handChoiceCanDecline = msg.canDecline;
   }
 
   handleChooseColor(msg: ChooseColorNotification): void {
