@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -39,6 +40,11 @@ public class LibraryTargetValidators {
 
     @ValidatesTarget(ExileTargetPlayerGraveyardEffect.class)
     public void validateExileTargetPlayerGraveyard(TargetValidationContext ctx) {
+        tvs.requireTargetPlayer(ctx);
+    }
+
+    @ValidatesTarget(MillBottomOfTargetLibraryConditionalTokenEffect.class)
+    public void validateMillBottomOfTargetLibraryConditionalToken(TargetValidationContext ctx) {
         tvs.requireTargetPlayer(ctx);
     }
 }

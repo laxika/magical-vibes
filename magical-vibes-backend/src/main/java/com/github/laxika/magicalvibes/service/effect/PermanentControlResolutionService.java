@@ -258,7 +258,7 @@ public class PermanentControlResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
-    private void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token, String sourceSetCode) {
+    public void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token, String sourceSetCode) {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         for (int i = 0; i < token.amount(); i++) {

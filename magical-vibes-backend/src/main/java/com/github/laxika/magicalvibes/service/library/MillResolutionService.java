@@ -10,9 +10,13 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,7 @@ public class MillResolutionService {
 
     private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
+    private final PermanentControlResolutionService permanentControlResolutionService;
 
     /**
      * Mills the target player for a number of cards equal to their hand size.
@@ -180,6 +185,46 @@ public class MillResolutionService {
         }
 
         graveyardService.resolveMillPlayer(gameData, targetPlayerId, cardsToMill);
+    }
+
+    /**
+     * Puts the bottom card of the target player's library into their graveyard.
+     * If the card matches the specified type, the controller creates a creature token.
+     * Used by Cellar Door.
+     */
+    @HandlesEffect(MillBottomOfTargetLibraryConditionalTokenEffect.class)
+    void resolveMillBottomOfTargetLibraryConditionalToken(GameData gameData, StackEntry entry,
+                                                          MillBottomOfTargetLibraryConditionalTokenEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck.isEmpty()) {
+            String logEntry = targetPlayerName + "'s library is empty — " + sourceName + "'s ability does nothing.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} ability: {}'s library is empty", gameData.id, sourceName, targetPlayerName);
+            return;
+        }
+
+        Card bottomCard = deck.removeLast();
+        graveyardService.addCardToGraveyard(gameData, targetPlayerId, bottomCard);
+
+        String logEntry = targetPlayerName + " puts " + bottomCard.getName() + " from the bottom of their library into their graveyard.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} ability: {} puts {} from bottom of library into graveyard",
+                gameData.id, sourceName, targetPlayerName, bottomCard.getName());
+
+        if (bottomCard.hasType(effect.conditionType())) {
+            CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                    effect.tokenName(), effect.tokenPower(), effect.tokenToughness(),
+                    effect.tokenColor(), effect.tokenSubtypes(),
+                    Set.of(), Set.of()
+            );
+            permanentControlResolutionService.applyCreateCreatureToken(
+                    gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode()
+            );
+        }
     }
 
     private static String pluralCards(int count) {
