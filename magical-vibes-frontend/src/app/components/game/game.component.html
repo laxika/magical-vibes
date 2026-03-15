@@ -794,6 +794,11 @@
         }
       </div>
     </div>
+    @if (isWaitingForOpponent) {
+      <div class="cancel-game-container">
+        <button class="btn-cancel-game" (click)="backToLobby()">Cancel</button>
+      </div>
+    }
   }
     </div>
 

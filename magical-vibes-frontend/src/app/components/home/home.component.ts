@@ -87,6 +87,12 @@ export class HomeComponent implements OnInit, OnDestroy {
               this.games.set(updatedGames);
             }
           }
+        } else if (message.type === MessageType.GAME_REMOVED) {
+          const notification = message as LobbyGameNotification;
+          if (notification.game) {
+            const currentGames = this.games();
+            this.games.set(currentGames.filter(g => g.id !== notification.game!.id));
+          }
         } else if (message.type === MessageType.LOBBY_GAMES_RESPONSE) {
           const notification = message as LobbyGamesNotification;
           this.games.set(notification.games);

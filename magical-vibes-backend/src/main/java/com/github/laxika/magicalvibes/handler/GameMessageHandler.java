@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.handler;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
@@ -995,6 +996,15 @@ public class GameMessageHandler implements MessageHandler {
         if (player == null) {
             handleError(connection, "Not authenticated");
             return;
+        }
+
+        // If the player is leaving a WAITING game, cancel it and notify lobby users
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData != null && gameData.status == GameStatus.WAITING) {
+            LobbyGame lobbyGame = new LobbyGame(gameData.id, gameData.gameName,
+                    gameData.createdByUsername, gameData.playerIds.size(), gameData.status);
+            gameRegistry.remove(gameData.id);
+            broadcastToLobby(MessageType.GAME_REMOVED, lobbyGame);
         }
 
         // Mark player as back in the lobby so they receive future lobby broadcasts
