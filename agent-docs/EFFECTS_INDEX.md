@@ -816,6 +816,7 @@ Pass `null` as filter to allow any card.
 | `SacrificeOnUnattachEffect` | `()` | whenever this equipment becomes unattached, sacrifice the previously-equipped creature (static marker) |
 | `AttachSourceEquipmentToTargetCreatureEffect` | `()` | attach source equipment to target creature on ETB. Reads sourcePermanentId as equipment, targetPermanentId as creature. Used by equipment with "When this Equipment enters, attach it to target creature you control." |
 | `AttachTargetEquipmentToTargetCreatureEffect` | `()` | attach target Equipment to target creature (multi-target; reads targetPermanentIds[0] as equipment, [1] as creature) |
+| `SacrificeSourceEquipmentCost` | `()` | cost effect that sacrifices the equipment granting this ability (not the equipped creature). Used for equipment-granted abilities like Blazing Torch's "{T}, Sacrifice Blazing Torch: ..." where the creature activates the ability but the equipment is sacrificed. The source equipment is identified via `ActivatedAbility.grantSourcePermanentId`, which is set automatically by the static bonus system |
 
 ## Static restrictions / taxes
 

@@ -389,7 +389,7 @@ public class StaticEffectResolutionService {
             default -> matchesCreatureScope(context, grant.scope(), grant.filter());
         };
         if (scopeMatch) {
-            accumulator.addActivatedAbility(grant.ability());
+            accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
         }
     }
 
@@ -498,7 +498,7 @@ public class StaticEffectResolutionService {
                     default -> matchesCreatureScope(context, grant.scope(), grant.filter());
                 };
                 if (scopeMatch) {
-                    accumulator.addActivatedAbility(grant.ability());
+                    accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
                 }
             }
         }

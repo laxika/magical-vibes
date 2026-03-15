@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class ActivatedAbility {
@@ -20,6 +21,7 @@ public class ActivatedAbility {
     private final int minTargets;
     private final int maxTargets;
     private final boolean variableLoyaltyCost;
+    private final UUID grantSourcePermanentId;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false);
@@ -74,6 +76,15 @@ public class ActivatedAbility {
                             ActivationTimingRestriction timingRestriction,
                             List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets,
                             boolean variableLoyaltyCost) {
+        this(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost, maxActivationsPerTurn,
+                timingRestriction, multiTargetFilters, minTargets, maxTargets, variableLoyaltyCost, null);
+    }
+
+    private ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description,
+                             TargetFilter targetFilter, Integer loyaltyCost, Integer maxActivationsPerTurn,
+                             ActivationTimingRestriction timingRestriction,
+                             List<TargetFilter> multiTargetFilters, int minTargets, int maxTargets,
+                             boolean variableLoyaltyCost, UUID grantSourcePermanentId) {
         this.requiresTap = requiresTap;
         this.manaCost = manaCost;
         this.effects = effects;
@@ -86,6 +97,17 @@ public class ActivatedAbility {
         this.minTargets = minTargets;
         this.maxTargets = maxTargets;
         this.variableLoyaltyCost = variableLoyaltyCost;
+        this.grantSourcePermanentId = grantSourcePermanentId;
+    }
+
+    /**
+     * Returns a copy of this ability with the grant source permanent ID set.
+     * Used by the static bonus system to track which permanent granted this ability.
+     */
+    public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
+        return new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
+                maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
+                variableLoyaltyCost, sourcePermanentId);
     }
 
     public boolean isNeedsTarget() {

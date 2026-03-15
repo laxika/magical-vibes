@@ -1002,9 +1002,10 @@ public class DamageResolutionService {
     }
 
     private boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
+        Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamagePreventable(gameData)
-                && gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + "'s damage is prevented.");
+                && gameQueryService.isDamageFromSourcePrevented(gameData, source.getColor())) {
+            gameBroadcastService.logAndBroadcast(gameData, source.getName() + "'s damage is prevented.");
             return true;
         }
         return false;
@@ -1018,11 +1019,12 @@ public class DamageResolutionService {
     }
 
     private boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
+        Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamagePreventable(gameData)
-                && (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())
-                    || gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
+                && (gameQueryService.isDamageFromSourcePrevented(gameData, source.getColor())
+                    || gameQueryService.hasProtectionFromSource(gameData, target, source))) {
             gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getCard().getName() + "'s damage is prevented.");
+                    source.getName() + "'s damage is prevented.");
             return true;
         }
         return false;
@@ -1034,7 +1036,8 @@ public class DamageResolutionService {
     }
 
     private void resolveAnyTargetDamage(GameData gameData, StackEntry entry, UUID targetId, int rawDamage, boolean cantRegenerate) {
-        String cardName = entry.getCard().getName();
+        Card source = entry.getEffectiveDamageSourceCard();
+        String cardName = source.getName();
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
 
@@ -1048,7 +1051,7 @@ public class DamageResolutionService {
         } else {
             if (gameQueryService.isDamagePreventable(gameData)
                     && (isSourcePermanentPreventedFromDealingDamage(gameData, entry)
-                        || gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard()))) {
+                        || gameQueryService.hasProtectionFromSource(gameData, targetPermanent, source))) {
                 gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
                 return;
             }
@@ -1080,7 +1083,8 @@ public class DamageResolutionService {
     }
 
     private void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
-        String cardName = entry.getCard().getName();
+        Card source = entry.getEffectiveDamageSourceCard();
+        String cardName = source.getName();
         if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
@@ -1090,7 +1094,7 @@ public class DamageResolutionService {
         rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
         processSourceRedirectDamage(gameData);
         if (rawDamage <= 0) return;
-        if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, entry.getCard().getColor())) {
+        if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);

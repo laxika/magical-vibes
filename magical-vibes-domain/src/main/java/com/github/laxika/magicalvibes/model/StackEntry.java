@@ -29,6 +29,7 @@ public class StackEntry {
     @Setter private boolean nonTargeting;
     @Setter private boolean returnToHandAfterResolving;
     @Setter private boolean castWithFlashback;
+    @Setter private Card damageSourceCard;
     private final List<UUID> targetPermanentIds;
 
     // Creature spell constructor
@@ -191,6 +192,7 @@ public class StackEntry {
         this.nonTargeting = source.nonTargeting;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.damageSourceCard = source.damageSourceCard;
         this.targetPermanentIds = source.targetPermanentIds.isEmpty() ? List.of() : new ArrayList<>(source.targetPermanentIds);
     }
 
@@ -209,5 +211,14 @@ public class StackEntry {
         this.targetCardIds = List.of();
         this.targetFilter = null;
         this.targetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
+    }
+
+    /**
+     * Returns the card to use as the damage source for protection and prevention checks.
+     * Normally this is the same as {@link #getCard()}, but for equipment-granted abilities
+     * like Blazing Torch the damage source is the equipment, not the equipped creature.
+     */
+    public Card getEffectiveDamageSourceCard() {
+        return damageSourceCard != null ? damageSourceCard : card;
     }
 }

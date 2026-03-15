@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ColorChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToContr
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -184,6 +186,19 @@ public class ActivatedAbilityExecutionService {
             permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
         }
 
+        // Sacrifice the source equipment (e.g. Blazing Torch's "{T}, Sacrifice Blazing Torch: ...")
+        // Snapshot the equipment's card before sacrifice so it can be used as the damage source
+        // per MTG rulings: "The source of the damage is Blazing Torch, not the equipped creature."
+        Card sacrificedEquipmentCard = null;
+        boolean shouldSacrificeEquipment = abilityEffects.stream().anyMatch(SacrificeSourceEquipmentCost.class::isInstance);
+        if (shouldSacrificeEquipment && ability.getGrantSourcePermanentId() != null) {
+            Permanent equipment = gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (equipment != null) {
+                sacrificedEquipmentCard = equipment.getCard();
+                permanentRemovalService.removePermanentToGraveyard(gameData, equipment);
+            }
+        }
+
         List<StackEntry> deferredCostTriggers = List.of();
         if (gameData.stack.size() > stackBeforeCosts) {
             deferredCostTriggers = new ArrayList<>(gameData.stack.subList(stackBeforeCosts, gameData.stack.size()));
@@ -214,6 +229,11 @@ public class ActivatedAbilityExecutionService {
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetPermanentIds);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
+        }
+        // Set the damage source card for equipment-granted abilities (e.g. Blazing Torch)
+        // Per MTG rulings: "The source of the damage is Blazing Torch, not the equipped creature."
+        if (sacrificedEquipmentCard != null && !gameData.stack.isEmpty()) {
+            gameData.stack.getLast().setDamageSourceCard(sacrificedEquipmentCard);
         }
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
         gameData.stack.addAll(deferredTapTriggers);
