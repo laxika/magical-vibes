@@ -276,6 +276,48 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleUpkeepPlayerTargetTrigger(GameData gameData, UUID playerId, PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                upt.sourceCard(),
+                upt.controllerId(),
+                upt.sourceCard().getName() + "'s upkeep ability",
+                new ArrayList<>(upt.effects()),
+                playerId,
+                upt.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = upt.sourceCard().getName() + "'s ability targets " + playerName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep player-target trigger targets {}", gameData.id, upt.sourceCard().getName(), playerName);
+
+        if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+            turnProgressionService.processNextUpkeepPlayerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+            turnProgressionService.processNextUpkeepCopyTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+            turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleUpkeepCopyTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target != null) {

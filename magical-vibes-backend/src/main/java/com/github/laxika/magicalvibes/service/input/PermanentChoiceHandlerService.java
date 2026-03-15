@@ -93,6 +93,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
         } else if (context instanceof PermanentChoiceContext.EmblemTriggerTarget ett) {
             triggerHandler.handleEmblemTrigger(gameData, permanentId, ett);
+        } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
+            triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
         } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
             triggerHandler.handleUpkeepCopyTrigger(gameData, permanentId, uct);
         } else if (context instanceof PermanentChoiceContext.CapriciousEfreetOwnTarget ceo) {

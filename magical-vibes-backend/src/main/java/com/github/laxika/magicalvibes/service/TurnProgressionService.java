@@ -207,6 +207,10 @@ public class TurnProgressionService {
         turnCleanupService.applyCleanupResets(gameData);
     }
 
+    public void processNextUpkeepPlayerTarget(GameData gameData) {
+        stepTriggerService.processNextUpkeepPlayerTarget(gameData);
+    }
+
     public void processNextUpkeepCopyTarget(GameData gameData) {
         stepTriggerService.processNextUpkeepCopyTarget(gameData);
     }

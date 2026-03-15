@@ -109,6 +109,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.UpkeepPlayerTargetTrigger> pendingUpkeepPlayerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.CapriciousEfreetOwnTarget> pendingCapriciousEfreetTargets = new ArrayDeque<>();
     public PendingCapriciousEfreetState pendingCapriciousEfreetState;
@@ -558,6 +559,7 @@ public class GameData {
         copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
         copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
         copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
+        copy.pendingUpkeepPlayerTargets.addAll(this.pendingUpkeepPlayerTargets);
         copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);
         copy.pendingCapriciousEfreetTargets.addAll(this.pendingCapriciousEfreetTargets);
         copy.pendingCapriciousEfreetState = this.pendingCapriciousEfreetState;

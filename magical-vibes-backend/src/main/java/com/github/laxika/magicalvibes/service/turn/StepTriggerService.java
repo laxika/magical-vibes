@@ -93,6 +93,14 @@ public class StepTriggerService {
             List<CardEffect> upkeepEffects = perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED);
             if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
+            // If any effect targets a player, group all effects into a single player-targeted trigger
+            boolean hasPlayerTarget = upkeepEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+            if (hasPlayerTarget) {
+                gameData.pendingUpkeepPlayerTargets.add(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                continue;
+            }
+
             for (CardEffect effect : upkeepEffects) {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
@@ -316,7 +324,13 @@ public class StepTriggerService {
             }
         });
 
-        // Process upkeep copy trigger target selection first (mandatory targeting at trigger time)
+        // Process upkeep player-targeted triggers first (mandatory targeting at trigger time, CR 603.3d)
+        if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+            processNextUpkeepPlayerTarget(gameData);
+            return;
+        }
+
+        // Process upkeep copy trigger target selection (mandatory targeting at trigger time)
         if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
             processNextUpkeepCopyTarget(gameData);
             return;
@@ -328,6 +342,33 @@ public class StepTriggerService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Processes the next pending upkeep player-targeted trigger (e.g. Bloodgift Demon).
+     * Presents the controller with a player choice; when selected, the trigger is
+     * pushed onto the stack with all its effects sharing the chosen target.
+     *
+     * @param gameData the current game state to modify
+     */
+    public void processNextUpkeepPlayerTarget(GameData gameData) {
+        if (gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+            processNextUpkeepCopyTarget(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.UpkeepPlayerTargetTrigger trigger = gameData.pendingUpkeepPlayerTargets.removeFirst();
+
+        List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+        playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
+                List.of(), validPlayerTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose target player.");
+
+        String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep trigger awaiting player target selection", gameData.id, trigger.sourceCard().getName());
     }
 
     /**
