@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
@@ -540,6 +541,25 @@ public class BattlefieldEntryService {
                                 gameData.id, perm.getCard().getName(), enteringCreature.getName(),
                                 enteringCreature.getPower(), conditional.minPower());
                     }
+                } else if (effect instanceof EnteringCreatureSubtypeConditionalEffect conditional) {
+                    if (!enteringCreature.getSubtypes().contains(conditional.subtype())) {
+                        continue;
+                    }
+                    CardEffect innerEffect = conditional.wrapped();
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(innerEffect)),
+                            null,
+                            perm.getId()
+                    ));
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for {} entering (subtype {})",
+                            gameData.id, perm.getCard().getName(), enteringCreature.getName(),
+                            conditional.subtype());
                 } else if (effect instanceof GainLifeEqualToToughnessEffect) {
                     int toughness = enteringCreature.getToughness();
                     gameData.stack.add(new StackEntry(
