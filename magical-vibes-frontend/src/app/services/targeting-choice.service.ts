@@ -160,6 +160,13 @@ export class TargetingChoiceService {
 
   handleValidTargetsResponse(msg: ValidTargetsResponse): void {
     this.pendingTargetRequest = false;
+
+    // No valid targets — auto-cancel to prevent stuck UI
+    if (msg.validPermanentIds.length === 0 && msg.validPlayerIds.length === 0 && msg.minTargets > 0) {
+      this.resetTargetingState();
+      return;
+    }
+
     this.validTargetPermanentIds.set(new Set(msg.validPermanentIds));
     this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
     this.targetingPrompt = msg.prompt;

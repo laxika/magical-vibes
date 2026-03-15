@@ -59,6 +59,7 @@ public class GameBroadcastService {
     private final PermanentViewFactory permanentViewFactory;
     private final StackEntryViewFactory stackEntryViewFactory;
     private final GameQueryService gameQueryService;
+    private final ValidTargetService validTargetService;
 
     public void broadcastGameState(GameData gameData) {
         List<String> newLogEntries;
@@ -349,6 +350,13 @@ public class GameBroadcastService {
                 }
             }
         }
+
+        // MTG rule 601.2c: a spell can't be cast unless a legal set of targets can be chosen for it
+        playable.removeIf(i -> {
+            Card card = hand.get(i);
+            if (card.hasType(CardType.LAND)) return false;
+            return card.isNeedsTarget() && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
+        });
 
         return playable;
     }

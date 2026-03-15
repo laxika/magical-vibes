@@ -179,8 +179,9 @@ public class GameSimulator {
 
         this.gameQueryService = sharedQueryService;
         PlayerInputService playerInputService = new PlayerInputService(noOpSession, cardViewFactory);
+        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         GameBroadcastService gameBroadcastService = new GameBroadcastService(
-                noOpSession, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
+                noOpSession, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService, validTargetService);
         DraftRegistry draftRegistry = new DraftRegistry();
         this.gameRegistry = new GameRegistry();
 
@@ -240,7 +241,6 @@ public class GameSimulator {
             scanTargetValidators(bean, targetValidatorRegistry);
         }
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
-        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
 
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);

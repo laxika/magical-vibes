@@ -390,6 +390,45 @@ public class ValidTargetService {
         return true;
     }
 
+    /**
+     * Returns true if at least one legal target exists for the given spell.
+     * Per MTG rule 601.2c, a spell can't be cast unless a legal set of targets can be chosen for it.
+     */
+    public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId) {
+        Set<TargetType> allowedTargets = card.getAllowedTargets();
+        boolean isMultiTarget = card.getMaxTargets() > 1;
+
+        if (allowedTargets.contains(TargetType.PERMANENT)) {
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent perm : battlefield) {
+                    if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if (allowedTargets.contains(TargetType.PLAYER)) {
+            boolean multiTargetAllowsPlayers = isMultiTarget && card.getEffects(EffectSlot.SPELL).stream()
+                    .anyMatch(CardEffect::canTargetPlayer);
+            boolean singleTargetAllowsPlayers = !isMultiTarget;
+
+            if (singleTargetAllowsPlayers || multiTargetAllowsPlayers) {
+                for (UUID playerId : gameData.playerIds) {
+                    if (isValidPlayerTarget(gameData, card, playerId, controllerId)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if (allowedTargets.contains(TargetType.GRAVEYARD)) {
+            return true;
+        }
+
+        return false;
+    }
+
     private boolean isPlaneswalker(Permanent perm) {
         return perm.getCard().hasType(CardType.PLANESWALKER);
     }
