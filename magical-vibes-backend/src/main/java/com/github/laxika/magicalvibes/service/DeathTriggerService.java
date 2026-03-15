@@ -66,8 +66,6 @@ public class DeathTriggerService {
                 }
             } else if (effect instanceof MayPayManaEffect mayPay) {
                 gameData.queueMayAbility(dyingCard, controllerId, mayPay, null);
-            } else if (effect instanceof MayEffect may) {
-                gameData.queueMayAbility(dyingCard, controllerId, may);
             } else if (effect instanceof TargetPlayerLosesLifeEqualToPowerEffect) {
                 // Bake the dying creature's last-known power into a concrete TargetPlayerLosesLifeEffect
                 int power = dyingPermanent != null ? dyingPermanent.getEffectivePower()
@@ -77,10 +75,15 @@ public class DeathTriggerService {
                         dyingCard, controllerId, new ArrayList<>(List.of(resolved))
                 ));
             } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
-                // Targeted death trigger — queue for target selection after current action completes
+                // Targeted death trigger — queue for target selection after current action completes.
+                // Checked before MayEffect because MayEffect delegates canTargetPlayer() to its
+                // wrapped effect, and targeted "may" abilities need the target chosen when stacking
+                // (CR 603.3d), with the "may" choice deferred to resolution (CR 603.5).
                 gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
                         dyingCard, controllerId, new ArrayList<>(List.of(effect))
                 ));
+            } else if (effect instanceof MayEffect may) {
+                gameData.queueMayAbility(dyingCard, controllerId, may);
             } else {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

@@ -482,13 +482,14 @@ public class InteractionState {
                 params.reorderRemainingToBottom(), params.reorderRemainingToTop(),
                 params.shuffleAfterSelection(),
                 params.prompt(), params.destination(), params.filterCardTypes(),
-                params.accumulatedCards(), params.filterCardName()
+                params.accumulatedCards(), params.filterCardName(), params.attachToPlayerId()
         );
         this.context = new InteractionContext.LibrarySearch(params.playerId(), params.cards(), params.reveals(),
                 params.canFailToFind(), params.targetPlayerId(), params.remainingCount(), params.sourceCards(),
                 params.reorderRemainingToBottom(), params.reorderRemainingToTop(),
                 params.shuffleAfterSelection(), params.prompt(), params.destination(),
-                params.filterCardTypes(), params.accumulatedCards(), params.filterCardName());
+                params.filterCardTypes(), params.accumulatedCards(), params.filterCardName(),
+                params.attachToPlayerId());
     }
 
     public void clearLibrarySearch() {
@@ -505,7 +506,7 @@ public class InteractionState {
                 librarySearch.reorderRemainingToTop(),
                 librarySearch.shuffleAfterSelection(), librarySearch.prompt(), librarySearch.destination(),
                 librarySearch.filterCardTypes(), librarySearch.accumulatedCards(),
-                librarySearch.filterCardName());
+                librarySearch.filterCardName(), librarySearch.attachToPlayerId());
     }
 
     // ========================================================================

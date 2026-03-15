@@ -304,7 +304,8 @@ public class LibraryChoiceHandlerService {
                 ? librarySearch.destination()
                 : LibrarySearchDestination.HAND;
         boolean toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD
-                || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
+                || destination == LibrarySearchDestination.BATTLEFIELD_TAPPED
+                || destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER;
         boolean toBattlefieldTapped = destination == LibrarySearchDestination.BATTLEFIELD_TAPPED;
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
@@ -349,6 +350,9 @@ public class LibraryChoiceHandlerService {
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
                     if (toBattlefieldTapped) {
                         perm.tap();
+                    }
+                    if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER && librarySearch.attachToPlayerId() != null) {
+                        perm.setAttachedTo(librarySearch.attachToPlayerId());
                     }
                     if (chosenCard.hasType(CardType.CREATURE)) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
@@ -581,6 +585,12 @@ public class LibraryChoiceHandlerService {
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
                 gameData.imprintSourcePermanentId = null;
             }
+        } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER) {
+            Permanent perm = new Permanent(chosenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+            if (librarySearch.attachToPlayerId() != null) {
+                perm.setAttachedTo(librarySearch.attachToPlayerId());
+            }
         } else {
             if (remainingCount > 1) {
                 // CR 608.2f: Accumulate for simultaneous battlefield entry
@@ -672,6 +682,7 @@ public class LibraryChoiceHandlerService {
             String destinationText = switch (destination) {
                 case BATTLEFIELD -> "onto the battlefield";
                 case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
+                case BATTLEFIELD_ATTACHED_TO_PLAYER -> "onto the battlefield";
                 case HAND -> "into their hand";
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE, EXILE_PLAYABLE -> "into exile";

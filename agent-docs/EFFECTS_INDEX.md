@@ -386,6 +386,7 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCreatureWithMVXOrLessToHandEffect` | `()` | search library for creature with MV X or less to hand |
 | `SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect` | `(CardColor requiredColor)` | search library for creature of specified color with MV X or less to battlefield |
 | `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect` | `(CardSubtype requiredSubtype)` | search library for creature card with specified subtype and put it onto the battlefield |
+| `SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect` | `(CardSubtype requiredSubtype)` | search library for card with specified subtype and put it onto the battlefield attached to target player. `canTargetPlayer()=true`. Used for Curse search (e.g. Bitterheart Witch) |
 | `SearchLibraryForCreatureWithExactMVToBattlefieldEffect` | `(int mvOffset)` | search library for creature with MV exactly equal to xValue + mvOffset, put onto battlefield. Used with `SacrificeCreatureCost(true)` which stores sacrificed creature's MV in xValue (e.g. Birthing Pod with mvOffset=1) |
 | `CastTopOfLibraryWithoutPayingManaCostEffect` | `(Set<CardType> castableTypes)` | look at top card of controller's library; if it matches one of the castable types, may cast it without paying its mana cost |
 | `RevealTopCardMayPlayFreeOrExileEffect` | `()` | reveal top card of controller's library; may play it (any type, including lands) without paying its mana cost; if not played, exile it. Used by Djinn of Wishes |

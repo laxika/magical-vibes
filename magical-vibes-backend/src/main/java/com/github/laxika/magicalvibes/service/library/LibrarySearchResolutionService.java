@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardToE
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -595,6 +596,51 @@ public class LibrarySearchResolutionService {
                 true,
                 LibrarySearchDestination.BATTLEFIELD
         );
+    }
+
+    /**
+     * Searches the controller's library for a card with the required subtype and puts it
+     * onto the battlefield attached to a target player. Used by Bitterheart Witch (Curse search).
+     */
+    @HandlesEffect(SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect.class)
+    void resolveSearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayer(GameData gameData, StackEntry entry,
+                                                                           SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        CardSubtype requiredSubtype = effect.requiredSubtype();
+        String subtypeName = requiredSubtype.getDisplayName();
+
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = deck.stream()
+                .filter(card -> card.getSubtypes().contains(requiredSubtype))
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            String logMsg = playerName + " searches their library but finds no " + subtypeName + " cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no {} cards found", gameData.id, playerName, subtypeName);
+            return;
+        }
+
+        String prompt = "Search your library for a " + subtypeName + " card and put it onto the battlefield.";
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER)
+                .attachToPlayerId(targetPlayerId)
+                .build(), prompt, true);
+
+        log.info("Game {} - {} searches library for {} card ({} matches)", gameData.id, playerName, subtypeName, matchingCards.size());
     }
 
     @HandlesEffect(SearchLibraryForCreatureWithExactMVToBattlefieldEffect.class)

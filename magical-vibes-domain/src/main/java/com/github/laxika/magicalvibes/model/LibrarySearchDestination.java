@@ -9,5 +9,6 @@ public enum LibrarySearchDestination {
     EXILE_PLAYABLE,
     TOP_OF_LIBRARY,
     GRAVEYARD,
+    BATTLEFIELD_ATTACHED_TO_PLAYER,
     SPHINX_AMBASSADOR
 }

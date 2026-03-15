@@ -23,7 +23,8 @@ public record LibrarySearchParams(
         LibrarySearchDestination destination,
         Set<CardType> filterCardTypes,
         List<Card> accumulatedCards,
-        String filterCardName
+        String filterCardName,
+        UUID attachToPlayerId
 ) {
     public static Builder builder(UUID playerId, List<Card> cards) {
         return new Builder(playerId, cards);
@@ -45,6 +46,7 @@ public record LibrarySearchParams(
         private Set<CardType> filterCardTypes;
         private List<Card> accumulatedCards = List.of();
         private String filterCardName;
+        private UUID attachToPlayerId;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -116,11 +118,16 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder attachToPlayerId(UUID attachToPlayerId) {
+            this.attachToPlayerId = attachToPlayerId;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     shuffleAfterSelection, prompt, destination, filterCardTypes, accumulatedCards,
-                    filterCardName);
+                    filterCardName, attachToPlayerId);
         }
     }
 }

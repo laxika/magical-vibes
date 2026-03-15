@@ -119,7 +119,8 @@ public enum CardSubtype {
     HOMUNCULUS("Homunculus"),
     PRAETOR("Praetor"),
     KARN("Karn"),
-    JACE("Jace");
+    JACE("Jace"),
+    CURSE("Curse");
 
     @Getter
     private final String displayName;

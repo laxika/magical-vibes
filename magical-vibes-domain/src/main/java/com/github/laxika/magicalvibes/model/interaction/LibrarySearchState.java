@@ -27,6 +27,7 @@ public class LibrarySearchState {
     private final Set<CardType> filterCardTypes;
     private final List<Card> accumulatedCards;
     private final String filterCardName;
+    private final UUID attachToPlayerId;
 
     public LibrarySearchState(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                               UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
@@ -34,7 +35,7 @@ public class LibrarySearchState {
                               boolean shuffleAfterSelection,
                               String prompt, LibrarySearchDestination destination,
                               Set<CardType> filterCardTypes, List<Card> accumulatedCards,
-                              String filterCardName) {
+                              String filterCardName, UUID attachToPlayerId) {
         this.playerId = playerId;
         this.cards = cards;
         this.reveals = reveals;
@@ -50,6 +51,7 @@ public class LibrarySearchState {
         this.filterCardTypes = filterCardTypes;
         this.accumulatedCards = accumulatedCards;
         this.filterCardName = filterCardName;
+        this.attachToPlayerId = attachToPlayerId;
     }
 
     public UUID playerId() {
@@ -112,6 +114,10 @@ public class LibrarySearchState {
         return filterCardName;
     }
 
+    public UUID attachToPlayerId() {
+        return attachToPlayerId;
+    }
+
     public LibrarySearchState deepCopy() {
         return new LibrarySearchState(
                 playerId,
@@ -121,7 +127,7 @@ public class LibrarySearchState {
                 reorderRemainingToBottom, reorderRemainingToTop, shuffleAfterSelection, prompt, destination,
                 filterCardTypes != null ? new HashSet<>(filterCardTypes) : null,
                 accumulatedCards != null ? new ArrayList<>(accumulatedCards) : null,
-                filterCardName
+                filterCardName, attachToPlayerId
         );
     }
 }

@@ -57,14 +57,14 @@ public sealed interface InteractionContext permits
                          boolean shuffleAfterSelection,
                          String prompt, LibrarySearchDestination destination,
                          Set<CardType> filterCardTypes, List<Card> accumulatedCards,
-                         String filterCardName) implements InteractionContext {
+                         String filterCardName, UUID attachToPlayerId) implements InteractionContext {
 
         public LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                              UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
                              boolean reorderRemainingToBottom, boolean shuffleAfterSelection,
                              String prompt, LibrarySearchDestination destination) {
             this(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount, sourceCards,
-                    reorderRemainingToBottom, false, shuffleAfterSelection, prompt, destination, null, List.of(), null);
+                    reorderRemainingToBottom, false, shuffleAfterSelection, prompt, destination, null, List.of(), null, null);
         }
     }
 

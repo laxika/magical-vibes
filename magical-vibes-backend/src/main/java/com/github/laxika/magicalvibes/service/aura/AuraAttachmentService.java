@@ -47,7 +47,9 @@ public class AuraAttachmentService {
             Iterator<Permanent> it = battlefield.iterator();
             while (it.hasNext()) {
                 Permanent p = it.next();
-                if (p.isAttached() && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
+                if (p.isAttached()
+                        && !gameData.playerIds.contains(p.getAttachedTo())
+                        && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null) {
                     if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         // Equipment stays on the battlefield unattached when the equipped creature leaves
                         p.setAttachedTo(null);
