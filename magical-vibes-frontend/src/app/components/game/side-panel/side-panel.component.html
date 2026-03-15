@@ -33,9 +33,7 @@
               }
               <span class="hand-size">Hand: {{ player1HandSize }}</span>
               <span class="deck-size">Deck: {{ player1DeckSize }}</span>
-              @if (holdsPriority0) {
-                <span class="priority-indicator">Priority</span>
-              }
+              <span class="priority-indicator" [class.hidden]="!holdsPriority0">Priority</span>
             </div>
             @if (showPlayerMenu() && myPlayerIndex === 0) {
               <div class="player-menu" (click)="$event.stopPropagation()">
@@ -56,9 +54,7 @@
               }
               <span class="hand-size">Hand: {{ player2HandSize }}</span>
               <span class="deck-size">Deck: {{ player2DeckSize }}</span>
-              @if (holdsPriority1) {
-                <span class="priority-indicator">Priority</span>
-              }
+              <span class="priority-indicator" [class.hidden]="!holdsPriority1">Priority</span>
             </div>
             @if (showPlayerMenu() && myPlayerIndex === 1) {
               <div class="player-menu" (click)="$event.stopPropagation()">

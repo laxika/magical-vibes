@@ -296,6 +296,11 @@
   letter-spacing: 1px;
   margin-top: 3px;
   color: var(--color-gold);
+  visibility: visible;
+}
+
+.priority-indicator.hidden {
+  visibility: hidden;
 }
 
 .player-badge.inactive .priority-indicator {

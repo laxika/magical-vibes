@@ -31,6 +31,7 @@ function makeCard(overrides: Partial<Card>): Card {
     alternateCostLifePayment: 0,
     alternateCostSacrificeCount: 0,
     graveyardActivatedAbilities: [],
+    transformable: false,
     ...overrides
   };
 }
@@ -62,6 +63,7 @@ function makePermanent(id: string, card: Card, overrides?: Partial<Permanent>): 
     wishCounters: 0,
     attackTargetId: null,
     markedDamage: 0,
+    transformed: false,
     ...overrides
   };
 }
