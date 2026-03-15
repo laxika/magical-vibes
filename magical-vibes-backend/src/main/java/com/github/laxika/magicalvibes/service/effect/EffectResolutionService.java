@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
@@ -195,6 +196,8 @@ public class EffectResolutionService {
         return switch (replacement) {
             case MetalcraftReplacementEffect ignored ->
                     gameQueryService.isMetalcraftMet(gameData, entry.getControllerId());
+            case MorbidReplacementEffect ignored ->
+                    gameQueryService.isMorbidMet(gameData);
             default -> {
                 log.warn("Unknown replacement conditional effect type: {}", replacement.getClass().getSimpleName());
                 yield false;

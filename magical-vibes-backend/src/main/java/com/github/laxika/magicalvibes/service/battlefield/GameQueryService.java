@@ -430,6 +430,15 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if a creature died this turn (morbid condition).
+     * Checks all players' death counts since morbid is not controller-specific.
+     */
+    public boolean isMorbidMet(GameData gameData) {
+        return gameData.creatureDeathCountThisTurn.values().stream()
+                .anyMatch(count -> count > 0);
+    }
+
+    /**
      * Returns {@code true} if the given creature can attack despite having defender.
      * Checks for {@link CanAttackAsThoughNoDefenderEffect} in static effects, including
      * those wrapped in {@link MetalcraftConditionalEffect}.
