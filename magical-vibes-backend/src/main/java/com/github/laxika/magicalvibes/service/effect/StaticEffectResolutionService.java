@@ -28,13 +28,11 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerCardsInAllGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerControlledSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerMatchingLandNameEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
@@ -138,16 +136,6 @@ public class StaticEffectResolutionService {
         }
     }
 
-    @HandlesStaticEffect(BoostAttachedCreatureEffect.class)
-    private void resolveBoostAttachedCreature(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostAttachedCreatureEffect) effect;
-        if (context.source().isAttached()
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-        }
-    }
-
     @HandlesStaticEffect(EnchantedCreatureSubtypeConditionalEffect.class)
     private void resolveEnchantedCreatureSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var conditional = (EnchantedCreatureSubtypeConditionalEffect) effect;
@@ -175,11 +163,10 @@ public class StaticEffectResolutionService {
                 || permanent.hasKeyword(Keyword.CHANGELING);
     }
 
-    @HandlesStaticEffect(BoostAttachedCreaturePerCardsInAllGraveyardsEffect.class)
-    private void resolveBoostAttachedCreaturePerCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostAttachedCreaturePerCardsInAllGraveyardsEffect) effect;
-        if (!context.source().isAttached()
-                || !context.source().getAttachedTo().equals(context.target().getId())) {
+    @HandlesStaticEffect(BoostCreaturePerCardsInAllGraveyardsEffect.class)
+    private void resolveBoostCreaturePerCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostCreaturePerCardsInAllGraveyardsEffect) effect;
+        if (!matchesCreatureScope(context, boost.scope(), null)) {
             return;
         }
 
@@ -188,11 +175,10 @@ public class StaticEffectResolutionService {
         accumulator.addToughness(count);
     }
 
-    @HandlesStaticEffect(BoostAttachedCreaturePerMatchingLandNameEffect.class)
-    private void resolveBoostAttachedCreaturePerMatchingLandName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostAttachedCreaturePerMatchingLandNameEffect) effect;
-        if (!context.source().isAttached()
-                || !context.source().getAttachedTo().equals(context.target().getId())) {
+    @HandlesStaticEffect(BoostCreaturePerMatchingLandNameEffect.class)
+    private void resolveBoostCreaturePerMatchingLandName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostCreaturePerMatchingLandNameEffect) effect;
+        if (!matchesCreatureScope(context, boost.scope(), null)) {
             return;
         }
 
@@ -215,11 +201,10 @@ public class StaticEffectResolutionService {
         accumulator.addToughness(count[0] * boost.toughnessPerMatch());
     }
 
-    @HandlesStaticEffect(BoostAttachedCreaturePerControlledSubtypeEffect.class)
-    private void resolveBoostAttachedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostAttachedCreaturePerControlledSubtypeEffect) effect;
-        if (!context.source().isAttached()
-                || !context.source().getAttachedTo().equals(context.target().getId())) {
+    @HandlesStaticEffect(BoostCreaturePerControlledSubtypeEffect.class)
+    private void resolveBoostCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostCreaturePerControlledSubtypeEffect) effect;
+        if (!matchesCreatureScope(context, boost.scope(), null)) {
             return;
         }
 
@@ -251,35 +236,6 @@ public class StaticEffectResolutionService {
                 && context.source().getAttachedTo().equals(context.target().getId())) {
             accumulator.addProtectionColors(protection.colors());
         }
-    }
-
-    @HandlesStaticEffect(BoostEnchantedCreaturePerControlledSubtypeEffect.class)
-    private void resolveBoostEnchantedCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostEnchantedCreaturePerControlledSubtypeEffect) effect;
-        if (!context.source().isAttached()
-                || !context.source().getAttachedTo().equals(context.target().getId())) {
-            return;
-        }
-
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) {
-            return;
-        }
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
-                count++;
-            }
-        }
-
-        accumulator.addPower(count * boost.powerPerSubtype());
-        accumulator.addToughness(count * boost.toughnessPerSubtype());
     }
 
     @HandlesStaticEffect(GrantKeywordEffect.class)
@@ -397,13 +353,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(StaticBoostEffect.class)
     private void resolveStaticBoost(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (StaticBoostEffect) effect;
-        boolean scopeMatch = switch (boost.scope()) {
-            case OWN_CREATURES -> context.targetOnSameBattlefield();
-            case OPPONENT_CREATURES -> !context.targetOnSameBattlefield();
-            case ALL_CREATURES -> true;
-            default -> false;
-        };
-        if (scopeMatch && matchesStaticFilter(context.target(), boost.filter())) {
+        if (matchesCreatureScope(context, boost.scope(), boost.filter())) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
             accumulator.addKeywords(boost.grantedKeywords());

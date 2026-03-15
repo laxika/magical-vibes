@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * effect is active.
  * <p>
  * Both inner effects can be any existing {@link CardEffect} — e.g., a
- * {@code BoostAttachedCreatureEffect} for the match branch and an
+ * {@code StaticBoostEffect} for the match branch and an
  * {@code EnchantedCreatureCantAttackOrBlockEffect} for the non-match branch.
  * <p>
  * The static effect system delegates to the active inner effect's handler for bonuses.

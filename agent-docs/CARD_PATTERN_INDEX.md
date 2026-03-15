@@ -293,14 +293,14 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Lockdown (can't attack/block) | `p/Pacifism.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect |
-| Subtype-conditional aura | `b/BondsOfFaith.java` | STATIC EnchantedCreatureSubtypeConditionalEffect(HUMAN, BoostAttachedCreatureEffect(2,2), EnchantedCreatureCantAttackOrBlockEffect()) — composes existing effects, +2/+2 if Human, can't attack/block otherwise |
+| Subtype-conditional aura | `b/BondsOfFaith.java` | STATIC EnchantedCreatureSubtypeConditionalEffect(HUMAN, StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE), EnchantedCreatureCantAttackOrBlockEffect()) — composes existing effects, +2/+2 if Human, can't attack/block otherwise |
 | Lockdown (can't attack) + self-bounce | `f/ForcedWorship.java` | STATIC EnchantedCreatureCantAttackEffect + activated ReturnSelfToHandEffect |
 | Full lockdown (can't attack/block/activate) | `a/Arrest.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect |
 | Lockdown + self-destruct on target | `i/IceCage.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect + ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY DestroySourcePermanentEffect |
 | Doesn't untap | `d/Dehydration.java` | STATIC EnchantedCreatureDoesntUntapEffect |
-| Static boost | `h/HolyStrength.java` | STATIC BoostAttachedCreatureEffect |
+| Static boost | `h/HolyStrength.java` | STATIC StaticBoostEffect(X, Y, GrantScope.ENCHANTED_CREATURE) |
 | Boost + keyword | `s/SerrasEmbrace.java` | Boost + GrantKeywordEffect(ENCHANTED_CREATURE) |
-| Boost per subtype | `b/BlanchwoodArmor.java` | STATIC BoostEnchantedCreaturePerControlledSubtypeEffect |
+| Boost per subtype | `b/BlanchwoodArmor.java` | STATIC BoostCreaturePerControlledSubtypeEffect |
 | Control enchanted | `p/Persuasion.java` | STATIC ControlEnchantedCreatureEffect |
 | Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityEffect with GrantScope.ENCHANTED_CREATURE |
 | Redirect damage to creature | `p/Pariah.java` | STATIC RedirectPlayerDamageToEnchantedCreatureEffect |
@@ -344,20 +344,20 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Simple boost equip | `l/LeoninScimitar.java` | STATIC BoostAttachedCreatureEffect + EquipActivatedAbility |
+| Simple boost equip | `l/LeoninScimitar.java` | STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + EquipActivatedAbility |
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
-| Boost + can't block equip | `c/CopperCarapace.java` | STATIC BoostAttachedCreatureEffect + CantBlockEffect + equip |
-| ETB attach + sacrifice equip | `p/PistonSledge.java` | ON_ENTER_BATTLEFIELD AttachSourceEquipmentToTargetCreatureEffect + STATIC BoostAttachedCreatureEffect + equip with SacrificeArtifactCost (no mana). Uses ControlledPermanentPredicateTargetFilter on card for ETB targeting |
-| Living weapon equip | `s/Strandwalker.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC BoostAttachedCreatureEffect + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
-| Living weapon + per-subtype boost equip | `l/Lashwrithe.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC BoostAttachedCreaturePerControlledSubtypeEffect(SWAMP, 1, 1) + Phyrexian mana equip |
-| Boost + color/subtype + death trigger equip | `n/NimDeathmantle.java` | STATIC BoostAttachedCreatureEffect + GrantKeywordEffect(EQUIPPED_CREATURE) + GrantColorEffect(BLACK, EQUIPPED_CREATURE) + GrantSubtypeEffect(ZOMBIE, EQUIPPED_CREATURE) + ON_ANY_NONTOKEN_CREATURE_DIES MayPayManaEffect("{4}", ReturnDyingCreatureToBattlefieldAndAttachSourceEffect) + equip |
-| Imprint + land-name boost equip | `s/StrataScythe.java` | ON_ENTER_BATTLEFIELD SearchLibraryForCardTypeToExileAndImprintEffect(LAND) + STATIC BoostAttachedCreaturePerMatchingLandNameEffect(1,1) + equip — imprint land from library on ETB, equipped creature gets +1/+1 per matching land on all battlefields |
-| Boost + equipped creature death trigger equip | `s/SylvokLifestaff.java` | STATIC BoostAttachedCreatureEffect(1, 0) + ON_EQUIPPED_CREATURE_DIES GainLifeEffect(3) + equip — triggers when the creature it's attached to dies |
+| Boost + can't block equip | `c/CopperCarapace.java` | STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + CantBlockEffect + equip |
+| ETB attach + sacrifice equip | `p/PistonSledge.java` | ON_ENTER_BATTLEFIELD AttachSourceEquipmentToTargetCreatureEffect + STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + equip with SacrificeArtifactCost (no mana). Uses ControlledPermanentPredicateTargetFilter on card for ETB targeting |
+| Living weapon equip | `s/Strandwalker.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
+| Living weapon + per-subtype boost equip | `l/Lashwrithe.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC BoostCreaturePerControlledSubtypeEffect(SWAMP, 1, 1, GrantScope.EQUIPPED_CREATURE) + Phyrexian mana equip |
+| Boost + color/subtype + death trigger equip | `n/NimDeathmantle.java` | STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + GrantKeywordEffect(EQUIPPED_CREATURE) + GrantColorEffect(BLACK, EQUIPPED_CREATURE) + GrantSubtypeEffect(ZOMBIE, EQUIPPED_CREATURE) + ON_ANY_NONTOKEN_CREATURE_DIES MayPayManaEffect("{4}", ReturnDyingCreatureToBattlefieldAndAttachSourceEffect) + equip |
+| Imprint + land-name boost equip | `s/StrataScythe.java` | ON_ENTER_BATTLEFIELD SearchLibraryForCardTypeToExileAndImprintEffect(LAND) + STATIC BoostCreaturePerMatchingLandNameEffect(1, 1, GrantScope.EQUIPPED_CREATURE) + equip — imprint land from library on ETB, equipped creature gets +1/+1 per matching land on all battlefields |
+| Boost + equipped creature death trigger equip | `s/SylvokLifestaff.java` | STATIC StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE) + ON_EQUIPPED_CREATURE_DIES GainLifeEffect(3) + equip — triggers when the creature it's attached to dies |
 | Grant ability + doesn't untap equip | `h/HeavyArbalest.java` | STATIC EquippedCreatureDoesntUntapEffect + GrantActivatedAbilityEffect(EQUIPPED_CREATURE) + equip |
 | Per-blocker trigger equip | `i/InfiltrationLens.java` | ON_BECOMES_BLOCKED MayEffect(DrawCardEffect(2)) + `TriggerMode.PER_BLOCKER` + equip. Use `addEffect(slot, effect, TriggerMode.PER_BLOCKER)` for "becomes blocked by a creature" triggers that fire once per blocker |
-| Becomes-target trigger equip | `l/LivewireLash.java` | ON_BECOMES_TARGET_OF_SPELL DealDamageToAnyTargetEffect(2) + STATIC BoostAttachedCreatureEffect(2, 0) + equip. Grants triggered ability to equipped creature: when it becomes the target of a spell, deal 2 damage to any target |
-| Boost + grant card type equip | `s/SilverskinArmor.java` | STATIC BoostAttachedCreatureEffect(1, 1) + GrantCardTypeEffect(ARTIFACT, EQUIPPED_CREATURE) + equip. Makes equipped creature an artifact in addition to its other types (counts for metalcraft, artifact targeting, etc.) |
-| Sword cycle (boost + protection + combat trigger) | `s/SwordOfWarAndPeace.java` | STATIC BoostAttachedCreatureEffect(2,2) + ProtectionFromColorsEffect(RED, WHITE) + ON_COMBAT_DAMAGE_TO_PLAYER DealDamageToTargetPlayerByHandSizeEffect + GainLifePerCardsInHandEffect + equip. Also: `SwordOfFeastAndFamine` (discard + untap lands), `SwordOfBodyAndMind` (token + mill) |
+| Becomes-target trigger equip | `l/LivewireLash.java` | ON_BECOMES_TARGET_OF_SPELL DealDamageToAnyTargetEffect(2) + STATIC StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE) + equip. Grants triggered ability to equipped creature: when it becomes the target of a spell, deal 2 damage to any target |
+| Boost + grant card type equip | `s/SilverskinArmor.java` | STATIC StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE) + GrantCardTypeEffect(ARTIFACT, EQUIPPED_CREATURE) + equip. Makes equipped creature an artifact in addition to its other types (counts for metalcraft, artifact targeting, etc.) |
+| Sword cycle (boost + protection + combat trigger) | `s/SwordOfWarAndPeace.java` | STATIC StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE) + ProtectionFromColorsEffect(RED, WHITE) + ON_COMBAT_DAMAGE_TO_PLAYER DealDamageToTargetPlayerByHandSizeEffect + GainLifePerCardsInHandEffect + equip. Also: `SwordOfFeastAndFamine` (discard + untap lands), `SwordOfBodyAndMind` (token + mill) |
 | Evasion + sacrifice-equip-to-deal-damage | `b/BlazingTorch.java` | STATIC CanBeBlockedOnlyByFilterEffect(PermanentNotPredicate(vampires/zombies)) + GrantActivatedAbilityEffect(EQUIPPED_CREATURE) with SacrificeSourceEquipmentCost + DealDamageToAnyTargetEffect + equip |
 
 ## Activated abilities

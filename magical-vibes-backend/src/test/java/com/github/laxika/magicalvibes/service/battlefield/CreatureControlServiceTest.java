@@ -20,7 +20,7 @@ class CreatureControlServiceTest extends BaseCardTest {
 
     @BeforeEach
     void setUpService() {
-        creatureControlService = new CreatureControlService(new GameBroadcastService(null, null, null, null, null), gqs);
+        creatureControlService = new CreatureControlService(new GameBroadcastService(null, null, null, null, null, null), gqs);
     }
 
     private Permanent addCreature(UUID playerId, GrizzlyBears card) {

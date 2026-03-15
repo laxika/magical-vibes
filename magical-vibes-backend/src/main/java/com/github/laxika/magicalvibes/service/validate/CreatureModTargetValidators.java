@@ -4,10 +4,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerControlledSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreaturePerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -59,8 +58,8 @@ public class CreatureModTargetValidators {
         tvs.requireCreature(ctx, target);
     }
 
-    @ValidatesTarget(BoostAttachedCreatureEffect.class)
-    public void validateBoostAttachedCreature(TargetValidationContext ctx) {
+    @ValidatesTarget(StaticBoostEffect.class)
+    public void validateStaticBoost(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
     }
@@ -71,14 +70,8 @@ public class CreatureModTargetValidators {
         tvs.requireCreature(ctx, target);
     }
 
-    @ValidatesTarget(BoostEnchantedCreaturePerControlledSubtypeEffect.class)
-    public void validateBoostEnchantedCreaturePerSubtype(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-    }
-
-    @ValidatesTarget(BoostAttachedCreaturePerControlledSubtypeEffect.class)
-    public void validateBoostAttachedCreaturePerSubtype(TargetValidationContext ctx) {
+    @ValidatesTarget(BoostCreaturePerControlledSubtypeEffect.class)
+    public void validateBoostCreaturePerSubtype(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
     }

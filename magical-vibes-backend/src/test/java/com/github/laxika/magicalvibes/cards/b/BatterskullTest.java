@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -44,9 +44,9 @@ class BatterskullTest extends BaseCardTest {
     void hasStaticBoostAndKeywords() {
         Batterskull card = new Batterskull();
 
-        BoostAttachedCreatureEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof BoostAttachedCreatureEffect)
-                .map(e -> (BoostAttachedCreatureEffect) e)
+        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof StaticBoostEffect)
+                .map(e -> (StaticBoostEffect) e)
                 .findFirst().orElseThrow();
         assertThat(boost.powerBoost()).isEqualTo(4);
         assertThat(boost.toughnessBoost()).isEqualTo(4);

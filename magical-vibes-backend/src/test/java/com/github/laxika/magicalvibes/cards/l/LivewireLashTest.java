@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ class LivewireLashTest extends BaseCardTest {
         LivewireLash card = new LivewireLash();
 
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof BoostAttachedCreatureEffect bace
+                .filteredOn(e -> e instanceof StaticBoostEffect bace
                         && bace.powerBoost() == 2 && bace.toughnessBoost() == 0)
                 .hasSize(1);
     }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerMatchingLandNameEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -48,8 +48,8 @@ class StrataScytheTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostAttachedCreaturePerMatchingLandNameEffect.class);
-        var boost = (BoostAttachedCreaturePerMatchingLandNameEffect)
+                .isInstanceOf(BoostCreaturePerMatchingLandNameEffect.class);
+        var boost = (BoostCreaturePerMatchingLandNameEffect)
                 card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(boost.powerPerMatch()).isEqualTo(1);
         assertThat(boost.toughnessPerMatch()).isEqualTo(1);

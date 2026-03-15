@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -44,11 +44,11 @@ class PistonSledgeTest extends BaseCardTest {
         PistonSledge card = new PistonSledge();
 
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof BoostAttachedCreatureEffect)
+                .filteredOn(e -> e instanceof StaticBoostEffect)
                 .hasSize(1);
-        BoostAttachedCreatureEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof BoostAttachedCreatureEffect)
-                .map(e -> (BoostAttachedCreatureEffect) e)
+        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof StaticBoostEffect)
+                .map(e -> (StaticBoostEffect) e)
                 .findFirst().orElseThrow();
         assertThat(boost.powerBoost()).isEqualTo(3);
         assertThat(boost.toughnessBoost()).isEqualTo(1);

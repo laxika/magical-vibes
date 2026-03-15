@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -28,8 +28,8 @@ class SylvokLifestaffTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostAttachedCreatureEffect.class);
-        BoostAttachedCreatureEffect boost = (BoostAttachedCreatureEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+                .isInstanceOf(StaticBoostEffect.class);
+        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(boost.powerBoost()).isEqualTo(1);
         assertThat(boost.toughnessBoost()).isEqualTo(0);
     }

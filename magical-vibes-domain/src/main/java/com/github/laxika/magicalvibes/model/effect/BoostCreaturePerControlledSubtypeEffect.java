@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
-public record BoostEnchantedCreaturePerControlledSubtypeEffect(
+public record BoostCreaturePerControlledSubtypeEffect(
         CardSubtype subtype,
         int powerPerSubtype,
-        int toughnessPerSubtype
+        int toughnessPerSubtype,
+        GrantScope scope
 ) implements CardEffect {
 }

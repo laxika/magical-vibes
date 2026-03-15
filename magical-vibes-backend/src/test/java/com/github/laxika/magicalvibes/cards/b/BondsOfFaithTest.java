@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -36,7 +36,7 @@ class BondsOfFaithTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         var effect = (EnchantedCreatureSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(effect.subtype()).isEqualTo(CardSubtype.HUMAN);
-        assertThat(effect.ifMatch()).isInstanceOf(BoostAttachedCreatureEffect.class);
+        assertThat(effect.ifMatch()).isInstanceOf(StaticBoostEffect.class);
         assertThat(effect.ifNotMatch()).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
     }
 

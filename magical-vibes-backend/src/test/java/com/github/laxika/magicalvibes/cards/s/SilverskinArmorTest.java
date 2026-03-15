@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -22,8 +22,8 @@ class SilverskinArmorTest extends BaseCardTest {
         SilverskinArmor card = new SilverskinArmor();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostAttachedCreatureEffect.class);
-        BoostAttachedCreatureEffect boost = (BoostAttachedCreatureEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
+        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(0);
         assertThat(boost.powerBoost()).isEqualTo(1);
         assertThat(boost.toughnessBoost()).isEqualTo(1);
 

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,7 +22,7 @@ public class Mortarpod extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
 
         // Equipped creature gets +0/+1
-        addEffect(EffectSlot.STATIC, new BoostAttachedCreatureEffect(0, 1));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Equipped creature has "Sacrifice this creature: This creature deals 1 damage to any target."
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

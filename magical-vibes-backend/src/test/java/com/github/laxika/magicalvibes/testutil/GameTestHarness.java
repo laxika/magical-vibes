@@ -180,8 +180,9 @@ public class GameTestHarness {
         StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(gameQueryService, staticEffectHandlerRegistry);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
         playerInputService = new PlayerInputService(sessionManager, cardViewFactory);
+        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         gameBroadcastService = new GameBroadcastService(
-                sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService);
+                sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService, validTargetService);
         DraftRegistry draftRegistry = new DraftRegistry();
         legendRuleService = new LegendRuleService(playerInputService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
@@ -239,17 +240,17 @@ public class GameTestHarness {
             scanTargetValidators(bean, targetValidatorRegistry);
         }
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
-        ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService, exileService);
         PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, sessionManager, cardViewFactory, permanentRemovalService, battlefieldEntryService, triggerCollectionService, effectHandlerRegistry);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         DestructionResolutionService destructionResolutionService = new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService);
+        PermanentControlResolutionService permanentControlResolutionService = new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 destructionResolutionService,
-                new MillResolutionService(graveyardService, gameBroadcastService),
+                new MillResolutionService(graveyardService, gameBroadcastService, permanentControlResolutionService),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 new LibrarySearchResolutionService(drawService, gameBroadcastService, sessionManager, cardViewFactory),
                 new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, battlefieldEntryService, exileService),
@@ -268,7 +269,7 @@ public class GameTestHarness {
                 new TapUntapResolutionService(gameQueryService, gameBroadcastService, triggerCollectionService),
                 new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService),
                 playerInteractionResolutionService,
-                new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService),
+                permanentControlResolutionService,
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
                 new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, permanentRemovalService, legendRuleService),

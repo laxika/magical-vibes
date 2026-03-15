@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreaturePerMatchingLandNameEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 
 import java.util.Set;
@@ -22,7 +23,7 @@ public class StrataScythe extends Card {
         // Equipped creature gets +1/+1 for each land on the battlefield with the
         // same name as the exiled card.
         addEffect(EffectSlot.STATIC,
-                new BoostAttachedCreaturePerMatchingLandNameEffect(1, 1));
+                new BoostCreaturePerMatchingLandNameEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

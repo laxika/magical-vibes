@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -262,7 +262,8 @@ public class SpellEvaluator {
         boolean isBeneficial = false;
 
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof BoostAttachedCreatureEffect boost) {
+            if (effect instanceof StaticBoostEffect boost
+                    && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE)) {
                 isBeneficial = true;
                 value += boost.powerBoost() * 2.0 + boost.toughnessBoost();
             }

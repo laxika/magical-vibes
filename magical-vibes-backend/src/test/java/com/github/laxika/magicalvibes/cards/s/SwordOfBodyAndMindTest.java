@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -35,11 +35,11 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
         SwordOfBodyAndMind card = new SwordOfBodyAndMind();
 
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof BoostAttachedCreatureEffect)
+                .filteredOn(e -> e instanceof StaticBoostEffect)
                 .hasSize(1);
-        BoostAttachedCreatureEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof BoostAttachedCreatureEffect)
-                .map(e -> (BoostAttachedCreatureEffect) e)
+        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof StaticBoostEffect)
+                .map(e -> (StaticBoostEffect) e)
                 .findFirst().orElseThrow();
         assertThat(boost.powerBoost()).isEqualTo(2);
         assertThat(boost.toughnessBoost()).isEqualTo(2);
