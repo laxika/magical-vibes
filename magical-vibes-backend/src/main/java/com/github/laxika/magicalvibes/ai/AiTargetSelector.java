@@ -58,27 +58,50 @@ class AiTargetSelector {
             // Target own creature with highest toughness
             List<Permanent> ownBattlefield = gameData.playerBattlefields.get(aiPlayerId);
             if (ownBattlefield != null) {
-                return ownBattlefield.stream()
+                UUID target = ownBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> passesTargetFilter(gameData, card, p, aiPlayerId))
                         .max(Comparator.comparingInt(p -> gameQueryService.getEffectiveToughness(gameData, p)))
                         .map(Permanent::getId)
                         .orElse(null);
+                if (target != null) return target;
             }
-        } else {
-            // Detrimental — target opponent's highest-power creature that doesn't already have this effect
+        } else if (card.isAura()) {
+            // Detrimental aura — target opponent's highest-power creature that doesn't already have this effect
             List<Permanent> oppBattlefield = gameData.playerBattlefields.get(opponentId);
             if (oppBattlefield != null) {
                 List<Class<? extends CardEffect>> auraEffectClasses = card.getEffects(EffectSlot.STATIC).stream()
                         .map(CardEffect::getClass)
                         .toList();
-                return oppBattlefield.stream()
+                UUID target = oppBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> passesTargetFilter(gameData, card, p, aiPlayerId))
                         .filter(p -> auraEffectClasses.stream().noneMatch(ec -> gameQueryService.hasAuraWithEffect(gameData, p, ec)))
                         .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
                         .map(Permanent::getId)
                         .orElse(null);
+                if (target != null) return target;
             }
         }
+
+        // General fallback: find any valid target using the card's target filter
+        if (card.getTargetFilter() != null) {
+            // Search own battlefield first (for beneficial ETB effects like Awakener Druid)
+            List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+            for (Permanent p : ownBattlefield) {
+                if (passesTargetFilter(gameData, card, p, aiPlayerId)) {
+                    return p.getId();
+                }
+            }
+            // Then search opponent battlefield
+            List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+            for (Permanent p : oppBattlefield) {
+                if (passesTargetFilter(gameData, card, p, aiPlayerId)) {
+                    return p.getId();
+                }
+            }
+        }
+
         return null;
     }
 
