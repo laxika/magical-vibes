@@ -824,6 +824,62 @@ public class GameQueryService {
         return accumulator.toStaticBonus(power, toughness, accumulator.isAnimatedCreature() || isSelfAnimated);
     }
 
+    // --- CR 614.12 replacement-effect lookahead ---
+
+    /**
+     * CR 614.12 lookahead: determines whether a permanent <em>about to enter the battlefield</em>
+     * would have the given subtype once all static effects are applied. This considers:
+     * <ol>
+     *   <li>The permanent's natural subtypes (from its card).</li>
+     *   <li>Transient and granted subtypes already on the permanent.</li>
+     *   <li>The Changeling keyword (natural or granted by static effects).</li>
+     *   <li>Static effects from permanents already on the battlefield (e.g., Xenograft,
+     *       Conspiracy, lord effects that grant subtypes).</li>
+     * </ol>
+     *
+     * <p>Per CR 614.12, when multiple permanents enter simultaneously they <em>cannot</em>
+     * see each other. The {@code simultaneouslyEntered} parameter lists permanents that were
+     * already placed on the battlefield as part of the same simultaneous batch and must be
+     * <em>excluded</em> from the lookahead.
+     *
+     * <p>Implementation: temporarily adds the entering permanent to the controller's battlefield
+     * (and removes any {@code simultaneouslyEntered} permanents), runs {@link #computeStaticBonus},
+     * then restores the original state.
+     *
+     * @param gameData               current game state
+     * @param entering               the permanent about to enter the battlefield
+     * @param controllerId           the controller under whose control it will enter
+     * @param simultaneouslyEntered  permanents already on the battlefield from this simultaneous
+     *                               batch that should be excluded from the lookahead; may be empty
+     * @param subtype                the subtype to check for
+     * @return {@code true} if the permanent would have the subtype on the battlefield
+     */
+    public boolean permanentWouldHaveSubtype(GameData gameData, Permanent entering, UUID controllerId,
+                                              List<Permanent> simultaneouslyEntered, CardSubtype subtype) {
+        // Quick path: check natural/transient/granted subtypes
+        if (entering.getCard().getSubtypes().contains(subtype)) return true;
+        if (entering.getTransientSubtypes().contains(subtype)) return true;
+        if (entering.getGrantedSubtypes().contains(subtype)) return true;
+
+        // Quick path: Changeling means all creature subtypes
+        if (isCreatureSubtype(subtype) && entering.getCard().getKeywords().contains(Keyword.CHANGELING)) return true;
+
+        // Full lookahead: temporarily add entering permanent and remove simultaneously-entered
+        // permanents, compute static bonus, then restore original state.
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        bf.add(entering);
+        bf.removeAll(simultaneouslyEntered);
+        try {
+            StaticBonus bonus = computeStaticBonus(gameData, entering);
+            if (bonus.grantedSubtypes().contains(subtype)) return true;
+            // A static effect might grant Changeling
+            return isCreatureSubtype(subtype) && bonus.keywords().contains(Keyword.CHANGELING);
+        } finally {
+            bf.remove(entering);
+            bf.addAll(simultaneouslyEntered);
+        }
+    }
+
     // --- Protection & evasion ---
 
     /**

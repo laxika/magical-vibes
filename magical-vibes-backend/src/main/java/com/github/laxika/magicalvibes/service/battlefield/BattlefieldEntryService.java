@@ -66,26 +66,28 @@ public class BattlefieldEntryService {
     // ===== Permanent entry =====
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
-        Set<CardType> enterTappedTypes = snapshotEnterTappedTypes(gameData);
-        applyEnterTappedEffects(permanent, enterTappedTypes);
-        applySelfEnterTapped(permanent);
-        applyConditionalEnterTapped(gameData, controllerId, permanent);
-        applyAllPermanentsEnterTapped(gameData, permanent);
-        applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
-        applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent);
-        gameData.playerBattlefields.get(controllerId).add(permanent);
-        gameData.permanentsEnteredBattlefieldThisTurn
-                .computeIfAbsent(controllerId, k -> new ArrayList<>())
-                .add(permanent.getCard());
+        putPermanentOntoBattlefield(gameData, controllerId, permanent, snapshotEnterTappedTypes(gameData), List.of());
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes) {
+        putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes, List.of());
+    }
+
+    /**
+     * Core battlefield entry method. All overloads delegate here.
+     *
+     * @param simultaneouslyEntered permanents already placed on the battlefield as part of the
+     *                              same simultaneous batch (e.g. mass reanimation) that must be
+     *                              <em>excluded</em> from the CR 614.12 lookahead; may be empty
+     */
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                             Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered) {
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         applyAllPermanentsEnterTapped(gameData, permanent);
         applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
-        applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent);
+        applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -206,9 +208,13 @@ public class BattlefieldEntryService {
     /**
      * Replacement effect (MTG Rule 614.1c): checks the controller's graveyard for cards with
      * {@link GraveyardEnterWithAdditionalCountersEffect} and adds +1/+1 counters to matching
-     * creatures as they enter the battlefield.
+     * creatures as they enter the battlefield. Uses CR 614.12 lookahead via
+     * {@link GameQueryService#permanentWouldHaveSubtype} to determine subtypes.
+     *
+     * @param simultaneouslyEntered permanents to exclude from lookahead (see CR 614.12)
      */
-    private void applyGraveyardEnterWithAdditionalCounters(GameData gameData, UUID controllerId, Permanent permanent) {
+    private void applyGraveyardEnterWithAdditionalCounters(GameData gameData, UUID controllerId,
+                                                            Permanent permanent, List<Permanent> simultaneouslyEntered) {
         if (!permanent.getCard().hasType(CardType.CREATURE)) return;
 
         boolean cantHaveCounters = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -222,7 +228,8 @@ public class BattlefieldEntryService {
         for (Card card : graveyard) {
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GraveyardEnterWithAdditionalCountersEffect graveyardEffect) {
-                    if (permanent.getCard().getSubtypes().contains(graveyardEffect.subtype())) {
+                    if (gameQueryService.permanentWouldHaveSubtype(gameData, permanent, controllerId,
+                            simultaneouslyEntered, graveyardEffect.subtype())) {
                         additionalCounters += graveyardEffect.count();
                     }
                 }
