@@ -317,6 +317,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Curse (enchant player + combat trigger) | `c/CurseOfStalkedPrey.java` | ON_COMBAT_DAMAGE_TO_PLAYER PutCountersOnSourceEffect(1,1,1) — enchants player (auto-detected from CURSE subtype), whenever a creature deals combat damage to enchanted player, put +1/+1 counter on that creature. CombatDamageService checks curses attached to defending player |
 | Curse (enchant player + upkeep damage) | `c/CurseOfThePiercedHeart.java` | ENCHANTED_PLAYER_UPKEEP_TRIGGERED DealDamageToEnchantedPlayerEffect(1) — enchant player curse; at enchanted player's upkeep, deals 1 damage to that player |
 | Curse (enchant player + upkeep graveyard exile) | `c/CurseOfOblivion.java` | ENCHANTED_PLAYER_UPKEEP_TRIGGERED ExileCardsFromOwnGraveyardEffect(2) — enchant player curse; at enchanted player's upkeep, that player exiles 2 cards from their graveyard |
+| Curse (enchant player + upkeep mill) | `c/CurseOfTheBloodyTome.java` | ENCHANTED_PLAYER_UPKEEP_TRIGGERED MillTargetPlayerEffect(2) — enchant player curse; at enchanted player's upkeep, that player mills 2 cards |
 
 ## Artifacts
 

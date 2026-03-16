@@ -328,7 +328,7 @@ public class StepTriggerService {
         });
 
         // Check all battlefields for curses with ENCHANTED_PLAYER_UPKEEP_TRIGGERED effects
-        // These fire during the enchanted player's upkeep (e.g. Curse of Oblivion)
+        // These fire during the enchanted player's upkeep (e.g. Curse of Oblivion, Curse of the Bloody Tome)
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedPlayerUpkeepEffects = perm.getCard().getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED);
             if (enchantedPlayerUpkeepEffects == null || enchantedPlayerUpkeepEffects.isEmpty()) return;
@@ -353,7 +353,7 @@ public class StepTriggerService {
                         auraOwnerId,
                         perm.getCard().getName() + "'s upkeep ability",
                         new ArrayList<>(List.of(effectForStack)),
-                        (UUID) null,
+                        enchantedPlayerId,
                         perm.getId()
                 ));
 
