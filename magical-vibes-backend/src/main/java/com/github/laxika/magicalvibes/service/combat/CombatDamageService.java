@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoi
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -699,13 +700,19 @@ public class CombatDamageService {
 
             for (UUID damagedCreatureId : entry.getValue()) {
                 for (CardEffect effect : effects) {
+                    CardEffect effectToUse = null;
                     if (effect instanceof DestroyTargetPermanentEffect destroyEffect) {
+                        effectToUse = destroyEffect;
+                    } else if (effect instanceof FlipCoinWinEffect flipEffect) {
+                        effectToUse = flipEffect;
+                    }
+                    if (effectToUse != null) {
                         StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 source.getCard(),
                                 controllerId,
                                 source.getCard().getName() + "'s triggered ability",
-                                List.of(destroyEffect),
+                                List.of(effectToUse),
                                 damagedCreatureId,
                                 source.getId()
                         );
