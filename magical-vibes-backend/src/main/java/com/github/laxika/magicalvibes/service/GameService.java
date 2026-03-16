@@ -301,6 +301,14 @@ public class GameService {
         }
     }
 
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex);
+        }
+    }
+
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, UUID targetPermanentId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);

@@ -523,6 +523,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
+    public void castInstantWithGraveyardExile(Player player, int cardIndex, UUID targetPermanentId, int exileGraveyardCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, null, null, null, exileGraveyardCardIndex);
+    }
+
     public void castInstantWithConvoke(Player player, int cardIndex, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, convokeCreatureIds);

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -91,6 +92,14 @@ public class SpellCastingService {
         return new SacrificeCostFlags(sacAllCreatures, sacCreature, sacArtifact, permCost);
     }
 
+    private ExileCardFromGraveyardCost extractAndRemoveExileGraveyardCost(List<CardEffect> effects) {
+        ExileCardFromGraveyardCost cost = (ExileCardFromGraveyardCost) effects.stream()
+                .filter(ExileCardFromGraveyardCost.class::isInstance)
+                .findFirst().orElse(null);
+        if (cost != null) effects.removeIf(ExileCardFromGraveyardCost.class::isInstance);
+        return cost;
+    }
+
     private int unwrapChooseOneEffect(Card card, List<CardEffect> effects, int effectiveXValue) {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ChooseOneEffect coe) {
@@ -132,17 +141,23 @@ public class SpellCastingService {
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
-        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, null, null);
+        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, null, null, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount) {
-        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, null);
+        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, null, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds) {
+        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetPermanentIds == null) targetPermanentIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -208,6 +223,7 @@ public class SpellCastingService {
         Card card = hand.get(cardIndex);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         SacrificeCostFlags sacFlags = extractAndRemoveSacrificeCosts(filteredSpellEffects);
+        ExileCardFromGraveyardCost exileGraveyardCost = extractAndRemoveExileGraveyardCost(filteredSpellEffects);
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
@@ -438,6 +454,7 @@ public class SpellCastingService {
                 paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount);
             }
             resolvedXValue = payAllSacrificeCosts(gameData, player, card, sacrificePermanentId, sacFlags, resolvedXValue);
+            resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
 
             // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
             ReturnTargetCardsFromGraveyardToHandEffect graveyardToHandEffect =
@@ -648,6 +665,33 @@ public class SpellCastingService {
             }
         }
         return Math.max(0, totalPower);
+    }
+
+    private int payExileGraveyardCost(GameData gameData, Player player, Card card,
+                                       ExileCardFromGraveyardCost cost, Integer exileGraveyardCardIndex, int resolvedXValue) {
+        if (cost == null) return resolvedXValue;
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (exileGraveyardCardIndex == null) {
+            throw new IllegalStateException("Must exile a creature card from your graveyard to cast " + card.getName());
+        }
+        if (graveyard == null || exileGraveyardCardIndex < 0 || exileGraveyardCardIndex >= graveyard.size()) {
+            throw new IllegalStateException("Invalid graveyard card index");
+        }
+        Card exiledCard = graveyard.get(exileGraveyardCardIndex);
+        if (cost.requiredType() != null && !exiledCard.hasType(cost.requiredType())) {
+            String typeName = cost.requiredType().name().toLowerCase();
+            throw new IllegalStateException("Must exile a " + typeName + " card from your graveyard");
+        }
+        int exiledPower = exiledCard.getPower() != null ? exiledCard.getPower() : 0;
+        graveyard.remove((int) exileGraveyardCardIndex);
+        gameData.playerExiledCards.computeIfAbsent(playerId, k -> java.util.Collections.synchronizedList(new ArrayList<>())).add(exiledCard);
+        gameBroadcastService.logAndBroadcast(gameData,
+                player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
+        if (cost.trackExiledPower()) {
+            resolvedXValue = exiledPower;
+        }
+        return resolvedXValue;
     }
 
     // --- Play with flashback from graveyard ---

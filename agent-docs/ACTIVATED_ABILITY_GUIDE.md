@@ -309,7 +309,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardType)` | "Discard a [type] card: ..." |
-| `ExileCardFromGraveyardCost` | `(CardType)` | "Exile a [type] card from your graveyard: ..." (null = any type) |
+| `ExileCardFromGraveyardCost` | `(CardType)` or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
 
 ```java

@@ -360,6 +360,12 @@ public class GameMessageHandler implements MessageHandler {
                         request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
                         request.alternateCostSacrificePermanentIds());
+            } else if (request.exileGraveyardCardIndex() != null) {
+                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
+                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
+                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
+                        null, request.exileGraveyardCardIndex());
             } else {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetPermanentId(), request.damageAssignments(),
                         request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
