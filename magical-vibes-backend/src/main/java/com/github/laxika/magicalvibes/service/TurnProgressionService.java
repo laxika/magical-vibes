@@ -137,6 +137,8 @@ public class TurnProgressionService {
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
+        gameData.spellsCastLastTurn.clear();
+        gameData.spellsCastLastTurn.putAll(gameData.spellsCastThisTurn);
         gameData.spellsCastThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();

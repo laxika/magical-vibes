@@ -24,7 +24,9 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -242,6 +244,17 @@ public class StepTriggerService {
             if (eachUpkeepEffects == null || eachUpkeepEffects.isEmpty()) return;
 
             for (CardEffect effect : eachUpkeepEffects) {
+                // Intervening-if: werewolf transform conditions checked at trigger time
+                if (effect instanceof NoSpellsCastLastTurnConditionalEffect) {
+                    int totalSpells = gameData.spellsCastLastTurn.values().stream()
+                            .mapToInt(Integer::intValue).sum();
+                    if (totalSpells > 0) continue;
+                } else if (effect instanceof TwoOrMoreSpellsCastLastTurnConditionalEffect) {
+                    boolean anyPlayerCastTwo = gameData.spellsCastLastTurn.values().stream()
+                            .anyMatch(count -> count >= 2);
+                    if (!anyPlayerCastTwo) continue;
+                }
+
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -249,7 +262,7 @@ public class StepTriggerService {
                         perm.getCard().getName() + "'s upkeep ability",
                         new ArrayList<>(List.of(effect)),
                         activePlayerId,
-                        (UUID) null
+                        perm.getId()
                 ));
 
                 String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";

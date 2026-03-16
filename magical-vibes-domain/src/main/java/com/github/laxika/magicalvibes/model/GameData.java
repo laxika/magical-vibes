@@ -48,6 +48,8 @@ public class GameData {
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Snapshot of spellsCastThisTurn from the previous turn. Used by werewolf transform triggers. */
+    public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
@@ -438,6 +440,7 @@ public class GameData {
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         copy.spellsCastThisTurn.putAll(this.spellsCastThisTurn);
+        copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);

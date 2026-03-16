@@ -18,8 +18,10 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -185,6 +187,10 @@ public class EffectResolutionService {
                     isActivationCountConditionMet(gameData, entry, acc);
             case DidntAttackConditionalEffect ignored ->
                     isSourceDidntAttackThisTurn(gameData, entry);
+            case NoSpellsCastLastTurnConditionalEffect ignored ->
+                    isNoSpellsCastLastTurn(gameData);
+            case TwoOrMoreSpellsCastLastTurnConditionalEffect ignored ->
+                    isTwoOrMoreSpellsCastLastTurn(gameData);
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;
@@ -267,5 +273,14 @@ public class EffectResolutionService {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) return false;
         return !source.isAttackedThisTurn();
+    }
+
+    private boolean isNoSpellsCastLastTurn(GameData gameData) {
+        if (gameData.spellsCastLastTurn.isEmpty()) return true;
+        return gameData.spellsCastLastTurn.values().stream().mapToInt(Integer::intValue).sum() == 0;
+    }
+
+    private boolean isTwoOrMoreSpellsCastLastTurn(GameData gameData) {
+        return gameData.spellsCastLastTurn.values().stream().anyMatch(count -> count >= 2);
     }
 }
