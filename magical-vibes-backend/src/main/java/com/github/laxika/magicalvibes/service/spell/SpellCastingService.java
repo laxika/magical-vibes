@@ -595,13 +595,16 @@ public class SpellCastingService {
     private int payAllSacrificeCosts(GameData gameData, Player player, Card card,
                                      UUID sacrificePermanentId, SacrificeCostFlags sacFlags, int resolvedXValue) {
         if (sacFlags.usesSacrificeCreatureCost()) {
-            int sacrificedPower = paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
+            SacrificedCreatureStats stats = paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
                     "a creature", p -> gameQueryService.isCreature(gameData, p));
             SacrificeCreatureCost sacCreatureCost = (SacrificeCreatureCost) card.getEffects(EffectSlot.SPELL).stream()
                     .filter(SacrificeCreatureCost.class::isInstance)
                     .findFirst().orElseThrow();
             if (sacCreatureCost.trackSacrificedPower()) {
-                resolvedXValue = sacrificedPower;
+                resolvedXValue = stats.power();
+            }
+            if (sacCreatureCost.trackSacrificedToughness()) {
+                resolvedXValue = stats.toughness();
             }
         }
         if (sacFlags.usesSacrificeArtifactCost()) {
@@ -619,7 +622,9 @@ public class SpellCastingService {
         return resolvedXValue;
     }
 
-    private int paySingleSacrificeCost(GameData gameData, Player player, Card sourceCard,
+    private record SacrificedCreatureStats(int power, int toughness) {}
+
+    private SacrificedCreatureStats paySingleSacrificeCost(GameData gameData, Player player, Card sourceCard,
                                        UUID sacrificePermanentId, String typeDescription,
                                        Predicate<Permanent> typeCheck) {
         if (sacrificePermanentId == null) {
@@ -637,12 +642,13 @@ public class SpellCastingService {
             throw new IllegalStateException("Sacrifice target must be " + typeDescription);
         }
         int power = gameQueryService.getEffectivePower(gameData, toSacrifice);
+        int toughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
             gameBroadcastService.logAndBroadcast(gameData,
                     player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
                             + " for " + sourceCard.getName() + ".");
         }
-        return power;
+        return new SacrificedCreatureStats(power, toughness);
     }
 
     private int paySacrificeAllCreaturesYouControlCost(GameData gameData, Player player, Card sourceCard) {

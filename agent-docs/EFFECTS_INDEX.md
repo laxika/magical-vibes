@@ -184,7 +184,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 |--------|-------------|--------|
 | `ExileSelfCost` | `()` | exile this permanent as cost (e.g. Brittle Effigy). Handled in `ActivatedAbilityExecutionService` via `removePermanentToExile` |
 | `SacrificeSelfCost` | `()` | sacrifice this permanent as cost |
-| `SacrificeCreatureCost` | `()` or `(boolean trackSacrificedManaValue)` or `(boolean trackSacrificedManaValue, boolean trackSacrificedPower)` | sacrifice a creature as cost. When `trackSacrificedManaValue=true`, the sacrificed creature's mana value is stored in the StackEntry's xValue (e.g. Birthing Pod). When `trackSacrificedPower=true`, the sacrificed creature's effective power (including static bonuses) is stored in xValue (e.g. Ichor Explosion) |
+| `SacrificeCreatureCost` | `()` or `(boolean trackSacrificedManaValue)` or `(boolean trackSacrificedManaValue, boolean trackSacrificedPower)` or `(boolean trackSacrificedManaValue, boolean trackSacrificedPower, boolean trackSacrificedToughness)` | sacrifice a creature as cost. When `trackSacrificedManaValue=true`, the sacrificed creature's mana value is stored in the StackEntry's xValue (e.g. Birthing Pod). When `trackSacrificedPower=true`, the sacrificed creature's effective power (including static bonuses) is stored in xValue (e.g. Ichor Explosion). When `trackSacrificedToughness=true`, the sacrificed creature's effective toughness is stored in xValue (e.g. Disciple of Griselbrand) |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype subtype)` | sacrifice a creature of specific subtype as cost |
 | `SacrificeArtifactCost` | `()` | sacrifice an artifact as cost (works for both activated abilities and spell costs) |
 | `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` | sacrifice a permanent matching filter as cost. Uses `GameQueryService.matchesPermanentPredicate()` for validation. E.g. `new SacrificePermanentCost(new PermanentAnyOfPredicate(List.of(new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate())), "Sacrifice an artifact or creature")` |
@@ -509,6 +509,7 @@ Pass `null` as filter to allow any card.
 | `GainLifeEqualToToughnessEffect` | `()` | gain life equal to own toughness (self, e.g. dies trigger) |
 | `GainLifeEqualToDamageDealtEffect` | `()` | gain life equal to damage dealt (lifelink-style, static) |
 | `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
+| `GainLifeEqualToXValueEffect` | `()` | gain life equal to xValue on stack entry (use with `SacrificeCreatureCost(trackToughness/power)` or other xValue-setting costs) |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `EachTargetPlayerGainsLifeEffect` | `(int amount)` | each targeted player gains N life (multi-target, reads from `targetPermanentIds`). Pair with `setMinTargets(0)` and `setMaxTargets(99)` for "any number of target players". Used by Hunters' Feast |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |

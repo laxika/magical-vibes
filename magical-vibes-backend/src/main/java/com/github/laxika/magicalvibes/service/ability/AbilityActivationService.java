@@ -742,6 +742,9 @@ public class AbilityActivationService {
             if (sacCost.trackSacrificedPower()) {
                 effectiveXValue = gameQueryService.getEffectivePower(gameData, sacTarget);
             }
+            if (sacCost.trackSacrificedToughness()) {
+                effectiveXValue = gameQueryService.getEffectiveToughness(gameData, sacTarget);
+            }
 
             sacrificePermanentAsCost(gameData, player, sacTarget);
 
