@@ -113,6 +113,7 @@ class DesperateRavingsTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback from graveyard draws two and discards one at random")
     void flashbackDrawsTwoAndDiscardsOne() {
+        harness.setHand(player1, List.of());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         harness.setGraveyard(player1, List.of(new DesperateRavings()));
