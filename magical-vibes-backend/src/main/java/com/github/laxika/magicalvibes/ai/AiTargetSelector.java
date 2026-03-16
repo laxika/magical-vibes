@@ -9,11 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -29,6 +31,12 @@ class AiTargetSelector {
 
     UUID chooseTarget(GameData gameData, Card card, UUID aiPlayerId) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
+
+        // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
+        Set<TargetType> allowedTargets = card.getAllowedTargets();
+        if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
+            return opponentId;
+        }
 
         // Handle destroy effects (ETB creatures or removal spells)
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {

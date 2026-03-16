@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -894,6 +895,13 @@ public class GameSimulator {
 
     private UUID findBestTarget(GameData gd, Card card, UUID playerId) {
         UUID opponentId = getOpponentId(gd, playerId);
+
+        // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
+        Set<TargetType> allowedTargets = card.getAllowedTargets();
+        if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
+            return opponentId;
+        }
+
         List<Permanent> oppBattlefield = gd.playerBattlefields.getOrDefault(opponentId, List.of());
 
         // Prefer creatures that pass the target filter

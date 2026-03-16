@@ -911,6 +911,13 @@ public class GraveyardReturnResolutionService {
         UUID targetPlayerId = entry.getTargetPermanentId();
         UUID controllerId = entry.getControllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // Fizzle if no valid target player (e.g. target was illegal on resolution)
+        if (targetPlayerId == null || !gameData.playerGraveyards.containsKey(targetPlayerId)) {
+            log.warn("Game {} - Haunting Echoes fizzles: no valid target player", gameData.id);
+            return;
+        }
+
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
