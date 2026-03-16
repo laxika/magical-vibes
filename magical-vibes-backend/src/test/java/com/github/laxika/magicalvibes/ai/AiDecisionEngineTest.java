@@ -2,13 +2,17 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,6 +25,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -219,6 +224,56 @@ class AiDecisionEngineTest {
 
         ai.handleMessage("GAME_STATE", "");
 
+        assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Target filter fallback =====
+
+    @Test
+    @DisplayName("AI casts Awakener Druid targeting own Forest")
+    void castsAwakenerDruidTargetingForest() {
+        giveAiPriority();
+
+        // Awakener Druid costs {2}{G} — give AI 3 Forests (one will be the target)
+        for (int i = 0; i < 3; i++) {
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(forest);
+        }
+
+        harness.setHand(aiPlayer, List.of(new AwakenerDruid()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Awakener Druid");
+        // Target must be one of the AI's Forests
+        UUID targetId = gd.stack.getFirst().getTargetPermanentId();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(p -> p.getId().equals(targetId))
+                .findFirst()
+                .orElseThrow()
+                .getCard().getName()).isEqualTo("Forest");
+    }
+
+    @Test
+    @DisplayName("AI does not cast Awakener Druid when no Forests on battlefield")
+    void doesNotCastAwakenerDruidWithoutForests() {
+        giveAiPriority();
+
+        // Give AI enough mana for {2}{G} via Swamps + floating green, but no Forest permanents
+        for (int i = 0; i < 2; i++) {
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
+        }
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+
+        harness.setHand(aiPlayer, List.of(new AwakenerDruid()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // No valid Forest target — AI should pass priority instead
         assertThat(gd.stack).isEmpty();
     }
 
