@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.ability.cost.ArtifactSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
@@ -501,7 +502,16 @@ public class AbilityActivationService {
         }
 
         boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
+        // When the ability has SacrificeCreatureCost AND other non-cost effects that need targeting,
+        // the sacrifice goes through the permanent-choice handler (e.g. Equip — Sacrifice a creature).
+        // Otherwise, targetPermanentId is used directly for the sacrifice (e.g. Vampire Aristocrat).
+        boolean hasNonCostTargeting = abilityEffects.stream()
+                .filter(e -> !(e instanceof CostEffect))
+                .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer() || e.canTargetGraveyard());
+        boolean sacCreatureCostAsChoice = hasSacCreatureCost && hasNonCostTargeting;
+
         List<PermanentChoiceCostHandler> permanentChoiceCosts = abilityEffects.stream()
+                .filter(e -> sacCreatureCostAsChoice || !(e instanceof SacrificeCreatureCost))
                 .map(this::toPermanentChoiceCostHandler)
                 .filter(Objects::nonNull)
                 .toList();
@@ -509,7 +519,7 @@ public class AbilityActivationService {
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (ability.isMultiTarget()) {
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability, targetPermanentIds, permanent.getCard());
-        } else if (!hasSacCreatureCost) {
+        } else if (!hasSacCreatureCost || sacCreatureCostAsChoice) {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
@@ -703,8 +713,9 @@ public class AbilityActivationService {
             }
         }
 
-        // Handle sacrifice-a-creature cost (e.g. Nantuko Husk: "Sacrifice a creature: ...")
-        if (hasSacCreatureCost) {
+        // Handle sacrifice-a-creature cost inline (e.g. Nantuko Husk: "Sacrifice a creature: ...")
+        // When sacCreatureCostAsChoice is true, the sacrifice was already handled by the permanent choice flow above.
+        if (hasSacCreatureCost && !sacCreatureCostAsChoice) {
             if (targetPermanentId == null) {
                 throw new IllegalStateException("Must choose a creature to sacrifice");
             }
@@ -740,16 +751,18 @@ public class AbilityActivationService {
 
         // Sacrifice-a-creature cost abilities use target selection as UI for cost payment.
         // Validate any remaining real targets after the cost has been paid.
-        if (hasSacCreatureCost) {
+        if (hasSacCreatureCost && !sacCreatureCostAsChoice) {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
+        boolean nonTargeting = hasSacCreatureCost && !sacCreatureCostAsChoice;
         completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects,
-                effectiveXValue, targetPermanentId, targetZone, hasSacCreatureCost, effectiveIndex, targetPermanentIds);
+                effectiveXValue, targetPermanentId, targetZone, nonTargeting, effectiveIndex, targetPermanentIds);
     }
 
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
+        if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);
