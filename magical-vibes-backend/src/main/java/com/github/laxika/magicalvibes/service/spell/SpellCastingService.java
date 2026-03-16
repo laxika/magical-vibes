@@ -696,7 +696,8 @@ public class SpellCastingService {
 
     // --- Play with flashback from graveyard ---
 
-    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, UUID targetPermanentId) {
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId) {
+        int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -728,10 +729,10 @@ public class SpellCastingService {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
-        if (!cost.canPay(pool, additionalCost)) {
+        if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
             throw new IllegalStateException("Not enough mana to pay flashback cost");
         }
-        cost.pay(pool, additionalCost);
+        cost.pay(pool, effectiveXValue + additionalCost);
 
         // Remove card from graveyard
         graveyard.remove(graveyardCardIndex);
@@ -748,7 +749,7 @@ public class SpellCastingService {
         StackEntryType entryType = card.hasType(CardType.INSTANT) ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
         StackEntry stackEntry = new StackEntry(
                 entryType, card, playerId, card.getName(),
-                spellEffects, 0, targetPermanentId, null
+                spellEffects, effectiveXValue, targetPermanentId, null
         );
         stackEntry.setCastWithFlashback(true);
         gameData.stack.add(stackEntry);
