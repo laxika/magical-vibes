@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
@@ -128,6 +129,38 @@ public class BoostResolutionService {
 
         log.info("Game {} - {} gets +{}/+{} from {} matching permanent(s)",
                 gameData.id, self.getCard().getName(), powerBoost, toughnessBoost, count);
+    }
+
+    @HandlesEffect(BoostTargetCreaturePerControlledPermanentEffect.class)
+    private void resolveBoostTargetCreaturePerControlledPermanent(GameData gameData, StackEntry entry, BoostTargetCreaturePerControlledPermanentEffect boost) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        int count = 0;
+        if (battlefield != null) {
+            FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.matchesPermanentPredicate(permanent, boost.filter(), filterContext)) {
+                    count++;
+                }
+            }
+        }
+
+        int powerBoost = count * boost.powerPerPermanent();
+        int toughnessBoost = count * boost.toughnessPerPermanent();
+        target.setPowerModifier(target.getPowerModifier() + powerBoost);
+        target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
+
+        String logEntry = target.getCard().getName() + " gets +" + powerBoost + "/+" + toughnessBoost
+                + " until end of turn (" + count + " creature(s)).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets +{}/+{} from {} creature(s)",
+                gameData.id, target.getCard().getName(), powerBoost, toughnessBoost, count);
     }
 
     @HandlesEffect(BoostTargetCreatureEffect.class)
