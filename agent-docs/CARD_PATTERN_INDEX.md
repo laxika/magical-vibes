@@ -314,6 +314,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Doesn't untap + enchanted controller upkeep life loss | `n/NumbingDose.java` | STATIC AttachedCreatureDoesntUntapEffect + ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED EnchantedCreatureControllerLosesLifeEffect(1) — enchants artifact or creature, uses PermanentAnyOfPredicate target filter |
 | Enchanted permanent death trigger (gain life) | `v/ViridianHarvest.java` | ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD GainLifeEffect(6) — enchants artifact, aura controller gains life when enchanted permanent is put into graveyard |
 | Curse (enchant player + static debuff) | `c/CurseOfDeathsHold.java` | STATIC StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_PLAYER_CREATURES) — enchant player aura (auto-detected from CURSE subtype via `isEnchantPlayer()`), creatures enchanted player controls get -1/-1 |
+| Curse (enchant player + combat trigger) | `c/CurseOfStalkedPrey.java` | ON_COMBAT_DAMAGE_TO_PLAYER PutCountersOnSourceEffect(1,1,1) — enchants player (auto-detected from CURSE subtype), whenever a creature deals combat damage to enchanted player, put +1/+1 counter on that creature. CombatDamageService checks curses attached to defending player |
 
 ## Artifacts
 

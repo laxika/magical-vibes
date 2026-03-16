@@ -661,6 +661,7 @@ public class CombatDamageService {
             }
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
+            checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId);
         }
     }
 
@@ -684,6 +685,37 @@ public class CombatDamageService {
                     gameData.stack.add(se);
                     String logEntry = perm.getCard().getName() + "'s combat damage trigger goes on the stack.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
+            }
+        });
+    }
+
+    /**
+     * Checks for curse enchantments attached to the defending player that trigger on combat damage.
+     * E.g. Curse of Stalked Prey: "Whenever a creature deals combat damage to enchanted player,
+     * put a +1/+1 counter on that creature."
+     */
+    private void checkPlayerAttachedCurseCombatDamageTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (perm.isAttached() && perm.getAttachedTo().equals(defenderId)) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
+                for (CardEffect effect : effects) {
+                    if (effect instanceof PutCountersOnSourceEffect) {
+                        // "sourcePermanentId" is set to the creature that dealt damage, so counters go on it
+                        StackEntry se = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                ownerId,
+                                perm.getCard().getName() + "'s triggered ability",
+                                List.of(effect),
+                                null,
+                                creature.getId()
+                        );
+                        se.setNonTargeting(true);
+                        gameData.stack.add(se);
+                        gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName()
+                                + "'s combat damage trigger goes on the stack.");
+                    }
                 }
             }
         });
