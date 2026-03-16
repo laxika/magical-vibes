@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "169")
 public class KuldothaForgemaster extends Card {
@@ -20,7 +20,8 @@ public class KuldothaForgemaster extends Card {
                 null,
                 List.of(
                         new SacrificeMultiplePermanentsCost(3, new PermanentIsArtifactPredicate()),
-                        new SearchLibraryForCardTypesToBattlefieldEffect(Set.of(CardType.ARTIFACT), false, false)
+                        new SearchLibraryForCardTypesToBattlefieldEffect(
+                                new CardTypePredicate(CardType.ARTIFACT), false)
                 ),
                 "{T}, Sacrifice three artifacts: Search your library for an artifact card, put it onto the battlefield, then shuffle."
         ));

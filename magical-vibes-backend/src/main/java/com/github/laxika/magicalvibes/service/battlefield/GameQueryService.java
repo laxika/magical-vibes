@@ -56,6 +56,8 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
@@ -282,8 +284,14 @@ public class GameQueryService {
         if (predicate instanceof CardIsPermanentPredicate) {
             return card.getType().isPermanentType();
         }
+        if (predicate instanceof CardSupertypePredicate p) {
+            return card.getSupertypes().contains(p.supertype());
+        }
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return card.getManaValue() <= p.maxManaValue();
+        }
+        if (predicate instanceof CardMinManaValuePredicate p) {
+            return card.getManaValue() >= p.minManaValue();
         }
         if (predicate instanceof CardNotPredicate p) {
             return !matchesCardPredicate(card, p.predicate(), sourceCardId);

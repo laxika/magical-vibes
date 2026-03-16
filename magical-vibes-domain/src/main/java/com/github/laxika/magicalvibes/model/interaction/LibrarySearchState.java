@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 public class LibrarySearchState {
 
@@ -28,6 +29,7 @@ public class LibrarySearchState {
     private final List<Card> accumulatedCards;
     private final String filterCardName;
     private final UUID attachToPlayerId;
+    private final CardPredicate filterPredicate;
 
     public LibrarySearchState(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                               UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
@@ -35,7 +37,8 @@ public class LibrarySearchState {
                               boolean shuffleAfterSelection,
                               String prompt, LibrarySearchDestination destination,
                               Set<CardType> filterCardTypes, List<Card> accumulatedCards,
-                              String filterCardName, UUID attachToPlayerId) {
+                              String filterCardName, UUID attachToPlayerId,
+                              CardPredicate filterPredicate) {
         this.playerId = playerId;
         this.cards = cards;
         this.reveals = reveals;
@@ -52,6 +55,7 @@ public class LibrarySearchState {
         this.accumulatedCards = accumulatedCards;
         this.filterCardName = filterCardName;
         this.attachToPlayerId = attachToPlayerId;
+        this.filterPredicate = filterPredicate;
     }
 
     public UUID playerId() {
@@ -118,6 +122,10 @@ public class LibrarySearchState {
         return attachToPlayerId;
     }
 
+    public CardPredicate filterPredicate() {
+        return filterPredicate;
+    }
+
     public LibrarySearchState deepCopy() {
         return new LibrarySearchState(
                 playerId,
@@ -127,7 +135,7 @@ public class LibrarySearchState {
                 reorderRemainingToBottom, reorderRemainingToTop, shuffleAfterSelection, prompt, destination,
                 filterCardTypes != null ? new HashSet<>(filterCardTypes) : null,
                 accumulatedCards != null ? new ArrayList<>(accumulatedCards) : null,
-                filterCardName, attachToPlayerId
+                filterCardName, attachToPlayerId, filterPredicate
         );
     }
 }

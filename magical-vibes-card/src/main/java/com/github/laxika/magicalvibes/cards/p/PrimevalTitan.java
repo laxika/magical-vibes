@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
-
-import java.util.Set;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M11", collectorNumber = "192")
 public class PrimevalTitan extends Card {
@@ -17,7 +16,8 @@ public class PrimevalTitan extends Card {
         // you may search your library for up to two land cards,
         // put them onto the battlefield tapped, then shuffle.
         MayEffect searchEffect = new MayEffect(
-                new SearchLibraryForCardTypesToBattlefieldEffect(Set.of(CardType.LAND), false, true, 2),
+                new SearchLibraryForCardTypesToBattlefieldEffect(
+                        new CardTypePredicate(CardType.LAND), true, 2),
                 "You may search your library for up to two land cards, put them onto the battlefield tapped, then shuffle."
         );
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, searchEffect);

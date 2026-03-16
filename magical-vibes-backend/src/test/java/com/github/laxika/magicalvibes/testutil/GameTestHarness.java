@@ -252,7 +252,7 @@ public class GameTestHarness {
                 destructionResolutionService,
                 new MillResolutionService(graveyardService, gameBroadcastService, permanentControlResolutionService),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
-                new LibrarySearchResolutionService(drawService, gameBroadcastService, sessionManager, cardViewFactory),
+                new LibrarySearchResolutionService(drawService, gameBroadcastService, sessionManager, cardViewFactory, gameQueryService),
                 new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, battlefieldEntryService, exileService),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, gameBroadcastService, gameQueryService, stateTriggerService),

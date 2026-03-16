@@ -13,12 +13,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +35,7 @@ class SylvanScryingTest extends BaseCardTest {
                 .isInstanceOf(SearchLibraryForCardTypesToHandEffect.class);
         SearchLibraryForCardTypesToHandEffect effect =
                 (SearchLibraryForCardTypesToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cardTypes()).isEqualTo(Set.of(CardType.LAND));
+        assertThat(CardPredicateUtils.describeFilter(effect.filter())).isEqualTo("land card");
     }
 
     @Test

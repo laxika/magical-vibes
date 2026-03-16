@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Parameter object for initiating a library search interaction.
@@ -24,7 +25,8 @@ public record LibrarySearchParams(
         Set<CardType> filterCardTypes,
         List<Card> accumulatedCards,
         String filterCardName,
-        UUID attachToPlayerId
+        UUID attachToPlayerId,
+        CardPredicate filterPredicate
 ) {
     public static Builder builder(UUID playerId, List<Card> cards) {
         return new Builder(playerId, cards);
@@ -47,6 +49,7 @@ public record LibrarySearchParams(
         private List<Card> accumulatedCards = List.of();
         private String filterCardName;
         private UUID attachToPlayerId;
+        private CardPredicate filterPredicate;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -123,11 +126,16 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder filterPredicate(CardPredicate filterPredicate) {
+            this.filterPredicate = filterPredicate;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     shuffleAfterSelection, prompt, destination, filterCardTypes, accumulatedCards,
-                    filterCardName, attachToPlayerId);
+                    filterCardName, attachToPlayerId, filterPredicate);
         }
     }
 }

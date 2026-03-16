@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
-import java.util.Set;
-
-public record SearchLibraryForCardTypesToBattlefieldEffect(Set<CardType> cardTypes, boolean requiresBasicSupertype,
+public record SearchLibraryForCardTypesToBattlefieldEffect(CardPredicate filter,
                                                            boolean entersTapped, int maxCount) implements CardEffect {
 
-    public SearchLibraryForCardTypesToBattlefieldEffect(Set<CardType> cardTypes, boolean requiresBasicSupertype,
+    public SearchLibraryForCardTypesToBattlefieldEffect(CardPredicate filter,
                                                         boolean entersTapped) {
-        this(cardTypes, requiresBasicSupertype, entersTapped, 1);
+        this(filter, entersTapped, 1);
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,8 +44,7 @@ class TerramorphicExpanseTest extends BaseCardTest {
 
         SearchLibraryForCardTypesToBattlefieldEffect effect =
                 (SearchLibraryForCardTypesToBattlefieldEffect) ability.getEffects().get(1);
-        assertThat(effect.cardTypes()).containsExactly(CardType.LAND);
-        assertThat(effect.requiresBasicSupertype()).isTrue();
+        assertThat(CardPredicateUtils.describeFilter(effect.filter())).isEqualTo("basic land card");
         assertThat(effect.entersTapped()).isTrue();
     }
 

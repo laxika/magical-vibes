@@ -270,6 +270,9 @@ Only `destination` is required. All booleans default to `false`, all object refe
 | `CardIsAuraPredicate` | `()` | aura cards |
 | `CardIsPermanentPredicate` | `()` | permanent cards (creature, artifact, enchantment, planeswalker, land, kindred — not instant/sorcery) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | cards with mana value ≤ maxManaValue |
+| `CardMinManaValuePredicate` | `(int minManaValue)` | cards with mana value ≥ minManaValue |
+| `CardSupertypePredicate` | `(CardSupertype supertype)` | cards with a given supertype (BASIC, LEGENDARY) |
+| `CardColorPredicate` | `(CardColor color)` | cards of a given color |
 | `CardNotPredicate` | `(CardPredicate predicate)` | NOT — inverts a predicate |
 | `CardAllOfPredicate` | `(List<CardPredicate> predicates)` | AND — all predicates must match |
 | `CardAnyOfPredicate` | `(List<CardPredicate> predicates)` | OR — any predicate matches |
@@ -378,8 +381,8 @@ Pass `null` as filter to allow any card.
 | `SearchLibraryForCardsByNameToHandEffect` | `(String cardName, int maxCount)` | search library for up to N cards with specified name, reveal them, put into hand. Multi-pick via remainingCount. Used by Squadron Hawk |
 | `SearchLibraryForBasicLandToHandEffect` | `()` | search library for basic land to hand |
 | `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect` | `()` | search library for up to two basic lands: one to battlefield tapped, one to hand. Single search action (one Leonin Arbiter check). Used by Cultivate, Kodama's Reach |
-| `SearchLibraryForCardTypesToHandEffect` | `(Set<CardType> cardTypes)` or `(Set<CardType> cardTypes, int maxManaValue)` or `(Set<CardType> cardTypes, int minManaValue, int maxManaValue)` | search library for card of specific types to hand (optionally filtered by min/max mana value) |
-| `SearchLibraryForCardTypesToBattlefieldEffect` | `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped)` or `(Set<CardType> cardTypes, boolean requiresBasicSupertype, boolean entersTapped, int maxCount)` | search library for card(s) to battlefield. When maxCount > 1, uses multi-pick (e.g. Primeval Titan searches for up to 2 lands) |
+| `SearchLibraryForCardTypesToHandEffect` | `(CardPredicate filter)` | search library for a card matching the CardPredicate and put into hand. Description auto-generated via `CardPredicateUtils.describeFilter()` |
+| `SearchLibraryForCardTypesToBattlefieldEffect` | `(CardPredicate filter, boolean entersTapped)` or `(CardPredicate filter, boolean entersTapped, int maxCount)` | search library for card(s) matching CardPredicate to battlefield. When maxCount > 1, uses multi-pick (e.g. Primeval Titan searches for up to 2 lands) |
 | `SearchLibraryForCardTypeToExileAndImprintEffect` | `(Set<CardType> cardTypes)` | search library for card of specific types, exile it, and imprint on source permanent |
 | `SearchLibraryForCreatureWithMVXOrLessToHandEffect` | `()` | search library for creature with MV X or less to hand |
 | `SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect` | `(CardColor requiredColor)` | search library for creature of specified color with MV X or less to battlefield |

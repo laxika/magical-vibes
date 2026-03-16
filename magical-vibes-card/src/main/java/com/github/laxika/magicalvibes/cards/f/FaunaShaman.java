@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "172")
 public class FaunaShaman extends Card {
@@ -19,7 +19,8 @@ public class FaunaShaman extends Card {
                 "{G}",
                 List.of(
                         new DiscardCardTypeCost(CardType.CREATURE),
-                        new SearchLibraryForCardTypesToHandEffect(Set.of(CardType.CREATURE))
+                        new SearchLibraryForCardTypesToHandEffect(
+                                new CardTypePredicate(CardType.CREATURE))
                 ),
                 "{G}, {T}, Discard a creature card: Search your library for a creature card, reveal it, put it into your hand, then shuffle."
         ));

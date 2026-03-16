@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,8 +39,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         assertThat(may.wrapped()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
         SearchLibraryForCardTypesToBattlefieldEffect search =
                 (SearchLibraryForCardTypesToBattlefieldEffect) may.wrapped();
-        assertThat(search.cardTypes()).containsExactly(CardType.LAND);
-        assertThat(search.requiresBasicSupertype()).isTrue();
+        assertThat(CardPredicateUtils.describeFilter(search.filter())).isEqualTo("basic land card");
         assertThat(search.entersTapped()).isTrue();
     }
 

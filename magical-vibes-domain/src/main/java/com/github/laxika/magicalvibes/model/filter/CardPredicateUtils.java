@@ -25,8 +25,14 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsPermanentPredicate) {
             return "permanent card";
         }
+        if (predicate instanceof CardSupertypePredicate p) {
+            return p.supertype().getDisplayName().toLowerCase();
+        }
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";
+        }
+        if (predicate instanceof CardMinManaValuePredicate p) {
+            return "card with mana value " + p.minManaValue() + " or greater";
         }
         if (predicate instanceof CardAllOfPredicate p) {
             List<String> parts = new ArrayList<>();

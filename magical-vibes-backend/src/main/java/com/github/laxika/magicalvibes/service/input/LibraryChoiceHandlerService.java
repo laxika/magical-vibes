@@ -310,6 +310,7 @@ public class LibraryChoiceHandlerService {
         boolean toGraveyard = destination == LibrarySearchDestination.GRAVEYARD;
         Set<CardType> filterCardTypes = librarySearch.filterCardTypes();
         String filterCardName = librarySearch.filterCardName();
+        com.github.laxika.magicalvibes.model.filter.CardPredicate filterPredicate = librarySearch.filterPredicate();
         List<Card> accumulatedCards = librarySearch.accumulatedCards() != null
                 ? new ArrayList<>(librarySearch.accumulatedCards()) : new ArrayList<>();
 
@@ -608,6 +609,9 @@ public class LibraryChoiceHandlerService {
             List<Card> newSearchCards;
             if (filterCardName != null) {
                 newSearchCards = deck.stream().filter(c -> filterCardName.equals(c.getName())).toList();
+            } else if (filterPredicate != null) {
+                final com.github.laxika.magicalvibes.model.filter.CardPredicate fp = filterPredicate;
+                newSearchCards = deck.stream().filter(c -> gameQueryService.matchesCardPredicate(c, fp, null)).toList();
             } else if (filterCardTypes != null) {
                 newSearchCards = deck.stream().filter(c -> filterCardTypes.contains(c.getType()) || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains)).toList();
             } else {
@@ -654,6 +658,7 @@ public class LibraryChoiceHandlerService {
                     .destination(destination)
                     .filterCardTypes(filterCardTypes)
                     .filterCardName(filterCardName)
+                    .filterPredicate(filterPredicate)
                     .accumulatedCards(accumulatedCards)
                     .build());
 

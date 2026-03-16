@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,8 +34,7 @@ class TrinketMageTest extends BaseCardTest {
         assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardTypesToHandEffect.class);
         SearchLibraryForCardTypesToHandEffect searchEffect =
                 (SearchLibraryForCardTypesToHandEffect) mayEffect.wrapped();
-        assertThat(searchEffect.cardTypes()).isEqualTo(Set.of(CardType.ARTIFACT));
-        assertThat(searchEffect.maxManaValue()).isEqualTo(1);
+        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("artifact card with mana value 1 or less");
     }
 
     @Test
@@ -124,7 +123,7 @@ class TrinketMageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 1 or less"));
     }
 
     @Test
@@ -142,7 +141,7 @@ class TrinketMageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 1 or less"));
     }
 
     @Test

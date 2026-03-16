@@ -14,13 +14,13 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,8 +39,7 @@ class PrimevalTitanTest extends BaseCardTest {
         assertThat(etbMay.wrapped()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
         SearchLibraryForCardTypesToBattlefieldEffect searchEffect =
                 (SearchLibraryForCardTypesToBattlefieldEffect) etbMay.wrapped();
-        assertThat(searchEffect.cardTypes()).isEqualTo(Set.of(CardType.LAND));
-        assertThat(searchEffect.requiresBasicSupertype()).isFalse();
+        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("land card");
         assertThat(searchEffect.entersTapped()).isTrue();
         assertThat(searchEffect.maxCount()).isEqualTo(2);
 
@@ -196,7 +195,7 @@ class PrimevalTitanTest extends BaseCardTest {
 
             // No lands to search for, search fails
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no matching cards"));
+            assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no land cards"));
         }
     }
 

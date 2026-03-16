@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.library;
 
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14,6 +15,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -67,6 +70,7 @@ public class LibrarySearchResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final GameQueryService gameQueryService;
 
     /**
      * Searches the controller's library for a basic land card and puts it into their hand.
@@ -87,35 +91,20 @@ public class LibrarySearchResolutionService {
     }
 
     /**
-     * Searches the controller's library for a card matching the specified types and optional
-     * mana value range, then reveals it and puts it into their hand. Used by cards like Sylvan Scrying.
+     * Searches the controller's library for a card matching the filter, then reveals it
+     * and puts it into their hand. Used by cards like Sylvan Scrying, Fabricate, Trinket Mage.
      */
     @HandlesEffect(SearchLibraryForCardTypesToHandEffect.class)
     void resolveSearchLibraryForCardTypesToHand(GameData gameData, StackEntry entry, SearchLibraryForCardTypesToHandEffect effect) {
-        Set<CardType> requestedTypes = effect.cardTypes();
-        String requestedTypeText = formatCardTypeSetForPrompt(requestedTypes);
-        int minMV = effect.minManaValue();
-        int maxMV = effect.maxManaValue();
-
-        String mvSuffix;
-        if (minMV > 0 && maxMV < Integer.MAX_VALUE) {
-            mvSuffix = " with mana value between " + minMV + " and " + maxMV;
-        } else if (minMV > 0) {
-            mvSuffix = " with mana value " + minMV + " or greater";
-        } else if (maxMV < Integer.MAX_VALUE) {
-            mvSuffix = " with mana value " + maxMV + " or less";
-        } else {
-            mvSuffix = "";
-        }
+        String desc = CardPredicateUtils.describeFilter(effect.filter());
+        String descPlural = desc.replace(" card", " cards");
 
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> {
-                    return matchesCardTypes(card, requestedTypes) && card.getManaValue() >= minMV && card.getManaValue() <= maxMV;
-                },
-                requestedTypeText + " cards" + mvSuffix,
-                "Search your library for a " + requestedTypeText + " card" + mvSuffix + " to reveal and put into your hand.",
+                card -> gameQueryService.matchesCardPredicate(card, effect.filter(), null),
+                descPlural,
+                "Search your library for a " + desc + " to reveal and put into your hand.",
                 true,
                 true,
                 LibrarySearchDestination.HAND
@@ -123,7 +112,7 @@ public class LibrarySearchResolutionService {
     }
 
     /**
-     * Searches the controller's library for a card matching the specified types and puts it
+     * Searches the controller's library for a card matching the filter and puts it
      * onto the battlefield (optionally tapped). Used by cards like Rampant Growth and Primeval Titan.
      * When maxCount > 1, initiates a multi-pick search using remainingCount.
      */
@@ -135,24 +124,20 @@ public class LibrarySearchResolutionService {
             return;
         }
 
-        boolean basicLandOnly = isBasicLandOnlyFilter(effect);
-        String filterText = basicLandOnly ? "basic land card" : "matching card";
-        String noMatchDesc = basicLandOnly ? "basic land cards" : "matching cards";
+        String desc = CardPredicateUtils.describeFilter(effect.filter());
+        String descPlural = desc.replace(" card", " cards");
         LibrarySearchDestination destination = effect.entersTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
         String prompt = effect.entersTapped()
-                ? "Search your library for a " + filterText + " and put it onto the battlefield tapped."
-                : "Search your library for a " + filterText + " and put it onto the battlefield.";
+                ? "Search your library for a " + desc + " and put it onto the battlefield tapped."
+                : "Search your library for a " + desc + " and put it onto the battlefield.";
 
         performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> {
-                    if (!matchesCardTypes(card, effect.cardTypes())) return false;
-                    return !effect.requiresBasicSupertype() || card.getSupertypes().contains(CardSupertype.BASIC);
-                },
-                noMatchDesc,
+                card -> gameQueryService.matchesCardPredicate(card, effect.filter(), null),
+                descPlural,
                 prompt,
                 false,
                 true,
@@ -162,7 +147,7 @@ public class LibrarySearchResolutionService {
 
     /**
      * Multi-pick variant: searches the controller's library for up to N cards matching the
-     * specified types and puts each onto the battlefield (optionally tapped). Used by Primeval Titan.
+     * filter and puts each onto the battlefield (optionally tapped). Used by Primeval Titan.
      */
     private void resolveMultiPickSearchToBattlefield(GameData gameData, StackEntry entry,
                                                       SearchLibraryForCardTypesToBattlefieldEffect effect) {
@@ -178,18 +163,16 @@ public class LibrarySearchResolutionService {
             return;
         }
 
+        String desc = CardPredicateUtils.describeFilter(effect.filter());
+        String descPlural = desc.replace(" card", " cards");
+
         List<Card> matchingCards = deck.stream()
-                .filter(card -> {
-                    if (!matchesCardTypes(card, effect.cardTypes())) return false;
-                    return !effect.requiresBasicSupertype() || card.getSupertypes().contains(CardSupertype.BASIC);
-                })
+                .filter(card -> gameQueryService.matchesCardPredicate(card, effect.filter(), null))
                 .toList();
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            boolean basicLandOnly = isBasicLandOnlyFilter(effect);
-            String noMatchDesc = basicLandOnly ? "basic land cards" : "matching cards";
-            String logMsg = playerName + " searches their library but finds no " + noMatchDesc + ". Library is shuffled.";
+            String logMsg = playerName + " searches their library but finds no " + descPlural + ". Library is shuffled.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
@@ -198,14 +181,14 @@ public class LibrarySearchResolutionService {
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
         String destinationText = effect.entersTapped() ? "onto the battlefield tapped" : "onto the battlefield";
-        String prompt = "Search your library for a land card to put " + destinationText
+        String prompt = "Search your library for a " + desc + " to put " + destinationText
                 + " (" + effect.maxCount() + " remaining).";
 
         sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                 .remainingCount(effect.maxCount())
                 .canFailToFind(true)
                 .destination(destination)
-                .filterCardTypes(effect.cardTypes())
+                .filterPredicate(effect.filter())
                 .build(), prompt, true);
 
         log.info("Game {} - {} searches library for up to {} cards", gameData.id, playerName, effect.maxCount());
@@ -832,12 +815,6 @@ public class LibrarySearchResolutionService {
             return names.getFirst();
         }
         return String.join(" or ", names);
-    }
-
-    private boolean isBasicLandOnlyFilter(SearchLibraryForCardTypesToBattlefieldEffect effect) {
-        return effect.requiresBasicSupertype()
-                && effect.cardTypes().size() == 1
-                && effect.cardTypes().contains(CardType.LAND);
     }
 
     private static boolean matchesCardTypes(Card card, Set<CardType> cardTypes) {

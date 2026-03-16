@@ -14,12 +14,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,7 +39,7 @@ class FaunaShamanTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(SearchLibraryForCardTypesToHandEffect.class);
         SearchLibraryForCardTypesToHandEffect searchEffect =
                 (SearchLibraryForCardTypesToHandEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(searchEffect.cardTypes()).isEqualTo(Set.of(CardType.CREATURE));
+        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("creature card");
     }
 
     @Test
