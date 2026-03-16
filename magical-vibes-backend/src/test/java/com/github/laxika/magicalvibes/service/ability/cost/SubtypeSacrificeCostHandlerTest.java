@@ -1,139 +1,232 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class SubtypeSacrificeCostHandlerTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class SubtypeSacrificeCostHandlerTest {
 
-    @Test
-    @DisplayName("Auto-selects single matching creature for sacrifice")
-    void autoSelectsSingleCreature() {
-        Permanent source = addReadyPermanent(player1, createCardWithSubtypeSacrificeCost());
-        addReadyPermanent(player1, createGoblinCreature("Goblin Recruit"));
+    @Mock
+    private GameQueryService gameQueryService;
 
-        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(source);
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.activateAbility(player1, idx, null, player2.getId());
+    @Mock
+    private PermanentSacrificeAction sacrificeAction;
 
-        // Single goblin should be auto-sacrificed, no prompt
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin Recruit"));
-        assertThat(gd.stack).hasSize(1);
+    private final SacrificeSubtypeCreatureCost cost = new SacrificeSubtypeCreatureCost(CardSubtype.GOBLIN);
+    private SubtypeSacrificeCostHandler handler;
+
+    private GameData gameData;
+    private Player player;
+    private UUID playerId;
+
+    @BeforeEach
+    void setUp() {
+        handler = new SubtypeSacrificeCostHandler(cost, gameQueryService, sacrificeAction);
+        playerId = UUID.randomUUID();
+        player = new Player(playerId, "TestPlayer");
+        gameData = new GameData(UUID.randomUUID(), "test", playerId, "TestPlayer");
+        gameData.playerBattlefields.put(playerId, new ArrayList<>());
     }
 
     @Test
-    @DisplayName("No matching subtype creature throws")
-    void noMatchingSubtypeCreatureThrows() {
-        Permanent source = addReadyPermanent(player1, createCardWithSubtypeSacrificeCost());
-        addReadyPermanent(player1, createNonGoblinCreature("Human Soldier"));
-        harness.addMana(player1, ManaColor.RED, 2);
+    @DisplayName("costEffect returns the SacrificeSubtypeCreatureCost")
+    void costEffectReturnsCost() {
+        assertThat(handler.costEffect()).isSameAs(cost);
+    }
 
-        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(source);
-        assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, player2.getId()))
+    @Test
+    @DisplayName("requiredCount returns 1")
+    void requiredCountReturnsOne() {
+        assertThat(handler.requiredCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("getPromptMessage includes subtype name")
+    void getPromptMessageIncludesSubtype() {
+        assertThat(handler.getPromptMessage(1)).isEqualTo("Choose a Goblin to sacrifice.");
+    }
+
+    // =========================================================================
+    // validateCanPay
+    // =========================================================================
+
+    @Test
+    @DisplayName("validateCanPay throws when no matching subtype creatures exist")
+    void validateCanPayThrowsWhenNoMatching() {
+        Permanent human = createCreature("Human Soldier", List.of(CardSubtype.HUMAN));
+        gameData.playerBattlefields.get(playerId).add(human);
+
+        when(gameQueryService.isCreature(gameData, human)).thenReturn(true);
+
+        assertThatThrownBy(() -> handler.validateCanPay(gameData, playerId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Goblin");
     }
 
     @Test
-    @DisplayName("Multiple matching creatures prompt for choice")
-    void multipleMatchingCreaturesPromptChoice() {
-        Permanent source = addReadyPermanent(player1, createCardWithSubtypeSacrificeCost());
-        addReadyPermanent(player1, createGoblinCreature("Goblin A"));
-        addReadyPermanent(player1, createGoblinCreature("Goblin B"));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(source);
-        harness.activateAbility(player1, idx, null, player2.getId());
-
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    @DisplayName("validateCanPay throws when battlefield is empty")
+    void validateCanPayThrowsWhenBattlefieldEmpty() {
+        assertThatThrownBy(() -> handler.validateCanPay(gameData, playerId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Goblin");
     }
 
     @Test
-    @DisplayName("Completing sacrifice choice puts ability on stack")
-    void completingSacrificeChoicePutsAbilityOnStack() {
-        Permanent source = addReadyPermanent(player1, createCardWithSubtypeSacrificeCost());
-        Permanent goblinA = addReadyPermanent(player1, createGoblinCreature("Goblin A"));
-        addReadyPermanent(player1, createGoblinCreature("Goblin B"));
-        harness.addMana(player1, ManaColor.RED, 2);
+    @DisplayName("validateCanPay succeeds when a matching subtype creature exists")
+    void validateCanPaySucceedsWhenMatchingExists() {
+        Permanent goblin = createCreature("Goblin Recruit", List.of(CardSubtype.GOBLIN));
+        gameData.playerBattlefields.get(playerId).add(goblin);
 
-        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(source);
-        harness.activateAbility(player1, idx, null, player2.getId());
-        harness.handlePermanentChosen(player1, goblinA.getId());
+        when(gameQueryService.isCreature(gameData, goblin)).thenReturn(true);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Goblin A"));
+        handler.validateCanPay(gameData, playerId);
+        // no exception = success
+    }
+
+    @Test
+    @DisplayName("validateCanPay does not count non-creatures with matching subtype")
+    void validateCanPayDoesNotCountNonCreatures() {
+        Permanent tribalEnchantment = createCreature("Goblin Enchantment", List.of(CardSubtype.GOBLIN));
+        gameData.playerBattlefields.get(playerId).add(tribalEnchantment);
+
+        when(gameQueryService.isCreature(gameData, tribalEnchantment)).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.validateCanPay(gameData, playerId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Goblin");
     }
 
     // =========================================================================
-    // Helper methods
+    // getValidChoiceIds
     // =========================================================================
 
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("getValidChoiceIds returns empty list when no matching creatures")
+    void getValidChoiceIdsEmptyWhenNoMatching() {
+        Permanent human = createCreature("Human Soldier", List.of(CardSubtype.HUMAN));
+        gameData.playerBattlefields.get(playerId).add(human);
+
+        when(gameQueryService.isCreature(gameData, human)).thenReturn(true);
+
+        List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
+
+        assertThat(result).isEmpty();
     }
 
-    private Card createCardWithSubtypeSacrificeCost() {
-        Card card = new Card();
-        card.setName("Test Goblin Sacrificer");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{R}");
-        card.setColor(CardColor.RED);
-        card.setPower(2);
-        card.setToughness(2);
-        card.addActivatedAbility(new ActivatedAbility(
-                false, "{1}{R}",
-                List.of(new SacrificeSubtypeCreatureCost(CardSubtype.GOBLIN), new DealDamageToAnyTargetEffect(2)),
-                "Sacrifice a Goblin: deal 2 damage to any target"
-        ));
-        return card;
+    @Test
+    @DisplayName("getValidChoiceIds returns empty list when battlefield is null")
+    void getValidChoiceIdsEmptyWhenBattlefieldNull() {
+        UUID otherPlayerId = UUID.randomUUID();
+
+        List<UUID> result = handler.getValidChoiceIds(gameData, otherPlayerId);
+
+        assertThat(result).isEmpty();
     }
 
-    private Card createGoblinCreature(String name) {
+    @Test
+    @DisplayName("getValidChoiceIds returns only matching subtype creature IDs")
+    void getValidChoiceIdsFiltersToMatching() {
+        Permanent goblinA = createCreature("Goblin A", List.of(CardSubtype.GOBLIN));
+        Permanent human = createCreature("Human Soldier", List.of(CardSubtype.HUMAN));
+        Permanent goblinB = createCreature("Goblin B", List.of(CardSubtype.GOBLIN));
+        gameData.playerBattlefields.get(playerId).addAll(List.of(goblinA, human, goblinB));
+
+        when(gameQueryService.isCreature(gameData, goblinA)).thenReturn(true);
+        when(gameQueryService.isCreature(gameData, human)).thenReturn(true);
+        when(gameQueryService.isCreature(gameData, goblinB)).thenReturn(true);
+
+        List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
+
+        assertThat(result).containsExactly(goblinA.getId(), goblinB.getId());
+    }
+
+    @Test
+    @DisplayName("getValidChoiceIds excludes non-creatures even with matching subtype")
+    void getValidChoiceIdsExcludesNonCreatures() {
+        Permanent goblinCreature = createCreature("Goblin Warrior", List.of(CardSubtype.GOBLIN));
+        Permanent goblinNonCreature = createCreature("Goblin Banner", List.of(CardSubtype.GOBLIN));
+        gameData.playerBattlefields.get(playerId).addAll(List.of(goblinCreature, goblinNonCreature));
+
+        when(gameQueryService.isCreature(gameData, goblinCreature)).thenReturn(true);
+        when(gameQueryService.isCreature(gameData, goblinNonCreature)).thenReturn(false);
+
+        List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
+
+        assertThat(result).containsExactly(goblinCreature.getId());
+    }
+
+    // =========================================================================
+    // validateAndPay
+    // =========================================================================
+
+    @Test
+    @DisplayName("validateAndPay throws when chosen permanent is not a creature")
+    void validateAndPayThrowsForNonCreature() {
+        Permanent nonCreature = createCreature("Goblin Banner", List.of(CardSubtype.GOBLIN));
+        when(gameQueryService.isCreature(gameData, nonCreature)).thenReturn(false);
+
+        assertThatThrownBy(() -> handler.validateAndPay(gameData, player, nonCreature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must sacrifice a creature");
+
+        verify(sacrificeAction, never()).sacrifice(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("validateAndPay throws when chosen creature has wrong subtype")
+    void validateAndPayThrowsForWrongSubtype() {
+        Permanent human = createCreature("Human Soldier", List.of(CardSubtype.HUMAN));
+        when(gameQueryService.isCreature(gameData, human)).thenReturn(true);
+
+        assertThatThrownBy(() -> handler.validateAndPay(gameData, player, human))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must sacrifice a Goblin");
+
+        verify(sacrificeAction, never()).sacrifice(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("validateAndPay sacrifices the chosen matching creature")
+    void validateAndPaySacrificesMatching() {
+        Permanent goblin = createCreature("Goblin Recruit", List.of(CardSubtype.GOBLIN));
+        when(gameQueryService.isCreature(gameData, goblin)).thenReturn(true);
+
+        handler.validateAndPay(gameData, player, goblin);
+
+        verify(sacrificeAction).sacrifice(gameData, player, goblin);
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    private Permanent createCreature(String name, List<CardSubtype> subtypes) {
         Card card = new Card();
         card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{R}");
-        card.setColor(CardColor.RED);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.GOBLIN));
-        return card;
-    }
-
-    private Card createNonGoblinCreature(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{W}");
-        card.setColor(CardColor.WHITE);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.HUMAN));
-        return card;
+        card.setManaCost("{0}");
+        card.setSubtypes(subtypes);
+        return new Permanent(card);
     }
 }
