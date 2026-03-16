@@ -256,7 +256,7 @@ public class GameTestHarness {
                 new LibrarySearchResolutionService(drawService, gameBroadcastService, sessionManager, cardViewFactory, gameQueryService),
                 new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, battlefieldEntryService, exileService),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
-                new CounterResolutionService(graveyardService, gameBroadcastService, gameQueryService, stateTriggerService),
+                new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService),
                 exileResolutionService,
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
@@ -311,7 +311,7 @@ public class GameTestHarness {
                 inputCompletionService, gameQueryService, battlefieldEntryService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService, destructionResolutionService);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
-                inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService);
+                inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService, destructionResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(

@@ -155,6 +155,12 @@ public class GameData {
     public final List<PendingForcedSacrifice> pendingForcedSacrificeQueue = Collections.synchronizedList(new ArrayList<>());
     /** Permanent IDs to sacrifice simultaneously once all players have made forced sacrifice choices. */
     public final List<UUID> pendingSimultaneousSacrificeIds = Collections.synchronizedList(new ArrayList<>());
+    /** When true, the forced sacrifice queue is being used for "choose creature to keep" (destroy rest) instead of "choose to sacrifice". */
+    public boolean pendingDestroyRestMode;
+    /** Creature IDs chosen to be kept (protected from destruction) during a destroy-rest flow. */
+    public final List<UUID> pendingDestroyRestProtectedIds = Collections.synchronizedList(new ArrayList<>());
+    /** Name of the card that initiated the destroy-rest flow (for logging). */
+    public String pendingDestroyRestSourceName;
     public boolean pendingAwakeningCounterPlacement;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
@@ -409,6 +415,9 @@ public class GameData {
         copy.pendingForcedSacrificePlayerId = this.pendingForcedSacrificePlayerId;
         copy.pendingForcedSacrificeQueue.addAll(this.pendingForcedSacrificeQueue);
         copy.pendingSimultaneousSacrificeIds.addAll(this.pendingSimultaneousSacrificeIds);
+        copy.pendingDestroyRestMode = this.pendingDestroyRestMode;
+        copy.pendingDestroyRestProtectedIds.addAll(this.pendingDestroyRestProtectedIds);
+        copy.pendingDestroyRestSourceName = this.pendingDestroyRestSourceName;
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
         copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
 

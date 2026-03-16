@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGain
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureDestroyRestEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentsEffect;
@@ -100,6 +101,119 @@ public class DestructionResolutionService {
         });
 
         destroyBatch(gameData, toDestroy, entry.getCard().getName(), effect.cannotBeRegenerated());
+    }
+
+    /**
+     * Resolves a {@link EachPlayerChoosesCreatureDestroyRestEffect}. Each player in APNAP order
+     * chooses a creature they control; all other creatures are destroyed simultaneously.
+     * Players with zero or one creature auto-resolve.
+     */
+    @HandlesEffect(EachPlayerChoosesCreatureDestroyRestEffect.class)
+    void resolveEachPlayerChoosesCreatureDestroyRest(GameData gameData, StackEntry entry) {
+        gameData.pendingDestroyRestMode = true;
+        gameData.pendingDestroyRestProtectedIds.clear();
+        gameData.pendingDestroyRestSourceName = entry.getCard().getName();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> creatures = new ArrayList<>();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null) {
+                for (Permanent perm : battlefield) {
+                    if (gameQueryService.isCreature(gameData, perm)) {
+                        creatures.add(perm);
+                    }
+                }
+            }
+
+            if (creatures.isEmpty()) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData, playerName + " has no creatures.");
+                continue;
+            }
+
+            if (creatures.size() == 1) {
+                // Auto-keep the only creature
+                gameData.pendingDestroyRestProtectedIds.add(creatures.getFirst().getId());
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " keeps " + creatures.getFirst().getCard().getName() + " (only creature).");
+                continue;
+            }
+
+            // Multiple creatures — player must choose 1 to keep
+            List<UUID> creatureIds = creatures.stream().map(Permanent::getId).toList();
+            gameData.pendingForcedSacrificeQueue.add(
+                    new PendingForcedSacrifice(playerId, 1, creatureIds));
+        }
+
+        if (gameData.pendingForcedSacrificeQueue.isEmpty()) {
+            // All auto-resolved — destroy non-protected creatures now
+            performDestroyAllCreaturesExcept(gameData, entry.getCard().getName());
+        } else {
+            beginNextDestroyRestChoice(gameData);
+        }
+    }
+
+    /**
+     * Prompts the next player in the destroy-rest queue to choose a creature to keep.
+     */
+    void beginNextDestroyRestChoice(GameData gameData) {
+        if (gameData.pendingForcedSacrificeQueue.isEmpty()) return;
+        PendingForcedSacrifice next = gameData.pendingForcedSacrificeQueue.removeFirst();
+        gameData.pendingForcedSacrificeCount = next.count();
+        gameData.pendingForcedSacrificePlayerId = next.playerId();
+        playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
+                next.count(), "Choose a creature to keep. The rest will be destroyed.");
+    }
+
+    /**
+     * Completes a player's "choose creature to keep" selection during a destroy-rest flow.
+     * Called from {@link com.github.laxika.magicalvibes.service.input.MultiPermanentChoiceHandlerService}.
+     *
+     * @param gameData     the current game state
+     * @param permanentIds the permanent IDs the player chose to keep
+     */
+    public void completeDestroyRestChoice(GameData gameData, List<UUID> permanentIds) {
+        gameData.pendingForcedSacrificeCount = 0;
+        gameData.pendingForcedSacrificePlayerId = null;
+
+        // Add the chosen creature to the protected set
+        gameData.pendingDestroyRestProtectedIds.addAll(permanentIds);
+
+        if (!gameData.pendingForcedSacrificeQueue.isEmpty()) {
+            // More players need to choose — prompt the next one
+            beginNextDestroyRestChoice(gameData);
+            return;
+        }
+
+        // All players have chosen — destroy all non-protected creatures
+        String sourceName = gameData.pendingDestroyRestSourceName;
+        performDestroyAllCreaturesExcept(gameData, sourceName != null ? sourceName : "unknown");
+    }
+
+    /**
+     * Destroys all creatures not in the protected set. Clears destroy-rest state afterwards.
+     */
+    private void performDestroyAllCreaturesExcept(GameData gameData, String sourceName) {
+        Set<UUID> protectedIds = new HashSet<>(gameData.pendingDestroyRestProtectedIds);
+        gameData.pendingDestroyRestProtectedIds.clear();
+        gameData.pendingDestroyRestMode = false;
+
+        List<Permanent> toDestroy = new ArrayList<>();
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm) && !protectedIds.contains(perm.getId())) {
+                    toDestroy.add(perm);
+                }
+            }
+        });
+
+        if (toDestroy.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, sourceName + " resolves but no creatures are destroyed.");
+            return;
+        }
+
+        destroyBatch(gameData, toDestroy, sourceName, false);
     }
 
     /**

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -55,6 +56,7 @@ public class MultiPermanentChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
+    private final DestructionResolutionService destructionResolutionService;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_PERMANENT_CHOICE)) {
@@ -97,6 +99,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds);
         } else if (gameData.pendingSacrificeAttackingCreature) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
+        } else if (gameData.pendingDestroyRestMode && gameData.pendingForcedSacrificeCount > 0) {
+            handleDestroyRestChoice(gameData, permanentIds);
         } else if (gameData.pendingForcedSacrificeCount > 0) {
             handleForcedSacrifice(gameData, permanentIds);
         } else if (gameData.pendingCombatDamageBounceTargetPlayerId != null) {
@@ -254,6 +258,34 @@ public class MultiPermanentChoiceHandlerService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Follow the same pattern as proliferate completion: SBA → may abilities → resume effects
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleDestroyRestChoice(GameData gameData, List<UUID> permanentIds) {
+        destructionResolutionService.completeDestroyRestChoice(gameData, permanentIds);
+
+        // If we're still awaiting input (next player's choice), return
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        // Destruction is complete — follow standard completion: SBA → may abilities → resume effects
+        permanentRemovalService.removeOrphanedAuras(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
