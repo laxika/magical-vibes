@@ -85,7 +85,7 @@ class HardAiDecisionEngineTest {
     void hardEngineConstructorWorks() {
         HardAiDecisionEngine engine = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
         assertThat(engine).isNotNull();
     }
 }

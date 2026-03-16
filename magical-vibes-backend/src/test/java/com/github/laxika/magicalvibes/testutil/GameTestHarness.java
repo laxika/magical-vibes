@@ -163,6 +163,7 @@ public class GameTestHarness {
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
+    private final CombatAttackService combatAttackService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -219,7 +220,7 @@ public class GameTestHarness {
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
-        CombatAttackService combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, sessionManager, triggerCollectionService, combatTriggerService);
+        combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, sessionManager, triggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, sessionManager, combatAttackService, combatTriggerService);
         CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, deathTriggerService, permanentRemovalService, playerInputService, sessionManager, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
@@ -858,6 +859,10 @@ public class GameTestHarness {
 
     public SpellCastingService getSpellCastingService() {
         return spellCastingService;
+    }
+
+    public CombatAttackService getCombatAttackService() {
+        return combatAttackService;
     }
 
     public void clearMessages() {

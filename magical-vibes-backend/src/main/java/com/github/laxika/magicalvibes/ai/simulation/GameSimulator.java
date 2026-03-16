@@ -166,6 +166,7 @@ public class GameSimulator {
     private final BoardEvaluator boardEvaluator;
     private final SpellEvaluator spellEvaluator;
     private final CombatSimulator combatSimulator;
+    private final CombatAttackService combatAttackService;
 
     public GameSimulator(GameQueryService sharedQueryService) {
         NoOpSessionManager noOpSession = new NoOpSessionManager();
@@ -220,7 +221,7 @@ public class GameSimulator {
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
-        CombatAttackService combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, noOpSession, triggerCollectionService, combatTriggerService);
+        this.combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, noOpSession, triggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, noOpSession, combatAttackService, combatTriggerService);
         CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, deathTriggerService, permanentRemovalService, playerInputService, noOpSession, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
@@ -407,16 +408,7 @@ public class GameSimulator {
 
         switch (awaitingInput) {
             case ATTACKER_DECLARATION -> {
-                List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
-                List<Integer> availableIndices = new ArrayList<>();
-                for (int i = 0; i < battlefield.size(); i++) {
-                    Permanent perm = battlefield.get(i);
-                    if (!gameQueryService.isCreature(gd, perm)) continue;
-                    if (perm.isTapped()) continue;
-                    if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
-                    if (gameQueryService.hasKeyword(gd, perm, Keyword.DEFENDER)) continue;
-                    availableIndices.add(i);
-                }
+                List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gd, playerId);
                 // Use CombatSimulator to find best attackers, then also offer empty attack
                 List<Integer> bestAttackers = combatSimulator.findBestAttackers(gd, playerId, availableIndices);
                 actions.add(new SimulationAction.DeclareAttackers(List.of())); // no attack

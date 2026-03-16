@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
@@ -21,6 +22,7 @@ public class AiPlayerService {
     private final GameRegistry gameRegistry;
     private final ObjectProvider<MessageHandler> messageHandlerProvider;
     private final GameQueryService gameQueryService;
+    private final CombatAttackService combatAttackService;
     private final LobbyService lobbyService;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
@@ -28,12 +30,14 @@ public class AiPlayerService {
     public AiPlayerService(GameRegistry gameRegistry,
                            ObjectProvider<MessageHandler> messageHandlerProvider,
                            GameQueryService gameQueryService,
+                           CombatAttackService combatAttackService,
                            LobbyService lobbyService,
                            WebSocketSessionManager sessionManager,
                            ObjectMapper objectMapper) {
         this.gameRegistry = gameRegistry;
         this.messageHandlerProvider = messageHandlerProvider;
         this.gameQueryService = gameQueryService;
+        this.combatAttackService = combatAttackService;
         this.lobbyService = lobbyService;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
@@ -52,10 +56,10 @@ public class AiPlayerService {
 
         MessageHandler handler = messageHandlerProvider.getObject();
         AiDecisionEngine engine = isHard
-                ? new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService)
+                ? new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService)
                 : isMedium
-                ? new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService)
-                : new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
+                ? new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService)
+                : new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService);
         String connectionId = "ai-" + gameData.id;
         long delay = isHard ? 1500L : isMedium ? 1200L : 800L;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, delay);

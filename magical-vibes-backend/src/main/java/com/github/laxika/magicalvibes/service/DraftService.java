@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.ai.AiConnection;
 import com.github.laxika.magicalvibes.ai.EasyAiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.AiDraftEngine;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
@@ -63,6 +64,7 @@ public class DraftService {
     private final GameBroadcastService gameBroadcastService;
     private final ObjectProvider<MessageHandler> messageHandlerProvider;
     private final GameQueryService gameQueryService;
+    private final CombatAttackService combatAttackService;
     private final SessionManager sessionManager;
     private final WebSocketSessionManager webSocketSessionManager;
     private final CardViewFactory cardViewFactory;
@@ -76,6 +78,7 @@ public class DraftService {
                         GameBroadcastService gameBroadcastService,
                         ObjectProvider<MessageHandler> messageHandlerProvider,
                         GameQueryService gameQueryService,
+                        CombatAttackService combatAttackService,
                         SessionManager sessionManager,
                         WebSocketSessionManager webSocketSessionManager,
                         CardViewFactory cardViewFactory,
@@ -85,6 +88,7 @@ public class DraftService {
         this.gameBroadcastService = gameBroadcastService;
         this.messageHandlerProvider = messageHandlerProvider;
         this.gameQueryService = gameQueryService;
+        this.combatAttackService = combatAttackService;
         this.sessionManager = sessionManager;
         this.webSocketSessionManager = webSocketSessionManager;
         this.cardViewFactory = cardViewFactory;
@@ -562,7 +566,7 @@ public class DraftService {
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         MessageHandler handler = messageHandlerProvider.getObject();
-        EasyAiDecisionEngine engine = new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService);
+        EasyAiDecisionEngine engine = new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService);
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper);
         engine.setSelfConnection(aiConnection);

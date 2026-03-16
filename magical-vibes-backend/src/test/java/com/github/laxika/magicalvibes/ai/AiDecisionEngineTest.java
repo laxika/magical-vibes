@@ -44,7 +44,7 @@ class AiDecisionEngineTest {
         FakeConnection aiConn = new FakeConnection("ai-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
         ai.setSelfConnection(aiConn);
     }
 

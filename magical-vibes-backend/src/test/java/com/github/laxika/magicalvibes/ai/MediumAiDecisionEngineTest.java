@@ -41,7 +41,7 @@ class MediumAiDecisionEngineTest {
         FakeConnection aiConn = new FakeConnection("ai-medium-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new MediumAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
         ai.setSelfConnection(aiConn);
     }
 

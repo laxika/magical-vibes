@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,8 +32,9 @@ import java.util.UUID;
 public class EasyAiDecisionEngine extends AiDecisionEngine {
 
     public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                                MessageHandler messageHandler, GameQueryService gameQueryService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService);
+                                MessageHandler messageHandler, GameQueryService gameQueryService,
+                                CombatAttackService combatAttackService) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService);
     }
 
     // ===== Priority / Main Phase =====
@@ -159,7 +161,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     @Override
     protected void handleAttackers(GameData gameData) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        if (battlefield == null) {
+        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
+        if (battlefield == null || availableIndices.isEmpty()) {
             send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of(), null)));
             return;
         }
@@ -171,12 +174,8 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         int totalAttackDamage = 0;
         int opponentLife = gameData.getLife(opponentId);
 
-        for (int i = 0; i < battlefield.size(); i++) {
+        for (int i : availableIndices) {
             Permanent perm = battlefield.get(i);
-            if (!gameQueryService.isCreature(gameData, perm)) continue;
-            if (perm.isTapped()) continue;
-            if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
 
             int power = gameQueryService.getEffectivePower(gameData, perm);
             int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
@@ -210,20 +209,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // Always attack if lethal
         if (totalAttackDamage < opponentLife) {
             int allInDamage = 0;
-            List<Integer> allInIndices = new ArrayList<>();
-            for (int i = 0; i < battlefield.size(); i++) {
-                Permanent perm = battlefield.get(i);
-                if (!gameQueryService.isCreature(gameData, perm)) continue;
-                if (perm.isTapped()) continue;
-                if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gameData, perm, Keyword.VIGILANCE)
-                        && !gameQueryService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE)) continue;
-                if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
-
-                allInDamage += gameQueryService.getEffectivePower(gameData, perm);
-                allInIndices.add(i);
+            for (int i : availableIndices) {
+                allInDamage += gameQueryService.getEffectivePower(gameData, battlefield.get(i));
             }
             if (allInDamage >= opponentLife) {
-                attackerIndices = allInIndices;
+                attackerIndices = new ArrayList<>(availableIndices);
             }
         }
 

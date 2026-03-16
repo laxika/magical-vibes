@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,8 +46,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final MCTSEngine mctsEngine;
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                                MessageHandler messageHandler, GameQueryService gameQueryService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService);
+                                MessageHandler messageHandler, GameQueryService gameQueryService,
+                                CombatAttackService combatAttackService) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService);
         BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -224,21 +226,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     @Override
     protected void handleAttackers(GameData gameData) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        if (battlefield == null) {
+        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
+        if (availableIndices.isEmpty()) {
             send(() -> messageHandler.handleDeclareAttackers(selfConnection,
                     new DeclareAttackersRequest(List.of(), null)));
             return;
-        }
-
-        List<Integer> availableIndices = new ArrayList<>();
-        for (int i = 0; i < battlefield.size(); i++) {
-            Permanent perm = battlefield.get(i);
-            if (!gameQueryService.isCreature(gameData, perm)) continue;
-            if (perm.isTapped()) continue;
-            if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
-            availableIndices.add(i);
         }
 
         // If 0-1 attackers, use CombatSimulator (no need for MCTS)
