@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -322,6 +323,40 @@ public class StepTriggerService {
                 String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} enchanted-permanent-controller upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
+            }
+        });
+
+        // Check all battlefields for curses with ENCHANTED_PLAYER_UPKEEP_TRIGGERED effects
+        // These fire during the enchanted player's upkeep (e.g. Curse of Oblivion)
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            List<CardEffect> enchantedPlayerUpkeepEffects = perm.getCard().getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED);
+            if (enchantedPlayerUpkeepEffects == null || enchantedPlayerUpkeepEffects.isEmpty()) return;
+            if (!perm.isAttached()) return;
+
+            // For curses, attachedTo is the enchanted player's UUID
+            UUID enchantedPlayerId = perm.getAttachedTo();
+            if (!enchantedPlayerId.equals(activePlayerId)) return;
+
+            for (CardEffect effect : enchantedPlayerUpkeepEffects) {
+                // Bake the enchanted player ID into effects that need it
+                CardEffect effectForStack = effect;
+                if (effect instanceof ExileCardsFromOwnGraveyardEffect e) {
+                    effectForStack = new ExileCardsFromOwnGraveyardEffect(e.count(), enchantedPlayerId);
+                }
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        auraOwnerId,
+                        perm.getCard().getName() + "'s upkeep ability",
+                        new ArrayList<>(List.of(effectForStack)),
+                        (UUID) null,
+                        perm.getId()
+                ));
+
+                String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} enchanted-player upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
         });
 

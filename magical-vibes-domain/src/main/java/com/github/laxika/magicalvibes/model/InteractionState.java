@@ -268,6 +268,7 @@ public class InteractionState {
             this.graveyardChoice.setAttachToSourcePermanentId(prev.attachToSourcePermanentId());
             this.graveyardChoice.setGrantColor(prev.grantColor());
             this.graveyardChoice.setGrantSubtype(prev.grantSubtype());
+            this.graveyardChoice.setExileRemainingCount(prev.exileRemainingCount());
         }
         this.context = new InteractionContext.GraveyardChoice(playerId, new HashSet<>(validIndices), destination, cardPool);
     }
@@ -295,6 +296,10 @@ public class InteractionState {
 
     public void setGraveyardChoiceGrantSubtype(CardSubtype subtype) {
         ensureGraveyardChoice().setGrantSubtype(subtype);
+    }
+
+    public void setGraveyardChoiceExileRemainingCount(int count) {
+        ensureGraveyardChoice().setExileRemainingCount(count);
     }
 
     public InteractionContext.GraveyardChoice graveyardChoiceContext() {

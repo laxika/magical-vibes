@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -48,6 +50,7 @@ public class GraveyardChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final LifeResolutionService lifeResolutionService;
+    private final ExileService exileService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
@@ -68,9 +71,13 @@ public class GraveyardChoiceHandlerService {
         UUID attachToSourcePermanentId = gameData.interaction.graveyardChoice().attachToSourcePermanentId();
         CardColor grantColor = gameData.interaction.graveyardChoice().grantColor();
         CardSubtype grantSubtype = gameData.interaction.graveyardChoice().grantSubtype();
+        int exileRemainingCount = gameData.interaction.graveyardChoice().exileRemainingCount();
         gameData.interaction.clearGraveyardChoice();
 
         if (cardIndex == -1) {
+            if (destination == GraveyardChoiceDestination.EXILE) {
+                throw new IllegalStateException("Cannot decline forced graveyard exile");
+            }
             // Player declined
             String logEntry = player.getUsername() + " chooses not to return a card.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -138,6 +145,27 @@ public class GraveyardChoiceHandlerService {
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
                         legendRuleService.checkLegendRule(gameData, playerId);
+                    }
+                }
+                case EXILE -> {
+                    exileService.exileCard(gameData, playerId, card);
+
+                    String logEntry = player.getUsername() + " exiles " + card.getName() + " from their graveyard.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} exiles {} from graveyard", gameData.id, player.getUsername(), card.getName());
+
+                    // Check if more exiles are needed
+                    int remaining = exileRemainingCount - 1;
+                    if (remaining > 0) {
+                        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                        if (graveyard != null && !graveyard.isEmpty()) {
+                            List<Integer> newValidIndices = IntStream.range(0, graveyard.size()).boxed().toList();
+                            gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
+                            gameData.interaction.setGraveyardChoiceExileRemainingCount(remaining);
+                            playerInputService.beginGraveyardChoice(gameData, playerId, newValidIndices,
+                                    "Choose a card to exile from your graveyard.");
+                            return;
+                        }
                     }
                 }
             }

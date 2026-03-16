@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -1243,5 +1244,65 @@ public class GraveyardReturnResolutionService {
             playerInputService.beginPermanentChoice(gameData, enchantedCreatureControllerId, validTargetIds,
                     "Choose a creature to attach " + auraCard.getName() + " to.");
         }
+    }
+
+    /**
+     * Resolves an {@link ExileCardsFromOwnGraveyardEffect} by forcing the affected
+     * player to exile cards from their own graveyard.
+     * <ul>
+     *   <li>0 cards in graveyard: nothing happens</li>
+     *   <li>1 to count cards: all are auto-exiled</li>
+     *   <li>More than count cards: the player chooses which to exile</li>
+     * </ul>
+     */
+    @HandlesEffect(ExileCardsFromOwnGraveyardEffect.class)
+    void resolveExileCardsFromOwnGraveyard(GameData gameData, StackEntry entry,
+                                           ExileCardsFromOwnGraveyardEffect effect) {
+        UUID affectedPlayerId = effect.affectedPlayerId();
+        if (affectedPlayerId == null) {
+            affectedPlayerId = entry.getControllerId();
+        }
+        int count = effect.count();
+        String playerName = gameData.playerIdToName.get(affectedPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(affectedPlayerId);
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            String logEntry = playerName + " has no cards in graveyard to exile.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no graveyard cards to exile", gameData.id, playerName);
+            return;
+        }
+
+        if (graveyard.size() <= count) {
+            // Auto-exile all cards
+            List<Card> toExile = new ArrayList<>(graveyard);
+            graveyard.clear();
+            List<String> exiledNames = new ArrayList<>();
+            for (Card card : toExile) {
+                exileService.exileCard(gameData, affectedPlayerId, card);
+                exiledNames.add(card.getName());
+            }
+            String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from their graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} auto-exiles {} cards from graveyard", gameData.id, playerName, toExile.size());
+        } else {
+            // Player must choose which cards to exile
+            beginGraveyardExileChoice(gameData, affectedPlayerId, count);
+        }
+    }
+
+    /**
+     * Sets up a graveyard choice interaction for the player to choose a card to exile.
+     * If multiple exiles are needed, the remaining count is tracked so subsequent choices
+     * are presented after each exile.
+     */
+    void beginGraveyardExileChoice(GameData gameData, UUID playerId, int remainingCount) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Integer> validIndices = IntStream.range(0, graveyard.size()).boxed().toList();
+
+        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
+        gameData.interaction.setGraveyardChoiceExileRemainingCount(remainingCount);
+
+        playerInputService.beginGraveyardChoice(gameData, playerId, validIndices, "Choose a card to exile from your graveyard.");
     }
 }

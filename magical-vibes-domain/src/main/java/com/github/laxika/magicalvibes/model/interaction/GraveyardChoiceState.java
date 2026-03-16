@@ -21,6 +21,7 @@ public class GraveyardChoiceState {
     private UUID attachToSourcePermanentId;
     private CardColor grantColor;
     private CardSubtype grantSubtype;
+    private int exileRemainingCount;
 
     public GraveyardChoiceState() {
     }
@@ -89,6 +90,14 @@ public class GraveyardChoiceState {
         this.grantSubtype = grantSubtype;
     }
 
+    public int exileRemainingCount() {
+        return exileRemainingCount;
+    }
+
+    public void setExileRemainingCount(int exileRemainingCount) {
+        this.exileRemainingCount = exileRemainingCount;
+    }
+
     public GraveyardChoiceState deepCopy() {
         GraveyardChoiceState copy = new GraveyardChoiceState(
                 playerId,
@@ -100,6 +109,7 @@ public class GraveyardChoiceState {
         copy.attachToSourcePermanentId = this.attachToSourcePermanentId;
         copy.grantColor = this.grantColor;
         copy.grantSubtype = this.grantSubtype;
+        copy.exileRemainingCount = this.exileRemainingCount;
         return copy;
     }
 }
