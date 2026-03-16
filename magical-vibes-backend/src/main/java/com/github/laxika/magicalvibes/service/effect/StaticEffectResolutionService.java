@@ -494,6 +494,15 @@ public class StaticEffectResolutionService {
                     && context.source().getAttachedTo().equals(context.target().getId())
                     && matchesStaticFilter(context.target(), filter);
         }
+        if (scope == GrantScope.ENCHANTED_PLAYER_CREATURES) {
+            if (!context.source().isAttached()) return false;
+            UUID attachedPlayerId = context.source().getAttachedTo();
+            List<Permanent> attachedPlayerBf = context.gameData().playerBattlefields.get(attachedPlayerId);
+            if (attachedPlayerBf == null || !attachedPlayerBf.contains(context.target())) return false;
+            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
+            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
+                    && matchesStaticFilter(context.target(), filter);
+        }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
             return context.targetOnSameBattlefield() && context.target().isTapped();
         }

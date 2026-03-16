@@ -141,10 +141,18 @@ public class Card {
         return subtypes.contains(CardSubtype.AURA);
     }
 
+    public boolean isEnchantPlayer() {
+        return isAura() && subtypes.contains(CardSubtype.CURSE);
+    }
+
     public Set<TargetType> getAllowedTargets() {
         Set<TargetType> result = EnumSet.noneOf(TargetType.class);
         if (isAura()) {
-            result.add(TargetType.PERMANENT);
+            if (isEnchantPlayer()) {
+                result.add(TargetType.PLAYER);
+            } else {
+                result.add(TargetType.PERMANENT);
+            }
         }
         for (CardEffect e : getEffects(EffectSlot.SPELL)) {
             collectTargetTypes(e, result);
@@ -179,7 +187,11 @@ public class Card {
     public boolean isNeedsSpellCastTarget() {
         Set<TargetType> result = EnumSet.noneOf(TargetType.class);
         if (isAura()) {
-            result.add(TargetType.PERMANENT);
+            if (isEnchantPlayer()) {
+                result.add(TargetType.PLAYER);
+            } else {
+                result.add(TargetType.PERMANENT);
+            }
         }
         for (CardEffect e : getEffects(EffectSlot.SPELL)) {
             if (e instanceof CostEffect) continue;

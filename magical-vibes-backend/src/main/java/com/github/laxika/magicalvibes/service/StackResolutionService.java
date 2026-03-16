@@ -158,8 +158,27 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
+        // Aura that enchants a player (e.g. Curses)
+        if (card.isAura() && card.isEnchantPlayer() && entry.getTargetPermanentId() != null) {
+            UUID targetPlayerId = entry.getTargetPermanentId();
+            if (!gameData.playerIds.contains(targetPlayerId)) {
+                String fizzleLog = card.getName() + " fizzles (enchanted player no longer in the game).";
+                gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                log.info("Game {} - {} fizzles, target player {} no longer in game", gameData.id, card.getName(), targetPlayerId);
+            } else {
+                Permanent perm = new Permanent(card);
+                perm.setAttachedTo(targetPlayerId);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+                String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                String logEntry = card.getName() + " enters the battlefield attached to " + targetPlayerName + " under " + playerName + "'s control.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} resolves, attached to player {} for {}", gameData.id, card.getName(), targetPlayerName, playerName);
+            }
         // Aura fizzles if its target is no longer on the battlefield
-        if (card.isAura() && entry.getTargetPermanentId() != null) {
+        } else if (card.isAura() && entry.getTargetPermanentId() != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
             if (target == null) {
                 String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";

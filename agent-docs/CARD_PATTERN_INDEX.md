@@ -313,6 +313,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep +1/+1 counter + sacrifice on combat | `p/PrimalCocoon.java` | UPKEEP_TRIGGERED PutPlusOnePlusOneCounterOnEnchantedCreatureEffect + ON_ATTACK SacrificeSelfEffect + ON_BLOCK SacrificeSelfEffect |
 | Doesn't untap + enchanted controller upkeep life loss | `n/NumbingDose.java` | STATIC AttachedCreatureDoesntUntapEffect + ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED EnchantedCreatureControllerLosesLifeEffect(1) — enchants artifact or creature, uses PermanentAnyOfPredicate target filter |
 | Enchanted permanent death trigger (gain life) | `v/ViridianHarvest.java` | ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD GainLifeEffect(6) — enchants artifact, aura controller gains life when enchanted permanent is put into graveyard |
+| Curse (enchant player + static debuff) | `c/CurseOfDeathsHold.java` | STATIC StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_PLAYER_CREATURES) — enchant player aura (auto-detected from CURSE subtype via `isEnchantPlayer()`), creatures enchanted player controls get -1/-1 |
 
 ## Artifacts
 
