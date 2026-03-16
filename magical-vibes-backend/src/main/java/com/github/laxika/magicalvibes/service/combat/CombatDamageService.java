@@ -286,16 +286,39 @@ public class CombatDamageService {
         // Validate trample: each blocker must receive at least lethal damage
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
             boolean atkHasDeathtouchForValidation = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
+
+            // Compute total lethal needed across all blockers
+            int totalLethalNeeded = 0;
             for (int blkIdx : livingBlockers) {
                 Permanent blk = defBf.get(blkIdx);
                 int alreadyTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
                 int lethal = atkHasDeathtouchForValidation
                         ? Math.max(0, 1 - alreadyTaken)
-                        : gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken;
-                int assigned = assignments.getOrDefault(blk.getId(), 0);
-                if (assigned < lethal) {
-                    throw new IllegalStateException("Trample: must assign at least " + lethal
-                            + " damage to " + blk.getCard().getName());
+                        : Math.max(0, gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken);
+                totalLethalNeeded += lethal;
+            }
+
+            if (totalDamage >= totalLethalNeeded) {
+                // Enough damage to deal lethal to all blockers: enforce per-blocker minimums
+                for (int blkIdx : livingBlockers) {
+                    Permanent blk = defBf.get(blkIdx);
+                    int alreadyTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
+                    int lethal = atkHasDeathtouchForValidation
+                            ? Math.max(0, 1 - alreadyTaken)
+                            : Math.max(0, gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken);
+                    int assigned = assignments.getOrDefault(blk.getId(), 0);
+                    if (assigned < lethal) {
+                        throw new IllegalStateException("Trample: must assign at least " + lethal
+                                + " damage to " + blk.getCard().getName());
+                    }
+                }
+            } else {
+                // Not enough damage to deal lethal to all blockers:
+                // all damage must go to blockers, none can trample over
+                if (assignments.containsKey(overflowTargetId)) {
+                    throw new IllegalStateException(
+                            "Trample: not enough damage to deal lethal to all blockers, "
+                                    + "all damage must be assigned to blockers");
                 }
             }
         }
