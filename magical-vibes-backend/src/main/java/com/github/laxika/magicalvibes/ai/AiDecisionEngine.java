@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.IntConsumer;
@@ -226,6 +228,34 @@ public abstract class AiDecisionEngine {
             return nonActive;
         }
         return null;
+    }
+
+    /**
+     * Merges must-attack indices into an attacker list, ensuring all creatures
+     * with "attacks each combat if able" are included.
+     */
+    protected List<Integer> enforceMustAttack(List<Integer> attackerIndices, List<Integer> mustAttackIndices) {
+        if (mustAttackIndices.isEmpty()) return attackerIndices;
+        LinkedHashSet<Integer> merged = new LinkedHashSet<>(attackerIndices);
+        merged.addAll(mustAttackIndices);
+        return new ArrayList<>(merged);
+    }
+
+    /**
+     * Sends a blocker declaration with automatic fallback to empty blockers
+     * if the original declaration fails server-side validation.
+     */
+    protected void sendBlockerDeclaration(GameData gameData, DeclareBlockersRequest request) {
+        try {
+            messageHandler.handleDeclareBlockers(selfConnection, request);
+        } catch (Exception e) {
+            log.warn("AI: Blocker declaration rejected in game {}: {}. Falling back to no blockers.", gameId, e.getMessage());
+            try {
+                messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of()));
+            } catch (Exception e2) {
+                log.error("AI: Empty blocker declaration also failed in game {}", gameId, e2);
+            }
+        }
     }
 
     protected IntConsumer tapPermanentAction() {

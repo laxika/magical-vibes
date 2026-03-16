@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -51,7 +52,7 @@ class CombatSimulatorTest {
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0));
+        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0), List.of());
 
         // Should attack since no blockers
         assertThat(attackers).containsExactly(0);
@@ -94,7 +95,7 @@ class CombatSimulatorTest {
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0));
+        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0), List.of());
 
         // Air Elemental should attack since bears can't block it (no flying or reach)
         assertThat(attackers).containsExactly(0);
@@ -114,7 +115,7 @@ class CombatSimulatorTest {
         gd.playerBattlefields.get(player1.getId()).add(bears2);
 
         // No blockers on opponent side
-        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0, 1));
+        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0, 1), List.of());
 
         // 2+2=4 = exact lethal, should attack with both
         assertThat(attackers).containsExactlyInAnyOrder(0, 1);
@@ -134,7 +135,7 @@ class CombatSimulatorTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(airElemental);
 
-        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0));
+        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(0), List.of());
 
         // Bears attacking into a 4/4 should not be selected (bears dies, AE survives)
         // The simulator should find this is a bad trade
@@ -144,9 +145,129 @@ class CombatSimulatorTest {
     @Test
     @DisplayName("No attackers available returns empty list")
     void noAttackersReturnsEmpty() {
-        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of());
+        List<Integer> attackers = simulator.findBestAttackers(gd, player1.getId(), List.of(), List.of());
         assertThat(attackers).isEmpty();
     }
+
+    // ===== Must-attack =====
+
+    @Test
+    @DisplayName("Must-attack creature is included even when trade is unfavorable")
+    void mustAttackCreatureIncludedEvenWhenUnfavorable() {
+        // AI has Berserkers of Blood Ridge (4/4) that must attack
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers);
+
+        // Opponent has Air Elemental (4/4 flying) that can block it — even trade
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(airElemental);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Berserkers must be included regardless of trade outcome
+        assertThat(attackers).contains(0);
+    }
+
+    @Test
+    @DisplayName("Must-attack creature included alongside optional attacker chosen by simulator")
+    void mustAttackWithOptionalAttacker() {
+        // AI has Berserkers (must attack) and a Grizzly Bears (optional)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // No blockers — both should attack
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of(0));
+
+        assertThat(attackers).contains(0); // must-attack always present
+        assertThat(attackers).contains(1); // bears should also attack (no blockers)
+    }
+
+    @Test
+    @DisplayName("Only must-attack creature returned when optional creature has unfavorable trade")
+    void onlyMustAttackWhenOptionalIsUnfavorable() {
+        // AI has Berserkers (must-attack, index 0) and Bears (optional, index 1)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // Opponent has Air Elemental (4/4 flying) — can block bears unfavorably
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(airElemental);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of(0));
+
+        // Berserkers must always be included
+        assertThat(attackers).contains(0);
+    }
+
+    @Test
+    @DisplayName("Multiple must-attack creatures all included")
+    void multipleMustAttackCreaturesAllIncluded() {
+        Permanent berserkers1 = new Permanent(new BerserkersOfBloodRidge());
+        berserkers1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers1);
+
+        Permanent berserkers2 = new Permanent(new BerserkersOfBloodRidge());
+        berserkers2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers2);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of(0, 1));
+
+        assertThat(attackers).containsExactlyInAnyOrder(0, 1);
+    }
+
+    @Test
+    @DisplayName("Must-attack with lethal detection: forced attacker contributes to lethal count")
+    void mustAttackContributesToLethal() {
+        gd.playerLifeTotals.put(player2.getId(), 6);
+
+        // AI has Berserkers (4/4 must-attack) and Bears (2/2 optional)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // No blockers — 4+2=6 exact lethal
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of(0));
+
+        assertThat(attackers).containsExactlyInAnyOrder(0, 1);
+    }
+
+    @Test
+    @DisplayName("Empty must-attack list behaves same as before")
+    void emptyMustAttackListIsNoOp() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // No blockers — bears should attack
+        List<Integer> withEmptyMustAttack = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(withEmptyMustAttack).containsExactly(0);
+    }
+
+    // ===== Blocker selection =====
 
     @Test
     @DisplayName("Blocker selection: favorable block kills attacker")

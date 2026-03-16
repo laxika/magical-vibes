@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -179,6 +180,59 @@ class MediumAiDecisionEngineTest {
 
         // Should cast the spell with higher evaluated value
         assertThat(gd.stack).hasSize(1);
+    }
+
+    // ===== Must-attack =====
+
+    @Test
+    @DisplayName("Medium AI includes must-attack creature even into unfavorable board")
+    void includesMustAttackCreature() {
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+        // AI has Berserkers of Blood Ridge (4/4 must-attack)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(berserkers);
+
+        // Opponent has Air Elemental (4/4 flying) — can block
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(airElemental);
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // Berserkers must be attacking despite the unfavorable board
+        assertThat(berserkers.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Medium AI includes must-attack creature alongside optional creatures")
+    void includesMustAttackWithOptional() {
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        gd.playerLifeTotals.put(human.getId(), 20);
+
+        // AI has Berserkers (4/4 must-attack) and Bears (2/2 optional)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(berserkers);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        // No blockers — both should attack, dealing at least 4 damage (must-attack Berserkers)
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // Berserkers (4 power) must have attacked; combat fully resolves with no blockers
+        assertThat(gd.playerLifeTotals.get(human.getId())).isLessThanOrEqualTo(16);
     }
 
     // ===== tryCastSpell silent failure recovery =====

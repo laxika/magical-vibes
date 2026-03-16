@@ -3,14 +3,18 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.Connection;
@@ -18,6 +22,7 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -107,6 +112,72 @@ class HardAiDecisionEngineTest {
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
         assertThat(engine).isNotNull();
+    }
+
+    // ===== Must-attack =====
+
+    @Test
+    @DisplayName("Hard AI includes must-attack creature in attack declaration")
+    void includesMustAttackCreature() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+        // AI has Berserkers of Blood Ridge (4/4 must-attack)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers);
+
+        // Opponent has Air Elemental (4/4 flying)
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(airElemental);
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        assertThat(berserkers.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI blocker declaration does not leave game stuck")
+    void blockerDeclarationDoesNotStick() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player2.getId(), "Bob");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player2, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+
+        // Player1 attacks with Grizzly Bears
+        Permanent humanBears = new Permanent(new GrizzlyBears());
+        humanBears.setSummoningSick(false);
+        humanBears.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(humanBears);
+
+        // AI has Air Elemental to block with
+        Permanent aiElemental = new Permanent(new AirElemental());
+        aiElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(aiElemental);
+
+        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+        // The blocker declaration should have been accepted
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     // ===== tryCastSpell silent failure recovery =====

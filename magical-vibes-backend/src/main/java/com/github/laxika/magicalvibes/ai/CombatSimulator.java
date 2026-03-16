@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -48,9 +50,11 @@ public class CombatSimulator {
 
     /**
      * Finds the best set of attackers among available creatures.
+     * Must-attack creatures (from "attacks each combat if able" effects) are always included.
      */
     public List<Integer> findBestAttackers(GameData gameData, UUID aiPlayerId,
-                                           List<Integer> availableAttackerIndices) {
+                                           List<Integer> availableAttackerIndices,
+                                           List<Integer> mustAttackIndices) {
         if (availableAttackerIndices.isEmpty()) {
             return List.of();
         }
@@ -62,10 +66,17 @@ public class CombatSimulator {
         int opponentPoison = gameData.playerPoisonCounters.getOrDefault(opponentId, 0);
 
         // Build creature info for available attackers
-        List<CreatureInfo> attackerInfos = new ArrayList<>();
+        Set<Integer> mustAttackSet = new HashSet<>(mustAttackIndices);
+        List<CreatureInfo> forcedAttackerInfos = new ArrayList<>();
+        List<CreatureInfo> optionalAttackerInfos = new ArrayList<>();
         for (int idx : availableAttackerIndices) {
             Permanent perm = aiBattlefield.get(idx);
-            attackerInfos.add(buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId));
+            CreatureInfo info = buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId);
+            if (mustAttackSet.contains(idx)) {
+                forcedAttackerInfos.add(info);
+            } else {
+                optionalAttackerInfos.add(info);
+            }
         }
 
         // Build creature info for potential blockers
@@ -77,25 +88,43 @@ public class CombatSimulator {
             blockerInfos.add(buildCreatureInfo(gameData, perm, i, opponentId, aiPlayerId));
         }
 
-        // Limit to top creatures by score if too many
-        if (attackerInfos.size() > MAX_ATTACKER_SUBSET_BITS) {
-            attackerInfos.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
-            attackerInfos = new ArrayList<>(attackerInfos.subList(0, MAX_ATTACKER_SUBSET_BITS));
+        // Limit optional attackers to top creatures by score if too many
+        if (optionalAttackerInfos.size() > MAX_ATTACKER_SUBSET_BITS) {
+            optionalAttackerInfos.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
+            optionalAttackerInfos = new ArrayList<>(optionalAttackerInfos.subList(0, MAX_ATTACKER_SUBSET_BITS));
         }
 
-        int n = attackerInfos.size();
+        // If all attackers are forced, return them all
+        if (optionalAttackerInfos.isEmpty()) {
+            return forcedAttackerInfos.stream().map(CreatureInfo::index).toList();
+        }
+
+        int n = optionalAttackerInfos.size();
         int totalSubsets = 1 << n;
 
-        double bestScore = 0; // Not attacking at all scores 0
+        // Baseline: forced attackers only (score must beat this; if no must-attack, baseline is 0 = no attack)
+        double bestScore = Double.NEGATIVE_INFINITY;
         List<Integer> bestSubset = List.of();
+        if (!forcedAttackerInfos.isEmpty()) {
+            // Evaluate forced-only attack as baseline
+            CombatOutcome forcedOutcome = simulateCombat(forcedAttackerInfos, blockerInfos, opponentLife);
+            bestScore = forcedOutcome.evaluationDelta();
+            bestSubset = forcedAttackerInfos.stream().map(CreatureInfo::index).toList();
+        } else {
+            bestScore = 0; // Not attacking at all scores 0
+        }
 
-        for (int mask = 1; mask < totalSubsets; mask++) {
-            List<CreatureInfo> subset = new ArrayList<>();
+        for (int mask = 0; mask < totalSubsets; mask++) {
+            // Build subset: forced attackers + selected optional attackers
+            List<CreatureInfo> subset = new ArrayList<>(forcedAttackerInfos);
             for (int i = 0; i < n; i++) {
                 if ((mask & (1 << i)) != 0) {
-                    subset.add(attackerInfos.get(i));
+                    subset.add(optionalAttackerInfos.get(i));
                 }
             }
+
+            // Skip empty subset (no optional + no forced)
+            if (subset.isEmpty()) continue;
 
             // Quick lethal check: if unblockable damage >= opponent life (or poison), pick immediately
             List<CreatureInfo> unblockable = subset.stream()

@@ -409,14 +409,21 @@ public class GameSimulator {
         switch (awaitingInput) {
             case ATTACKER_DECLARATION -> {
                 List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gd, playerId);
-                // Use CombatSimulator to find best attackers, then also offer empty attack
-                List<Integer> bestAttackers = combatSimulator.findBestAttackers(gd, playerId, availableIndices);
-                actions.add(new SimulationAction.DeclareAttackers(List.of())); // no attack
-                if (!bestAttackers.isEmpty()) {
+                List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gd, playerId, availableIndices);
+                // Use CombatSimulator to find best attackers, then also offer empty/must-only attack
+                List<Integer> bestAttackers = combatSimulator.findBestAttackers(gd, playerId, availableIndices, mustAttackIndices);
+                if (mustAttackIndices.isEmpty()) {
+                    actions.add(new SimulationAction.DeclareAttackers(List.of())); // no attack
+                } else {
+                    // Must-attack creatures must always be included
+                    actions.add(new SimulationAction.DeclareAttackers(mustAttackIndices));
+                }
+                if (!bestAttackers.isEmpty() && !bestAttackers.equals(mustAttackIndices)) {
                     actions.add(new SimulationAction.DeclareAttackers(bestAttackers));
                 }
                 // Also try all-in attack if different from best
-                if (!availableIndices.isEmpty() && !availableIndices.equals(bestAttackers)) {
+                if (!availableIndices.isEmpty() && !availableIndices.equals(bestAttackers)
+                        && !availableIndices.equals(mustAttackIndices)) {
                     actions.add(new SimulationAction.DeclareAttackers(availableIndices));
                 }
             }
@@ -624,7 +631,8 @@ public class GameSimulator {
                     if (gameQueryService.hasKeyword(gd, perm, Keyword.DEFENDER)) continue;
                     available.add(i);
                 }
-                List<Integer> attackers = combatSimulator.findBestAttackers(gd, pid, available);
+                List<Integer> mustAttack = combatAttackService.getMustAttackIndices(gd, pid, available);
+                List<Integer> attackers = combatSimulator.findBestAttackers(gd, pid, available, mustAttack);
                 gameService.declareAttackers(gd, player, attackers, null);
             }
             case BLOCKER_DECLARATION -> {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
+import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -367,6 +368,82 @@ class AiDecisionEngineTest {
         // Air Elemental survived (4/4 vs 2/2)
         assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
+    }
+
+    // ===== Must-attack =====
+
+    private void setupAttackerPhase() {
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+    }
+
+    @Test
+    @DisplayName("Easy AI includes must-attack creature in attack declaration")
+    void includesMustAttackCreature() {
+        setupAttackerPhase();
+
+        // AI has Berserkers of Blood Ridge (4/4 must-attack)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(berserkers);
+
+        // Opponent has Air Elemental (4/4 flying) — can block
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(airElemental);
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // Berserkers must be attacking despite the unfavorable board
+        assertThat(berserkers.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Easy AI includes must-attack creature alongside optional creatures")
+    void includesMustAttackWithOptional() {
+        setupAttackerPhase();
+        gd.playerLifeTotals.put(human.getId(), 20);
+
+        // AI has Berserkers (4/4 must-attack) and Bears (2/2 optional)
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(berserkers);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // Berserkers (4 power) must have attacked; combat fully resolves with no blockers
+        assertThat(gd.playerLifeTotals.get(human.getId())).isLessThanOrEqualTo(16);
+    }
+
+    // ===== Blocker fallback =====
+
+    @Test
+    @DisplayName("AI does not get stuck when blocker declaration is rejected")
+    void blockerFallbackOnInvalidDeclaration() {
+        setupBlockerPhase();
+
+        // Human attacks with Grizzly Bears
+        Permanent humanBears = new Permanent(new GrizzlyBears());
+        humanBears.setSummoningSick(false);
+        humanBears.setAttacking(true);
+        gd.playerBattlefields.get(human.getId()).add(humanBears);
+
+        // AI has Air Elemental to block with
+        Permanent aiElemental = new Permanent(new AirElemental());
+        aiElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(aiElemental);
+
+        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+        // The blocker declaration should have been accepted (no stuck state)
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     // ===== ETB destroy targeting =====

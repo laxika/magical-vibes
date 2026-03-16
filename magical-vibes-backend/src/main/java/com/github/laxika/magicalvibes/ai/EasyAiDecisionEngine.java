@@ -224,6 +224,10 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Ensure creatures with "attacks each combat if able" are included
+        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
+        attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
+
         log.info("AI: Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
         send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices, null)));
@@ -337,7 +341,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         log.info("AI: Declaring {} blockers in game {}", assignments.size(), gameId);
-        send(() -> messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(assignments)));
+        sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
     }
 
     // ===== Combat Helpers =====

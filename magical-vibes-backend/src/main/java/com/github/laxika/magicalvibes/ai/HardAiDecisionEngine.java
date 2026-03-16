@@ -247,9 +247,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
+        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
+
         // If 0-1 attackers, use CombatSimulator (no need for MCTS)
         if (availableIndices.size() <= 1) {
-            handleAttackersWithSimulator(gameData, availableIndices);
+            handleAttackersWithSimulator(gameData, availableIndices, mustAttackIndices);
             return;
         }
 
@@ -258,9 +260,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             SimulationAction bestAction = mctsEngine.search(gameData, aiPlayer.getId(), MCTS_BUDGET);
 
             if (bestAction instanceof SimulationAction.DeclareAttackers da) {
-                log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", da.attackerIndices().size(), gameId);
+                // Ensure must-attack creatures are included in the MCTS result
+                List<Integer> attackerIndices = enforceMustAttack(da.attackerIndices(), mustAttackIndices);
+                log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
                 send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                        new DeclareAttackersRequest(da.attackerIndices(), null)));
+                        new DeclareAttackersRequest(attackerIndices, null)));
                 return;
             }
         } catch (Exception e) {
@@ -268,12 +272,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Fall back to CombatSimulator
-        handleAttackersWithSimulator(gameData, availableIndices);
+        handleAttackersWithSimulator(gameData, availableIndices, mustAttackIndices);
     }
 
-    private void handleAttackersWithSimulator(GameData gameData, List<Integer> availableIndices) {
+    private void handleAttackersWithSimulator(GameData gameData, List<Integer> availableIndices,
+                                              List<Integer> mustAttackIndices) {
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
-                gameData, aiPlayer.getId(), availableIndices);
+                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
 
         log.info("AI (Hard): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         send(() -> messageHandler.handleDeclareAttackers(selfConnection,
@@ -315,8 +320,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 .toList();
 
         log.info("AI (Hard): Declaring {} blockers in game {}", blockerAssignments.size(), gameId);
-        send(() -> messageHandler.handleDeclareBlockers(selfConnection,
-                new DeclareBlockersRequest(blockerAssignments)));
+        sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
     }
 
     // ===== Card Choice (discard lowest spell value) =====

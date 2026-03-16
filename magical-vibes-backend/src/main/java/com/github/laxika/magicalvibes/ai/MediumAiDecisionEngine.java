@@ -157,9 +157,10 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
     @Override
     protected void handleAttackers(GameData gameData) {
         List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
+        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
 
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
-                gameData, aiPlayer.getId(), availableIndices);
+                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
 
         log.info("AI (Medium): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         send(() -> messageHandler.handleDeclareAttackers(selfConnection,
@@ -203,8 +204,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 .toList();
 
         log.info("AI (Medium): Declaring {} blockers in game {}", blockerAssignments.size(), gameId);
-        send(() -> messageHandler.handleDeclareBlockers(selfConnection,
-                new DeclareBlockersRequest(blockerAssignments)));
+        sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
     }
 
     @Override
