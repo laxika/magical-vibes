@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSubtypeReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -207,6 +208,10 @@ public class EffectResolutionService {
                     gameQueryService.isMetalcraftMet(gameData, entry.getControllerId());
             case MorbidReplacementEffect ignored ->
                     gameQueryService.isMorbidMet(gameData);
+            case TargetSubtypeReplacementEffect tsre -> {
+                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+                yield target != null && target.getCard().getSubtypes().contains(tsre.subtype());
+            }
             default -> {
                 log.warn("Unknown replacement conditional effect type: {}", replacement.getClass().getSimpleName());
                 yield false;

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -33,7 +35,13 @@ public class TriggeredAbilityQueueService {
             boolean canTargetPlayers = pending.effects().stream().anyMatch(e -> e.canTargetPlayer());
             boolean canTargetPermanents = pending.effects().stream().anyMatch(e -> e.canTargetPermanent());
 
-            // Collect valid targets based on what the effects can target
+            // Collect valid targets based on what the effects can target,
+            // respecting the card's target filter if present
+            TargetFilter targetFilter = pending.dyingCard().getTargetFilter();
+            FilterContext filterCtx = targetFilter != null
+                    ? new FilterContext(gameData, pending.dyingCard().getId(), pending.controllerId())
+                    : null;
+
             List<UUID> validTargets = new ArrayList<>();
             if (canTargetPlayers) {
                 validTargets.addAll(gameData.orderedPlayerIds);
@@ -43,9 +51,13 @@ public class TriggeredAbilityQueueService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.isCreature(gameData, p)) {
-                            validTargets.add(p.getId());
+                        if (!gameQueryService.isCreature(gameData, p)) continue;
+                        if (targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {
+                            if (!gameQueryService.matchesFilters(p, Set.of(cpf), filterCtx)) continue;
+                        } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+                            if (!gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
                         }
+                        validTargets.add(p.getId());
                     }
                 }
             }
