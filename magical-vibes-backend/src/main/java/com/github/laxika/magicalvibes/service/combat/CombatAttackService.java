@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPred
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -447,11 +448,21 @@ public class CombatAttackService {
             count[0]++;
         }
 
+        UUID creatureControllerId = CombatHelper.findControllerOf(gameData, creature);
+
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.isAttached()
                     && permanent.getAttachedTo().equals(creature.getId())) {
                 count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(MustAttackEffect.class::isInstance)
+                        .count();
+            }
+            // Check for curses on the creature's controller (e.g. Curse of the Nightly Hunt)
+            if (permanent.isAttached()
+                    && permanent.getAttachedTo().equals(creatureControllerId)) {
+                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof MustAttackEffect mae
+                                && mae.scope() == GrantScope.ENCHANTED_PLAYER_CREATURES)
                         .count();
             }
         });
