@@ -1,23 +1,12 @@
 package com.github.laxika.magicalvibes.service.ability;
 
-import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.l.LuxCannon;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.n.NantukoHusk;
-import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.SeismicAssault;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -25,28 +14,96 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class AbilityActivationServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class AbilityActivationServiceTest {
+
+    private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false, false, Set.of());
+
+    @Mock private GraveyardService graveyardService;
+    @Mock private GameQueryService gameQueryService;
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private TargetLegalityService targetLegalityService;
+    @Mock private ActivatedAbilityExecutionService activatedAbilityExecutionService;
+    @Mock private PlayerInputService playerInputService;
+    @Mock private SessionManager sessionManager;
+    @Mock private PermanentRemovalService permanentRemovalService;
+    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private ExileService exileService;
+
+    @InjectMocks
+    private AbilityActivationService service;
+
+    private GameData gameData;
+    private Player player1;
+    private Player player2;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        player1 = new Player(player1Id, "Player1");
+        player2 = new Player(player2Id, "Player2");
+
+        gameData = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gameData.playerIds.add(player1Id);
+        gameData.playerIds.add(player2Id);
+        gameData.orderedPlayerIds.add(player1Id);
+        gameData.orderedPlayerIds.add(player2Id);
+        gameData.playerBattlefields.put(player1Id, new ArrayList<>());
+        gameData.playerBattlefields.put(player2Id, new ArrayList<>());
+        gameData.playerManaPools.put(player1Id, new ManaPool());
+        gameData.playerManaPools.put(player2Id, new ManaPool());
+        gameData.playerHands.put(player1Id, new ArrayList<>());
+        gameData.playerHands.put(player2Id, new ArrayList<>());
+        gameData.playerGraveyards.put(player1Id, new ArrayList<>());
+        gameData.playerGraveyards.put(player2Id, new ArrayList<>());
+        gameData.playerIdToName.put(player1Id, "Player1");
+        gameData.playerIdToName.put(player2Id, "Player2");
+        gameData.activePlayerId = player1Id;
+        gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+    }
 
     // =========================================================================
     // tapPermanent
@@ -59,35 +116,33 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Tapping a land awards the correct mana")
         void tappingLandAwardsMana() {
-            harness.addToBattlefield(player1, new Island());
+            Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
+            Permanent perm = addReadyPermanent(player1Id, island);
 
-            Permanent island = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Island"))
-                    .findFirst().orElseThrow();
-            island.setSummoningSick(false);
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             int blueBefore = pool.get(ManaColor.BLUE);
 
-            gs.tapPermanent(gd, player1, gd.playerBattlefields.get(player1.getId()).indexOf(island));
+            service.tapPermanent(gameData, player1, 0);
 
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
-            assertThat(island.isTapped()).isTrue();
+            assertThat(perm.isTapped()).isTrue();
+            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId());
+            verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
+            verify(gameBroadcastService).broadcastGameState(gameData);
         }
 
         @Test
         @DisplayName("Cannot tap an already tapped permanent")
         void cannotTapAlreadyTapped() {
-            harness.addToBattlefield(player1, new Island());
+            Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
+            Permanent perm = addReadyPermanent(player1Id, island);
+            perm.tap();
 
-            Permanent island = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Island"))
-                    .findFirst().orElseThrow();
-            island.setSummoningSick(false);
-            island.tap();
-
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(island);
-            assertThatThrownBy(() -> gs.tapPermanent(gd, player1, idx))
+            assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("already tapped");
         }
@@ -95,15 +150,10 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot tap a permanent with no tap effects")
         void cannotTapWithNoTapEffects() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Card card = createCreatureCard("Grizzly Bears", 2, 2);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
-            bears.setSummoningSick(false);
-
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-            assertThatThrownBy(() -> gs.tapPermanent(gd, player1, idx))
+            assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no tap effects");
         }
@@ -111,15 +161,15 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Summoning sick creature with tap-for-mana cannot be tapped")
         void summoningSickCreatureCannotTap() {
-            harness.addToBattlefield(player1, new LlanowarElves());
-
-            Permanent elves = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                    .findFirst().orElseThrow();
+            Card elves = createCreatureWithTapAbility("Llanowar Elves", ManaColor.GREEN);
+            Permanent perm = new Permanent(elves);
             // summoningSick is true by default
+            gameData.playerBattlefields.get(player1Id).add(perm);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(elves);
-            assertThatThrownBy(() -> gs.tapPermanent(gd, player1, idx))
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
+            when(gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("summoning sickness");
         }
@@ -127,17 +177,17 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Non-summoning-sick creature with tap-for-mana can be tapped")
         void nonSummoningSickCreatureCanTap() {
-            harness.addToBattlefield(player1, new LlanowarElves());
+            Card elves = createCreatureWithTapAbility("Llanowar Elves", ManaColor.GREEN);
+            Permanent perm = addReadyPermanent(player1Id, elves);
 
-            Permanent elves = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
-                    .findFirst().orElseThrow();
-            elves.setSummoningSick(false);
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             int greenBefore = pool.get(ManaColor.GREEN);
 
-            gs.tapPermanent(gd, player1, gd.playerBattlefields.get(player1.getId()).indexOf(elves));
+            service.tapPermanent(gameData, player1, 0);
 
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
         }
@@ -145,17 +195,19 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Summoning sick land can be tapped (lands are not creatures)")
         void summoningSickLandCanBeTapped() {
-            harness.addToBattlefield(player1, new Island());
-
-            Permanent island = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Island"))
-                    .findFirst().orElseThrow();
+            Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
+            Permanent perm = new Permanent(island);
             // summoningSick is true by default for all permanents, but lands should still be tappable
+            gameData.playerBattlefields.get(player1Id).add(perm);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             int blueBefore = pool.get(ManaColor.BLUE);
 
-            gs.tapPermanent(gd, player1, gd.playerBattlefields.get(player1.getId()).indexOf(island));
+            service.tapPermanent(gameData, player1, 0);
 
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
         }
@@ -163,13 +215,13 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Arrest blocks creature tap abilities")
         void arrestBlocksCreatureTapAbilities() {
-            Permanent elves = addReadyCreature(player1, new LlanowarElves());
+            Card elves = createCreatureWithTapAbility("Llanowar Elves", ManaColor.GREEN);
+            Permanent perm = addReadyPermanent(player1Id, elves);
 
-            // Attach Arrest aura to the creature
-            attachArrestAura(elves);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(true);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(elves);
-            assertThatThrownBy(() -> gs.tapPermanent(gd, player1, idx))
+            assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("can't be activated");
         }
@@ -177,7 +229,7 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Invalid permanent index throws")
         void invalidPermanentIndexThrows() {
-            assertThatThrownBy(() -> gs.tapPermanent(gd, player1, 999))
+            assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 999))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Invalid permanent index");
         }
@@ -185,16 +237,16 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Tapping a land logs the action")
         void tappingLandLogsAction() {
-            harness.addToBattlefield(player1, new Island());
+            Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
+            Permanent perm = addReadyPermanent(player1Id, island);
 
-            Permanent island = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Island"))
-                    .findFirst().orElseThrow();
-            island.setSummoningSick(false);
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            gs.tapPermanent(gd, player1, gd.playerBattlefields.get(player1.getId()).indexOf(island));
+            service.tapPermanent(gameData, player1, 0);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("taps Island"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 taps Island."));
         }
     }
 
@@ -207,31 +259,38 @@ class AbilityActivationServiceTest extends BaseCardTest {
     class SacrificePermanent {
 
         @Test
-        @DisplayName("Sacrificing puts ability on the stack and card in graveyard")
+        @DisplayName("Sacrificing puts ability on the stack and removes permanent")
         void sacrificePutsAbilityOnStack() {
-            Permanent aura = addReadyPermanent(player1, new AuraOfSilence());
-            harness.addToBattlefield(player2, new LuxCannon());
-            UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
+            Card aura = createCardWithSacrificeAbility("Aura of Silence");
+            Permanent perm = addReadyPermanent(player1Id, aura);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(aura);
-            harness.sacrificePermanent(player1, idx, targetId);
+            Card targetCard = createGenericArtifact("Lux Cannon");
+            Permanent target = addReadyPermanent(player2Id, targetCard);
+            UUID targetId = target.getId();
 
-            // Card should be in graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Aura of Silence"));
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.findPermanentById(gameData, targetId)).thenReturn(target);
+            when(gameQueryService.hasProtectionFrom(eq(gameData), eq(target), any())).thenReturn(false);
+            when(gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, perm)).thenReturn(false);
+            when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, perm)).thenReturn(false);
 
-            // Ability should be on the stack
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            service.sacrificePermanent(gameData, player1, 0, targetId);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
+            verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id);
+            verify(permanentRemovalService).removeOrphanedAuras(gameData);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         }
 
         @Test
         @DisplayName("Cannot sacrifice permanent with no ON_SACRIFICE effects")
         void cannotSacrificeWithoutEffects() {
-            Permanent bears = addReadyPermanent(player1, new GrizzlyBears());
+            Card card = createCreatureCard("Grizzly Bears", 2, 2);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-            assertThatThrownBy(() -> harness.sacrificePermanent(player1, idx, null))
+            assertThatThrownBy(() -> service.sacrificePermanent(gameData, player1, 0, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no sacrifice abilities");
         }
@@ -239,15 +298,12 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Pithing Needle blocks sacrifice abilities")
         void pithingNeedleBlocksSacrifice() {
-            Permanent aura = addReadyPermanent(player1, new AuraOfSilence());
-            harness.addToBattlefield(player2, new LuxCannon());
-            UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
+            Card aura = createCardWithSacrificeAbility("Aura of Silence");
+            Permanent perm = addReadyPermanent(player1Id, aura);
 
-            // Add Pithing Needle naming Aura of Silence
-            addPithingNeedleNaming(player2, "Aura of Silence");
+            addPithingNeedle(player2Id, "Aura of Silence");
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(aura);
-            assertThatThrownBy(() -> harness.sacrificePermanent(player1, idx, targetId))
+            assertThatThrownBy(() -> service.sacrificePermanent(gameData, player1, 0, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("can't be activated")
                     .hasMessageContaining("Pithing Needle");
@@ -256,7 +312,7 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Invalid permanent index throws")
         void invalidIndexThrows() {
-            assertThatThrownBy(() -> harness.sacrificePermanent(player1, 999, null))
+            assertThatThrownBy(() -> service.sacrificePermanent(gameData, player1, 999, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Invalid permanent index");
         }
@@ -264,14 +320,23 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Sacrifice logs the action")
         void sacrificeLogsAction() {
-            Permanent aura = addReadyPermanent(player1, new AuraOfSilence());
-            harness.addToBattlefield(player2, new LuxCannon());
-            UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
+            Card aura = createCardWithSacrificeAbility("Aura of Silence");
+            Permanent perm = addReadyPermanent(player1Id, aura);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(aura);
-            harness.sacrificePermanent(player1, idx, targetId);
+            Card targetCard = createGenericArtifact("Lux Cannon");
+            Permanent target = addReadyPermanent(player2Id, targetCard);
+            UUID targetId = target.getId();
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("sacrifices Aura of Silence"));
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.findPermanentById(gameData, targetId)).thenReturn(target);
+            when(gameQueryService.hasProtectionFrom(eq(gameData), eq(target), any())).thenReturn(false);
+            when(gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, perm)).thenReturn(false);
+            when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, perm)).thenReturn(false);
+
+            service.sacrificePermanent(gameData, player1, 0, targetId);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 sacrifices Aura of Silence."));
         }
     }
 
@@ -286,16 +351,13 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Tap ability: already tapped permanent throws")
         void tapAbilityAlreadyTappedThrows() {
-            harness.addToBattlefield(player1, new LuxCannon());
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.tap();
 
-            Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Lux Cannon"))
-                    .findFirst().orElseThrow();
-            cannon.setSummoningSick(false);
-            cannon.tap();
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("already tapped");
         }
@@ -303,12 +365,18 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Tap ability: summoning sick creature throws")
         void tapAbilitySummoningSickCreatureThrows() {
-            Card creature = createCreatureWithTapAbility();
-            gd.playerBattlefields.get(player1.getId()).add(new Permanent(creature));
+            Card creature = createCreatureWithActivatedTapAbility();
+            Permanent perm = new Permanent(creature);
             // summoningSick is true by default
+            gameData.playerBattlefields.get(player1Id).add(perm);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).size() - 1;
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
+            when(gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("summoning sickness");
         }
@@ -317,11 +385,15 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("Mana cost: insufficient mana throws")
         void insufficientManaThrows() {
             Card artifact = createArtifactWithManaAbility("{2}");
-            Permanent perm = addReadyPermanent(player1, artifact);
+            Permanent perm = addReadyPermanent(player1Id, artifact);
             // Do NOT add any mana
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough mana");
         }
@@ -330,22 +402,29 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("Mana cost: sufficient mana succeeds and is deducted")
         void sufficientManaSucceeds() {
             Card artifact = createArtifactWithManaAbility("{1}");
-            Permanent perm = addReadyPermanent(player1, artifact);
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            Permanent perm = addReadyPermanent(player1Id, artifact);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            harness.activateAbility(player1, idx, null, null);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isArtifact(perm)).thenReturn(true);
 
-            assertThat(gd.stack).hasSize(1);
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
         }
 
         @Test
         @DisplayName("No activated abilities on permanent throws")
         void noActivatedAbilitiesThrows() {
-            Permanent bears = addReadyPermanent(player1, new GrizzlyBears());
+            Card card = createCreatureCard("Grizzly Bears", 2, 2);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no activated ability");
         }
@@ -353,10 +432,12 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Invalid ability index throws")
         void invalidAbilityIndexThrows() {
-            Permanent cannon = addReadyPermanent(player1, new LuxCannon());
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, 99, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, 99, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Invalid ability index");
         }
@@ -374,13 +455,16 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("SORCERY_SPEED: cannot activate on opponent's turn")
         void sorcerySpeedCannotActivateOnOpponentTurn() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.SORCERY_SPEED);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player2Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("sorcery speed");
         }
@@ -389,13 +473,16 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("SORCERY_SPEED: cannot activate outside main phase")
         void sorcerySpeedCannotActivateOutsideMainPhase() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.SORCERY_SPEED);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.UPKEEP;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("main phase");
         }
@@ -404,19 +491,19 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("SORCERY_SPEED: cannot activate with non-empty stack")
         void sorcerySpeedCannotActivateWithStack() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.SORCERY_SPEED);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
             // Put something on the stack
-            harness.setHand(player1, List.of(new GrizzlyBears()));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-            harness.castCreature(player1, 0);
-            assertThat(gd.stack).isNotEmpty();
+            gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
+                    StackEntryType.CREATURE_SPELL, new Card(), player1Id, "Test spell", List.of()));
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("stack is empty");
         }
@@ -425,28 +512,35 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("SORCERY_SPEED: succeeds during own main phase with empty stack")
         void sorcerySpeedSucceedsDuringMainPhase() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.SORCERY_SPEED);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            harness.activateAbility(player1, idx, null, null);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            assertThat(gd.stack).hasSize(1);
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
         }
 
         @Test
         @DisplayName("ONLY_DURING_YOUR_UPKEEP: wrong step throws")
         void upkeepOnlyWrongStepThrows() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("upkeep");
         }
@@ -455,13 +549,16 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("ONLY_DURING_YOUR_UPKEEP: opponent's upkeep throws")
         void upkeepOnlyOpponentTurnThrows() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(TurnStep.UPKEEP);
+            gameData.activePlayerId = player2Id;
+            gameData.currentStep = TurnStep.UPKEEP;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("upkeep");
         }
@@ -470,11 +567,14 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("METALCRAFT: fewer than 3 artifacts throws")
         void metalcraftInsufficientArtifactsThrows() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.METALCRAFT);
-            Permanent perm = addReadyPermanent(player1, card);
-            // Only one artifact on the field (the card itself)
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isMetalcraftMet(gameData, player1Id)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("three or more artifacts");
         }
@@ -483,25 +583,31 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("METALCRAFT: exactly 3 artifacts succeeds")
         void metalcraftThreeArtifactsSucceeds() {
             Card card = createArtifactWithTimingRestriction(ActivationTimingRestriction.METALCRAFT);
-            Permanent perm = addReadyPermanent(player1, card);
-            // Add two more artifacts for metalcraft (card itself is one)
-            addReadyPermanent(player1, createGenericArtifact("Artifact A"));
-            addReadyPermanent(player1, createGenericArtifact("Artifact B"));
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            harness.activateAbility(player1, idx, null, null);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isMetalcraftMet(gameData, player1Id)).thenReturn(true);
 
-            assertThat(gd.stack).hasSize(1);
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
         }
 
         @Test
         @DisplayName("POWER_4_OR_GREATER: low power creature throws")
         void power4OrGreaterLowPowerThrows() {
             Card card = createCreatureWithTimingRestriction(ActivationTimingRestriction.POWER_4_OR_GREATER, 2, 2);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(2);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("power is 4 or greater");
         }
@@ -510,12 +616,17 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("POWER_4_OR_GREATER: high power creature succeeds")
         void power4OrGreaterHighPowerSucceeds() {
             Card card = createCreatureWithTimingRestriction(ActivationTimingRestriction.POWER_4_OR_GREATER, 5, 5);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            harness.activateAbility(player1, idx, null, null);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(5);
 
-            assertThat(gd.stack).hasSize(1);
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
         }
     }
 
@@ -530,13 +641,18 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot activate loyalty ability on opponent's turn")
         void cannotActivateLoyaltyOnOpponentTurn() {
-            Permanent koth = addReadyKoth(player1);
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setLoyaltyCounters(3);
 
-            harness.forceActivePlayer(player2);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player2Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(koth);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Loyalty abilities");
         }
@@ -544,13 +660,18 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot activate loyalty ability outside main phase")
         void cannotActivateLoyaltyOutsideMainPhase() {
-            Permanent koth = addReadyKoth(player1);
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setLoyaltyCounters(3);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.UPKEEP;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(koth);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("main phase");
         }
@@ -558,18 +679,20 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot activate loyalty ability with non-empty stack")
         void cannotActivateLoyaltyWithStack() {
-            Permanent koth = addReadyKoth(player1);
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setLoyaltyCounters(3);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+            gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
+                    StackEntryType.CREATURE_SPELL, new Card(), player1Id, "Test spell", List.of()));
 
-            // Put something on the stack
-            harness.setHand(player1, List.of(new GrizzlyBears()));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-            harness.castCreature(player1, 0);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(koth);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("stack is empty");
         }
@@ -577,30 +700,19 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot activate loyalty ability twice per turn")
         void cannotActivateLoyaltyTwicePerTurn() {
-            Permanent koth = addReadyKoth(player1);
-            // Koth +1 needs a Mountain target
-            harness.addToBattlefield(player1, new Mountain());
-            Permanent mountain1 = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Mountain"))
-                    .findFirst().orElseThrow();
-            mountain1.setSummoningSick(false);
-            harness.addToBattlefield(player1, new Mountain());
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setLoyaltyCounters(5);
+            perm.setLoyaltyAbilityUsedThisTurn(true);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-            int kothIdx = gd.playerBattlefields.get(player1.getId()).indexOf(koth);
-            UUID mountainId = mountain1.getId();
-            harness.activateAbility(player1, kothIdx, 0, null, mountainId);
-            harness.passBothPriorities();
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            // Second activation should fail
-            UUID mountain2Id = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Mountain") && !p.getId().equals(mountainId))
-                    .findFirst().orElseThrow().getId();
-
-            int kothIdx2 = gd.playerBattlefields.get(player1.getId()).indexOf(koth);
-            assertThatThrownBy(() -> harness.activateAbility(player1, kothIdx2, 0, null, mountain2Id))
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("one loyalty ability");
         }
@@ -608,14 +720,18 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot activate negative loyalty ability with insufficient counters")
         void cannotActivateNegativeLoyaltyWithInsufficientCounters() {
-            Permanent koth = addReadyKoth(player1);
-            koth.setLoyaltyCounters(1); // Koth's -2 ability needs at least 2
+            Card card = createPlaneswalkerWithNegativeLoyalty("Koth of the Hammer", -2);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setLoyaltyCounters(1); // Need at least 2
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(koth);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, 1, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough loyalty counters");
         }
@@ -623,22 +739,21 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Positive loyalty cost adds counters")
         void positiveLoyaltyCostAddsCounters() {
-            Permanent koth = addReadyKoth(player1);
-            harness.addToBattlefield(player1, new Mountain());
-            Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Mountain"))
-                    .findFirst().orElseThrow();
-            mountain.setSummoningSick(false);
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setLoyaltyCounters(3);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-            int loyaltyBefore = koth.getLoyaltyCounters();
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(koth);
-            harness.activateAbility(player1, idx, 0, null, mountain.getId());
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             // +1 loyalty cost
-            assertThat(koth.getLoyaltyCounters()).isEqualTo(loyaltyBefore + 1);
+            assertThat(perm.getLoyaltyCounters()).isEqualTo(4);
         }
     }
 
@@ -653,64 +768,72 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Pithing Needle blocks non-mana activated abilities")
         void pithingNeedleBlocksNonManaAbilities() {
-            Permanent cannon = addReadyPermanent(player1, new LuxCannon());
-            cannon.setChargeCounters(3);
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            addPithingNeedleNaming(player2, "Lux Cannon");
+            addPithingNeedle(player2Id, "Lux Cannon");
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("can't be activated")
                     .hasMessageContaining("Pithing Needle");
         }
 
         @Test
-        @DisplayName("Pithing Needle does not block mana abilities")
+        @DisplayName("Pithing Needle does not block mana abilities (tested via tapPermanent)")
         void pithingNeedleDoesNotBlockManaAbilities() {
-            harness.addToBattlefield(player1, new Island());
-            Permanent island = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Island"))
-                    .findFirst().orElseThrow();
-            island.setSummoningSick(false);
+            Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
+            Permanent perm = addReadyPermanent(player1Id, island);
 
-            addPithingNeedleNaming(player2, "Island");
+            addPithingNeedle(player2Id, "Island");
 
-            // Tapping Island for mana should still work — ON_TAP is tapped via tapPermanent, not activateAbility
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             int blueBefore = pool.get(ManaColor.BLUE);
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(island);
-            gs.tapPermanent(gd, player1, idx);
+
+            // tapPermanent does not check Pithing Needle for mana abilities
+            service.tapPermanent(gameData, player1, 0);
+
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
         }
 
         @Test
         @DisplayName("Pithing Needle naming a different card does not block")
         void pithingNeedleDifferentNameDoesNotBlock() {
-            Permanent cannon = addReadyPermanent(player1, new LuxCannon());
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            addPithingNeedleNaming(player2, "Grizzly Bears");
+            addPithingNeedle(player2Id, "Grizzly Bears");
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
-            harness.activateAbility(player1, idx, null, null);
-            assertThat(gd.stack).hasSize(1);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
         }
 
         @Test
         @DisplayName("Arrest blocks all activated abilities of enchanted creature")
         void arrestBlocksAllAbilities() {
-            NantukoHusk huskCard = new NantukoHusk();
-            Permanent husk = new Permanent(huskCard);
-            husk.setSummoningSick(false);
-            gd.playerBattlefields.get(player1.getId()).add(husk);
+            Card card = createCreatureCard("Nantuko Husk", 2, 2);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)), "Sacrifice a creature: +2/+2"
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            attachArrestAura(husk);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(true);
 
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(husk);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, bearsId))
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("can't be activated");
         }
@@ -727,14 +850,15 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("RemoveChargeCountersFromSourceCost: insufficient counters throws")
         void removeChargeCountersInsufficientThrows() {
-            Permanent cannon = addReadyPermanent(player1, new LuxCannon());
-            cannon.setChargeCounters(2);
+            Card card = createArtifactWithChargeCounterAbility(3);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setChargeCounters(2);
 
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, 1, null, targetId))
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough charge counters");
         }
@@ -742,27 +866,31 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("RemoveChargeCountersFromSourceCost: removes exactly the required count")
         void removeChargeCountersExactCount() {
-            Permanent cannon = addReadyPermanent(player1, new LuxCannon());
-            cannon.setChargeCounters(5);
+            Card card = createArtifactWithChargeCounterAbility(3);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setChargeCounters(5);
 
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
-            harness.activateAbility(player1, idx, 1, null, targetId);
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            assertThat(cannon.getChargeCounters()).isEqualTo(2);
+            assertThat(perm.getChargeCounters()).isEqualTo(2);
         }
 
         @Test
         @DisplayName("RemoveCounterFromSourceCost: no counters throws")
         void removeCounterNoCountersThrows() {
             Card card = createArtifactWithRemoveCounterAbility();
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
             // No counters on the permanent
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough counters to remove");
         }
@@ -771,12 +899,15 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("RemoveCounterFromSourceCost: prefers removing -1/-1 counter first")
         void removeCounterPrefersMinusOneMinusOne() {
             Card card = createArtifactWithRemoveCounterAbility();
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
             perm.setPlusOnePlusOneCounters(2);
             perm.setMinusOneMinusOneCounters(1);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            harness.activateAbility(player1, idx, null, null);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             assertThat(perm.getMinusOneMinusOneCounters()).isEqualTo(0);
             assertThat(perm.getPlusOnePlusOneCounters()).isEqualTo(2);
@@ -786,89 +917,16 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("RemoveCounterFromSourceCost: removes +1/+1 if no -1/-1 counters")
         void removeCounterFallsToPlusOnePlusOne() {
             Card card = createArtifactWithRemoveCounterAbility();
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
             perm.setPlusOnePlusOneCounters(3);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            harness.activateAbility(player1, idx, null, null);
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             assertThat(perm.getPlusOnePlusOneCounters()).isEqualTo(2);
-        }
-    }
-
-    // =========================================================================
-    // activateAbility — discard card type cost
-    // =========================================================================
-
-    @Nested
-    @DisplayName("activateAbility — discard card type cost")
-    class ActivateAbilityDiscardCost {
-
-        @Test
-        @DisplayName("Triggers discard-cost choice when land card in hand")
-        void triggersDiscardChoice() {
-            addReadySeismicAssault(player1);
-            harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
-
-            harness.activateAbility(player1, 0, null, player2.getId());
-
-            assertThat(gd.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("No valid discard card throws")
-        void noValidDiscardCardThrows() {
-            addReadySeismicAssault(player1);
-            harness.setHand(player1, List.of(new GrizzlyBears()));
-
-            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Must discard a land card");
-        }
-
-        @Test
-        @DisplayName("Completing discard choice puts ability on stack")
-        void completingDiscardChoicePutsAbilityOnStack() {
-            addReadySeismicAssault(player1);
-            harness.setHand(player1, List.of(new Mountain()));
-
-            harness.activateAbility(player1, 0, null, player2.getId());
-            harness.handleCardChosen(player1, 0);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Mountain"));
-        }
-
-        @Test
-        @DisplayName("Choosing invalid card index re-prompts")
-        void choosingInvalidCardIndexRePrompts() {
-            addReadySeismicAssault(player1);
-            harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
-
-            harness.activateAbility(player1, 0, null, player2.getId());
-
-            // Choosing an invalid index re-prompts instead of throwing
-            harness.handleCardChosen(player1, 0);
-
-            // State should still be awaiting discard cost choice (re-prompted)
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Only land cards are valid for land discard cost")
-        void onlyLandCardsAreValid() {
-            addReadySeismicAssault(player1);
-            harness.setHand(player1, List.of(new GrizzlyBears(), new Plains(), new Mountain()));
-
-            harness.activateAbility(player1, 0, null, player2.getId());
-
-            // Indices 1 and 2 should be valid (both lands), index 0 is a creature
-            assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(1, 2);
         }
     }
 
@@ -881,27 +939,47 @@ class AbilityActivationServiceTest extends BaseCardTest {
     class ActivateAbilitySacrificeCreature {
 
         @Test
-        @DisplayName("Sacrifice creature cost: creature goes to graveyard and ability goes on stack")
+        @DisplayName("Sacrifice creature cost: creature is sacrificed and ability completes")
         void sacrificeCreatureCostWorks() {
-            addNantukoHuskReady(player1);
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
+            huskCard.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    "Sacrifice a creature: +2/+2"
+            ));
+            Permanent husk = addReadyPermanent(player1Id, huskCard);
 
-            harness.activateAbility(player1, 0, null, bearsId);
+            Card bearsCard = createCreatureCard("Grizzly Bears", 2, 2);
+            Permanent bears = addReadyPermanent(player1Id, bearsCard);
+            UUID bearsId = bears.getId();
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.stack).hasSize(1);
+            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.findPermanentById(gameData, bearsId)).thenReturn(bears);
+            when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
+
+            service.activateAbility(gameData, player1, 0, null, null, bearsId, null);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gameData, bears);
+            verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id);
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 sacrifices Grizzly Bears."));
         }
 
         @Test
         @DisplayName("Must choose a creature to sacrifice")
         void mustChooseCreatureToSacrifice() {
-            addNantukoHuskReady(player1);
+            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
+            huskCard.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    "Sacrifice a creature: +2/+2"
+            ));
+            Permanent husk = addReadyPermanent(player1Id, huskCard);
 
-            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must choose a creature to sacrifice");
         }
@@ -909,10 +987,23 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot sacrifice a non-creature")
         void cannotSacrificeNonCreature() {
-            addNantukoHuskReady(player1);
-            Permanent artifact = addReadyPermanent(player1, createGenericArtifact("Test Artifact"));
+            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
+            huskCard.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    "Sacrifice a creature: +2/+2"
+            ));
+            Permanent husk = addReadyPermanent(player1Id, huskCard);
 
-            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+            Card artifact = createGenericArtifact("Test Artifact");
+            Permanent artPerm = addReadyPermanent(player1Id, artifact);
+
+            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.findPermanentById(gameData, artPerm.getId())).thenReturn(artPerm);
+            when(gameQueryService.isCreature(gameData, artPerm)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, artPerm.getId(), null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must sacrifice a creature");
         }
@@ -920,11 +1011,23 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot sacrifice opponent's creature")
         void cannotSacrificeOpponentCreature() {
-            addNantukoHuskReady(player1);
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
+            huskCard.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    "Sacrifice a creature: +2/+2"
+            ));
+            Permanent husk = addReadyPermanent(player1Id, huskCard);
 
-            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBearsId))
+            Card bearsCard = createCreatureCard("Grizzly Bears", 2, 2);
+            Permanent bears = addReadyPermanent(player2Id, bearsCard);
+
+            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.findPermanentById(gameData, bears.getId())).thenReturn(bears);
+            when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, bears.getId(), null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must sacrifice a creature you control");
         }
@@ -942,13 +1045,18 @@ class AbilityActivationServiceTest extends BaseCardTest {
         @DisplayName("Activation limit per turn blocks excess activations")
         void activationLimitBlocksExcess() {
             Card card = createArtifactWithLimitedAbility(1);
-            Permanent perm = addReadyPermanent(player1, card);
+            Permanent perm = addReadyPermanent(player1Id, card);
 
-            int idx = gd.playerBattlefields.get(player1.getId()).indexOf(perm);
-            harness.activateAbility(player1, idx, null, null);
-            harness.passBothPriorities();
+            // Simulate one activation already recorded this turn
+            gameData.activatedAbilityUsesThisTurn
+                    .computeIfAbsent(perm.getId(), k -> new java.util.concurrent.ConcurrentHashMap<>())
+                    .put(0, 1);
 
-            assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no more than 1 times each turn");
         }
@@ -958,66 +1066,88 @@ class AbilityActivationServiceTest extends BaseCardTest {
     // Helper methods
     // =========================================================================
 
-    private Permanent addReadyPermanent(Player player, Card card) {
+    private Permanent addReadyPermanent(UUID playerId, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        gameData.playerBattlefields.get(playerId).add(perm);
         return perm;
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        return addReadyPermanent(player, card);
-    }
-
-    private Permanent addNantukoHuskReady(Player player) {
-        return addReadyPermanent(player, new NantukoHusk());
-    }
-
-    private Permanent addReadyKoth(Player player) {
-        KothOfTheHammer card = new KothOfTheHammer();
-        Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        return perm;
-    }
-
-    private Permanent addReadySeismicAssault(Player player) {
-        return addReadyPermanent(player, new SeismicAssault());
-    }
-
-    private void attachArrestAura(Permanent target) {
-        Card aura = new Card();
-        aura.setName("Arrest");
-        aura.setType(CardType.ENCHANTMENT);
-        aura.setManaCost("{2}{W}");
-        aura.setColor(CardColor.WHITE);
-        aura.addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
-        aura.addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
-
-        Permanent auraPerm = new Permanent(aura);
-        auraPerm.setSummoningSick(false);
-        auraPerm.setAttachedTo(target.getId());
-        // Find which player controls the target and add the aura to their battlefield
-        for (UUID pid : gd.playerIds) {
-            if (gd.playerBattlefields.get(pid).contains(target)) {
-                gd.playerBattlefields.get(pid).add(auraPerm);
-                break;
-            }
-        }
-    }
-
-    private void addPithingNeedleNaming(Player player, String cardName) {
-        PithingNeedle needleCard = new PithingNeedle();
+    private void addPithingNeedle(UUID playerId, String cardName) {
+        Card needleCard = new Card();
+        needleCard.setName("Pithing Needle");
+        needleCard.setType(CardType.ARTIFACT);
+        needleCard.setManaCost("{1}");
+        needleCard.addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(false));
         Permanent needle = new Permanent(needleCard);
         needle.setSummoningSick(false);
         needle.setChosenName(cardName);
-        gd.playerBattlefields.get(player.getId()).add(needle);
+        gameData.playerBattlefields.get(playerId).add(needle);
     }
 
-    private Card createCreatureWithTapAbility() {
+    private Card createLandWithManaAbility(String name, ManaColor color) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.LAND);
+        card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(color, 1));
+        return card;
+    }
+
+    private Card createCreatureWithTapAbility(String name, ManaColor color) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{G}");
+        card.setColor(CardColor.GREEN);
+        card.setPower(1);
+        card.setToughness(1);
+        card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(color, 1));
+        return card;
+    }
+
+    private Card createCreatureCard(String name, int power, int toughness) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}{G}");
+        card.setColor(CardColor.GREEN);
+        card.setPower(power);
+        card.setToughness(toughness);
+        return card;
+    }
+
+    private Card createGenericArtifact(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost("{0}");
+        card.setColor(null);
+        return card;
+    }
+
+    private Card createCardWithSacrificeAbility(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setManaCost("{1}{W}{W}");
+        card.setColor(CardColor.WHITE);
+        card.addEffect(EffectSlot.ON_SACRIFICE, new DestroyTargetPermanentEffect());
+        return card;
+    }
+
+    private Card createArtifactWithTapAbility(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost("{4}");
+        card.setColor(null);
+        card.addActivatedAbility(new ActivatedAbility(
+                true, null, List.of(new PutChargeCounterOnSelfEffect()), "Tap to add counter"
+        ));
+        return card;
+    }
+
+    private Card createCreatureWithActivatedTapAbility() {
         Card card = new Card();
         card.setName("Test Tap Creature");
         card.setType(CardType.CREATURE);
@@ -1071,12 +1201,41 @@ class AbilityActivationServiceTest extends BaseCardTest {
         return card;
     }
 
-    private Card createGenericArtifact(String name) {
+    private Card createPlaneswalkerCard(String name) {
         Card card = new Card();
         card.setName(name);
+        card.setType(CardType.PLANESWALKER);
+        card.setManaCost("{2}{R}{R}");
+        card.setColor(CardColor.RED);
+        // +1 loyalty ability with a simple effect
+        card.addActivatedAbility(new ActivatedAbility(
+                1, List.of(new BoostSelfEffect(1, 1)), "+1: Test"
+        ));
+        return card;
+    }
+
+    private Card createPlaneswalkerWithNegativeLoyalty(String name, int loyaltyCost) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.PLANESWALKER);
+        card.setManaCost("{2}{R}{R}");
+        card.setColor(CardColor.RED);
+        card.addActivatedAbility(new ActivatedAbility(
+                loyaltyCost, List.of(new BoostSelfEffect(1, 1)), "Negative ability"
+        ));
+        return card;
+    }
+
+    private Card createArtifactWithChargeCounterAbility(int requiredCount) {
+        Card card = new Card();
+        card.setName("Test Charge Artifact");
         card.setType(CardType.ARTIFACT);
         card.setManaCost("{0}");
         card.setColor(null);
+        card.addActivatedAbility(new ActivatedAbility(
+                true, null, List.of(new RemoveChargeCountersFromSourceCost(requiredCount), new PutChargeCounterOnSelfEffect()),
+                "Remove charge counters"
+        ));
         return card;
     }
 
