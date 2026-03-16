@@ -430,6 +430,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `MillControllerEffect` | `(int count)` | controller mills N cards (self-mill, no target). Used by Armored Skaab |
+| `MillControllerCost` | `(int count)` | **Cost**: controller mills N cards as activation cost. Blocks activation if library too small. Used by Deranged Assistant |
 | `MillTargetPlayerEffect` | `(int count)` | target player mills N cards |
 | `MillHalfLibraryEffect` | `()` | target player mills half their library |
 | `MillByHandSizeEffect` | `()` | target player mills cards equal to hand size |

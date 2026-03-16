@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -580,6 +581,19 @@ public class AbilityActivationService {
             }
         }
 
+        // Validate mill-controller cost (e.g. Deranged Assistant: "{T}, Mill a card: Add {C}.")
+        Optional<MillControllerCost> millControllerCost = abilityEffects.stream()
+                .filter(e -> e instanceof MillControllerCost)
+                .map(e -> (MillControllerCost) e)
+                .findFirst();
+        if (millControllerCost.isPresent()) {
+            int required = millControllerCost.get().count();
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck == null || deck.size() < required) {
+                throw new IllegalStateException("Not enough cards in library to mill (need " + required + ")");
+            }
+        }
+
         // Validate and pay remove-charge-counter cost
         Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
                 .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
@@ -676,6 +690,12 @@ public class AbilityActivationService {
                     + " (" + permanent.getChargeCounters() + " remaining).";
             gameBroadcastService.logAndBroadcast(gameData, counterLog);
         }
+
+        // Pay mill-controller cost
+        if (millControllerCost.isPresent()) {
+            graveyardService.resolveMillPlayer(gameData, playerId, millControllerCost.get().count());
+        }
+
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
             if (handlePermanentChoiceCost(gameData, player, permanent, effectiveIndex,
                     effectiveXValue, targetPermanentId, targetZone, handler)) {
