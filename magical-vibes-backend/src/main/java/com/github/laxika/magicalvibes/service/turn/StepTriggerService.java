@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -342,6 +343,8 @@ public class StepTriggerService {
                 CardEffect effectForStack = effect;
                 if (effect instanceof ExileCardsFromOwnGraveyardEffect e) {
                     effectForStack = new ExileCardsFromOwnGraveyardEffect(e.count(), enchantedPlayerId);
+                } else if (effect instanceof DealDamageToEnchantedPlayerEffect e) {
+                    effectForStack = new DealDamageToEnchantedPlayerEffect(e.damage(), enchantedPlayerId);
                 }
 
                 gameData.stack.add(new StackEntry(

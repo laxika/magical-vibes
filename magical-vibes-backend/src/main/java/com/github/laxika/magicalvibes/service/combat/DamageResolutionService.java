@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetC
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureControllerEffect;
@@ -1328,6 +1329,23 @@ public class DamageResolutionService {
         } else {
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToEnchantedPlayerEffect} — deals a fixed amount of damage to the
+     * enchanted player (the player a curse is attached to). Used by curses like Curse of the Pierced Heart.
+     */
+    @HandlesEffect(DealDamageToEnchantedPlayerEffect.class)
+    void resolveDealDamageToEnchantedPlayer(GameData gameData, StackEntry entry, DealDamageToEnchantedPlayerEffect effect) {
+        UUID targetId = effect.affectedPlayerId();
+        if (targetId == null || !gameData.playerIds.contains(targetId)) return;
+
+        if (!isDamageSourcePreventedWithLog(gameData, entry)) {
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+            dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
         gameOutcomeService.checkWinCondition(gameData);
