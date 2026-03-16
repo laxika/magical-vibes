@@ -43,6 +43,7 @@ public enum CardSubtype {
     WIZARD("Wizard"),
     SORCERER("Sorcerer"),
     MUTANT("Mutant"),
+    WEREWOLF("Werewolf"),
     WOLF("Wolf"),
     MONK("Monk"),
     GRIFFIN("Griffin"),
