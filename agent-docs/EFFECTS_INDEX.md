@@ -255,6 +255,7 @@ ReturnCardFromGraveyardEffect.builder()
     .enterTapped(boolean)                      // true = enters the battlefield tapped (default: false)
     .underOwnersControl(boolean)               // true = put each card onto battlefield under its owner's control (default: false)
     .returnAtRandom(boolean)                   // true = return a random matching card instead of player choice (default: false)
+    .choosePermanentType(boolean)              // true = prompt controller to choose a permanent type at resolution, then return all matching (default: false); implies returnAll
     .build()
 ```
 
@@ -331,6 +332,7 @@ Pass `null` as filter to allow any card.
 | Reassembling Skeleton | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardIsSelfPredicate()).returnAll(true).enterTapped(true).build()` — self-return to battlefield tapped (graveyard activated ability) |
 | Open the Vaults | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(ENCHANTMENT)))).source(ALL_GRAVEYARDS).returnAll(true).underOwnersControl(true).build()` — return all artifacts and enchantments from all graveyards under their owners' control |
 | Charmbreaker Devils | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardAnyOfPredicate(List.of(new CardTypePredicate(INSTANT), new CardTypePredicate(SORCERY)))).returnAtRandom(true).build()` — return a random instant or sorcery from your graveyard to hand |
+| Creeping Renaissance | `ReturnCardFromGraveyardEffect.builder().destination(HAND).returnAll(true).choosePermanentType(true).build()` — choose a permanent type, return all cards of that type from your graveyard to hand |
 
 ### Other graveyard effects
 

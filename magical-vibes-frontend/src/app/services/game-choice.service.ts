@@ -417,6 +417,11 @@ export class GameChoiceService {
       case 'SWAMP': return 'Swamp';
       case 'MOUNTAIN': return 'Mountain';
       case 'FOREST': return 'Forest';
+      case 'ARTIFACT': return 'Artifact';
+      case 'CREATURE': return 'Creature';
+      case 'ENCHANTMENT': return 'Enchantment';
+      case 'LAND': return 'Land';
+      case 'PLANESWALKER': return 'Planeswalker';
       default: return color;
     }
   }

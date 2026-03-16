@@ -93,6 +93,12 @@ public class GraveyardReturnResolutionService {
         UUID controllerId = entry.getControllerId();
         UUID sourceCardId = entry.getCard().getId();
 
+        // Case 0: Choose permanent type first (e.g. Creeping Renaissance)
+        if (effect.choosePermanentType()) {
+            playerInputService.beginPermanentTypeChoice(gameData, controllerId, effect.destination(), entry.getDescription());
+            return;
+        }
+
         // Case 1: Pre-targeted (from spell cast or activated ability targeting)
         if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetPermanentId() != null) {
             resolvePreTargeted(gameData, entry, effect, controllerId, sourceCardId);

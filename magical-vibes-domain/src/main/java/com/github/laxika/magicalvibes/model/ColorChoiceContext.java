@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+
 public sealed interface ColorChoiceContext {
 
     record TextChangeFromWord(UUID targetPermanentId) implements ColorChoiceContext {}
@@ -43,4 +45,11 @@ public sealed interface ColorChoiceContext {
      * {@code GameData.pendingSphinxAmbassadorChoice}.
      */
     record SphinxAmbassadorNameChoice(UUID namingPlayerId, UUID controllerId) implements ColorChoiceContext {}
+
+    /**
+     * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),
+     * then all cards of that type are returned from the controller's graveyard.
+     */
+    record PermanentTypeChoice(UUID controllerId, GraveyardChoiceDestination destination,
+                               String entryDescription) implements ColorChoiceContext {}
 }

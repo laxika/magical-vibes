@@ -111,6 +111,10 @@ public class ColorChoiceHandlerService {
             handleBasicLandTypeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ColorChoiceContext.PermanentTypeChoice ctx) {
+            handlePermanentTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice ctx) {
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
             return;
@@ -443,6 +447,57 @@ public class ColorChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + " for " + perm.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chooses basic land type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handlePermanentTypeChoice(GameData gameData, Player player, String typeName, ColorChoiceContext.PermanentTypeChoice ctx) {
+        CardType chosenType = CardType.valueOf(typeName);
+        if (!chosenType.isPermanentType()) {
+            throw new IllegalArgumentException("Invalid permanent type choice: " + typeName);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        UUID controllerId = ctx.controllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+
+        if (graveyard == null || graveyard.isEmpty()) {
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
+        List<Card> toReturn = new ArrayList<>();
+        for (Card card : graveyard) {
+            if (card.hasType(chosenType)) {
+                toReturn.add(card);
+            }
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        if (!toReturn.isEmpty()) {
+            List<String> returnedNames = new ArrayList<>();
+            for (Card card : toReturn) {
+                graveyard.remove(card);
+                gameData.addCardToHand(controllerId, card);
+                returnedNames.add(card.getName());
+            }
+
+            String logEntry = playerName + " chooses " + chosenType.getDisplayName()
+                    + " and returns " + String.join(", ", returnedNames) + " to hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses {} and returns {} card(s) from graveyard to hand",
+                    gameData.id, playerName, chosenType.getDisplayName(), returnedNames.size());
+        } else {
+            String logEntry = playerName + " chooses " + chosenType.getDisplayName()
+                    + " but has no " + chosenType.getDisplayName().toLowerCase() + " cards in graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
         gameData.priorityPassedBy.clear();
