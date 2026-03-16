@@ -66,6 +66,7 @@ class AiTargetSelector {
                         .orElse(null);
                 if (target != null) return target;
             }
+            return null; // Aura was handled by specific logic — don't fall through
         } else if (card.isAura()) {
             // Detrimental aura — target opponent's highest-power creature that doesn't already have this effect
             List<Permanent> oppBattlefield = gameData.playerBattlefields.get(opponentId);
@@ -82,6 +83,7 @@ class AiTargetSelector {
                         .orElse(null);
                 if (target != null) return target;
             }
+            return null; // Aura was handled by specific logic — don't fall through
         }
 
         // General fallback: find any valid target using the card's target filter
