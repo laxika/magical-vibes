@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TapAndTransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -183,6 +184,43 @@ public class AnimationResolutionService {
             String logEntry = backName + " transforms into " + originalCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+        }
+    }
+
+    @HandlesEffect(TapAndTransformSelfEffect.class)
+    private void resolveTapAndTransformSelf(GameData gameData, StackEntry entry, TapAndTransformSelfEffect effect) {
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return;
+        }
+
+        // Tap
+        self.tap();
+        String tapLog = self.getCard().getName() + " is tapped.";
+        gameBroadcastService.logAndBroadcast(gameData, tapLog);
+        log.info("Game {} - {} is tapped", gameData.id, self.getCard().getName());
+
+        // Transform
+        Card originalCard = self.getOriginalCard();
+        if (self.isTransformed()) {
+            String backName = self.getCard().getName();
+            self.setCard(originalCard);
+            self.setTransformed(false);
+            String logEntry = backName + " transforms into " + originalCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+        } else {
+            Card backFace = originalCard.getBackFaceCard();
+            if (backFace == null) {
+                log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
+                return;
+            }
+            String frontName = self.getCard().getName();
+            self.setCard(backFace);
+            self.setTransformed(true);
+            String logEntry = frontName + " transforms into " + backFace.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
         }
     }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
+import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -152,6 +153,9 @@ public class CardChoiceHandlerService {
 
         // Check if a spell should return to hand based on the discarded card type (e.g. Psychic Miasma)
         checkPendingReturnToHandOnDiscard(gameData, card);
+
+        // Check if a creature discard should untap + transform the source (e.g. Civilized Scholar)
+        checkPendingTransformOnCreatureDiscard(gameData, card);
 
         int remainingDiscards = gameData.interaction.decrementDiscardRemainingCount();
 
@@ -433,6 +437,37 @@ public class CardChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} returned to hand (land discarded)", gameData.id, pending.card().getName());
             gameData.pendingReturnToHandOnDiscardType = null;
+        }
+    }
+
+    private void checkPendingTransformOnCreatureDiscard(GameData gameData, Card discardedCard) {
+        PendingTransformOnCreatureDiscard pending = gameData.pendingTransformOnCreatureDiscard;
+        if (pending == null) {
+            return;
+        }
+        gameData.pendingTransformOnCreatureDiscard = null;
+        if (discardedCard.hasType(CardType.CREATURE)) {
+            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            if (source == null) {
+                return;
+            }
+            // Untap
+            source.untap();
+            String untapLog = source.getCard().getName() + " untaps.";
+            gameBroadcastService.logAndBroadcast(gameData, untapLog);
+            log.info("Game {} - {} untaps (creature discarded)", gameData.id, source.getCard().getName());
+
+            // Transform
+            Card originalCard = source.getOriginalCard();
+            Card backFace = originalCard.getBackFaceCard();
+            if (backFace != null && !source.isTransformed()) {
+                String frontName = source.getCard().getName();
+                source.setCard(backFace);
+                source.setTransformed(true);
+                String transformLog = frontName + " transforms into " + backFace.getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
+            }
         }
     }
 

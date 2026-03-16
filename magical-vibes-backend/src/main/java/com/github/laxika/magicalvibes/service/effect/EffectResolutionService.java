@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEff
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -182,6 +183,8 @@ public class EffectResolutionService {
                     isNoOtherSubtypeConditionMet(gameData, entry, noOther);
             case ActivationCountConditionalEffect acc ->
                     isActivationCountConditionMet(gameData, entry, acc);
+            case DidntAttackConditionalEffect ignored ->
+                    isSourceDidntAttackThisTurn(gameData, entry);
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;
@@ -256,5 +259,13 @@ public class EffectResolutionService {
         if (perAbilityCounts == null) return false;
         int count = perAbilityCounts.getOrDefault(acc.abilityIndex(), 0);
         return count >= acc.threshold();
+    }
+
+    private boolean isSourceDidntAttackThisTurn(GameData gameData, StackEntry entry) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) return true;
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) return false;
+        return !source.isAttackedThisTurn();
     }
 }

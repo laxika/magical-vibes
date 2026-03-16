@@ -115,6 +115,7 @@ public class GameData {
     public PendingCapriciousEfreetState pendingCapriciousEfreetState;
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
+    public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
     /** Queue of player IDs still needing to discard for an "each player discards" effect (APNAP order). */
     public final Deque<UUID> pendingEachPlayerDiscardQueue = new ArrayDeque<>();
     public UUID pendingEachPlayerDiscardControllerId;

@@ -835,6 +835,7 @@ public class CardSpecificResolutionService {
         gameData.pendingSacrificeSelfToDestroySourceId = null;
         gameData.pendingProliferateCount = 0;
         gameData.pendingReturnToHandOnDiscardType = null;
+        gameData.pendingTransformOnCreatureDiscard = null;
         gameData.pendingEachPlayerDiscardControllerId = null;
         gameData.pendingEachPlayerDiscardAmount = 0;
         gameData.combatDamageRedirectTarget = null;

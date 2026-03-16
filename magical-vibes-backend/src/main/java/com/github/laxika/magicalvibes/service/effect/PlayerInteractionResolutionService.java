@@ -54,6 +54,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsReturnSelfIfCardTypeEffect;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
+import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
+import com.github.laxika.magicalvibes.model.effect.DrawDiscardTransformIfCreatureDiscardedEffect;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -297,6 +299,22 @@ public class PlayerInteractionResolutionService {
     private void resolveDiscardCard(GameData gameData, StackEntry entry, DiscardCardEffect effect) {
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(DrawDiscardTransformIfCreatureDiscardedEffect.class)
+    private void resolveDrawDiscardTransformIfCreatureDiscarded(GameData gameData, StackEntry entry,
+                                                                DrawDiscardTransformIfCreatureDiscardedEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        // Draw a card
+        drawService.resolveDrawCard(gameData, controllerId);
+        // Set up pending conditional transform before the discard
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId != null) {
+            gameData.pendingTransformOnCreatureDiscard = new PendingTransformOnCreatureDiscard(sourcePermanentId);
+        }
+        // Then discard a card
+        gameData.discardCausedByOpponent = false;
+        resolveDiscardCards(gameData, controllerId, 1);
     }
 
     @HandlesEffect(EachPlayerDiscardsEffect.class)
