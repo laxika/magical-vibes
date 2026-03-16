@@ -188,11 +188,11 @@ class NecropedeTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Necropede"));
 
-        // The blocker got 1 -1/-1 counter from infect combat damage, but no additional counter from the declined trigger
+        // The targeted creature (regular 2/2 Grizzly Bears) should have 0 counters since the may was declined
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .filter(p -> p.getId().equals(bearsId))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(0);
     }
 
     // ===== Can target own creature =====

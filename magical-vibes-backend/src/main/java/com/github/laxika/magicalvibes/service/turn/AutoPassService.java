@@ -63,22 +63,22 @@ public class AutoPassService {
         if (gameData.status != GameStatus.RUNNING) return;
 
         // Process any pending spell-target triggers (e.g. Livewire Lash)
-        if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSpellTargetTriggers.isEmpty()) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
         }
 
         // Process any pending discard self-triggers before death triggers
-        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDiscardSelfTriggers.isEmpty()) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
 
         // Process any pending targeted attack triggers before death triggers
-        if (!gameData.pendingAttackTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingAttackTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
         }
 
         // Process any pending targeted death triggers before auto-passing
-        if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
 
