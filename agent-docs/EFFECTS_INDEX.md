@@ -201,6 +201,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `CounterSpellEffect` | `()` | counter target spell |
+| `CounterSpellAndExileEffect` | `()` | counter target spell and exile it instead of putting it into its owner's graveyard |
 | `CounterSpellIfControllerPoisonedEffect` | `()` | counter target spell if its controller is poisoned (has at least one poison counter) |
 | `TargetSpellControllerLosesLifeEffect` | `(int amount)` | target spell's controller loses N life. Companion effect for counter spells (e.g. Psychic Barrier). Place before CounterSpellEffect so target is still on stack |
 | `CounterUnlessPaysEffect` | `(int amount)` | counter unless controller pays N generic mana |

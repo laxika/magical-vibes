@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.StateTriggerService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -32,6 +34,7 @@ import java.util.UUID;
 public class CounterResolutionService {
 
     private final GraveyardService graveyardService;
+    private final ExileService exileService;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
     private final StateTriggerService stateTriggerService;
@@ -54,6 +57,24 @@ public class CounterResolutionService {
         if (targetEntry == null) return;
 
         counterSpell(gameData, entry, targetEntry);
+    }
+
+    /**
+     * Resolves a counter spell that exiles the countered spell instead of putting it
+     * into its owner's graveyard (e.g. Dissipate).
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry of the counter spell being resolved
+     */
+    @HandlesEffect(CounterSpellAndExileEffect.class)
+    void resolveCounterSpellAndExile(GameData gameData, StackEntry entry) {
+        UUID targetCardId = entry.getTargetPermanentId();
+        if (targetCardId == null) return;
+
+        StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
+        if (targetEntry == null) return;
+
+        counterSpellAndExile(gameData, entry, targetEntry);
     }
 
     /**
@@ -176,6 +197,30 @@ public class CounterResolutionService {
         String logMsg = target.getCard().getName() + " is countered.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+    }
+
+    /**
+     * Counters the target spell and exiles it instead of putting it into its owner's graveyard.
+     * Copies cease to exist per CR 707.10a.
+     *
+     * @param gameData the current game state
+     * @param source   the stack entry of the spell/ability doing the countering
+     * @param target   the stack entry of the spell being countered
+     */
+    private void counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target) {
+        gameData.stack.remove(target);
+
+        // CR 603.8 — clean up state-trigger tracking when countered
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        // Copies cease to exist per rule 707.10a — skip exile
+        if (!target.isCopy()) {
+            exileService.exileCard(gameData, target.getControllerId(), target.getCard());
+        }
+
+        String logMsg = target.getCard().getName() + " is countered and exiled.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }
 }
 
