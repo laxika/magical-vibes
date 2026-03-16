@@ -12,22 +12,40 @@ import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 class AiDecisionEngineTest {
 
@@ -394,6 +412,95 @@ class AiDecisionEngineTest {
 
         // AI should not cast — no valid enchantment targets
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== tryPlayLand silent failure recovery =====
+
+    @Nested
+    @ExtendWith(MockitoExtension.class)
+    @DisplayName("tryPlayLand silent failure recovery")
+    class TryPlayLandSilentFailureRecovery {
+
+        @Mock private MessageHandler mockMessageHandler;
+        @Mock private GameQueryService mockGameQueryService;
+        @Mock private CombatAttackService mockCombatAttackService;
+        @Mock private Connection mockConnection;
+
+        private GameData mockGd;
+        private Player mockAiPlayer;
+        private GameRegistry mockGameRegistry;
+
+        @BeforeEach
+        void setUpMocks() {
+            UUID gameId = UUID.randomUUID();
+            mockAiPlayer = new Player(UUID.randomUUID(), "AI");
+            Player mockOpponent = new Player(UUID.randomUUID(), "Opponent");
+
+            mockGd = new GameData(gameId, "test", mockAiPlayer.getId(), "AI");
+            mockGd.status = GameStatus.RUNNING;
+            mockGd.currentStep = TurnStep.PRECOMBAT_MAIN;
+            mockGd.activePlayerId = mockAiPlayer.getId();
+            mockGd.orderedPlayerIds.add(mockAiPlayer.getId());
+            mockGd.orderedPlayerIds.add(mockOpponent.getId());
+            mockGd.playerIdToName.put(mockAiPlayer.getId(), "AI");
+            mockGd.playerIdToName.put(mockOpponent.getId(), "Opponent");
+            mockGd.playerHands.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerHands.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerBattlefields.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerBattlefields.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerManaPools.put(mockAiPlayer.getId(), new ManaPool());
+            mockGd.playerManaPools.put(mockOpponent.getId(), new ManaPool());
+            mockGd.playerLifeTotals.put(mockAiPlayer.getId(), 20);
+            mockGd.playerLifeTotals.put(mockOpponent.getId(), 20);
+            mockGd.playerDecks.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerDecks.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerGraveyards.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerGraveyards.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+
+            mockGameRegistry = new GameRegistry();
+            mockGameRegistry.register(mockGd);
+        }
+
+        private EasyAiDecisionEngine createEngine() {
+            EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
+                    mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
+                    mockGameQueryService, mockCombatAttackService);
+            engine.setSelfConnection(mockConnection);
+            return engine;
+        }
+
+        @Test
+        @DisplayName("AI passes priority when land play is silently rejected")
+        void passesPriorityWhenLandPlaySilentlyRejected() throws Exception {
+            Card land = new Card();
+            land.setName("Test Plains");
+            land.setType(CardType.LAND);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(land);
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            verify(mockMessageHandler).handlePlayCard(any(), any());
+            verify(mockMessageHandler).handlePassPriority(any(), any());
+        }
+
+        @Test
+        @DisplayName("AI does NOT pass priority when land play succeeds")
+        void doesNotPassPriorityWhenLandPlaySucceeds() throws Exception {
+            Card land = new Card();
+            land.setName("Test Plains");
+            land.setType(CardType.LAND);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(land);
+
+            Mockito.doAnswer(inv -> {
+                mockGd.playerHands.get(mockAiPlayer.getId()).removeFirst();
+                return null;
+            }).when(mockMessageHandler).handlePlayCard(any(), any());
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            verify(mockMessageHandler).handlePlayCard(any(), any());
+            verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+        }
     }
 }
 

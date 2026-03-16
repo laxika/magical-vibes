@@ -129,11 +129,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 }
                 log.info("AI (Hard/MCTS): Casting {}{} in game {}", card.getName(),
                         xValue != null ? " (X=" + xValue + ")" : "", gameId);
+                int handSizeBefore = hand.size();
                 final int cardIndex = pc.handIndex();
                 final UUID targetId = pc.targetPermanentId();
                 final Integer finalXValue = xValue;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
                         new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null, null, null, null, null, null, null)));
+                // Verify the spell was actually cast — handlePlayCard silently
+                // swallows errors, so we must confirm the state actually changed.
+                if (hand.size() >= handSizeBefore) {
+                    log.warn("AI (Hard/MCTS): PlayCard failed silently in game {}", gameId);
+                    return false;
+                }
                 return true;
             }
 
@@ -214,11 +221,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
+        int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
         send(() -> messageHandler.handlePlayCard(selfConnection,
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, null)));
+        // Verify the spell was actually cast — handlePlayCard silently
+        // swallows errors, so we must confirm the state actually changed.
+        if (hand.size() >= handSizeBefore) {
+            log.warn("AI (Hard): PlayCard failed silently in game {}", gameId);
+            return false;
+        }
         return true;
     }
 

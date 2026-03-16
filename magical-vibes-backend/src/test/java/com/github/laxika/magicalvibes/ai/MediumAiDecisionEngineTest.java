@@ -6,20 +6,40 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 class MediumAiDecisionEngineTest {
 
@@ -159,5 +179,108 @@ class MediumAiDecisionEngineTest {
 
         // Should cast the spell with higher evaluated value
         assertThat(gd.stack).hasSize(1);
+    }
+
+    // ===== tryCastSpell silent failure recovery =====
+
+    @Nested
+    @ExtendWith(MockitoExtension.class)
+    @DisplayName("tryCastSpell silent failure recovery")
+    class TryCastSpellSilentFailureRecovery {
+
+        @Mock private MessageHandler mockMessageHandler;
+        @Mock private GameQueryService mockGameQueryService;
+        @Mock private CombatAttackService mockCombatAttackService;
+        @Mock private Connection mockConnection;
+
+        private GameData mockGd;
+        private Player mockAiPlayer;
+        private GameRegistry mockGameRegistry;
+
+        @BeforeEach
+        void setUpMocks() {
+            UUID gameId = UUID.randomUUID();
+            mockAiPlayer = new Player(UUID.randomUUID(), "AI");
+            Player mockOpponent = new Player(UUID.randomUUID(), "Opponent");
+
+            mockGd = new GameData(gameId, "test", mockAiPlayer.getId(), "AI");
+            mockGd.status = GameStatus.RUNNING;
+            mockGd.currentStep = TurnStep.PRECOMBAT_MAIN;
+            mockGd.activePlayerId = mockAiPlayer.getId();
+            mockGd.orderedPlayerIds.add(mockAiPlayer.getId());
+            mockGd.orderedPlayerIds.add(mockOpponent.getId());
+            mockGd.playerIdToName.put(mockAiPlayer.getId(), "AI");
+            mockGd.playerIdToName.put(mockOpponent.getId(), "Opponent");
+            mockGd.playerHands.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerHands.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerBattlefields.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerBattlefields.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerManaPools.put(mockAiPlayer.getId(), new ManaPool());
+            mockGd.playerManaPools.put(mockOpponent.getId(), new ManaPool());
+            mockGd.playerLifeTotals.put(mockAiPlayer.getId(), 20);
+            mockGd.playerLifeTotals.put(mockOpponent.getId(), 20);
+            mockGd.playerDecks.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerDecks.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerGraveyards.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerGraveyards.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+
+            mockGameRegistry = new GameRegistry();
+            mockGameRegistry.register(mockGd);
+        }
+
+        private MediumAiDecisionEngine createEngine() {
+            MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
+                    mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
+                    mockGameQueryService, mockCombatAttackService);
+            engine.setSelfConnection(mockConnection);
+            return engine;
+        }
+
+        @Test
+        @DisplayName("Medium AI passes priority when spell cast is silently rejected")
+        void passesPriorityWhenSpellCastSilentlyRejected() throws Exception {
+            Card creature = new Card();
+            creature.setName("Test Bear");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{1}{G}");
+            creature.setPower(2);
+            creature.setToughness(2);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+
+            ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
+            pool.add(ManaColor.GREEN, 1);
+            pool.add(ManaColor.COLORLESS, 1);
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            verify(mockMessageHandler).handlePlayCard(any(), any());
+            verify(mockMessageHandler).handlePassPriority(any(), any());
+        }
+
+        @Test
+        @DisplayName("Medium AI does NOT pass priority when spell cast succeeds")
+        void doesNotPassPriorityWhenSpellCastSucceeds() throws Exception {
+            Card creature = new Card();
+            creature.setName("Test Bear");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{1}{G}");
+            creature.setPower(2);
+            creature.setToughness(2);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+
+            ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
+            pool.add(ManaColor.GREEN, 1);
+            pool.add(ManaColor.COLORLESS, 1);
+
+            Mockito.doAnswer(inv -> {
+                mockGd.playerHands.get(mockAiPlayer.getId()).removeFirst();
+                return null;
+            }).when(mockMessageHandler).handlePlayCard(any(), any());
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            verify(mockMessageHandler).handlePlayCard(any(), any());
+            verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+        }
     }
 }
