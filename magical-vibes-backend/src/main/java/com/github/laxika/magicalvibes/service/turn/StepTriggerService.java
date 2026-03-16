@@ -104,7 +104,7 @@ public class StepTriggerService {
 
             for (CardEffect effect : upkeepEffects) {
                 if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
                 } else if (effect instanceof BecomeCopyOfTargetCreatureEffect) {
                     // Targeted upkeep trigger: target is chosen at trigger time (CR 603.3d).
                     // Collect valid creature targets excluding self ("another creature").
