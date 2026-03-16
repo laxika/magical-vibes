@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEff
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControllerLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlledCreatureCountEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledCreatureSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerOwnCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
@@ -155,6 +156,29 @@ public class PermanentControlResolutionService {
 
         CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
                 count, effect.tokenName(), effect.power(), effect.toughness(),
+                effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
+        );
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+    }
+
+    @HandlesEffect(CreateTokensPerControlledCreatureSubtypeEffect.class)
+    private void resolveCreateTokensPerControlledCreatureSubtype(GameData gameData, StackEntry entry,
+                                                                  CreateTokensPerControlledCreatureSubtypeEffect effect) {
+        int count = 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm)
+                        && perm.getCard().getSubtypes().contains(effect.subtype())) {
+                    count++;
+                }
+            }
+        }
+        int tokenCount = count / effect.divisor();
+        if (tokenCount <= 0) return;
+
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                tokenCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
         applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
