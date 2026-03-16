@@ -667,7 +667,9 @@ public class CombatDamageService {
     private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
-                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
+                List<CardEffect> effects = new ArrayList<>();
+                effects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                effects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
                 if (!effects.isEmpty()) {
                     StackEntry se = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
