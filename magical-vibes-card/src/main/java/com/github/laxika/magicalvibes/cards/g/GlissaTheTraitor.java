@@ -15,7 +15,7 @@ public class GlissaTheTraitor extends Card {
     public GlissaTheTraitor() {
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
                 new MayEffect(
-                        new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.ARTIFACT)),
+                        ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardTypePredicate(CardType.ARTIFACT)).build(),
                         "Return an artifact card from your graveyard to your hand?"));
     }
 }

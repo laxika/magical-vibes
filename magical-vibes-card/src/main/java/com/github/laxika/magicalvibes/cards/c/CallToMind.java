@@ -15,13 +15,13 @@ import java.util.List;
 public class CallToMind extends Card {
 
     public CallToMind() {
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.HAND,
-                new CardAnyOfPredicate(List.of(
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)
-                )),
-                true
-        ));
+                )))
+                .targetGraveyard(true)
+                .build());
     }
 }

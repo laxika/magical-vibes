@@ -72,11 +72,11 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Tutor + exile + opponent choice | `d/DistantMemories.java` | DistantMemoriesEffect — search, exile, opponent may let you have it or draw 3 |
 | Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryForCardTypesToBattlefieldEffect |
 | Cultivate (2 basic lands split) | `c/Cultivate.java` | SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect — one to BF tapped, one to hand |
-| Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect(HAND, null, true) — any card, targets graveyard |
+| Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect.builder().destination(HAND).targetGraveyard(true).build() — any card, targets graveyard |
 | Graveyard return (multi-target to hand) | `m/MorbidPlunder.java` | ReturnTargetCardsFromGraveyardToHandEffect(CardTypePredicate(CREATURE), 2) — up to N target cards to hand |
-| Graveyard return (to battlefield) | `b/BeaconOfUnrest.java` | ReturnCardFromGraveyardEffect(BATTLEFIELD, CardAnyOfPredicate, ALL_GRAVEYARDS) |
-| Graveyard reanimate + type/color grant | `r/RiseFromTheGrave.java` | ReturnCardFromGraveyardEffect(BATTLEFIELD, ..., ALL_GRAVEYARDS, ..., grantColor=BLACK, grantSubtype=ZOMBIE) — permanently adds color and subtype "in addition to" |
-| Graveyard to top of owner's library | `n/NoxiousRevival.java` | ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY, null, ALL_GRAVEYARDS, true, ...) — any card from any graveyard on top of owner's library. Phyrexian mana |
+| Graveyard return (to battlefield) | `b/BeaconOfUnrest.java` | ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardAnyOfPredicate).source(ALL_GRAVEYARDS).build() |
+| Graveyard reanimate + type/color grant | `r/RiseFromTheGrave.java` | ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).source(ALL_GRAVEYARDS).grantColor(BLACK).grantSubtype(ZOMBIE).build() — permanently adds color and subtype "in addition to" |
+| Graveyard to top of owner's library | `n/NoxiousRevival.java` | ReturnCardFromGraveyardEffect.builder().destination(TOP_OF_OWNERS_LIBRARY).source(ALL_GRAVEYARDS).targetGraveyard(true).build() — any card from any graveyard on top of owner's library. Phyrexian mana |
 | Graveyard to top of library + draw | `f/FranticSalvage.java` | PutTargetCardsFromGraveyardOnTopOfLibraryEffect(CardTypePredicate(ARTIFACT)) + DrawCardEffect — any number of target artifact cards, multi-graveyard targeting at cast time |
 | Prevent combat damage | `h/HolyDay.java` | PreventAllCombatDamageEffect |
 | Steal creature (temp) | `t/Threaten.java` | GainControlOfTargetCreatureUntilEndOfTurn + haste + untap |
@@ -132,7 +132,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
 | ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryForCardTypesToHandEffect(ARTIFACT, 6, MAX_VALUE)) — artifact with MV 6+ |
 | ETB search (by name, multi-pick) | `s/SquadronHawk.java` | MayEffect(SearchLibraryForCardsByNameToHandEffect("Squadron Hawk", 3)) — search for up to 3 copies by name to hand |
-| ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(CREATURE))) |
+| ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).build()) |
 | ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has ON_OPENING_HAND_REVEAL MayEffect(EachOpponentMillsEffect(7)) |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateCreatureTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
@@ -172,10 +172,10 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep conditional self-bounce + tokens | `t/ThopterAssembly.java` | UPKEEP_TRIGGERED NoOtherSubtypeConditionalEffect(THOPTER, ReturnSelfToHandAndCreateTokensEffect) — intervening-if "no other Thopters", returns self + creates 5 tokens |
 | Upkeep token per equipment | `k/KembaKhaRegent.java` | UPKEEP_TRIGGERED CreateTokenPerEquipmentOnSourceEffect — tokens equal to attached Equipment |
 | Upkeep may target artifact charge | `v/VedalkenInfuser.java` | UPKEEP_TRIGGERED MayEffect(PutChargeCounterOnTargetPermanentEffect) + PermanentPredicateTargetFilter(PermanentIsArtifactPredicate) — may put charge counter on target artifact |
-| Graveyard upkeep | `s/SqueeGoblinNabob.java` | GRAVEYARD_UPKEEP_TRIGGERED ReturnCardFromGraveyardEffect(HAND, CardIsSelfPredicate, returnAll=true) |
-| Graveyard metalcraft pay-to-return | `k/KuldothaPhoenix.java` | GRAVEYARD_UPKEEP_TRIGGERED MetalcraftConditionalEffect(MayPayManaEffect("{4}", ReturnCardFromGraveyardEffect(BATTLEFIELD, CardIsSelfPredicate))) — metalcraft checked at trigger time, mana paid at resolution |
-| Graveyard activated ability (return to hand) | `m/MagmaPhoenix.java` | `addGraveyardActivatedAbility(ActivatedAbility(false, "{3}{R}{R}", ReturnCardFromGraveyardEffect(HAND, CardIsSelfPredicate)))` — activated ability usable from graveyard zone, pays mana, puts on stack as ACTIVATED_ABILITY. Blocked by Pithing Needle |
-| Graveyard activated ability (return to battlefield tapped) | `r/ReassemblingSkeleton.java` | `addGraveyardActivatedAbility(ActivatedAbility(false, "{1}{B}", ReturnCardFromGraveyardEffect(BATTLEFIELD, CardIsSelfPredicate, ..., enterTapped=true)))` — self-return to battlefield tapped from graveyard |
+| Graveyard upkeep | `s/SqueeGoblinNabob.java` | GRAVEYARD_UPKEEP_TRIGGERED ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardIsSelfPredicate).returnAll(true).build() |
+| Graveyard metalcraft pay-to-return | `k/KuldothaPhoenix.java` | GRAVEYARD_UPKEEP_TRIGGERED MetalcraftConditionalEffect(MayPayManaEffect("{4}", ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardIsSelfPredicate).build())) — metalcraft checked at trigger time, mana paid at resolution |
+| Graveyard activated ability (return to hand) | `m/MagmaPhoenix.java` | `addGraveyardActivatedAbility(ActivatedAbility(false, "{3}{R}{R}", ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardIsSelfPredicate).build()))` — activated ability usable from graveyard zone, pays mana, puts on stack as ACTIVATED_ABILITY. Blocked by Pithing Needle |
+| Graveyard activated ability (return to battlefield tapped) | `r/ReassemblingSkeleton.java` | `addGraveyardActivatedAbility(ActivatedAbility(false, "{1}{B}", ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardIsSelfPredicate).enterTapped(true).build()))` — self-return to battlefield tapped from graveyard |
 | Combat damage to player | `t/ThievingMagpie.java` | ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect |
 | Combat damage awakening | `l/LiegeOfTheTangle.java` | ON_COMBAT_DAMAGE_TO_PLAYER PutAwakeningCountersOnTargetLandsEffect — multi-permanent choice on controller's lands, permanent 8/8 animation via awakening counters |
 | Combat damage may-sacrifice-draw | `i/ImpalerShrike.java` | ON_COMBAT_DAMAGE_TO_PLAYER `MayEffect(SacrificeSelfAndDrawCardsEffect(3))` — may sacrifice self, if you do draw N cards |
@@ -193,7 +193,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Other creature enters | `s/SoulWarden.java` | ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD GainLifeEffect |
 | Ally creature enters (may gain life) + opponent creature enters (may lose life) | `s/SuturePriest.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD MayEffect(GainLifeEffect(1)) + ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD MayEffect(TargetPlayerLosesLifeEffect(1)) |
 | Ally creature dies | `g/GravePact.java` | ON_ALLY_CREATURE_DIES EachOpponentSacrificesCreatureEffect |
-| Opponent creature dies | `g/GlissaTheTraitor.java` | ON_OPPONENT_CREATURE_DIES MayEffect(ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(ARTIFACT))) — includes tokens |
+| Opponent creature dies | `g/GlissaTheTraitor.java` | ON_OPPONENT_CREATURE_DIES MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(ARTIFACT)).build()) — includes tokens |
 | Any artifact goes to graveyard from battlefield | `m/MolderBeast.java` | ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD BoostSelfEffect |
 | Any artifact goes to graveyard — damage controller | `m/MagneticMine.java` | ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD DealDamageToTriggeringPermanentControllerEffect(2) — target pre-set to artifact's controller at trigger time |
 | Artifact put into opponent's graveyard from battlefield | `v/ViridianRevel.java` | ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD MayEffect(DrawCardEffect) |
@@ -308,7 +308,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Enchanted land mana | `o/Overgrowth.java` | ON_ANY_PLAYER_TAPS_LAND AddManaOnEnchantedLandTapEffect |
 | Enchanted land becomes basic type | `e/EvilPresence.java` | STATIC EnchantedPermanentBecomesTypeEffect(SWAMP) — land loses all land types/abilities, becomes the new basic land type |
 | Aura + self-bounce ability | `s/ShimmeringWings.java` | STATIC keyword + activated ReturnSelfToHandEffect |
-| Grant keyword + upkeep counter + death return | `g/GlisteningOil.java` | STATIC GrantKeywordEffect(INFECT, ENCHANTED_CREATURE) + UPKEEP_TRIGGERED PutMinusOneMinusOneCounterOnEnchantedCreatureEffect + ON_DEATH ReturnCardFromGraveyardEffect(HAND, CardIsSelfPredicate) |
+| Grant keyword + upkeep counter + death return | `g/GlisteningOil.java` | STATIC GrantKeywordEffect(INFECT, ENCHANTED_CREATURE) + UPKEEP_TRIGGERED PutMinusOneMinusOneCounterOnEnchantedCreatureEffect + ON_DEATH ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardIsSelfPredicate).build() |
 | Upkeep +1/+1 counter + sacrifice on combat | `p/PrimalCocoon.java` | UPKEEP_TRIGGERED PutPlusOnePlusOneCounterOnEnchantedCreatureEffect + ON_ATTACK SacrificeSelfEffect + ON_BLOCK SacrificeSelfEffect |
 | Doesn't untap + enchanted controller upkeep life loss | `n/NumbingDose.java` | STATIC AttachedCreatureDoesntUntapEffect + ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED EnchantedCreatureControllerLosesLifeEffect(1) — enchants artifact or creature, uses PermanentAnyOfPredicate target filter |
 | Enchanted permanent death trigger (gain life) | `v/ViridianHarvest.java` | ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD GainLifeEffect(6) — enchants artifact, aura controller gains life when enchanted permanent is put into graveyard |
@@ -335,7 +335,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Shrine (upkeep + spell trigger charge + sac-for-mana) | `s/ShrineOfBoundlessGrowth.java` | UPKEEP_TRIGGERED PutChargeCounterOnSelfEffect + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(CardColorPredicate) + tap+SacrificeSelfCost+AddColorlessManaPerChargeCounterOnSourceEffect — charge counters on upkeep and colored spell cast, sacrifice for mana |
 | Upkeep + spell-cast charge counters + sac damage | `s/ShrineOfBurningRage.java` | UPKEEP_TRIGGERED PutChargeCounterOnSelfEffect + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(CardColorPredicate(RED)) + activated {3}+tap+SacrificeSelfCost+DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect |
 | Shrine (upkeep + spell trigger charge + sac-for-library-pick) | `s/ShrineOfPiercingVision.java` | UPKEEP_TRIGGERED PutChargeCounterOnSelfEffect + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(CardColorPredicate(BLUE)) + tap+SacrificeSelfCost+LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect — charge counters on upkeep and blue spell cast, sacrifice to look at top X and pick one to hand |
-| Upkeep random graveyard return + spell-cast self-boost | `c/CharmbreakerDevils.java` | UPKEEP_TRIGGERED ReturnCardFromGraveyardEffect(HAND, instant/sorcery filter, returnAtRandom=true) + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(instant/sorcery filter, BoostSelfEffect(4,0)) — return random instant/sorcery from graveyard at upkeep, +4/+0 when casting instant/sorcery |
+| Upkeep random graveyard return + spell-cast self-boost | `c/CharmbreakerDevils.java` | UPKEEP_TRIGGERED ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(instant/sorcery filter).returnAtRandom(true).build() + ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(instant/sorcery filter, BoostSelfEffect(4,0)) — return random instant/sorcery from graveyard at upkeep, +4/+0 when casting instant/sorcery |
 | Multi-target player ability (exchange life) | `s/SoulConduit.java` | Activated {6}+tap ExchangeTargetPlayersLifeTotalsEffect with multi-target PlayerPredicateTargetFilter(ANY) — two target players exchange life totals |
 | Untap own artifacts on opponent's untap | `u/UnwindingClock.java` | STATIC UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(UNTAP, PermanentIsArtifactPredicate) — filtered variant of Seedborn Muse (which uses null filter for all permanents) |
 | Coin flip activated ability | `s/SorcerersStrongbox.java` | Tap+{2} FlipCoinWinEffect(SacrificeSelfAndDrawCardsEffect(3)) — flip a coin, if you win sacrifice self and draw 3 |

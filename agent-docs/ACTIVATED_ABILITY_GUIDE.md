@@ -282,10 +282,11 @@ addGraveyardActivatedAbility(new ActivatedAbility(requiresTap, manaCost, effects
 // {3}{R}{R}: Return Magma Phoenix from your graveyard to your hand.
 addGraveyardActivatedAbility(new ActivatedAbility(
     false, "{3}{R}{R}",
-    List.of(new ReturnCardFromGraveyardEffect(
-        GraveyardChoiceDestination.HAND, new CardIsSelfPredicate(),
-        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-        false, true, false, null, false)),
+    List.of(ReturnCardFromGraveyardEffect.builder()
+        .destination(GraveyardChoiceDestination.HAND)
+        .filter(new CardIsSelfPredicate())
+        .returnAll(true)
+        .build()),
     "{3}{R}{R}: Return Magma Phoenix from your graveyard to your hand."));
 ```
 

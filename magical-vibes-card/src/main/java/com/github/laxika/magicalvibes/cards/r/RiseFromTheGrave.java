@@ -18,13 +18,12 @@ public class RiseFromTheGrave extends Card {
     public RiseFromTheGrave() {
         // Put target creature card from a graveyard onto the battlefield under your control.
         // That creature is a black Zombie in addition to its other colors and types.
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.BATTLEFIELD,
-                new CardTypePredicate(CardType.CREATURE),
-                GraveyardSearchScope.ALL_GRAVEYARDS,
-                false, false, false, null, false, false, false, false, false,
-                CardColor.BLACK,
-                CardSubtype.ZOMBIE
-        ));
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardTypePredicate(CardType.CREATURE))
+                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .grantColor(CardColor.BLACK)
+                .grantSubtype(CardSubtype.ZOMBIE)
+                .build());
     }
 }

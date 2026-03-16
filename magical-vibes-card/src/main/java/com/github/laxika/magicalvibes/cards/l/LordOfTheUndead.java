@@ -25,7 +25,7 @@ public class LordOfTheUndead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{B}",
-                List.of(new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardSubtypePredicate(CardSubtype.ZOMBIE))),
+                List.of(ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardSubtypePredicate(CardSubtype.ZOMBIE)).build()),
                 "{1}{B}, {T}: Return target Zombie card from your graveyard to your hand."
         ));
     }

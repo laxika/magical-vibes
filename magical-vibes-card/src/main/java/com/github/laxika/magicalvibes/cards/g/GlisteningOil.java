@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -31,11 +30,10 @@ public class GlisteningOil extends Card {
 
         // When Glistening Oil is put into a graveyard from the battlefield,
         // return Glistening Oil to its owner's hand.
-        addEffect(EffectSlot.ON_DEATH, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.HAND,
-                new CardIsSelfPredicate(),
-                GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                false, true, false, null, false
-        ));
+        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .filter(new CardIsSelfPredicate())
+                .returnAll(true)
+                .build());
     }
 }

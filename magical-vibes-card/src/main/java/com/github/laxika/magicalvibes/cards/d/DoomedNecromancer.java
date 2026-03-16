@@ -18,7 +18,7 @@ public class DoomedNecromancer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}",
-                List.of(new SacrificeSelfCost(), new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.BATTLEFIELD, new CardTypePredicate(CardType.CREATURE))),
+                List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.BATTLEFIELD).filter(new CardTypePredicate(CardType.CREATURE)).build()),
                 "{B}, {T}, Sacrifice Doomed Necromancer: Return target creature card from your graveyard to the battlefield."
         ));
     }

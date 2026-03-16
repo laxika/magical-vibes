@@ -17,14 +17,14 @@ import java.util.List;
 public class BeaconOfUnrest extends Card {
 
     public BeaconOfUnrest() {
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.BATTLEFIELD,
-                new CardAnyOfPredicate(List.of(
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.CREATURE)
-                )),
-                GraveyardSearchScope.ALL_GRAVEYARDS
-        ));
+                )))
+                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .build());
         addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect());
     }
 }

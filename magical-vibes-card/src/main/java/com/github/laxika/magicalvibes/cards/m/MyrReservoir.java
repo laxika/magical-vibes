@@ -25,11 +25,11 @@ public class MyrReservoir extends Card {
         // {3}, {T}: Return target Myr card from your graveyard to your hand.
         addActivatedAbility(new ActivatedAbility(
                 true, "{3}",
-                List.of(new ReturnCardFromGraveyardEffect(
-                        GraveyardChoiceDestination.HAND,
-                        new CardSubtypePredicate(CardSubtype.MYR),
-                        true
-                )),
+                List.of(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardSubtypePredicate(CardSubtype.MYR))
+                        .targetGraveyard(true)
+                        .build()),
                 "{3}, {T}: Return target Myr card from your graveyard to your hand."
         ));
     }

@@ -15,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Gravedigger extends Card {
 
     public Gravedigger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.CREATURE)), "Return a creature card from your graveyard to your hand?"));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardTypePredicate(CardType.CREATURE)).build(), "Return a creature card from your graveyard to your hand?"));
     }
 }

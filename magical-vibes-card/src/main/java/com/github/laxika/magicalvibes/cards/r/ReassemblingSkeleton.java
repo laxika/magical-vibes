@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
@@ -18,23 +17,12 @@ public class ReassemblingSkeleton extends Card {
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
-                List.of(new ReturnCardFromGraveyardEffect(
-                        GraveyardChoiceDestination.BATTLEFIELD,
-                        new CardIsSelfPredicate(),
-                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                        false,  // targetGraveyard
-                        true,   // returnAll
-                        false,  // thisTurnOnly
-                        null,   // attachmentTarget
-                        false,  // gainLifeEqualToManaValue
-                        false,  // attachToSource
-                        false,  // grantHaste
-                        false,  // exileAtEndStep
-                        false,  // requiresManaValueEqualsX
-                        null,   // grantColor
-                        null,   // grantSubtype
-                        true    // enterTapped
-                )),
+                List.of(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(new CardIsSelfPredicate())
+                        .returnAll(true)
+                        .enterTapped(true)
+                        .build()),
                 "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped."
         ));
     }

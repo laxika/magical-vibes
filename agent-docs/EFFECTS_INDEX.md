@@ -234,37 +234,30 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 
 All graveyard-to-hand and graveyard-to-battlefield return effects are handled by a single unified record.
 
-**Canonical constructor:**
+**Builder pattern:**
 ```
-ReturnCardFromGraveyardEffect(
-    GraveyardChoiceDestination destination,  // HAND, BATTLEFIELD, or TOP_OF_OWNERS_LIBRARY
-    CardPredicate filter,                    // which cards qualify (null = any)
-    GraveyardSearchScope source,             // CONTROLLERS_GRAVEYARD, ALL_GRAVEYARDS, OPPONENT_GRAVEYARD
-    boolean targetGraveyard,                 // true = player chooses whose graveyard to search at cast time
-    boolean returnAll,                       // true = return all matching cards, false = choose one
-    boolean thisTurnOnly,                    // true = only cards put there from battlefield this turn
-    PermanentPredicate attachmentTarget,     // non-null = aura attaches to matching permanent on ETB
-    boolean gainLifeEqualToManaValue,        // true = controller gains life equal to returned card's mana value
-    boolean attachToSource,                  // true = auto-attach returned equipment to the source permanent (e.g. Auriok Survivors)
-    boolean grantHaste,                      // true = grant haste to the returned permanent (e.g. Postmortem Lunge)
-    boolean exileAtEndStep,                  // true = exile at next end step (e.g. Postmortem Lunge)
-    boolean requiresManaValueEqualsX,        // true = restrict to cards with MV = X (e.g. Postmortem Lunge)
-    CardColor grantColor,                    // non-null = permanently grant this color "in addition to" (e.g. Rise from the Grave)
-    CardSubtype grantSubtype,                // non-null = permanently grant this subtype "in addition to" (e.g. Rise from the Grave)
-    boolean enterTapped,                     // true = enters the battlefield tapped (e.g. Reassembling Skeleton)
-    boolean underOwnersControl,              // true = put each card onto battlefield under its owner's control, not spell controller's (e.g. Open the Vaults)
-    boolean returnAtRandom                   // true = return a random matching card instead of player choice (e.g. Charmbreaker Devils)
-)
+ReturnCardFromGraveyardEffect.builder()
+    .destination(GraveyardChoiceDestination)   // HAND, BATTLEFIELD, or TOP_OF_OWNERS_LIBRARY (required)
+    .filter(CardPredicate)                     // which cards qualify (default: null = any)
+    .source(GraveyardSearchScope)              // default: CONTROLLERS_GRAVEYARD — omit unless ALL_GRAVEYARDS or OPPONENT_GRAVEYARD
+    .targetGraveyard(boolean)                  // true = player chooses whose graveyard to search at cast time (default: false)
+    .returnAll(boolean)                        // true = return all matching cards, false = choose one (default: false)
+    .thisTurnOnly(boolean)                     // true = only cards put there from battlefield this turn (default: false)
+    .attachmentTarget(PermanentPredicate)      // non-null = aura attaches to matching permanent on ETB (default: null)
+    .gainLifeEqualToManaValue(boolean)         // true = controller gains life equal to returned card's mana value (default: false)
+    .attachToSource(boolean)                   // true = auto-attach returned equipment to the source permanent (default: false)
+    .grantHaste(boolean)                       // true = grant haste to the returned permanent (default: false)
+    .exileAtEndStep(boolean)                   // true = exile at next end step (default: false)
+    .requiresManaValueEqualsX(boolean)         // true = restrict to cards with MV = X (default: false)
+    .grantColor(CardColor)                     // non-null = permanently grant this color "in addition to" (default: null)
+    .grantSubtype(CardSubtype)                 // non-null = permanently grant this subtype "in addition to" (default: null)
+    .enterTapped(boolean)                      // true = enters the battlefield tapped (default: false)
+    .underOwnersControl(boolean)               // true = put each card onto battlefield under its owner's control (default: false)
+    .returnAtRandom(boolean)                   // true = return a random matching card instead of player choice (default: false)
+    .build()
 ```
 
-**Convenience constructors:**
-
-| Constructor | Equivalent canonical | When to use |
-|-------------|---------------------|-------------|
-| `(destination, filter)` | `(destination, filter, CONTROLLERS_GRAVEYARD, false, false, false, null, false, false)` | choose one from controller's graveyard (most common) |
-| `(destination, filter, source)` | `(destination, filter, source, false, false, false, null, false, false)` | choose one from a specific scope (e.g. ALL_GRAVEYARDS) |
-| `(destination, filter, targetGraveyard)` | `(destination, filter, CONTROLLERS_GRAVEYARD, targetGraveyard, false, false, null, false, false)` | targets graveyard at cast time (for spells like Recollect, Recover) |
-| `(dest, filter, src, tgt, all, turn, attach, life)` | `(dest, filter, src, tgt, all, turn, attach, life, false)` | backward-compatible 8-param constructor |
+Only `destination` is required. All booleans default to `false`, all object references default to `null`, and `source` defaults to `CONTROLLERS_GRAVEYARD`. Only set fields that differ from defaults.
 
 **CardPredicate filter system** (in `model/filter/`):
 
@@ -303,37 +296,37 @@ Pass `null` as filter to allow any card.
 
 | Old effect | New equivalent |
 |------------|----------------|
-| `ReturnCardFromGraveyardToHandEffect()` | `ReturnCardFromGraveyardEffect(HAND, null, true)` |
-| `ReturnCardFromGraveyardToHandEffect(CardType.CREATURE)` | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE))` |
-| `ReturnCardOfSubtypeFromGraveyardToHandEffect(subtype)` | `ReturnCardFromGraveyardEffect(HAND, new CardSubtypePredicate(subtype))` |
-| `ReturnCardWithKeywordFromGraveyardToHandEffect(type, kw)` | `ReturnCardFromGraveyardEffect(HAND, new CardAllOfPredicate(List.of(new CardTypePredicate(type), new CardKeywordPredicate(kw))))` |
-| `ReturnSelfFromGraveyardToHandEffect()` | `ReturnCardFromGraveyardEffect(HAND, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null)` |
-| `ReturnCreatureFromGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE))` |
-| `ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(CREATURE))), ALL_GRAVEYARDS)` |
-| `ReturnAuraFromGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardIsAuraPredicate(), CONTROLLERS_GRAVEYARD, false, false, false, attachmentTarget)` |
-| `ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect()` | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null)` |
+| `ReturnCardFromGraveyardToHandEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).targetGraveyard(true).build()` |
+| `ReturnCardFromGraveyardToHandEffect(CardType.CREATURE)` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).build()` |
+| `ReturnCardOfSubtypeFromGraveyardToHandEffect(subtype)` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardSubtypePredicate(subtype)).build()` |
+| `ReturnCardWithKeywordFromGraveyardToHandEffect(type, kw)` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardAllOfPredicate(List.of(new CardTypePredicate(type), new CardKeywordPredicate(kw)))).build()` |
+| `ReturnSelfFromGraveyardToHandEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).returnAll(true).build()` |
+| `ReturnCreatureFromGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).build()` |
+| `ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(CREATURE)))).source(ALL_GRAVEYARDS).build()` |
+| `ReturnAuraFromGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardIsAuraPredicate()).attachmentTarget(attachmentTarget).build()` |
+| `ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).returnAll(true).thisTurnOnly(true).build()` |
 
 **Common usage examples:**
 
 | Card | Usage |
 |------|-------|
-| Recollect | `ReturnCardFromGraveyardEffect(HAND, null, true)` — any card, targets graveyard |
-| Gravedigger | `MayEffect(ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE)))` — creature to hand |
-| Corpse Cur | `ReturnCardFromGraveyardEffect(HAND, new CardAllOfPredicate(List.of(new CardTypePredicate(CREATURE), new CardKeywordPredicate(INFECT))))` — creature with infect |
-| Lord of the Undead | `ReturnCardFromGraveyardEffect(HAND, new CardSubtypePredicate(ZOMBIE))` — Zombie subtype |
-| Doomed Necromancer | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE))` — creature to battlefield |
-| Beacon of Unrest | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(...), ALL_GRAVEYARDS)` — artifact or creature from any graveyard |
-| Nomad Mythmaker | canonical constructor with `attachmentTarget = new PermanentIsCreaturePredicate()` — aura to battlefield attached to creature |
-| Auriok Survivors | `MayEffect(ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardSubtypePredicate(EQUIPMENT), CONTROLLERS_GRAVEYARD, false, false, false, null, false, true))` — equipment to battlefield attached to source |
-| Squee, Goblin Nabob | `ReturnCardFromGraveyardEffect(HAND, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null)` — self-return |
-| No Rest for the Wicked | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, false, true, true, null, false)` — all creatures that died this turn |
-| Razor Hippogriff | `ReturnCardFromGraveyardEffect(HAND, new CardTypePredicate(ARTIFACT), CONTROLLERS_GRAVEYARD, false, false, false, null, true)` — artifact to hand + gain life equal to mana value |
-| Noxious Revival | `ReturnCardFromGraveyardEffect(TOP_OF_OWNERS_LIBRARY, null, ALL_GRAVEYARDS, true, false, false, null, false, false)` — any card from any graveyard on top of owner's library |
-| Postmortem Lunge | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD, true, false, false, null, false, false, true, true, true)` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |
-| Rise from the Grave | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardTypePredicate(CREATURE), ALL_GRAVEYARDS, false, false, false, null, false, false, false, false, false, CardColor.BLACK, CardSubtype.ZOMBIE)` — creature from any graveyard to battlefield as a black Zombie in addition to other colors/types |
-| Reassembling Skeleton | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardIsSelfPredicate(), CONTROLLERS_GRAVEYARD, false, true, false, null, false, false, false, false, false, null, null, true)` — self-return to battlefield tapped (graveyard activated ability) |
-| Open the Vaults | `ReturnCardFromGraveyardEffect(BATTLEFIELD, new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(ENCHANTMENT))), ALL_GRAVEYARDS, false, true, false, null, false, false, false, false, false, null, null, false, true)` — return all artifacts and enchantments from all graveyards under their owners' control |
-| Charmbreaker Devils | `ReturnCardFromGraveyardEffect(HAND, new CardAnyOfPredicate(List.of(new CardTypePredicate(INSTANT), new CardTypePredicate(SORCERY))), CONTROLLERS_GRAVEYARD, false, false, false, null, false, false, false, false, false, null, null, false, false, true)` — return a random instant or sorcery from your graveyard to hand |
+| Recollect | `ReturnCardFromGraveyardEffect.builder().destination(HAND).targetGraveyard(true).build()` — any card, targets graveyard |
+| Gravedigger | `MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).build())` — creature to hand |
+| Corpse Cur | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardAllOfPredicate(List.of(new CardTypePredicate(CREATURE), new CardKeywordPredicate(INFECT)))).build()` — creature with infect |
+| Lord of the Undead | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardSubtypePredicate(ZOMBIE)).build()` — Zombie subtype |
+| Doomed Necromancer | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).build()` — creature to battlefield |
+| Beacon of Unrest | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardAnyOfPredicate(...)).source(ALL_GRAVEYARDS).build()` — artifact or creature from any graveyard |
+| Nomad Mythmaker | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardIsAuraPredicate()).attachmentTarget(new PermanentIsCreaturePredicate()).build()` — aura to battlefield attached to creature |
+| Auriok Survivors | `MayEffect(ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardSubtypePredicate(EQUIPMENT)).attachToSource(true).build())` — equipment to battlefield attached to source |
+| Squee, Goblin Nabob | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).returnAll(true).build()` — self-return |
+| No Rest for the Wicked | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).returnAll(true).thisTurnOnly(true).build()` — all creatures that died this turn |
+| Razor Hippogriff | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(ARTIFACT)).gainLifeEqualToManaValue(true).build()` — artifact to hand + gain life equal to mana value |
+| Noxious Revival | `ReturnCardFromGraveyardEffect.builder().destination(TOP_OF_OWNERS_LIBRARY).source(ALL_GRAVEYARDS).targetGraveyard(true).build()` — any card from any graveyard on top of owner's library |
+| Postmortem Lunge | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).targetGraveyard(true).grantHaste(true).exileAtEndStep(true).requiresManaValueEqualsX(true).build()` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |
+| Rise from the Grave | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).source(ALL_GRAVEYARDS).grantColor(CardColor.BLACK).grantSubtype(CardSubtype.ZOMBIE).build()` — creature from any graveyard to battlefield as a black Zombie in addition to other colors/types |
+| Reassembling Skeleton | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardIsSelfPredicate()).returnAll(true).enterTapped(true).build()` — self-return to battlefield tapped (graveyard activated ability) |
+| Open the Vaults | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(ENCHANTMENT)))).source(ALL_GRAVEYARDS).returnAll(true).underOwnersControl(true).build()` — return all artifacts and enchantments from all graveyards under their owners' control |
+| Charmbreaker Devils | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardAnyOfPredicate(List.of(new CardTypePredicate(INSTANT), new CardTypePredicate(SORCERY)))).returnAtRandom(true).build()` — return a random instant or sorcery from your graveyard to hand |
 
 ### Other graveyard effects
 

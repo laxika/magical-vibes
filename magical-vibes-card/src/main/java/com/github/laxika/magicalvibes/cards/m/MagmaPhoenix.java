@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -24,12 +23,11 @@ public class MagmaPhoenix extends Card {
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}{R}",
-                List.of(new ReturnCardFromGraveyardEffect(
-                        GraveyardChoiceDestination.HAND,
-                        new CardIsSelfPredicate(),
-                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                        false, true, false, null, false
-                )),
+                List.of(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardIsSelfPredicate())
+                        .returnAll(true)
+                        .build()),
                 "{3}{R}{R}: Return Magma Phoenix from your graveyard to your hand."
         ));
     }

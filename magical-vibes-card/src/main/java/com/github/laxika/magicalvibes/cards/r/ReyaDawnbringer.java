@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ReyaDawnbringer extends Card {
 
     public ReyaDawnbringer() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.BATTLEFIELD, new CardTypePredicate(CardType.CREATURE)), "Return a creature from your graveyard to the battlefield?"));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.BATTLEFIELD).filter(new CardTypePredicate(CardType.CREATURE)).build(), "Return a creature from your graveyard to the battlefield?"));
     }
 }

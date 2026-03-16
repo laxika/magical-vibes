@@ -20,13 +20,13 @@ public class CorpseCur extends Card {
     public CorpseCur() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(
-                        new ReturnCardFromGraveyardEffect(
-                                GraveyardChoiceDestination.HAND,
-                                new CardAllOfPredicate(List.of(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
                                         new CardKeywordPredicate(Keyword.INFECT)
-                                ))
-                        ),
+                                )))
+                                .build(),
                         "Return a creature card with infect from your graveyard to your hand?"
                 )
         );

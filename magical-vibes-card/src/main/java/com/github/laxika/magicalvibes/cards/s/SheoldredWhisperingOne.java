@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class SheoldredWhisperingOne extends Card {
 
     public SheoldredWhisperingOne() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.BATTLEFIELD, new CardTypePredicate(CardType.CREATURE)));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.BATTLEFIELD).filter(new CardTypePredicate(CardType.CREATURE)).build());
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new SacrificeCreatureEffect());
     }
 }

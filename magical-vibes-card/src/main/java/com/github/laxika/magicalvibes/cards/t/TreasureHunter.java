@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class TreasureHunter extends Card {
 
     public TreasureHunter() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.ARTIFACT)), "Return an artifact from your graveyard to your hand?"));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardTypePredicate(CardType.ARTIFACT)).build(), "Return an artifact from your graveyard to your hand?"));
     }
 }

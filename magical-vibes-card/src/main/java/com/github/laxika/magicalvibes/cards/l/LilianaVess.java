@@ -35,16 +35,12 @@ public class LilianaVess extends Card {
         // −8: Put all creature cards from all graveyards onto the battlefield under your control.
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new ReturnCardFromGraveyardEffect(
-                        GraveyardChoiceDestination.BATTLEFIELD,
-                        new CardTypePredicate(CardType.CREATURE),
-                        GraveyardSearchScope.ALL_GRAVEYARDS,
-                        false,
-                        true,
-                        false,
-                        null,
-                        false
-                )),
+                List.of(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(new CardTypePredicate(CardType.CREATURE))
+                        .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                        .returnAll(true)
+                        .build()),
                 "\u22128: Put all creature cards from all graveyards onto the battlefield under your control."
         ));
     }

@@ -22,10 +22,10 @@ public class EntomberExarch extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to your hand",
-                        new ReturnCardFromGraveyardEffect(
-                                GraveyardChoiceDestination.HAND,
-                                new CardTypePredicate(CardType.CREATURE)
-                        )
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .build()
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent reveals their hand. You choose a noncreature card from it. That player discards that card.",

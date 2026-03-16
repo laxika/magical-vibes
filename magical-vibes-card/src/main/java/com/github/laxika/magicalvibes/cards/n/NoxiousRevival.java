@@ -11,16 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 public class NoxiousRevival extends Card {
 
     public NoxiousRevival() {
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY,
-                null,
-                GraveyardSearchScope.ALL_GRAVEYARDS,
-                true,
-                false,
-                false,
-                null,
-                false,
-                false
-        ));
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
+                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .targetGraveyard(true)
+                .build());
     }
 }

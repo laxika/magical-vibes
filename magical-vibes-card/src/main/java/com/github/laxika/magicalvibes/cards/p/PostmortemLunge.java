@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -13,19 +12,13 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class PostmortemLunge extends Card {
 
     public PostmortemLunge() {
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.BATTLEFIELD,
-                new CardTypePredicate(CardType.CREATURE),
-                GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                true,   // targetGraveyard
-                false,  // returnAll
-                false,  // thisTurnOnly
-                null,   // attachmentTarget
-                false,  // gainLifeEqualToManaValue
-                false,  // attachToSource
-                true,   // grantHaste
-                true,   // exileAtEndStep
-                true    // requiresManaValueEqualsX
-        ));
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardTypePredicate(CardType.CREATURE))
+                .targetGraveyard(true)
+                .grantHaste(true)
+                .exileAtEndStep(true)
+                .requiresManaValueEqualsX(true)
+                .build());
     }
 }

@@ -18,26 +18,15 @@ public class OpenTheVaults extends Card {
     public OpenTheVaults() {
         // Return all artifact and enchantment cards from all graveyards to the battlefield
         // under their owners' control.
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.BATTLEFIELD,
-                new CardAnyOfPredicate(List.of(
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.ENCHANTMENT)
-                )),
-                GraveyardSearchScope.ALL_GRAVEYARDS,
-                false,  // targetGraveyard
-                true,   // returnAll
-                false,  // thisTurnOnly
-                null,   // attachmentTarget
-                false,  // gainLifeEqualToManaValue
-                false,  // attachToSource
-                false,  // grantHaste
-                false,  // exileAtEndStep
-                false,  // requiresManaValueEqualsX
-                null,   // grantColor
-                null,   // grantSubtype
-                false,  // enterTapped
-                true    // underOwnersControl
-        ));
+                )))
+                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .returnAll(true)
+                .underOwnersControl(true)
+                .build());
     }
 }

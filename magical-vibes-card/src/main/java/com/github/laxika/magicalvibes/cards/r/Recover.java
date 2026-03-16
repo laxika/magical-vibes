@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class Recover extends Card {
 
     public Recover() {
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.CREATURE), true));
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardTypePredicate(CardType.CREATURE)).targetGraveyard(true).build());
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 public class NaturesSpiral extends Card {
 
     public NaturesSpiral() {
-        addEffect(EffectSlot.SPELL, new ReturnCardFromGraveyardEffect(
-                GraveyardChoiceDestination.HAND,
-                new CardIsPermanentPredicate(),
-                true
-        ));
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .filter(new CardIsPermanentPredicate())
+                .targetGraveyard(true)
+                .build());
     }
 }

@@ -18,7 +18,7 @@ public class SalvageScout extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new SacrificeSelfCost(), new ReturnCardFromGraveyardEffect(GraveyardChoiceDestination.HAND, new CardTypePredicate(CardType.ARTIFACT))),
+                List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardTypePredicate(CardType.ARTIFACT)).build()),
                 "{W}, Sacrifice Salvage Scout: Return target artifact card from your graveyard to your hand."
         ));
     }
