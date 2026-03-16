@@ -89,6 +89,7 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
+        addReadyCreature(player2); // valid target so spell is playable
         harness.addToBattlefield(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);

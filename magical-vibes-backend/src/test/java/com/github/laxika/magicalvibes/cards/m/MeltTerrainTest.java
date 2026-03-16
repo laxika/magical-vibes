@@ -118,6 +118,7 @@ class MeltTerrainTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
+        harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MeltTerrain()));
         harness.addMana(player1, ManaColor.RED, 4);

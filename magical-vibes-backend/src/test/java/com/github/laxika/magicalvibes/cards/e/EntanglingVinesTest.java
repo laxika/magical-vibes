@@ -55,6 +55,11 @@ class EntanglingVinesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an untapped creature with Entangling Vines")
     void cannotTargetUntappedCreature() {
+        Permanent tappedBears = new Permanent(new GrizzlyBears());
+        tappedBears.setSummoningSick(false);
+        tappedBears.tap();
+        gd.playerBattlefields.get(player2.getId()).add(tappedBears);
+
         Permanent bearsPerm = new Permanent(new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
@@ -70,6 +75,11 @@ class EntanglingVinesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Entangling Vines")
     void cannotTargetNonCreature() {
+        Permanent tappedBears = new Permanent(new GrizzlyBears());
+        tappedBears.setSummoningSick(false);
+        tappedBears.tap();
+        gd.playerBattlefields.get(player2.getId()).add(tappedBears);
+
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new EntanglingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);

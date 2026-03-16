@@ -66,6 +66,12 @@ class CondemnTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
+        // Add an attacking creature as valid target so spell is playable
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
+
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
 
@@ -83,6 +89,12 @@ class CondemnTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a player")
     void cannotTargetPlayer() {
+        // Add an attacking creature as valid target so spell is playable
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
+
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Condemn()));

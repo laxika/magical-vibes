@@ -196,6 +196,11 @@ class VulshokRefugeeTest extends BaseCardTest {
         refugee.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(refugee);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
         harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -106,6 +106,9 @@ class IchorExplosionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast without a creature to sacrifice")
     void cannotCastWithoutCreatureToSacrifice() {
+        // Add a creature to opponent's battlefield so spell is considered playable by ValidTargetService,
+        // but player1 still has no creature to sacrifice
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);

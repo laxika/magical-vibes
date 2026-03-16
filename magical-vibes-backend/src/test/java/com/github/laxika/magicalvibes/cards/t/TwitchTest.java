@@ -172,6 +172,7 @@ class TwitchTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
+        addReadyCreature(player1); // valid target so spell is playable
         Permanent enchantment = addReadyEnchantment(player2);
         harness.setHand(player1, List.of(new Twitch()));
         harness.addMana(player1, ManaColor.BLUE, 1);

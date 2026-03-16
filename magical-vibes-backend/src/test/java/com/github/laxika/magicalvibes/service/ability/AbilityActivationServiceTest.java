@@ -844,16 +844,19 @@ class AbilityActivationServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Choosing invalid card index throws")
-        void choosingInvalidCardIndexThrows() {
+        @DisplayName("Choosing invalid card index re-prompts")
+        void choosingInvalidCardIndexRePrompts() {
             addReadySeismicAssault(player1);
             harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
 
             harness.activateAbility(player1, 0, null, player2.getId());
 
-            assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Invalid card index");
+            // Choosing an invalid index re-prompts instead of throwing
+            harness.handleCardChosen(player1, 0);
+
+            // State should still be awaiting discard cost choice (re-prompted)
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

@@ -51,6 +51,7 @@ class SoulBleedTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Soul Bleed")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         Permanent artifact = findPermanentByName(player1, "Fountain of Youth");
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -36,6 +37,8 @@ class PincherBeetlesTest extends BaseCardTest {
     void opponentSpellsCannotTarget() {
         harness.forceActivePlayer(player2);
         harness.addToBattlefield(player1, new PincherBeetles());
+        // Add valid target so spell is playable
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player2, List.of(new Boomerang()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
@@ -69,6 +72,8 @@ class PincherBeetlesTest extends BaseCardTest {
     @DisplayName("Your own spells cannot target Pincher Beetles")
     void ownSpellsCannotTarget() {
         harness.addToBattlefield(player1, new PincherBeetles());
+        // Add valid target so spell is playable
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

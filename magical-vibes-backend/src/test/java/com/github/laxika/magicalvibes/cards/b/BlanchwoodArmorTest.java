@@ -135,6 +135,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Blanchwood Armor")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new BlanchwoodArmor()));
         harness.addMana(player1, ManaColor.GREEN, 3);

@@ -99,6 +99,7 @@ class CombustTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target non-white non-blue creature")
     void cannotTargetRedCreature() {
+        harness.addToBattlefield(player2, createWhiteCreature("Valid Target", 1, 1)); // valid target so spell is playable
         harness.addToBattlefield(player2, createRedCreature("Goblin Piker", 2, 1));
         harness.setHand(player1, List.of(new Combust()));
         harness.addMana(player1, ManaColor.RED, 2);

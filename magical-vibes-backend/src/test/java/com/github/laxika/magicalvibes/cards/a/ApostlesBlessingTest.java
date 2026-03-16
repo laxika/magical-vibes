@@ -104,6 +104,8 @@ class ApostlesBlessingTest extends BaseCardTest {
         Permanent opponentCreature = new Permanent(new GrizzlyBears());
         opponentCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+        // Add valid target (creature you control) so spell is playable
+        harness.addToBattlefield(player1, new IronMyr());
         harness.setHand(player1, List.of(new ApostlesBlessing()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -117,6 +119,8 @@ class ApostlesBlessingTest extends BaseCardTest {
     void cannotTargetEnchantment() {
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player1.getId()).add(enchantment);
+        // Add valid target (creature you control) so spell is playable
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ApostlesBlessing()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

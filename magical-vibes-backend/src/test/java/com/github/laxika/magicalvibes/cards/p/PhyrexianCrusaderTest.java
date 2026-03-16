@@ -250,6 +250,11 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         crusader.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(crusader);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
         harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -264,6 +269,11 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         Permanent crusader = new Permanent(new PhyrexianCrusader());
         crusader.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(crusader);
+
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(createTargetedInstant("Swords to Plowshares", CardColor.WHITE, "{W}")));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -297,6 +307,11 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         Permanent crusader = new Permanent(new PhyrexianCrusader());
         crusader.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(crusader);
+
+        // Add valid target so aura is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         Card whiteAura = new Card();
         whiteAura.setName("Holy Strength");

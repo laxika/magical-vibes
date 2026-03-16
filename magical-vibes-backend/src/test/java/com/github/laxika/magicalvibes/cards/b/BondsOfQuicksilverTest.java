@@ -180,6 +180,7 @@ class BondsOfQuicksilverTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Bonds of Quicksilver")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new BondsOfQuicksilver()));
         harness.addMana(player1, ManaColor.BLUE, 4);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import lombok.AccessLevel;
@@ -166,6 +167,26 @@ public class Card {
         Set<TargetType> t = getAllowedTargets();
         return t.contains(TargetType.PLAYER) || t.contains(TargetType.PERMANENT)
                 || t.contains(TargetType.GRAVEYARD);
+    }
+
+    /**
+     * Returns true if the spell itself requires a target to be cast (MTG rule 601.2c).
+     * Unlike {@link #isNeedsTarget()}, this excludes ON_ENTER_BATTLEFIELD effects because
+     * ETB abilities are separate from casting — a creature is always castable regardless of
+     * whether its ETB can find a valid target. Also excludes {@link CostEffect}s because
+     * sacrifice/discard costs are not "targeting" in MTG terms.
+     */
+    public boolean isNeedsSpellCastTarget() {
+        Set<TargetType> result = EnumSet.noneOf(TargetType.class);
+        if (isAura()) {
+            result.add(TargetType.PERMANENT);
+        }
+        for (CardEffect e : getEffects(EffectSlot.SPELL)) {
+            if (e instanceof CostEffect) continue;
+            collectTargetTypes(e, result);
+        }
+        return result.contains(TargetType.PLAYER) || result.contains(TargetType.PERMANENT)
+                || result.contains(TargetType.GRAVEYARD);
     }
 
     public boolean isNeedsSpellTarget() {

@@ -197,6 +197,7 @@ class FistsOfTheAnvilTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast with invalid target permanent ID")
     void cannotCastWithInvalidTarget() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
         harness.setHand(player1, List.of(new FistsOfTheAnvil()));
         harness.addMana(player1, ManaColor.RED, 2);
 

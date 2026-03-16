@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Terror;
@@ -38,6 +39,9 @@ class KarplusanStriderTest extends BaseCardTest {
     void blueSpellsCannotTarget() {
         harness.addToBattlefield(player2, new KarplusanStrider());
 
+        // Add valid target so spell is playable
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -50,6 +54,9 @@ class KarplusanStriderTest extends BaseCardTest {
     @DisplayName("Black spells cannot target Karplusan Strider")
     void blackSpellsCannotTarget() {
         harness.addToBattlefield(player2, new KarplusanStrider());
+
+        // Add valid target so spell is playable
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);

@@ -63,6 +63,12 @@ class RighteousnessTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-blocking creature")
     void cannotTargetNonBlockingCreature() {
+        // Add a blocking creature as valid target so spell is playable
+        Permanent blockerValid = new Permanent(new GrizzlyBears());
+        blockerValid.setSummoningSick(false);
+        blockerValid.setBlocking(true);
+        gd.playerBattlefields.get(player2.getId()).add(blockerValid);
+
         Permanent bearsPerm = new Permanent(new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
@@ -80,6 +86,12 @@ class RighteousnessTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a player")
     void cannotTargetPlayer() {
+        // Add a blocking creature as valid target so spell is playable
+        Permanent blockerValid = new Permanent(new GrizzlyBears());
+        blockerValid.setSummoningSick(false);
+        blockerValid.setBlocking(true);
+        gd.playerBattlefields.get(player1.getId()).add(blockerValid);
+
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Righteousness()));

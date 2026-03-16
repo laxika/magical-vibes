@@ -100,9 +100,13 @@ class FaunaShamanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+        // Choosing an invalid index re-prompts instead of throwing
+        harness.handleCardChosen(player1, 1);
+
+        // State should still be awaiting discard cost choice (re-prompted)
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

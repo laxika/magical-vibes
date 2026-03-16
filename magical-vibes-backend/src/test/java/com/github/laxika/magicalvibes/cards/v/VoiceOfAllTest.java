@@ -323,6 +323,11 @@ class VoiceOfAllTest extends BaseCardTest {
         voiceOfAll.setChosenColor(CardColor.BLACK);
         gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
         harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -357,6 +362,11 @@ class VoiceOfAllTest extends BaseCardTest {
         voiceOfAll.setSummoningSick(false);
         voiceOfAll.setChosenColor(CardColor.BLACK);
         gd.playerBattlefields.get(player2.getId()).add(voiceOfAll);
+
+        // Add valid target so aura is playable
+        Permanent bears = new Permanent(createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         Card blackAura = new Card();
         blackAura.setName("Unholy Strength");

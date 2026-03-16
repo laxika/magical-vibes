@@ -355,7 +355,7 @@ public class GameBroadcastService {
         playable.removeIf(i -> {
             Card card = hand.get(i);
             if (card.hasType(CardType.LAND)) return false;
-            return card.isNeedsTarget() && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
+            return card.isNeedsSpellCastTarget() && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
         });
 
         return playable;

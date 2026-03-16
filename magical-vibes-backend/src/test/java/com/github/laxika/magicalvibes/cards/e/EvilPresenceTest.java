@@ -170,8 +170,11 @@ class EvilPresenceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Evil Presence targeting a non-land permanent")
     void cannotTargetNonLand() {
+        harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
         harness.setHand(player1, List.of(new EvilPresence()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

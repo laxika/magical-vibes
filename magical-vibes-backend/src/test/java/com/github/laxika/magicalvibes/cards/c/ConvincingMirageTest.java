@@ -188,8 +188,11 @@ class ConvincingMirageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Convincing Mirage targeting a non-land permanent")
     void cannotTargetNonLand() {
+        harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
         harness.setHand(player1, List.of(new ConvincingMirage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

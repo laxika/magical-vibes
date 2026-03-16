@@ -7,4 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * The token copies all copiable characteristics per CR 707.2.
  */
 public record CreateTokenCopyOfTargetPermanentEffect() implements CardEffect {
+
+    @Override
+    public boolean canTargetPermanent() {
+        return true;
+    }
 }

@@ -66,6 +66,9 @@ class GoForTheThroatTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact creature")
     void cannotTargetArtifactCreature() {
+        // Add a nonartifact creature as valid target so spell is playable
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+
         Permanent artifactCreature = new Permanent(new BottleGnomes());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(artifactCreature);
 

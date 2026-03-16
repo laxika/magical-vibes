@@ -61,8 +61,11 @@ class RelicPutrescenceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Relic Putrescence targeting a non-artifact permanent")
     void cannotTargetNonArtifact() {
+        harness.addToBattlefield(player1, new RatchetBomb()); // valid target so spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent creature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
         harness.setHand(player1, List.of(new RelicPutrescence()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player1);

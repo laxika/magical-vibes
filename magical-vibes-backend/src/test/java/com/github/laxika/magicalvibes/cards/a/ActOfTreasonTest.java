@@ -144,6 +144,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
+        addReadyCreature(player1); // valid target so spell is playable
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         harness.setHand(player1, List.of(new ActOfTreason()));

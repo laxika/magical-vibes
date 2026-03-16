@@ -95,6 +95,7 @@ class MetallicMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-artifact permanent")
     void cannotTargetNonArtifact() {
+        addArtifact(player1); // valid target so spell is playable
         Permanent creature = new Permanent(new GrizzlyBears());
         gd.playerBattlefields.get(player2.getId()).add(creature);
         harness.setHand(player1, List.of(new MetallicMastery()));

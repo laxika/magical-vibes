@@ -93,6 +93,7 @@ class DisperseTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new Island());
         UUID targetId = harness.getPermanentId(player2, "Island");
         harness.setHand(player1, List.of(new Disperse()));

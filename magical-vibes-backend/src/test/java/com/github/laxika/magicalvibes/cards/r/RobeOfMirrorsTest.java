@@ -139,6 +139,11 @@ class RobeOfMirrorsTest extends BaseCardTest {
         robePerm.setAttachedTo(bearsPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(robePerm);
 
+        // Add another creature without shroud so aura is playable
+        Permanent otherBears = new Permanent(new GrizzlyBears());
+        otherBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+
         // Controller tries to target the creature with Pacifism
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);

@@ -92,6 +92,7 @@ class TreetopBracersTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Treetop Bracers targeting a noncreature permanent")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent anthem = new Permanent(new GloriousAnthem());
         gd.playerBattlefields.get(player1.getId()).add(anthem);
 

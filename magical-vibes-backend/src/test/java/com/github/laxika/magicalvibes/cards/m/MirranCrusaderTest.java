@@ -353,6 +353,11 @@ class MirranCrusaderTest extends BaseCardTest {
         crusader.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(crusader);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
         harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -367,6 +372,11 @@ class MirranCrusaderTest extends BaseCardTest {
         Permanent crusader = new Permanent(new MirranCrusader());
         crusader.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(crusader);
+
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(createTargetedInstant("Giant Growth", CardColor.GREEN, "{G}")));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -400,6 +410,11 @@ class MirranCrusaderTest extends BaseCardTest {
         Permanent crusader = new Permanent(new MirranCrusader());
         crusader.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(crusader);
+
+        // Add valid target so aura is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         Card blackAura = new Card();
         blackAura.setName("Unholy Strength");

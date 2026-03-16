@@ -69,6 +69,11 @@ class AssassinateTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an untapped creature")
     void cannotTargetUntappedCreature() {
+        // Add a tapped creature as valid target so spell is playable
+        Permanent tappedValid = new Permanent(new GrizzlyBears());
+        tappedValid.tap();
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(tappedValid);
+
         Permanent untappedCreature = new Permanent(new GrizzlyBears());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(untappedCreature);
 
@@ -83,6 +88,11 @@ class AssassinateTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a tapped noncreature")
     void cannotTargetTappedNonCreature() {
+        // Add a tapped creature as valid target so spell is playable
+        Permanent tappedValid = new Permanent(new GrizzlyBears());
+        tappedValid.tap();
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(tappedValid);
+
         Permanent tappedLand = new Permanent(new Forest());
         tappedLand.tap();
         harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedLand);

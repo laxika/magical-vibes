@@ -156,6 +156,7 @@ class ArmoredAscensionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Armored Ascension")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new ArmoredAscension()));
         harness.addMana(player1, ManaColor.WHITE, 4);

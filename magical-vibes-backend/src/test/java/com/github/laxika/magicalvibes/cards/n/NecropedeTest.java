@@ -78,40 +78,42 @@ class NecropedeTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Necropede"));
     }
 
-    // ===== Death trigger: accept may, put counter on 2/2 =====
+    // ===== Death trigger: target selection then may =====
 
     @Test
-    @DisplayName("When Necropede dies, controller is prompted with may ability")
-    void deathTriggerPromptsMayChoice() {
+    @DisplayName("When Necropede dies, controller is prompted to choose a target creature (CR 603.3d)")
+    void deathTriggerPromptsTargetChoice() {
         harness.addToBattlefield(player1, new Necropede());
         harness.addToBattlefield(player2, new GrizzlyBears());
         setupCombatWhereNecropedeDies();
 
-        harness.passBothPriorities(); // Combat damage — Necropede dies, MayEffect on stack
+        harness.passBothPriorities(); // Combat damage — Necropede dies, target selection prompt
 
         // Necropede should be dead
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Necropede"));
 
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-
-        // Player1 should be prompted for the may ability
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        // CR 603.3d: targets are chosen when the triggered ability is put on the stack
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
     }
 
     @Test
-    @DisplayName("Accepting may prompts for target creature selection")
-    void acceptingMayPromptsForTarget() {
+    @DisplayName("Choosing a target puts ability on stack, resolving prompts may choice")
+    void choosingTargetPutsAbilityOnStackThenMayPrompt() {
         harness.addToBattlefield(player1, new Necropede());
         harness.addToBattlefield(player2, new GrizzlyBears());
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
         setupCombatWhereNecropedeDies();
+        harness.passBothPriorities(); // Necropede dies, target selection
 
-        harness.passBothPriorities(); // Necropede dies, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // Accept may -> target selection
+        harness.handlePermanentChosen(player1, bearsId); // Choose target -> ability on stack
+        harness.passBothPriorities(); // Resolve -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        // Player1 should be prompted for the may ability
+        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -123,11 +125,12 @@ class NecropedeTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereNecropedeDies();
-        harness.passBothPriorities(); // Necropede dies, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities(); // Necropede dies, target selection
 
-        harness.handleMayAbilityChosen(player1, true); // Accept may -> target selection
-        harness.handlePermanentChosen(player1, bearsId); // Choose target -> effect resolves inline
+        harness.handlePermanentChosen(player1, bearsId); // Choose target -> ability on stack
+        harness.passBothPriorities(); // Resolve -> may prompt
+
+        harness.handleMayAbilityChosen(player1, true); // Accept may -> effect resolves
 
         // Grizzly Bears should have a -1/-1 counter
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
@@ -149,11 +152,12 @@ class NecropedeTest extends BaseCardTest {
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
 
         setupCombatWhereNecropedeDies();
-        harness.passBothPriorities(); // Necropede dies, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities(); // Necropede dies, target selection
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, elvesId); // effect resolves inline
+        harness.handlePermanentChosen(player1, elvesId); // Choose target -> ability on stack
+        harness.passBothPriorities(); // Resolve -> may prompt
+
+        harness.handleMayAbilityChosen(player1, true); // Accept may -> effect resolves
 
         // Llanowar Elves (1/1) should be dead from 0 toughness
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -168,10 +172,15 @@ class NecropedeTest extends BaseCardTest {
     @DisplayName("Declining may ability does not put counter on any creature")
     void decliningMayDoesNotPutCounter() {
         harness.addToBattlefield(player1, new Necropede());
-        // setupCombatWhereNecropedeDies adds a 3/3 blocker internally
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
         setupCombatWhereNecropedeDies();
-        harness.passBothPriorities(); // Necropede dies, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities(); // Necropede dies, target selection
+
+        harness.handlePermanentChosen(player1, bearsId); // Choose target -> ability on stack
+        harness.passBothPriorities(); // Resolve -> may prompt
 
         harness.handleMayAbilityChosen(player1, false); // Decline may
 
@@ -197,11 +206,12 @@ class NecropedeTest extends BaseCardTest {
         UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         setupCombatWhereNecropedeDies();
-        harness.passBothPriorities(); // Necropede dies, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities(); // Necropede dies, target selection
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, ownBearsId); // effect resolves inline
+        harness.handlePermanentChosen(player1, ownBearsId); // Choose own creature -> ability on stack
+        harness.passBothPriorities(); // Resolve -> may prompt
+
+        harness.handleMayAbilityChosen(player1, true); // Accept may -> effect resolves
 
         // Own Grizzly Bears should have a -1/-1 counter
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
@@ -213,34 +223,26 @@ class NecropedeTest extends BaseCardTest {
     // ===== No creatures on battlefield (Wrath scenario) =====
 
     @Test
-    @DisplayName("Death trigger from Wrath of God: accept may but no valid creature targets")
-    void deathTriggerFromWrathAcceptMayNoTargets() {
+    @DisplayName("Death trigger from Wrath of God: no valid creature targets, trigger is skipped")
+    void deathTriggerFromWrathNoValidTargets() {
         harness.addToBattlefield(player1, new Necropede());
 
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath — all creatures die, MayEffect on stack
+        harness.passBothPriorities(); // Resolve Wrath — all creatures die
 
         // Necropede should be dead
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Necropede"));
 
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-
-        // Player1 should be prompted for may ability
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
-
-        harness.handleMayAbilityChosen(player1, true); // Accept may — no valid targets inline
-
-        // No valid creature targets — stack should be empty
-        assertThat(gd.stack).isEmpty();
+        // No valid creature targets — trigger is skipped entirely (no stack entry, no may prompt)
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
     }
 
     @Test
-    @DisplayName("Death trigger from Wrath of God: decline may")
+    @DisplayName("Death trigger from Wrath of God: decline path (no valid targets, trigger skipped)")
     void deathTriggerFromWrathDeclineMay() {
         harness.addToBattlefield(player1, new Necropede());
 
@@ -248,12 +250,9 @@ class NecropedeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.getGameService().playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath — Necropede dies, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities(); // Resolve Wrath — Necropede dies
 
-        harness.handleMayAbilityChosen(player1, false); // Decline may
-
-        // No triggered ability placed
+        // No triggered ability placed (no valid targets for the targeted trigger)
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Necropede"));
     }
@@ -269,16 +268,14 @@ class NecropedeTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         setupCombatWhereNecropedeDies();
-        harness.passBothPriorities(); // Necropede dies, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities(); // Necropede dies, target selection
 
-        harness.handleMayAbilityChosen(player1, true); // Accept may -> target selection
+        harness.handlePermanentChosen(player1, bearsId); // Choose target -> ability on stack
 
-        // Remove the target before choosing it
+        // Remove the target before resolution
         gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(bearsId));
 
-        // Choose removed target -> effect does nothing during inline resolution
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities(); // Resolve — target gone, fizzles
 
         assertThat(gd.stack).isEmpty();
     }

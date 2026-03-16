@@ -33,6 +33,7 @@ class HeartOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Heart of Light")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new HeartOfLight()));
         harness.addMana(player1, ManaColor.WHITE, 3);

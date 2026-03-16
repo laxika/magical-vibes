@@ -40,6 +40,9 @@ class PistusStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature without flying")
     void cannotTargetCreatureWithoutFlying() {
+        // Add a creature with flying as valid target so spell is playable
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new SerraAngel()));
+
         Permanent bears = new Permanent(new GrizzlyBears());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
 

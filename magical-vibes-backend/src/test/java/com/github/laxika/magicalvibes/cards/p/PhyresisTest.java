@@ -223,6 +223,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Phyresis")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);

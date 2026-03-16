@@ -123,13 +123,15 @@ class CharmbreakerDevilsTest extends BaseCardTest {
     @DisplayName("No effect when graveyard is empty")
     void noEffectWithEmptyGraveyard() {
         harness.addToBattlefield(player1, new CharmbreakerDevils());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         advanceToUpkeep(player1);
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        // Should resolve without error
+        // Should resolve without error — no card returned to hand
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

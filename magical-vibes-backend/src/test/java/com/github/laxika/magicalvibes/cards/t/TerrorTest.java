@@ -72,6 +72,9 @@ class TerrorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
+        // Add a nonblack nonartifact creature as valid target so spell is playable
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+
         Permanent blackCreature = new Permanent(new MassOfGhouls());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(blackCreature);
 
@@ -86,6 +89,9 @@ class TerrorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact creature")
     void cannotTargetArtifactCreature() {
+        // Add a nonblack nonartifact creature as valid target so spell is playable
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+
         Permanent artifactCreature = new Permanent(new BottleGnomes());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(artifactCreature);
 

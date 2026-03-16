@@ -69,6 +69,9 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
+        // Add a nonblack creature as valid target so spell is playable
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+
         Permanent blackCreature = new Permanent(new MassOfGhouls());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(blackCreature);
 

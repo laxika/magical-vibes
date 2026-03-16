@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -99,6 +100,11 @@ class GreatSableStagTest extends BaseCardTest {
     void cannotBeTargetedByBlueInstant() {
         Permanent stag = addStagReady(player1);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
         harness.setHand(player2, List.of(createTargetedInstant("Blue Zap", CardColor.BLUE, "{U}")));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.passPriority(player1);
@@ -112,6 +118,11 @@ class GreatSableStagTest extends BaseCardTest {
     @DisplayName("Cannot be targeted by black instant")
     void cannotBeTargetedByBlackInstant() {
         Permanent stag = addStagReady(player1);
+
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.setHand(player2, List.of(createTargetedInstant("Black Zap", CardColor.BLACK, "{B}")));
         harness.addMana(player2, ManaColor.BLACK, 1);

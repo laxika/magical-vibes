@@ -86,6 +86,9 @@ class DeathmarkTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-green non-white creature")
     void cannotTargetBlackCreature() {
+        // Add a green creature as valid target so spell is playable
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+
         Permanent skeletons = new Permanent(new DrudgeSkeletons());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(skeletons);
 

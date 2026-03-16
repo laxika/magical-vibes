@@ -126,6 +126,7 @@ class WeaknessTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Weakness")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new Weakness()));
         harness.addMana(player1, ManaColor.BLACK, 1);

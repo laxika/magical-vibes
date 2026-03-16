@@ -278,6 +278,7 @@ class ShivsEmbraceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Shiv's Embrace")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new ShivsEmbrace()));
         harness.addMana(player1, ManaColor.RED, 4);

@@ -239,6 +239,11 @@ class BlackKnightTest extends BaseCardTest {
         knight.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(knight);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
         harness.setHand(player1, List.of(createTargetedInstant("White Removal", CardColor.WHITE, "{W}")));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -271,6 +276,11 @@ class BlackKnightTest extends BaseCardTest {
         Permanent knight = new Permanent(new BlackKnight());
         knight.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(knight);
+
+        // Add valid target so aura is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new HolyStrength()));
         harness.addMana(player1, ManaColor.WHITE, 1);

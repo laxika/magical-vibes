@@ -151,6 +151,7 @@ class RegenerateTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Regenerate")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new Regenerate()));
         harness.addMana(player1, ManaColor.GREEN, 2);

@@ -709,7 +709,7 @@ public class SpellCastingService {
         stackEntry.setCastWithFlashback(true);
         gameData.stack.add(stackEntry);
 
-        finishSpellCast(gameData, playerId, player, graveyard, card);
+        finishSpellCast(gameData, playerId, player, graveyard, card, false);
     }
 
     // --- Play from exile ---
@@ -873,6 +873,10 @@ public class SpellCastingService {
     }
 
     public void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card) {
+        finishSpellCast(gameData, playerId, player, hand, card, true);
+    }
+
+    public void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card, boolean castFromHand) {
         gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
         gameData.priorityPassedBy.clear();
 
@@ -881,7 +885,7 @@ public class SpellCastingService {
 
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, castFromHand);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);

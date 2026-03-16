@@ -81,6 +81,11 @@ class TrollAsceticTest extends BaseCardTest {
     void opponentCannotTargetWithBoomerang() {
         Permanent trollPerm = addTrollAsceticReady(player1);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Boomerang()));
         harness.addMana(player2, ManaColor.BLUE, 2);

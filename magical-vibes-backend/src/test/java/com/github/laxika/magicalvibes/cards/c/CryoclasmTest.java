@@ -135,6 +135,7 @@ class CryoclasmTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a Mountain")
     void cannotTargetMountain() {
+        harness.addToBattlefield(player1, new Plains()); // valid target so spell is playable
         harness.addToBattlefield(player2, new Mountain());
         harness.setHand(player1, List.of(new Cryoclasm()));
         harness.addMana(player1, ManaColor.RED, 3);

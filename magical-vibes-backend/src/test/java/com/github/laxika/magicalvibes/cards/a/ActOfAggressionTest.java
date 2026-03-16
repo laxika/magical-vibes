@@ -123,6 +123,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target own creature")
     void cannotTargetOwnCreature() {
+        addReadyCreature(player2); // valid target so spell is playable
         Permanent ownCreature = addReadyCreature(player1);
         harness.setHand(player1, List.of(new ActOfAggression()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -135,6 +136,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
+        addReadyCreature(player2); // valid target so spell is playable
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         harness.setHand(player1, List.of(new ActOfAggression()));

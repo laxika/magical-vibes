@@ -169,6 +169,7 @@ class BandageTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Bandage targeting a player adds prevention shield")
     void resolvingAddsPlayerPrevention() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Bandage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());

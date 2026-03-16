@@ -319,6 +319,11 @@ class PaladinEnVecTest extends BaseCardTest {
         paladin.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(paladin);
 
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
         harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -333,6 +338,11 @@ class PaladinEnVecTest extends BaseCardTest {
         Permanent paladin = new Permanent(new PaladinEnVec());
         paladin.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(paladin);
+
+        // Add valid target so spell is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -366,6 +376,11 @@ class PaladinEnVecTest extends BaseCardTest {
         Permanent paladin = new Permanent(new PaladinEnVec());
         paladin.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(paladin);
+
+        // Add valid target so aura is playable
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         Card blackAura = new Card();
         blackAura.setName("Unholy Strength");

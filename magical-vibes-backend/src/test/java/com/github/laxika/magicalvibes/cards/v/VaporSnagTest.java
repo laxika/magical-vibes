@@ -59,6 +59,7 @@ class VaporSnagTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new VaporSnag()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -73,6 +74,7 @@ class VaporSnagTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new Island());
         harness.setHand(player1, List.of(new VaporSnag()));
         harness.addMana(player1, ManaColor.BLUE, 1);
