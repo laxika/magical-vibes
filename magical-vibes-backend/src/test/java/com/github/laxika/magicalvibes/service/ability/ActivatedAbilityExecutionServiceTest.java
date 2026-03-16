@@ -1,46 +1,122 @@
 package com.github.laxika.magicalvibes.service.ability;
 
-import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
-import com.github.laxika.magicalvibes.cards.b.BlightMamba;
-import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
-import com.github.laxika.magicalvibes.cards.c.CullingDais;
-import com.github.laxika.magicalvibes.cards.d.DoublingCube;
-import com.github.laxika.magicalvibes.cards.d.DrossHopper;
-import com.github.laxika.magicalvibes.cards.d.DuctCrawler;
-import com.github.laxika.magicalvibes.cards.g.GlintHawkIdol;
-import com.github.laxika.magicalvibes.cards.g.GoldenUrn;
-import com.github.laxika.magicalvibes.cards.g.Grindclock;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MyrReservoir;
-import com.github.laxika.magicalvibes.cards.n.NeurokReplica;
-import com.github.laxika.magicalvibes.cards.n.NihilSpellbomb;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.t.TreetopVillage;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class ActivatedAbilityExecutionServiceTest {
+
+    @Mock private DamagePreventionService damagePreventionService;
+    @Mock private PermanentRemovalService permanentRemovalService;
+    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private StateBasedActionService stateBasedActionService;
+    @Mock private GameQueryService gameQueryService;
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private PlayerInputService playerInputService;
+    @Mock private SessionManager sessionManager;
+    @Mock private LifeResolutionService lifeResolutionService;
+
+    @InjectMocks
+    private ActivatedAbilityExecutionService service;
+
+    private GameData gameData;
+    private Player player1;
+    private Player player2;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        player1 = new Player(player1Id, "Player1");
+        player2 = new Player(player2Id, "Player2");
+
+        gameData = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gameData.playerIds.add(player1Id);
+        gameData.playerIds.add(player2Id);
+        gameData.orderedPlayerIds.add(player1Id);
+        gameData.orderedPlayerIds.add(player2Id);
+        gameData.playerBattlefields.put(player1Id, new ArrayList<>());
+        gameData.playerBattlefields.put(player2Id, new ArrayList<>());
+        gameData.playerManaPools.put(player1Id, new ManaPool());
+        gameData.playerManaPools.put(player2Id, new ManaPool());
+        gameData.playerHands.put(player1Id, new ArrayList<>());
+        gameData.playerHands.put(player2Id, new ArrayList<>());
+        gameData.playerGraveyards.put(player1Id, new ArrayList<>());
+        gameData.playerGraveyards.put(player2Id, new ArrayList<>());
+        gameData.playerLifeTotals.put(player1Id, 20);
+        gameData.playerLifeTotals.put(player2Id, 20);
+        gameData.playerIdToName.put(player1Id, "Player1");
+        gameData.playerIdToName.put(player2Id, "Player2");
+        gameData.activePlayerId = player1Id;
+    }
 
     // =========================================================================
     // Mana ability — immediate resolution (no stack)
@@ -53,105 +129,161 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Pain land: adds mana and deals damage without using the stack")
         void painLandAddsManaAndDealsDamage() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
-            harness.setLife(player1, 20);
+            Card card = createCard("Test Pain Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
-            int idx = indexOf(player1, wastes);
-            // Ability index 1 = "{T}: Add {W}. Adarkar Wastes deals 1 damage to you."
-            harness.activateAbility(player1, idx, 1, null, null);
+            stubIsCreature(perm, false);
+            stubDamagePathForNormalDamage(perm, 1);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-            assertThat(gd.stack).isEmpty();
+            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
+            assertThat(gameData.stack).isEmpty();
+            verify(stateBasedActionService).performStateBasedActions(gameData);
+            verify(gameBroadcastService).broadcastGameState(gameData);
         }
 
         @Test
         @DisplayName("Pain land: colorless ability adds mana without damage")
         void painLandColorlessNoDamage() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
-            harness.setLife(player1, 20);
+            Card card = createCard("Test Pain Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.COLORLESS, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {C}.");
 
-            int idx = indexOf(player1, wastes);
-            // Ability index 0 = "{T}: Add {C}."
-            harness.activateAbility(player1, idx, 0, null, null);
+            stubIsCreature(perm, false);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-            assertThat(gd.stack).isEmpty();
+            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            assertThat(gameData.stack).isEmpty();
         }
 
         @Test
         @DisplayName("Pain land: blue ability adds blue mana and deals damage without stack")
         void painLandBlueAbility() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
-            harness.setLife(player1, 20);
+            Card card = createCard("Test Pain Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.BLUE, 1), new DealDamageToControllerEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {U}. Deals 1 damage.");
 
-            int idx = indexOf(player1, wastes);
-            // Ability index 2 = "{T}: Add {U}. Adarkar Wastes deals 1 damage to you."
-            harness.activateAbility(player1, idx, 2, null, null);
+            stubIsCreature(perm, false);
+            stubDamagePathForNormalDamage(perm, 1);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-            assertThat(gd.stack).isEmpty();
+            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
+            assertThat(gameData.stack).isEmpty();
         }
 
         @Test
         @DisplayName("Doubling Cube: doubles all mana in pool immediately")
         void doublingCubeDoublesAllMana() {
-            Permanent cube = addReadyPermanent(player1, new DoublingCube());
-            // Add 3 colorless to pay the cost, plus extra mana to be doubled
-            harness.addMana(player1, ManaColor.COLORLESS, 5);
-            harness.addMana(player1, ManaColor.RED, 2);
+            Card card = createCard("Doubling Cube", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new DoubleManaPoolEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{3}, {T}: Double mana.");
 
-            int idx = indexOf(player1, cube);
-            harness.activateAbility(player1, idx, null, null);
+            // Pre-populate pool (costs already paid by caller)
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.RED, 2);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
-            // 5 colorless - 3 cost = 2 remaining, doubled to 4
+            stubIsCreature(perm, false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(4);
-            // 2 red doubled to 4
             assertThat(pool.get(ManaColor.RED)).isEqualTo(4);
-            assertThat(gd.stack).isEmpty();
+            assertThat(gameData.stack).isEmpty();
         }
 
         @Test
         @DisplayName("Myr Reservoir: adds Myr-only colorless mana immediately")
         void myrReservoirAddsMyrOnlyMana() {
-            Permanent reservoir = addReadyPermanent(player1, new MyrReservoir());
+            Card card = createCard("Myr Reservoir", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardMyrOnlyColorlessManaEffect(2));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {C}{C} (Myr only).");
 
-            int idx = indexOf(player1, reservoir);
-            // Ability index 0 = "{T}: Add {C}{C}. Spend this mana only to cast Myr spells..."
-            harness.activateAbility(player1, idx, 0, null, null);
+            stubIsCreature(perm, false);
 
-            ManaPool pool = gd.playerManaPools.get(player1.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.getMyrOnlyColorless()).isEqualTo(2);
-            assertThat(gd.stack).isEmpty();
+            assertThat(gameData.stack).isEmpty();
         }
 
         @Test
         @DisplayName("Mana ability taps the permanent when tap cost is required")
         void manaAbilityTapsPermanent() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.COLORLESS, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {C}.");
 
-            int idx = indexOf(player1, wastes);
-            harness.activateAbility(player1, idx, 0, null, null);
+            stubIsCreature(perm, false);
 
-            assertThat(wastes.isTapped()).isTrue();
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(perm.isTapped()).isTrue();
+            verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
         }
 
         @Test
         @DisplayName("Mana ability logs the activation")
         void manaAbilityLogs() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.COLORLESS, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {C}.");
 
-            int idx = indexOf(player1, wastes);
-            harness.activateAbility(player1, idx, 0, null, null);
+            stubIsCreature(perm, false);
 
-            assertThat(gd.gameLog).anyMatch(log ->
-                    log.contains("activates") && log.contains("Adarkar Wastes"));
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gameData),
+                    argThat(msg -> msg.contains("activates") && msg.contains("Test Mana Land")));
+        }
+
+        @Test
+        @DisplayName("GainLifeEffect in mana ability delegates to lifeResolutionService")
+        void gainLifeEffectDelegatesToLifeResolutionService() {
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new GainLifeEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}, gain 1 life.");
+
+            stubIsCreature(perm, false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(lifeResolutionService).applyGainLife(gameData, player1Id, 1);
+        }
+
+        @Test
+        @DisplayName("AwardAnyColorManaEffect sends color choice message via sessionManager")
+        void awardAnyColorManaSendsChoiceMessage() {
+            Card card = createCard("Test Any-Color Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(
+                    new com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add one mana of any color.");
+
+            stubIsCreature(perm, false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseColorMessage.class));
         }
     }
 
@@ -166,68 +298,71 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("BoostSelfEffect auto-targets source permanent on the stack")
         void boostSelfAutoTargets() {
-            Card creature = createCreatureWithBoostSelf();
-            Permanent perm = addReadyPermanent(player1, creature);
+            Card card = createCreature("Test Boost Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
-            int idx = indexOf(player1, perm);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
         }
 
         @Test
         @DisplayName("RegenerateEffect (non-targeting) auto-targets source permanent")
         void regenerateAutoTargets() {
-            Permanent mamba = addReadyPermanent(player1, new BlightMamba());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            Card card = createCreature("Test Regenerate Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new RegenerateEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Regenerate");
 
-            int idx = indexOf(player1, mamba);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(mamba.getId());
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
         }
 
         @Test
         @DisplayName("AnimateSelfWithStatsEffect auto-targets source permanent")
         void animateSelfAutoTargets() {
-            Permanent idol = addReadyPermanent(player1, new GlintHawkIdol());
-            harness.addMana(player1, ManaColor.WHITE, 1);
+            Card card = createCard("Test Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AnimateSelfWithStatsEffect(2, 2, List.of(), Set.of()));
+            ActivatedAbility ability = new ActivatedAbility(false, "{W}", effects, "Animate");
 
-            int idx = indexOf(player1, idol);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(idol.getId());
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
         }
 
         @Test
         @DisplayName("AnimateLandEffect auto-targets source permanent")
         void animateLandAutoTargets() {
-            Permanent village = addReadyPermanent(player1, new TreetopVillage());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            Card card = createCard("Test Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AnimateLandEffect(3, 3, List.of(), Set.of(), CardColor.GREEN));
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Animate land");
 
-            int idx = indexOf(player1, village);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(village.getId());
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
         }
 
         @Test
         @DisplayName("PutChargeCounterOnSelfEffect auto-targets source permanent")
         void putChargeCounterAutoTargets() {
-            Permanent grindclock = addReadyPermanent(player1, new Grindclock());
+            Card card = createCard("Test Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new PutChargeCounterOnSelfEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Put a charge counter.");
 
-            int idx = indexOf(player1, grindclock);
-            // Ability index 0 = "{T}: Put a charge counter on Grindclock."
-            harness.activateAbility(player1, idx, 0, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(grindclock.getId());
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
         }
     }
 
@@ -242,90 +377,117 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Non-mana ability is pushed onto the stack")
         void nonManaAbilityPushedToStack() {
-            Card creature = createCreatureWithBoostSelf();
-            Permanent perm = addReadyPermanent(player1, creature);
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
-            int idx = indexOf(player1, perm);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            verify(triggerCollectionService).checkBecomesTargetOfAbilityTriggers(gameData);
+            verify(stateBasedActionService).performStateBasedActions(gameData);
+            verify(gameBroadcastService).broadcastGameState(gameData);
         }
 
         @Test
         @DisplayName("Stack entry has correct controller")
         void stackEntryHasCorrectController() {
-            Card creature = createCreatureWithBoostSelf();
-            Permanent perm = addReadyPermanent(player1, creature);
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
-            int idx = indexOf(player1, perm);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+            assertThat(gameData.stack.getFirst().getControllerId()).isEqualTo(player1Id);
         }
 
         @Test
         @DisplayName("Stack entry has correct source permanent ID")
         void stackEntryHasCorrectSourcePermanent() {
-            Card creature = createCreatureWithBoostSelf();
-            Permanent perm = addReadyPermanent(player1, creature);
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
 
-            int idx = indexOf(player1, perm);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gameData.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
         }
 
         @Test
         @DisplayName("Stack entry description includes card name")
         void stackEntryDescriptionIncludesCardName() {
-            Permanent mamba = addReadyPermanent(player1, new BlightMamba());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            Card card = createCreature("Blight Mamba");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new RegenerateEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Regenerate");
 
-            int idx = indexOf(player1, mamba);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack.getFirst().getDescription()).contains("Blight Mamba");
-            assertThat(gd.stack.getFirst().getDescription()).contains("ability");
+            assertThat(gameData.stack.getFirst().getDescription()).contains("Blight Mamba");
+            assertThat(gameData.stack.getFirst().getDescription()).contains("ability");
         }
 
         @Test
         @DisplayName("Tap ability taps the permanent when pushed to stack")
         void tapAbilityTapsPermanent() {
-            Permanent grindclock = addReadyPermanent(player1, new Grindclock());
+            Card card = createCard("Test Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new PutChargeCounterOnSelfEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Put a charge counter.");
 
-            int idx = indexOf(player1, grindclock);
-            harness.activateAbility(player1, idx, 0, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(grindclock.isTapped()).isTrue();
+            assertThat(perm.isTapped()).isTrue();
+            verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
         }
 
         @Test
         @DisplayName("Non-tap ability does not tap the permanent")
         void nonTapAbilityDoesNotTap() {
-            Permanent mamba = addReadyPermanent(player1, new BlightMamba());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new RegenerateEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Regenerate");
 
-            int idx = indexOf(player1, mamba);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(mamba.isTapped()).isFalse();
+            assertThat(perm.isTapped()).isFalse();
+            verify(triggerCollectionService, never()).checkEnchantedPermanentTapTriggers(any(), any());
         }
 
         @Test
         @DisplayName("Activation logs the action")
         void activationLogs() {
-            Permanent mamba = addReadyPermanent(player1, new BlightMamba());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            Card card = createCreature("Blight Mamba");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new RegenerateEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Regenerate");
 
-            int idx = indexOf(player1, mamba);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.gameLog).anyMatch(log ->
-                    log.contains("activates") && log.contains("Blight Mamba"));
+            verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gameData),
+                    argThat(msg -> msg.contains("activates") && msg.contains("Blight Mamba")));
+        }
+
+        @Test
+        @DisplayName("Pending may abilities are processed after non-mana ability activation")
+        void pendingMayAbilitiesProcessed() {
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(1, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Boost self");
+
+            // Set up a pending may ability so the code path is hit
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    card, player1Id, List.of(new DrawCardEffect(1)), "Draw a card"));
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(playerInputService).processNextMayAbility(gameData);
         }
     }
 
@@ -340,38 +502,76 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("SacrificeSelfCost is filtered out of stack entry effects")
         void sacrificeSelfCostFilteredFromStack() {
-            Permanent replica = addReadyPermanent(player1, new NeurokReplica());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.BLUE, 1);
-            Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+            Card card = createCard("Test Replica", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
-            int idx = indexOf(player1, replica);
-            harness.activateAbility(player1, idx, null, target.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEffectsToResolve())
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .noneMatch(e -> e instanceof SacrificeSelfCost);
-            assertThat(gd.stack.getFirst().getEffectsToResolve())
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .anyMatch(e -> e instanceof ReturnTargetPermanentToHandEffect);
         }
 
         @Test
         @DisplayName("CantBlockSourceEffect gets source permanent ID baked in")
         void cantBlockSourceGetsIdBakedIn() {
-            Permanent crawler = addReadyPermanent(player1, new DuctCrawler());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.RED, 1);
-            Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(new CantBlockSourceEffect(null));
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{R}", effects, "Can't block");
 
-            int idx = indexOf(player1, crawler);
-            harness.activateAbility(player1, idx, null, target.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            CantBlockSourceEffect snapshot = gd.stack.getFirst().getEffectsToResolve().stream()
+            assertThat(gameData.stack).hasSize(1);
+            CantBlockSourceEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
                     .filter(e -> e instanceof CantBlockSourceEffect)
                     .map(e -> (CantBlockSourceEffect) e)
                     .findFirst().orElseThrow();
-            assertThat(snapshot.sourcePermanentId()).isEqualTo(crawler.getId());
+            assertThat(snapshot.sourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("MustBlockSourceEffect gets source permanent ID baked in")
+        void mustBlockSourceGetsIdBakedIn() {
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(new MustBlockSourceEffect(null));
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{R}", effects, "Must block");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
+
+            assertThat(gameData.stack).hasSize(1);
+            MustBlockSourceEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
+                    .filter(e -> e instanceof MustBlockSourceEffect)
+                    .map(e -> (MustBlockSourceEffect) e)
+                    .findFirst().orElseThrow();
+            assertThat(snapshot.sourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("PreventNextColorDamageToControllerEffect gets chosen color baked in")
+        void preventColorDamageGetsChosenColorBakedIn() {
+            Card card = createCard("Test Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setChosenColor(CardColor.RED);
+            List<CardEffect> effects = List.of(new PreventNextColorDamageToControllerEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Prevent color damage");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.stack).hasSize(1);
+            PreventNextColorDamageToControllerEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
+                    .filter(e -> e instanceof PreventNextColorDamageToControllerEffect)
+                    .map(e -> (PreventNextColorDamageToControllerEffect) e)
+                    .findFirst().orElseThrow();
+            assertThat(snapshot.chosenColor()).isEqualTo(CardColor.RED);
         }
     }
 
@@ -384,48 +584,89 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
     class SelfSacrificeFlow {
 
         @Test
-        @DisplayName("SacrificeSelfCost removes permanent from battlefield")
+        @DisplayName("SacrificeSelfCost removes permanent via removal service")
         void sacrificeRemovesPermanent() {
-            Permanent replica = addReadyPermanent(player1, new NeurokReplica());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.BLUE, 1);
-            Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+            Card card = createCard("Test Replica", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
-            int idx = indexOf(player1, replica);
-            harness.activateAbility(player1, idx, null, target.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Neurok Replica"));
+            verify(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
         }
 
         @Test
-        @DisplayName("SacrificeSelfCost puts card in graveyard")
-        void sacrificePutsCardInGraveyard() {
-            Permanent replica = addReadyPermanent(player1, new NeurokReplica());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.BLUE, 1);
-            Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+        @DisplayName("SacrificeSelfCost passes the correct permanent to removal service")
+        void sacrificePassesCorrectPermanent() {
+            Card card = createCard("Neurok Replica", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
-            int idx = indexOf(player1, replica);
-            harness.activateAbility(player1, idx, null, target.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Neurok Replica"));
+            verify(permanentRemovalService).removePermanentToGraveyard(eq(gameData),
+                    argThat(p -> p.getCard().getName().equals("Neurok Replica")));
         }
 
         @Test
         @DisplayName("SacrificeSelfCost still pushes ability on stack")
         void sacrificeStillPushesAbilityOnStack() {
-            Permanent replica = addReadyPermanent(player1, new NeurokReplica());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.BLUE, 1);
-            Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+            Card card = createCard("Test Replica", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
-            int idx = indexOf(player1, replica);
-            harness.activateAbility(player1, idx, null, target.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        }
+    }
+
+    // =========================================================================
+    // Exile self cost
+    // =========================================================================
+
+    @Nested
+    @DisplayName("exile self cost")
+    class ExileSelfCostFlow {
+
+        @Test
+        @DisplayName("ExileSelfCost exiles permanent via removal service")
+        void exileSelfCostExilesPermanent() {
+            Card card = createCard("Test Exile Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new ExileSelfCost(), new DrawCardEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile self: draw a card");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(permanentRemovalService).removePermanentToExile(gameData, perm);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        }
+
+        @Test
+        @DisplayName("ExileSelfCost still pushes ability on stack")
+        void exileSelfCostStillPushesAbilityOnStack() {
+            Card card = createCard("Test Exile Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new ExileSelfCost(), new DrawCardEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile self: draw a card");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            // ExileSelfCost should be filtered from the snapshot effects
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
+                    .noneMatch(e -> e instanceof ExileSelfCost);
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
+                    .anyMatch(e -> e instanceof DrawCardEffect);
         }
     }
 
@@ -440,98 +681,110 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Death trigger from sacrifice is on top of activated ability on the stack")
         void deathTriggerOnTopOfActivatedAbility() {
-            harness.addToBattlefield(player1, new NihilSpellbomb());
-            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears()));
+            Card card = createCard("Test Spellbomb", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ExileTargetPlayerGraveyardEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
-            harness.activateAbility(player1, 0, null, player2.getId());
+            // Simulate death trigger being added during sacrifice
+            doAnswer(inv -> {
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                        "Death trigger", List.of(new DrawCardEffect(1)));
+                gameData.stack.add(trigger);
+                return null;
+            }).when(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
 
-            // Per CR 602.2a/601.2h/603.3: ability goes on stack first, sacrifice
-            // pays cost, death triggers go on top
-            assertThat(gd.stack).hasSize(2);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
+
+            assertThat(gameData.stack).hasSize(2);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            assertThat(gameData.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         }
 
         @Test
         @DisplayName("Activated ability is bottom of stack with correct effect")
         void activatedAbilityIsBottomWithCorrectEffect() {
-            harness.addToBattlefield(player1, new NihilSpellbomb());
-            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears()));
+            Card card = createCard("Test Spellbomb", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ExileTargetPlayerGraveyardEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
-            harness.activateAbility(player1, 0, null, player2.getId());
+            doAnswer(inv -> {
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                        "Death trigger", List.of(new DrawCardEffect(1)));
+                gameData.stack.add(trigger);
+                return null;
+            }).when(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
 
-            assertThat(gd.stack.getFirst().getEffectsToResolve())
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
+
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .anyMatch(e -> e instanceof ExileTargetPlayerGraveyardEffect);
         }
 
         @Test
-        @DisplayName("Death trigger is top of stack with MayPayManaEffect")
-        void deathTriggerIsTopWithMayPayManaEffect() {
-            harness.addToBattlefield(player1, new NihilSpellbomb());
-            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears()));
+        @DisplayName("Death trigger is top of stack with DrawCardEffect")
+        void deathTriggerIsTopWithDrawCardEffect() {
+            Card card = createCard("Test Spellbomb", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ExileTargetPlayerGraveyardEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
-            harness.activateAbility(player1, 0, null, player2.getId());
+            doAnswer(inv -> {
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                        "Death trigger", List.of(new DrawCardEffect(1)));
+                gameData.stack.add(trigger);
+                return null;
+            }).when(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
 
-            assertThat(gd.stack.getLast().getEffectsToResolve())
-                    .anyMatch(e -> e instanceof MayPayManaEffect);
-        }
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
 
-        @Test
-        @DisplayName("Death trigger resolves before activated ability")
-        void deathTriggerResolvesFirst() {
-            harness.addToBattlefield(player1, new NihilSpellbomb());
-            harness.setGraveyard(player2, java.util.List.of(new GrizzlyBears(), new Shock()));
-            harness.addMana(player1, ManaColor.BLACK, 1);
-
-            int handBefore = gd.playerHands.get(player1.getId()).size();
-
-            harness.activateAbility(player1, 0, null, player2.getId());
-
-            // Death trigger resolves first (top of stack)
-            harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true); // pay {B}, draw a card
-
-            assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
-            // Graveyard NOT yet exiled — activated ability hasn't resolved yet
-            assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
-
-            // Now the activated ability resolves
-            harness.passBothPriorities();
-
-            assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-            assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+            assertThat(gameData.stack.getLast().getEffectsToResolve())
+                    .anyMatch(e -> e instanceof DrawCardEffect);
         }
 
         @Test
         @DisplayName("Mana ability with sacrifice: death trigger goes on stack, mana resolves immediately")
         void manaAbilityDeathTriggerOnStack() {
-            harness.addToBattlefield(player1, new ChromaticStar());
-            harness.addMana(player1, ManaColor.WHITE, 1);
+            Card card = createCard("Test Chromatic Star", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.WHITE, 1));
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}", effects, "{1}, Sacrifice: Add one mana.");
 
-            harness.activateAbility(player1, 0, null, null);
+            stubIsCreature(perm, false);
 
-            // Mana ability resolves immediately (no stack entry)
+            doAnswer(inv -> {
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                        "Death trigger", List.of(new DrawCardEffect(1)));
+                gameData.stack.add(trigger);
+                return null;
+            }).when(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            // Mana ability resolves immediately (no stack entry for mana)
             // Only the death trigger should be on the stack
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(gd.stack.getFirst().getEffectsToResolve())
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .anyMatch(e -> e instanceof DrawCardEffect);
         }
 
         @Test
         @DisplayName("Sacrifice without death trigger: only activated ability on stack")
         void sacrificeWithoutDeathTriggerOnlyAbilityOnStack() {
-            Permanent replica = addReadyPermanent(player1, new NeurokReplica());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.BLUE, 1);
-            Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+            Card card = createCard("Test Replica", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
-            int idx = indexOf(player1, replica);
-            harness.activateAbility(player1, idx, null, target.getId());
+            // No death trigger added during sacrifice (mock does nothing by default)
 
-            // No death trigger — only the activated ability
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
+
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         }
     }
 
@@ -546,59 +799,62 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("DrawCardsEqualToChargeCountersOnSourceEffect snapshots counters as xValue")
         void drawCardsSnapshotsChargeCounters() {
-            Permanent dais = addReadyPermanent(player1, new CullingDais());
-            dais.setChargeCounters(3);
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            Card card = createCard("Culling Dais", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setChargeCounters(3);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new DrawCardsEqualToChargeCountersOnSourceEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}", effects, "{1}, Sacrifice: Draw cards.");
 
-            int idx = indexOf(player1, dais);
-            // Ability index 1 = "{1}, Sacrifice Culling Dais: Draw cards equal to charge counters."
-            harness.activateAbility(player1, idx, 1, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getXValue()).isEqualTo(3);
-            // Dais should be sacrificed
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Culling Dais"));
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(3);
+            verify(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
         }
 
         @Test
         @DisplayName("GainLifeEqualToChargeCountersOnSourceEffect snapshots counters as xValue")
         void gainLifeSnapshotsChargeCounters() {
-            Permanent urn = addReadyPermanent(player1, new GoldenUrn());
-            urn.setChargeCounters(5);
+            Card card = createCard("Golden Urn", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setChargeCounters(5);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new GainLifeEqualToChargeCountersOnSourceEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Sacrifice: Gain life.");
 
-            int idx = indexOf(player1, urn);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getXValue()).isEqualTo(5);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(5);
         }
 
         @Test
         @DisplayName("MillTargetPlayerByChargeCountersEffect snapshots counters as xValue")
         void millSnapshotsChargeCounters() {
-            Permanent clock = addReadyPermanent(player1, new Grindclock());
-            clock.setChargeCounters(4);
+            Card card = createCard("Grindclock", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setChargeCounters(4);
+            List<CardEffect> effects = List.of(new MillTargetPlayerByChargeCountersEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Mill X.");
 
-            int idx = indexOf(player1, clock);
-            // Ability index 1 = "{T}: Target player mills X cards..."
-            harness.activateAbility(player1, idx, 1, null, player2.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getXValue()).isEqualTo(4);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(4);
         }
 
         @Test
         @DisplayName("Charge counters snapshot to 0 when permanent has no counters")
         void snapshotZeroCounters() {
-            Permanent clock = addReadyPermanent(player1, new Grindclock());
-            // No charge counters
+            Card card = createCard("Grindclock", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            // No charge counters set
+            List<CardEffect> effects = List.of(new MillTargetPlayerByChargeCountersEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Mill X.");
 
-            int idx = indexOf(player1, clock);
-            harness.activateAbility(player1, idx, 1, null, player2.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getXValue()).isEqualTo(0);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(0);
         }
     }
 
@@ -613,27 +869,31 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Priority is cleared after mana ability resolution")
         void priorityClearedAfterManaAbility() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
-            gd.priorityPassedBy.add(player1.getId());
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.COLORLESS, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {C}.");
+            gameData.priorityPassedBy.add(player1Id);
 
-            int idx = indexOf(player1, wastes);
-            harness.activateAbility(player1, idx, 0, null, null);
+            stubIsCreature(perm, false);
 
-            assertThat(gd.priorityPassedBy).isEmpty();
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.priorityPassedBy).isEmpty();
         }
 
         @Test
         @DisplayName("Priority is cleared after non-mana ability activation")
         void priorityClearedAfterStackPush() {
-            Permanent mamba = addReadyPermanent(player1, new BlightMamba());
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
-            harness.addMana(player1, ManaColor.GREEN, 1);
-            gd.priorityPassedBy.add(player1.getId());
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new RegenerateEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Regenerate");
+            gameData.priorityPassedBy.add(player1Id);
 
-            int idx = indexOf(player1, mamba);
-            harness.activateAbility(player1, idx, null, null);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            assertThat(gd.priorityPassedBy).isEmpty();
+            assertThat(gameData.priorityPassedBy).isEmpty();
         }
     }
 
@@ -648,36 +908,54 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Pain land damage is prevented when source damage prevention is active")
         void painLandDamagePreventedBySourcePrevention() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
-            harness.setLife(player1, 20);
-            // Set up source-specific damage prevention for this permanent
-            gd.playerSourceDamagePreventionIds
-                    .computeIfAbsent(player1.getId(), k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                    .add(wastes.getId());
+            Card card = createCard("Test Pain Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
-            int idx = indexOf(player1, wastes);
-            harness.activateAbility(player1, idx, 1, null, null);
+            stubIsCreature(perm, false);
+            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            // Source-specific prevention is active for this permanent
+            when(damagePreventionService.isSourceDamagePreventedForPlayer(gameData, player1Id, perm.getId()))
+                    .thenReturn(true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             // Mana should be added
-            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-            // Damage should be prevented
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
+            // Damage should be prevented — applyPlayerPreventionShield should NOT be called
+            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            verify(damagePreventionService, never()).applyPlayerPreventionShield(any(), any(), any(int.class));
         }
 
         @Test
         @DisplayName("Pain land damage is reduced by player damage prevention shield")
         void painLandDamageReducedByShield() {
-            Permanent wastes = addReadyPermanent(player1, new AdarkarWastes());
-            harness.setLife(player1, 20);
-            gd.playerDamagePreventionShields.put(player1.getId(), 1);
+            Card card = createCard("Test Pain Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
-            int idx = indexOf(player1, wastes);
-            harness.activateAbility(player1, idx, 1, null, null);
+            stubIsCreature(perm, false);
+            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
+                    .thenReturn(false);
+            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
+                    .thenReturn(false);
+            // Shield absorbs all 1 damage
+            when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(0);
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(0), anyString()))
+                    .thenReturn(0);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             // Mana should be added
-            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
             // 1 damage fully absorbed by shield
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            verify(damagePreventionService).applyPlayerPreventionShield(gameData, player1Id, 1);
         }
     }
 
@@ -692,14 +970,15 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Sacrifice creature cost ability sets nonTargeting on stack entry")
         void sacrificeCreatureCostSetsNonTargeting() {
-            Permanent hopper = addReadyPermanent(player1, new DrossHopper());
-            Permanent sacrificeTarget = addReadyPermanent(player1, new GrizzlyBears());
+            Card card = createCreature("Test Hopper");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new BoostSelfEffect(2, 2));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Sacrifice a creature: +2/+2");
 
-            int idx = indexOf(player1, hopper);
-            harness.activateAbility(player1, idx, null, sacrificeTarget.getId());
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, true);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().isNonTargeting()).isTrue();
         }
     }
 
@@ -707,28 +986,46 @@ class ActivatedAbilityExecutionServiceTest extends BaseCardTest {
     // Helper methods
     // =========================================================================
 
-    private Permanent addReadyPermanent(Player player, Card card) {
+    private Permanent addReadyPermanent(UUID playerId, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        gameData.playerBattlefields.get(playerId).add(perm);
         return perm;
     }
 
-    private int indexOf(Player player, Permanent permanent) {
-        return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    private Card createCard(String name, CardType type) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(type);
+        return card;
     }
 
-    private Card createCreatureWithBoostSelf() {
+    private Card createCreature(String name) {
         Card card = new Card();
-        card.setName("Test Boost Creature");
+        card.setName(name);
         card.setType(CardType.CREATURE);
         card.setManaCost("{G}");
         card.setColor(CardColor.GREEN);
         card.setPower(2);
         card.setToughness(2);
-        card.addActivatedAbility(new com.github.laxika.magicalvibes.model.ActivatedAbility(
-                false, null, java.util.List.of(new BoostSelfEffect(1, 1)), "Boost self"
-        ));
         return card;
+    }
+
+    private void stubIsCreature(Permanent perm, boolean value) {
+        when(gameQueryService.isCreature(gameData, perm)).thenReturn(value);
+    }
+
+    private void stubDamagePathForNormalDamage(Permanent perm, int damage) {
+        when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
+        when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+        when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
+                .thenReturn(false);
+        when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
+                .thenReturn(false);
+        when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, damage)).thenReturn(damage);
+        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(damage), anyString()))
+                .thenReturn(damage);
+        when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
+        when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
     }
 }
