@@ -79,7 +79,7 @@ public class MCTSEngine {
                 }
 
                 // 4. ROLLOUT: Play out using heuristic policy
-                double reward = rollout(simState, aiPlayerId, node);
+                double reward = rollout(simState, aiPlayerId, node, deadline);
 
                 // 5. BACKPROPAGATE: Update visit counts and rewards
                 backpropagate(node, reward);
@@ -143,11 +143,12 @@ public class MCTSEngine {
      * ROLLOUT phase: From the current state, play out using heuristic policy
      * for a limited number of moves, then evaluate.
      */
-    private double rollout(GameData simState, UUID aiPlayerId, MCTSNode node) {
+    private double rollout(GameData simState, UUID aiPlayerId, MCTSNode node, long deadline) {
         // Apply remaining actions from root to this node
         // (In IS-MCTS with determinization, the state is already partially played out during expand)
 
         for (int depth = 0; depth < DEFAULT_ROLLOUT_DEPTH; depth++) {
+            if (System.currentTimeMillis() > deadline) break;
             if (simulator.isTerminal(simState)) break;
 
             // Get legal actions and pick using heuristic

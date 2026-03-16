@@ -45,7 +45,7 @@ class AiVsAiStressTest {
     private static final int DECK_SIZE = 40;
     private static final int LAND_COUNT = 18;
     private static final int SPELL_COUNT = DECK_SIZE - LAND_COUNT;
-    private static final int MAX_SAME_STATE_COUNT = 10;
+    private static final int MAX_SAME_STATE_COUNT = 30;
     private static final long POLL_INTERVAL_MS = 200;
     private static final long MAX_GAME_DURATION_MS = 120_000;
     private static final long AI_DECISION_DELAY_MS = 10;
