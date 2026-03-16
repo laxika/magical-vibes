@@ -15,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,7 +25,7 @@ class BirthingPodTest extends BaseCardTest {
     @DisplayName("Sacrifice MV 1 creature, search for MV 2 creature and put onto battlefield")
     void sacrificeMV1SearchForMV2() {
         addPodReady(player1);
-        Permanent elves = addCreature(player1, new LlanowarElves());
+        addCreature(player1, new LlanowarElves());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -34,8 +33,7 @@ class BirthingPodTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).add(new GoldMyr());
 
-        UUID elvesId = elves.getId();
-        harness.activateAbility(player1, 0, null, elvesId);
+        harness.activateAbility(player1, 0, null, null);
 
         // Elves should be sacrificed
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -63,7 +61,7 @@ class BirthingPodTest extends BaseCardTest {
     @DisplayName("Sacrifice MV 3 creature, search for MV 4 creature")
     void sacrificeMV3SearchForMV4() {
         addPodReady(player1);
-        Permanent knight = addCreature(player1, new BenalishKnight());
+        addCreature(player1, new BenalishKnight());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -71,7 +69,7 @@ class BirthingPodTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).addAll(List.of(new HillGiant(), new GoldMyr()));
 
-        harness.activateAbility(player1, 0, null, knight.getId());
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -91,7 +89,7 @@ class BirthingPodTest extends BaseCardTest {
     @DisplayName("Search only finds creatures with exact MV, not higher or lower")
     void searchFiltersToExactMV() {
         addPodReady(player1);
-        Permanent elves = addCreature(player1, new LlanowarElves());
+        addCreature(player1, new LlanowarElves());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -104,7 +102,7 @@ class BirthingPodTest extends BaseCardTest {
                 new AirElemental()      // MV 5
         ));
 
-        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         // No MV 2 creature in library, search should fail
@@ -127,9 +125,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        UUID elvesId = findPermanent(player1, "Llanowar Elves").getId();
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elvesId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
     }
@@ -145,9 +141,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
 
-        UUID elvesId = findPermanent(player1, "Llanowar Elves").getId();
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elvesId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("main phase");
     }
@@ -172,9 +166,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         pod.tap();
 
-        UUID elvesId = findPermanent(player1, "Llanowar Elves").getId();
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elvesId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
@@ -183,7 +175,7 @@ class BirthingPodTest extends BaseCardTest {
     @DisplayName("Phyrexian mana can be paid with 2 life instead of green mana")
     void phyrexianManaPaidWithLife() {
         addPodReady(player1);
-        Permanent elves = addCreature(player1, new LlanowarElves());
+        addCreature(player1, new LlanowarElves());
         // Only provide colorless mana - no green
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);
@@ -191,7 +183,7 @@ class BirthingPodTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).add(new GoldMyr());
 
-        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.activateAbility(player1, 0, null, null);
 
         // Life should be reduced by 2 (Phyrexian mana)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -204,7 +196,7 @@ class BirthingPodTest extends BaseCardTest {
     @DisplayName("Pod taps as part of the cost")
     void podTapsAsCost() {
         Permanent pod = addPodReady(player1);
-        Permanent elves = addCreature(player1, new LlanowarElves());
+        addCreature(player1, new LlanowarElves());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -212,7 +204,7 @@ class BirthingPodTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).add(new GoldMyr());
 
         assertThat(pod.isTapped()).isFalse();
-        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.activateAbility(player1, 0, null, null);
         assertThat(pod.isTapped()).isTrue();
     }
 
@@ -224,14 +216,14 @@ class BirthingPodTest extends BaseCardTest {
         // Create a 0-cost creature token on the battlefield
         // Use GoldMyr with MV 2 to search for MV 3 instead, or use an actual MV 0 token
         // Actually let's test with MV 4 creature searching for MV 5
-        Permanent hillGiant = addCreature(player1, new HillGiant());
+        addCreature(player1, new HillGiant());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).add(new AirElemental());
 
-        harness.activateAbility(player1, 0, null, hillGiant.getId());
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -251,10 +243,10 @@ class BirthingPodTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         addPodReady(player1);
-        Permanent elves = addCreature(player1, new LlanowarElves());
+        addCreature(player1, new LlanowarElves());
         // No mana added
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elves.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
     }

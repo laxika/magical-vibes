@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NantukoHuskTest extends BaseCardTest {
 
@@ -40,8 +38,7 @@ class NantukoHuskTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
+        assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(BoostSelfEffect.class);
@@ -90,7 +87,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
 
@@ -120,7 +118,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -141,11 +140,13 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, createTokenCreature("Saproling Token"));
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         UUID tokenId = harness.getPermanentId(player1, "Saproling Token");
-        harness.activateAbility(player1, 0, null, tokenId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, tokenId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -167,9 +168,8 @@ class NantukoHuskTest extends BaseCardTest {
     @DisplayName("Can sacrifice Nantuko Husk to its own ability")
     void canSacrificeItself() {
         addNantukoHuskReady(player1);
-        UUID huskId = harness.getPermanentId(player1, "Nantuko Husk");
 
-        harness.activateAbility(player1, 0, null, huskId);
+        harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
 
@@ -188,9 +188,8 @@ class NantukoHuskTest extends BaseCardTest {
     @DisplayName("Boost fizzles when Husk sacrifices itself")
     void boostFizzlesWhenHuskSacrificesItself() {
         addNantukoHuskReady(player1);
-        UUID huskId = harness.getPermanentId(player1, "Nantuko Husk");
 
-        harness.activateAbility(player1, 0, null, huskId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -213,7 +212,8 @@ class NantukoHuskTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         // No mana added — should still work
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -226,7 +226,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         Permanent husk = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(husk.isTapped()).isFalse();
@@ -240,7 +241,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(harness.getGameData().stack).hasSize(1);
     }
@@ -256,7 +258,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(harness.getGameData().stack).hasSize(1);
     }
@@ -270,7 +273,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         Permanent husk = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
@@ -297,7 +301,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         // Remove Husk before resolution (e.g., killed by an instant)
         harness.getGameData().playerBattlefields.get(player1.getId())
@@ -313,31 +318,24 @@ class NantukoHuskTest extends BaseCardTest {
     // ===== Validation errors =====
 
     @Test
-    @DisplayName("Cannot activate ability without a creature to sacrifice")
-    void cannotActivateWithoutSacrificeTarget() {
+    @DisplayName("When Husk is the only creature, it auto-sacrifices itself")
+    void autoSacrificesItselfWhenOnlyCreature() {
         addNantukoHuskReady(player1);
-        // No other creatures on the battlefield, trying to pass null target
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must choose a creature to sacrifice");
+        // Husk is the only creature — auto-pay sacrifices itself
+        harness.activateAbility(player1, 0, null, null);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Nantuko Husk"));
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
-    @DisplayName("Cannot sacrifice an opponent's creature")
-    void cannotSacrificeOpponentCreature() {
-        addNantukoHuskReady(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBearsId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature you control");
-    }
-
-    @Test
-    @DisplayName("Cannot sacrifice a non-creature permanent")
-    void cannotSacrificeNonCreature() {
+    @DisplayName("Non-creature permanents are not eligible for sacrifice — auto-pays with Husk")
+    void nonCreaturePermanentNotEligibleForSacrifice() {
         addNantukoHuskReady(player1);
         Card enchantment = new Card();
         enchantment.setName("Test Enchantment");
@@ -345,11 +343,17 @@ class NantukoHuskTest extends BaseCardTest {
         enchantment.setManaCost("{1}{W}");
         enchantment.setColor(CardColor.WHITE);
         harness.addToBattlefield(player1, enchantment);
-        UUID enchantmentId = harness.getPermanentId(player1, "Test Enchantment");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantmentId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature");
+        // Only one creature (Husk) — auto-pay sacrifices Husk, not the enchantment
+        harness.activateAbility(player1, 0, null, null);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Nantuko Husk"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Test Enchantment"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Nantuko Husk"));
     }
 
     // ===== Logging =====
@@ -361,7 +365,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("sacrifices Grizzly Bears"));
@@ -374,7 +379,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("activates Nantuko Husk's ability"));
@@ -387,7 +393,8 @@ class NantukoHuskTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

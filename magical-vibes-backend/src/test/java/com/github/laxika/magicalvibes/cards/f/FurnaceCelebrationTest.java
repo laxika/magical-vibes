@@ -48,7 +48,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
         Permanent hopper = addReadyCreature(player1, new DrossHopper());
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
 
-        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         // Resolve Dross Hopper ability (on top)
         harness.passBothPriorities();
@@ -70,7 +71,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
         UUID hawkId = harness.getPermanentId(player2, "Suntail Hawk");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         // Resolve Dross Hopper ability (on top)
         harness.passBothPriorities();
@@ -108,7 +110,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         // Resolve Dross Hopper ability (on top)
         harness.passBothPriorities();
@@ -136,7 +139,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         // Resolve Dross Hopper ability (on top)
         harness.passBothPriorities();
@@ -166,7 +170,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
         // No mana added — cannot pay {2}
 
-        harness.activateAbility(player1, 1, null, bears.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         // Resolve Dross Hopper ability (on top)
         harness.passBothPriorities();
@@ -193,7 +198,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
         Permanent hopper = addReadyCreature(player2, new DrossHopper());
         Permanent bears = addReadyCreature(player2, new GrizzlyBears());
 
-        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.handlePermanentChosen(player2, bears.getId());
 
         // No may ability should fire for player1
         assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();

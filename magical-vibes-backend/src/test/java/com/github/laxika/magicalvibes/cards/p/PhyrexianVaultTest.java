@@ -12,13 +12,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,8 +37,7 @@ class PhyrexianVaultTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isTrue();
         assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
+        assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
@@ -97,10 +94,10 @@ class PhyrexianVaultTest extends BaseCardTest {
     void activatingAbilitySacrificesCreatureAndPutsDrawOnStack() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
 
         // Grizzly Bears should be sacrificed
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -124,12 +121,12 @@ class PhyrexianVaultTest extends BaseCardTest {
     void activatingTapsVault() {
         Permanent vault = addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThat(vault.isTapped()).isFalse();
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(vault.isTapped()).isTrue();
     }
@@ -139,10 +136,10 @@ class PhyrexianVaultTest extends BaseCardTest {
     void manaIsConsumedWhenActivating() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
@@ -154,12 +151,12 @@ class PhyrexianVaultTest extends BaseCardTest {
     void resolvingDrawsACard() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.setHand(player1, List.of());
         setDeck(player1, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -172,12 +169,12 @@ class PhyrexianVaultTest extends BaseCardTest {
     void doesNotAffectOpponent() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.setHand(player2, List.of(new GrizzlyBears()));
         setDeck(player1, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -188,11 +185,11 @@ class PhyrexianVaultTest extends BaseCardTest {
     void remainsOnBattlefieldAfterResolution() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
         setDeck(player1, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -206,12 +203,12 @@ class PhyrexianVaultTest extends BaseCardTest {
     void drawingFromEmptyDeck() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.setHand(player1, List.of());
         gd.playerDecks.get(player1.getId()).clear();
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -225,10 +222,9 @@ class PhyrexianVaultTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
@@ -239,10 +235,9 @@ class PhyrexianVaultTest extends BaseCardTest {
         Permanent vault = addReadyVault(player1);
         vault.tap();
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
@@ -254,26 +249,12 @@ class PhyrexianVaultTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must choose a creature to sacrifice");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Cannot sacrifice an opponent's creature")
-    void cannotSacrificeOpponentCreature() {
-        addReadyVault(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBearsId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature you control");
-    }
-
-    @Test
-    @DisplayName("Cannot sacrifice a non-creature permanent")
-    void cannotSacrificeNonCreature() {
+    @DisplayName("Cannot activate with only non-creature permanents (no creatures to sacrifice)")
+    void cannotActivateWithOnlyNonCreatures() {
         addReadyVault(player1);
         Card enchantment = new Card();
         enchantment.setName("Test Enchantment");
@@ -281,12 +262,10 @@ class PhyrexianVaultTest extends BaseCardTest {
         enchantment.setManaCost("{1}{W}");
         enchantment.setColor(CardColor.WHITE);
         harness.addToBattlefield(player1, enchantment);
-        UUID enchantmentId = harness.getPermanentId(player1, "Test Enchantment");
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantmentId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== No summoning sickness for artifacts =====
@@ -299,10 +278,10 @@ class PhyrexianVaultTest extends BaseCardTest {
         vault.setSummoningSick(true);
         gd.playerBattlefields.get(player1.getId()).add(vault);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(vault.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -315,10 +294,10 @@ class PhyrexianVaultTest extends BaseCardTest {
     void sacrificingCreatureLogsIt() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("sacrifices Grizzly Bears"));
     }
@@ -328,10 +307,10 @@ class PhyrexianVaultTest extends BaseCardTest {
     void activatingAbilityLogsActivation() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("activates Phyrexian Vault's ability"));
     }
@@ -341,11 +320,11 @@ class PhyrexianVaultTest extends BaseCardTest {
     void resolvingLogsCardDraw() {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.addMana(player1, ManaColor.WHITE, 2);
         setDeck(player1, List.of(new Forest()));
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));

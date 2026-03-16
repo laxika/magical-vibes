@@ -413,7 +413,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any());
         }
 
         @Test
@@ -524,7 +524,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any());
         }
 
         @Test
@@ -593,7 +593,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any());
         }
 
         @Test
@@ -626,7 +626,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any());
         }
     }
 
@@ -817,7 +817,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(false), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any());
         }
 
         @Test
@@ -931,7 +931,7 @@ class AbilityActivationServiceTest {
     }
 
     // =========================================================================
-    // activateAbility — sacrifice creature cost
+    // activateAbility — sacrifice creature cost (permanent-choice handler flow)
     // =========================================================================
 
     @Nested
@@ -939,8 +939,32 @@ class AbilityActivationServiceTest {
     class ActivateAbilitySacrificeCreature {
 
         @Test
-        @DisplayName("Sacrifice creature cost: creature is sacrificed and ability completes")
-        void sacrificeCreatureCostWorks() {
+        @DisplayName("Sacrifice creature cost: auto-pays when only one creature is available")
+        void sacrificeCreatureCostAutoPaysSingleCreature() {
+            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
+            huskCard.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
+                    "Sacrifice a creature: +2/+2"
+            ));
+            Permanent husk = addReadyPermanent(player1Id, huskCard);
+
+            // Only husk on the battlefield — 1 creature = auto-pay
+            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gameData, husk.getId())).thenReturn(husk);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gameData, husk);
+            verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id);
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 sacrifices Nantuko Husk."));
+        }
+
+        @Test
+        @DisplayName("Sacrifice creature cost: prompts when multiple creatures are available")
+        void sacrificeCreatureCostPromptsMultipleCreatures() {
             Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
             huskCard.addActivatedAbility(new ActivatedAbility(
                     false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
@@ -950,34 +974,35 @@ class AbilityActivationServiceTest {
 
             Card bearsCard = createCreatureCard("Grizzly Bears", 2, 2);
             Permanent bears = addReadyPermanent(player1Id, bearsCard);
-            UUID bearsId = bears.getId();
 
+            // 2 creatures on battlefield — prompts for choice
             when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.findPermanentById(gameData, bearsId)).thenReturn(bears);
+            when(gameQueryService.isCreature(gameData, husk)).thenReturn(true);
             when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
 
-            service.activateAbility(gameData, player1, 0, null, null, bearsId, null);
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gameData, bears);
-            verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id);
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 sacrifices Grizzly Bears."));
+            verify(playerInputService).beginPermanentChoice(eq(gameData), eq(player1Id), any(), eq("Choose a creature to sacrifice."));
+            verify(gameBroadcastService).broadcastGameState(gameData);
         }
 
         @Test
-        @DisplayName("Must choose a creature to sacrifice")
-        void mustChooseCreatureToSacrifice() {
-            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
-            huskCard.addActivatedAbility(new ActivatedAbility(
+        @DisplayName("Sacrifice creature cost: validateCanPay throws when no creatures available")
+        void validateCanPayThrowsWhenNoCreatures() {
+            Card artifactCard = createGenericArtifact("Phyrexian Altar");
+            artifactCard.addActivatedAbility(new ActivatedAbility(
                     false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
                     "Sacrifice a creature: +2/+2"
             ));
-            Permanent husk = addReadyPermanent(player1Id, huskCard);
+            Permanent artifact = addReadyPermanent(player1Id, artifactCard);
 
-            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+            // No creatures on P1's battlefield — only a non-creature artifact
+            when(gameQueryService.computeStaticBonus(gameData, artifact)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(artifact), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
+            when(gameQueryService.isCreature(gameData, artifact)).thenReturn(false);
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -985,51 +1010,28 @@ class AbilityActivationServiceTest {
         }
 
         @Test
-        @DisplayName("Cannot sacrifice a non-creature")
-        void cannotSacrificeNonCreature() {
-            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
-            huskCard.addActivatedAbility(new ActivatedAbility(
+        @DisplayName("Sacrifice creature cost: only considers controller's creatures")
+        void onlyConsidersControllerCreatures() {
+            Card artifactCard = createGenericArtifact("Phyrexian Altar");
+            artifactCard.addActivatedAbility(new ActivatedAbility(
                     false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
                     "Sacrifice a creature: +2/+2"
             ));
-            Permanent husk = addReadyPermanent(player1Id, huskCard);
+            Permanent artifact = addReadyPermanent(player1Id, artifactCard);
 
-            Card artifact = createGenericArtifact("Test Artifact");
-            Permanent artPerm = addReadyPermanent(player1Id, artifact);
-
-            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
-            when(gameQueryService.findPermanentById(gameData, artPerm.getId())).thenReturn(artPerm);
-            when(gameQueryService.isCreature(gameData, artPerm)).thenReturn(false);
-
-            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, artPerm.getId(), null))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Must sacrifice a creature");
-        }
-
-        @Test
-        @DisplayName("Cannot sacrifice opponent's creature")
-        void cannotSacrificeOpponentCreature() {
-            Card huskCard = createCreatureCard("Nantuko Husk", 2, 2);
-            huskCard.addActivatedAbility(new ActivatedAbility(
-                    false, null, List.of(new SacrificeCreatureCost(false, false), new BoostSelfEffect(2, 2)),
-                    "Sacrifice a creature: +2/+2"
-            ));
-            Permanent husk = addReadyPermanent(player1Id, huskCard);
-
+            // Opponent has a creature, but player 1 has none
             Card bearsCard = createCreatureCard("Grizzly Bears", 2, 2);
-            Permanent bears = addReadyPermanent(player2Id, bearsCard);
+            addReadyPermanent(player2Id, bearsCard);
 
-            when(gameQueryService.computeStaticBonus(gameData, husk)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(husk), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+            when(gameQueryService.computeStaticBonus(gameData, artifact)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(artifact), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.findPermanentById(gameData, bears.getId())).thenReturn(bears);
-            when(gameQueryService.isCreature(gameData, bears)).thenReturn(true);
+            when(gameQueryService.isCreature(gameData, artifact)).thenReturn(false);
 
-            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, bears.getId(), null))
+            // getValidChoiceIds only checks player1's battlefield, so opponent's creature is invisible
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Must sacrifice a creature you control");
+                    .hasMessageContaining("Must choose a creature to sacrifice");
         }
     }
 

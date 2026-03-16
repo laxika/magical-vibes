@@ -501,17 +501,7 @@ public class AbilityActivationService {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, ability.getTargetFilter(), playerId);
         }
 
-        boolean hasSacCreatureCost = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeCreatureCost);
-        // When the ability has SacrificeCreatureCost AND other non-cost effects that need targeting,
-        // the sacrifice goes through the permanent-choice handler (e.g. Equip — Sacrifice a creature).
-        // Otherwise, targetPermanentId is used directly for the sacrifice (e.g. Vampire Aristocrat).
-        boolean hasNonCostTargeting = abilityEffects.stream()
-                .filter(e -> !(e instanceof CostEffect))
-                .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer() || e.canTargetGraveyard());
-        boolean sacCreatureCostAsChoice = hasSacCreatureCost && hasNonCostTargeting;
-
         List<PermanentChoiceCostHandler> permanentChoiceCosts = abilityEffects.stream()
-                .filter(e -> sacCreatureCostAsChoice || !(e instanceof SacrificeCreatureCost))
                 .map(this::toPermanentChoiceCostHandler)
                 .filter(Objects::nonNull)
                 .toList();
@@ -519,7 +509,7 @@ public class AbilityActivationService {
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (ability.isMultiTarget()) {
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability, targetPermanentIds, permanent.getCard());
-        } else if (!hasSacCreatureCost || sacCreatureCostAsChoice) {
+        } else {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
         }
@@ -707,58 +697,26 @@ public class AbilityActivationService {
         }
 
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+            // Capture sacrificed creature's tracked values before auto-pay (e.g. Birthing Pod, Fling)
+            if (handler.costEffect() instanceof SacrificeCreatureCost sacCost
+                    && (sacCost.trackSacrificedManaValue() || sacCost.trackSacrificedPower() || sacCost.trackSacrificedToughness())) {
+                List<UUID> autoPayIds = handler.getValidChoiceIds(gameData, playerId);
+                if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
+                    Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
+                    if (autoTarget != null) {
+                        if (sacCost.trackSacrificedManaValue()) effectiveXValue = autoTarget.getCard().getManaValue();
+                        if (sacCost.trackSacrificedPower()) effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
+                        if (sacCost.trackSacrificedToughness()) effectiveXValue = gameQueryService.getEffectiveToughness(gameData, autoTarget);
+                    }
+                }
+            }
             if (handlePermanentChoiceCost(gameData, player, permanent, effectiveIndex,
                     effectiveXValue, targetPermanentId, targetZone, handler)) {
                 return;
             }
         }
 
-        // Handle sacrifice-a-creature cost inline (e.g. Nantuko Husk: "Sacrifice a creature: ...")
-        // When sacCreatureCostAsChoice is true, the sacrifice was already handled by the permanent choice flow above.
-        if (hasSacCreatureCost && !sacCreatureCostAsChoice) {
-            if (targetPermanentId == null) {
-                throw new IllegalStateException("Must choose a creature to sacrifice");
-            }
-            Permanent sacTarget = gameQueryService.findPermanentById(gameData, targetPermanentId);
-            if (sacTarget == null) {
-                throw new IllegalStateException("Invalid sacrifice target");
-            }
-            if (!gameQueryService.isCreature(gameData, sacTarget)) {
-                throw new IllegalStateException("Must sacrifice a creature");
-            }
-            List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
-            if (playerBf == null || !playerBf.contains(sacTarget)) {
-                throw new IllegalStateException("Must sacrifice a creature you control");
-            }
-
-            // Capture sacrificed creature's mana value before sacrifice if needed (e.g. Birthing Pod)
-            SacrificeCreatureCost sacCost = abilityEffects.stream()
-                    .filter(SacrificeCreatureCost.class::isInstance)
-                    .map(SacrificeCreatureCost.class::cast)
-                    .findFirst().orElseThrow();
-            if (sacCost.trackSacrificedManaValue()) {
-                effectiveXValue = sacTarget.getCard().getManaValue();
-            }
-            if (sacCost.trackSacrificedPower()) {
-                effectiveXValue = gameQueryService.getEffectivePower(gameData, sacTarget);
-            }
-            if (sacCost.trackSacrificedToughness()) {
-                effectiveXValue = gameQueryService.getEffectiveToughness(gameData, sacTarget);
-            }
-
-            sacrificePermanentAsCost(gameData, player, sacTarget);
-
-            // Clear targetPermanentId so it's not used for effect targeting
-            targetPermanentId = null;
-        }
-
-        // Sacrifice-a-creature cost abilities use target selection as UI for cost payment.
-        // Validate any remaining real targets after the cost has been paid.
-        if (hasSacCreatureCost && !sacCreatureCostAsChoice) {
-            targetLegalityService.validateActivatedAbilityTargeting(
-                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
-        }
-        boolean nonTargeting = hasSacCreatureCost && !sacCreatureCostAsChoice;
+        boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects,
                 effectiveXValue, targetPermanentId, targetZone, nonTargeting, effectiveIndex, targetPermanentIds);
     }
@@ -832,6 +790,20 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must choose a permanent you control");
         }
 
+        // Capture sacrificed creature's tracked values before sacrifice (e.g. Birthing Pod, Fling)
+        Integer updatedXValue = null;
+        if (context.costEffect() instanceof SacrificeCreatureCost sacCost) {
+            if (sacCost.trackSacrificedManaValue()) {
+                updatedXValue = chosen.getCard().getManaValue();
+            }
+            if (sacCost.trackSacrificedPower()) {
+                updatedXValue = gameQueryService.getEffectivePower(gameData, chosen);
+            }
+            if (sacCost.trackSacrificedToughness()) {
+                updatedXValue = gameQueryService.getEffectiveToughness(gameData, chosen);
+            }
+        }
+
         handler.validateAndPay(gameData, player, chosen);
 
         int remaining = context.remaining() - 1;
@@ -858,8 +830,10 @@ public class AbilityActivationService {
             }
         }
 
+        int finalXValue = updatedXValue != null ? updatedXValue : (context.xValue() != null ? context.xValue() : 0);
+        boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
-                context.xValue() != null ? context.xValue() : 0, context.targetPermanentId(), context.targetZone(), false, effectiveIndex);
+                finalXValue, context.targetPermanentId(), context.targetZone(), nonTargeting, effectiveIndex);
     }
 
     private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {

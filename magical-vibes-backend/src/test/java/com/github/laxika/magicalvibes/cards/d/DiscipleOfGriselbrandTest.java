@@ -35,7 +35,7 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.isNeedsTarget()).isTrue();
+        assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
@@ -58,7 +58,8 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
@@ -76,7 +77,8 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
-        harness.activateAbility(player1, 0, null, beefy.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, beefy.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 5);
@@ -90,7 +92,8 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
-        harness.activateAbility(player1, 0, null, token.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, token.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
@@ -103,10 +106,10 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
-        harness.activateAbility(player1, 0, null, disciple.getId());
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Disciple is 1/1, so gains 1 life
+        // Disciple is 1/1 and auto-sacrificed (only creature), so gains 1 life
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Disciple of Griselbrand"));
@@ -125,11 +128,13 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         // Sacrifice Grizzly Bears (toughness 2)
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        // Sacrifice Goblin Token (toughness 1)
-        harness.activateAbility(player1, 0, null, token.getId());
+        // Sacrifice Goblin Token (toughness 1) — 2 creatures left (disciple + token)
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, token.getId());
         harness.passBothPriorities();
 
         // Total life gained: 2 + 1 = 3
@@ -146,34 +151,26 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         // No mana added
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== Validation =====
 
     @Test
-    @DisplayName("Cannot activate without a creature to sacrifice")
-    void cannotActivateWithoutSacrificeTarget() {
+    @DisplayName("Auto-sacrifices Disciple when it is the only creature")
+    void autoSacrificesSelfWhenOnlyCreature() {
         Permanent disciple = addDiscipleReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must choose a creature to sacrifice");
-    }
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
 
-    @Test
-    @DisplayName("Cannot sacrifice an opponent's creature")
-    void cannotSacrificeOpponentCreature() {
-        Permanent disciple = addDiscipleReady(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBearsId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature you control");
+        // Disciple auto-sacrificed (only creature), gains 1 life (toughness 1)
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Disciple of Griselbrand"));
     }
 
     // ===== Helper methods =====

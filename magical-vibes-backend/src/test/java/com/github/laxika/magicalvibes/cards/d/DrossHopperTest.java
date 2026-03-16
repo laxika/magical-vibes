@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DrossHopperTest extends BaseCardTest {
 
@@ -32,8 +30,7 @@ class DrossHopperTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
+        assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
@@ -48,7 +45,8 @@ class DrossHopperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         // Bears should be sacrificed
@@ -68,7 +66,8 @@ class DrossHopperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
@@ -85,9 +84,8 @@ class DrossHopperTest extends BaseCardTest {
     @DisplayName("Can sacrifice Dross Hopper to its own ability (fizzles on resolution)")
     void canSacrificeItself() {
         addReadyHopper(player1);
-        UUID hopperId = harness.getPermanentId(player1, "Dross Hopper");
 
-        harness.activateAbility(player1, 0, null, hopperId);
+        harness.activateAbility(player1, 0, null, null);
 
         // Hopper should be sacrificed, ability on stack
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -109,18 +107,10 @@ class DrossHopperTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         // No mana added, hopper is tapped — should still work
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(gd.stack).hasSize(1);
-    }
-
-    @Test
-    @DisplayName("Cannot activate without a creature to sacrifice")
-    void cannotActivateWithoutSacrificeTarget() {
-        addReadyHopper(player1);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== Helpers =====

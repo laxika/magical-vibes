@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,8 +32,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isEqualTo("{B}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
+        assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateEffect.class);
@@ -50,7 +48,8 @@ class CorruptedHarvesterTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
 
@@ -79,7 +78,8 @@ class CorruptedHarvesterTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -154,10 +154,9 @@ class CorruptedHarvesterTest extends BaseCardTest {
     @DisplayName("Can sacrifice Corrupted Harvester to its own ability")
     void canSacrificeItself() {
         addHarvesterReady(player1);
-        UUID harvesterId = harness.getPermanentId(player1, "Corrupted Harvester");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, null, harvesterId);
+        harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
 
@@ -175,10 +174,9 @@ class CorruptedHarvesterTest extends BaseCardTest {
     @DisplayName("Regeneration fizzles when Corrupted Harvester sacrifices itself")
     void regenerationFizzlesWhenSacrificedItself() {
         addHarvesterReady(player1);
-        UUID harvesterId = harness.getPermanentId(player1, "Corrupted Harvester");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, null, harvesterId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -201,7 +199,8 @@ class CorruptedHarvesterTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
@@ -212,38 +211,30 @@ class CorruptedHarvesterTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         addHarvesterReady(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         // No mana added
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Validation errors =====
+    // ===== Auto-sacrifice =====
 
     @Test
-    @DisplayName("Cannot activate ability without a creature to sacrifice")
-    void cannotActivateWithoutSacrificeTarget() {
+    @DisplayName("Auto-sacrifices when only one creature is available")
+    void autoSacrificesWhenOnlyOneCreature() {
         addHarvesterReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must choose a creature to sacrifice");
-    }
+        harness.activateAbility(player1, 0, null, null);
 
-    @Test
-    @DisplayName("Cannot sacrifice an opponent's creature")
-    void cannotSacrificeOpponentCreature() {
-        addHarvesterReady(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        GameData gd = harness.getGameData();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBearsId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature you control");
+        // Harvester should be auto-sacrificed (only creature available)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Corrupted Harvester"));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
 
     // ===== Does not require tap =====
@@ -256,7 +247,8 @@ class CorruptedHarvesterTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         Permanent harvester = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(harvester.isTapped()).isFalse();
@@ -271,7 +263,8 @@ class CorruptedHarvesterTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(harness.getGameData().stack).hasSize(1);
     }

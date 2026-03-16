@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -18,11 +17,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VampireAristocratTest extends BaseCardTest {
 
@@ -38,7 +35,7 @@ class VampireAristocratTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isTrue();
+        assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
@@ -58,7 +55,8 @@ class VampireAristocratTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
 
@@ -88,7 +86,8 @@ class VampireAristocratTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -109,11 +108,13 @@ class VampireAristocratTest extends BaseCardTest {
         harness.addToBattlefield(player1, createTokenCreature("Saproling Token"));
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         UUID tokenId = harness.getPermanentId(player1, "Saproling Token");
-        harness.activateAbility(player1, 0, null, tokenId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, tokenId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -131,7 +132,7 @@ class VampireAristocratTest extends BaseCardTest {
         addVampireAristocratReady(player1);
         UUID vampId = harness.getPermanentId(player1, "Vampire Aristocrat");
 
-        harness.activateAbility(player1, 0, null, vampId);
+        harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
 
@@ -152,7 +153,7 @@ class VampireAristocratTest extends BaseCardTest {
         addVampireAristocratReady(player1);
         UUID vampId = harness.getPermanentId(player1, "Vampire Aristocrat");
 
-        harness.activateAbility(player1, 0, null, vampId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -174,7 +175,8 @@ class VampireAristocratTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -187,7 +189,8 @@ class VampireAristocratTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         Permanent vamp = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(vamp.isTapped()).isFalse();
@@ -202,7 +205,8 @@ class VampireAristocratTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         Permanent vamp = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
@@ -223,25 +227,19 @@ class VampireAristocratTest extends BaseCardTest {
     // ===== Validation errors =====
 
     @Test
-    @DisplayName("Cannot activate ability without a creature to sacrifice")
-    void cannotActivateWithoutSacrificeTarget() {
+    @DisplayName("Auto-sacrifices when only one creature available")
+    void autoSacrificesWhenOnlyOneCreatureAvailable() {
         addVampireAristocratReady(player1);
+        harness.activateAbility(player1, 0, null, null);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must choose a creature to sacrifice");
-    }
-
-    @Test
-    @DisplayName("Cannot sacrifice an opponent's creature")
-    void cannotSacrificeOpponentCreature() {
-        addVampireAristocratReady(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBearsId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature you control");
+        GameData gd = harness.getGameData();
+        // Vampire auto-sacrificed (only creature on battlefield)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Vampire Aristocrat"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Vampire Aristocrat"));
+        // Ability should be on the stack
+        assertThat(gd.stack).hasSize(1);
     }
 
     // ===== Helper methods =====

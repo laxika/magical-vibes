@@ -13,5 +13,4 @@ public record SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean tr
         this(trackSacrificedManaValue, trackSacrificedPower, false);
     }
 
-    @Override public boolean canTargetPermanent() { return true; }
 }

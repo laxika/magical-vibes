@@ -960,25 +960,27 @@ class ActivatedAbilityExecutionServiceTest {
     }
 
     // =========================================================================
-    // Non-targeting sacrifice flag
+    // Sacrifice creature cost does NOT set nonTargeting flag
     // =========================================================================
 
     @Nested
-    @DisplayName("non-targeting sacrifice creature cost")
-    class NonTargetingSacrificeCreatureCost {
+    @DisplayName("sacrifice creature cost targeting flag")
+    class SacrificeCreatureCostTargetingFlag {
 
         @Test
-        @DisplayName("Sacrifice creature cost ability sets nonTargeting on stack entry")
-        void sacrificeCreatureCostSetsNonTargeting() {
+        @DisplayName("Sacrifice creature cost ability does not set nonTargeting on stack entry")
+        void sacrificeCreatureCostDoesNotSetNonTargeting() {
             Card card = createCreature("Test Hopper");
             Permanent perm = addReadyPermanent(player1Id, card);
             List<CardEffect> effects = List.of(new BoostSelfEffect(2, 2));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Sacrifice a creature: +2/+2");
 
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, true);
+            // With the permanent-choice handler flow, completeActivationAfterCosts
+            // is called with markAsNonTargetingForSacCreatureCost=false
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gameData.stack.getFirst().isNonTargeting()).isFalse();
         }
     }
 

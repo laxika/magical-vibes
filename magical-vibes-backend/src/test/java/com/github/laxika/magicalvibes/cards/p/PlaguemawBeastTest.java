@@ -51,7 +51,8 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, elvesId); // sacrifice Llanowar Elves
+        harness.activateAbility(player1, 0, null, null); // sacrifice Llanowar Elves
+        harness.handlePermanentChosen(player1, elvesId);
         harness.passBothPriorities(); // resolve ability
 
         // Choose enemy bears for proliferate
@@ -79,7 +80,8 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, elvesId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, elvesId);
         harness.passBothPriorities();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(allyBears.getId()));
@@ -99,7 +101,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, beast.getId()); // sacrifice itself
+        harness.activateAbility(player1, 0, null, null); // sacrifice itself (auto-pay, only creature)
         harness.passBothPriorities();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
@@ -114,12 +116,11 @@ class PlaguemawBeastTest extends BaseCardTest {
         Permanent beast = addReadyBeast(player1);
         beast.tap();
         harness.addToBattlefield(player1, new LlanowarElves());
-        UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elvesId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -131,12 +132,11 @@ class PlaguemawBeastTest extends BaseCardTest {
         // summoning sick by default
         gd.playerBattlefields.get(player1.getId()).add(beast);
         harness.addToBattlefield(player1, new LlanowarElves());
-        UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elvesId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -154,7 +154,8 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, elvesId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, elvesId);
         harness.passBothPriorities();
 
         // Choose nothing
@@ -165,15 +166,22 @@ class PlaguemawBeastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate without a creature to sacrifice")
-    void cannotActivateWithoutCreatureToSacrifice() {
+    @DisplayName("Auto-sacrifices when only one creature is available")
+    void autoSacrificesWhenOnlyOneCreature() {
         addReadyBeast(player1);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setMinusOneMinusOneCounters(1);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, null, null);
+
+        // Beast should be auto-sacrificed (only creature controlled by player1)
+        harness.assertNotOnBattlefield(player1, "Plaguemaw Beast");
+        assertThat(gd.stack).hasSize(1);
     }
 
     // ===== Helpers =====

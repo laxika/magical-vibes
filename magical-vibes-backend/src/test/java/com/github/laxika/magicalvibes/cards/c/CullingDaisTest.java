@@ -17,7 +17,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,9 +55,8 @@ class CullingDaisTest extends BaseCardTest {
     void sacrificeCreatureAddsChargeCounter() {
         Permanent dais = addReadyDais(player1);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // resolve ability
 
         GameData gd = harness.getGameData();
@@ -79,10 +77,9 @@ class CullingDaisTest extends BaseCardTest {
         Permanent dais = addReadyDais(player1);
         dais.tap();
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         org.assertj.core.api.Assertions.assertThatThrownBy(
-                () -> harness.activateAbility(player1, 0, null, bearsId)
+                () -> harness.activateAbility(player1, 0, null, null)
         ).isInstanceOf(IllegalStateException.class);
     }
 
@@ -93,8 +90,7 @@ class CullingDaisTest extends BaseCardTest {
 
         // First sacrifice
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bears1Id = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, bears1Id);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(dais.getChargeCounters()).isEqualTo(1);
@@ -104,8 +100,7 @@ class CullingDaisTest extends BaseCardTest {
 
         // Second sacrifice
         harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bears2Id = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, bears2Id);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(dais.getChargeCounters()).isEqualTo(2);

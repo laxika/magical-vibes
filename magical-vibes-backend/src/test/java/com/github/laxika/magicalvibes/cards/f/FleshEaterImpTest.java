@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FleshEaterImpTest extends BaseCardTest {
 
@@ -34,8 +32,7 @@ class FleshEaterImpTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
+        assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(BoostSelfEffect.class);
@@ -54,7 +51,8 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         // Grizzly Bears should be sacrificed
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -81,7 +79,8 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -99,11 +98,13 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.addToBattlefield(player1, createTokenCreature("Saproling Token"));
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         UUID tokenId = harness.getPermanentId(player1, "Saproling Token");
-        harness.activateAbility(player1, 0, null, tokenId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, tokenId);
         harness.passBothPriorities();
 
         Permanent imp = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -116,9 +117,8 @@ class FleshEaterImpTest extends BaseCardTest {
     @DisplayName("Can sacrifice Flesh-Eater Imp to its own ability")
     void canSacrificeItself() {
         addFleshEaterImpReady(player1);
-        UUID impId = harness.getPermanentId(player1, "Flesh-Eater Imp");
 
-        harness.activateAbility(player1, 0, null, impId);
+        harness.activateAbility(player1, 0, null, null);
 
         // Imp should be sacrificed
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -140,7 +140,8 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         Permanent imp = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -165,7 +166,8 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -178,33 +180,30 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Validation errors =====
+    // ===== Auto-sacrifice =====
 
     @Test
-    @DisplayName("Cannot activate ability without a creature to sacrifice")
-    void cannotActivateWithoutSacrificeTarget() {
+    @DisplayName("When Imp is the only creature, it auto-sacrifices itself")
+    void autoSacrificesWhenOnlyCreature() {
         addFleshEaterImpReady(player1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must choose a creature to sacrifice");
-    }
+        harness.activateAbility(player1, 0, null, null);
 
-    @Test
-    @DisplayName("Cannot sacrifice an opponent's creature")
-    void cannotSacrificeOpponentCreature() {
-        addFleshEaterImpReady(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        // Imp should be auto-sacrificed (only creature available)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Flesh-Eater Imp"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Flesh-Eater Imp"));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBearsId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must sacrifice a creature you control");
+        // Ability should still be on the stack
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Flesh-Eater Imp");
     }
 
     // ===== Helper methods =====

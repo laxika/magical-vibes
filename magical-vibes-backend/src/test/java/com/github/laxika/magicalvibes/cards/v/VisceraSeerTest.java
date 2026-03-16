@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VisceraSeerTest extends BaseCardTest {
 
@@ -49,7 +48,8 @@ class VisceraSeerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         // Bears should be sacrificed
@@ -75,7 +75,8 @@ class VisceraSeerTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card topCard = deck.get(0);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
@@ -94,7 +95,8 @@ class VisceraSeerTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card topCard = deck.get(0);
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
         harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0));
@@ -107,9 +109,8 @@ class VisceraSeerTest extends BaseCardTest {
     @DisplayName("Can sacrifice Viscera Seer to its own ability")
     void canSacrificeItself() {
         addReadySeer(player1);
-        UUID seerId = harness.getPermanentId(player1, "Viscera Seer");
 
-        harness.activateAbility(player1, 0, null, seerId);
+        harness.activateAbility(player1, 0, null, null);
 
         // Seer should be sacrificed, ability on stack
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -126,18 +127,24 @@ class VisceraSeerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.activateAbility(player1, 0, null, bearsId);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(gd.stack).hasSize(1);
     }
 
     @Test
-    @DisplayName("Cannot activate without a creature to sacrifice")
-    void cannotActivateWithoutSacrificeTarget() {
+    @DisplayName("Auto-sacrifices when only one creature is available")
+    void autoSacrificesWhenOnlyOneCreature() {
         addReadySeer(player1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, null, null);
+
+        // Seer should be auto-sacrificed (only creature available)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Viscera Seer"));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
 
     @Test
@@ -152,17 +159,19 @@ class VisceraSeerTest extends BaseCardTest {
 
         UUID bears1Id = harness.getPermanentId(player1, "Grizzly Bears");
 
-        // First activation
-        harness.activateAbility(player1, 0, null, bears1Id);
+        // First activation (3 creatures: Seer + 2 Bears)
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bears1Id);
         harness.passBothPriorities();
 
         // Complete scry
         GameData gd = harness.getGameData();
         harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
 
-        // Second activation with the other bears
+        // Second activation with the other bears (2 creatures: Seer + 1 Bear)
         UUID bears2Id = bears2Perm.getId();
-        harness.activateAbility(player1, 0, null, bears2Id);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bears2Id);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
