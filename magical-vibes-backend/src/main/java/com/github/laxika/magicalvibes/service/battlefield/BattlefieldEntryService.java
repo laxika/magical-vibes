@@ -13,9 +13,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
@@ -70,6 +72,7 @@ public class BattlefieldEntryService {
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         applyAllPermanentsEnterTapped(gameData, permanent);
         applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+        applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -82,6 +85,7 @@ public class BattlefieldEntryService {
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         applyAllPermanentsEnterTapped(gameData, permanent);
         applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+        applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -197,6 +201,39 @@ public class BattlefieldEntryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Replacement effect (MTG Rule 614.1c): checks the controller's graveyard for cards with
+     * {@link GraveyardEnterWithAdditionalCountersEffect} and adds +1/+1 counters to matching
+     * creatures as they enter the battlefield.
+     */
+    private void applyGraveyardEnterWithAdditionalCounters(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (!permanent.getCard().hasType(CardType.CREATURE)) return;
+
+        boolean cantHaveCounters = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantHaveCountersEffect);
+        if (cantHaveCounters) return;
+
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard == null || graveyard.isEmpty()) return;
+
+        int additionalCounters = 0;
+        for (Card card : graveyard) {
+            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GraveyardEnterWithAdditionalCountersEffect graveyardEffect) {
+                    if (permanent.getCard().getSubtypes().contains(graveyardEffect.subtype())) {
+                        additionalCounters += graveyardEffect.count();
+                    }
+                }
+            }
+        }
+
+        if (additionalCounters > 0) {
+            permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() + additionalCounters);
+            log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from graveyard effect(s)",
+                    gameData.id, permanent.getCard().getName(), additionalCounters);
+        }
     }
 
     // ===== ETB pipeline =====
