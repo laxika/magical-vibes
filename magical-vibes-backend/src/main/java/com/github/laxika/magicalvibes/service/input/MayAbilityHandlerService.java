@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -126,6 +127,54 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof RevealTopCardCreatureToBattlefieldOrMayBottomEffect);
         if (isRevealCreatureOrBottom) {
             mayMiscHandlerService.handleRevealTopCardMayBottomChoice(gameData, player, accepted);
+            return;
+        }
+
+        // Look at top card, may reveal to transform — e.g. Delver of Secrets
+        // Per ruling (2011-09-22): you may reveal even if it's not an instant or sorcery.
+        // The card stays on top of your library. Transform only happens if revealed card matches.
+        LookAtTopCardMayRevealTypeTransformEffect revealTypeTransform = ability.effects().stream()
+                .filter(e -> e instanceof LookAtTopCardMayRevealTypeTransformEffect)
+                .map(e -> (LookAtTopCardMayRevealTypeTransformEffect) e)
+                .findFirst().orElse(null);
+        if (revealTypeTransform != null) {
+            if (accepted) {
+                List<Card> deck = gameData.playerDecks.get(ability.controllerId());
+                if (!deck.isEmpty()) {
+                    Card topCard = deck.getFirst();
+                    String revealLog = player.getUsername() + " reveals " + topCard.getName() + " from the top of their library.";
+                    gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+                    // Transform only if the revealed card matches the required types
+                    boolean matches = revealTypeTransform.cardTypes().contains(topCard.getType())
+                            || topCard.getAdditionalTypes().stream().anyMatch(revealTypeTransform.cardTypes()::contains);
+                    if (matches) {
+                        Permanent self = ability.sourcePermanentId() != null
+                                ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
+                        if (self != null && !self.isTransformed()) {
+                            Card backFace = self.getOriginalCard().getBackFaceCard();
+                            if (backFace != null) {
+                                String frontName = self.getCard().getName();
+                                self.setCard(backFace);
+                                self.setTransformed(true);
+                                String transformLog = frontName + " transforms into " + backFace.getName() + ".";
+                                gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                                log.info("Game {} - {} transforms into {} (revealed instant/sorcery)",
+                                        gameData.id, frontName, backFace.getName());
+                            }
+                        }
+                    } else {
+                        log.info("Game {} - {} revealed {} but it's not a matching type, no transform",
+                                gameData.id, player.getUsername(), topCard.getName());
+                    }
+                }
+            } else {
+                String logEntry = player.getUsername() + " chooses not to reveal.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

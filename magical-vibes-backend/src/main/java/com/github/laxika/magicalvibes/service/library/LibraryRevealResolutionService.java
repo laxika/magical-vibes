@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEf
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -85,6 +86,44 @@ public class LibraryRevealResolutionService {
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
+    }
+
+    /**
+     * Looks at the top card of the controller's library and queues a "may" ability to reveal it.
+     * If the revealed card matches one of the specified card types, the source permanent transforms.
+     * Per ruling (2011-09-22): "You may reveal the card even if it's not an instant or sorcery.
+     * Whether or not you reveal it, the card stays on top of your library."
+     * Used by Delver of Secrets.
+     */
+    @HandlesEffect(LookAtTopCardMayRevealTypeTransformEffect.class)
+    void resolveLookAtTopCardMayRevealTypeTransform(GameData gameData, StackEntry entry, LookAtTopCardMayRevealTypeTransformEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty (" + sourceName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+
+        String logEntry = playerName + " looks at the top card of their library (" + sourceName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} looks at top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
+
+        // Per rules, the player may always choose to reveal — the type check happens after reveal
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(),
+                controllerId,
+                List.of(effect),
+                sourceName + " — Reveal " + topCard.getName() + "?",
+                null,
+                null,
+                entry.getSourcePermanentId()
+        ));
     }
 
     /**
