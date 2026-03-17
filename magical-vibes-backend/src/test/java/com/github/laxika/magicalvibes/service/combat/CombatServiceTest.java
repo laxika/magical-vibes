@@ -1,625 +1,455 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicWall;
-import com.github.laxika.magicalvibes.cards.b.BlightMamba;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GoblinSkyRaider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class CombatServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class CombatServiceTest {
+
+    @Mock
+    private CombatAttackService combatAttackService;
+
+    @Mock
+    private CombatBlockService combatBlockService;
+
+    @Mock
+    private CombatDamageService combatDamageService;
+
+    @Mock
+    private GameBroadcastService gameBroadcastService;
+
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
+
+    @InjectMocks
+    private CombatService combatService;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
 
     // ===== Helper methods =====
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        harness.addToBattlefield(player, card);
-        List<Permanent> bf = gd.playerBattlefields.get(player.getId());
-        Permanent p = bf.getLast();
-        p.setSummoningSick(false);
-        return p;
+    private static Card createCreature(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{2}");
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
     }
 
-    private void setupAttackerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+    private Permanent addPermanent(UUID playerId, Card card) {
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(playerId).add(permanent);
+        return permanent;
     }
 
-    private void setupBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginBlockerDeclaration(player2.getId());
-    }
-
-    /**
-     * Sets up combat state for combat damage resolution.
-     * Callers should manually set attacking/blocking state on permanents before calling this,
-     * then call {@code harness.passBothPriorities()} to advance from DECLARE_BLOCKERS through
-     * COMBAT_DAMAGE and resolve damage.
-     */
-    private void setupCombatDamageResolution() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-    }
-
-    // ===== Attacker Declaration Tests =====
+    // ===== Delegation Tests =====
 
     @Nested
-    @DisplayName("Declare Attackers")
-    class DeclareAttackersTest {
+    @DisplayName("Delegation")
+    class DelegationTest {
 
         @Test
-        @DisplayName("Ready creature can be declared as attacker")
-        void readyCreatureCanAttack() {
-            addReadyCreature(player1, new GrizzlyBears());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("declareAttackers delegates to CombatAttackService")
+        void declareAttackersDelegates() {
+            Player player = new Player(player1Id, "Player1");
+            List<Integer> indices = List.of(0, 1);
+            Map<Integer, UUID> targets = Map.of(0, player2Id);
+            when(combatAttackService.declareAttackers(gd, player, indices, targets))
+                    .thenReturn(CombatResult.AUTO_PASS_ONLY);
 
-            gs.declareAttackers(gd, player1, List.of(0));
+            CombatResult result = combatService.declareAttackers(gd, player, indices, targets);
 
-            Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
+            assertThat(result).isEqualTo(CombatResult.AUTO_PASS_ONLY);
+            verify(combatAttackService).declareAttackers(gd, player, indices, targets);
+        }
+
+        @Test
+        @DisplayName("declareBlockers delegates to CombatBlockService")
+        void declareBlockersDelegates() {
+            Player player = new Player(player2Id, "Player2");
+            List<BlockerAssignment> assignments = List.of(new BlockerAssignment(0, 0));
+            when(combatBlockService.declareBlockers(gd, player, assignments))
+                    .thenReturn(CombatResult.AUTO_PASS_ONLY);
+
+            CombatResult result = combatService.declareBlockers(gd, player, assignments);
+
+            assertThat(result).isEqualTo(CombatResult.AUTO_PASS_ONLY);
+            verify(combatBlockService).declareBlockers(gd, player, assignments);
+        }
+
+        @Test
+        @DisplayName("resolveCombatDamage delegates to CombatDamageService")
+        void resolveCombatDamageDelegates() {
+            when(combatDamageService.resolveCombatDamage(gd))
+                    .thenReturn(CombatResult.ADVANCE_ONLY);
+
+            CombatResult result = combatService.resolveCombatDamage(gd);
+
+            assertThat(result).isEqualTo(CombatResult.ADVANCE_ONLY);
+            verify(combatDamageService).resolveCombatDamage(gd);
+        }
+
+        @Test
+        @DisplayName("getAttackableCreatureIndices delegates to CombatAttackService")
+        void getAttackableIndicesDelegates() {
+            when(combatAttackService.getAttackableCreatureIndices(gd, player1Id))
+                    .thenReturn(List.of(0, 2));
+
+            List<Integer> result = combatService.getAttackableCreatureIndices(gd, player1Id);
+
+            assertThat(result).containsExactly(0, 2);
+            verify(combatAttackService).getAttackableCreatureIndices(gd, player1Id);
+        }
+
+        @Test
+        @DisplayName("getMustAttackIndices delegates to CombatAttackService")
+        void getMustAttackIndicesDelegates() {
+            List<Integer> attackable = List.of(0, 1);
+            when(combatAttackService.getMustAttackIndices(gd, player1Id, attackable))
+                    .thenReturn(List.of(0));
+
+            List<Integer> result = combatService.getMustAttackIndices(gd, player1Id, attackable);
+
+            assertThat(result).containsExactly(0);
+            verify(combatAttackService).getMustAttackIndices(gd, player1Id, attackable);
+        }
+
+        @Test
+        @DisplayName("buildAvailableTargets delegates to CombatAttackService")
+        void buildAvailableTargetsDelegates() {
+            List<AttackTarget> expected = List.of(new AttackTarget(player2Id.toString(), "Player2", true));
+            when(combatAttackService.buildAvailableTargets(gd, player1Id)).thenReturn(expected);
+
+            List<AttackTarget> result = combatService.buildAvailableTargets(gd, player1Id);
+
+            assertThat(result).isEqualTo(expected);
+            verify(combatAttackService).buildAvailableTargets(gd, player1Id);
+        }
+
+        @Test
+        @DisplayName("handleDeclareAttackersStep delegates to CombatAttackService")
+        void handleDeclareAttackersStepDelegates() {
+            combatService.handleDeclareAttackersStep(gd);
+
+            verify(combatAttackService).handleDeclareAttackersStep(gd);
+        }
+
+        @Test
+        @DisplayName("handleDeclareBlockersStep delegates to CombatBlockService")
+        void handleDeclareBlockersStepDelegates() {
+            when(combatBlockService.handleDeclareBlockersStep(gd))
+                    .thenReturn(CombatResult.DONE);
+
+            CombatResult result = combatService.handleDeclareBlockersStep(gd);
+
+            assertThat(result).isEqualTo(CombatResult.DONE);
+            verify(combatBlockService).handleDeclareBlockersStep(gd);
+        }
+
+        @Test
+        @DisplayName("getAttackingCreatureIndices delegates to CombatAttackService")
+        void getAttackingIndicesDelegates() {
+            when(combatAttackService.getAttackingCreatureIndices(gd, player1Id))
+                    .thenReturn(List.of(0));
+
+            List<Integer> result = combatService.getAttackingCreatureIndices(gd, player1Id);
+
+            assertThat(result).containsExactly(0);
+            verify(combatAttackService).getAttackingCreatureIndices(gd, player1Id);
+        }
+
+        @Test
+        @DisplayName("getBlockableCreatureIndices delegates to CombatBlockService")
+        void getBlockableIndicesDelegates() {
+            when(combatBlockService.getBlockableCreatureIndices(gd, player2Id))
+                    .thenReturn(List.of(0, 1));
+
+            List<Integer> result = combatService.getBlockableCreatureIndices(gd, player2Id);
+
+            assertThat(result).containsExactly(0, 1);
+            verify(combatBlockService).getBlockableCreatureIndices(gd, player2Id);
+        }
+
+        @Test
+        @DisplayName("computeLegalBlockPairs delegates to CombatBlockService")
+        void computeLegalBlockPairsDelegates() {
+            List<Integer> blockers = List.of(0);
+            List<Integer> attackers = List.of(0);
+            Map<Integer, List<Integer>> expected = Map.of(0, List.of(0));
+            when(combatBlockService.computeLegalBlockPairs(gd, blockers, attackers, player2Id, player1Id))
+                    .thenReturn(expected);
+
+            Map<Integer, List<Integer>> result = combatService.computeLegalBlockPairs(gd, blockers, attackers, player2Id, player1Id);
+
+            assertThat(result).isEqualTo(expected);
+            verify(combatBlockService).computeLegalBlockPairs(gd, blockers, attackers, player2Id, player1Id);
+        }
+
+        @Test
+        @DisplayName("handleCombatDamageAssigned delegates to CombatDamageService")
+        void handleCombatDamageAssignedDelegates() {
+            Player player = new Player(player1Id, "Player1");
+            Map<UUID, Integer> assignments = Map.of(player2Id, 3);
+
+            combatService.handleCombatDamageAssigned(gd, player, 0, assignments);
+
+            verify(combatDamageService).handleCombatDamageAssigned(gd, player, 0, assignments);
+        }
+    }
+
+    // ===== clearCombatState Tests =====
+
+    @Nested
+    @DisplayName("clearCombatState")
+    class ClearCombatStateTest {
+
+        @Test
+        @DisplayName("Clears attacking flag on all permanents")
+        void clearsAttackingFlag() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            attacker.setAttacking(true);
             assertThat(attacker.isAttacking()).isTrue();
+
+            combatService.clearCombatState(gd);
+
+            assertThat(attacker.isAttacking()).isFalse();
         }
 
         @Test
-        @DisplayName("Declaring attackers taps them")
-        void attackersTapWhenDeclared() {
-            addReadyCreature(player1, new GrizzlyBears());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("Clears blocking flag and blocking targets on all permanents")
+        void clearsBlockingFlagAndTargets() {
+            Permanent blocker = addPermanent(player2Id, createCreature("Grizzly Bears"));
+            blocker.setBlocking(true);
+            blocker.addBlockingTarget(0);
+            assertThat(blocker.isBlocking()).isTrue();
+            assertThat(blocker.getBlockingTargets()).hasSize(1);
 
-            gs.declareAttackers(gd, player1, List.of(0));
+            combatService.clearCombatState(gd);
 
-            Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(attacker.isTapped()).isTrue();
+            assertThat(blocker.isBlocking()).isFalse();
+            assertThat(blocker.getBlockingTargets()).isEmpty();
         }
 
         @Test
-        @DisplayName("Vigilance creature does not tap when attacking")
-        void vigilanceCreatureDoesNotTap() {
-            addReadyCreature(player1, new SerraAngel());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("Clears combat state across both players' battlefields")
+        void clearsCombatStateAcrossBothPlayers() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            attacker.setAttacking(true);
+            Permanent blocker = addPermanent(player2Id, createCreature("Serra Angel"));
+            blocker.setBlocking(true);
+            blocker.addBlockingTarget(0);
 
-            gs.declareAttackers(gd, player1, List.of(0));
+            combatService.clearCombatState(gd);
 
-            Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(attacker.isAttacking()).isTrue();
-            assertThat(attacker.isTapped()).isFalse();
+            assertThat(attacker.isAttacking()).isFalse();
+            assertThat(blocker.isBlocking()).isFalse();
+            assertThat(blocker.getBlockingTargets()).isEmpty();
         }
 
         @Test
-        @DisplayName("Summoning sick creature cannot be declared as attacker")
-        void summoningSickCreatureCannotAttack() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("Clears combat damage player assignments")
+        void clearsCombatDamagePlayerAssignments() {
+            gd.combatDamagePlayerAssignments.put(0, new HashMap<>(Map.of(player2Id, 3)));
 
-            assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Invalid attacker index");
+            combatService.clearCombatState(gd);
+
+            assertThat(gd.combatDamagePlayerAssignments).isEmpty();
         }
 
         @Test
-        @DisplayName("Haste creature can attack while summoning sick")
-        void hasteCreatureCanAttackWhileSummoningSick() {
-            harness.addToBattlefield(player1, new RagingGoblin());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("Clears combat damage pending indices")
+        void clearsCombatDamagePendingIndices() {
+            gd.combatDamagePendingIndices.add(0);
+            gd.combatDamagePendingIndices.add(1);
 
-            gs.declareAttackers(gd, player1, List.of(0));
+            combatService.clearCombatState(gd);
 
-            Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(attacker.isAttacking()).isTrue();
+            assertThat(gd.combatDamagePendingIndices).isEmpty();
         }
 
         @Test
-        @DisplayName("Tapped creature cannot be declared as attacker")
-        void tappedCreatureCannotAttack() {
-            Permanent creature = addReadyCreature(player1, new GrizzlyBears());
-            creature.tap();
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("Resets combat damage phase 1 complete flag")
+        void resetsCombatDamagePhase1CompleteFlag() {
+            gd.combatDamagePhase1Complete = true;
 
-            assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Invalid attacker index");
+            combatService.clearCombatState(gd);
+
+            assertThat(gd.combatDamagePhase1Complete).isFalse();
         }
 
         @Test
-        @DisplayName("Defender creature cannot be declared as attacker")
-        void defenderCreatureCannotAttack() {
-            addReadyCreature(player1, new AngelicWall());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("Clears combat damage phase 1 state")
+        void clearsCombatDamagePhase1State() {
+            gd.combatDamagePhase1State = new CombatDamagePhase1State(
+                    Set.of(), Set.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
+                    0, 0, Map.of(), Map.of(), false, Set.of(), Set.of());
 
-            assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Invalid attacker index");
+            combatService.clearCombatState(gd);
+
+            assertThat(gd.combatDamagePhase1State).isNull();
         }
 
         @Test
-        @DisplayName("Declaring no attackers is valid")
-        void declaringNoAttackersIsValid() {
-            addReadyCreature(player1, new GrizzlyBears());
-            setupAttackerDeclaration();
+        @DisplayName("Handles empty battlefields without error")
+        void handlesEmptyBattlefields() {
+            combatService.clearCombatState(gd);
 
-            gs.declareAttackers(gd, player1, List.of());
-
-            Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(creature.isAttacking()).isFalse();
-            assertThat(creature.isTapped()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Duplicate attacker indices are rejected")
-        void duplicateAttackerIndicesRejected() {
-            addReadyCreature(player1, new GrizzlyBears());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
-
-            assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0, 0)))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Duplicate attacker indices");
-        }
-
-        @Test
-        @DisplayName("Only active player can declare attackers")
-        void onlyActivePlayerCanDeclareAttackers() {
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
-
-            assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Only the active player");
-        }
-
-        @Test
-        @DisplayName("Multiple creatures can attack simultaneously")
-        void multipleCreaturesCanAttack() {
-            addReadyCreature(player1, new GrizzlyBears());
-            addReadyCreature(player1, new LlanowarElves());
-            addReadyCreature(player2, new GrizzlyBears());
-            setupAttackerDeclaration();
-
-            gs.declareAttackers(gd, player1, List.of(0, 1));
-
-            List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-            assertThat(bf.get(0).isAttacking()).isTrue();
-            assertThat(bf.get(1).isAttacking()).isTrue();
+            assertThat(gd.combatDamagePlayerAssignments).isEmpty();
+            assertThat(gd.combatDamagePendingIndices).isEmpty();
+            assertThat(gd.combatDamagePhase1Complete).isFalse();
+            assertThat(gd.combatDamagePhase1State).isNull();
         }
     }
 
-    // ===== Blocker Declaration Tests =====
+    // ===== processEndOfCombatSacrifices Tests =====
 
     @Nested
-    @DisplayName("Declare Blockers")
-    class DeclareBlockersTest {
+    @DisplayName("processEndOfCombatSacrifices")
+    class ProcessEndOfCombatSacrificesTest {
 
         @Test
-        @DisplayName("Valid blocking assignment results in combat trade")
-        void validBlockingResultsInCombat() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            addReadyCreature(player2, new GrizzlyBears());
-            setupBlockerDeclaration();
+        @DisplayName("Sacrifices permanent marked for end-of-combat sacrifice")
+        void sacrificesMarkedPermanent() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
 
-            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-            harness.passBothPriorities();
+            combatService.processEndOfCombatSacrifices(gd);
 
-            // Both 2/2 creatures traded in combat
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            // Blocked creature dealt no damage to player
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, creature);
         }
 
         @Test
-        @DisplayName("Flying creature cannot be blocked by ground creature")
-        void flyingCannotBeBlockedByGround() {
-            Permanent attacker = addReadyCreature(player1, new GoblinSkyRaider());
-            attacker.setAttacking(true);
-            addReadyCreature(player2, new GrizzlyBears());
-            setupBlockerDeclaration();
+        @DisplayName("Logs sacrifice message for each sacrificed permanent")
+        void logsSacrificeMessage() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
 
-            assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("flying");
+            combatService.processEndOfCombatSacrifices(gd);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), contains("Grizzly Bears"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), contains("sacrificed"));
         }
 
         @Test
-        @DisplayName("Reach creature can block flying creature")
-        void reachCreatureCanBlockFlying() {
-            harness.setLife(player2, 20);
-            // Goblin Sky Raider (1/2 Flying) vs Giant Spider (2/4 Reach)
-            Permanent attacker = addReadyCreature(player1, new GoblinSkyRaider());
-            attacker.setAttacking(true);
-            addReadyCreature(player2, new GiantSpider());
-            setupBlockerDeclaration();
+        @DisplayName("Clears sacrifice set after processing")
+        void clearsSacrificeSetAfterProcessing() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
 
-            // Should not throw — reach can block flying
-            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-            harness.passBothPriorities();
+            combatService.processEndOfCombatSacrifices(gd);
 
-            // Goblin Sky Raider dies (1/2 takes 2 damage), Giant Spider survives (2/4 takes 1 damage)
-            harness.assertNotOnBattlefield(player1, "Goblin Sky Raider");
-            harness.assertOnBattlefield(player2, "Giant Spider");
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
         }
 
         @Test
-        @DisplayName("Flying creature can block another flying creature")
-        void flyingCanBlockFlying() {
-            harness.setLife(player2, 20);
-            // Both Goblin Sky Raider (1/2 Flying) — neither kills the other (1 power < 2 toughness)
-            Permanent attacker = addReadyCreature(player1, new GoblinSkyRaider());
-            attacker.setAttacking(true);
-            addReadyCreature(player2, new GoblinSkyRaider());
-            setupBlockerDeclaration();
+        @DisplayName("Removes orphaned auras after sacrificing")
+        void removesOrphanedAurasAfterSacrificing() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
 
-            // Should not throw — flying can block flying
-            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            combatService.processEndOfCombatSacrifices(gd);
 
-            // Both survive (1 power < 2 toughness), no damage to player
-            harness.assertOnBattlefield(player1, "Goblin Sky Raider");
-            harness.assertOnBattlefield(player2, "Goblin Sky Raider");
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
 
         @Test
-        @DisplayName("Tapped creature cannot block")
-        void tappedCreatureCannotBlock() {
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
-            blocker.tap();
-            setupBlockerDeclaration();
+        @DisplayName("No-op when no permanents are marked for sacrifice")
+        void noOpWhenNoMarkedPermanents() {
+            addPermanent(player1Id, createCreature("Grizzly Bears"));
 
-            assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Invalid blocker index");
+            combatService.processEndOfCombatSacrifices(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
         @Test
-        @DisplayName("Only defending player can declare blockers")
-        void onlyDefendingPlayerCanDeclareBlockers() {
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            addReadyCreature(player2, new GrizzlyBears());
-            setupBlockerDeclaration();
+        @DisplayName("Still removes orphaned auras even when no sacrifices occur")
+        void removesOrphanedAurasEvenWithNoSacrifices() {
+            combatService.processEndOfCombatSacrifices(gd);
 
-            assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Only the defending player");
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
 
         @Test
-        @DisplayName("Empty blocker assignments is valid")
-        void emptyBlockerAssignmentsIsValid() {
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            addReadyCreature(player2, new GrizzlyBears());
-            setupBlockerDeclaration();
+        @DisplayName("Sacrifices multiple permanents from different players")
+        void sacrificesMultiplePermanentsFromDifferentPlayers() {
+            Permanent creature1 = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            Permanent creature2 = addPermanent(player2Id, createCreature("Serra Angel"));
+            gd.permanentsToSacrificeAtEndOfCombat.add(creature1.getId());
+            gd.permanentsToSacrificeAtEndOfCombat.add(creature2.getId());
 
-            gs.declareBlockers(gd, player2, List.of());
+            combatService.processEndOfCombatSacrifices(gd);
 
-            Permanent defender = gd.playerBattlefields.get(player2.getId()).getFirst();
-            assertThat(defender.isBlocking()).isFalse();
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, creature1);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, creature2);
+            assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
         }
 
         @Test
-        @DisplayName("Same creature cannot block more than one attacker by default")
-        void blockerAssignedTooManyTimesRejected() {
-            Permanent attacker1 = addReadyCreature(player1, new GrizzlyBears());
-            attacker1.setAttacking(true);
-            Permanent attacker2 = addReadyCreature(player1, new LlanowarElves());
-            attacker2.setAttacking(true);
-            addReadyCreature(player2, new GrizzlyBears());
-            setupBlockerDeclaration();
+        @DisplayName("Does not sacrifice permanent that is not marked")
+        void doesNotSacrificeUnmarkedPermanent() {
+            Permanent marked = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            Permanent unmarked = addPermanent(player1Id, createCreature("Serra Angel"));
+            gd.permanentsToSacrificeAtEndOfCombat.add(marked.getId());
 
-            assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
-                    new BlockerAssignment(0, 0),
-                    new BlockerAssignment(0, 1)
-            )))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("assigned too many times");
-        }
-    }
+            combatService.processEndOfCombatSacrifices(gd);
 
-    // ===== Combat Damage Resolution Tests =====
-
-    @Nested
-    @DisplayName("Combat Damage")
-    class CombatDamageTest {
-
-        @Test
-        @DisplayName("Unblocked creature deals damage to defending player")
-        void unblockedCreatureDealsDamageToPlayer() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        }
-
-        @Test
-        @DisplayName("Blocked creatures trade when both have lethal power")
-        void blockedCreaturesTradeWhenBothDie() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        }
-
-        @Test
-        @DisplayName("Larger creature survives combat with smaller creature")
-        void largerCreatureSurvivesCombat() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new LlanowarElves());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            harness.assertOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        }
-
-        @Test
-        @DisplayName("Blocked creature does not deal damage to player even if blocker dies")
-        void blockedCreatureDoesNotDamagePlayer() {
-            harness.setLife(player2, 20);
-            // Avatar of Might (8/8 trample) blocked by Llanowar Elves (1/1)
-            // Because Avatar has trample, excess goes to player — let's use a non-trample creature
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new LlanowarElves());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            // Blocker dies but attacker's excess damage does NOT go to player (no trample)
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        }
-
-        @Test
-        @DisplayName("Multiple unblocked attackers each deal damage to defending player")
-        void multipleUnblockedAttackersDealDamage() {
-            harness.setLife(player2, 20);
-            Permanent attacker1 = addReadyCreature(player1, new GrizzlyBears());
-            attacker1.setAttacking(true);
-            Permanent attacker2 = addReadyCreature(player1, new LlanowarElves());
-            attacker2.setAttacking(true);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        }
-
-        @Test
-        @DisplayName("First strike creature kills blocker before it can deal damage back")
-        void firstStrikeKillsBlockerBeforeItDealsDamage() {
-            harness.setLife(player2, 20);
-            // Youthful Knight (2/1 First Strike) vs Grizzly Bears (2/2)
-            // Phase 1: Knight deals 2 first-strike damage to Bears → Bears die
-            // Phase 2: Bears already dead → Knight survives
-            Permanent attacker = addReadyCreature(player1, new YouthfulKnight());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            harness.assertOnBattlefield(player1, "Youthful Knight");
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        }
-
-        @Test
-        @DisplayName("First strike creature dies to blocker with higher toughness")
-        void firstStrikeCreatureDiesToLargerBlocker() {
-            harness.setLife(player2, 20);
-            // Youthful Knight (2/1 First Strike) vs Giant Spider (2/4 Reach)
-            // Phase 1: Knight deals 2 first-strike damage to Spider → Spider at 2 dmg/4 toughness, survives
-            // Phase 2: Spider deals 2 damage to Knight → Knight (1 toughness) dies
-            Permanent attacker = addReadyCreature(player1, new YouthfulKnight());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new GiantSpider());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            harness.assertNotOnBattlefield(player1, "Youthful Knight");
-            harness.assertOnBattlefield(player2, "Giant Spider");
-        }
-
-        @Test
-        @DisplayName("Prevent all combat damage flag prevents all damage")
-        void preventAllCombatDamagePreventsAllDamage() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            gd.preventAllCombatDamage = true;
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        }
-
-        @Test
-        @DisplayName("Prevention shield saves creature from lethal combat damage")
-        void preventionShieldSavesCreature() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new LlanowarElves());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            blocker.setDamagePreventionShield(2);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            // Blocker survives: 2 damage - 2 prevention = 0 effective
-            harness.assertOnBattlefield(player2, "Llanowar Elves");
-        }
-
-        @Test
-        @DisplayName("Infect creature applies -1/-1 counters to blocker instead of damage")
-        void infectAppliesCountersToCreature() {
-            harness.setLife(player2, 20);
-            // Blight Mamba (1/1 Infect) vs Grizzly Bears (2/2)
-            // Infect deals 1 -1/-1 counter to Bears → Bears becomes 1/1, survives
-            // Bears deals 2 damage to Mamba → Mamba (1 toughness) dies
-            Permanent attacker = addReadyCreature(player1, new BlightMamba());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            harness.assertNotOnBattlefield(player1, "Blight Mamba");
-            Permanent survivingBlocker = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElse(null);
-            assertThat(survivingBlocker).isNotNull();
-            assertThat(survivingBlocker.getMinusOneMinusOneCounters()).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("Infect creature deals poison counters to player instead of life loss")
-        void infectDealsPoisonCountersToPlayer() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new BlightMamba());
-            attacker.setAttacking(true);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-            assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("Prevent all combat damage also prevents creature-to-creature damage")
-        void preventAllCombatDamageAlsoPreventsCreatureDamage() {
-            harness.setLife(player2, 20);
-            Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new LlanowarElves());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            gd.preventAllCombatDamage = true;
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            // Both creatures survive — all combat damage prevented
-            harness.assertOnBattlefield(player1, "Grizzly Bears");
-            harness.assertOnBattlefield(player2, "Llanowar Elves");
-        }
-    }
-
-    // ===== Combat State Management Tests =====
-
-    @Nested
-    @DisplayName("Combat State")
-    class CombatStateTest {
-
-        @Test
-        @DisplayName("Permanent.clearCombatState resets attacking and blocking flags")
-        void clearCombatStateResetsFlags() {
-            Permanent creature1 = addReadyCreature(player1, new GrizzlyBears());
-            creature1.setAttacking(true);
-            Permanent creature2 = addReadyCreature(player2, new GrizzlyBears());
-            creature2.setBlocking(true);
-            creature2.addBlockingTarget(0);
-
-            assertThat(creature1.isAttacking()).isTrue();
-            assertThat(creature2.isBlocking()).isTrue();
-            assertThat(creature2.getBlockingTargets()).hasSize(1);
-
-            creature1.clearCombatState();
-            creature2.clearCombatState();
-
-            assertThat(creature1.isAttacking()).isFalse();
-            assertThat(creature2.isBlocking()).isFalse();
-            assertThat(creature2.getBlockingTargets()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Combat state is cleared after full combat resolution")
-        void combatStateClearedAfterResolution() {
-            harness.setLife(player2, 20);
-            // Use a high-toughness creature as both attacker and blocker so they survive
-            Permanent attacker = addReadyCreature(player1, new GiantSpider());
-            attacker.setAttacking(true);
-            Permanent blocker = addReadyCreature(player2, new GiantSpider());
-            blocker.setBlocking(true);
-            blocker.addBlockingTarget(0);
-            setupCombatDamageResolution();
-
-            harness.passBothPriorities();
-
-            // After combat resolves and advances past END_OF_COMBAT, flags should be cleared
-            Permanent survivingAttacker = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Giant Spider"))
-                    .findFirst().orElse(null);
-            assertThat(survivingAttacker).isNotNull();
-            assertThat(survivingAttacker.isAttacking()).isFalse();
-
-            Permanent survivingBlocker = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Giant Spider"))
-                    .findFirst().orElse(null);
-            assertThat(survivingBlocker).isNotNull();
-            assertThat(survivingBlocker.isBlocking()).isFalse();
-            assertThat(survivingBlocker.getBlockingTargets()).isEmpty();
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, marked);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, unmarked);
         }
     }
 }
