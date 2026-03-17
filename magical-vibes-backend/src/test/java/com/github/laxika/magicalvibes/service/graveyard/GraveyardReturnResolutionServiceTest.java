@@ -1,24 +1,23 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
-import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
-import com.github.laxika.magicalvibes.cards.f.FranticSalvage;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GruesomeEncore;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.MorbidPlunder;
-import com.github.laxika.magicalvibes.cards.n.NihilSpellbomb;
-import com.github.laxika.magicalvibes.cards.r.Recover;
-import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -27,18 +26,101 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
-class GraveyardReturnResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class GraveyardReturnResolutionServiceTest {
+
+    @Mock
+    private BattlefieldEntryService battlefieldEntryService;
+
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
+
+    @Mock
+    private LegendRuleService legendRuleService;
+
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private GameBroadcastService gameBroadcastService;
+
+    @Mock
+    private PlayerInputService playerInputService;
+
+    @Mock
+    private LifeResolutionService lifeResolutionService;
+
+    @Mock
+    private ExileService exileService;
+
+    @InjectMocks
+    private GraveyardReturnResolutionService service;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    private static Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        return card;
+    }
 
     // =========================================================================
     // describeFilter — static utility method
@@ -131,7 +213,7 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
     }
 
     // =========================================================================
-    // ReturnTargetCardsFromGraveyardToHandEffect (via Morbid Plunder)
+    // ReturnTargetCardsFromGraveyardToHandEffect
     // =========================================================================
 
     @Nested
@@ -141,42 +223,70 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Returns multiple targeted cards from graveyard to hand")
         void returnsMultipleTargetedCardsToHand() {
-            Card creature1 = new GrizzlyBears();
-            Card creature2 = new LlanowarElves();
-            harness.setGraveyard(player1, List.of(creature1, creature2));
-            harness.setHand(player1, List.of(new MorbidPlunder()));
-            harness.addMana(player1, ManaColor.BLACK, 3);
+            Card creature1 = createCard("Grizzly Bears");
+            Card creature2 = createCard("Llanowar Elves");
+            gd.playerGraveyards.get(player1Id).addAll(List.of(creature1, creature2));
 
-            harness.castSorcery(player1, 0, 0);
-            List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-            harness.handleMultipleGraveyardCardsChosen(player1, validIds);
-            harness.passBothPriorities();
+            ReturnTargetCardsFromGraveyardToHandEffect effect =
+                    new ReturnTargetCardsFromGraveyardToHandEffect(null, 2);
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Morbid Plunder"),
+                    player1Id, "Morbid Plunder", List.of(effect),
+                    List.of(creature1.getId(), creature2.getId()));
 
-            harness.assertNotInGraveyard(player1, "Grizzly Bears");
-            harness.assertNotInGraveyard(player1, "Llanowar Elves");
-            harness.assertInHand(player1, "Grizzly Bears");
-            harness.assertInHand(player1, "Llanowar Elves");
+            when(gameQueryService.findCardInGraveyardById(gd, creature1.getId())).thenReturn(creature1);
+            when(gameQueryService.findCardInGraveyardById(gd, creature2.getId())).thenReturn(creature2);
+
+            service.resolveReturnTargetCardsFromGraveyardToHand(gd, entry, effect);
+
+            assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
+            assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
+                    .containsExactlyInAnyOrder("Grizzly Bears", "Llanowar Elves");
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Grizzly Bears") && msg.contains("Llanowar Elves")
+                            && msg.contains("graveyard to hand")));
         }
 
         @Test
         @DisplayName("Does nothing when no targets are selected")
         void doesNothingWhenNoTargets() {
-            harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-            harness.setHand(player1, List.of(new MorbidPlunder()));
-            harness.addMana(player1, ManaColor.BLACK, 3);
+            ReturnTargetCardsFromGraveyardToHandEffect effect =
+                    new ReturnTargetCardsFromGraveyardToHandEffect(null, 2);
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Morbid Plunder"),
+                    player1Id, "Morbid Plunder", List.of(effect),
+                    List.of());
 
-            harness.castSorcery(player1, 0, 0);
-            harness.handleMultipleGraveyardCardsChosen(player1, List.of());
-            harness.passBothPriorities();
+            service.resolveReturnTargetCardsFromGraveyardToHand(gd, entry, effect);
 
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
+        }
+
+        @Test
+        @DisplayName("Silently skips cards no longer in graveyard")
+        void skipsCardsNoLongerInGraveyard() {
+            Card creature1 = createCard("Grizzly Bears");
+            Card creature2 = createCard("Llanowar Elves");
+            // Only creature1 is still in graveyard
+            gd.playerGraveyards.get(player1Id).add(creature1);
+
+            ReturnTargetCardsFromGraveyardToHandEffect effect =
+                    new ReturnTargetCardsFromGraveyardToHandEffect(null, 2);
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Morbid Plunder"),
+                    player1Id, "Morbid Plunder", List.of(effect),
+                    List.of(creature1.getId(), creature2.getId()));
+
+            when(gameQueryService.findCardInGraveyardById(gd, creature1.getId())).thenReturn(creature1);
+            when(gameQueryService.findCardInGraveyardById(gd, creature2.getId())).thenReturn(null);
+
+            service.resolveReturnTargetCardsFromGraveyardToHand(gd, entry, effect);
+
+            assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
+                    .containsExactly("Grizzly Bears");
+            assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
         }
     }
 
     // =========================================================================
-    // PutTargetCardsFromGraveyardOnTopOfLibraryEffect (via Frantic Salvage)
+    // PutTargetCardsFromGraveyardOnTopOfLibraryEffect
     // =========================================================================
 
     @Nested
@@ -184,58 +294,53 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
     class PutCardsOnTopOfLibraryTests {
 
         @Test
-        @DisplayName("Moves targeted artifact cards from graveyard to top of library")
-        void movesArtifactCardsToTopOfLibrary() {
-            Card artifact1 = new LeoninScimitar();
-            Card artifact2 = new RodOfRuin();
-            harness.setGraveyard(player1, List.of(artifact1, artifact2));
-            harness.setHand(player1, List.of(new FranticSalvage()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+        @DisplayName("Moves targeted cards from graveyard to top of library")
+        void movesCardsToTopOfLibrary() {
+            Card artifact1 = createCard("Leonin Scimitar");
+            Card artifact2 = createCard("Rod of Ruin");
+            gd.playerGraveyards.get(player1Id).addAll(List.of(artifact1, artifact2));
 
-            // Frantic Salvage is an instant — cast it
-            harness.castInstant(player1, 0);
+            PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect =
+                    new PutTargetCardsFromGraveyardOnTopOfLibraryEffect(new CardTypePredicate(CardType.ARTIFACT));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Frantic Salvage"),
+                    player1Id, "Frantic Salvage", List.of(effect),
+                    List.of(artifact1.getId(), artifact2.getId()));
 
-            // Should prompt for multi-graveyard choice (artifact cards)
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-            List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-            harness.handleMultipleGraveyardCardsChosen(player1, validIds);
-            harness.passBothPriorities();
+            when(gameQueryService.findCardInGraveyardById(gd, artifact1.getId())).thenReturn(artifact1);
+            when(gameQueryService.findCardInGraveyardById(gd, artifact2.getId())).thenReturn(artifact2);
 
-            // Artifacts should no longer be in graveyard
-            harness.assertNotInGraveyard(player1, "Leonin Scimitar");
-            harness.assertNotInGraveyard(player1, "Rod of Ruin");
+            service.resolvePutTargetCardsFromGraveyardOnTopOfLibrary(gd, entry, effect);
 
-            // Both artifacts were put on top of library, then DrawCardEffect drew the topmost one.
-            // So one should be in library and one in hand.
-            List<Card> library = gd.playerDecks.get(player1.getId());
-            List<Card> hand = gd.playerHands.get(player1.getId());
-            boolean scimitarFound = library.stream().anyMatch(c -> c.getName().equals("Leonin Scimitar"))
-                    || hand.stream().anyMatch(c -> c.getName().equals("Leonin Scimitar"));
-            boolean rodFound = library.stream().anyMatch(c -> c.getName().equals("Rod of Ruin"))
-                    || hand.stream().anyMatch(c -> c.getName().equals("Rod of Ruin"));
-            assertThat(scimitarFound).isTrue();
-            assertThat(rodFound).isTrue();
+            assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
+            assertThat(gd.playerDecks.get(player1Id)).extracting(Card::getName)
+                    .containsExactlyInAnyOrder("Leonin Scimitar", "Rod of Ruin");
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("on top of their library") && msg.contains("from graveyard")));
         }
 
         @Test
-        @DisplayName("Non-artifact cards are not valid targets for artifact filter")
-        void nonArtifactNotValidTarget() {
-            Card creature = new GrizzlyBears();
-            harness.setGraveyard(player1, List.of(creature));
-            harness.setHand(player1, List.of(new FranticSalvage()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+        @DisplayName("Silently skips cards no longer in graveyard")
+        void skipsCardsNoLongerInGraveyard() {
+            Card artifact = createCard("Leonin Scimitar");
+            // Card is no longer in graveyard
 
-            // Frantic Salvage is an instant
-            harness.castInstant(player1, 0);
+            PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect =
+                    new PutTargetCardsFromGraveyardOnTopOfLibraryEffect(new CardTypePredicate(CardType.ARTIFACT));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Frantic Salvage"),
+                    player1Id, "Frantic Salvage", List.of(effect),
+                    List.of(artifact.getId()));
 
-            // No valid artifact targets, so no graveyard choice prompt
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+            when(gameQueryService.findCardInGraveyardById(gd, artifact.getId())).thenReturn(null);
+
+            service.resolvePutTargetCardsFromGraveyardOnTopOfLibrary(gd, entry, effect);
+
+            assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
         }
     }
 
     // =========================================================================
     // PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect
-    //   (via Gruesome Encore)
     // =========================================================================
 
     @Nested
@@ -245,46 +350,76 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Puts creature from opponent's graveyard onto battlefield with haste")
         void putsCreatureWithHaste() {
-            Card target = new GrizzlyBears();
-            harness.setGraveyard(player2, List.of(target));
-            harness.setHand(player1, List.of(new GruesomeEncore()));
-            harness.addMana(player1, ManaColor.BLACK, 1);
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            Card target = createCard("Grizzly Bears");
 
-            harness.castSorcery(player1, 0, target.getId());
-            harness.passBothPriorities();
+            PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect effect =
+                    new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gruesome Encore"),
+                    player1Id, "Gruesome Encore", List.of(effect), 0,
+                    target.getId(), null);
 
-            harness.assertOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotInGraveyard(player2, "Grizzly Bears");
+            when(gameQueryService.findCardInGraveyardById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findGraveyardOwnerById(gd, target.getId())).thenReturn(player2Id);
+            when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+            lenient().when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
 
-            Permanent creature = findPermanent(player1, "Grizzly Bears");
-            assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
-            assertThat(creature.isExileIfLeavesBattlefield()).isTrue();
-            assertThat(gd.pendingTokenExilesAtEndStep).contains(creature.getId());
-            assertThat(gd.stolenCreatures).containsKey(creature.getId());
+            service.resolvePutCreatureFromOpponentGraveyardWithExile(gd, entry);
+
+            verify(permanentRemovalService).removeCardFromGraveyardById(gd, target.getId());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id),
+                    argThat(p -> p.getGrantedKeywords().contains(Keyword.HASTE)
+                            && p.isExileIfLeavesBattlefield()),
+                    eq(Set.of()));
+            assertThat(gd.pendingTokenExilesAtEndStep).isNotEmpty();
+            assertThat(gd.stolenCreatures).isNotEmpty();
+            assertThat(gd.permanentControlStolenCreatures).isNotEmpty();
         }
 
         @Test
         @DisplayName("Fizzles if target card is no longer in graveyard")
         void fizzlesIfTargetGone() {
-            Card target = new GrizzlyBears();
-            harness.setGraveyard(player2, List.of(target));
-            harness.setHand(player1, List.of(new GruesomeEncore()));
-            harness.addMana(player1, ManaColor.BLACK, 1);
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            UUID targetId = UUID.randomUUID();
 
-            harness.castSorcery(player1, 0, target.getId());
-            // Remove target before resolution
-            gd.playerGraveyards.get(player2.getId()).clear();
-            harness.passBothPriorities();
+            PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect effect =
+                    new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gruesome Encore"),
+                    player1Id, "Gruesome Encore", List.of(effect), 0,
+                    targetId, null);
 
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            when(gameQueryService.findCardInGraveyardById(gd, targetId)).thenReturn(null);
+
+            service.resolvePutCreatureFromOpponentGraveyardWithExile(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("fizzles")));
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                    any(), any(), any(Permanent.class), any());
+        }
+
+        @Test
+        @DisplayName("Fizzles if target is in controller's own graveyard")
+        void fizzlesIfTargetInOwnGraveyard() {
+            Card target = createCard("Grizzly Bears");
+
+            PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect effect =
+                    new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gruesome Encore"),
+                    player1Id, "Gruesome Encore", List.of(effect), 0,
+                    target.getId(), null);
+
+            when(gameQueryService.findCardInGraveyardById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findGraveyardOwnerById(gd, target.getId())).thenReturn(player1Id);
+
+            service.resolvePutCreatureFromOpponentGraveyardWithExile(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    argThat(msg -> msg.contains("fizzles") && msg.contains("not in opponent's graveyard")));
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                    any(), any(), any(Permanent.class), any());
         }
     }
 
     // =========================================================================
-    // ExileTargetPlayerGraveyardEffect (via Nihil Spellbomb)
+    // ExileTargetPlayerGraveyardEffect
     // =========================================================================
 
     @Nested
@@ -294,48 +429,114 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Exiles all cards from target player's graveyard")
         void exilesEntireGraveyard() {
-            Card creature = new GrizzlyBears();
-            Card artifact = new LeoninScimitar();
-            harness.setGraveyard(player2, List.of(creature, artifact));
+            Card creature = createCard("Grizzly Bears");
+            Card artifact = createCard("Leonin Scimitar");
+            gd.playerGraveyards.get(player2Id).addAll(List.of(creature, artifact));
 
-            // Add Nihil Spellbomb to battlefield (not summoning sick — artifacts don't have it)
-            harness.addToBattlefield(player1, new NihilSpellbomb());
+            ExileTargetPlayerGraveyardEffect effect = new ExileTargetPlayerGraveyardEffect();
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Nihil Spellbomb"),
+                    player1Id, "Nihil Spellbomb", List.of(effect), 0,
+                    player2Id, null);
 
-            // Activate: {T}, Sacrifice Nihil Spellbomb: Exile target player's graveyard
-            harness.activateAbility(player1, 0, null, player2.getId());
+            service.resolveExileTargetPlayerGraveyard(gd, entry);
 
-            // Per CR 603.3 death triggers from sacrifice go on top of the activated ability
-            harness.passBothPriorities(); // resolve death trigger MayPayManaEffect → MAY prompt
-            harness.handleMayAbilityChosen(player1, false); // decline draw
-            harness.passBothPriorities(); // resolve activated ability (exile graveyard)
-
-            // Player2's graveyard should be empty
-            assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-            // Cards should be in exile
-            assertThat(gd.playerExiledCards.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"))
-                    .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
+            assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
+            assertThat(gd.playerExiledCards.get(player2Id))
+                    .extracting(Card::getName)
+                    .containsExactlyInAnyOrder("Grizzly Bears", "Leonin Scimitar");
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("exiled") && msg.contains("2 cards")));
         }
 
         @Test
         @DisplayName("Logs message when targeting empty graveyard")
         void logsMessageForEmptyGraveyard() {
-            harness.setGraveyard(player2, List.of());
-            harness.addToBattlefield(player1, new NihilSpellbomb());
+            ExileTargetPlayerGraveyardEffect effect = new ExileTargetPlayerGraveyardEffect();
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Nihil Spellbomb"),
+                    player1Id, "Nihil Spellbomb", List.of(effect), 0,
+                    player2Id, null);
 
-            harness.activateAbility(player1, 0, null, player2.getId());
+            service.resolveExileTargetPlayerGraveyard(gd, entry);
 
-            // Per CR 603.3 death triggers from sacrifice go on top of the activated ability
-            harness.passBothPriorities(); // resolve death trigger MayPayManaEffect → MAY prompt
-            harness.handleMayAbilityChosen(player1, false); // decline draw
-            harness.passBothPriorities(); // resolve activated ability
-
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("already empty"));
+            assertThat(gd.playerExiledCards.get(player2Id)).isEmpty();
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("already empty")));
         }
     }
 
     // =========================================================================
-    // ReturnCardFromGraveyardEffect — pre-targeted to hand (via Recover)
+    // ExileCardsFromGraveyardEffect
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveExileCardsFromGraveyard")
+    class ExileCardsFromGraveyardTests {
+
+        @Test
+        @DisplayName("Exiles targeted cards still in graveyards")
+        void exilesTargetedCards() {
+            Card creature = createCard("Grizzly Bears");
+            Card artifact = createCard("Leonin Scimitar");
+            gd.playerGraveyards.get(player1Id).add(creature);
+            gd.playerGraveyards.get(player2Id).add(artifact);
+
+            ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(2, 0);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Scavenging Ooze"),
+                    player1Id, "Scavenging Ooze", List.of(effect),
+                    List.of(creature.getId(), artifact.getId()));
+
+            when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.findCardInGraveyardById(gd, artifact.getId())).thenReturn(artifact);
+
+            service.resolveExileCardsFromGraveyard(gd, entry, effect);
+
+            verify(exileService).exileCard(gd, player1Id, creature);
+            verify(exileService).exileCard(gd, player2Id, artifact);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("exiles") && msg.contains("Grizzly Bears")
+                            && msg.contains("Leonin Scimitar")));
+        }
+
+        @Test
+        @DisplayName("Gains life after exiling when lifeGain is positive")
+        void gainsLifeAfterExiling() {
+            Card creature = createCard("Grizzly Bears");
+            gd.playerGraveyards.get(player1Id).add(creature);
+
+            ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(1, 3);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Scavenging Ooze"),
+                    player1Id, "Scavenging Ooze", List.of(effect),
+                    List.of(creature.getId()));
+
+            when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+
+            service.resolveExileCardsFromGraveyard(gd, entry, effect);
+
+            verify(exileService).exileCard(gd, player1Id, creature);
+            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+        }
+
+        @Test
+        @DisplayName("Skips cards no longer in graveyard")
+        void skipsCardsNoLongerInGraveyard() {
+            UUID goneCardId = UUID.randomUUID();
+
+            ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(1, 0);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Scavenging Ooze"),
+                    player1Id, "Scavenging Ooze", List.of(effect),
+                    List.of(goneCardId));
+
+            when(gameQueryService.findCardInGraveyardById(gd, goneCardId)).thenReturn(null);
+
+            service.resolveExileCardsFromGraveyard(gd, entry, effect);
+
+            verify(exileService, never()).exileCard(any(), any(), any());
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
+        }
+    }
+
+    // =========================================================================
+    // ReturnCardFromGraveyardEffect — pre-targeted to hand
     // =========================================================================
 
     @Nested
@@ -345,39 +546,75 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Returns pre-targeted creature card from graveyard to hand")
         void returnsPreTargetedCreatureToHand() {
-            Card creature = new GrizzlyBears();
-            harness.setGraveyard(player1, List.of(creature));
-            harness.setHand(player1, List.of(new Recover()));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+            Card creature = createCard("Grizzly Bears");
 
-            harness.castSorcery(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .targetGraveyard(true)
+                    .build();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Recover"),
+                    player1Id, "Recover", new ArrayList<>(List.of(effect)),
+                    creature.getId(), Zone.GRAVEYARD);
 
-            harness.assertInHand(player1, "Grizzly Bears");
-            harness.assertNotInGraveyard(player1, "Grizzly Bears");
+            when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+
+            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+
+            verify(permanentRemovalService).removeCardFromGraveyardById(gd, creature.getId());
+            assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
+                    .containsExactly("Grizzly Bears");
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Grizzly Bears") && msg.contains("graveyard to hand")));
+        }
+
+        @Test
+        @DisplayName("Gains life equal to mana value when effect specifies it")
+        void gainsLifeEqualToManaValue() {
+            Card creature = createCard("Grizzly Bears");
+            creature.setManaCost("{1}{G}");
+
+            ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .targetGraveyard(true)
+                    .gainLifeEqualToManaValue(true)
+                    .build();
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Razor Hippogriff"),
+                    player1Id, "Razor Hippogriff", new ArrayList<>(List.of(effect)),
+                    creature.getId(), Zone.GRAVEYARD);
+
+            when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+
+            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+
+            verify(permanentRemovalService).removeCardFromGraveyardById(gd, creature.getId());
+            verify(lifeResolutionService).applyGainLife(gd, player1Id, 2);
         }
 
         @Test
         @DisplayName("Fizzles when pre-targeted card is no longer in graveyard")
         void fizzlesWhenTargetGone() {
-            Card creature = new GrizzlyBears();
-            harness.setGraveyard(player1, List.of(creature));
-            harness.setHand(player1, List.of(new Recover()));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+            UUID targetId = UUID.randomUUID();
 
-            harness.castSorcery(player1, 0, creature.getId());
-            // Remove target before resolution
-            gd.playerGraveyards.get(player1.getId()).clear();
-            harness.passBothPriorities();
+            ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .targetGraveyard(true)
+                    .build();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Recover"),
+                    player1Id, "Recover", new ArrayList<>(List.of(effect)),
+                    targetId, Zone.GRAVEYARD);
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            when(gameQueryService.findCardInGraveyardById(gd, targetId)).thenReturn(null);
+
+            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("fizzles")));
         }
     }
 
     // =========================================================================
-    // ReturnCardFromGraveyardEffect — search all graveyards (via Beacon of Unrest)
+    // ReturnCardFromGraveyardEffect — search all graveyards
     // =========================================================================
 
     @Nested
@@ -387,64 +624,77 @@ class GraveyardReturnResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Prompts graveyard choice when matching cards exist in any graveyard")
         void promptsChoiceWhenMatchingCardsExist() {
-            Card creature = new GrizzlyBears();
-            Card artifact = new LeoninScimitar();
-            harness.setGraveyard(player1, List.of(creature));
-            harness.setGraveyard(player2, List.of(artifact));
-            harness.setHand(player1, List.of(new BeaconOfUnrest()));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+            Card creature = createCard("Grizzly Bears");
+            Card artifact = createCard("Leonin Scimitar");
+            gd.playerGraveyards.get(player1Id).add(creature);
+            gd.playerGraveyards.get(player2Id).add(artifact);
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passBothPriorities();
+            CardPredicate filter = new CardAnyOfPredicate(List.of(
+                    new CardTypePredicate(CardType.ARTIFACT),
+                    new CardTypePredicate(CardType.CREATURE)
+            ));
+            ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                    .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                    .filter(filter)
+                    .build();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
+                    player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
 
-            // Should be awaiting graveyard choice (search all graveyards)
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.matchesCardPredicate(eq(artifact), eq(filter), any())).thenReturn(true);
+
+            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+
+            verify(playerInputService).beginGraveyardChoice(eq(gd), eq(player1Id), any(), any());
         }
 
         @Test
-        @DisplayName("Puts chosen creature from opponent's graveyard onto battlefield")
-        void putsChosenCardOntoBattlefield() {
-            Card creature = new GrizzlyBears();
-            harness.setGraveyard(player2, List.of(creature));
-            harness.setHand(player1, List.of(new BeaconOfUnrest()));
-            harness.addMana(player1, ManaColor.BLACK, 5);
-
-            harness.castSorcery(player1, 0, 0);
-            harness.passBothPriorities();
-
-            // Choose the creature (index 0 in the card pool)
-            harness.handleGraveyardCardChosen(player1, 0);
-
-            harness.assertOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotInGraveyard(player2, "Grizzly Bears");
-        }
-
-        @Test
-        @DisplayName("Logs message and skips shuffle when no matching cards in any graveyard")
+        @DisplayName("Logs message and removes shuffle effect when no matching cards in any graveyard")
         void logsMessageWhenNoMatchingCards() {
-            // No artifact or creature cards in any graveyard
-            harness.setGraveyard(player1, List.of());
-            harness.setGraveyard(player2, List.of());
-            harness.setHand(player1, List.of(new BeaconOfUnrest()));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+            CardPredicate filter = new CardAnyOfPredicate(List.of(
+                    new CardTypePredicate(CardType.ARTIFACT),
+                    new CardTypePredicate(CardType.CREATURE)
+            ));
+            ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                    .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                    .filter(filter)
+                    .build();
+            ShuffleIntoLibraryEffect shuffleEffect = new ShuffleIntoLibraryEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
+                    player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect, shuffleEffect)));
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passBothPriorities();
+            service.resolveReturnCardFromGraveyard(gd, entry, effect);
 
-            // Should not be awaiting input (no valid choices)
-            assertThat(gd.interaction.awaitingInputType()).isNull();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no ") && log.contains("in any graveyard"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("no ") && msg.contains("in any graveyard")));
+            // Shuffle effect should be removed when no valid targets
+            assertThat(entry.getEffectsToResolve()).noneMatch(e -> e instanceof ShuffleIntoLibraryEffect);
         }
-    }
 
-    // =========================================================================
-    // Helper
-    // =========================================================================
+        @Test
+        @DisplayName("Does not prompt when all graveyard cards fail predicate")
+        void doesNotPromptWhenNoCardsMatchPredicate() {
+            Card creature = createCard("Grizzly Bears");
+            gd.playerGraveyards.get(player1Id).add(creature);
 
-    private Permanent findPermanent(com.github.laxika.magicalvibes.model.Player player, String cardName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError(cardName + " not found on battlefield"));
+            CardPredicate filter = new CardTypePredicate(CardType.ARTIFACT);
+            ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                    .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                    .filter(filter)
+                    .build();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
+                    player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
+
+            when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(false);
+
+            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+
+            verify(playerInputService, never()).beginGraveyardChoice(any(), any(), any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("no ") && msg.contains("in any graveyard")));
+        }
     }
 }
