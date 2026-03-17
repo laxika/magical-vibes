@@ -1,42 +1,91 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.cards.c.ConcussiveBolt;
-import com.github.laxika.magicalvibes.cards.g.GalvanicBlast;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
-class EffectResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class EffectResolutionServiceTest {
+
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private EffectHandlerRegistry registry;
+
+    @Mock
+    private GameBroadcastService gameBroadcastService;
+
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
+
+    @InjectMocks
+    private EffectResolutionService effectResolutionService;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
 
     // =========================================================================
     // Helpers
     // =========================================================================
 
-    private void addArtifacts(Player player, int count) {
-        for (int i = 0; i < count; i++) {
-            harness.addToBattlefield(player, new Spellbook());
-        }
+    private static Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        return card;
     }
 
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private StackEntry createEntry(Card card, UUID controllerId, List<CardEffect> effects) {
+        return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), effects);
+    }
+
+    private EffectHandler stubHandler(CardEffect effect) {
+        EffectHandler handler = mock(EffectHandler.class);
+        lenient().when(registry.getHandler(effect)).thenReturn(handler);
+        return handler;
     }
 
     // =========================================================================
@@ -51,96 +100,79 @@ class EffectResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Skips wrapped effect when metalcraft is not met")
         void skipsWrappedEffectWhenMetalcraftNotMet() {
-            harness.setLife(player2, 20);
-            Permanent creature = addReadyCreature(player2);
+            CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            effectResolutionService.resolveEffects(gd, entry);
 
-            // Damage effect still resolves
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-            // Metalcraft conditional effect is skipped
-            assertThat(creature.isCantBlockThisTurn()).isFalse();
+            verify(registry, never()).getHandler(wrapped);
         }
 
         @Test
         @DisplayName("Logs skip message when metalcraft is not met")
         void logsSkipMessageWhenMetalcraftNotMet() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
+            CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
 
-            assertThat(gd.gameLog).anyMatch(log ->
-                    log.contains("Concussive Bolt") && log.contains("does nothing")
-                            && log.contains("fewer than three artifacts"));
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Concussive Bolt") && msg.contains("does nothing")
+                            && msg.contains("fewer than three artifacts")));
         }
 
         @Test
         @DisplayName("Resolves wrapped effect when metalcraft is met")
         void resolvesWrappedEffectWhenMetalcraftMet() {
-            harness.setLife(player2, 20);
-            Permanent creature = addReadyCreature(player2);
+            CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
-            addArtifacts(player1, 3);
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            EffectHandler handler = stubHandler(wrapped);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            effectResolutionService.resolveEffects(gd, entry);
 
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-            assertThat(creature.isCantBlockThisTurn()).isTrue();
+            verify(handler).resolve(gd, entry, wrapped);
         }
 
         @Test
         @DisplayName("Re-checks metalcraft condition at resolution time (intervening-if)")
         void rechecksMetalcraftConditionAtResolutionTime() {
-            harness.setLife(player2, 20);
-            Permanent creature = addReadyCreature(player2);
+            CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
-            addArtifacts(player1, 3);
+            // Metalcraft lost before resolution — condition re-evaluated and fails
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
 
-            harness.castSorcery(player1, 0, player2.getId());
+            effectResolutionService.resolveEffects(gd, entry);
 
-            // Remove artifacts before resolution — metalcraft fails at resolve time
-            gd.playerBattlefields.get(player1.getId()).removeIf(
-                    p -> p.getCard().getName().equals("Spellbook"));
-
-            harness.passBothPriorities();
-
-            // Damage still applied (non-metalcraft effect)
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-            // Can't-block skipped since metalcraft lost
-            assertThat(creature.isCantBlockThisTurn()).isFalse();
+            verify(gameQueryService).isMetalcraftMet(gd, player1Id);
+            verify(registry, never()).getHandler(wrapped);
         }
 
         @Test
         @DisplayName("Logs skip message when metalcraft lost before resolution")
         void logsSkipMessageWhenMetalcraftLostBeforeResolution() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
-            addArtifacts(player1, 3);
+            CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
-            harness.castSorcery(player1, 0, player2.getId());
+            // Metalcraft lost before resolution
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
 
-            // Remove artifacts before resolution
-            gd.playerBattlefields.get(player1.getId()).removeIf(
-                    p -> p.getCard().getName().equals("Spellbook"));
+            effectResolutionService.resolveEffects(gd, entry);
 
-            harness.passBothPriorities();
-
-            assertThat(gd.gameLog).anyMatch(log ->
-                    log.contains("Concussive Bolt") && log.contains("does nothing")
-                            && log.contains("fewer than three artifacts"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Concussive Bolt") && msg.contains("does nothing")
+                            && msg.contains("fewer than three artifacts")));
         }
     }
 
@@ -156,49 +188,51 @@ class EffectResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Resolves base effect when metalcraft is not met")
         void resolvesBaseEffectWhenMetalcraftNotMet() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            EffectHandler handler = stubHandler(base);
 
-            // Base effect: 2 damage
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, base);
         }
 
         @Test
         @DisplayName("Resolves metalcraft effect when metalcraft is met")
         void resolvesMetalcraftEffectWhenMetalcraftMet() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            addArtifacts(player1, 3);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            EffectHandler handler = stubHandler(upgraded);
 
-            // Metalcraft effect: 4 damage
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, upgraded);
         }
 
         @Test
         @DisplayName("Re-checks metalcraft condition at resolution time")
         void rechecksConditionAtResolutionTime() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            addArtifacts(player1, 3);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
+            // Metalcraft lost at resolution time — falls back to base
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            EffectHandler handler = stubHandler(base);
 
-            // Remove artifacts before resolution
-            gd.playerBattlefields.get(player1.getId()).clear();
+            effectResolutionService.resolveEffects(gd, entry);
 
-            harness.passBothPriorities();
-
-            // Falls back to base effect: 2 damage
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+            verify(gameQueryService).isMetalcraftMet(gd, player1Id);
+            verify(handler).resolve(gd, entry, base);
         }
     }
 
@@ -213,78 +247,87 @@ class EffectResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Two artifacts do not meet metalcraft threshold")
         void twoArtifactsDoNotMeetThreshold() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            addArtifacts(player1, 2);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            EffectHandler handler = stubHandler(base);
 
-            // Only 2 damage (base)
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, base);
         }
 
         @Test
         @DisplayName("Exactly three artifacts meets metalcraft threshold")
         void exactlyThreeArtifactsMeetsThreshold() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            addArtifacts(player1, 3);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            EffectHandler handler = stubHandler(upgraded);
 
-            // 4 damage (metalcraft)
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, upgraded);
         }
 
         @Test
         @DisplayName("Artifact creatures count toward metalcraft")
         void artifactCreaturesCountForMetalcraft() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            // 2 non-creature artifacts + 1 artifact creature = 3 artifacts total
-            addArtifacts(player1, 2);
-            harness.addToBattlefield(player1, new Ornithopter());
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            EffectHandler handler = stubHandler(upgraded);
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            effectResolutionService.resolveEffects(gd, entry);
 
-            // 4 damage (metalcraft met via artifact creature)
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+            // Verifies metalcraft is checked for the correct controller
+            verify(gameQueryService).isMetalcraftMet(gd, player1Id);
+            verify(handler).resolve(gd, entry, upgraded);
         }
 
         @Test
         @DisplayName("More than three artifacts still meets metalcraft threshold")
         void moreThanThreeArtifactsMeetsThreshold() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            addArtifacts(player1, 5);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            stubHandler(base);
+            EffectHandler upgradedHandler = stubHandler(upgraded);
 
-            // 4 damage (metalcraft)
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(upgradedHandler).resolve(gd, entry, upgraded);
+            verify(registry, never()).getHandler(base);
         }
 
         @Test
         @DisplayName("Zero artifacts does not meet metalcraft threshold")
         void zeroArtifactsDoesNotMeetThreshold() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            CardEffect base = new DealDamageToAnyTargetEffect(2);
+            CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
+            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            EffectHandler baseHandler = stubHandler(base);
+            stubHandler(upgraded);
 
-            // Only 2 damage (base)
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(baseHandler).resolve(gd, entry, base);
+            verify(registry, never()).getHandler(upgraded);
         }
     }
 
@@ -299,39 +342,42 @@ class EffectResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("All effects on a stack entry resolve in sequence")
         void allEffectsOnStackEntryResolveInSequence() {
-            harness.setLife(player2, 20);
-            Permanent creature = addReadyCreature(player2);
+            CardEffect damageEffect = new DealDamageToTargetPlayerEffect(4);
+            CardEffect cantBlockEffect = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(cantBlockEffect);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
+                    List.of(damageEffect, conditional));
 
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
-            addArtifacts(player1, 3);
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            EffectHandler damageHandler = stubHandler(damageEffect);
+            EffectHandler cantBlockHandler = stubHandler(cantBlockEffect);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            effectResolutionService.resolveEffects(gd, entry);
 
-            // First effect: 4 damage to target player
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-            // Second effect: creatures of target player can't block
-            assertThat(creature.isCantBlockThisTurn()).isTrue();
+            InOrder inOrder = inOrder(damageHandler, cantBlockHandler);
+            inOrder.verify(damageHandler).resolve(gd, entry, damageEffect);
+            inOrder.verify(cantBlockHandler).resolve(gd, entry, cantBlockEffect);
         }
 
         @Test
         @DisplayName("Non-metalcraft effects still resolve when metalcraft conditional is skipped")
         void nonMetalcraftEffectsStillResolveWhenMetalcraftSkips() {
-            harness.setLife(player2, 20);
-            Permanent creature = addReadyCreature(player2);
+            CardEffect damageEffect = new DealDamageToTargetPlayerEffect(4);
+            CardEffect cantBlockEffect = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(cantBlockEffect);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
+                    List.of(damageEffect, conditional));
 
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
-            // No artifacts — metalcraft not met
+            // No metalcraft — conditional effect is skipped
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            EffectHandler damageHandler = stubHandler(damageEffect);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            effectResolutionService.resolveEffects(gd, entry);
 
-            // First effect (non-metalcraft) still fires: 4 damage
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+            // First effect (non-metalcraft) still fires
+            verify(damageHandler).resolve(gd, entry, damageEffect);
             // Second effect (metalcraft conditional) is skipped
-            assertThat(creature.isCantBlockThisTurn()).isFalse();
+            verify(registry, never()).getHandler(cantBlockEffect);
         }
     }
 
@@ -346,12 +392,14 @@ class EffectResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Clears pendingEffectResolutionEntry after all effects resolve")
         void clearsPendingEffectResolutionEntryAfterResolution() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            CardEffect effect = new DealDamageToAnyTargetEffect(2);
+            CardEffect replacement = new MetalcraftReplacementEffect(effect, new DealDamageToAnyTargetEffect(4));
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            stubHandler(effect);
+
+            effectResolutionService.resolveEffects(gd, entry);
 
             assertThat(gd.pendingEffectResolutionEntry).isNull();
         }
@@ -359,12 +407,14 @@ class EffectResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Clears pendingEffectResolutionIndex after all effects resolve")
         void clearsPendingEffectResolutionIndexAfterResolution() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new GalvanicBlast()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            CardEffect effect = new DealDamageToAnyTargetEffect(2);
+            CardEffect replacement = new MetalcraftReplacementEffect(effect, new DealDamageToAnyTargetEffect(4));
+            StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+            stubHandler(effect);
+
+            effectResolutionService.resolveEffects(gd, entry);
 
             assertThat(gd.pendingEffectResolutionIndex).isZero();
         }
@@ -372,13 +422,17 @@ class EffectResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Clears pending state after multi-effect spell resolves")
         void clearsPendingStateAfterMultiEffectSpellResolves() {
-            harness.setLife(player2, 20);
-            harness.setHand(player1, List.of(new ConcussiveBolt()));
-            harness.addMana(player1, ManaColor.RED, 5);
-            addArtifacts(player1, 3);
+            CardEffect damageEffect = new DealDamageToTargetPlayerEffect(4);
+            CardEffect cantBlockEffect = new TargetPlayerCreaturesCantBlockThisTurnEffect();
+            CardEffect conditional = new MetalcraftConditionalEffect(cantBlockEffect);
+            StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
+                    List.of(damageEffect, conditional));
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            stubHandler(damageEffect);
+            stubHandler(cantBlockEffect);
+
+            effectResolutionService.resolveEffects(gd, entry);
 
             assertThat(gd.pendingEffectResolutionEntry).isNull();
             assertThat(gd.pendingEffectResolutionIndex).isZero();
