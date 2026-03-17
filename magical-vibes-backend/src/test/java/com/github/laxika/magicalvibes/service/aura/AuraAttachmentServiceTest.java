@@ -1,29 +1,64 @@
 package com.github.laxika.magicalvibes.service.aura;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
-import com.github.laxika.magicalvibes.cards.d.Demystify;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
-import com.github.laxika.magicalvibes.cards.p.Persuasion;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.t.Terror;
-import com.github.laxika.magicalvibes.cards.t.Threaten;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class AuraAttachmentServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class AuraAttachmentServiceTest {
+
+    @Mock private GameQueryService gameQueryService;
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GraveyardService graveyardService;
+
+    @InjectMocks private AuraAttachmentService service;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
 
     // ===== removeOrphanedAuras — Aura behavior =====
 
@@ -34,99 +69,104 @@ class AuraAttachmentServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Aura goes to graveyard when enchanted creature is destroyed")
         void auraGoesToGraveyardWhenCreatureDestroyed() {
-            Permanent creature = addCreatureReady(player2);
-            addAuraAttachedTo(player1, new HolyStrength(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent aura = createAura("Holy Strength");
+            aura.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player1Id).add(aura);
 
-            // Terror destroys the creature, which triggers removeOrphanedAuras
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, creature.getId());
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player1, "Holy Strength");
-            harness.assertInGraveyard(player1, "Holy Strength");
+            service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(aura);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(aura.getOriginalCard()), eq(Zone.BATTLEFIELD));
         }
 
         @Test
         @DisplayName("Multiple auras on same creature all go to graveyard when creature dies")
         void multipleAurasRemovedWhenCreatureDies() {
-            Permanent creature = addCreatureReady(player2);
-            addAuraAttachedTo(player1, new HolyStrength(), creature);
-            addAuraAttachedTo(player1, new HolyStrength(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent aura1 = createAura("Holy Strength");
+            aura1.setAttachedTo(deadCreatureId);
+            Permanent aura2 = createAura("Holy Strength");
+            aura2.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player1Id).add(aura1);
+            gd.playerBattlefields.get(player1Id).add(aura2);
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, creature.getId());
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
 
-            harness.assertNotOnBattlefield(player1, "Holy Strength");
-            assertThat(gd.playerGraveyards.get(player1.getId())
-                    .stream().filter(c -> c.getName().equals("Holy Strength")).count())
-                    .isEqualTo(2);
+            service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).isEmpty();
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, aura1.getOriginalCard(), Zone.BATTLEFIELD);
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, aura2.getOriginalCard(), Zone.BATTLEFIELD);
         }
 
         @Test
-        @DisplayName("Aura from opponent goes to opponent's graveyard when creature dies from damage")
+        @DisplayName("Aura from opponent goes to opponent's graveyard when creature dies")
         void opponentAuraGoesToOpponentGraveyard() {
-            // Player 2 has a creature, player 2 also has an aura on it
-            Permanent creature = addCreatureReady(player2);
-            addAuraAttachedTo(player2, new HolyStrength(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent aura = createAura("Holy Strength");
+            aura.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player2Id).add(aura);
 
-            // Shock deals 2 damage to the 2/2 creature, killing it.
-            // Note: Holy Strength gives +1/+2, making it 3/4, so Shock won't kill it.
-            // Use Terror instead which destroys it outright.
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, creature.getId());
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Holy Strength");
-            harness.assertInGraveyard(player2, "Holy Strength");
+            service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).doesNotContain(aura);
+            verify(graveyardService).addCardToGraveyard(gd, player2Id, aura.getOriginalCard(), Zone.BATTLEFIELD);
         }
 
         @Test
         @DisplayName("Aura attached to a valid creature is not removed")
         void auraNotRemovedWhenCreatureStillExists() {
-            Permanent creature = addCreatureReady(player1);
-            Permanent aura = addAuraAttachedTo(player1, new HolyStrength(), creature);
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
 
-            // Kill a different creature — aura on living creature should stay
-            Permanent otherCreature = addCreatureReady(player2);
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, otherCreature.getId());
+            Permanent aura = createAura("Holy Strength");
+            aura.setAttachedTo(creature.getId());
+            gd.playerBattlefields.get(player1Id).add(aura);
 
-            harness.assertOnBattlefield(player1, "Holy Strength");
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+
+            service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(aura);
             assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(), any());
         }
 
         @Test
         @DisplayName("Game log records aura going to graveyard when enchanted creature is destroyed")
         void gameLogRecordsAuraRemoval() {
-            Permanent creature = addCreatureReady(player2);
-            addAuraAttachedTo(player1, new HolyStrength(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent aura = createAura("Holy Strength");
+            aura.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player1Id).add(aura);
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.clearMessages();
-            harness.castAndResolveInstant(player1, 0, creature.getId());
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Holy Strength") && log.contains("graveyard"));
+            service.removeOrphanedAuras(gd);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Holy Strength is put into the graveyard (enchanted creature left the battlefield)."));
         }
 
         @Test
         @DisplayName("Player 1's aura on player 2's creature goes to player 1's graveyard")
         void crossPlayerAuraGoesToControllerGraveyard() {
-            Permanent creature = addCreatureReady(player2);
-            addAuraAttachedTo(player1, new HolyStrength(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent aura = createAura("Holy Strength");
+            aura.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player1Id).add(aura);
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, creature.getId());
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
 
-            // Aura should go to player1's graveyard (the controller), not player2's
-            harness.assertInGraveyard(player1, "Holy Strength");
-            harness.assertNotInGraveyard(player2, "Holy Strength");
+            service.removeOrphanedAuras(gd);
+
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), any(), eq(Zone.BATTLEFIELD));
+            verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player2Id), any(), any());
         }
     }
 
@@ -139,47 +179,48 @@ class AuraAttachmentServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Equipment stays on battlefield unattached when equipped creature is destroyed")
         void equipmentStaysOnBattlefieldWhenCreatureDestroyed() {
-            Permanent creature = addCreatureReady(player1);
-            Permanent equipment = addEquipmentAttachedTo(player1, new DarksteelAxe(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent equipment = createEquipment("Darksteel Axe");
+            equipment.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player1Id).add(equipment);
 
-            // Use Shock (2 damage) to kill the 2/2 creature
-            // DarksteelAxe gives +2/+0 making it 4/2, but Shock deals 2 damage = lethal to 2 toughness
-            harness.setHand(player2, List.of(new Shock()));
-            harness.addMana(player2, ManaColor.RED, 1);
-            harness.passPriority(player1);
-            harness.castAndResolveInstant(player2, 0, creature.getId());
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
 
-            harness.assertOnBattlefield(player1, "Darksteel Axe");
+            service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(equipment);
             assertThat(equipment.getAttachedTo()).isNull();
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         }
 
         @Test
         @DisplayName("Game log records equipment becoming unattached")
         void gameLogRecordsEquipmentUnattached() {
-            Permanent creature = addCreatureReady(player1);
-            addEquipmentAttachedTo(player1, new DarksteelAxe(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent equipment = createEquipment("Darksteel Axe");
+            equipment.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player1Id).add(equipment);
 
-            harness.setHand(player2, List.of(new Shock()));
-            harness.addMana(player2, ManaColor.RED, 1);
-            harness.passPriority(player1);
-            harness.castAndResolveInstant(player2, 0, creature.getId());
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Darksteel Axe") && log.contains("unattached"));
+            service.removeOrphanedAuras(gd);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Darksteel Axe becomes unattached (equipped creature left the battlefield)."));
         }
 
         @Test
         @DisplayName("Equipment remains attached when equipped creature survives")
         void equipmentStaysAttachedWhenCreatureSurvives() {
-            Permanent creature = addCreatureReady(player1);
-            Permanent equipment = addEquipmentAttachedTo(player1, new DarksteelAxe(), creature);
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
 
-            // Kill a different creature — equipment on surviving creature should stay attached
-            Permanent otherCreature = addCreatureReady(player2);
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, otherCreature.getId());
+            Permanent equipment = createEquipment("Darksteel Axe");
+            equipment.setAttachedTo(creature.getId());
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+
+            service.removeOrphanedAuras(gd);
 
             assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
         }
@@ -187,160 +228,115 @@ class AuraAttachmentServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Aura and equipment on same creature: aura goes to graveyard, equipment unattaches")
         void auraAndEquipmentOnSameCreature() {
-            Permanent creature = addCreatureReady(player1);
-            addAuraAttachedTo(player1, new HolyStrength(), creature);
-            Permanent equipment = addEquipmentAttachedTo(player1, new DarksteelAxe(), creature);
+            UUID deadCreatureId = UUID.randomUUID();
 
-            // Terror destroys the creature — Holy Strength gives +1/+2, DarksteelAxe gives +2/+0
-            // Terror ignores toughness
-            harness.setHand(player2, List.of(new Terror()));
-            harness.addMana(player2, ManaColor.BLACK, 2);
-            harness.passPriority(player1);
-            harness.castAndResolveInstant(player2, 0, creature.getId());
+            Permanent aura = createAura("Holy Strength");
+            aura.setAttachedTo(deadCreatureId);
+            Permanent equipment = createEquipment("Darksteel Axe");
+            equipment.setAttachedTo(deadCreatureId);
 
-            // Aura should be in graveyard
-            harness.assertNotOnBattlefield(player1, "Holy Strength");
-            harness.assertInGraveyard(player1, "Holy Strength");
+            gd.playerBattlefields.get(player1Id).add(aura);
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
+
+            service.removeOrphanedAuras(gd);
+
+            // Aura should be removed from battlefield
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(aura);
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD);
 
             // Equipment should stay on battlefield, unattached
-            harness.assertOnBattlefield(player1, "Darksteel Axe");
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(equipment);
             assertThat(equipment.getAttachedTo()).isNull();
         }
     }
 
-    // ===== returnStolenCreatures — Persuasion (ControlEnchantedCreatureEffect) =====
+    // ===== returnStolenCreatures — enchantment-based control =====
 
     @Nested
     @DisplayName("returnStolenCreatures - enchantment-based control")
     class ReturnStolenCreatures {
 
         @Test
-        @DisplayName("Creature returns to owner when Persuasion is destroyed by Demystify")
-        void creatureReturnsWhenPersuasionDestroyed() {
-            Permanent creature = addCreatureReady(player2);
+        @DisplayName("Creature returns to owner when controlling aura is removed")
+        void creatureReturnsWhenControlAuraRemoved() {
+            Permanent creature = createCreature("Grizzly Bears");
+            creature.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
 
-            // Player 1 casts Persuasion to steal the creature
-            harness.setHand(player1, List.of(new Persuasion()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
-            harness.castEnchantment(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
 
-            // Creature should be on player1's battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getId().equals(creature.getId()));
+            service.returnStolenCreatures(gd, false);
 
-            // Player 2 casts Demystify targeting Persuasion
-            Permanent persuasionPerm = findPermanent(player1, "Persuasion");
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player2, List.of(new Demystify()));
-            harness.addMana(player2, ManaColor.WHITE, 1);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, persuasionPerm.getId());
-            harness.passBothPriorities();
-
-            // Creature should return to player2's battlefield
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getId().equals(creature.getId()));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getId().equals(creature.getId()));
+            // Creature should be on player2's battlefield
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
         }
 
         @Test
         @DisplayName("Returned creature has summoning sickness")
         void returnedCreatureHasSummoningSickness() {
-            Permanent creature = addCreatureReady(player2);
+            Permanent creature = createCreature("Grizzly Bears");
+            creature.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
 
-            harness.setHand(player1, List.of(new Persuasion()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
-            harness.castEnchantment(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
 
-            // Destroy Persuasion
-            Permanent persuasionPerm = findPermanent(player1, "Persuasion");
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player2, List.of(new Demystify()));
-            harness.addMana(player2, ManaColor.WHITE, 1);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, persuasionPerm.getId());
-            harness.passBothPriorities();
+            service.returnStolenCreatures(gd, false);
 
-            Permanent returnedCreature = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getId().equals(creature.getId()))
-                    .findFirst().orElseThrow();
-            assertThat(returnedCreature.isSummoningSick()).isTrue();
+            assertThat(creature.isSummoningSick()).isTrue();
         }
 
         @Test
         @DisplayName("Stolen creature tracking is cleaned up after return")
         void stolenCreatureTrackingCleanedUp() {
-            Permanent creature = addCreatureReady(player2);
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
 
-            harness.setHand(player1, List.of(new Persuasion()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
-            harness.castEnchantment(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
 
-            assertThat(gd.stolenCreatures).containsKey(creature.getId());
-
-            // Destroy Persuasion
-            Permanent persuasionPerm = findPermanent(player1, "Persuasion");
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player2, List.of(new Demystify()));
-            harness.addMana(player2, ManaColor.WHITE, 1);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, persuasionPerm.getId());
-            harness.passBothPriorities();
+            service.returnStolenCreatures(gd, false);
 
             assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
         }
 
         @Test
-        @DisplayName("Creature stays stolen while Persuasion aura remains attached")
+        @DisplayName("Creature stays stolen while controlling aura remains attached")
         void creatureStaysStolenWhileAuraAttached() {
-            Permanent creature = addCreatureReady(player2);
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
 
-            harness.setHand(player1, List.of(new Persuasion()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
-            harness.castEnchantment(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(true);
 
-            // Destroy a different permanent — Persuasion should stay, creature should stay stolen
-            Permanent otherCreature = addCreatureReady(player2);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, otherCreature.getId());
+            service.returnStolenCreatures(gd, false);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getId().equals(creature.getId()));
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
             assertThat(gd.stolenCreatures).containsKey(creature.getId());
         }
 
         @Test
         @DisplayName("Game log records creature returning to owner")
         void gameLogRecordsCreatureReturn() {
-            Permanent creature = addCreatureReady(player2);
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
 
-            harness.setHand(player1, List.of(new Persuasion()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
-            harness.castEnchantment(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
 
-            Permanent persuasionPerm = findPermanent(player1, "Persuasion");
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player2, List.of(new Demystify()));
-            harness.addMana(player2, ManaColor.WHITE, 1);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, persuasionPerm.getId());
-            harness.passBothPriorities();
+            service.returnStolenCreatures(gd, false);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("returns"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears returns to Player2's control."));
         }
     }
 
@@ -351,68 +347,62 @@ class AuraAttachmentServiceTest extends BaseCardTest {
     class UntilEndOfTurnSteals {
 
         @Test
-        @DisplayName("Threaten steals creature until end of turn")
-        void threatenStealsCreatureUntilEndOfTurn() {
-            Permanent creature = addCreatureReady(player2);
+        @DisplayName("Until-end-of-turn stolen creature is returned when includeUntilEndOfTurn is true")
+        void untilEndOfTurnCreatureReturned() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+            gd.untilEndOfTurnStolenCreatures.add(creature.getId());
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player1, List.of(new Threaten()));
-            harness.addMana(player1, ManaColor.RED, 3);
-            harness.castSorcery(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
 
-            // Creature should be on player1's battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getId().equals(creature.getId()));
+            service.returnStolenCreatures(gd, true);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
+        }
+
+        @Test
+        @DisplayName("Until-end-of-turn creature is NOT returned when includeUntilEndOfTurn is false")
+        void untilEndOfTurnCreatureNotReturnedWhenFlagIsFalse() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+            gd.untilEndOfTurnStolenCreatures.add(creature.getId());
+
+            service.returnStolenCreatures(gd, false);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
             assertThat(gd.stolenCreatures).containsKey(creature.getId());
-            assertThat(gd.untilEndOfTurnStolenCreatures).contains(creature.getId());
         }
 
         @Test
-        @DisplayName("Until-end-of-turn stolen creature returns at end of turn")
-        void stolenCreatureReturnsAtEndOfTurn() {
-            Permanent creature = addCreatureReady(player2);
+        @DisplayName("Non-temporary steal is NOT returned when includeUntilEndOfTurn is true")
+        void nonTemporaryStealNotReturnedWhenUntilEndOfTurnFlagIsTrue() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+            // NOT in untilEndOfTurnStolenCreatures
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player1, List.of(new Threaten()));
-            harness.addMana(player1, ManaColor.RED, 3);
-            harness.castSorcery(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            service.returnStolenCreatures(gd, true);
 
-            // Advance to end step and pass through cleanup
-            harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-
-            // Creature should return to player2
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getId().equals(creature.getId()));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getId().equals(creature.getId()));
-            assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
+            assertThat(gd.stolenCreatures).containsKey(creature.getId());
         }
 
         @Test
-        @DisplayName("Until-end-of-turn stolen creature tracking is cleaned up after return")
+        @DisplayName("Until-end-of-turn tracking is cleaned up after return")
         void untilEndOfTurnTrackingCleanedUp() {
-            Permanent creature = addCreatureReady(player2);
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+            gd.untilEndOfTurnStolenCreatures.add(creature.getId());
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player1, List.of(new Threaten()));
-            harness.addMana(player1, ManaColor.RED, 3);
-            harness.castSorcery(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
 
-            // Advance to end step / cleanup
-            harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
+            service.returnStolenCreatures(gd, true);
 
             assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(creature.getId());
             assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
@@ -426,83 +416,129 @@ class AuraAttachmentServiceTest extends BaseCardTest {
     class EdgeCases {
 
         @Test
-        @DisplayName("Destroying creature with no auras or equipment does not cause errors")
-        void destroyCreatureWithNoAttachments() {
-            Permanent creature = addCreatureReady(player2);
+        @DisplayName("No auras or equipment on battlefield does not cause errors")
+        void noAttachmentsDoesNotCauseErrors() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(creature);
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
-            harness.castAndResolveInstant(player1, 0, creature.getId());
+            service.removeOrphanedAuras(gd);
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("Full lifecycle: Persuasion steal, Demystify destroys it, creature returns with correct state")
-        void fullPersuasionLifecycle() {
-            Permanent creature = addCreatureReady(player2);
+        @DisplayName("Stolen creature that no longer exists is cleaned up")
+        void stolenCreatureThatNoLongerExistsIsCleanedUp() {
+            UUID goneCreatureId = UUID.randomUUID();
+            gd.stolenCreatures.put(goneCreatureId, player2Id);
+            gd.untilEndOfTurnStolenCreatures.add(goneCreatureId);
+            gd.enchantmentDependentStolenCreatures.add(goneCreatureId);
 
-            // Player 1 steals with Persuasion
-            harness.setHand(player1, List.of(new Persuasion()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
-            harness.castEnchantment(player1, 0, creature.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, goneCreatureId)).thenReturn(null);
 
-            // Verify steal
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getId().equals(creature.getId()));
-            assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
+            service.returnStolenCreatures(gd, false);
 
-            // Player 2 destroys Persuasion with Demystify
-            Permanent persuasionPerm = findPermanent(player1, "Persuasion");
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.setHand(player2, List.of(new Demystify()));
-            harness.addMana(player2, ManaColor.WHITE, 1);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, persuasionPerm.getId());
-            harness.passBothPriorities();
+            assertThat(gd.stolenCreatures).doesNotContainKey(goneCreatureId);
+            assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(goneCreatureId);
+            assertThat(gd.enchantmentDependentStolenCreatures).doesNotContain(goneCreatureId);
+        }
 
-            // Creature returns to player2
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getId().equals(creature.getId()));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getId().equals(creature.getId()));
+        @Test
+        @DisplayName("Permanent control steal is never returned")
+        void permanentControlStealIsNeverReturned() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+            gd.permanentControlStolenCreatures.add(creature.getId());
+
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+
+            service.returnStolenCreatures(gd, false);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
+            assertThat(gd.stolenCreatures).containsKey(creature.getId());
+        }
+
+        @Test
+        @DisplayName("Enchantment-dependent steal is not returned while creature is still enchanted")
+        void enchantmentDependentStealNotReturnedWhileEnchanted() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+            gd.enchantmentDependentStolenCreatures.add(creature.getId());
+
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
+            when(gameQueryService.isEnchanted(gd, creature)).thenReturn(true);
+
+            service.returnStolenCreatures(gd, false);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
+            assertThat(gd.stolenCreatures).containsKey(creature.getId());
+        }
+
+        @Test
+        @DisplayName("Enchantment-dependent steal IS returned when creature is no longer enchanted")
+        void enchantmentDependentStealReturnedWhenNoLongerEnchanted() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+            gd.enchantmentDependentStolenCreatures.add(creature.getId());
+
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
+            when(gameQueryService.isEnchanted(gd, creature)).thenReturn(false);
+
+            service.returnStolenCreatures(gd, false);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
+            assertThat(gd.enchantmentDependentStolenCreatures).doesNotContain(creature.getId());
+        }
+
+        @Test
+        @DisplayName("removeOrphanedAuras also triggers returnStolenCreatures for non-temporary steals")
+        void removeOrphanedAurasTriggersReturnStolenCreatures() {
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.stolenCreatures.put(creature.getId(), player2Id);
+
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
+
+            service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
             assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
-            assertThat(creature.isSummoningSick()).isTrue();
-
-            // Persuasion should be in graveyard
-            harness.assertInGraveyard(player1, "Persuasion");
         }
     }
 
     // ===== Helper methods =====
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        return card;
     }
 
-    private Permanent addAuraAttachedTo(Player owner, Card auraCard, Permanent target) {
-        Permanent auraPerm = new Permanent(auraCard);
-        auraPerm.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(owner.getId()).add(auraPerm);
-        return auraPerm;
+    private Permanent createCreature(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.CREATURE);
+        return new Permanent(card);
     }
 
-    private Permanent addEquipmentAttachedTo(Player owner, Card equipmentCard, Permanent target) {
-        Permanent equipPerm = new Permanent(equipmentCard);
-        equipPerm.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(owner.getId()).add(equipPerm);
-        return equipPerm;
+    private Permanent createAura(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setSubtypes(List.of(CardSubtype.AURA));
+        return new Permanent(card);
     }
 
-    private Permanent findPermanent(Player player, String cardName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst().orElseThrow();
+    private Permanent createEquipment(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.ARTIFACT);
+        card.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+        return new Permanent(card);
     }
 }
