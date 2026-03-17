@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -558,6 +560,30 @@ public class CombatSimulator {
         // Protection: attacker with protection from blocker can't be blocked by it
         if (gameQueryService.hasProtectionFromSource(gameData, attacker.perm, blocker.perm)) return false;
 
+        // CanBeBlockedOnlyByFilterEffect: attacker can only be blocked by matching blockers (e.g. Juggernaut)
+        for (CardEffect effect : attacker.perm.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
+                    && !gameQueryService.matchesPermanentPredicate(gameData, blocker.perm, restriction.blockerPredicate())) {
+                return false;
+            }
+        }
+
+        // Aura-granted CanBeBlockedOnlyByFilterEffect (e.g. Treetop Bracers)
+        for (CardEffect effect : getAuraGrantedStaticEffects(gameData, attacker.perm)) {
+            if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
+                    && !gameQueryService.matchesPermanentPredicate(gameData, blocker.perm, restriction.blockerPredicate())) {
+                return false;
+            }
+        }
+
+        // CanBlockOnlyIfAttackerMatchesPredicateEffect: blocker can only block matching attackers (e.g. Cloud Elemental)
+        for (CardEffect effect : blocker.perm.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
+                    && !gameQueryService.matchesPermanentPredicate(gameData, attacker.perm, restriction.attackerPredicate())) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -631,6 +657,17 @@ public class CombatSimulator {
             }
         }
         return false;
+    }
+
+    private List<CardEffect> getAuraGrantedStaticEffects(GameData gameData, Permanent creature) {
+        List<CardEffect> effects = new ArrayList<>();
+        gameData.forEachPermanent((playerId, aura) -> {
+            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
+                return;
+            }
+            effects.addAll(aura.getCard().getEffects(EffectSlot.STATIC));
+        });
+        return effects;
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {
