@@ -1,49 +1,197 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.cards.a.ArcTrail;
-import com.github.laxika.magicalvibes.cards.b.Blaze;
-import com.github.laxika.magicalvibes.cards.b.BurnTheImpure;
-import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
-import com.github.laxika.magicalvibes.cards.e.EssenceDrain;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.Hurricane;
-import com.github.laxika.magicalvibes.cards.l.LavaAxe;
-import com.github.laxika.magicalvibes.cards.l.LavabornMuse;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.SpittingEarth;
-import com.github.laxika.magicalvibes.cards.s.SuddenImpact;
-import com.github.laxika.magicalvibes.cards.w.WingPuncture;
-import com.github.laxika.magicalvibes.cards.b.Blightwidow;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-class DamageResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class DamageResolutionServiceTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
+    @Mock
+    private GraveyardService graveyardService;
+
+    @Mock
+    private DamagePreventionService damagePreventionService;
+
+    @Mock
+    private GameOutcomeService gameOutcomeService;
+
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private GameBroadcastService gameBroadcastService;
+
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
+
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
+
+    @Mock
+    private LifeResolutionService lifeResolutionService;
+
+    @InjectMocks
+    private DamageResolutionService drs;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerLifeTotals.put(player1Id, 20);
+        gd.playerLifeTotals.put(player2Id, 20);
+    }
+
+    // ===== Helper methods =====
+
+    private static Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.INSTANT);
+        card.setManaCost("{R}");
+        card.setColor(CardColor.RED);
+        return card;
+    }
+
+    private static Card createCreature(String name, int power, int toughness) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{2}");
+        card.setPower(power);
+        card.setToughness(toughness);
+        return card;
+    }
+
+    private Permanent addPermanent(UUID playerId, Card card) {
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(playerId).add(permanent);
+        return permanent;
+    }
+
+    private StackEntry createEntry(Card card, UUID controllerId, UUID targetId) {
+        StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId, card.getName(), List.of());
+        entry.setTargetPermanentId(targetId);
+        return entry;
+    }
+
+    private StackEntry createEntryWithXValue(Card card, UUID controllerId, int xValue, UUID targetId) {
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), List.of(), xValue);
+        entry.setTargetPermanentId(targetId);
+        return entry;
+    }
+
+    private StackEntry createMultiTargetEntry(Card card, UUID controllerId, List<UUID> targetIds) {
+        return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), List.of(), 0, targetIds);
+    }
+
+    private void stubDamageNotPrevented() {
+        lenient().when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
+        lenient().when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+    }
+
+    private void stubNoDamageMultiplier() {
+        lenient().when(gameQueryService.applyDamageMultiplier(eq(gd), anyInt(), any(StackEntry.class))).thenAnswer(inv -> inv.getArgument(1));
+    }
+
+    private void stubCreatureDamageDefaults(Permanent target, int toughness) {
+        lenient().when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
+        lenient().when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
+        lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+    }
+
+    private void stubLethalDamage(boolean isLethal) {
+        lenient().when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean())).thenReturn(isLethal);
+    }
+
+    private void stubNoKeywordsOnSource(StackEntry entry) {
+        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.INFECT))).thenReturn(false);
+        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.DEATHTOUCH))).thenReturn(false);
+    }
+
+    private void stubNoKeywordsOnSourceWithDamageSource(StackEntry entry, Permanent damageSource) {
+        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.INFECT))).thenReturn(false);
+        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.DEATHTOUCH))).thenReturn(false);
+    }
+
+    private void stubPlayerDamageDefaults(UUID playerId) {
+        lenient().when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
+        lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
+        lenient().when(damagePreventionService.applyOpponentSourceDamageReduction(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(playerId), anyInt(), anyString())).thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(gameQueryService.canPlayerLifeChange(gd, playerId)).thenReturn(true);
+        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), any(StackEntry.class), isNull(), eq(Keyword.INFECT))).thenReturn(false);
+        lenient().when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
     }
 
     // =========================================================================
-    // DealDamageToAnyTargetEffect (via Shock — instant, {R}, 2 damage)
+    // DealDamageToAnyTargetEffect — creature target
     // =========================================================================
 
     @Nested
@@ -53,83 +201,101 @@ class DamageResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Deals lethal damage to a creature and destroys it")
         void dealsLethalDamageToCreatureAndDestroysIt() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+            Card shockCard = createCard("Shock");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntry(shockCard, player1Id, bears.getId());
+            DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
 
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            assertThat(bears.getMarkedDamage()).isEqualTo(2);
+            assertThat(gd.pendingLethalDamageDestructions).contains(bears);
         }
 
         @Test
         @DisplayName("Deals non-lethal damage to a creature and it survives")
         void dealsNonLethalDamageToCreature() {
-            // Serra Angel is a 4/4 — 2 damage from Shock is not lethal
-            SerraAngel angel = new SerraAngel();
-            harness.addToBattlefield(player2, angel);
+            Card shockCard = createCard("Shock");
+            Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+            StackEntry entry = createEntry(shockCard, player1Id, angel.getId());
+            DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(angel, 4);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(false);
+            when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Serra Angel"));
+            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
 
-            harness.assertOnBattlefield(player2, "Serra Angel");
-            harness.assertNotInGraveyard(player2, "Serra Angel");
+            assertThat(angel.getMarkedDamage()).isEqualTo(2);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
         @Test
         @DisplayName("Deals damage to a player and reduces their life total")
         void dealsDamageToPlayer() {
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            Card shockCard = createCard("Shock");
+            StackEntry entry = createEntry(shockCard, player1Id, player2Id);
+            DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            harness.castAndResolveInstant(player1, 0, player2.getId());
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.assertLife(player2, 18);
+            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
         }
 
         @Test
-        @DisplayName("Fizzles when target creature is no longer on the battlefield")
-        void fizzlesWhenTargetGone() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
-            UUID bearsPermId = harness.getPermanentId(player2, "Grizzly Bears");
+        @DisplayName("Does nothing when targetId is null")
+        void doesNothingWhenTargetNull() {
+            Card shockCard = createCard("Shock");
+            StackEntry entry = createEntry(shockCard, player1Id, null);
+            DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
 
-            harness.castInstant(player1, 0, bearsPermId);
-
-            // Remove bears before Shock resolves
-            gd.playerBattlefields.get(player2.getId()).clear();
-
-            harness.passBothPriorities();
-
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            verify(gameQueryService, never()).applyDamageMultiplier(any(), anyInt(), any());
         }
 
         @Test
-        @DisplayName("Damage is logged in the game log")
+        @DisplayName("Damage is logged via broadcast service")
         void damageIsLogged() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+            Card shockCard = createCard("Shock");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntry(shockCard, player1Id, bears.getId());
+            DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Shock") && log.contains("2 damage") && log.contains("Grizzly Bears"));
+            verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Shock") && msg.contains("2 damage") && msg.contains("Grizzly Bears")));
         }
     }
 
     // =========================================================================
-    // DealDamageToTargetCreatureEffect (via Burn the Impure — instant, {1}{R}, 3 damage to creature)
+    // DealDamageToTargetCreatureEffect
     // =========================================================================
 
     @Nested
@@ -137,23 +303,30 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealDamageToTargetCreature {
 
         @Test
-        @DisplayName("Deals 3 damage to a creature and destroys it")
-        void deals3DamageToCreature() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+        @DisplayName("Deals damage to a creature and destroys it")
+        void dealsDamageToCreature() {
+            Card burnCard = createCard("Burn the Impure");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntry(burnCard, player1Id, bears.getId());
+            DealDamageToTargetCreatureEffect effect = new DealDamageToTargetCreatureEffect(3, false);
 
-            harness.setHand(player1, List.of(new BurnTheImpure()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
 
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            assertThat(bears.getMarkedDamage()).isEqualTo(3);
         }
     }
 
     // =========================================================================
-    // DealDamageToTargetControllerIfTargetHasKeywordEffect (via Burn the Impure)
+    // DealDamageToTargetControllerIfTargetHasKeywordEffect
     // =========================================================================
 
     @Nested
@@ -161,40 +334,46 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealDamageToTargetControllerIfTargetHasKeyword {
 
         @Test
-        @DisplayName("Deals bonus damage to controller when target creature has infect")
-        void dealsBonusDamageWhenTargetHasInfect() {
-            // Blightwidow is a 2/4 with reach and infect — survives 3 damage
-            harness.addToBattlefield(player2, new Blightwidow());
+        @DisplayName("Deals bonus damage to controller when target creature has the keyword")
+        void dealsBonusDamageWhenTargetHasKeyword() {
+            Card burnCard = createCard("Burn the Impure");
+            Permanent creature = addPermanent(player2Id, createCreature("Blightwidow", 2, 4));
+            StackEntry entry = createEntry(burnCard, player1Id, creature.getId());
+            DealDamageToTargetControllerIfTargetHasKeywordEffect effect =
+                    new DealDamageToTargetControllerIfTargetHasKeywordEffect(3, Keyword.INFECT);
 
-            harness.setHand(player1, List.of(new BurnTheImpure()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            stubNoDamageMultiplier();
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.hasKeyword(gd, creature, Keyword.INFECT)).thenReturn(true);
+            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Blightwidow"));
+            drs.resolveDealDamageToTargetControllerIfTargetHasKeyword(gd, entry, effect);
 
-            // 3 damage to 2/4 creature (survives) + 3 damage to controller (infect bonus)
-            harness.assertOnBattlefield(player2, "Blightwidow");
-            harness.assertLife(player2, 17);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
         }
 
         @Test
         @DisplayName("Does not deal bonus damage when target creature lacks the keyword")
         void noBonusDamageWhenTargetLacksKeyword() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+            Card burnCard = createCard("Burn the Impure");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntry(burnCard, player1Id, bears.getId());
+            DealDamageToTargetControllerIfTargetHasKeywordEffect effect =
+                    new DealDamageToTargetControllerIfTargetHasKeywordEffect(3, Keyword.INFECT);
 
-            harness.setHand(player1, List.of(new BurnTheImpure()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INFECT)).thenReturn(false);
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            drs.resolveDealDamageToTargetControllerIfTargetHasKeyword(gd, entry, effect);
 
-            // 3 damage kills the creature, but no bonus damage to controller
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertLife(player2, 20);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
         }
     }
 
     // =========================================================================
-    // DealDamageToTargetPlayerEffect (via Lava Axe — sorcery, {4}{R}, 5 damage to player)
+    // DealDamageToTargetPlayerEffect
     // =========================================================================
 
     @Nested
@@ -202,31 +381,37 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealDamageToTargetPlayer {
 
         @Test
-        @DisplayName("Deals 5 damage to target player")
-        void deals5DamageToTargetPlayer() {
-            harness.setHand(player1, List.of(new LavaAxe()));
-            harness.addMana(player1, ManaColor.RED, 5);
+        @DisplayName("Deals damage to target player")
+        void dealsDamageToTargetPlayer() {
+            Card lavaAxeCard = createCard("Lava Axe");
+            StackEntry entry = createEntry(lavaAxeCard, player1Id, player2Id);
+            DealDamageToTargetPlayerEffect effect = new DealDamageToTargetPlayerEffect(5);
 
-            harness.castAndResolveSorcery(player1, 0, player2.getId());
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.assertLife(player2, 15);
+            drs.resolveDealDamageToTargetPlayer(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
         }
 
         @Test
-        @DisplayName("Damage is logged in the game log")
-        void damageIsLogged() {
-            harness.setHand(player1, List.of(new LavaAxe()));
-            harness.addMana(player1, ManaColor.RED, 5);
+        @DisplayName("Does nothing when target is not a player")
+        void doesNothingWhenTargetNotPlayer() {
+            Card lavaAxeCard = createCard("Lava Axe");
+            UUID fakeId = UUID.randomUUID();
+            StackEntry entry = createEntry(lavaAxeCard, player1Id, fakeId);
+            DealDamageToTargetPlayerEffect effect = new DealDamageToTargetPlayerEffect(5);
 
-            harness.castAndResolveSorcery(player1, 0, player2.getId());
+            drs.resolveDealDamageToTargetPlayer(gd, entry, effect);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("5 damage"));
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
         }
     }
 
     // =========================================================================
-    // DealDamageToControllerEffect (via Orcish Artillery — activated ability, deals 2 to any + 3 to self)
+    // DealDamageToControllerEffect
     // =========================================================================
 
     @Nested
@@ -234,41 +419,24 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealDamageToController {
 
         @Test
-        @DisplayName("Orcish Artillery deals 2 to target creature and 3 to its controller")
-        void orcishArtilleryDeals2ToTargetAnd3ToController() {
-            OrcishArtillery artillery = new OrcishArtillery();
-            harness.addToBattlefield(player1, artillery);
-            gd.playerBattlefields.get(player1.getId()).getLast().setSummoningSick(false);
+        @DisplayName("Deals damage to the controller of the ability")
+        void dealsDamageToController() {
+            Card artilleryCard = createCard("Orcish Artillery");
+            StackEntry entry = createEntry(artilleryCard, player1Id, null);
+            DealDamageToControllerEffect effect = new DealDamageToControllerEffect(3);
 
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+            stubNoDamageMultiplier();
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+            stubPlayerDamageDefaults(player1Id);
 
-            harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Grizzly Bears"));
-            harness.passBothPriorities();
+            drs.resolveDealDamageToController(gd, entry, effect);
 
-            // 2 damage kills 2/2 Grizzly Bears
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            // 3 damage to the controller (player1)
-            harness.assertLife(player1, 17);
-        }
-
-        @Test
-        @DisplayName("Orcish Artillery deals 2 to target player and 3 to its controller")
-        void orcishArtilleryDeals2ToPlayerAnd3ToController() {
-            OrcishArtillery artillery = new OrcishArtillery();
-            harness.addToBattlefield(player1, artillery);
-            gd.playerBattlefields.get(player1.getId()).getLast().setSummoningSick(false);
-
-            harness.activateAbility(player1, 0, null, player2.getId());
-            harness.passBothPriorities();
-
-            harness.assertLife(player2, 18);
-            harness.assertLife(player1, 17);
+            assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(17);
         }
     }
 
     // =========================================================================
-    // MassDamageEffect (via Pyroclasm — sorcery, {1}{R}, 2 damage to each creature)
+    // MassDamageEffect
     // =========================================================================
 
     @Nested
@@ -276,61 +444,90 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveMassDamage {
 
         @Test
-        @DisplayName("Pyroclasm kills all 2-toughness creatures on both sides")
-        void pyroclasmKills2ToughnessCreatures() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player2, new LlanowarElves());
+        @DisplayName("Deals damage to all creatures and kills those with toughness <= damage")
+        void damagesAllCreatures() {
+            Card pyroCard = createCard("Pyroclasm");
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+            Permanent elves = addPermanent(player2Id, createCreature("Llanowar Elves", 1, 1));
+            StackEntry entry = createEntry(pyroCard, player1Id, null);
+            MassDamageEffect effect = new MassDamageEffect(2);
 
-            harness.setHand(player1, List.of(new Pyroclasm()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageDefaults(elves, 1);
+            when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
+            when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            drs.resolveMassDamage(gd, entry, effect);
 
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Llanowar Elves");
+            assertThat(bears.getMarkedDamage()).isEqualTo(2);
+            assertThat(elves.getMarkedDamage()).isEqualTo(2);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
         }
 
         @Test
-        @DisplayName("Pyroclasm does not kill creatures with toughness > 2")
-        void pyroclasmDoesNotKillHighToughnessCreatures() {
-            // Serra Angel is 4/4
-            harness.addToBattlefield(player1, new SerraAngel());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+        @DisplayName("Does not kill creatures with toughness > damage")
+        void doesNotKillHighToughnessCreatures() {
+            Card pyroCard = createCard("Pyroclasm");
+            Permanent angel = addPermanent(player1Id, createCreature("Serra Angel", 4, 4));
+            StackEntry entry = createEntry(pyroCard, player1Id, null);
+            MassDamageEffect effect = new MassDamageEffect(2);
 
-            harness.setHand(player1, List.of(new Pyroclasm()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+            stubCreatureDamageDefaults(angel, 4);
+            when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player1Id);
+            stubNoKeywordsOnSource(entry);
+            when(gameQueryService.isLethalDamage(2, 4, false)).thenReturn(false);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            drs.resolveMassDamage(gd, entry, effect);
 
-            harness.assertOnBattlefield(player1, "Serra Angel");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            assertThat(angel.getMarkedDamage()).isEqualTo(2);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
         @Test
-        @DisplayName("Hurricane deals X damage to flying creatures and all players")
-        void hurricaneDealsXDamageToFlyingCreaturesAndPlayers() {
-            // Serra Angel has flying (4/4)
-            harness.addToBattlefield(player2, new SerraAngel());
-            // Grizzly Bears does not have flying — should survive
-            harness.addToBattlefield(player1, new GrizzlyBears());
+        @DisplayName("Deals X damage to creatures matching filter and to all players when damagesPlayers is true")
+        void hurricaneDealsXDamageToFilteredCreaturesAndPlayers() {
+            Card hurricaneCard = createCard("Hurricane");
+            hurricaneCard.setColor(CardColor.GREEN);
+            Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntryWithXValue(hurricaneCard, player1Id, 4, null);
+            MassDamageEffect effect = new MassDamageEffect(0, true, true, null);
 
-            harness.setHand(player1, List.of(new Hurricane()));
-            harness.addMana(player1, ManaColor.GREEN, 5);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
+            stubCreatureDamageDefaults(angel, 4);
+            stubCreatureDamageDefaults(bears, 2);
+            when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player2Id);
+            when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+            stubNoKeywordsOnSource(entry);
+            when(gameQueryService.isLethalDamage(4, 4, false)).thenReturn(true);
+            when(gameQueryService.isLethalDamage(4, 2, false)).thenReturn(true);
+            when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
+            when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
+            stubPlayerDamageDefaults(player1Id);
+            stubPlayerDamageDefaults(player2Id);
 
-            // Cast Hurricane with X=4 to kill Serra Angel (4 damage to 4 toughness)
-            harness.castAndResolveSorcery(player1, 0, 4);
+            drs.resolveMassDamage(gd, entry, effect);
 
-            harness.assertInGraveyard(player2, "Serra Angel");
-            // Non-flying Grizzly Bears should survive
-            harness.assertOnBattlefield(player1, "Grizzly Bears");
-            // Both players take 4 damage
-            harness.assertLife(player1, 16);
-            harness.assertLife(player2, 16);
+            assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(16);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
+            verify(gameOutcomeService).checkWinCondition(gd);
         }
     }
 
     // =========================================================================
-    // DealXDamageToAnyTargetEffect (via Blaze — sorcery, {X}{R}, X damage to any target)
+    // DealXDamageToAnyTargetEffect
     // =========================================================================
 
     @Nested
@@ -338,33 +535,47 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealXDamageToAnyTarget {
 
         @Test
-        @DisplayName("Blaze for X=3 deals 3 damage to a creature and destroys it")
-        void blazeDeals3DamageToCreature() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+        @DisplayName("Deals X damage to a creature and destroys it")
+        void dealsXDamageToCreature() {
+            Card blazeCard = createCard("Blaze");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntryWithXValue(blazeCard, player1Id, 3, bears.getId());
+            DealXDamageToAnyTargetEffect effect = new DealXDamageToAnyTargetEffect(false);
 
-            harness.setHand(player1, List.of(new Blaze()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            harness.castAndResolveSorcery(player1, 0, 3, harness.getPermanentId(player2, "Grizzly Bears"));
+            drs.resolveDealXDamageToAnyTarget(gd, entry, effect);
 
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            assertThat(bears.getMarkedDamage()).isEqualTo(3);
+            assertThat(gd.pendingLethalDamageDestructions).contains(bears);
         }
 
         @Test
-        @DisplayName("Blaze for X=5 deals 5 damage to a player")
-        void blazeDeals5DamageToPlayer() {
-            harness.setHand(player1, List.of(new Blaze()));
-            harness.addMana(player1, ManaColor.RED, 6);
+        @DisplayName("Deals X damage to a player")
+        void dealsXDamageToPlayer() {
+            Card blazeCard = createCard("Blaze");
+            StackEntry entry = createEntryWithXValue(blazeCard, player1Id, 5, player2Id);
+            DealXDamageToAnyTargetEffect effect = new DealXDamageToAnyTargetEffect(false);
 
-            harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.assertLife(player2, 15);
+            drs.resolveDealXDamageToAnyTarget(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
         }
     }
 
     // =========================================================================
-    // DealDamageToAnyTargetAndGainLifeEffect (via Essence Drain — sorcery, {4}{B}, 3 damage + 3 life)
+    // DealDamageToAnyTargetAndGainLifeEffect
     // =========================================================================
 
     @Nested
@@ -372,35 +583,50 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealDamageToAnyTargetAndGainLife {
 
         @Test
-        @DisplayName("Deals 3 damage to target player and controller gains 3 life")
-        void deals3DamageAndGains3Life() {
-            harness.setHand(player1, List.of(new EssenceDrain()));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+        @DisplayName("Deals damage to target player and controller gains life")
+        void dealsDamageAndGainsLife() {
+            Card drainCard = createCard("Essence Drain");
+            drainCard.setColor(CardColor.BLACK);
+            StackEntry entry = createEntry(drainCard, player1Id, player2Id);
+            DealDamageToAnyTargetAndGainLifeEffect effect = new DealDamageToAnyTargetAndGainLifeEffect(3, 3);
 
-            harness.castAndResolveSorcery(player1, 0, player2.getId());
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.assertLife(player2, 17);
-            harness.assertLife(player1, 23);
+            drs.resolveDealDamageToAnyTargetAndGainLife(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
         }
 
         @Test
-        @DisplayName("Deals 3 damage to creature and controller gains 3 life")
-        void deals3DamageToCreatureAndGains3Life() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+        @DisplayName("Deals damage to creature and controller gains life")
+        void dealsDamageToCreatureAndGainsLife() {
+            Card drainCard = createCard("Essence Drain");
+            drainCard.setColor(CardColor.BLACK);
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntry(drainCard, player1Id, bears.getId());
+            DealDamageToAnyTargetAndGainLifeEffect effect = new DealDamageToAnyTargetAndGainLifeEffect(3, 3);
 
-            harness.setHand(player1, List.of(new EssenceDrain()));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            drs.resolveDealDamageToAnyTargetAndGainLife(gd, entry, effect);
 
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertLife(player1, 23);
+            assertThat(gd.pendingLethalDamageDestructions).contains(bears);
+            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
         }
     }
 
     // =========================================================================
-    // DealXDamageToAnyTargetAndGainXLifeEffect (via Consume Spirit — sorcery, {X}{1}{B}, X damage + X life)
+    // DealXDamageToAnyTargetAndGainXLifeEffect
     // =========================================================================
 
     @Nested
@@ -408,21 +634,25 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealXDamageToAnyTargetAndGainXLife {
 
         @Test
-        @DisplayName("Consume Spirit for X=3 deals 3 damage and gains 3 life")
-        void consumeSpiritDeals3AndGains3() {
-            harness.setHand(player1, List.of(new ConsumeSpirit()));
-            // Consume Spirit costs {X}{1}{B} with X restricted to black mana; X=3 needs 3B + 1 generic + 1B = 4B + 1
-            harness.addMana(player1, ManaColor.BLACK, 5);
+        @DisplayName("Deals X damage and gains X life")
+        void dealsXDamageAndGainsXLife() {
+            Card consumeCard = createCard("Consume Spirit");
+            consumeCard.setColor(CardColor.BLACK);
+            StackEntry entry = createEntryWithXValue(consumeCard, player1Id, 3, player2Id);
 
-            harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.assertLife(player2, 17);
-            harness.assertLife(player1, 23);
+            drs.resolveDealXDamageToAnyTargetAndGainXLife(gd, entry);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
         }
     }
 
     // =========================================================================
-    // DealDamageToTargetPlayerByHandSizeEffect (via Sudden Impact — instant, {3}{R})
+    // DealDamageToTargetPlayerByHandSizeEffect
     // =========================================================================
 
     @Nested
@@ -432,36 +662,41 @@ class DamageResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Deals damage equal to target player's hand size")
         void dealsDamageEqualToHandSize() {
+            Card impactCard = createCard("Sudden Impact");
+            StackEntry entry = createEntry(impactCard, player1Id, player2Id);
+
             // Give player2 a hand of 5 cards
-            harness.setHand(player2, List.of(
-                    new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                    new GrizzlyBears(), new GrizzlyBears()
-            ));
+            for (int i = 0; i < 5; i++) {
+                gd.playerHands.get(player2Id).add(createCreature("Bear " + i, 2, 2));
+            }
 
-            harness.setHand(player1, List.of(new SuddenImpact()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.castAndResolveInstant(player1, 0, player2.getId());
+            drs.resolveDealDamageToTargetPlayerByHandSize(gd, entry);
 
-            harness.assertLife(player2, 15);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
         }
 
         @Test
         @DisplayName("Deals 0 damage when target has an empty hand")
         void dealsZeroDamageWhenEmptyHand() {
-            harness.setHand(player2, List.of());
+            Card impactCard = createCard("Sudden Impact");
+            StackEntry entry = createEntry(impactCard, player1Id, player2Id);
 
-            harness.setHand(player1, List.of(new SuddenImpact()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.castAndResolveInstant(player1, 0, player2.getId());
+            drs.resolveDealDamageToTargetPlayerByHandSize(gd, entry);
 
-            harness.assertLife(player2, 20);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
         }
     }
 
     // =========================================================================
-    // DealDamageIfFewCardsInHandEffect (via Lavaborn Muse — opponent upkeep trigger, 3 damage if ≤ 2 cards)
+    // DealDamageIfFewCardsInHandEffect
     // =========================================================================
 
     @Nested
@@ -469,46 +704,63 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealDamageIfFewCardsInHand {
 
         @Test
-        @DisplayName("Deals 3 damage when opponent has 2 cards in hand")
-        void deals3DamageWhenOpponentHas2Cards() {
-            harness.addToBattlefield(player1, new LavabornMuse());
-            harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        @DisplayName("Deals damage when opponent has cards <= maxCards")
+        void dealsDamageWhenOpponentHasFewCards() {
+            Card museCard = createCard("Lavaborn Muse");
+            StackEntry entry = createEntry(museCard, player1Id, player2Id);
+            DealDamageIfFewCardsInHandEffect effect = new DealDamageIfFewCardsInHandEffect(2, 3);
 
-            advanceToUpkeep(player2);
-            harness.passBothPriorities(); // resolve trigger
+            // Player2 has 2 cards (at the threshold)
+            gd.playerHands.get(player2Id).add(createCreature("Bear1", 2, 2));
+            gd.playerHands.get(player2Id).add(createCreature("Bear2", 2, 2));
 
-            harness.assertLife(player2, 17);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
+
+            drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
         }
 
         @Test
-        @DisplayName("Deals 3 damage when opponent has 0 cards in hand")
-        void deals3DamageWhenOpponentHasEmptyHand() {
-            harness.addToBattlefield(player1, new LavabornMuse());
-            harness.setHand(player2, List.of());
+        @DisplayName("Deals damage when opponent has 0 cards in hand")
+        void dealsDamageWhenOpponentHasEmptyHand() {
+            Card museCard = createCard("Lavaborn Muse");
+            StackEntry entry = createEntry(museCard, player1Id, player2Id);
+            DealDamageIfFewCardsInHandEffect effect = new DealDamageIfFewCardsInHandEffect(2, 3);
 
-            advanceToUpkeep(player2);
-            harness.passBothPriorities(); // resolve trigger
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageDefaults(player2Id);
 
-            harness.assertLife(player2, 17);
+            drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
         }
 
         @Test
-        @DisplayName("Does nothing when opponent has more than 2 cards in hand")
-        void doesNothingWhenOpponentHasMoreThan2Cards() {
-            harness.addToBattlefield(player1, new LavabornMuse());
-            harness.setHand(player2, List.of(
-                    new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()
-            ));
+        @DisplayName("Does nothing when opponent has more than maxCards")
+        void doesNothingWhenOpponentHasTooManyCards() {
+            Card museCard = createCard("Lavaborn Muse");
+            StackEntry entry = createEntry(museCard, player1Id, player2Id);
+            DealDamageIfFewCardsInHandEffect effect = new DealDamageIfFewCardsInHandEffect(2, 3);
 
-            advanceToUpkeep(player2);
-            harness.passBothPriorities();
+            // Player2 has 3 cards (exceeds maxCards of 2)
+            gd.playerHands.get(player2Id).add(createCreature("Bear1", 2, 2));
+            gd.playerHands.get(player2Id).add(createCreature("Bear2", 2, 2));
+            gd.playerHands.get(player2Id).add(createCreature("Bear3", 2, 2));
 
-            harness.assertLife(player2, 20);
+            drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("does nothing")));
         }
     }
 
     // =========================================================================
-    // DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect (via Spitting Earth — sorcery, {1}{R})
+    // DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect
     // =========================================================================
 
     @Nested
@@ -516,62 +768,78 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealDamageToTargetCreatureEqualToControlledSubtypeCount {
 
         @Test
-        @DisplayName("Deals damage equal to number of Mountains you control")
-        void dealsDamageEqualToMountainCount() {
-            // Add 3 Mountains to player1's battlefield
-            harness.addToBattlefield(player1, new Mountain());
-            harness.addToBattlefield(player1, new Mountain());
-            harness.addToBattlefield(player1, new Mountain());
+        @DisplayName("Deals damage equal to controlled subtype count — creature survives")
+        void dealsDamageEqualToSubtypeCount() {
+            Card spittingCard = createCard("Spitting Earth");
+            Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+            StackEntry entry = createEntry(spittingCard, player1Id, angel.getId());
+            DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect =
+                    new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype.MOUNTAIN, false);
 
-            // Serra Angel is 4/4 — 3 damage is not lethal
-            SerraAngel angel = new SerraAngel();
-            harness.addToBattlefield(player2, angel);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(angel, 4);
+            stubNoKeywordsOnSource(entry);
+            when(gameQueryService.countControlledSubtypePermanents(gd, player1Id, CardSubtype.MOUNTAIN)).thenReturn(3);
+            when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
+            when(gameQueryService.isLethalDamage(3, 4, false)).thenReturn(false);
 
-            harness.setHand(player1, List.of(new SpittingEarth()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            drs.resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(gd, entry, effect);
 
-            harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Serra Angel"));
-
-            // 3 damage to 4/4 — survives
-            harness.assertOnBattlefield(player2, "Serra Angel");
+            assertThat(angel.getMarkedDamage()).isEqualTo(3);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
         @Test
         @DisplayName("Kills creature when damage equals toughness")
         void killsCreatureWhenDamageEqualsOrExceedsToughness() {
-            harness.addToBattlefield(player1, new Mountain());
-            harness.addToBattlefield(player1, new Mountain());
+            Card spittingCard = createCard("Spitting Earth");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntry(spittingCard, player1Id, bears.getId());
+            DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect =
+                    new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype.MOUNTAIN, false);
 
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.countControlledSubtypePermanents(gd, player1Id, CardSubtype.MOUNTAIN)).thenReturn(2);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            harness.setHand(player1, List.of(new SpittingEarth()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            drs.resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(gd, entry, effect);
 
-            harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-
-            // 2 damage to 2/2 — kills it
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            assertThat(bears.getMarkedDamage()).isEqualTo(2);
         }
 
         @Test
-        @DisplayName("Deals 0 damage when controller has no Mountains")
-        void dealsZeroDamageWithNoMountains() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+        @DisplayName("Deals 0 damage when controller has no subtypes")
+        void dealsZeroDamageWithNoSubtypes() {
+            Card spittingCard = createCard("Spitting Earth");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createEntry(spittingCard, player1Id, bears.getId());
+            DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect =
+                    new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype.MOUNTAIN, false);
 
-            harness.setHand(player1, List.of(new SpittingEarth()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            when(gameQueryService.countControlledSubtypePermanents(gd, player1Id, CardSubtype.MOUNTAIN)).thenReturn(0);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.isLethalDamage(0, 2, false)).thenReturn(false);
 
-            harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            drs.resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(gd, entry, effect);
 
-            // 0 damage — creature survives
-            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            assertThat(bears.getMarkedDamage()).isEqualTo(0);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
     }
 
     // =========================================================================
-    // DealOrderedDamageToAnyTargetsEffect (via Arc Trail — sorcery, {1}{R}, 2 to first + 1 to second)
+    // DealOrderedDamageToAnyTargetsEffect
     // =========================================================================
 
     @Nested
@@ -579,47 +847,60 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveDealOrderedDamageToAnyTargets {
 
         @Test
-        @DisplayName("Deals 2 damage to first target creature and 1 to second target creature")
-        void deals2And1DamageToTwoCreatures() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+        @DisplayName("Deals ordered damage to two creature targets")
+        void dealsOrderedDamageToTwoCreatures() {
+            Card arcCard = createCard("Arc Trail");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            Permanent elves = addPermanent(player2Id, createCreature("Llanowar Elves", 1, 1));
+            StackEntry entry = createMultiTargetEntry(arcCard, player1Id, List.of(bears.getId(), elves.getId()));
+            DealOrderedDamageToAnyTargetsEffect effect = new DealOrderedDamageToAnyTargetsEffect(List.of(2, 1));
 
-            LlanowarElves elves = new LlanowarElves();
-            harness.addToBattlefield(player2, elves);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageDefaults(elves, 1);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
+            when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
 
-            harness.setHand(player1, List.of(new ArcTrail()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            drs.resolveDealOrderedDamageToAnyTargets(gd, entry, effect);
 
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-            UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-
-            harness.castAndResolveSorcery(player1, 0, List.of(bearsId, elvesId));
-
-            // 2 damage kills 2/2 Grizzly Bears; 1 damage kills 1/1 Llanowar Elves
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Llanowar Elves");
+            assertThat(bears.getMarkedDamage()).isEqualTo(2);
+            assertThat(elves.getMarkedDamage()).isEqualTo(1);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
         }
 
         @Test
-        @DisplayName("Deals 2 damage to a creature and 1 damage to a player")
-        void deals2ToCreatureAnd1ToPlayer() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player2, bears);
+        @DisplayName("Deals damage to a creature and a player")
+        void dealsDamageToCreatureAndPlayer() {
+            Card arcCard = createCard("Arc Trail");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createMultiTargetEntry(arcCard, player1Id, List.of(bears.getId(), player2Id));
+            DealOrderedDamageToAnyTargetsEffect effect = new DealOrderedDamageToAnyTargetsEffect(List.of(2, 1));
 
-            harness.setHand(player1, List.of(new ArcTrail()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(bears, 2);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
+            stubPlayerDamageDefaults(player2Id);
 
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            drs.resolveDealOrderedDamageToAnyTargets(gd, entry, effect);
 
-            harness.castAndResolveSorcery(player1, 0, List.of(bearsId, player2.getId()));
-
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertLife(player2, 19);
+            assertThat(bears.getMarkedDamage()).isEqualTo(2);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
         }
     }
 
     // =========================================================================
-    // FirstTargetDealsPowerDamageToSecondTargetEffect (via Wing Puncture — instant, {G})
+    // FirstTargetDealsPowerDamageToSecondTargetEffect (bite mechanic)
     // =========================================================================
 
     @Nested
@@ -627,86 +908,56 @@ class DamageResolutionServiceTest extends BaseCardTest {
     class ResolveBite {
 
         @Test
-        @DisplayName("Source creature deals its power as damage to target flyer")
-        void sourceDealsItsePowerAsaDamageToFlyer() {
-            // GrizzlyBears is 2/2, Serra Angel is 4/4 with flying
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player1, bears);
+        @DisplayName("Source creature deals its power as damage to target — target survives")
+        void sourceDealsItsPowerAsDamageToTarget() {
+            Card wingCard = createCard("Wing Puncture");
+            wingCard.setColor(CardColor.GREEN);
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+            Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+            StackEntry entry = createMultiTargetEntry(wingCard, player1Id, List.of(bears.getId(), angel.getId()));
 
-            SerraAngel angel = new SerraAngel();
-            harness.addToBattlefield(player2, angel);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(angel, 4);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
+            when(gameQueryService.getEffectivePower(gd, bears)).thenReturn(2);
+            when(gameQueryService.isPreventedFromDealingDamage(gd, bears)).thenReturn(false);
+            when(gameQueryService.hasProtectionFromSource(eq(gd), eq(angel), any(Permanent.class))).thenReturn(false);
+            stubNoKeywordsOnSourceWithDamageSource(entry, bears);
+            when(gameQueryService.isLethalDamage(2, 4, false)).thenReturn(false);
 
-            harness.setHand(player1, List.of(new WingPuncture()));
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            drs.resolveBite(gd, entry);
 
-            UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-            UUID angelId = harness.getPermanentId(player2, "Serra Angel");
-
-            harness.castAndResolveInstant(player1, 0, List.of(bearsId, angelId));
-
-            // 2 power vs 4 toughness — Serra Angel survives
-            harness.assertOnBattlefield(player2, "Serra Angel");
+            assertThat(angel.getMarkedDamage()).isEqualTo(2);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
         @Test
-        @DisplayName("Kills target flyer when source power >= target toughness")
-        void killsFlyerWhenPowerIsLethal() {
-            // Player1 controls Serra Angel (4/4 flying), player2 controls another Serra Angel (4/4 flying)
-            SerraAngel myAngel = new SerraAngel();
-            harness.addToBattlefield(player1, myAngel);
+        @DisplayName("Kills target when source power >= target toughness")
+        void killsTargetWhenPowerIsLethal() {
+            Card wingCard = createCard("Wing Puncture");
+            wingCard.setColor(CardColor.GREEN);
+            Permanent myAngel = addPermanent(player1Id, createCreature("Serra Angel", 4, 4));
+            Permanent theirAngel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+            StackEntry entry = createMultiTargetEntry(wingCard, player1Id, List.of(myAngel.getId(), theirAngel.getId()));
 
-            SerraAngel theirAngel = new SerraAngel();
-            harness.addToBattlefield(player2, theirAngel);
+            stubDamageNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageDefaults(theirAngel, 4);
+            when(gameQueryService.findPermanentById(gd, myAngel.getId())).thenReturn(myAngel);
+            when(gameQueryService.findPermanentById(gd, theirAngel.getId())).thenReturn(theirAngel);
+            when(gameQueryService.getEffectivePower(gd, myAngel)).thenReturn(4);
+            when(gameQueryService.isPreventedFromDealingDamage(gd, myAngel)).thenReturn(false);
+            when(gameQueryService.hasProtectionFromSource(eq(gd), eq(theirAngel), any(Permanent.class))).thenReturn(false);
+            stubNoKeywordsOnSourceWithDamageSource(entry, myAngel);
+            when(gameQueryService.isLethalDamage(4, 4, false)).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, theirAngel, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, theirAngel)).thenReturn(false);
 
-            harness.setHand(player1, List.of(new WingPuncture()));
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            drs.resolveBite(gd, entry);
 
-            UUID myAngelId = harness.getPermanentId(player1, "Serra Angel");
-            UUID theirAngelId = harness.getPermanentId(player2, "Serra Angel");
-
-            harness.castAndResolveInstant(player1, 0, List.of(myAngelId, theirAngelId));
-
-            // 4 power vs 4 toughness — lethal
-            harness.assertInGraveyard(player2, "Serra Angel");
-        }
-    }
-
-    // =========================================================================
-    // DealDamageToTargetPlayerByHandSizeEffect — via Prodigal Pyromancer activated ability
-    // (covered above via Sudden Impact, but let's also test the tap ability pattern)
-    // =========================================================================
-
-    @Nested
-    @DisplayName("resolveDealDamageViaActivatedAbility")
-    class ResolveDealDamageViaActivatedAbility {
-
-        @Test
-        @DisplayName("Prodigal Pyromancer's tap ability deals 1 damage to a creature")
-        void pyromancerDeals1DamageToCreature() {
-            ProdigalPyromancer pyro = new ProdigalPyromancer();
-            harness.addToBattlefield(player1, pyro);
-            gd.playerBattlefields.get(player1.getId()).getLast().setSummoningSick(false);
-
-            LlanowarElves elves = new LlanowarElves();
-            harness.addToBattlefield(player2, elves);
-
-            harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Llanowar Elves"));
-            harness.passBothPriorities();
-
-            harness.assertInGraveyard(player2, "Llanowar Elves");
-        }
-
-        @Test
-        @DisplayName("Prodigal Pyromancer's tap ability deals 1 damage to a player")
-        void pyromancerDeals1DamageToPlayer() {
-            ProdigalPyromancer pyro = new ProdigalPyromancer();
-            harness.addToBattlefield(player1, pyro);
-            gd.playerBattlefields.get(player1.getId()).getLast().setSummoningSick(false);
-
-            harness.activateAbility(player1, 0, null, player2.getId());
-            harness.passBothPriorities();
-
-            harness.assertLife(player2, 19);
+            assertThat(theirAngel.getMarkedDamage()).isEqualTo(4);
         }
     }
 }
