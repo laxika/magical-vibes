@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageTo
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -707,6 +708,63 @@ public class DamageResolutionService {
                     gameBroadcastService.logAndBroadcast(gameData,
                             target.getCard().getName() + "'s damage to " + cardName + " is prevented.");
                 }
+            }
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link PlaneswalkerDealDamageAndReceivePowerDamageEffect} — the source planeswalker
+     * deals fixed damage to target creature, and that creature deals damage equal to its power
+     * back to the source planeswalker (removing loyalty counters).
+     *
+     * <p>Used by Garruk Relentless's 0-loyalty ability: "Garruk Relentless deals 3 damage to
+     * target creature. That creature deals damage equal to its power to him."</p>
+     */
+    @HandlesEffect(PlaneswalkerDealDamageAndReceivePowerDamageEffect.class)
+    void resolvePlaneswalkerDealDamageAndReceivePowerDamage(GameData gameData, StackEntry entry,
+                                                            PlaneswalkerDealDamageAndReceivePowerDamageEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) return;
+
+        String cardName = entry.getCard().getName();
+
+        // Step 1: Planeswalker deals fixed damage to target creature
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+        if (rawDamage > 0) {
+            if (!(gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
+                if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
+                    gameData.pendingLethalDamageDestructions.add(target);
+                }
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + " deals " + rawDamage + " damage to " + target.getCard().getName() + ".");
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + "'s damage to " + target.getCard().getName() + " is prevented.");
+            }
+        }
+
+        // Step 2: Target creature deals damage equal to its power to the source planeswalker
+        // (removes loyalty counters)
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent sourcePlaneswalker = sourcePermanentId != null
+                ? gameQueryService.findPermanentById(gameData, sourcePermanentId) : null;
+
+        if (sourcePlaneswalker != null) {
+            int targetPower = gameQueryService.getEffectivePower(gameData, target);
+            if (targetPower > 0) {
+                int newLoyalty = Math.max(0, sourcePlaneswalker.getLoyaltyCounters() - targetPower);
+                sourcePlaneswalker.setLoyaltyCounters(newLoyalty);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        target.getCard().getName() + " deals " + targetPower + " damage to " + cardName
+                                + ". (" + cardName + " now has " + newLoyalty + " loyalty.)");
+                log.info("Game {} - {} takes {} damage from {}, loyalty now {}",
+                        gameData.id, cardName, targetPower, target.getCard().getName(), newLoyalty);
             }
         }
 

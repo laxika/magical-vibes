@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final DamageResolutionService damageResolutionService;
     private final DestructionResolutionService destructionResolutionService;
+    private final LibrarySearchResolutionService librarySearchResolutionService;
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -152,6 +154,30 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleSacrificeCreatureThenSearchLibrary(GameData gameData, UUID permanentId,
+                                                         PermanentChoiceContext.SacrificeCreatureThenSearchLibrary context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target creature no longer exists");
+        }
+
+        UUID sacrificingPlayerId = context.sacrificingPlayerId();
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+
+        String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
+        String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+
+        // "If you do" — sacrifice happened, now search library for a creature card
+        librarySearchResolutionService.searchLibraryForCreatureToHand(gameData, sacrificingPlayerId);
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            stateBasedActionService.performStateBasedActions(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 
     public void handleSacrificeCreatureOpponentsLoseLife(GameData gameData, UUID permanentId,

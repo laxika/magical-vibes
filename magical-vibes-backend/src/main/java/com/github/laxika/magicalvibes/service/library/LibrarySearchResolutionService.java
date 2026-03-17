@@ -38,9 +38,13 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardToE
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -71,6 +75,8 @@ public class LibrarySearchResolutionService {
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
     private final GameQueryService gameQueryService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final PlayerInputService playerInputService;
 
     /**
      * Searches the controller's library for a basic land card and puts it into their hand.
@@ -723,6 +729,74 @@ public class LibrarySearchResolutionService {
                 .build(), prompt, false, casterName + " searches " + targetName + "'s library.");
         log.info("Game {} - {} resolving Head Games, searching {}'s library for {} cards",
                 gameData.id, casterName, targetName, handSize);
+    }
+
+    /**
+     * Resolves Garruk, the Veil-Cursed's −1: sacrifice a creature, then if you did,
+     * search your library for a creature card, reveal it, put it into your hand, then shuffle.
+     *
+     * <p>The sacrifice is part of the effect, not a cost. If the controller controls no creatures,
+     * nothing happens. If exactly one creature, it's sacrificed automatically. If multiple,
+     * the player is prompted to choose.
+     */
+    @HandlesEffect(SacrificeCreatureSearchLibraryForCreatureToHandEffect.class)
+    void resolveSacrificeCreatureSearchLibrary(GameData gameData, StackEntry entry,
+                                                SacrificeCreatureSearchLibraryForCreatureToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        List<UUID> creatureIds = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p)) {
+                    creatureIds.add(p.getId());
+                }
+            }
+        }
+
+        if (creatureIds.isEmpty()) {
+            String logEntry = playerName + " controls no creatures to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no creatures for sacrifice-then-search", gameData.id, playerName);
+            return;
+        }
+
+        if (creatureIds.size() == 1) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
+            if (creature != null) {
+                permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+                String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+
+                searchLibraryForCreatureToHand(gameData, controllerId);
+            }
+            return;
+        }
+
+        // Multiple creatures — prompt the player to choose
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SacrificeCreatureThenSearchLibrary(controllerId));
+        playerInputService.beginPermanentChoice(gameData, controllerId, creatureIds,
+                "Choose a creature to sacrifice.");
+    }
+
+    /**
+     * Searches the controller's library for a creature card, reveals it, and puts it into their hand.
+     * Called after the sacrifice portion of SacrificeCreatureSearchLibraryForCreatureToHandEffect completes.
+     */
+    public void searchLibraryForCreatureToHand(GameData gameData, UUID controllerId) {
+        performLibrarySearch(
+                gameData,
+                controllerId,
+                card -> card.hasType(CardType.CREATURE),
+                "creature cards",
+                "Search your library for a creature card to reveal and put into your hand.",
+                true,
+                true,
+                LibrarySearchDestination.HAND
+        );
     }
 
     // =========================================================================
