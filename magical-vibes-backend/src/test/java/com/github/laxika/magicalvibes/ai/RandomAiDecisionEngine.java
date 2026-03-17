@@ -343,9 +343,23 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
             if (candidates.isEmpty()) continue;
 
-            int blockerIdx = candidates.get(rng.nextInt(candidates.size()));
-            assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
-            blockerUsed[blockerIdx] = true;
+            // Menace requires at least 2 blockers — skip if we don't have enough candidates
+            boolean hasMenace = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE);
+            if (hasMenace && candidates.size() < 2) {
+                continue;
+            }
+
+            Collections.shuffle(candidates, rng);
+            if (hasMenace) {
+                // Assign exactly 2 blockers for menace creatures
+                assignments.add(new BlockerAssignment(candidates.get(0), attackerIdx));
+                blockerUsed[candidates.get(0)] = true;
+                assignments.add(new BlockerAssignment(candidates.get(1), attackerIdx));
+                blockerUsed[candidates.get(1)] = true;
+            } else {
+                assignments.add(new BlockerAssignment(candidates.get(0), attackerIdx));
+                blockerUsed[candidates.get(0)] = true;
+            }
         }
 
         log.info("Random AI: Declaring {} blockers in game {}", assignments.size(), gameId);
