@@ -1,21 +1,85 @@
 package com.github.laxika.magicalvibes.service.library;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RedSunsZenith;
-import com.github.laxika.magicalvibes.cards.r.Reminisce;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
-class LibraryShuffleResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class LibraryShuffleResolutionServiceTest {
+
+    @Mock
+    private GameBroadcastService gameBroadcastService;
+
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
+
+    @InjectMocks
+    private LibraryShuffleResolutionService service;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.activePlayerId = player1Id;
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    private static Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        return card;
+    }
 
     // =========================================================================
     // resolveShuffleIntoLibrary (via RedSunsZenith)
@@ -28,30 +92,31 @@ class LibraryShuffleResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Card is shuffled into library instead of going to graveyard")
         void cardShuffledIntoLibrary() {
-            harness.setHand(player1, List.of(new RedSunsZenith()));
-            harness.addMana(player1, ManaColor.RED, 4);
-            harness.setLife(player2, 20);
+            Card zenith = createCard("Red Sun's Zenith");
+            ShuffleIntoLibraryEffect effect = new ShuffleIntoLibraryEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, zenith,
+                    player1Id, "Red Sun's Zenith", List.of(effect));
 
-            harness.castSorcery(player1, 0, 3, player2.getId());
-            harness.passBothPriorities();
+            service.resolveShuffleIntoLibrary(gd, entry);
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
+            assertThat(gd.playerGraveyards.get(player1Id))
                     .noneMatch(c -> c.getName().equals("Red Sun's Zenith"));
-            assertThat(gd.playerDecks.get(player1.getId()))
+            assertThat(gd.playerDecks.get(player1Id))
                     .anyMatch(c -> c.getName().equals("Red Sun's Zenith"));
         }
 
         @Test
         @DisplayName("Shuffle log is recorded")
         void shuffleLogRecorded() {
-            harness.setHand(player1, List.of(new RedSunsZenith()));
-            harness.addMana(player1, ManaColor.RED, 2);
-            harness.setLife(player2, 20);
+            Card zenith = createCard("Red Sun's Zenith");
+            ShuffleIntoLibraryEffect effect = new ShuffleIntoLibraryEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, zenith,
+                    player1Id, "Red Sun's Zenith", List.of(effect));
 
-            harness.castSorcery(player1, 0, 1, player2.getId());
-            harness.passBothPriorities();
+            service.resolveShuffleIntoLibrary(gd, entry);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled into its owner's library"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("shuffled into its owner's library")));
         }
     }
 
@@ -66,35 +131,38 @@ class LibraryShuffleResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Shuffles graveyard into library")
         void shufflesGraveyardIntoLibrary() {
-            Card bear1 = new GrizzlyBears();
-            Card bear2 = new GrizzlyBears();
-            harness.setGraveyard(player1, List.of(bear1, bear2));
-            harness.setHand(player1, List.of(new Reminisce()));
-            harness.addMana(player1, ManaColor.BLUE, 3);
-            int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+            Card bear1 = createCard("Grizzly Bears");
+            Card bear2 = createCard("Grizzly Bears");
+            gd.playerGraveyards.get(player1Id).addAll(List.of(bear1, bear2));
+            int deckSizeBefore = gd.playerDecks.get(player1Id).size();
 
-            harness.castSorcery(player1, 0, player1.getId());
-            harness.passBothPriorities();
+            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Reminisce"),
+                    player1Id, "Reminisce", List.of(effect), 0, player1Id, null);
 
-            assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 2);
-            assertThat(gd.playerGraveyards.get(player1.getId()))
+            service.resolveShuffleGraveyardIntoLibrary(gd, entry);
+
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
+            assertThat(gd.playerGraveyards.get(player1Id))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their graveyard"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("shuffles their graveyard")));
         }
 
         @Test
         @DisplayName("Empty graveyard still shuffles library")
         void emptyGraveyardStillShuffles() {
-            harness.setGraveyard(player1, new ArrayList<>());
-            harness.setHand(player1, List.of(new Reminisce()));
-            harness.addMana(player1, ManaColor.BLUE, 3);
-            int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+            int deckSizeBefore = gd.playerDecks.get(player1Id).size();
 
-            harness.castSorcery(player1, 0, player1.getId());
-            harness.passBothPriorities();
+            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect();
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Reminisce"),
+                    player1Id, "Reminisce", List.of(effect), 0, player1Id, null);
 
-            assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("graveyard is empty"));
+            service.resolveShuffleGraveyardIntoLibrary(gd, entry);
+
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("graveyard is empty")));
         }
     }
 }
