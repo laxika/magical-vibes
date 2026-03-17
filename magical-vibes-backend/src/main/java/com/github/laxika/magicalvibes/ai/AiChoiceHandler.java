@@ -503,6 +503,17 @@ class AiChoiceHandler {
             return;
         }
 
+        // Library reveal choice (Lead the Stampede, Commune with Nature, etc.)
+        if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
+            InteractionContext.LibraryRevealChoice lrc = gameData.interaction.libraryRevealChoiceContext();
+            if (lrc != null && aiPlayerId.equals(lrc.playerId())) {
+                List<UUID> chosen = new ArrayList<>(lrc.validCardIds());
+                log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), gameId);
+                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+            }
+            return;
+        }
+
         InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
         if (multiGraveyardChoice == null) {
             return;
