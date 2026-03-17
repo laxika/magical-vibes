@@ -76,7 +76,7 @@ class CombatSimulatorTest {
                 gd, oppAirElemental, 0, player2.getId(), player1.getId());
 
         CombatSimulator.CombatOutcome outcome = simulator.simulateCombat(
-                List.of(attackerInfo), List.of(blockerInfo), 20);
+                gd, List.of(attackerInfo), List.of(blockerInfo), 20);
 
         // Attacker (2/2) should die — blocked by 4/4
         assertThat(outcome.aiCreaturesLostValue()).isGreaterThan(0);

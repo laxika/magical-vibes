@@ -41,7 +41,7 @@ public class CombatSimulator {
         this.boardEvaluator = boardEvaluator;
     }
 
-    record CreatureInfo(int index, UUID id, int power, int toughness,
+    record CreatureInfo(int index, UUID id, Permanent perm, int power, int toughness,
                         boolean flying, boolean firstStrike, boolean doubleStrike,
                         boolean trample, boolean lifelink, boolean indestructible,
                         boolean menace, boolean fear, boolean intimidate, boolean reach, boolean defender,
@@ -118,7 +118,7 @@ public class CombatSimulator {
         List<Integer> bestSubset = List.of();
         if (!forcedAttackerInfos.isEmpty()) {
             // Evaluate forced-only attack as baseline
-            CombatOutcome forcedOutcome = simulateCombat(forcedAttackerInfos, blockerInfos, opponentLife);
+            CombatOutcome forcedOutcome = simulateCombat(gameData, forcedAttackerInfos, blockerInfos, opponentLife);
             bestScore = forcedOutcome.evaluationDelta();
             bestSubset = forcedAttackerInfos.stream().map(CreatureInfo::index).toList();
         } else {
@@ -139,7 +139,7 @@ public class CombatSimulator {
 
             // Quick lethal check: if unblockable damage >= opponent life (or poison), pick immediately
             List<CreatureInfo> unblockable = subset.stream()
-                    .filter(a -> a.cantBeBlocked || !canBeBlockedByAny(a, blockerInfos))
+                    .filter(a -> a.cantBeBlocked || !canBeBlockedByAny(gameData, a, blockerInfos))
                     .toList();
             int unblockableLifeDamage = unblockable.stream()
                     .filter(a -> !a.infect)
@@ -155,7 +155,7 @@ public class CombatSimulator {
             }
 
             // Simulate greedy-optimal blocking by opponent
-            CombatOutcome outcome = simulateCombat(subset, blockerInfos, opponentLife);
+            CombatOutcome outcome = simulateCombat(gameData, subset, blockerInfos, opponentLife);
             double score = outcome.evaluationDelta();
 
             if (score > bestScore) {
@@ -210,7 +210,7 @@ public class CombatSimulator {
 
             List<CreatureInfo> available = blockerInfos.stream()
                     .filter(b -> !blockerUsed[b.index])
-                    .filter(b -> canBlock(b, attacker))
+                    .filter(b -> canBlock(gameData, b, attacker))
                     .toList();
 
             if (available.isEmpty()) continue;
@@ -269,7 +269,7 @@ public class CombatSimulator {
     /**
      * Simulates combat between a set of attackers and greedy-optimal blocking.
      */
-    CombatOutcome simulateCombat(List<CreatureInfo> attackers, List<CreatureInfo> blockers,
+    CombatOutcome simulateCombat(GameData gameData, List<CreatureInfo> attackers, List<CreatureInfo> blockers,
                                   int opponentLife) {
         // Simulate opponent's greedy-optimal blocking:
         // assign best blocker to biggest threat first
@@ -291,7 +291,7 @@ public class CombatSimulator {
                 // Need 2 blockers for menace
                 List<Integer> availableIdx = new ArrayList<>();
                 for (int j = 0; j < blockers.size(); j++) {
-                    if (!blockerUsed[j] && canBlock(blockers.get(j), attacker)) {
+                    if (!blockerUsed[j] && canBlock(gameData, blockers.get(j), attacker)) {
                         availableIdx.add(j);
                     }
                 }
@@ -329,7 +329,7 @@ public class CombatSimulator {
             for (int j = 0; j < blockers.size(); j++) {
                 if (blockerUsed[j]) continue;
                 CreatureInfo blocker = blockers.get(j);
-                if (!canBlock(blocker, attacker)) continue;
+                if (!canBlock(gameData, blocker, attacker)) continue;
 
                 double value = evaluateDefenderBlock(attacker, blocker);
                 if (value > bestDefenderValue) {
@@ -542,7 +542,7 @@ public class CombatSimulator {
         return bestValue > 0 ? bestPair : null;
     }
 
-    private boolean canBlock(CreatureInfo blocker, CreatureInfo attacker) {
+    private boolean canBlock(GameData gameData, CreatureInfo blocker, CreatureInfo attacker) {
         if (attacker.cantBeBlocked) return false;
         if (blocker.defender || !blocker.defender) { /* defenders can block */ }
 
@@ -555,12 +555,15 @@ public class CombatSimulator {
         // Intimidate: can only be blocked by artifact creatures or creatures that share a color
         if (attacker.intimidate && !blocker.isArtifact && blocker.color != attacker.color) return false;
 
+        // Protection: attacker with protection from blocker can't be blocked by it
+        if (gameQueryService.hasProtectionFromSource(gameData, attacker.perm, blocker.perm)) return false;
+
         return true;
     }
 
-    private boolean canBeBlockedByAny(CreatureInfo attacker, List<CreatureInfo> blockers) {
+    private boolean canBeBlockedByAny(GameData gameData, CreatureInfo attacker, List<CreatureInfo> blockers) {
         if (attacker.cantBeBlocked) return false;
-        return blockers.stream().anyMatch(b -> canBlock(b, attacker));
+        return blockers.stream().anyMatch(b -> canBlock(gameData, b, attacker));
     }
 
     CreatureInfo buildCreatureInfo(GameData gameData, Permanent perm, int index,
@@ -581,6 +584,7 @@ public class CombatSimulator {
         return new CreatureInfo(
                 index,
                 perm.getId(),
+                perm,
                 power,
                 toughness,
                 gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING),
