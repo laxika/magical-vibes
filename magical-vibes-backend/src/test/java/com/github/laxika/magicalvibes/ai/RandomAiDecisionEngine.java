@@ -379,6 +379,19 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // CR 509.1b: if only one unique blocker and it can't block alone, remove it
+        Set<Integer> uniqueBlockerIndices = new HashSet<>();
+        for (BlockerAssignment a : assignments) {
+            uniqueBlockerIndices.add(a.blockerIndex());
+        }
+        if (uniqueBlockerIndices.size() == 1) {
+            Permanent sole = battlefield.get(uniqueBlockerIndices.iterator().next());
+            if (sole.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance)) {
+                assignments.clear();
+            }
+        }
+
         log.info("Random AI: Declaring {} blockers in game {}", assignments.size(), gameId);
         sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
     }
