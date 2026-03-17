@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -358,10 +359,13 @@ public class BattlefieldEntryService {
                         return e;
                     })
                     .filter(Objects::nonNull)
-                    // Metalcraft intervening-if: only trigger if controller has 3+ artifacts
+                    // Conditional intervening-if: only trigger if condition is met
                     .filter(e -> {
                         if (e instanceof MetalcraftConditionalEffect) {
                             return gameQueryService.isMetalcraftMet(gameData, controllerId);
+                        }
+                        if (e instanceof MorbidConditionalEffect) {
+                            return gameQueryService.isMorbidMet(gameData);
                         }
                         return true;
                     })
