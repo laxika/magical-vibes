@@ -371,6 +371,8 @@ class AuraAttachmentServiceTest {
             gd.stolenCreatures.put(creature.getId(), player2Id);
             gd.untilEndOfTurnStolenCreatures.add(creature.getId());
 
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+
             service.returnStolenCreatures(gd, false);
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
@@ -384,6 +386,8 @@ class AuraAttachmentServiceTest {
             gd.playerBattlefields.get(player1Id).add(creature);
             gd.stolenCreatures.put(creature.getId(), player2Id);
             // NOT in untilEndOfTurnStolenCreatures
+
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
 
             service.returnStolenCreatures(gd, true);
 

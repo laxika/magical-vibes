@@ -86,19 +86,22 @@ public class AuraAttachmentService {
             Map.Entry<UUID, UUID> entry = it.next();
             UUID creatureId = entry.getKey();
             UUID ownerId = entry.getValue();
+
+            // Always clean up tracking for creatures that no longer exist on the battlefield,
+            // regardless of the steal type
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            if (creature == null) {
+                it.remove();
+                clearStolenCreatureTracking(gameData, creatureId);
+                continue;
+            }
+
             boolean isUntilEndOfTurnSteal = gameData.untilEndOfTurnStolenCreatures.contains(creatureId);
 
             if (includeUntilEndOfTurn && !isUntilEndOfTurnSteal) {
                 continue;
             }
             if (!includeUntilEndOfTurn && isUntilEndOfTurnSteal) {
-                continue;
-            }
-
-            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-            if (creature == null) {
-                it.remove();
-                clearStolenCreatureTracking(gameData, creatureId);
                 continue;
             }
 
