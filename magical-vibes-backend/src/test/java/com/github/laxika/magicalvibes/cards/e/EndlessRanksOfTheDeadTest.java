@@ -28,7 +28,7 @@ class EndlessRanksOfTheDeadTest extends BaseCardTest {
 
     private List<Permanent> getZombieTokens(Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie") && p.isToken())
+                .filter(p -> p.getCard().getName().equals("Zombie") && p.getCard().isToken())
                 .toList();
     }
 

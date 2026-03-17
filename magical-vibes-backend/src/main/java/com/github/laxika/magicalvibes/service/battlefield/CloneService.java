@@ -106,6 +106,7 @@ public class CloneService {
         gameData.cloneOperation.powerOverride = copyEffect.powerOverride();
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
+        gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -125,6 +126,7 @@ public class CloneService {
         Integer powerOverride = gameData.cloneOperation.powerOverride;
         Integer toughnessOverride = gameData.cloneOperation.toughnessOverride;
         Set<CardType> additionalTypesOverride = gameData.cloneOperation.additionalTypesOverride;
+        List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
 
         gameData.cloneOperation.card = null;
         gameData.cloneOperation.controllerId = null;
@@ -132,6 +134,7 @@ public class CloneService {
         gameData.cloneOperation.powerOverride = null;
         gameData.cloneOperation.toughnessOverride = null;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
+        gameData.cloneOperation.additionalActivatedAbilities = List.of();
 
         Permanent perm = new Permanent(card);
 
@@ -139,6 +142,10 @@ public class CloneService {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermanentId);
             if (targetPerm != null) {
                 applyCloneCopy(perm, targetPerm, powerOverride, toughnessOverride, additionalTypesOverride);
+                // "except it has..." — add additional abilities to the copy (e.g. Evil Twin)
+                for (ActivatedAbility extraAbility : additionalActivatedAbilities) {
+                    perm.getCard().addActivatedAbility(extraAbility);
+                }
             }
         }
 

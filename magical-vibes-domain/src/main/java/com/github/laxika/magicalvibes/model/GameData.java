@@ -552,6 +552,10 @@ public class GameData {
         copy.cloneOperation.card = this.cloneOperation.card;
         copy.cloneOperation.controllerId = this.cloneOperation.controllerId;
         copy.cloneOperation.etbTargetId = this.cloneOperation.etbTargetId;
+        copy.cloneOperation.powerOverride = this.cloneOperation.powerOverride;
+        copy.cloneOperation.toughnessOverride = this.cloneOperation.toughnessOverride;
+        copy.cloneOperation.additionalTypesOverride = this.cloneOperation.additionalTypesOverride;
+        copy.cloneOperation.additionalActivatedAbilities = this.cloneOperation.additionalActivatedAbilities;
 
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);

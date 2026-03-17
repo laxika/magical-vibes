@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -713,6 +714,30 @@ public class GameQueryService {
             int sourcePower = getEffectivePower(gameData, sourcePermanent);
             int targetToughness = getEffectiveToughness(gameData, permanent);
             return targetToughness < sourcePower;
+        }
+        if (predicate instanceof PermanentHasSameNameAsSourcePredicate) {
+            if (gameData == null || sourceCardId == null) {
+                return false;
+            }
+            // Find the source permanent by its current card ID (important for clones
+            // where card differs from originalCard)
+            Permanent sourcePermanent = null;
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        if (p.getCard().getId().equals(sourceCardId)) {
+                            sourcePermanent = p;
+                            break;
+                        }
+                    }
+                }
+                if (sourcePermanent != null) break;
+            }
+            if (sourcePermanent == null) {
+                return false;
+            }
+            return permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
         }
         if (predicate instanceof PermanentTruePredicate) {
             return true;
