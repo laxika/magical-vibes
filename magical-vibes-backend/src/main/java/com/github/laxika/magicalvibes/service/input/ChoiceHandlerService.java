@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -45,7 +45,7 @@ import java.util.ArrayList;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ColorChoiceHandlerService {
+public class ChoiceHandlerService {
 
     private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
@@ -66,60 +66,60 @@ public class ColorChoiceHandlerService {
         }
 
         // Mana color choice (Chromatic Star, etc.)
-        if (colorChoice.context() instanceof ColorChoiceContext.ManaColorChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.ManaColorChoice ctx) {
             handleManaColorChosen(gameData, player, colorName, ctx);
             return;
         }
 
         // Card name choice (Pithing Needle, etc.)
-        if (colorChoice.context() instanceof ColorChoiceContext.CardNameChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx) {
             handleCardNameChosen(gameData, player, colorName, ctx);
             return;
         }
 
         // Text-changing effects (Mind Bend, etc.) — two-step color/land-type choice
-        if (colorChoice.context() instanceof ColorChoiceContext.TextChangeFromWord ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.TextChangeFromWord ctx) {
             handleTextChangeFromWordChosen(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.TextChangeToWord ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.TextChangeToWord ctx) {
             handleTextChangeToWordChosen(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.DrawReplacementChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.DrawReplacementChoice ctx) {
             handleDrawReplacementChoice(gameData, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.KeywordGrantChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.KeywordGrantChoice ctx) {
             handleKeywordGrantChoice(gameData, player, colorName, ctx);
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.ExileByNameChoice ctx) {
             handleExileByNameChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.ProtectionColorChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.ProtectionColorChoice ctx) {
             handleProtectionColorChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.SubtypeChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.BasicLandTypeChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice ctx) {
             handleBasicLandTypeChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.PermanentTypeChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.PermanentTypeChoice ctx) {
             handlePermanentTypeChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ColorChoiceContext.SphinxAmbassadorNameChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice ctx) {
             handleSphinxAmbassadorNameChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -148,7 +148,7 @@ public class ColorChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleManaColorChosen(GameData gameData, Player player, String colorName, ColorChoiceContext.ManaColorChoice ctx) {
+    private void handleManaColorChosen(GameData gameData, Player player, String colorName, ChoiceContext.ManaColorChoice ctx) {
         ManaColor manaColor = ManaColor.valueOf(colorName);
 
         gameData.interaction.clearAwaitingInput();
@@ -174,15 +174,15 @@ public class ColorChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleTextChangeFromWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeFromWord ctx) {
+    private void handleTextChangeFromWordChosen(GameData gameData, Player player, String chosenWord, ChoiceContext.TextChangeFromWord ctx) {
         boolean isColor = GameQueryService.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord);
         boolean isLandType = GameQueryService.TEXT_CHANGE_LAND_TYPES.contains(chosenWord);
         if (!isColor && !isLandType) {
             throw new IllegalArgumentException("Invalid choice: " + chosenWord);
         }
 
-        ColorChoiceContext.TextChangeToWord choiceContext =
-                new ColorChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
+        ChoiceContext.TextChangeToWord choiceContext =
+                new ChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
         gameData.interaction.beginColorChoice(player.getId(), null, null, choiceContext);
 
         List<String> remainingOptions;
@@ -199,7 +199,7 @@ public class ColorChoiceHandlerService {
         log.info("Game {} - Awaiting {} to choose replacement word for text change", gameData.id, player.getUsername());
     }
 
-    private void handleTextChangeToWordChosen(GameData gameData, Player player, String chosenWord, ColorChoiceContext.TextChangeToWord ctx) {
+    private void handleTextChangeToWordChosen(GameData gameData, Player player, String chosenWord, ChoiceContext.TextChangeToWord ctx) {
         if (ctx.isColor()) {
             if (!GameQueryService.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord)) {
                 throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
@@ -254,7 +254,7 @@ public class ColorChoiceHandlerService {
         };
     }
 
-    private void handleCardNameChosen(GameData gameData, Player player, String cardName, ColorChoiceContext.CardNameChoice ctx) {
+    private void handleCardNameChosen(GameData gameData, Player player, String cardName, ChoiceContext.CardNameChoice ctx) {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
@@ -281,7 +281,7 @@ public class ColorChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleKeywordGrantChoice(GameData gameData, Player player, String chosenKeywordName, ColorChoiceContext.KeywordGrantChoice ctx) {
+    private void handleKeywordGrantChoice(GameData gameData, Player player, String chosenKeywordName, ChoiceContext.KeywordGrantChoice ctx) {
         Keyword keyword;
         try {
             keyword = Keyword.valueOf(chosenKeywordName);
@@ -310,7 +310,7 @@ public class ColorChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ColorChoiceContext.DrawReplacementChoice ctx) {
+    private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ChoiceContext.DrawReplacementChoice ctx) {
         if (ctx.kind() != DrawReplacementKind.ABUNDANCE) {
             throw new IllegalStateException("Unsupported draw replacement choice kind: " + ctx.kind());
         }
@@ -388,7 +388,7 @@ public class ColorChoiceHandlerService {
         }
     }
 
-    private void handleProtectionColorChoice(GameData gameData, Player player, String chosenValue, ColorChoiceContext.ProtectionColorChoice ctx) {
+    private void handleProtectionColorChoice(GameData gameData, Player player, String chosenValue, ChoiceContext.ProtectionColorChoice ctx) {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
@@ -414,7 +414,7 @@ public class ColorChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleSubtypeChoice(GameData gameData, Player player, String subtypeName, ColorChoiceContext.SubtypeChoice ctx) {
+    private void handleSubtypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SubtypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.interaction.clearAwaitingInput();
@@ -434,7 +434,7 @@ public class ColorChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ColorChoiceContext.BasicLandTypeChoice ctx) {
+    private void handleBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.BasicLandTypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.interaction.clearAwaitingInput();
@@ -454,7 +454,7 @@ public class ColorChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handlePermanentTypeChoice(GameData gameData, Player player, String typeName, ColorChoiceContext.PermanentTypeChoice ctx) {
+    private void handlePermanentTypeChoice(GameData gameData, Player player, String typeName, ChoiceContext.PermanentTypeChoice ctx) {
         CardType chosenType = CardType.valueOf(typeName);
         if (!chosenType.isPermanentType()) {
             throw new IllegalArgumentException("Invalid permanent type choice: " + typeName);
@@ -506,7 +506,7 @@ public class ColorChoiceHandlerService {
     }
 
     private void handleEachPlayerCardNameRevealChoice(GameData gameData, Player player, String cardName,
-                                                      ColorChoiceContext.EachPlayerCardNameRevealChoice ctx) {
+                                                      ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
         // Store this player's chosen name
         Map<UUID, String> updatedNames = new LinkedHashMap<>(ctx.chosenNames());
         updatedNames.put(player.getId(), cardName);
@@ -530,7 +530,7 @@ public class ColorChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearColorChoice();
 
-            var nextContext = new ColorChoiceContext.EachPlayerCardNameRevealChoice(
+            var nextContext = new ChoiceContext.EachPlayerCardNameRevealChoice(
                     ctx.playerOrder(), updatedNames);
             gameData.interaction.beginColorChoice(nextPlayerId, null, null, nextContext);
 
@@ -599,7 +599,7 @@ public class ColorChoiceHandlerService {
         return new ArrayList<>(names);
     }
 
-    private void handleExileByNameChoice(GameData gameData, Player player, String cardName, ColorChoiceContext.ExileByNameChoice ctx) {
+    private void handleExileByNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.ExileByNameChoice ctx) {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
@@ -652,7 +652,7 @@ public class ColorChoiceHandlerService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
-    private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ColorChoiceContext.SphinxAmbassadorNameChoice ctx) {
+    private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.SphinxAmbassadorNameChoice ctx) {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 

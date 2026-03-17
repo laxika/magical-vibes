@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -281,7 +281,7 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
             } else if (effect instanceof AwardAnyColorManaEffect) {
-                ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
                 gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseColorMessage(colors, "Choose a color of mana to add."));

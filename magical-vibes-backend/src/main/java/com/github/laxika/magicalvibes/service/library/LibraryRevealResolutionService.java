@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
@@ -784,7 +784,7 @@ public class LibraryRevealResolutionService {
 
         // Begin the first player's card name choice
         UUID firstPlayerId = playerOrder.getFirst();
-        var choiceContext = new ColorChoiceContext.EachPlayerCardNameRevealChoice(
+        var choiceContext = new ChoiceContext.EachPlayerCardNameRevealChoice(
                 playerOrder, new LinkedHashMap<>());
         gameData.interaction.beginColorChoice(firstPlayerId, null, null, choiceContext);
 

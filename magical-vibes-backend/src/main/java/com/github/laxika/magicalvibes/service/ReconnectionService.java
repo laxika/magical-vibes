@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
@@ -258,12 +258,12 @@ public class ReconnectionService {
                 }
                 List<String> options;
                 String prompt;
-                if (cc.context() instanceof ColorChoiceContext.TextChangeFromWord) {
+                if (cc.context() instanceof ChoiceContext.TextChangeFromWord) {
                     options = new ArrayList<>();
                     options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
                     options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
                     prompt = "Choose a color word or basic land type to replace.";
-                } else if (cc.context() instanceof ColorChoiceContext.TextChangeToWord tc) {
+                } else if (cc.context() instanceof ChoiceContext.TextChangeToWord tc) {
                     if (tc.isColor()) {
                         options = GameQueryService.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(tc.fromWord())).toList();
                         prompt = "Choose the replacement color word.";
@@ -271,11 +271,11 @@ public class ReconnectionService {
                         options = GameQueryService.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(tc.fromWord())).toList();
                         prompt = "Choose the replacement basic land type.";
                     }
-                } else if (cc.context() instanceof ColorChoiceContext.DrawReplacementChoice drc
+                } else if (cc.context() instanceof ChoiceContext.DrawReplacementChoice drc
                         && drc.kind() == DrawReplacementKind.ABUNDANCE) {
                     options = List.of("LAND", "NONLAND");
                     prompt = "Choose land or nonland for Abundance.";
-                } else if (cc.context() instanceof ColorChoiceContext.CardNameChoice cnc) {
+                } else if (cc.context() instanceof ChoiceContext.CardNameChoice cnc) {
                     if (cnc.excludedTypes().isEmpty()) {
                         options = collectAllCardNamesInGame(gameData);
                         prompt = "Choose a card name.";
@@ -285,24 +285,24 @@ public class ReconnectionService {
                                 .map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
                         prompt = "Choose a non" + excludedLabel + " card name.";
                     }
-                } else if (cc.context() instanceof ColorChoiceContext.ExileByNameChoice ebn) {
+                } else if (cc.context() instanceof ChoiceContext.ExileByNameChoice ebn) {
                     options = collectCardNamesInGameExcluding(gameData, ebn.excludedTypes());
                     String excludedLabel = ebn.excludedTypes().stream()
                             .map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
                     prompt = "Choose a non" + excludedLabel + " card name.";
-                } else if (cc.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+                } else if (cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     options = kgc.options().stream().map(Keyword::name).toList();
                     prompt = "Choose a keyword to grant.";
-                } else if (cc.context() instanceof ColorChoiceContext.SubtypeChoice) {
+                } else if (cc.context() instanceof ChoiceContext.SubtypeChoice) {
                     options = java.util.Arrays.stream(CardSubtype.values())
                             .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
                             .map(CardSubtype::name)
                             .toList();
                     prompt = "Choose a creature type.";
-                } else if (cc.context() instanceof ColorChoiceContext.BasicLandTypeChoice) {
+                } else if (cc.context() instanceof ChoiceContext.BasicLandTypeChoice) {
                     options = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
                     prompt = "Choose a basic land type.";
-                } else if (cc.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice) {
+                } else if (cc.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice) {
                     options = collectAllCardNamesInGame(gameData);
                     prompt = "Choose a card name.";
                 } else {

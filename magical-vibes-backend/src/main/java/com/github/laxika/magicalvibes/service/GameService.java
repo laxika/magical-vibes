@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
@@ -47,7 +47,7 @@ public class GameService {
     private final GameBroadcastService gameBroadcastService;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
-    private final ColorChoiceHandlerService colorChoiceHandlerService;
+    private final ChoiceHandlerService colorChoiceHandlerService;
     private final CardChoiceHandlerService cardChoiceHandlerService;
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;

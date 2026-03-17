@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
@@ -173,7 +173,7 @@ public class MayMiscHandlerService {
                     drawingPlayerId,
                     null,
                     null,
-                    new ColorChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind())
+                    new ChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind())
             );
             sessionManager.sendToPlayer(drawingPlayerId, new ChooseColorMessage(
                     List.of("LAND", "NONLAND"),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -61,7 +61,7 @@ class ConundrumSphinxTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
         assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.colorChoice().choiceContext())
-                .isInstanceOf(ColorChoiceContext.EachPlayerCardNameRevealChoice.class);
+                .isInstanceOf(ChoiceContext.EachPlayerCardNameRevealChoice.class);
     }
 
     @Test
@@ -77,9 +77,9 @@ class ConundrumSphinxTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
         assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.colorChoice().choiceContext())
-                .isInstanceOf(ColorChoiceContext.EachPlayerCardNameRevealChoice.class);
+                .isInstanceOf(ChoiceContext.EachPlayerCardNameRevealChoice.class);
 
-        var ctx = (ColorChoiceContext.EachPlayerCardNameRevealChoice) gd.interaction.colorChoice().choiceContext();
+        var ctx = (ChoiceContext.EachPlayerCardNameRevealChoice) gd.interaction.colorChoice().choiceContext();
         assertThat(ctx.chosenNames()).containsEntry(player1.getId(), "Lightning Bolt");
     }
 

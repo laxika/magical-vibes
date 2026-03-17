@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.model.interaction;
 
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 
 import java.util.UUID;
 
-public class ColorChoiceState {
+public class ChoiceState {
 
     private final UUID playerId;
     private final UUID permanentId;
     private final UUID etbTargetPermanentId;
-    private final ColorChoiceContext choiceContext;
+    private final ChoiceContext choiceContext;
 
-    public ColorChoiceState(UUID playerId, UUID permanentId, UUID etbTargetPermanentId,
-                            ColorChoiceContext choiceContext) {
+    public ChoiceState(UUID playerId, UUID permanentId, UUID etbTargetPermanentId,
+                            ChoiceContext choiceContext) {
         this.playerId = playerId;
         this.permanentId = permanentId;
         this.etbTargetPermanentId = etbTargetPermanentId;
@@ -31,11 +31,11 @@ public class ColorChoiceState {
         return etbTargetPermanentId;
     }
 
-    public ColorChoiceContext choiceContext() {
+    public ChoiceContext choiceContext() {
         return choiceContext;
     }
 
-    public ColorChoiceState deepCopy() {
-        return new ColorChoiceState(playerId, permanentId, etbTargetPermanentId, choiceContext);
+    public ChoiceState deepCopy() {
+        return new ChoiceState(playerId, permanentId, etbTargetPermanentId, choiceContext);
     }
 }

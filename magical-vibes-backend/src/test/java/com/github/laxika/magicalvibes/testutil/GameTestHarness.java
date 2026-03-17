@@ -71,7 +71,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
@@ -296,7 +296,7 @@ public class GameTestHarness {
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, sessionManager, permanentRemovalService, triggerCollectionService, exileService);
-        ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
+        ChoiceHandlerService colorChoiceHandlerService = new ChoiceHandlerService(
                 sessionManager, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(

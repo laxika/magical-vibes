@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.interaction.CardChoiceState;
-import com.github.laxika.magicalvibes.model.interaction.ColorChoiceState;
+import com.github.laxika.magicalvibes.model.interaction.ChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.GraveyardChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
 import com.github.laxika.magicalvibes.model.interaction.LibraryViewState;
@@ -25,7 +25,7 @@ public class InteractionState {
     private CardChoiceState cardChoice;
     private PermanentChoiceState permanentChoice;
     private GraveyardChoiceState graveyardChoice;
-    private ColorChoiceState colorChoice;
+    private ChoiceState colorChoice;
     private LibrarySearchState librarySearch;
     private final LibraryViewState libraryView = new LibraryViewState();
     private RevealedHandChoiceState revealedHandChoice;
@@ -115,7 +115,7 @@ public class InteractionState {
         return graveyardChoice;
     }
 
-    public ColorChoiceState colorChoice() {
+    public ChoiceState colorChoice() {
         return colorChoice;
     }
 
@@ -343,9 +343,9 @@ public class InteractionState {
     // ========================================================================
 
     public void beginColorChoice(UUID playerId, UUID permanentId, UUID etbTargetPermanentId,
-                                 ColorChoiceContext choiceContext) {
+                                 ChoiceContext choiceContext) {
         this.awaitingInput = AwaitingInput.COLOR_CHOICE;
-        this.colorChoice = new ColorChoiceState(playerId, permanentId, etbTargetPermanentId, choiceContext);
+        this.colorChoice = new ChoiceState(playerId, permanentId, etbTargetPermanentId, choiceContext);
         this.context = new InteractionContext.ColorChoice(playerId, permanentId, etbTargetPermanentId, choiceContext);
     }
 
@@ -353,7 +353,7 @@ public class InteractionState {
         this.colorChoice = null;
     }
 
-    public ColorChoiceContext colorChoiceContext() {
+    public ChoiceContext colorChoiceContext() {
         return colorChoice != null ? colorChoice.choiceContext() : null;
     }
 

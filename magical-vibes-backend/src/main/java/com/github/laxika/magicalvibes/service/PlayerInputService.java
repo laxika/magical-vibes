@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -124,7 +124,7 @@ public class PlayerInputService {
     }
 
     public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetPermanentId, boolean includeArtifacts) {
-        ColorChoiceContext.ProtectionColorChoice ctx = new ColorChoiceContext.ProtectionColorChoice(targetPermanentId, includeArtifacts);
+        ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetPermanentId, includeArtifacts);
         gameData.interaction.beginColorChoice(playerId, null, null, ctx);
 
         List<String> options = new java.util.ArrayList<>(List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"));
@@ -139,7 +139,7 @@ public class PlayerInputService {
     }
 
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetPermanentId, List<Keyword> options) {
-        ColorChoiceContext.KeywordGrantChoice choiceContext = new ColorChoiceContext.KeywordGrantChoice(targetPermanentId, options);
+        ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetPermanentId, options);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> optionNames = options.stream().map(Keyword::name).toList();
@@ -150,7 +150,7 @@ public class PlayerInputService {
     }
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
-        ColorChoiceContext.SubtypeChoice choiceContext = new ColorChoiceContext.SubtypeChoice(permanentId);
+        ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> creatureTypes = Arrays.stream(CardSubtype.values())
@@ -164,7 +164,7 @@ public class PlayerInputService {
     }
 
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {
-        ColorChoiceContext.PermanentTypeChoice choiceContext = new ColorChoiceContext.PermanentTypeChoice(playerId, destination, entryDescription);
+        ChoiceContext.PermanentTypeChoice choiceContext = new ChoiceContext.PermanentTypeChoice(playerId, destination, entryDescription);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> permanentTypes = List.of("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
@@ -175,7 +175,7 @@ public class PlayerInputService {
     }
 
     public void beginBasicLandTypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
-        ColorChoiceContext.BasicLandTypeChoice choiceContext = new ColorChoiceContext.BasicLandTypeChoice(permanentId);
+        ChoiceContext.BasicLandTypeChoice choiceContext = new ChoiceContext.BasicLandTypeChoice(permanentId);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
@@ -192,7 +192,7 @@ public class PlayerInputService {
     );
 
     public void beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes) {
-        ColorChoiceContext.CardNameChoice choiceContext = new ColorChoiceContext.CardNameChoice(card, playerId, excludedTypes);
+        ChoiceContext.CardNameChoice choiceContext = new ChoiceContext.CardNameChoice(card, playerId, excludedTypes);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> cardNames;
@@ -212,7 +212,7 @@ public class PlayerInputService {
     }
 
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<CardType> excludedTypes) {
-        ColorChoiceContext.ExileByNameChoice choiceContext = new ColorChoiceContext.ExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes);
+        ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes);
         gameData.interaction.beginColorChoice(choosingPlayerId, null, null, choiceContext);
 
         List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
@@ -225,7 +225,7 @@ public class PlayerInputService {
     }
 
     public void beginSphinxAmbassadorCardNameChoice(GameData gameData, UUID namingPlayerId, UUID controllerId) {
-        ColorChoiceContext.SphinxAmbassadorNameChoice choiceContext = new ColorChoiceContext.SphinxAmbassadorNameChoice(namingPlayerId, controllerId);
+        ChoiceContext.SphinxAmbassadorNameChoice choiceContext = new ChoiceContext.SphinxAmbassadorNameChoice(namingPlayerId, controllerId);
         gameData.interaction.beginColorChoice(namingPlayerId, null, null, choiceContext);
 
         List<String> cardNames = collectAllCardNamesInGame(gameData);

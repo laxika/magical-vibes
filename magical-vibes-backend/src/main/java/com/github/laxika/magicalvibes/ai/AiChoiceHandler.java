@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
@@ -190,21 +190,21 @@ class AiChoiceHandler {
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.DrawReplacementChoice drc
+        if (colorChoice.context() instanceof ChoiceContext.DrawReplacementChoice drc
                 && drc.kind() == DrawReplacementKind.ABUNDANCE) {
             log.info("AI: Choosing NONLAND for Abundance in game {}", gameId);
             send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, "NONLAND")));
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+        if (colorChoice.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
             String chosenKeyword = kgc.options().getFirst().name();
             log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);
             send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, chosenKeyword)));
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.CardNameChoice) {
+        if (colorChoice.context() instanceof ChoiceContext.CardNameChoice) {
             UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
             List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
             String chosenName = opponentField.stream()
@@ -218,7 +218,7 @@ class AiChoiceHandler {
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.EachPlayerCardNameRevealChoice) {
+        if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice) {
             // For the reveal-top-card game: guess the top card of our library
             List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
             String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();
@@ -228,7 +228,7 @@ class AiChoiceHandler {
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.SubtypeChoice) {
+        if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice) {
             String chosenSubtype = "HUMAN";
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
             final String subtype = chosenSubtype;
@@ -236,7 +236,7 @@ class AiChoiceHandler {
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.BasicLandTypeChoice) {
+        if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice) {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type {} in game {}", chosenType, gameId);
             final String landType = chosenType;
@@ -244,7 +244,7 @@ class AiChoiceHandler {
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.SphinxAmbassadorNameChoice) {
+        if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
             // AI names the best creature card from its own library to try to guess what was picked
             List<Card> ownDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
             String chosenName = ownDeck.stream()
@@ -258,7 +258,7 @@ class AiChoiceHandler {
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.PermanentTypeChoice) {
+        if (colorChoice.context() instanceof ChoiceContext.PermanentTypeChoice) {
             // Pick the permanent type with the most cards in our graveyard
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of());
             Map<CardType, Long> typeCounts = new HashMap<>();
@@ -275,7 +275,7 @@ class AiChoiceHandler {
             return;
         }
 
-        if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
+        if (colorChoice.context() instanceof ChoiceContext.ExileByNameChoice ctx) {
             UUID targetId = ctx.targetPlayerId();
             List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());
             String chosenName = targetHand.stream()

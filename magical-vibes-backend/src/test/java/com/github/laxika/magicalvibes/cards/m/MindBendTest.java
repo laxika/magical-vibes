@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -75,7 +75,7 @@ class MindBendTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
         assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ColorChoiceContext.TextChangeFromWord.class);
+        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.TextChangeFromWord.class);
     }
 
     @Test
@@ -93,8 +93,8 @@ class MindBendTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ColorChoiceContext.TextChangeToWord.class);
-        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
+        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.TextChangeToWord.class);
+        ChoiceContext.TextChangeToWord ctx = (ChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
         assertThat(ctx.fromWord()).isEqualTo("BLACK");
         assertThat(ctx.isColor()).isTrue();
     }
@@ -182,7 +182,7 @@ class MindBendTest extends BaseCardTest {
         harness.handleColorChosen(player1, "ISLAND");
 
         GameData gd = harness.getGameData();
-        ColorChoiceContext.TextChangeToWord ctx = (ColorChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
+        ChoiceContext.TextChangeToWord ctx = (ChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
         assertThat(ctx.isColor()).isFalse();
         assertThat(ctx.fromWord()).isEqualTo("ISLAND");
     }

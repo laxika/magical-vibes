@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -949,7 +949,7 @@ public class PlayerInteractionResolutionService {
             return;
         }
 
-        ColorChoiceContext.TextChangeFromWord choiceContext = new ColorChoiceContext.TextChangeFromWord(targetPermanentId);
+        ChoiceContext.TextChangeFromWord choiceContext = new ChoiceContext.TextChangeFromWord(targetPermanentId);
         gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
 
         List<String> options = new ArrayList<>();
@@ -963,7 +963,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(AwardAnyColorManaEffect.class)
     private void resolveAwardAnyColorMana(GameData gameData, StackEntry entry) {
-        ColorChoiceContext.ManaColorChoice choiceContext = new ColorChoiceContext.ManaColorChoice(entry.getControllerId(), false);
+        ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(entry.getControllerId(), false);
         gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(colors, "Choose a color of mana to add."));

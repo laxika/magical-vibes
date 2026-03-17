@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.config.EffectRegistryConfig;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ColorChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.InteractionContext;
@@ -120,7 +120,7 @@ import com.github.laxika.magicalvibes.service.trigger.MiscTriggerCollectorServic
 import com.github.laxika.magicalvibes.service.trigger.SpellCastTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.ColorChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
@@ -300,7 +300,7 @@ public class GameSimulator {
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, noOpSession, permanentRemovalService, triggerCollectionService, exileService);
-        ColorChoiceHandlerService colorChoiceHandlerService = new ColorChoiceHandlerService(
+        ChoiceHandlerService colorChoiceHandlerService = new ChoiceHandlerService(
                 noOpSession, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
@@ -455,7 +455,7 @@ public class GameSimulator {
             }
             case COLOR_CHOICE -> {
                 var cc = gd.interaction.colorChoiceContextView();
-                if (cc != null && cc.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+                if (cc != null && cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     for (var kw : kgc.options()) {
                         actions.add(new SimulationAction.ChooseColor(kw.name()));
                     }
@@ -668,7 +668,7 @@ public class GameSimulator {
             }
             case COLOR_CHOICE -> {
                 var ccCtx = gd.interaction.colorChoiceContextView();
-                if (ccCtx != null && ccCtx.context() instanceof ColorChoiceContext.KeywordGrantChoice kgc) {
+                if (ccCtx != null && ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     gameService.handleColorChosen(gd, player, kgc.options().getFirst().name());
                 } else {
                     gameService.handleColorChosen(gd, player, "RED");
