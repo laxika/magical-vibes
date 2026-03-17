@@ -207,7 +207,7 @@ class GhostQuarterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerMana.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(1);
     }
 
     private void setupLibrary(com.github.laxika.magicalvibes.model.Player player) {
