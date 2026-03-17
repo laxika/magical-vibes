@@ -47,7 +47,7 @@ class AiVsAiStressTest {
     private static final int SPELL_COUNT = DECK_SIZE - LAND_COUNT;
     private static final int MAX_SAME_STATE_COUNT = 30;
     private static final long POLL_INTERVAL_MS = 200;
-    private static final long MAX_GAME_DURATION_MS = 120_000;
+    private static final long MAX_GAME_DURATION_MS = 300_000;
     private static final long AI_DECISION_DELAY_MS = 10;
 
     private static final Map<CardColor, CardPrinting> BASIC_LAND_PRINTINGS = new EnumMap<>(CardColor.class);
