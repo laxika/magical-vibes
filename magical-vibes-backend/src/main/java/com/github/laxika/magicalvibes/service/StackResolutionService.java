@@ -135,22 +135,27 @@ public class StackResolutionService {
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
+        // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
+        // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
+        // and logging so that the copy's characteristics are used, not the original's.
+        Card enteredCard = perm.getCard();
+
         String playerName = gameData.playerIdToName.get(controllerId);
-        if (hasXPlusOneCounterEffect && entry.getXValue() > 0) {
-            String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " +1/+1 counters under " + playerName + "'s control.";
+        if (hasXPlusOneCounterEffect && perm.getPlusOnePlusOneCounters() > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getPlusOnePlusOneCounters() + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (fixedWishCountersCreature > 0) {
-            String logEntry = card.getName() + " enters the battlefield with " + fixedWishCountersCreature + " wish counters under " + playerName + "'s control.";
+        } else if (perm.getWishCounters() > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getWishCounters() + " wish counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            logEnterBattlefield(gameData, card, controllerId);
+            logEnterBattlefield(gameData, enteredCard, controllerId);
         }
 
         // "As enters" phylactery counter placement — replacement effect (MTG Rule 614.1c),
         // happens as part of the entering process before state-based actions are checked.
-        handlePhylacteryCounterPlacement(gameData, controllerId, card, entry.getTargetPermanentId());
+        handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetPermanentId());
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetPermanentId(), true, entry.getXValue());
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 
@@ -306,28 +311,30 @@ public class StackResolutionService {
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
+        // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
+        // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
+        // and logging so that the copy's characteristics are used, not the original's.
+        Card enteredCard = perm.getCard();
+
         String playerName = gameData.playerIdToName.get(controllerId);
-        if (hasXChargeCounterEffect && entry.getXValue() > 0) {
-            String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " charge counters under " + playerName + "'s control.";
+        if (perm.getChargeCounters() > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getChargeCounters() + " charge counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (hasXPlusOneCounterEffect && entry.getXValue() > 0) {
-            String logEntry = card.getName() + " enters the battlefield with " + entry.getXValue() + " +1/+1 counters under " + playerName + "'s control.";
+        } else if (perm.getPlusOnePlusOneCounters() > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getPlusOnePlusOneCounters() + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (fixedChargeCounters > 0) {
-            String logEntry = card.getName() + " enters the battlefield with " + fixedChargeCounters + " charge counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (fixedWishCounters > 0) {
-            String logEntry = card.getName() + " enters the battlefield with " + fixedWishCounters + " wish counters under " + playerName + "'s control.";
+        } else if (perm.getWishCounters() > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getWishCounters() + " wish counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
+            String logEntry = enteredCard.getName() + " enters the battlefield under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
-        log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+        log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
 
         // Process ETB effects for all artifacts (creature and non-creature)
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, entry.getTargetPermanentId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetPermanentId(), true, entry.getXValue());
 
         checkLegendRuleIfIdle(gameData, controllerId);
     }

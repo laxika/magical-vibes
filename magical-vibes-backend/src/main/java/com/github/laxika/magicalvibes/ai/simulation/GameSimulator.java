@@ -195,8 +195,9 @@ public class GameSimulator {
         GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, noOpSession, gameRegistry, draftRegistry, null);
         DeathTriggerService deathTriggerService = new DeathTriggerService(gameQueryService, gameBroadcastService);
         DrawService drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService);
-        BattlefieldEntryService battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory);
+        BattlefieldEntryService battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, null);
         CloneService cloneService = new CloneService(gameQueryService, gameBroadcastService, playerInputService, legendRuleService, battlefieldEntryService);
+        battlefieldEntryService.setCloneService(cloneService);
         WarpWorldService warpWorldService = new WarpWorldService(gameQueryService, gameBroadcastService, playerInputService, battlefieldEntryService, legendRuleService, creatureControlService, cardViewFactory, noOpSession);
         ExileService exileService = new ExileService();
         GraveyardService graveyardService = new GraveyardService(gameQueryService, gameBroadcastService, exileService, null);

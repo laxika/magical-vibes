@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -41,8 +42,8 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -55,13 +56,35 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class BattlefieldEntryService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final CardViewFactory cardViewFactory;
+    // @Lazy to break circular dependency:
+    // BattlefieldEntryService → CloneService → BattlefieldEntryService
+    private CloneService cloneService;
+
+    public BattlefieldEntryService(GameQueryService gameQueryService,
+                                    GameBroadcastService gameBroadcastService,
+                                    PlayerInputService playerInputService,
+                                    CardViewFactory cardViewFactory,
+                                    @Lazy CloneService cloneService) {
+        this.gameQueryService = gameQueryService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.playerInputService = playerInputService;
+        this.cardViewFactory = cardViewFactory;
+        this.cloneService = cloneService;
+    }
+
+    /**
+     * Sets the CloneService for manual (non-Spring) construction where
+     * the circular dependency prevents passing it in the constructor.
+     */
+    public void setCloneService(CloneService cloneService) {
+        this.cloneService = cloneService;
+    }
 
     // ===== Permanent entry =====
 
@@ -82,6 +105,7 @@ public class BattlefieldEntryService {
      */
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered) {
+        applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
         applyConditionalEnterTapped(gameData, controllerId, permanent);
@@ -92,6 +116,35 @@ public class BattlefieldEntryService {
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());
+    }
+
+    /**
+     * CR 614.1c — "Creatures you control enter as a copy of this creature."
+     * If the entering permanent is a creature and the controller has a permanent with
+     * {@link CreaturesEnterAsCopyOfSourceEffect}, the entering creature becomes a copy
+     * of that source permanent. This is mandatory (not a "may" ability).
+     */
+    private void applyCreaturesEnterAsCopyReplacementEffect(GameData gameData, UUID controllerId, Permanent entering) {
+        if (!entering.getCard().hasType(CardType.CREATURE)) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : battlefield) {
+            boolean hasEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof CreaturesEnterAsCopyOfSourceEffect);
+            if (hasEffect) {
+                cloneService.applyCloneCopy(entering, source, null, null);
+                // Reset any counters that were pre-set by the original card's "enters with"
+                // replacement effects — the creature now enters as Essence, which has no such
+                // effects, so those counters should not apply.
+                entering.setPlusOnePlusOneCounters(0);
+                entering.setChargeCounters(0);
+                entering.setWishCounters(0);
+                return;
+            }
+        }
     }
 
     public Set<CardType> snapshotEnterTappedTypes(GameData gameData) {

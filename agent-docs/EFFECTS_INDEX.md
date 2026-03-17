@@ -214,6 +214,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `CantBeCounteredEffect` | `()` | this spell can't be countered (static). Replaces `setCantBeCountered(true)` |
 | `CreatureSpellsCantBeCounteredEffect` | `()` | creature spells can't be countered (static) |
 | `CreatureEnteringDontCauseTriggersEffect` | `()` | creatures entering don't cause abilities to trigger (static, e.g. Torpor Orb) |
+| `CreaturesEnterAsCopyOfSourceEffect` | `()` | creatures you control enter as a copy of this creature (static replacement effect, e.g. Essence of the Wild). Handled in BattlefieldEntryService.putPermanentOntoBattlefield() |
 
 ## Bounce / return to hand
 
