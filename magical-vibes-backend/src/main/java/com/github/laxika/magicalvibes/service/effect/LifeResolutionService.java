@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeForEachSubtypeOnBattl
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerMatchingPermanentOnBattlefieldEffect;
@@ -274,6 +275,29 @@ public class LifeResolutionService {
             return;
         }
         applyGainLife(gameData, controllerId, amount);
+    }
+
+    @HandlesEffect(GainLifePerCreatureCardInGraveyardEffect.class)
+    private void resolveGainLifePerCreatureCardInGraveyard(GameData gameData, StackEntry entry,
+                                                           GainLifePerCreatureCardInGraveyardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        int creatureCount = 0;
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (card.hasType(CardType.CREATURE)) {
+                    creatureCount++;
+                }
+            }
+        }
+        if (creatureCount == 0) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = playerName + " has no creature cards in their graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no creature cards in graveyard for life gain", gameData.id, playerName);
+            return;
+        }
+        applyGainLife(gameData, controllerId, creatureCount * effect.lifePerCreature());
     }
 
     @HandlesEffect(GainLifeEqualToTargetToughnessEffect.class)
