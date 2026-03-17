@@ -41,7 +41,9 @@ import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerateAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -636,6 +638,32 @@ public class PermanentControlResolutionService {
         String logEntry = perm.getCard().getName() + " gains a regeneration shield.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
+    }
+
+    @HandlesEffect(RegenerateAllOwnCreaturesEffect.class)
+    private void resolveRegenerateAllOwnCreatures(GameData gameData, StackEntry entry, RegenerateAllOwnCreaturesEffect effect) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        if (battlefield == null) return;
+
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+
+        int count = 0;
+        for (Permanent perm : battlefield) {
+            if (gameQueryService.isCreature(gameData, perm)
+                    && (effect.filter() == null
+                        || gameQueryService.matchesPermanentPredicate(perm, effect.filter(), filterContext))) {
+                perm.setRegenerationShield(perm.getRegenerationShield() + 1);
+                count++;
+            }
+        }
+
+        if (count > 0) {
+            String logEntry = count + " creature(s) gain a regeneration shield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} creature(s) gain regeneration shields", gameData.id, count);
+        }
     }
 
     @HandlesEffect(GainControlOfTargetAuraEffect.class)
