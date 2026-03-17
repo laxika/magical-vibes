@@ -1,57 +1,119 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.b.Boomerang;
-import com.github.laxika.magicalvibes.cards.e.Evacuation;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HurkylsRecall;
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
-import com.github.laxika.magicalvibes.cards.s.ScoriaWurm;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.s.StampedingWildebeests;
-import com.github.laxika.magicalvibes.cards.s.SunkenHope;
-import com.github.laxika.magicalvibes.cards.v.ViashinoSandscout;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.BounceCreatureOnUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class BounceResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class BounceResolutionServiceTest {
 
+    @Mock private GameQueryService gameQueryService;
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameOutcomeService gameOutcomeService;
+    @Mock private PlayerInputService playerInputService;
+    @Mock private PermanentRemovalService permanentRemovalService;
 
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @InjectMocks private BounceResolutionService service;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
     }
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    // ===== Helper methods =====
+
+    private Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        return card;
     }
 
-    private void advanceToEndStep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    private Permanent createCreature(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.CREATURE);
+        return new Permanent(card);
+    }
+
+    private Permanent createArtifact(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.ARTIFACT);
+        return new Permanent(card);
+    }
+
+    private Permanent createEnchantment(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.ENCHANTMENT);
+        return new Permanent(card);
+    }
+
+    private StackEntry entryWithSource(Card card, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                card.getName() + " trigger", effects, (UUID) null, sourcePermanentId);
+    }
+
+    private StackEntry entryWithTarget(Card card, UUID controllerId, List<CardEffect> effects, UUID targetPermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                card.getName(), effects, 0, targetPermanentId, null);
+    }
+
+    private StackEntry entryWithTargetAndSource(Card card, UUID controllerId, List<CardEffect> effects,
+                                                UUID targetPermanentId, UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                card.getName() + " trigger", effects, targetPermanentId, sourcePermanentId);
     }
 
     // =========================================================================
@@ -65,39 +127,39 @@ class BounceResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Returns the permanent to its owner's hand")
         void returnsPermanentToOwnersHand() {
-            Permanent sandscout = new Permanent(new ViashinoSandscout());
-            gd.playerBattlefields.get(player1.getId()).add(sandscout);
+            Card card = createCard("Viashino Sandscout");
+            Permanent permanent = createCreature("Viashino Sandscout");
+            gd.playerBattlefields.get(player1Id).add(permanent);
 
-            advanceToEndStep(player1);
-            // trigger on stack
-            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = entryWithSource(card, player1Id,
+                    List.of(new ReturnSelfToHandEffect()), permanent.getId());
 
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Viashino Sandscout"));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Viashino Sandscout"));
+            service.resolveReturnSelfToHand(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, permanent);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Viashino Sandscout is returned to its owner's hand."));
         }
 
         @Test
         @DisplayName("Does nothing when the permanent is already removed from the battlefield")
         void doesNothingWhenAlreadyRemoved() {
-            Permanent sandscout = new Permanent(new ViashinoSandscout());
-            gd.playerBattlefields.get(player1.getId()).add(sandscout);
+            Card card = createCard("Viashino Sandscout");
+            UUID sourcePermanentId = UUID.randomUUID();
 
-            advanceToEndStep(player1);
-            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = entryWithSource(card, player1Id,
+                    List.of(new ReturnSelfToHandEffect()), sourcePermanentId);
 
-            // Remove Viashino Sandscout before resolution (e.g. killed in response)
-            gd.playerBattlefields.get(player1.getId()).remove(sandscout);
+            when(gameQueryService.findPermanentById(gd, sourcePermanentId)).thenReturn(null);
 
-            harness.passBothPriorities();
+            service.resolveReturnSelfToHand(gd, entry);
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Viashino Sandscout"));
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("is no longer on the battlefield"));
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Viashino Sandscout is no longer on the battlefield."));
         }
     }
 
@@ -110,78 +172,104 @@ class BounceResolutionServiceTest extends BaseCardTest {
     class ResolveReturnTargetPermanentToHand {
 
         @Test
-        @DisplayName("Returns target creature to its owner's hand")
-        void returnsTargetCreatureToHand() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.setHand(player1, List.of(new Boomerang()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+        @DisplayName("Returns target permanent to its owner's hand")
+        void returnsTargetPermanentToHand() {
+            Card card = createCard("Boomerang");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(target);
 
-            UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-            harness.castInstant(player1, 0, targetId);
-            harness.passBothPriorities();
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnTargetPermanentToHandEffect()), target.getId());
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
+
+            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect());
+
+            verify(permanentRemovalService).removePermanentToHand(gd, target);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears is returned to its owner's hand."));
         }
 
         @Test
-        @DisplayName("Fizzles when target is removed before resolution")
-        void fizzlesWhenTargetRemoved() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.setHand(player1, List.of(new Boomerang()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+        @DisplayName("Skips when target is removed before resolution")
+        void skipsWhenTargetRemoved() {
+            Card card = createCard("Boomerang");
+            UUID targetId = UUID.randomUUID();
 
-            UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-            harness.castInstant(player1, 0, targetId);
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnTargetPermanentToHandEffect()), targetId);
 
-            // Remove target before resolution
-            gd.playerBattlefields.get(player2.getId()).clear();
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            harness.passBothPriorities();
+            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect());
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
 
         @Test
-        @DisplayName("Stolen creature returns to its original owner's hand, not controller's")
-        void stolenCreatureReturnsToOriginalOwner() {
-            // Place a creature on player1's battlefield, but mark it as owned by player2 (stolen)
-            Permanent stolen = addPermanent(player1, new GrizzlyBears());
-            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        @DisplayName("Controller loses life when lifeLoss is set")
+        void controllerLosesLifeWhenLifeLossSet() {
+            Card card = createCard("Vapor Snag");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(target);
+            gd.playerLifeTotals.put(player2Id, 20);
 
-            harness.setHand(player1, List.of(new Boomerang()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnTargetPermanentToHandEffect(1)), target.getId());
 
-            harness.castInstant(player1, 0, stolen.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
 
-            // Should be in player2's hand (original owner), not player1's (controller)
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect(1));
 
-            // stolenCreatures entry should be cleaned up
-            assertThat(gd.stolenCreatures).doesNotContainKey(stolen.getId());
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
+            verify(gameOutcomeService).checkWinCondition(gd);
+        }
+
+        @Test
+        @DisplayName("Life loss is skipped when player's life total can't change")
+        void lifeLossSkippedWhenLifeCantChange() {
+            Card card = createCard("Vapor Snag");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(target);
+            gd.playerLifeTotals.put(player2Id, 20);
+
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnTargetPermanentToHandEffect(1)), target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(false);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
+
+            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect(1));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Player2's life total can't change."));
         }
 
         @Test
         @DisplayName("Can bounce own permanent")
         void canBounceOwnPermanent() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.setHand(player1, List.of(new Boomerang()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Card card = createCard("Boomerang");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(target);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, targetId);
-            harness.passBothPriorities();
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnTargetPermanentToHandEffect()), target.getId());
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
+
+            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect());
+
+            verify(permanentRemovalService).removePermanentToHand(gd, target);
         }
     }
 
@@ -194,86 +282,65 @@ class BounceResolutionServiceTest extends BaseCardTest {
     class ResolveReturnCreaturesToOwnersHand {
 
         @Test
-        @DisplayName("Returns all creatures on both sides to their owners' hands")
-        void returnsAllCreaturesToHands() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player1, new SerraAngel());
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.setHand(player1, List.of(new Evacuation()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
+        @DisplayName("Returns all creatures on both sides")
+        void returnsAllCreatures() {
+            Card card = createCard("Evacuation");
+            Permanent creature1 = createCreature("Grizzly Bears");
+            Permanent creature2 = createCreature("Serra Angel");
+            Permanent creature3 = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature1);
+            gd.playerBattlefields.get(player1Id).add(creature2);
+            gd.playerBattlefields.get(player2Id).add(creature3);
 
-            harness.castInstant(player1, 0);
-            harness.passBothPriorities();
+            ReturnCreaturesToOwnersHandEffect effect = new ReturnCreaturesToOwnersHandEffect(Set.of());
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), null);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> gqs.isCreature(gd, p));
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> gqs.isCreature(gd, p));
+            when(gameQueryService.isCreature(eq(gd), any())).thenReturn(true);
+            when(gameQueryService.matchesFilters(any(), eq(Set.of()), any())).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .extracting(c -> c.getName())
-                    .containsExactlyInAnyOrder("Grizzly Bears", "Serra Angel");
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .extracting(c -> c.getName())
-                    .contains("Grizzly Bears");
+            service.resolveReturnCreaturesToOwnersHand(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, creature1);
+            verify(permanentRemovalService).removePermanentToHand(gd, creature2);
+            verify(permanentRemovalService).removePermanentToHand(gd, creature3);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
 
         @Test
         @DisplayName("Does not return non-creature permanents")
         void doesNotReturnNonCreatures() {
-            harness.addToBattlefield(player1, new GloriousAnthem());
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.setHand(player1, List.of(new Evacuation()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
+            Card card = createCard("Evacuation");
+            Permanent creature = createCreature("Grizzly Bears");
+            Permanent enchantment = createEnchantment("Glorious Anthem");
+            gd.playerBattlefields.get(player1Id).add(enchantment);
+            gd.playerBattlefields.get(player1Id).add(creature);
 
-            harness.castInstant(player1, 0);
-            harness.passBothPriorities();
+            ReturnCreaturesToOwnersHandEffect effect = new ReturnCreaturesToOwnersHandEffect(Set.of());
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), null);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .extracting(c -> c.getName())
-                    .containsExactly("Grizzly Bears");
-        }
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, enchantment)).thenReturn(false);
+            when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, creature)).thenReturn(true);
 
-        @Test
-        @DisplayName("Stolen creatures return to their original owner's hand")
-        void stolenCreaturesReturnToOriginalOwner() {
-            // Place a creature on player1's battlefield, but it's owned by player2
-            Permanent stolen = addPermanent(player1, new GrizzlyBears());
-            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            service.resolveReturnCreaturesToOwnersHand(gd, entry, effect);
 
-            // Player1's own creature
-            addPermanent(player1, new SerraAngel());
-
-            harness.setHand(player1, List.of(new Evacuation()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
-
-            harness.castInstant(player1, 0);
-            harness.passBothPriorities();
-
-            // Stolen Grizzly Bears should go to player2's hand (original owner)
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-
-            // Serra Angel should go to player1's hand (controller and owner)
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Serra Angel"));
-
-            // stolenCreatures entry should be cleaned up
-            assertThat(gd.stolenCreatures).doesNotContainKey(stolen.getId());
+            verify(permanentRemovalService).removePermanentToHand(gd, creature);
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, enchantment);
         }
 
         @Test
         @DisplayName("Works with empty battlefields without crashing")
         void worksWithEmptyBattlefields() {
-            harness.setHand(player1, List.of(new Evacuation()));
-            harness.addMana(player1, ManaColor.BLUE, 5);
+            Card card = createCard("Evacuation");
+            ReturnCreaturesToOwnersHandEffect effect = new ReturnCreaturesToOwnersHandEffect(Set.of());
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), null);
 
-            harness.castInstant(player1, 0);
-            harness.passBothPriorities();
+            service.resolveReturnCreaturesToOwnersHand(gd, entry, effect);
 
-            assertThat(gd.stack).isEmpty();
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+            verify(permanentRemovalService, never()).removeOrphanedAuras(any());
         }
     }
 
@@ -288,141 +355,155 @@ class BounceResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Returns all artifacts target player owns to their hand")
         void returnsAllArtifactsToTargetPlayersHand() {
-            harness.addToBattlefield(player2, new AngelsFeather());
-            harness.addToBattlefield(player2, new IcyManipulator());
-            harness.setHand(player1, List.of(new HurkylsRecall()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Permanent artifact1 = createArtifact("Angel's Feather");
+            Permanent artifact2 = createArtifact("Icy Manipulator");
+            gd.playerBattlefields.get(player2Id).add(artifact1);
+            gd.playerBattlefields.get(player2Id).add(artifact2);
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            Card card = createCard("Hurkyl's Recall");
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnArtifactsTargetPlayerOwnsToHandEffect()), player2Id);
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT));
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .extracting(c -> c.getName())
-                    .contains("Angel's Feather", "Icy Manipulator");
+            when(gameQueryService.isArtifact(artifact1)).thenReturn(true);
+            when(gameQueryService.isArtifact(artifact2)).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
+
+            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, artifact1);
+            verify(permanentRemovalService).removePermanentToHand(gd, artifact2);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
         }
 
         @Test
         @DisplayName("Does not return non-artifact permanents")
         void doesNotReturnNonArtifacts() {
-            harness.addToBattlefield(player2, new AngelsFeather());
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.setHand(player1, List.of(new HurkylsRecall()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Permanent artifact = createArtifact("Angel's Feather");
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(artifact);
+            gd.playerBattlefields.get(player2Id).add(creature);
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            Card card = createCard("Hurkyl's Recall");
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnArtifactsTargetPlayerOwnsToHandEffect()), player2Id);
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .extracting(c -> c.getName())
-                    .contains("Angel's Feather");
+            when(gameQueryService.isArtifact(artifact)).thenReturn(true);
+            when(gameQueryService.isArtifact(creature)).thenReturn(false);
+            when(permanentRemovalService.removePermanentToHand(gd, artifact)).thenReturn(true);
+
+            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, artifact);
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, creature);
         }
 
         @Test
         @DisplayName("Does not affect other player's artifacts")
         void doesNotAffectOtherPlayersArtifacts() {
-            harness.addToBattlefield(player1, new AngelsFeather());
-            harness.addToBattlefield(player2, new IcyManipulator());
-            harness.setHand(player1, List.of(new HurkylsRecall()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Permanent player1Artifact = createArtifact("Angel's Feather");
+            Permanent player2Artifact = createArtifact("Icy Manipulator");
+            gd.playerBattlefields.get(player1Id).add(player1Artifact);
+            gd.playerBattlefields.get(player2Id).add(player2Artifact);
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            Card card = createCard("Hurkyl's Recall");
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnArtifactsTargetPlayerOwnsToHandEffect()), player2Id);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Angel's Feather"));
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .extracting(c -> c.getName())
-                    .contains("Icy Manipulator");
+            when(gameQueryService.isArtifact(player1Artifact)).thenReturn(true);
+            when(gameQueryService.isArtifact(player2Artifact)).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, player2Artifact)).thenReturn(true);
+
+            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, player2Artifact);
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, player1Artifact);
         }
 
         @Test
         @DisplayName("No-op when target player has no artifacts")
         void noOpWhenNoArtifacts() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.setHand(player1, List.of(new HurkylsRecall()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(creature);
 
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            Card card = createCard("Hurkyl's Recall");
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnArtifactsTargetPlayerOwnsToHandEffect()), player2Id);
 
-            assertThat(gd.playerBattlefields.get(player2.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.stack).isEmpty();
+            when(gameQueryService.isArtifact(creature)).thenReturn(false);
+
+            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
         }
 
         @Test
         @DisplayName("Stolen artifact on target's battlefield is NOT returned (target controls but doesn't own it)")
         void stolenArtifactOnTargetBattlefieldNotReturned() {
-            // Angel's Feather is owned by player2 but permanently stolen and sitting on player1's battlefield
-            Permanent stolen = addPermanent(player1, new AngelsFeather());
-            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            // Angel's Feather owned by player2 but on player1's battlefield (stolen)
+            Permanent stolen = createArtifact("Angel's Feather");
+            gd.playerBattlefields.get(player1Id).add(stolen);
+            gd.stolenCreatures.put(stolen.getId(), player2Id);
             gd.permanentControlStolenCreatures.add(stolen.getId());
 
-            // Player1 also has their own artifact
-            harness.addToBattlefield(player1, new IcyManipulator());
+            // Player1's own artifact
+            Permanent ownArtifact = createArtifact("Icy Manipulator");
+            gd.playerBattlefields.get(player1Id).add(ownArtifact);
 
-            harness.setHand(player1, List.of(new HurkylsRecall()));
-            harness.setHand(player2, List.of());
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Card card = createCard("Hurkyl's Recall");
+            // Target player1 — should return artifacts player1 OWNS
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnArtifactsTargetPlayerOwnsToHandEffect()), player1Id);
 
-            // Hurkyl's targets player1 (self) — should only return artifacts player1 OWNS
-            harness.castInstant(player1, 0, player1.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isArtifact(stolen)).thenReturn(true);
+            when(gameQueryService.isArtifact(ownArtifact)).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, ownArtifact)).thenReturn(true);
 
-            // The stolen Angel's Feather should NOT be returned to hand (player1 controls it but player2 owns it)
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Angel's Feather"));
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Angel's Feather"));
-            // Icy Manipulator is owned by player1 so it SHOULD be returned
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Icy Manipulator"));
+            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+
+            // Stolen artifact (owned by player2) should NOT be returned when targeting player1
+            verify(permanentRemovalService, never()).removePermanentToHand(gd, stolen);
+            // Player1's own artifact SHOULD be returned
+            verify(permanentRemovalService).removePermanentToHand(gd, ownArtifact);
         }
 
         @Test
         @DisplayName("Artifact owned by target but controlled by opponent IS returned")
         void artifactOwnedByTargetButControlledByOpponentIsReturned() {
-            // Angel's Feather is owned by player2 but permanently stolen and sitting on player1's battlefield
-            Permanent stolen = addPermanent(player1, new AngelsFeather());
-            gd.stolenCreatures.put(stolen.getId(), player2.getId());
+            // Angel's Feather owned by player2 but on player1's battlefield (stolen)
+            Permanent stolen = createArtifact("Angel's Feather");
+            gd.playerBattlefields.get(player1Id).add(stolen);
+            gd.stolenCreatures.put(stolen.getId(), player2Id);
             gd.permanentControlStolenCreatures.add(stolen.getId());
 
-            harness.setHand(player1, List.of(new HurkylsRecall()));
-            harness.setHand(player2, List.of());
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Card card = createCard("Hurkyl's Recall");
+            // Target player2 — should return artifacts player2 OWNS, even from player1's battlefield
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnArtifactsTargetPlayerOwnsToHandEffect()), player2Id);
 
-            // Hurkyl's targets player2 — should return artifacts player2 OWNS, even from player1's battlefield
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isArtifact(stolen)).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, stolen)).thenReturn(true);
 
-            // The stolen Angel's Feather should be returned to player2's hand (the owner)
-            assertThat(gd.playerHands.get(player2.getId()))
-                    .anyMatch(c -> c.getName().equals("Angel's Feather"));
-            // It should be removed from player1's battlefield
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Angel's Feather"));
-            // stolenCreatures entry should be cleaned up
-            assertThat(gd.stolenCreatures).doesNotContainKey(stolen.getId());
+            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, stolen);
         }
 
         @Test
         @DisplayName("Can target self to return own artifacts")
         void canTargetSelf() {
-            harness.addToBattlefield(player1, new AngelsFeather());
-            harness.setHand(player1, List.of(new HurkylsRecall()));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Permanent artifact = createArtifact("Angel's Feather");
+            gd.playerBattlefields.get(player1Id).add(artifact);
 
-            harness.castInstant(player1, 0, player1.getId());
-            harness.passBothPriorities();
+            Card card = createCard("Hurkyl's Recall");
+            StackEntry entry = entryWithTarget(card, player1Id,
+                    List.of(new ReturnArtifactsTargetPlayerOwnsToHandEffect()), player1Id);
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Angel's Feather"));
+            when(gameQueryService.isArtifact(artifact)).thenReturn(true);
+            when(permanentRemovalService.removePermanentToHand(gd, artifact)).thenReturn(true);
+
+            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, artifact);
         }
     }
 
@@ -435,41 +516,66 @@ class BounceResolutionServiceTest extends BaseCardTest {
     class ResolveBounceCreatureOnUpkeep {
 
         @Test
-        @DisplayName("TRIGGER_TARGET_PLAYER scope prompts the active player to choose")
-        void triggerTargetPlayerScopePromptsActivePlayer() {
-            harness.addToBattlefield(player1, new SunkenHope());
-            Permanent creature = addPermanent(player2, new GrizzlyBears());
+        @DisplayName("TRIGGER_TARGET_PLAYER scope prompts the target player to choose")
+        void triggerTargetPlayerScopePromptsTargetPlayer() {
+            Card card = createCard("Sunken Hope");
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(creature);
 
-            advanceToUpkeep(player2);
-            harness.passBothPriorities(); // resolve trigger
+            BounceCreatureOnUpkeepEffect effect = new BounceCreatureOnUpkeepEffect(
+                    BounceCreatureOnUpkeepEffect.Scope.TRIGGER_TARGET_PLAYER, Set.of(),
+                    "Choose a creature to return to its owner's hand.");
+            StackEntry entry = entryWithTargetAndSource(card, player1Id,
+                    List.of(effect), player2Id, UUID.randomUUID());
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
-            assertThat(gd.interaction.permanentChoice().validIds()).contains(creature.getId());
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+
+            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player2Id),
+                    eq(List.of(creature.getId())), anyString());
         }
 
         @Test
         @DisplayName("SOURCE_CONTROLLER scope prompts the source controller to choose")
         void sourceControllerScopePromptsController() {
-            harness.addToBattlefield(player1, new StampedingWildebeests());
-            Permanent creature = addPermanent(player1, new GrizzlyBears());
+            Card card = createCard("Stampeding Wildebeests");
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities(); // resolve trigger
+            BounceCreatureOnUpkeepEffect effect = new BounceCreatureOnUpkeepEffect(
+                    BounceCreatureOnUpkeepEffect.Scope.SOURCE_CONTROLLER, Set.of(),
+                    "Choose a creature to return.");
+            StackEntry entry = entryWithSource(card, player1Id,
+                    List.of(effect), UUID.randomUUID());
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
-            assertThat(gd.interaction.permanentChoice().validIds()).contains(creature.getId());
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+
+            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
+                    eq(List.of(creature.getId())), anyString());
         }
 
         @Test
         @DisplayName("Sets BounceCreature permanent choice context")
         void setsBounceCreatureContext() {
-            harness.addToBattlefield(player1, new SunkenHope());
-            addPermanent(player1, new GrizzlyBears());
+            Card card = createCard("Sunken Hope");
+            Permanent creature = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(creature);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            BounceCreatureOnUpkeepEffect effect = new BounceCreatureOnUpkeepEffect(
+                    BounceCreatureOnUpkeepEffect.Scope.TRIGGER_TARGET_PLAYER, Set.of(),
+                    "Choose a creature.");
+            StackEntry entry = entryWithTargetAndSource(card, player1Id,
+                    List.of(effect), player1Id, UUID.randomUUID());
+
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+
+            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
 
             assertThat(gd.interaction.permanentChoiceContext())
                     .isInstanceOf(PermanentChoiceContext.BounceCreature.class);
@@ -478,72 +584,52 @@ class BounceResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Logs and skips when no valid creatures exist")
         void logsWhenNoValidCreatures() {
-            harness.addToBattlefield(player1, new SunkenHope());
-            // No creatures on player1's battlefield — only the enchantment
-            harness.setHand(player1, List.of());
+            Card card = createCard("Sunken Hope");
+            // No creatures on player1's battlefield
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities(); // resolve trigger
+            BounceCreatureOnUpkeepEffect effect = new BounceCreatureOnUpkeepEffect(
+                    BounceCreatureOnUpkeepEffect.Scope.TRIGGER_TARGET_PLAYER, Set.of(),
+                    "Choose a creature.");
+            StackEntry entry = entryWithTargetAndSource(card, player1Id,
+                    List.of(effect), player1Id, UUID.randomUUID());
 
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("controls no valid creatures"));
+            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    argThat(msg -> msg.contains("controls no valid creatures")));
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
         }
 
         @Test
         @DisplayName("Only offers creatures matching filters as valid choices")
         void filtersRestrictValidChoices() {
-            // Stampeding Wildebeests filters to green creatures only
-            addPermanent(player1, new StampedingWildebeests());
-            Permanent greenCreature = addPermanent(player1, new GrizzlyBears());
-            Permanent nonGreenCreature = addPermanent(player1, new SerraAngel());
+            Card card = createCard("Stampeding Wildebeests");
+            Permanent matchingCreature = createCreature("Grizzly Bears");
+            Permanent nonMatchingCreature = createCreature("Serra Angel");
+            gd.playerBattlefields.get(player1Id).add(matchingCreature);
+            gd.playerBattlefields.get(player1Id).add(nonMatchingCreature);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            BounceCreatureOnUpkeepEffect effect = new BounceCreatureOnUpkeepEffect(
+                    BounceCreatureOnUpkeepEffect.Scope.SOURCE_CONTROLLER, Set.of(),
+                    "Choose a green creature.");
+            StackEntry entry = entryWithSource(card, player1Id,
+                    List.of(effect), UUID.randomUUID());
 
-            assertThat(gd.interaction.permanentChoice().validIds())
-                    .contains(greenCreature.getId())
-                    .doesNotContain(nonGreenCreature.getId());
-        }
+            when(gameQueryService.isCreature(gd, matchingCreature)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, nonMatchingCreature)).thenReturn(true);
+            when(gameQueryService.matchesFilters(eq(matchingCreature), any(), any())).thenReturn(true);
+            when(gameQueryService.matchesFilters(eq(nonMatchingCreature), any(), any())).thenReturn(false);
 
-        @Test
-        @DisplayName("Chosen creature is returned to owner's hand and cleared from battlefield")
-        void chosenCreatureReturnsToHand() {
-            harness.addToBattlefield(player1, new SunkenHope());
-            Permanent creature = addPermanent(player1, new GrizzlyBears());
+            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, creature.getId());
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
+                    idsCaptor.capture(), anyString());
 
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getId().equals(creature.getId()));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.permanentChoiceContext()).isNull();
-        }
-
-        @Test
-        @DisplayName("Player can choose which creature to bounce when controlling multiple")
-        void playerChoosesWhichCreatureToBounce() {
-            harness.addToBattlefield(player1, new SunkenHope());
-            Permanent creature1 = addPermanent(player1, new GrizzlyBears());
-            Permanent creature2 = addPermanent(player1, new SerraAngel());
-
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
-
-            // Choose the second creature
-            harness.handlePermanentChosen(player1, creature2.getId());
-
-            // creature2 bounced, creature1 stays
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getId().equals(creature1.getId()));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getId().equals(creature2.getId()));
-            assertThat(gd.playerHands.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Serra Angel"));
+            assertThat(idsCaptor.getValue())
+                    .contains(matchingCreature.getId())
+                    .doesNotContain(nonMatchingCreature.getId());
         }
     }
 
@@ -556,41 +642,34 @@ class BounceResolutionServiceTest extends BaseCardTest {
     class ResolveReturnSelfToHandOnCoinFlipLoss {
 
         @Test
-        @DisplayName("Coin flip is logged and Scoria Wurm ends in exactly one zone")
-        void coinFlipLogsAndWurmEndsInOneZone() {
-            harness.addToBattlefield(player1, new ScoriaWurm());
-            int handBefore = gd.playerHands.get(player1.getId()).size();
+        @DisplayName("Coin flip is logged and bounce or stay occurs")
+        void coinFlipIsLoggedAndBounceOrStay() {
+            Card card = createCard("Scoria Wurm");
+            Permanent permanent = createCreature("Scoria Wurm");
+            gd.playerBattlefields.get(player1Id).add(permanent);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            StackEntry entry = entryWithSource(card, player1Id,
+                    List.of(new ReturnSelfToHandOnCoinFlipLossEffect()), permanent.getId());
 
-            boolean onBattlefield = gd.playerBattlefields.get(player1.getId()).stream()
-                    .anyMatch(p -> p.getCard().getName().equals("Scoria Wurm"));
-            boolean inHand = gd.playerHands.get(player1.getId()).stream()
-                    .anyMatch(c -> c.getName().equals("Scoria Wurm"));
+            // These stubs may or may not be used depending on coin flip outcome
+            lenient().when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
+            lenient().when(permanentRemovalService.removePermanentToHand(gd, permanent)).thenReturn(true);
 
-            // Must be in exactly one zone — battlefield XOR hand
-            assertThat(onBattlefield != inHand).isTrue();
+            service.resolveReturnSelfToHandOnCoinFlipLoss(gd, entry);
 
-            if (inHand) {
-                assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-                assertThat(gd.gameLog).anyMatch(log -> log.contains("returned to its owner's hand"));
+            // Verify coin flip was logged
+            ArgumentCaptor<String> logCaptor = ArgumentCaptor.forClass(String.class);
+            verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), logCaptor.capture());
+            List<String> allLogs = logCaptor.getAllValues();
+            assertThat(allLogs).anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
+
+            // Verify exactly one outcome: won (no bounce) or lost (bounced)
+            boolean won = allLogs.stream().anyMatch(log -> log.contains("wins the coin flip"));
+            if (won) {
+                verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
             } else {
-                assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+                verify(permanentRemovalService).removePermanentToHand(gd, permanent);
             }
-
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
-        }
-
-        @Test
-        @DisplayName("Does not trigger during opponent's upkeep")
-        void doesNotTriggerDuringOpponentUpkeep() {
-            harness.addToBattlefield(player1, new ScoriaWurm());
-
-            advanceToUpkeep(player2);
-
-            assertThat(gd.stack).isEmpty();
         }
     }
 }
