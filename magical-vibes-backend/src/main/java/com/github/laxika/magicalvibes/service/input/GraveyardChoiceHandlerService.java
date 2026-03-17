@@ -72,6 +72,8 @@ public class GraveyardChoiceHandlerService {
         CardColor grantColor = gameData.interaction.graveyardChoice().grantColor();
         CardSubtype grantSubtype = gameData.interaction.graveyardChoice().grantSubtype();
         int exileRemainingCount = gameData.interaction.graveyardChoice().exileRemainingCount();
+        int gainLifeIfCreatureAmount = gameData.interaction.graveyardChoice().gainLifeIfCreatureAmount();
+        UUID gainLifeIfCreaturePlayerId = gameData.interaction.graveyardChoice().gainLifeIfCreaturePlayerId();
         gameData.interaction.clearGraveyardChoice();
 
         if (cardIndex == -1) {
@@ -153,6 +155,12 @@ public class GraveyardChoiceHandlerService {
                     String logEntry = player.getUsername() + " exiles " + card.getName() + " from their graveyard.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} exiles {} from graveyard", gameData.id, player.getUsername(), card.getName());
+
+                    // Conditional life gain (e.g. Graveyard Shovel: "If it's a creature card, you gain 2 life.")
+                    if (gainLifeIfCreatureAmount > 0 && gainLifeIfCreaturePlayerId != null
+                            && card.hasType(CardType.CREATURE)) {
+                        lifeResolutionService.applyGainLife(gameData, gainLifeIfCreaturePlayerId, gainLifeIfCreatureAmount);
+                    }
 
                     // Check if more exiles are needed
                     int remaining = exileRemainingCount - 1;

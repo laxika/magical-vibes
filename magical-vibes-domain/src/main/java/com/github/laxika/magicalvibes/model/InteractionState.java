@@ -269,6 +269,8 @@ public class InteractionState {
             this.graveyardChoice.setGrantColor(prev.grantColor());
             this.graveyardChoice.setGrantSubtype(prev.grantSubtype());
             this.graveyardChoice.setExileRemainingCount(prev.exileRemainingCount());
+            this.graveyardChoice.setGainLifeIfCreatureAmount(prev.gainLifeIfCreatureAmount());
+            this.graveyardChoice.setGainLifeIfCreaturePlayerId(prev.gainLifeIfCreaturePlayerId());
         }
         this.context = new InteractionContext.GraveyardChoice(playerId, new HashSet<>(validIndices), destination, cardPool);
     }
@@ -300,6 +302,11 @@ public class InteractionState {
 
     public void setGraveyardChoiceExileRemainingCount(int count) {
         ensureGraveyardChoice().setExileRemainingCount(count);
+    }
+
+    public void setGraveyardChoiceGainLifeIfCreature(int amount, UUID playerId) {
+        ensureGraveyardChoice().setGainLifeIfCreatureAmount(amount);
+        ensureGraveyardChoice().setGainLifeIfCreaturePlayerId(playerId);
     }
 
     public InteractionContext.GraveyardChoice graveyardChoiceContext() {
