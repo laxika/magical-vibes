@@ -83,6 +83,7 @@ public class TurnResolutionService {
         // Clear combat state if we're ending during combat
         combatService.clearCombatState(gameData);
         gameData.permanentsToSacrificeAtEndOfCombat.clear();
+        gameData.pendingTokenExilesAtEndOfCombat.clear();
 
         // Rule 723.1d: Skip to cleanup step
         gameData.currentStep = TurnStep.CLEANUP;

@@ -810,6 +810,7 @@ public class CardSpecificResolutionService {
         gameData.playersWithNoMaximumHandSize.clear();
         gameData.priorityPassedBy.clear();
         gameData.permanentsToSacrificeAtEndOfCombat.clear();
+        gameData.pendingTokenExilesAtEndOfCombat.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();

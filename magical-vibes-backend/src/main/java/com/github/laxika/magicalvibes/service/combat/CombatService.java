@@ -125,4 +125,23 @@ public class CombatService {
         gameData.permanentsToSacrificeAtEndOfCombat.clear();
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
+
+    /**
+     * Exiles all tokens marked for end-of-combat exile (e.g. Geist of Saint Traft's Angel token).
+     */
+    public void processEndOfCombatExiles(GameData gameData) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            List<Permanent> toExile = battlefield.stream()
+                    .filter(p -> gameData.pendingTokenExilesAtEndOfCombat.contains(p.getId()))
+                    .toList();
+            for (Permanent perm : toExile) {
+                permanentRemovalService.removePermanentToExile(gameData, perm);
+                String logEntry = perm.getCard().getName() + " token is exiled.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} exiled at end of combat", gameData.id, perm.getCard().getName());
+            }
+        });
+        gameData.pendingTokenExilesAtEndOfCombat.clear();
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
 }

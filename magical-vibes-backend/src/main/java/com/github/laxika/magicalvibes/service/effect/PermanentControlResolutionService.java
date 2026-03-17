@@ -328,6 +328,10 @@ public class PermanentControlResolutionService {
                 tokenPermanent.tap();
             }
 
+            if (token.exileAtEndOfCombat()) {
+                gameData.pendingTokenExilesAtEndOfCombat.add(tokenPermanent.getId());
+            }
+
             String colorDesc;
             if (token.colors() != null && !token.colors().isEmpty()) {
                 colorDesc = token.colors().stream()
