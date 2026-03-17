@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPerma
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsReturnSelfIfCardTypeEffect;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
@@ -407,6 +408,21 @@ public class PlayerInteractionResolutionService {
     private void resolveTargetPlayerDiscards(GameData gameData, StackEntry entry, TargetPlayerDiscardsEffect effect) {
         gameData.discardCausedByOpponent = true;
         resolveDiscardCards(gameData, entry.getTargetPermanentId(), effect.amount());
+    }
+
+    @HandlesEffect(TargetSpellControllerDiscardsEffect.class)
+    private void resolveTargetSpellControllerDiscards(GameData gameData, StackEntry entry, TargetSpellControllerDiscardsEffect effect) {
+        UUID targetCardId = entry.getTargetPermanentId();
+        if (targetCardId == null) return;
+
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                gameData.discardCausedByOpponent = true;
+                resolveDiscardCards(gameData, se.getControllerId(), effect.amount());
+                return;
+            }
+        }
+        // Target spell already left the stack (e.g. was countered by earlier effect)
     }
 
     @HandlesEffect(TargetPlayerDiscardsByChargeCountersEffect.class)

@@ -193,6 +193,17 @@ public class CardChoiceHandlerService {
                         gameData.pendingEffectResolutionIndex);
             }
 
+            // A resumed effect may have created a pending may ability
+            // (e.g. Frightful Delusion: discard → counter-unless-pay)
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+
             turnProgressionService.resolveAutoPass(gameData);
         }
     }
