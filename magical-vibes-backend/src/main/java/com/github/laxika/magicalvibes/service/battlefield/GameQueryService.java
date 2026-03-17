@@ -20,7 +20,10 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
@@ -1288,6 +1291,117 @@ public class GameQueryService {
                 && !(creature.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
                         && !isEquipped(gameData, creature));
+    }
+
+    private static final Map<Keyword, CardSubtype> LANDWALK_MAP = Map.of(
+            Keyword.FORESTWALK, CardSubtype.FOREST,
+            Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
+            Keyword.ISLANDWALK, CardSubtype.ISLAND,
+            Keyword.SWAMPWALK, CardSubtype.SWAMP
+    );
+
+    /**
+     * Returns {@code true} if the given blocker can legally block the given attacker,
+     * considering all evasion abilities, blocking restrictions, landwalk, and protection.
+     * This is the single source of truth for pairwise block legality.
+     */
+    public boolean canBlockAttacker(GameData gameData, Permanent blocker, Permanent attacker,
+                                    List<Permanent> defenderBattlefield) {
+        return getBlockingIllegalityReason(gameData, blocker, attacker, defenderBattlefield).isEmpty();
+    }
+
+    /**
+     * Returns the reason a blocker cannot legally block the given attacker, or empty if the block is legal.
+     * This is the single source of truth for pairwise block legality validation.
+     */
+    public Optional<String> getBlockingIllegalityReason(GameData gameData, Permanent blocker,
+                                                        Permanent attacker, List<Permanent> defenderBattlefield) {
+        if (hasCantBeBlocked(gameData, attacker)) {
+            return Optional.of(attacker.getCard().getName() + " can't be blocked");
+        }
+        // Defender-condition unblockable (e.g. "can't be blocked if defending player controls a Forest")
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
+                boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
+                        .anyMatch(p -> matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                if (defenderMatches) {
+                    return Optional.of(attacker.getCard().getName() + " can't be blocked");
+                }
+            }
+        }
+        if (hasKeyword(gameData, attacker, Keyword.FLYING)
+                && !hasKeyword(gameData, blocker, Keyword.FLYING)
+                && !hasKeyword(gameData, blocker, Keyword.REACH)) {
+            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
+        }
+        if (hasKeyword(gameData, attacker, Keyword.FEAR)
+                && !isArtifact(blocker)
+                && blocker.getEffectiveColor() != CardColor.BLACK) {
+            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
+        }
+        if (hasKeyword(gameData, attacker, Keyword.INTIMIDATE)
+                && !isArtifact(blocker)
+                && blocker.getEffectiveColor() != attacker.getEffectiveColor()) {
+            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (intimidate)");
+        }
+        for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (blockerStaticEffect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
+                    && !matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
+                return Optional.of(blocker.getCard().getName() + " can only block " + restriction.allowedAttackersDescription());
+            }
+        }
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
+                    && !matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
+            }
+        }
+        for (CanBeBlockedOnlyByFilterEffect restriction : getAuraGrantedBlockingRestrictions(gameData, attacker)) {
+            if (!matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
+            }
+        }
+        if (defenderBattlefield != null) {
+            for (var entry : LANDWALK_MAP.entrySet()) {
+                if (hasKeyword(gameData, attacker, entry.getKey())
+                        && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
+                    return Optional.of(attacker.getCard().getName() + " can't be blocked (" + entry.getValue().getDisplayName().toLowerCase() + "walk)");
+                }
+            }
+        }
+        if (blocker.isCantBlockThisTurn()) {
+            return Optional.of(blocker.getCard().getName() + " can't block this turn");
+        }
+        boolean hasCantBlockStatic = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBlockEffect.class::isInstance);
+        if (hasCantBlockStatic) {
+            return Optional.of(blocker.getCard().getName() + " can't block");
+        }
+        if (hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)) {
+            return Optional.of(blocker.getCard().getName() + " can't block");
+        }
+        if (blocker.getCantBlockIds().contains(attacker.getId())) {
+            return Optional.of(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");
+        }
+        if (hasProtectionFromSource(gameData, attacker, blocker)) {
+            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
+        }
+        return Optional.empty();
+    }
+
+    private List<CanBeBlockedOnlyByFilterEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
+        List<CanBeBlockedOnlyByFilterEffect> restrictions = new ArrayList<>();
+        gameData.forEachPermanent((playerId, aura) -> {
+            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
+                return;
+            }
+            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction) {
+                    restrictions.add(restriction);
+                }
+            }
+        });
+        return restrictions;
     }
 
     /**

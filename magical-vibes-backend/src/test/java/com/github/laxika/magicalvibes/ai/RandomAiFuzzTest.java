@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.fail;
  *
  * <p>Disabled by default; enable manually to run.</p>
  */
-@Disabled("Fuzz test — runs many random games to find engine bugs; enable manually")
+//@Disabled("Fuzz test — runs many random games to find engine bugs; enable manually")
 class RandomAiFuzzTest {
 
     private static final int DEFAULT_GAME_COUNT = 50;

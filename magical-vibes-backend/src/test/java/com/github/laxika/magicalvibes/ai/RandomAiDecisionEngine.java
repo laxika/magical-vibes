@@ -355,16 +355,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     // ===== Block legality check =====
 
     private boolean canBlock(GameData gameData, Permanent blocker, Permanent attacker) {
-        if (gameQueryService.hasCantBeBlocked(gameData, attacker)) {
-            return false;
-        }
-        boolean attackerFlying = gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING);
-        if (attackerFlying
-                && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
-            return false;
-        }
-        return true;
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        return gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
     }
 
     private Set<Integer> findLureAttackers(GameData gameData, List<Permanent> opponentBattlefield) {

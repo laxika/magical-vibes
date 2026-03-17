@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -15,11 +14,8 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
@@ -47,13 +43,6 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class CombatBlockService {
-
-    private static final Map<Keyword, CardSubtype> LANDWALK_MAP = Map.of(
-            Keyword.FORESTWALK, CardSubtype.FOREST,
-            Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
-            Keyword.ISLANDWALK, CardSubtype.ISLAND,
-            Keyword.SWAMPWALK, CardSubtype.SWAMP
-    );
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -182,7 +171,7 @@ public class CombatBlockService {
 
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            getBlockingIllegalityReason(gameData, blocker, attacker, defenderBattlefield)
+            gameQueryService.getBlockingIllegalityReason(gameData, blocker, attacker, defenderBattlefield)
                     .ifPresent(reason -> { throw new IllegalStateException(reason); });
 
             blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
@@ -370,74 +359,7 @@ public class CombatBlockService {
 
     private boolean canBlockAttacker(GameData gameData, Permanent blocker,
                                       Permanent attacker, List<Permanent> defenderBattlefield) {
-        return getBlockingIllegalityReason(gameData, blocker, attacker, defenderBattlefield).isEmpty();
-    }
-
-    private Optional<String> getBlockingIllegalityReason(GameData gameData, Permanent blocker,
-                                                          Permanent attacker,
-                                                          List<Permanent> defenderBattlefield) {
-        if (gameQueryService.hasCantBeBlocked(gameData, attacker)) {
-            return Optional.of(attacker.getCard().getName() + " can't be blocked");
-        }
-        if (CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, gameData, attacker, defenderBattlefield)) {
-            return Optional.of(attacker.getCard().getName() + " can't be blocked");
-        }
-        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING)
-                && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
-            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
-        }
-        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FEAR)
-                && !gameQueryService.isArtifact(blocker)
-                && blocker.getEffectiveColor() != CardColor.BLACK) {
-            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
-        }
-        if (gameQueryService.hasKeyword(gameData, attacker, Keyword.INTIMIDATE)
-                && !gameQueryService.isArtifact(blocker)
-                && blocker.getEffectiveColor() != attacker.getEffectiveColor()) {
-            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (intimidate)");
-        }
-        for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (blockerStaticEffect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
-                    && !gameQueryService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
-                return Optional.of(blocker.getCard().getName() + " can only block " + restriction.allowedAttackersDescription());
-            }
-        }
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
-                    && !gameQueryService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
-                return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
-            }
-        }
-        for (CanBeBlockedOnlyByFilterEffect restriction : getAuraGrantedBlockingRestrictions(gameData, attacker)) {
-            if (!gameQueryService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
-                return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
-            }
-        }
-        for (var entry : LANDWALK_MAP.entrySet()) {
-            if (gameQueryService.hasKeyword(gameData, attacker, entry.getKey())
-                    && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
-                return Optional.of(attacker.getCard().getName() + " can't be blocked (" + entry.getValue().getDisplayName().toLowerCase() + "walk)");
-            }
-        }
-        if (blocker.isCantBlockThisTurn()) {
-            return Optional.of(blocker.getCard().getName() + " can't block this turn");
-        }
-        boolean hasCantBlockStatic = blocker.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantBlockEffect.class::isInstance);
-        if (hasCantBlockStatic) {
-            return Optional.of(blocker.getCard().getName() + " can't block");
-        }
-        if (gameQueryService.hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)) {
-            return Optional.of(blocker.getCard().getName() + " can't block");
-        }
-        if (blocker.getCantBlockIds().contains(attacker.getId())) {
-            return Optional.of(blocker.getCard().getName() + " can't block " + attacker.getCard().getName() + " this turn");
-        }
-        if (gameQueryService.hasProtectionFromSource(gameData, attacker, blocker)) {
-            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
-        }
-        return Optional.empty();
+        return gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
     }
 
     private int getMaxBlocksForCreature(Permanent creature, List<Permanent> battlefield) {
@@ -580,18 +502,4 @@ public class CombatBlockService {
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
     }
 
-    private List<CanBeBlockedOnlyByFilterEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
-        List<CanBeBlockedOnlyByFilterEffect> restrictions = new ArrayList<>();
-        gameData.forEachPermanent((playerId, aura) -> {
-            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
-                return;
-            }
-            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction) {
-                    restrictions.add(restriction);
-                }
-            }
-        });
-        return restrictions;
-    }
 }

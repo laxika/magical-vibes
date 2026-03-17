@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -580,45 +578,18 @@ public class CombatSimulator {
 
     private boolean canBlock(GameData gameData, CreatureInfo blocker, CreatureInfo attacker) {
         if (attacker.cantBeBlocked) return false;
-        if (blocker.defender || !blocker.defender) { /* defenders can block */ }
+        List<Permanent> defenderBattlefield = findBattlefieldFor(gameData, blocker.perm);
+        return gameQueryService.canBlockAttacker(gameData, blocker.perm, attacker.perm, defenderBattlefield);
+    }
 
-        // Flying: can only be blocked by flying or reach
-        if (attacker.flying && !blocker.flying && !blocker.reach) return false;
-
-        // Fear: can only be blocked by artifact creatures or black creatures
-        if (attacker.fear && !blocker.isArtifact && blocker.color != CardColor.BLACK) return false;
-
-        // Intimidate: can only be blocked by artifact creatures or creatures that share a color
-        if (attacker.intimidate && !blocker.isArtifact && blocker.color != attacker.color) return false;
-
-        // Protection: attacker with protection from blocker can't be blocked by it
-        if (gameQueryService.hasProtectionFromSource(gameData, attacker.perm, blocker.perm)) return false;
-
-        // CanBeBlockedOnlyByFilterEffect: attacker can only be blocked by matching blockers (e.g. Juggernaut)
-        for (CardEffect effect : attacker.perm.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
-                    && !gameQueryService.matchesPermanentPredicate(gameData, blocker.perm, restriction.blockerPredicate())) {
-                return false;
+    private List<Permanent> findBattlefieldFor(GameData gameData, Permanent perm) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf != null && bf.contains(perm)) {
+                return bf;
             }
         }
-
-        // Aura-granted CanBeBlockedOnlyByFilterEffect (e.g. Treetop Bracers)
-        for (CardEffect effect : getAuraGrantedStaticEffects(gameData, attacker.perm)) {
-            if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
-                    && !gameQueryService.matchesPermanentPredicate(gameData, blocker.perm, restriction.blockerPredicate())) {
-                return false;
-            }
-        }
-
-        // CanBlockOnlyIfAttackerMatchesPredicateEffect: blocker can only block matching attackers (e.g. Cloud Elemental)
-        for (CardEffect effect : blocker.perm.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
-                    && !gameQueryService.matchesPermanentPredicate(gameData, attacker.perm, restriction.attackerPredicate())) {
-                return false;
-            }
-        }
-
-        return true;
+        return List.of();
     }
 
     private boolean canBeBlockedByAny(GameData gameData, CreatureInfo attacker, List<CreatureInfo> blockers) {
@@ -691,17 +662,6 @@ public class CombatSimulator {
             }
         }
         return false;
-    }
-
-    private List<CardEffect> getAuraGrantedStaticEffects(GameData gameData, Permanent creature) {
-        List<CardEffect> effects = new ArrayList<>();
-        gameData.forEachPermanent((playerId, aura) -> {
-            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
-                return;
-            }
-            effects.addAll(aura.getCard().getEffects(EffectSlot.STATIC));
-        });
-        return effects;
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {

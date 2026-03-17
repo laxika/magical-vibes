@@ -186,7 +186,6 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
             int power = gameQueryService.getEffectivePower(gameData, perm);
             int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
-            boolean hasFlying = gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING);
 
             Permanent bestBlocker = findBestBlocker(gameData, perm, opponentBattlefield);
 
@@ -200,9 +199,6 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                 if (power >= blockerToughness && blockerPower < toughness) {
                     shouldAttack = true;
                 } else if (power >= blockerToughness && perm.getCard().getManaValue() < bestBlocker.getCard().getManaValue()) {
-                    shouldAttack = true;
-                } else if (hasFlying && !gameQueryService.hasKeyword(gameData, bestBlocker, Keyword.FLYING)
-                        && !gameQueryService.hasKeyword(gameData, bestBlocker, Keyword.REACH)) {
                     shouldAttack = true;
                 }
             }
@@ -271,10 +267,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             int attackerPower = attacker[1];
             int attackerToughness = attacker[2];
             Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
-            boolean attackerHasFlying = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.FLYING);
             boolean attackerHasMenace = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.MENACE);
             List<Integer> availableBlockers = getAvailableBlockersForAttacker(
-                    gameData, battlefield, blockerUsed, attackingPerm, attackerHasFlying
+                    gameData, battlefield, blockerUsed, attackingPerm
             );
 
             // Find cheapest blocker that can kill attacker and survive
@@ -347,19 +342,12 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     // ===== Combat Helpers =====
 
     private Permanent findBestBlocker(GameData gameData, Permanent attacker, List<Permanent> opponentField) {
-        boolean hasFlying = gameQueryService.hasKeyword(gameData, attacker, Keyword.FLYING);
-
         Permanent best = null;
         int bestToughness = Integer.MAX_VALUE;
 
         for (Permanent opp : opponentField) {
-            if (!gameQueryService.isCreature(gameData, opp)) continue;
-            if (opp.isTapped()) continue;
-
-            if (hasFlying && !gameQueryService.hasKeyword(gameData, opp, Keyword.FLYING)
-                    && !gameQueryService.hasKeyword(gameData, opp, Keyword.REACH)) {
-                continue;
-            }
+            if (!gameQueryService.canBlock(gameData, opp)) continue;
+            if (!gameQueryService.canBlockAttacker(gameData, opp, attacker, opponentField)) continue;
 
             int oppToughness = gameQueryService.getEffectiveToughness(gameData, opp);
             if (best == null || oppToughness < bestToughness) {
@@ -371,17 +359,14 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     }
 
     private List<Integer> getAvailableBlockersForAttacker(GameData gameData, List<Permanent> battlefield, boolean[] blockerUsed,
-                                                          Permanent attackingPerm, boolean attackerHasFlying) {
+                                                          Permanent attackingPerm) {
+        List<Permanent> defenderBattlefield = battlefield;
         List<Integer> available = new ArrayList<>();
         for (int j = 0; j < battlefield.size(); j++) {
             if (blockerUsed[j]) continue;
             Permanent blocker = battlefield.get(j);
             if (!gameQueryService.canBlock(gameData, blocker)) continue;
-
-            if (attackerHasFlying && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                    && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
-                continue;
-            }
+            if (!gameQueryService.canBlockAttacker(gameData, blocker, attackingPerm, defenderBattlefield)) continue;
             available.add(j);
         }
         return available;
