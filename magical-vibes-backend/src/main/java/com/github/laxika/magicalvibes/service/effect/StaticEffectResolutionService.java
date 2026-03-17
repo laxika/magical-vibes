@@ -642,7 +642,7 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(value = BoostSelfByImprintedCreaturePTEffect.class, selfOnly = true)
     private void resolveBoostSelfByImprintedCreaturePT(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         Card imprintedCard = context.source().getCard().getImprintedCard();
-        if (imprintedCard == null) {
+        if (imprintedCard == null || imprintedCard.getPower() == null || imprintedCard.getToughness() == null) {
             return;
         }
         accumulator.addPower(imprintedCard.getPower());
