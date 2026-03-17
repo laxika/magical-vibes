@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -73,6 +74,7 @@ public class DamagePreventionService {
         if (gameQueryService.isDamagePreventable(gameData)) {
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
+            if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (!isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllNoncombatDamageToAttachedCreatureEffect.class)) return 0;
             if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {

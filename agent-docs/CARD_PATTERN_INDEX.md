@@ -305,6 +305,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Doesn't untap | `d/Dehydration.java` | STATIC EnchantedCreatureDoesntUntapEffect |
 | Static boost | `h/HolyStrength.java` | STATIC StaticBoostEffect(X, Y, GrantScope.ENCHANTED_CREATURE) |
 | Boost + keyword | `s/SerrasEmbrace.java` | Boost + GrantKeywordEffect(ENCHANTED_CREATURE) |
+| Keyword + combat damage prevention | `g/GhostlyPossession.java` | GrantKeywordEffect(FLYING) + PreventAllCombatDamageToAndByEnchantedCreatureEffect (non-combat damage still goes through) |
 | Boost per subtype | `b/BlanchwoodArmor.java` | STATIC BoostCreaturePerControlledSubtypeEffect |
 | Control enchanted | `p/Persuasion.java` | STATIC ControlEnchantedCreatureEffect |
 | Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityEffect with GrantScope.ENCHANTED_CREATURE |

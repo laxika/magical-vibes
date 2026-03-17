@@ -124,7 +124,7 @@ class CombatDamageServiceTest {
                     Permanent perm = inv.getArgument(1);
                     return perm.getCard().getToughness() - perm.getMinusOneMinusOneCounters();
                 });
-        when(gameQueryService.isPreventedFromDealingDamage(eq(gameData), any(Permanent.class)))
+        when(gameQueryService.isPreventedFromDealingDamage(eq(gameData), any(Permanent.class), anyBoolean()))
                 .thenReturn(false);
     }
 

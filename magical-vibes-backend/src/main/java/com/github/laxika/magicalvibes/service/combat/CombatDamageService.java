@@ -147,7 +147,7 @@ public class CombatDamageService {
                 boolean bAtkSkipPhase2 = gameQueryService.hasKeyword(gameData, bAtk, Keyword.FIRST_STRIKE)
                         && !gameQueryService.hasKeyword(gameData, bAtk, Keyword.DOUBLE_STRIKE);
                 if (bAtkSkipPhase2) continue;
-                if (gameQueryService.isPreventedFromDealingDamage(gameData, bAtk)) continue;
+                if (gameQueryService.isPreventedFromDealingDamage(gameData, bAtk, true)) continue;
                 List<Integer> livingBlockers = bEntry.getValue().stream()
                         .filter(i -> !state.deadDefenderIndices.contains(i))
                         .toList();
@@ -381,17 +381,17 @@ public class CombatDamageService {
             boolean assignAsUnblocked = !blkIndices.isEmpty() && assignsCombatDamageAsThoughUnblocked(atk);
 
             if (playerAssignment != null) {
-                if (atkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
+                if (atkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, atk, true)) {
                     applyPlayerAssignedDamage(gameData, state, atk, blkIndices, defBf,
                             playerAssignment, activeId, defenderId, redirectTarget);
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
-                if (atkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
+                if (atkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, atk, true)) {
                     int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
                     accumulatePlayerDamage(gameData, atk, power, defenderId, redirectTarget, state);
                 }
             } else {
-                if (atkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, atk)) {
+                if (atkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, atk, true)) {
                     distributeAttackerDamageToBlockers(gameData, state, atk, blkIndices, defBf,
                             activeId, defenderId, redirectTarget, !isFirstStrikePhase);
                 }
@@ -402,7 +402,7 @@ public class CombatDamageService {
                     if (!isFirstStrikePhase && state.deadDefenderIndices.contains(blkIdx)) continue;
                     Permanent blk = defBf.get(blkIdx);
                     boolean blkParticipates = participatesInDamagePhase(gameData, blk, isFirstStrikePhase);
-                    if (blkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, blk)
+                    if (blkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, blk, true)
                             && !(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, atk, blk))) {
                         // For multi-blocking creatures, distribute damage per CR 510.1c-d:
                         // assign lethal to each attacker in order before moving on

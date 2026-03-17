@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -1589,10 +1590,25 @@ public class GameQueryService {
      * a global color-based damage prevention effect, or a per-permanent damage prevention flag.
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature) {
+        return isPreventedFromDealingDamage(gameData, creature, false);
+    }
+
+    /**
+     * Returns {@code true} if the given creature is prevented from dealing damage.
+     * When {@code isCombatDamage} is {@code true}, also checks for combat-specific
+     * prevention effects (e.g. {@link PreventAllCombatDamageToAndByEnchantedCreatureEffect}).
+     */
+    public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData)) return false;
-        return hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
+        if (hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
                 || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor())
-                || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId());
+                || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId())) {
+            return true;
+        }
+        if (isCombatDamage && hasAuraWithEffect(gameData, creature, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) {
+            return true;
+        }
+        return false;
     }
 
     /**

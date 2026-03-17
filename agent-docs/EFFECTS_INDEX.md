@@ -741,6 +741,7 @@ Pass `null` as filter to allow any card.
 | `PreventDamageToTargetEffect` | `(int amount)` | prevent next N damage to target |
 | `PreventNextDamageEffect` | `(int amount)` | prevent next N damage to target creature or player |
 | `PreventAllCombatDamageEffect` | `()` | prevent all combat damage this turn |
+| `PreventAllCombatDamageToAndByEnchantedCreatureEffect` | `()` | prevent all combat damage to and dealt by enchanted creature (non-combat damage still applies) |
 | `PreventAllDamageEffect` | `()` | prevent all damage (e.g. Fog-style) |
 | `PreventAllDamageToAndByEnchantedCreatureEffect` | `()` | prevent all damage to and dealt by enchanted creature |
 | `PreventAllNoncombatDamageToAttachedCreatureEffect` | `()` | prevent all noncombat damage to attached (equipped/enchanted) creature (e.g. Magebane Armor) |
