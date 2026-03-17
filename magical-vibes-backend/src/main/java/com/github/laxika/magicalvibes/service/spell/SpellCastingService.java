@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetC
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -100,6 +101,14 @@ public class SpellCastingService {
         return cost;
     }
 
+    private ExileXCardsFromGraveyardCost extractAndRemoveExileXCardsFromGraveyardCost(List<CardEffect> effects) {
+        ExileXCardsFromGraveyardCost cost = (ExileXCardsFromGraveyardCost) effects.stream()
+                .filter(ExileXCardsFromGraveyardCost.class::isInstance)
+                .findFirst().orElse(null);
+        if (cost != null) effects.removeIf(ExileXCardsFromGraveyardCost.class::isInstance);
+        return cost;
+    }
+
     private int unwrapChooseOneEffect(Card card, List<CardEffect> effects, int effectiveXValue) {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ChooseOneEffect coe) {
@@ -158,6 +167,13 @@ public class SpellCastingService {
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex) {
+        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
+                  List<Integer> exileGraveyardCardIndices) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetPermanentIds == null) targetPermanentIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -224,6 +240,7 @@ public class SpellCastingService {
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         SacrificeCostFlags sacFlags = extractAndRemoveSacrificeCosts(filteredSpellEffects);
         ExileCardFromGraveyardCost exileGraveyardCost = extractAndRemoveExileGraveyardCost(filteredSpellEffects);
+        ExileXCardsFromGraveyardCost exileXCardsGraveyardCost = extractAndRemoveExileXCardsFromGraveyardCost(filteredSpellEffects);
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
@@ -455,6 +472,7 @@ public class SpellCastingService {
             }
             resolvedXValue = payAllSacrificeCosts(gameData, player, card, sacrificePermanentId, sacFlags, resolvedXValue);
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
+            resolvedXValue = payExileXCardsFromGraveyardCost(gameData, player, card, exileXCardsGraveyardCost, exileGraveyardCardIndices, resolvedXValue);
 
             // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
             ReturnTargetCardsFromGraveyardToHandEffect graveyardToHandEffect =
@@ -698,6 +716,38 @@ public class SpellCastingService {
             resolvedXValue = exiledPower;
         }
         return resolvedXValue;
+    }
+
+    private int payExileXCardsFromGraveyardCost(GameData gameData, Player player, Card card,
+                                                 ExileXCardsFromGraveyardCost cost, List<Integer> exileGraveyardCardIndices, int resolvedXValue) {
+        if (cost == null) return resolvedXValue;
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (exileGraveyardCardIndices == null) {
+            throw new IllegalStateException("Must specify cards to exile from your graveyard to cast " + card.getName());
+        }
+        if (graveyard == null && !exileGraveyardCardIndices.isEmpty()) {
+            throw new IllegalStateException("No cards in graveyard to exile");
+        }
+        for (int idx : exileGraveyardCardIndices) {
+            if (idx < 0 || idx >= graveyard.size()) {
+                throw new IllegalStateException("Invalid graveyard card index: " + idx);
+            }
+        }
+        // Remove in descending index order so earlier indices remain valid
+        List<Integer> sortedDescending = exileGraveyardCardIndices.stream().sorted(java.util.Comparator.reverseOrder()).toList();
+        List<Card> exiledCards = new ArrayList<>();
+        for (int idx : sortedDescending) {
+            Card exiledCard = graveyard.remove(idx);
+            exiledCards.add(exiledCard);
+        }
+        List<Card> exileZone = gameData.playerExiledCards.computeIfAbsent(playerId, k -> java.util.Collections.synchronizedList(new ArrayList<>()));
+        exileZone.addAll(exiledCards);
+        for (Card exiledCard : exiledCards) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
+        }
+        return exiledCards.size();
     }
 
     // --- Play with flashback from graveyard ---

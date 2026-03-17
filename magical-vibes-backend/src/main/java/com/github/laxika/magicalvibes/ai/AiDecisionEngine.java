@@ -187,7 +187,7 @@ public abstract class AiDecisionEngine {
                 int handSizeBefore = hand.size();
                 final int idx = i;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the land was actually played — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 if (hand.size() >= handSizeBefore) {

@@ -8,5 +8,5 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetPermanen
                               List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,
                               UUID sacrificePermanentId, Integer phyrexianLifeCount, UUID fromExileCardId,
                               List<UUID> alternateCostSacrificePermanentIds, Boolean flashback,
-                              Integer exileGraveyardCardIndex) {
+                              Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices) {
 }

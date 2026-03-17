@@ -182,7 +182,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final Integer finalXValue = xValue;
             final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
             send(() -> messageHandler.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, finalExileGraveyardCardIndex)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, finalExileGraveyardCardIndex, null)));
 
             if (hand.size() >= handSizeBefore) {
                 log.warn("Random AI: PlayCard failed silently in game {}", gameId);
