@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
@@ -688,7 +689,7 @@ public class GameBroadcastService {
             }
         }
 
-        // Cost reduction from battlefield permanents with imprinted cards (e.g. Semblance Anvil)
+        // Cost reduction from battlefield permanents (e.g. Semblance Anvil, Heartless Summoning)
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
@@ -697,6 +698,11 @@ public class GameBroadcastService {
                         Card imprinted = perm.getCard().getImprintedCard();
                         if (imprinted != null && sharesCardType(card, imprinted)) {
                             reduction += reduceEffect.amount();
+                        }
+                    }
+                    if (effect instanceof ReduceOwnCastCostForCardTypeEffect cardTypeReduce) {
+                        if (cardTypeReduce.affectedTypes().contains(card.getType())) {
+                            reduction += cardTypeReduce.amount();
                         }
                     }
                 }
