@@ -414,6 +414,7 @@ Pass `null` as filter to allow any card.
 | `LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect` | `(int count)` | look at top N cards, may put one onto battlefield if it shares a name with any permanent, rest on bottom in any order |
 | `ImprintFromTopCardsEffect` | `(int count)` | look at top N cards, exile one face down (imprint on source), rest on bottom in any order |
 | `LookAtTopCardsOfTargetLibraryMayExileOneEffect` | `(int count)` | look at top N cards of target player's library, may exile one, rest on top in any order (used by Psychic Surgery) |
+| `LookAtTopCardsChooseOneToHandRestToGraveyardEffect` | `(int count)` | look at top N cards, choose one to hand, rest to graveyard |
 | `LookAtTopCardsHandTopBottomEffect` | `(int count)` | look at top N cards, choose hand/top/bottom for each |
 | `LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect` | `()` | look at top X cards (X = charge counters on source, snapshotted before sacrifice), choose one to hand, rest on bottom in any order |
 | `ReorderTopCardsOfLibraryEffect` | `(int count)` | reorder top N cards of library |

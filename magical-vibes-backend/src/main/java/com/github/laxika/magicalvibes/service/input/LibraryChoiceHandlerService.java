@@ -847,7 +847,7 @@ public class LibraryChoiceHandlerService {
 
         if (libraryRevealChoice.selectedToHand()) {
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
-                    libraryRevealChoice.reorderRemainingToBottom());
+                    libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard());
             return;
         }
 
@@ -911,13 +911,25 @@ public class LibraryChoiceHandlerService {
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
                                               List<Card> selectedCards, List<Card> remainingCards,
                                               boolean reorderRemainingToBottom) {
+        resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
+                reorderRemainingToBottom, false);
+    }
+
+    private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
+                                              List<Card> selectedCards, List<Card> remainingCards,
+                                              boolean reorderRemainingToBottom, boolean remainingToGraveyard) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
             gameData.addCardToHand(controllerId, card);
         }
 
         // Log the result
-        if (selectedCards.isEmpty()) {
+        if (remainingToGraveyard) {
+            if (!selectedCards.isEmpty()) {
+                String logEntry = playerName + " puts one card into their hand and the rest into their graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
+        } else if (selectedCards.isEmpty()) {
             String logEntry = playerName + " does not reveal any creature cards.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
@@ -927,6 +939,15 @@ public class LibraryChoiceHandlerService {
         }
 
         // Handle remaining cards
+        if (remainingToGraveyard) {
+            for (Card card : remainingCards) {
+                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            }
+            log.info("Game {} - {} puts 1 card to hand, {} to graveyard", gameData.id, playerName, remainingCards.size());
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
         if (reorderRemainingToBottom && remainingCards.size() > 1) {
             gameData.interaction.beginLibraryReorder(controllerId, remainingCards, true);
             List<CardView> cardViews = remainingCards.stream().map(cardViewFactory::create).toList();

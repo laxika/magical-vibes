@@ -64,7 +64,8 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardCardEffect |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + EachPlayerRandomDiscardEffect |
-| Library selection | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
+| Library selection (hand/top/bottom) | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
+| Library selection (hand, rest to graveyard) | `f/ForbiddenAlchemy.java` | LookAtTopCardsChooseOneToHandRestToGraveyardEffect |
 | Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect |
 | Targeted discard | `d/Distress.java` | ChooseCardFromTargetHandToDiscardEffect |
 | Exile by name (multi-zone) | `m/Memoricide.java` | ChooseCardNameAndExileFromZonesEffect(excludedTypes) — choose nonland name, exile from hand+graveyard+library, shuffle |

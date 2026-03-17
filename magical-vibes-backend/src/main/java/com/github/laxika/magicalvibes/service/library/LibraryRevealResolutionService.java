@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
@@ -408,6 +409,49 @@ public class LibraryRevealResolutionService {
         sessionManager.sendToPlayer(controllerId, new ChooseHandTopBottomMessage(
                 cardViews,
                 "Look at the top " + count + " cards of your library. Choose one to put into your hand."
+        ));
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " looks at the top " + pluralCards(count) + " of their library.");
+        log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
+    }
+
+    /**
+     * Looks at the top N cards of the controller's library, then the player chooses one to put
+     * into their hand and the rest go into the graveyard. If only one card remains, it goes
+     * directly to hand. Used by cards like Forbidden Alchemy.
+     */
+    @HandlesEffect(LookAtTopCardsChooseOneToHandRestToGraveyardEffect.class)
+    void resolveLookAtTopCardsChooseOneToHandRestToGraveyard(GameData gameData, StackEntry entry, LookAtTopCardsChooseOneToHandRestToGraveyardEffect effect) {
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        int count = topCards.size();
+
+        if (count == 1) {
+            // Only 1 card: it goes to hand
+            gameData.addCardToHand(controllerId, topCards.getFirst());
+            String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        // All cards are valid choices
+        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
+        for (Card card : topCards) {
+            validCardIds.add(card.getId());
+        }
+
+        gameData.interaction.beginLibraryRevealChoice(controllerId, topCards, validCardIds,
+                true, true, false);
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                cardIds, cardViews, 1,
+                "Look at the top " + count + " cards of your library. Put one into your hand. The rest are put into your graveyard."
         ));
 
         gameBroadcastService.logAndBroadcast(gameData,
