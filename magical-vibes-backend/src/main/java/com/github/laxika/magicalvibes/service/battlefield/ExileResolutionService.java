@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.ArrayList;
@@ -600,22 +601,27 @@ public class ExileResolutionService {
 
         // If the spell needs a target, set up target selection
         if (chosenCard.isNeedsTarget()) {
+            Set<TargetType> allowedTargets = chosenCard.getAllowedTargets();
             List<UUID> validTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+
+            // Only add permanents if the spell can actually target them
+            if (allowedTargets.contains(TargetType.PERMANENT)) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                validTargets.add(p.getId());
+                            }
+                        } else if (gameQueryService.isCreature(gameData, p)) {
                             validTargets.add(p.getId());
                         }
-                    } else if (gameQueryService.isCreature(gameData, p)) {
-                        validTargets.add(p.getId());
                     }
                 }
             }
-            boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-            if (canTargetPlayer) {
+
+            if (allowedTargets.contains(TargetType.PLAYER)) {
                 validTargets.addAll(gameData.orderedPlayerIds);
             }
 
@@ -698,22 +704,27 @@ public class ExileResolutionService {
 
             if (topCard.isNeedsTarget()) {
                 // Targeted spell — need to choose a target
+                Set<TargetType> allowedTargets = topCard.getAllowedTargets();
                 List<UUID> validTargets = new ArrayList<>();
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (topCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+
+                // Only add permanents if the spell can actually target them
+                if (allowedTargets.contains(TargetType.PERMANENT)) {
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                        if (battlefield == null) continue;
+                        for (Permanent p : battlefield) {
+                            if (topCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                                if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                    validTargets.add(p.getId());
+                                }
+                            } else if (gameQueryService.isCreature(gameData, p)) {
                                 validTargets.add(p.getId());
                             }
-                        } else if (gameQueryService.isCreature(gameData, p)) {
-                            validTargets.add(p.getId());
                         }
                     }
                 }
-                boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-                if (canTargetPlayer) {
+
+                if (allowedTargets.contains(TargetType.PLAYER)) {
                     validTargets.addAll(gameData.orderedPlayerIds);
                 }
 

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
 import com.github.laxika.magicalvibes.model.effect.OmenMachineDrawStepEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -1271,6 +1272,35 @@ class ExileResolutionServiceTest {
             assertThat(gd.spellsCastThisTurn.get(player1Id)).isEqualTo(1);
             verify(triggerCollectionService).checkSpellCastTriggers(gd, chosenCard, player1Id, false);
             verify(gameBroadcastService).broadcastGameState(gd);
+        }
+
+        @Test
+        @DisplayName("Player-only targeting spell only offers players as targets, not creatures")
+        void playerOnlySpellDoesNotOfferCreatureTargets() {
+            Player player = new Player(player1Id, "Player1");
+            Card chosenCard = createSorceryCard("Traumatize");
+            chosenCard.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect());
+            UUID kpId = UUID.randomUUID();
+
+            gd.knowledgePoolSourcePermanentId = kpId;
+            gd.permanentExiledCards.put(kpId,
+                    Collections.synchronizedList(new ArrayList<>(List.of(chosenCard))));
+            gd.playerExiledCards.get(player1Id).add(chosenCard);
+            gd.interaction.beginKnowledgePoolCastChoice(player1Id,
+                    java.util.Set.of(chosenCard.getId()), 1);
+
+            // Put a creature on the battlefield — it must NOT appear as a valid target
+            Card creatureCard = createCreatureCard("Baneslayer Angel");
+            addPermanent(player2Id, creatureCard);
+
+            exileResolutionService.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
+
+            // Should begin permanent choice with only the two player IDs
+            @SuppressWarnings("unchecked")
+            org.mockito.ArgumentCaptor<List<UUID>> targetsCaptor = org.mockito.ArgumentCaptor.forClass(List.class);
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), targetsCaptor.capture(), anyString());
+            List<UUID> validTargets = targetsCaptor.getValue();
+            assertThat(validTargets).containsExactlyInAnyOrder(player1Id, player2Id);
         }
 
         @Test

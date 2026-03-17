@@ -107,6 +107,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
+            // Skip spells that target spells on the stack (e.g. Twincast) — AI can't pick spell targets
+            if (card.isNeedsSpellTarget()) {
+                continue;
+            }
+
             ManaCost cost = new ManaCost(card.getManaCost());
             if (cost.hasX()) {
                 if (!cost.canPay(virtualPool, 1)) continue;
@@ -266,11 +271,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
-        // Find all available blockers (untapped creatures)
+        // Find all available blockers using the same canBlock() check as the game engine
         List<Integer> availableBlockerIndices = new ArrayList<>();
         for (int j = 0; j < battlefield.size(); j++) {
             Permanent blocker = battlefield.get(j);
-            if (gameQueryService.isCreature(gameData, blocker) && !blocker.isTapped()) {
+            if (gameQueryService.canBlock(gameData, blocker)) {
                 availableBlockerIndices.add(j);
             }
         }

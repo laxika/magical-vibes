@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,9 +29,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class EasyAiDecisionEngineTest {
@@ -128,5 +134,42 @@ class EasyAiDecisionEngineTest {
 
         verify(messageHandler).handlePlayCard(any(), any());
         verify(messageHandler, never()).handlePassPriority(any(), any());
+    }
+
+    // ===== Blocker eligibility uses canBlock =====
+
+    @Test
+    @DisplayName("Easy AI skips creatures that canBlock() returns false for when declaring blockers")
+    void skipsCreaturesThatCannotBlock() throws Exception {
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+
+        // Opponent has a 3/3 attacking creature
+        Card attackerCard = new Card();
+        attackerCard.setName("Opponent Bear");
+        attackerCard.setType(CardType.CREATURE);
+        attackerCard.setPower(3);
+        attackerCard.setToughness(3);
+        Permanent attacker = new Permanent(attackerCard);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(opponentId).add(attacker);
+
+        // AI has a 4/4 creature that cannot block (e.g. has CantBlockEffect)
+        Card cantBlockCard = new Card();
+        cantBlockCard.setName("Restricted Creature");
+        cantBlockCard.setType(CardType.CREATURE);
+        cantBlockCard.setPower(4);
+        cantBlockCard.setToughness(4);
+        Permanent cantBlocker = new Permanent(cantBlockCard);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(cantBlocker);
+
+        // gameQueryService.canBlock returns false for the restricted creature
+        when(gameQueryService.canBlock(gd, cantBlocker)).thenReturn(false);
+
+        createEngine().handleMessage("AVAILABLE_BLOCKERS", "");
+
+        // Should declare no blockers since the only creature can't block
+        ArgumentCaptor<DeclareBlockersRequest> captor = ArgumentCaptor.forClass(DeclareBlockersRequest.class);
+        verify(messageHandler).handleDeclareBlockers(eq(selfConnection), captor.capture());
+        assertThat(captor.getValue().blockerAssignments()).isEmpty();
     }
 }

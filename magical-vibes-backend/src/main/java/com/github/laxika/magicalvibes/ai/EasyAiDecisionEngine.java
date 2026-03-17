@@ -376,8 +376,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         for (int j = 0; j < battlefield.size(); j++) {
             if (blockerUsed[j]) continue;
             Permanent blocker = battlefield.get(j);
-            if (!gameQueryService.isCreature(gameData, blocker)) continue;
-            if (blocker.isTapped()) continue;
+            if (!gameQueryService.canBlock(gameData, blocker)) continue;
 
             if (attackerHasFlying && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
                     && !gameQueryService.hasKeyword(gameData, blocker, Keyword.REACH)) {
