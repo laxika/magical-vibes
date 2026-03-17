@@ -1,30 +1,123 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.cards.c.Cancel;
-import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
-import com.github.laxika.magicalvibes.cards.s.SpiketailHatchling;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.StateTriggerService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class CounterResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class CounterResolutionServiceTest {
+
+    @Mock private GraveyardService graveyardService;
+    @Mock private ExileService exileService;
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameQueryService gameQueryService;
+    @Mock private StateTriggerService stateTriggerService;
+
+    @InjectMocks private CounterResolutionService service;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    // ===== Helper methods =====
+
+    private Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        return card;
+    }
+
+    private Card createCreatureCard(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.CREATURE);
+        return card;
+    }
+
+    private Card createInstantCard(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.INSTANT);
+        return card;
+    }
+
+    private StackEntry creatureSpellEntry(Card card, UUID controllerId) {
+        return new StackEntry(StackEntryType.CREATURE_SPELL, card, controllerId,
+                card.getName(), List.of());
+    }
+
+    private StackEntry instantSpellEntry(Card card, UUID controllerId, UUID targetPermanentId) {
+        return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
+                card.getName(), List.of(new CounterSpellEffect()), 0, targetPermanentId, null);
+    }
+
+    private StackEntry counterSpellEntry(Card card, UUID controllerId, UUID targetCardId) {
+        return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
+                card.getName(), List.of(new CounterSpellEffect()), 0, targetCardId, null);
+    }
+
+    private StackEntry counterAndExileEntry(Card card, UUID controllerId, UUID targetCardId) {
+        return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
+                card.getName(), List.of(new CounterSpellAndExileEffect()), 0, targetCardId, null);
+    }
+
+    private StackEntry counterUnlessPaysEntry(Card card, UUID controllerId, UUID targetCardId, int amount) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                card.getName(), List.of(new CounterUnlessPaysEffect(amount)), 0, targetCardId, null);
+    }
+
+    private StackEntry counterIfPoisonedEntry(Card card, UUID controllerId, UUID targetCardId) {
+        return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
+                card.getName(), List.of(new CounterSpellIfControllerPoisonedEffect()), 0, targetCardId, null);
+    }
 
     // =========================================================================
     // resolveCounterSpell (CounterSpellEffect)
@@ -37,151 +130,306 @@ class CounterResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Counters a creature spell and puts it in the graveyard")
         void countersCreatureSpellAndPutsInGraveyard() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.setHand(player1, List.of(bears));
-            harness.addMana(player1, ManaColor.GREEN, 2);
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
 
-            harness.setHand(player2, List.of(new Cancel()));
-            harness.addMana(player2, ManaColor.BLUE, 3);
+            Card cancel = createInstantCard("Cancel");
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, bears.getId());
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, bears.getId());
-            harness.passBothPriorities();
+            service.resolveCounterSpell(gd, cancelEntry);
 
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.stack).isEmpty();
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, bears);
+            verify(stateTriggerService).cleanupResolvedStateTrigger(gd, bearsEntry);
         }
 
         @Test
         @DisplayName("Counters an instant spell and puts it in the graveyard")
         void countersInstantSpellAndPutsInGraveyard() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player1, bears);
+            Card might = createInstantCard("Might of Oaks");
+            StackEntry mightEntry = new StackEntry(StackEntryType.INSTANT_SPELL, might, player1Id,
+                    might.getName(), List.of());
+            gd.stack.add(mightEntry);
 
-            MightOfOaks might = new MightOfOaks();
-            harness.setHand(player1, List.of(might));
-            harness.addMana(player1, ManaColor.GREEN, 4);
+            Card cancel = createInstantCard("Cancel");
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, might.getId());
 
-            harness.setHand(player2, List.of(new Cancel()));
-            harness.addMana(player2, ManaColor.BLUE, 3);
+            service.resolveCounterSpell(gd, cancelEntry);
 
-            harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, might.getId());
-            harness.passBothPriorities();
-
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Might of Oaks"));
-            assertThat(gd.stack)
-                    .noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, might);
         }
 
         @Test
         @DisplayName("Does nothing when target spell is no longer on the stack")
         void doesNothingWhenTargetNoLongerOnStack() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.setHand(player1, List.of(bears));
-            harness.addMana(player1, ManaColor.GREEN, 2);
+            UUID removedCardId = UUID.randomUUID();
+            Card cancel = createInstantCard("Cancel");
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, removedCardId);
 
-            harness.setHand(player2, List.of(new Cancel()));
-            harness.addMana(player2, ManaColor.BLUE, 3);
+            service.resolveCounterSpell(gd, cancelEntry);
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, bears.getId());
-
-            // Remove the target spell before Cancel resolves
-            gd.stack.removeIf(se -> se.getCard().getName().equals("Grizzly Bears"));
-
-            harness.passBothPriorities();
-
-            // Bears should not be in graveyard (was removed from stack externally)
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
         }
 
         @Test
-        @DisplayName("Does not counter an uncounterable creature spell (Gaea's Herald on battlefield)")
-        void doesNotCounterUncounterableCreatureSpell() {
-            // Gaea's Herald makes creature spells uncounterable
-            harness.addToBattlefield(player1, new GaeasHerald());
+        @DisplayName("Does not counter an uncounterable spell")
+        void doesNotCounterUncounterableSpell() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
 
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.setHand(player1, List.of(bears));
-            harness.addMana(player1, ManaColor.GREEN, 2);
+            Card cancel = createInstantCard("Cancel");
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, bears.getId());
 
-            harness.setHand(player2, List.of(new Cancel()));
-            harness.addMana(player2, ManaColor.BLUE, 3);
+            when(gameQueryService.isUncounterable(gd, bears)).thenReturn(true);
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, bears.getId());
-            harness.passBothPriorities();
+            service.resolveCounterSpell(gd, cancelEntry);
 
-            // Bears should NOT be countered — it should resolve to the battlefield
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-
-            // Resolve the remaining Bears spell on the stack
-            harness.passBothPriorities();
-
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+            assertThat(gd.stack).contains(bearsEntry);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
 
         @Test
-        @DisplayName("Countered spell is logged in the game log")
+        @DisplayName("Countered spell is logged via broadcast")
         void counteredSpellIsLogged() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.setHand(player1, List.of(bears));
-            harness.addMana(player1, ManaColor.GREEN, 2);
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
 
-            harness.setHand(player2, List.of(new Cancel()));
-            harness.addMana(player2, ManaColor.BLUE, 3);
+            Card cancel = createInstantCard("Cancel");
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, bears.getId());
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, bears.getId());
-            harness.passBothPriorities();
+            service.resolveCounterSpell(gd, cancelEntry);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("countered"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears is countered."));
         }
 
         @Test
         @DisplayName("Countered copy ceases to exist and does not go to the graveyard")
         void counteredCopyDoesNotGoToGraveyard() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.setHand(player1, List.of(bears));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-
-            harness.setHand(player2, List.of(new Cancel()));
-            harness.addMana(player2, ManaColor.BLUE, 3);
-
-            harness.castCreature(player1, 0);
-
-            // Mark the Bears spell on the stack as a copy
-            StackEntry bearsEntry = gd.stack.stream()
-                    .filter(se -> se.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElseThrow();
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
             bearsEntry.setCopy(true);
+            gd.stack.add(bearsEntry);
 
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, bears.getId());
-            harness.passBothPriorities();
+            Card cancel = createInstantCard("Cancel");
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, bears.getId());
 
-            // Copy should NOT go to the graveyard per rule 707.10a
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.stack)
-                    .noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+            service.resolveCounterSpell(gd, cancelEntry);
+
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears is countered."));
+        }
+
+        @Test
+        @DisplayName("Does nothing when targetPermanentId is null")
+        void doesNothingWhenTargetIdIsNull() {
+            Card cancel = createInstantCard("Cancel");
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, null);
+
+            service.resolveCounterSpell(gd, cancelEntry);
+
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+        }
+
+        @Test
+        @DisplayName("Does not counter a spell protected from counter by spell color")
+        void doesNotCounterProtectedBySpellColor() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
+
+            Card cancel = createInstantCard("Cancel");
+            cancel.setColor(CardColor.BLUE);
+            StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, bears.getId());
+
+            when(gameQueryService.isProtectedFromCounterBySpellColor(eq(gd), eq(player1Id), eq(cancelEntry)))
+                    .thenReturn(true);
+
+            service.resolveCounterSpell(gd, cancelEntry);
+
+            assertThat(gd.stack).contains(bearsEntry);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+    }
+
+    // =========================================================================
+    // resolveCounterSpellAndExile (CounterSpellAndExileEffect)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveCounterSpellAndExile")
+    class ResolveCounterSpellAndExile {
+
+        @Test
+        @DisplayName("Counters a spell and exiles it instead of graveyard")
+        void countersAndExiles() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
+
+            Card dissipate = createInstantCard("Dissipate");
+            StackEntry dissipateEntry = counterAndExileEntry(dissipate, player2Id, bears.getId());
+
+            service.resolveCounterSpellAndExile(gd, dissipateEntry);
+
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+            verify(exileService).exileCard(gd, player1Id, bears);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears is countered and exiled."));
+        }
+
+        @Test
+        @DisplayName("Countered copy ceases to exist and is not exiled")
+        void counteredCopyNotExiled() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            bearsEntry.setCopy(true);
+            gd.stack.add(bearsEntry);
+
+            Card dissipate = createInstantCard("Dissipate");
+            StackEntry dissipateEntry = counterAndExileEntry(dissipate, player2Id, bears.getId());
+
+            service.resolveCounterSpellAndExile(gd, dissipateEntry);
+
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+            verify(exileService, never()).exileCard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Does nothing when target spell is no longer on the stack")
+        void doesNothingWhenTargetGone() {
+            UUID removedCardId = UUID.randomUUID();
+            Card dissipate = createInstantCard("Dissipate");
+            StackEntry dissipateEntry = counterAndExileEntry(dissipate, player2Id, removedCardId);
+
+            service.resolveCounterSpellAndExile(gd, dissipateEntry);
+
+            verify(exileService, never()).exileCard(any(), any(), any());
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+        }
+
+        @Test
+        @DisplayName("Does not counter an uncounterable spell")
+        void doesNotCounterUncounterable() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
+
+            Card dissipate = createInstantCard("Dissipate");
+            StackEntry dissipateEntry = counterAndExileEntry(dissipate, player2Id, bears.getId());
+
+            when(gameQueryService.isUncounterable(gd, bears)).thenReturn(true);
+
+            service.resolveCounterSpellAndExile(gd, dissipateEntry);
+
+            assertThat(gd.stack).contains(bearsEntry);
+            verify(exileService, never()).exileCard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Does nothing when targetPermanentId is null")
+        void doesNothingWhenTargetIdIsNull() {
+            Card dissipate = createInstantCard("Dissipate");
+            StackEntry dissipateEntry = counterAndExileEntry(dissipate, player2Id, null);
+
+            service.resolveCounterSpellAndExile(gd, dissipateEntry);
+
+            verify(exileService, never()).exileCard(any(), any(), any());
+        }
+    }
+
+    // =========================================================================
+    // resolveCounterSpellIfControllerPoisoned (CounterSpellIfControllerPoisonedEffect)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveCounterSpellIfControllerPoisoned")
+    class ResolveCounterSpellIfControllerPoisoned {
+
+        @Test
+        @DisplayName("Counters spell when target controller is poisoned")
+        void countersWhenPoisoned() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
+            gd.playerPoisonCounters.put(player1Id, 3);
+
+            Card corruptedResolve = createInstantCard("Corrupted Resolve");
+            StackEntry counterEntry = counterIfPoisonedEntry(corruptedResolve, player2Id, bears.getId());
+
+            service.resolveCounterSpellIfControllerPoisoned(gd, counterEntry);
+
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, bears);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Grizzly Bears is countered."));
+        }
+
+        @Test
+        @DisplayName("Does not counter spell when target controller is not poisoned")
+        void doesNotCounterWhenNotPoisoned() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
+
+            Card corruptedResolve = createInstantCard("Corrupted Resolve");
+            StackEntry counterEntry = counterIfPoisonedEntry(corruptedResolve, player2Id, bears.getId());
+
+            service.resolveCounterSpellIfControllerPoisoned(gd, counterEntry);
+
+            assertThat(gd.stack).contains(bearsEntry);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Does nothing when target spell is no longer on the stack")
+        void doesNothingWhenTargetGone() {
+            UUID removedCardId = UUID.randomUUID();
+            Card corruptedResolve = createInstantCard("Corrupted Resolve");
+            StackEntry counterEntry = counterIfPoisonedEntry(corruptedResolve, player2Id, removedCardId);
+
+            service.resolveCounterSpellIfControllerPoisoned(gd, counterEntry);
+
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Does not counter uncounterable spell even when poisoned")
+        void doesNotCounterUncounterableWhenPoisoned() {
+            Card bears = createCreatureCard("Grizzly Bears");
+            StackEntry bearsEntry = creatureSpellEntry(bears, player1Id);
+            gd.stack.add(bearsEntry);
+            gd.playerPoisonCounters.put(player1Id, 5);
+
+            Card corruptedResolve = createInstantCard("Corrupted Resolve");
+            StackEntry counterEntry = counterIfPoisonedEntry(corruptedResolve, player2Id, bears.getId());
+
+            when(gameQueryService.isUncounterable(gd, bears)).thenReturn(true);
+
+            service.resolveCounterSpellIfControllerPoisoned(gd, counterEntry);
+
+            assertThat(gd.stack).contains(bearsEntry);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Does nothing when targetPermanentId is null")
+        void doesNothingWhenTargetIdIsNull() {
+            Card corruptedResolve = createInstantCard("Corrupted Resolve");
+            StackEntry counterEntry = counterIfPoisonedEntry(corruptedResolve, player2Id, null);
+
+            service.resolveCounterSpellIfControllerPoisoned(gd, counterEntry);
+
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
     }
 
@@ -196,222 +444,159 @@ class CounterResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Counters spell immediately when opponent cannot pay")
         void countersImmediatelyWhenCannotPay() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
+            Card elves = createCreatureCard("Llanowar Elves");
+            StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
+            gd.stack.add(elvesEntry);
 
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            // Player1 has 0 mana — cannot pay {1}
+            gd.playerManaPools.put(player1Id, new ManaPool());
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, elves.getId(), 1);
 
-            // Elves should be countered — in graveyard, not on battlefield
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-            assertThat(gd.stack).isEmpty();
-        }
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
-        @Test
-        @DisplayName("Logs counter message when spell is countered immediately")
-        void logsCounterMessageWhenCannotPay() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
-
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 1);
-
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
-
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Llanowar Elves") && log.contains("countered"));
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Llanowar Elves"));
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, elves);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Llanowar Elves is countered."));
         }
 
         @Test
         @DisplayName("Presents may ability choice when opponent can pay")
         void presentsMayAbilityChoiceWhenCanPay() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
+            Card elves = createCreatureCard("Llanowar Elves");
+            StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
+            gd.stack.add(elvesEntry);
 
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 2); // 1 to cast, 1 to pay
+            // Player1 has 1 mana — can pay {1}
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 1);
+            gd.playerManaPools.put(player1Id, pool);
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, elves.getId(), 1);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
+
+            // Elves still on stack — not countered yet
+            assertThat(gd.stack).contains(elvesEntry);
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+
+            PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+            assertThat(ability.controllerId()).isEqualTo(player1Id);
+            assertThat(ability.targetCardId()).isEqualTo(elves.getId());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
 
         @Test
-        @DisplayName("Spell resolves when opponent accepts to pay")
-        void spellResolvesWhenOpponentPays() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
+        @DisplayName("PendingMayAbility prompt contains cost and spell name")
+        void mayAbilityPromptContainsCostAndSpellName() {
+            Card elves = createCreatureCard("Llanowar Elves");
+            StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
+            gd.stack.add(elvesEntry);
 
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 2);
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 2);
+            gd.playerManaPools.put(player1Id, pool);
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, elves.getId(), 1);
 
-            // Accept the payment
-            harness.handleMayAbilityChosen(player1, true);
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
-            // Elves should NOT be countered
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Llanowar Elves"));
-
-            // Resolve the remaining spell
-            harness.passBothPriorities();
-
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        }
-
-        @Test
-        @DisplayName("Spell is countered when opponent declines to pay")
-        void spellCounteredWhenOpponentDeclines() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
-
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
-
-            // Decline the payment
-            harness.handleMayAbilityChosen(player1, false);
-
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-        }
-
-        @Test
-        @DisplayName("Opponent's mana pool is reduced after paying")
-        void manaPoolReducedAfterPaying() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
-
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
-
-            int manaBefore = gd.playerManaPools.get(player1.getId()).getTotal();
-            assertThat(manaBefore).isEqualTo(1);
-
-            harness.handleMayAbilityChosen(player1, true);
-
-            int manaAfter = gd.playerManaPools.get(player1.getId()).getTotal();
-            assertThat(manaAfter).isEqualTo(0);
+            PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+            assertThat(ability.description()).contains("{1}");
+            assertThat(ability.description()).contains("Llanowar Elves");
         }
 
         @Test
         @DisplayName("Does nothing when target spell is no longer on the stack")
         void doesNothingWhenTargetNoLongerOnStack() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
+            UUID removedCardId = UUID.randomUUID();
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, removedCardId, 1);
 
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-
-            // Remove target spell before ability resolves
-            gd.stack.removeIf(se -> se.getCard().getName().equals("Llanowar Elves"));
-
-            harness.passBothPriorities();
-
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-            assertThat(gd.stack).isEmpty();
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.pendingMayAbilities).isEmpty();
         }
 
         @Test
-        @DisplayName("Does not counter an uncounterable creature spell (Gaea's Herald on battlefield)")
-        void doesNotCounterUncounterableCreatureSpell() {
-            // Gaea's Herald makes creature spells uncounterable
-            harness.addToBattlefield(player1, new GaeasHerald());
+        @DisplayName("Does not counter an uncounterable spell")
+        void doesNotCounterUncounterableSpell() {
+            Card elves = createCreatureCard("Llanowar Elves");
+            StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
+            gd.stack.add(elvesEntry);
 
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
+            gd.playerManaPools.put(player1Id, new ManaPool());
 
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 1);
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, elves.getId(), 1);
 
-            harness.castCreature(player1, 0);
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isUncounterable(gd, elves)).thenReturn(true);
 
-            // Elves should NOT be countered
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Llanowar Elves"));
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
-            // Resolve the remaining spell
-            harness.passBothPriorities();
-
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
+            assertThat(gd.stack).contains(elvesEntry);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.pendingMayAbilities).isEmpty();
         }
 
         @Test
         @DisplayName("Countered copy does not go to the graveyard")
         void counteredCopyDoesNotGoToGraveyard() {
-            SpiketailHatchling hatchling = new SpiketailHatchling();
-            harness.addToBattlefield(player2, hatchling);
-
-            LlanowarElves elves = new LlanowarElves();
-            harness.setHand(player1, List.of(elves));
-            harness.addMana(player1, ManaColor.GREEN, 1);
-
-            harness.castCreature(player1, 0);
-
-            // Mark the Elves spell on the stack as a copy
-            StackEntry elvesEntry = gd.stack.stream()
-                    .filter(se -> se.getCard().getName().equals("Llanowar Elves"))
-                    .findFirst().orElseThrow();
+            Card elves = createCreatureCard("Llanowar Elves");
+            StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
             elvesEntry.setCopy(true);
+            gd.stack.add(elvesEntry);
 
-            harness.passPriority(player1);
-            harness.activateAbility(player2, 0, null, elves.getId());
-            harness.passBothPriorities();
+            // Cannot pay — immediate counter
+            gd.playerManaPools.put(player1Id, new ManaPool());
 
-            // Copy should NOT go to the graveyard per rule 707.10a
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Llanowar Elves"));
-            assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
-            assertThat(gd.stack)
-                    .noneMatch(se -> se.getCard().getName().equals("Llanowar Elves"));
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, elves.getId(), 1);
+
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
+
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Llanowar Elves"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Does nothing when targetPermanentId is null")
+        void doesNothingWhenTargetIdIsNull() {
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, null, 1);
+
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
+
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.pendingMayAbilities).isEmpty();
+        }
+
+        @Test
+        @DisplayName("PendingMayAbility effects contain CounterUnlessPaysEffect")
+        void mayAbilityEffectsContainCounterUnlessPaysEffect() {
+            Card elves = createCreatureCard("Llanowar Elves");
+            StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
+            gd.stack.add(elvesEntry);
+
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 1);
+            gd.playerManaPools.put(player1Id, pool);
+
+            Card hatchling = createCard("Spiketail Hatchling");
+            StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, elves.getId(), 1);
+
+            service.resolveCounterUnlessPays(gd, counterEntry, new CounterUnlessPaysEffect(1));
+
+            PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+            assertThat(ability.effects())
+                    .hasSize(1)
+                    .first()
+                    .isInstanceOf(CounterUnlessPaysEffect.class);
         }
     }
 }
