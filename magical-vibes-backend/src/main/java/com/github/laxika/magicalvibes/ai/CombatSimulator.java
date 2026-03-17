@@ -208,6 +208,32 @@ public class CombatSimulator {
         List<int[]> assignments = new ArrayList<>(); // [blockerIdx, attackerIdx]
         boolean[] blockerUsed = new boolean[aiBattlefield.size()];
 
+        // Phase 1: Enforce "must be blocked by all creatures" (Lure / Prized Unicorn):
+        // any blocker that can block a lure attacker MUST do so — assign these first.
+        List<CreatureInfo> lureAttackers = attackerInfos.stream()
+                .filter(a -> hasLureEffect(gameData, a.perm))
+                .toList();
+        if (!lureAttackers.isEmpty()) {
+            Set<Integer> lureAttackerIndicesBlocked = new HashSet<>();
+            for (CreatureInfo blocker : blockerInfos) {
+                for (CreatureInfo lureAttacker : lureAttackers) {
+                    if (blockerUsed[blocker.index]) break;
+                    if (!canBlock(gameData, blocker, lureAttacker)) continue;
+                    assignments.add(new int[]{blocker.index, lureAttacker.index});
+                    blockerUsed[blocker.index] = true;
+                    lureAttackerIndicesBlocked.add(lureAttacker.index);
+                }
+            }
+            // Update incoming damage estimate: blocked lure attackers won't deal face damage
+            for (CreatureInfo lureAttacker : lureAttackers) {
+                if (lureAttackerIndicesBlocked.contains(lureAttacker.index)) {
+                    totalIncoming -= lureAttacker.power;
+                }
+            }
+            lethalIncoming = totalIncoming >= aiLife;
+        }
+
+        // Phase 2: Evaluate regular blocks for remaining unused blockers
         for (CreatureInfo attacker : attackerInfos) {
             if (attacker.cantBeBlocked) continue;
 
@@ -263,28 +289,6 @@ public class CombatSimulator {
                 blockerUsed[bestBlocker.index] = true;
                 totalIncoming -= attacker.power;
                 lethalIncoming = totalIncoming >= aiLife;
-            }
-        }
-
-        // Enforce "must be blocked by all creatures" (Lure / Prized Unicorn):
-        // any blocker that can block a lure attacker MUST do so.
-        List<CreatureInfo> lureAttackers = attackerInfos.stream()
-                .filter(a -> hasLureEffect(gameData, a.perm))
-                .toList();
-        if (!lureAttackers.isEmpty()) {
-            for (CreatureInfo blocker : blockerInfos) {
-                if (blockerUsed[blocker.index]) continue;
-                for (CreatureInfo lureAttacker : lureAttackers) {
-                    if (blockerUsed[blocker.index]) break;
-                    if (!canBlock(gameData, blocker, lureAttacker)) continue;
-                    // Check if this blocker is already assigned to this lure attacker
-                    boolean alreadyAssigned = assignments.stream()
-                            .anyMatch(a -> a[0] == blocker.index && a[1] == lureAttacker.index);
-                    if (!alreadyAssigned) {
-                        assignments.add(new int[]{blocker.index, lureAttacker.index});
-                        blockerUsed[blocker.index] = true;
-                    }
-                }
             }
         }
 
