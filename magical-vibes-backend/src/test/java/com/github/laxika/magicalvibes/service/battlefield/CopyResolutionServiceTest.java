@@ -1,35 +1,113 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.cards.a.Asceticism;
-import com.github.laxika.magicalvibes.cards.b.Boomerang;
-import com.github.laxika.magicalvibes.cards.c.ConsumeSpirit;
-import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.PrecursorGolem;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.SwordOfBodyAndMind;
-import com.github.laxika.magicalvibes.cards.t.Twincast;
-import com.github.laxika.magicalvibes.cards.w.WhispersilkCloak;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.ValidTargetService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class CopyResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class CopyResolutionServiceTest {
+
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private ValidTargetService validTargetService;
+    @Mock private GameQueryService gameQueryService;
+
+    @InjectMocks private CopyResolutionService service;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    // ===== Helper methods =====
+
+    private Card createCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        return card;
+    }
+
+    private Card createSpellCard(String name, List<CardEffect> effects) {
+        Card card = createCard(name);
+        card.setType(CardType.INSTANT);
+        return card;
+    }
+
+    private StackEntry spellEntry(Card card, UUID controllerId, StackEntryType type,
+                                  List<CardEffect> effects, int xValue, UUID targetPermanentId) {
+        return new StackEntry(type, card, controllerId, card.getName(), effects, xValue,
+                targetPermanentId, null, null, null, null, null);
+    }
+
+    private StackEntry spellEntry(Card card, UUID controllerId, StackEntryType type,
+                                  List<CardEffect> effects, UUID targetPermanentId) {
+        return spellEntry(card, controllerId, type, effects, 0, targetPermanentId);
+    }
+
+    private StackEntry copySpellTriggerEntry(Card twincastCard, UUID controllerId, UUID targetCardId) {
+        StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, twincastCard, controllerId,
+                twincastCard.getName(), List.of(new CopySpellEffect()), 0,
+                targetCardId, null, null, null, null, null);
+        return entry;
+    }
+
+    private Permanent createCreaturePermanent(String name, List<CardSubtype> subtypes) {
+        Card card = createCard(name);
+        card.setType(CardType.CREATURE);
+        card.setSubtypes(subtypes);
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        return perm;
+    }
 
     // =========================================================================
     // resolveCopySpell — CopySpellEffect
@@ -42,20 +120,17 @@ class CopyResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Copy preserves entry type from target spell")
         void copyPreservesEntryType() {
-            CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-            harness.setHand(player1, List.of(counsel));
-            harness.addMana(player1, ManaColor.BLUE, 3);
+            Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
+            StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, counsel.getId());
+            service.resolveCopySpell(gd, twincastEntry);
 
-            // Resolve Twincast
-            harness.passBothPriorities();
-
+            assertThat(gd.stack).hasSize(2);
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         }
@@ -63,22 +138,17 @@ class CopyResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Copy preserves effects from target spell")
         void copyPreservesEffects() {
-            Shock shock = new Shock();
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            UUID bearsPermId = UUID.randomUUID();
+            StackEntry targetEntry = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), bearsPermId);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player1, List.of(shock));
-            harness.addMana(player1, ManaColor.RED, 1);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, shockCard.getId());
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
-
-            harness.castInstant(player1, 0, bearsPermId);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, shock.getId());
-
-            // Resolve Twincast
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getEffectsToResolve())
@@ -86,72 +156,57 @@ class CopyResolutionServiceTest extends BaseCardTest {
                     .first()
                     .isInstanceOf(DealDamageToAnyTargetEffect.class);
 
-            DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) copyEntry.getEffectsToResolve().getFirst();
-            assertThat(effect.damage()).isEqualTo(2);
+            DealDamageToAnyTargetEffect copiedEffect = (DealDamageToAnyTargetEffect) copyEntry.getEffectsToResolve().getFirst();
+            assertThat(copiedEffect.damage()).isEqualTo(2);
         }
 
         @Test
         @DisplayName("Copy preserves X value from target spell")
         void copyPreservesXValue() {
-            ConsumeSpirit consume = new ConsumeSpirit();
-            harness.setHand(player1, List.of(consume));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+            Card consumeCard = createSpellCard("Consume Spirit", List.of());
+            StackEntry targetEntry = spellEntry(consumeCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), 3, player2Id);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, consumeCard.getId());
 
-            harness.castSorcery(player1, 0, 3, player2.getId());
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, consume.getId());
-
-            // Resolve Twincast
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getXValue()).isEqualTo(3);
-            assertThat(copyEntry.getEffectsToResolve())
-                    .first()
-                    .isInstanceOf(DealXDamageToAnyTargetAndGainXLifeEffect.class);
         }
 
         @Test
         @DisplayName("Copy controller is the Twincast caster, not the original spell owner")
         void copyControllerIsTwincastCaster() {
-            CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-            harness.setHand(player1, List.of(counsel));
-            harness.addMana(player1, ManaColor.BLUE, 3);
+            Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
+            StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, counsel.getId());
-
-            // Resolve Twincast
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry copyEntry = gd.stack.getLast();
-            assertThat(copyEntry.getControllerId()).isEqualTo(player2.getId());
-            assertThat(copyEntry.getControllerId()).isNotEqualTo(player1.getId());
+            assertThat(copyEntry.getControllerId()).isEqualTo(player2Id);
+            assertThat(copyEntry.getControllerId()).isNotEqualTo(player1Id);
         }
 
         @Test
         @DisplayName("Copy card has a new identity — different UUID from original")
         void copyHasNewCardIdentity() {
-            CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-            harness.setHand(player1, List.of(counsel));
-            harness.addMana(player1, ManaColor.BLUE, 3);
+            Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
+            StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, counsel.getId());
-
-            // Resolve Twincast
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry original = gd.stack.getFirst();
             StackEntry copy = gd.stack.getLast();
@@ -163,19 +218,15 @@ class CopyResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Copy is marked as copy=true")
         void copyIsMarkedAsCopy() {
-            CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-            harness.setHand(player1, List.of(counsel));
-            harness.addMana(player1, ManaColor.BLUE, 3);
+            Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
+            StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, counsel.getId());
-
-            // Resolve Twincast
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.isCopy()).isTrue();
@@ -188,22 +239,16 @@ class CopyResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Copy description is 'Copy of <spell name>'")
         void copyDescriptionPrefixed() {
-            Boomerang boomerang = new Boomerang();
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+            Card boomerangCard = createSpellCard("Boomerang", List.of());
+            UUID bearsPermId = UUID.randomUUID();
+            StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player1, List.of(boomerang));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, boomerangCard.getId());
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
-
-            harness.castInstant(player1, 0, bearsPermId);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, boomerang.getId());
-
-            // Resolve Twincast
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
@@ -212,22 +257,16 @@ class CopyResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Copy preserves target from original spell")
         void copyPreservesTarget() {
-            Boomerang boomerang = new Boomerang();
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+            Card boomerangCard = createSpellCard("Boomerang", List.of());
+            UUID bearsPermId = UUID.randomUUID();
+            StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player1, List.of(boomerang));
-            harness.addMana(player1, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, boomerangCard.getId());
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
-
-            harness.castInstant(player1, 0, bearsPermId);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, boomerang.getId());
-
-            // Resolve Twincast
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getTargetPermanentId()).isEqualTo(bearsPermId);
@@ -236,106 +275,83 @@ class CopyResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("No copy created when target spell was removed from stack")
         void noCopyWhenTargetSpellRemoved() {
-            CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-            harness.setHand(player1, List.of(counsel));
-            harness.addMana(player1, ManaColor.BLUE, 3);
+            // Stack is empty — target spell already removed
+            Card twincastCard = createCard("Twincast");
+            UUID removedCardId = UUID.randomUUID();
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, removedCardId);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
-
-            harness.castSorcery(player1, 0, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, counsel.getId());
-
-            // Remove the target spell from stack (simulating counter)
-            gd.stack.removeIf(se -> se.getCard().getName().equals("Counsel of the Soratami"));
-
-            // Resolve Twincast — should fizzle, no copy created
-            harness.passBothPriorities();
+            service.resolveCopySpell(gd, twincastEntry);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
         }
 
         @Test
         @DisplayName("Game log records copy creation message")
         void gameLogRecordsCopyCreation() {
-            CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-            harness.setHand(player1, List.of(counsel));
-            harness.addMana(player1, ManaColor.BLUE, 3);
+            Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
+            StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, counsel.getId());
+            service.resolveCopySpell(gd, twincastEntry);
 
-            harness.passBothPriorities();
-
-            assertThat(gd.gameLog).anyMatch(log ->
-                    log.contains("copy") && log.contains("Counsel of the Soratami"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("A copy of Counsel of the Soratami is created."));
         }
 
         @Test
-        @DisplayName("Copy of X spell resolves with correct X value — deals correct damage")
-        void copyOfXSpellResolvesWithCorrectXValue() {
-            harness.setLife(player1, 20);
-            harness.setLife(player2, 20);
+        @DisplayName("Does nothing when targetPermanentId is null")
+        void doesNothingWhenTargetIdIsNull() {
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = new StackEntry(StackEntryType.INSTANT_SPELL, twincastCard, player2Id,
+                    twincastCard.getName(), List.of(new CopySpellEffect()), 0,
+                    (UUID) null, null, null, null, null, null);
 
-            ConsumeSpirit consume = new ConsumeSpirit();
-            harness.setHand(player1, List.of(consume));
-            harness.addMana(player1, ManaColor.BLACK, 5);
+            service.resolveCopySpell(gd, twincastEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
-
-            // Cast Consume Spirit with X=3 targeting player2
-            harness.castSorcery(player1, 0, 3, player2.getId());
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, consume.getId());
-
-            // Resolve Twincast → copy created
-            harness.passBothPriorities();
-            // Decline retarget for copy
-            harness.handleMayAbilityChosen(player2, false);
-            // Resolve copy (controller=player2, target=player2) → 3 dmg to player2, player2 gains 3
-            harness.passBothPriorities();
-            // Resolve original (controller=player1, target=player2) → 3 dmg to player2, player1 gains 3
-            harness.passBothPriorities();
-
-            // Player2 took 3 from copy (net 0 since they also gain 3) + 3 from original = 17
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-            // Player1 gained 3 life from original Consume Spirit
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+            assertThat(gd.stack).isEmpty();
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
         }
 
         @Test
-        @DisplayName("Copy of spell ceases to exist — does not go to any graveyard")
-        void copyCeasesToExist() {
-            CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-            harness.setHand(player1, List.of(counsel));
-            harness.addMana(player1, ManaColor.BLUE, 3);
+        @DisplayName("Queues a retarget PendingMayAbility when the copy has a target")
+        void queuesRetargetMayAbilityWhenCopyHasTarget() {
+            Card boomerangCard = createSpellCard("Boomerang", List.of());
+            UUID bearsPermId = UUID.randomUUID();
+            StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+            gd.stack.add(targetEntry);
 
-            harness.setHand(player2, List.of(new Twincast()));
-            harness.addMana(player2, ManaColor.BLUE, 2);
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, boomerangCard.getId());
 
-            harness.castSorcery(player1, 0, 0);
-            harness.passPriority(player1);
-            harness.castInstant(player2, 0, counsel.getId());
+            service.resolveCopySpell(gd, twincastEntry);
 
-            // Resolve Twincast
-            harness.passBothPriorities();
-            // Resolve copy
-            harness.passBothPriorities();
-            // Resolve original
-            harness.passBothPriorities();
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+            PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+            assertThat(ability.controllerId()).isEqualTo(player2Id);
+            assertThat(ability.description()).contains("Choose new targets");
+            assertThat(ability.description()).contains("Boomerang");
+        }
 
-            // Copy of Counsel should not appear in any graveyard
-            assertThat(gd.playerGraveyards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("Counsel of the Soratami") && c != counsel);
-            assertThat(gd.playerGraveyards.get(player2.getId()))
-                    .noneMatch(c -> c.getName().equals("Counsel of the Soratami"));
+        @Test
+        @DisplayName("No retarget PendingMayAbility when copy has no target")
+        void noRetargetMayAbilityWhenCopyHasNoTarget() {
+            Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
+            StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+            gd.stack.add(targetEntry);
+
+            Card twincastCard = createCard("Twincast");
+            StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
+
+            service.resolveCopySpell(gd, twincastEntry);
+
+            assertThat(gd.pendingMayAbilities).isEmpty();
         }
     }
 
@@ -350,304 +366,509 @@ class CopyResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Creates copies for each other Golem — 2 copies for 3 Golems")
         void createsCopiesForEachOtherGolem() {
-            castAndResolveGolemWithTokens();
+            // Set up 3 Golem permanents on player1's battlefield
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem3 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, golem2, golem3));
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            UUID golemTokenId = getAnyGolemTokenId(player1);
+            UUID originalTargetId = golem1.getId();
 
-            harness.castInstant(player1, 0, golemTokenId);
-            // Resolve triggered ability → creates 2 copies
-            harness.passBothPriorities();
+            // Create spell snapshot (Shock targeting golem1)
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            // Stack: original Shock (bottom) + 2 copies
-            assertThat(gd.stack).hasSize(3);
-            long copyCount = gd.stack.stream().filter(StackEntry::isCopy).count();
-            assertThat(copyCount).isEqualTo(2);
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                    .thenReturn(true);
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            // 2 copies added to the stack (one for each non-targeted Golem)
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack).allMatch(StackEntry::isCopy);
         }
 
         @Test
         @DisplayName("Each copy targets a different Golem")
         void eachCopyTargetsDifferentGolem() {
-            castAndResolveGolemWithTokens();
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem3 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, golem2, golem3));
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            UUID golemTokenId = getAnyGolemTokenId(player1);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            harness.castInstant(player1, 0, golemTokenId);
-            // Resolve triggered ability
-            harness.passBothPriorities();
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            List<UUID> allTargets = gd.stack.stream()
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                    .thenReturn(true);
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            List<UUID> copyTargets = gd.stack.stream()
                     .map(StackEntry::getTargetPermanentId)
                     .toList();
 
-            assertThat(allTargets).hasSize(3);
-            assertThat(allTargets).doesNotHaveDuplicates();
+            assertThat(copyTargets).hasSize(2);
+            assertThat(copyTargets).doesNotHaveDuplicates();
+            assertThat(copyTargets).containsExactlyInAnyOrder(golem2.getId(), golem3.getId());
         }
 
         @Test
         @DisplayName("Copies are marked as copy=true")
         void copiesAreMarkedAsCopy() {
-            castAndResolveGolemWithTokens();
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, golem2));
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            UUID golemTokenId = getAnyGolemTokenId(player1);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            harness.castInstant(player1, 0, golemTokenId);
-            harness.passBothPriorities();
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            // The original Shock is NOT a copy
-            StackEntry originalShock = gd.stack.stream()
-                    .filter(se -> !se.isCopy())
-                    .findFirst().orElseThrow();
-            assertThat(originalShock.getCard().getName()).isEqualTo("Shock");
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
 
-            // All other entries are copies
-            gd.stack.stream()
-                    .filter(StackEntry::isCopy)
-                    .forEach(se -> {
-                        assertThat(se.getCard().getName()).isEqualTo("Shock");
-                        assertThat(se.isCopy()).isTrue();
-                    });
+            when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                    .thenReturn(true);
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().isCopy()).isTrue();
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
         }
 
         @Test
         @DisplayName("Copies preserve effects from the original spell")
         void copiesPreserveEffects() {
-            castAndResolveGolemWithTokens();
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, golem2));
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            UUID golemTokenId = getAnyGolemTokenId(player1);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            harness.castInstant(player1, 0, golemTokenId);
-            harness.passBothPriorities();
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            gd.stack.stream()
-                    .filter(StackEntry::isCopy)
-                    .forEach(se -> {
-                        assertThat(se.getEffectsToResolve()).hasSize(1);
-                        assertThat(se.getEffectsToResolve().getFirst())
-                                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-                    });
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                    .thenReturn(true);
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            gd.stack.forEach(se -> {
+                assertThat(se.getEffectsToResolve()).hasSize(1);
+                assertThat(se.getEffectsToResolve().getFirst())
+                        .isInstanceOf(DealDamageToAnyTargetEffect.class);
+            });
         }
 
         @Test
         @DisplayName("Game log records a copy creation for each eligible Golem")
         void gameLogRecordsCopiesCreated() {
-            castAndResolveGolemWithTokens();
-            harness.clearMessages();
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem3 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, golem2, golem3));
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            UUID golemTokenId = getAnyGolemTokenId(player1);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            harness.castInstant(player1, 0, golemTokenId);
-            harness.passBothPriorities();
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            long copyLogCount = gd.gameLog.stream()
-                    .filter(log -> log.contains("copy") && log.contains("Shock"))
-                    .count();
-            assertThat(copyLogCount).isGreaterThanOrEqualTo(2);
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                    .thenReturn(true);
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd),
+                    eq("A copy of Shock is created targeting Golem."));
         }
 
         @Test
-        @DisplayName("Shrouded Golem is skipped — no copy targets it")
-        void shroudedGolemIsSkipped() {
-            castAndResolveGolemWithTokens();
+        @DisplayName("Untargetable Golem is skipped — no copy targets it")
+        void untargetableGolemIsSkipped() {
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            Permanent shroudedGolem = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, golem2, shroudedGolem));
 
-            // Equip WhispersilkCloak on one Golem token to grant shroud
-            UUID shroudedGolemId = getAnyGolemTokenId(player1);
-            Permanent cloak = new Permanent(new WhispersilkCloak());
-            cloak.setSummoningSick(false);
-            gd.playerBattlefields.get(player1.getId()).add(cloak);
-            cloak.setAttachedTo(shroudedGolemId);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            // Target a different Golem with Shock
-            UUID targetGolemId = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.GOLEM))
-                    .filter(p -> !p.getId().equals(shroudedGolemId))
-                    .findFirst().orElseThrow().getId();
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
 
-            harness.castInstant(player1, 0, targetGolemId);
-            harness.passBothPriorities(); // resolve triggered ability
+            // golem2 is targetable, shroudedGolem is NOT
+            when(validTargetService.canPermanentBeTargetedBySpell(gd, golem2, shockCard, player1Id))
+                    .thenReturn(true);
+            when(validTargetService.canPermanentBeTargetedBySpell(gd, shroudedGolem, shockCard, player1Id))
+                    .thenReturn(false);
 
-            // Only 1 copy should be created (for the non-shrouded, non-targeted Golem)
-            long copyCount = gd.stack.stream().filter(StackEntry::isCopy).count();
-            assertThat(copyCount).isEqualTo(1);
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
 
-            // The shrouded Golem should NOT be targeted by any stack entry
-            assertThat(gd.stack).noneMatch(se -> se.getTargetPermanentId().equals(shroudedGolemId));
-        }
-
-        @Test
-        @DisplayName("Golem with protection from spell color is skipped")
-        void protectionFromSpellColorSkipsGolem() {
-            castAndResolveGolemWithTokens();
-
-            // Equip Sword of Body and Mind on one Golem token (grants protection from green and blue)
-            UUID protectedGolemId = getAnyGolemTokenId(player1);
-            Permanent sword = new Permanent(new SwordOfBodyAndMind());
-            sword.setSummoningSick(false);
-            gd.playerBattlefields.get(player1.getId()).add(sword);
-            sword.setAttachedTo(protectedGolemId);
-
-            // Target a different Golem with Boomerang (blue spell)
-            UUID targetGolemId = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.GOLEM))
-                    .filter(p -> !p.getId().equals(protectedGolemId))
-                    .findFirst().orElseThrow().getId();
-
-            Boomerang boomerang = new Boomerang();
-            harness.setHand(player1, List.of(boomerang));
-            harness.addMana(player1, ManaColor.BLUE, 2);
-
-            harness.castInstant(player1, 0, targetGolemId);
-            harness.passBothPriorities(); // resolve triggered ability
-
-            // Only 1 copy should be created (the protected Golem is skipped)
-            long copyCount = gd.stack.stream().filter(StackEntry::isCopy).count();
-            assertThat(copyCount).isEqualTo(1);
-
-            // The protected Golem should NOT be targeted
-            assertThat(gd.stack).noneMatch(se -> se.getTargetPermanentId().equals(protectedGolemId));
-        }
-
-        @Test
-        @DisplayName("Opponent's Golem with CantBeTargetOfSpellsOrAbilities is skipped")
-        void opponentGolemWithCantBeTargetedIsSkipped() {
-            // Player1 has PrecursorGolem + 2 tokens = 3 Golems
-            castAndResolveGolemWithTokens();
-
-            // Player2 also has a Golem creature manually added
-            Permanent opponentGolem = addGolemPermanent(player2);
-
-            // Player2 has Asceticism — grants CantBeTargetOfSpellsOrAbilities to player2's creatures
-            harness.addToBattlefield(player2, new Asceticism());
-
-            UUID targetGolemId = getAnyGolemTokenId(player1);
-
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-
-            harness.castInstant(player1, 0, targetGolemId);
-            harness.passBothPriorities(); // resolve triggered ability
-
-            // Copies should only target player1's Golems, NOT player2's protected Golem
-            assertThat(gd.stack).noneMatch(se ->
-                    se.getTargetPermanentId() != null && se.getTargetPermanentId().equals(opponentGolem.getId()));
-
-            // 2 copies created for player1's other 2 Golems
-            long copyCount = gd.stack.stream().filter(StackEntry::isCopy).count();
-            assertThat(copyCount).isEqualTo(2);
-        }
-
-        @Test
-        @DisplayName("No trigger when spell targets a non-Golem creature")
-        void noTriggerWhenTargetingNonGolem() {
-            castAndResolveGolemWithTokens();
-
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-
-            harness.castInstant(player1, 0, bearsId);
-
-            // Only the original Shock on the stack — no trigger
+            // Only 1 copy created (for golem2)
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
+            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(golem2.getId());
         }
 
         @Test
-        @DisplayName("No trigger when spell targets a player")
-        void noTriggerWhenTargetingPlayer() {
-            castAndResolveGolemWithTokens();
+        @DisplayName("Non-Golem permanent is not considered for copies")
+        void nonGolemPermanentIgnored() {
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent bear = createCreaturePermanent("Grizzly Bears", List.of(CardSubtype.BEAR));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, bear));
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            harness.castInstant(player1, 0, player2.getId());
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            // No copies since the only other permanent is a Bear, not a Golem
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Does nothing when spell snapshot is null")
+        void doesNothingWhenSpellSnapshotIsNull() {
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, null, player1Id, UUID.randomUUID());
+
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            assertThat(gd.stack).isEmpty();
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
         }
 
         @Test
         @DisplayName("Copies controller matches the casting player of the original spell")
         void copiesControllerMatchesCastingPlayer() {
-            castAndResolveGolemWithTokens();
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).addAll(List.of(golem1, golem2));
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            UUID golemTokenId = getAnyGolemTokenId(player1);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            harness.castInstant(player1, 0, golemTokenId);
-            harness.passBothPriorities();
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            gd.stack.stream()
-                    .filter(StackEntry::isCopy)
-                    .forEach(se -> assertThat(se.getControllerId()).isEqualTo(player1.getId()));
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                    .thenReturn(true);
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            gd.stack.forEach(se ->
+                    assertThat(se.getControllerId()).isEqualTo(player1Id));
         }
 
         @Test
-        @DisplayName("All copies and original resolve — all 3/3 Golems survive 2 damage")
-        void allCopiesResolveAndGolemsSurvive() {
-            castAndResolveGolemWithTokens();
+        @DisplayName("Opponent's Golems are also considered for copies")
+        void opponentGolemsAlsoConsidered() {
+            Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
+            Permanent opponentGolem = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
+            gd.playerBattlefields.get(player1Id).add(golem1);
+            gd.playerBattlefields.get(player2Id).add(opponentGolem);
 
-            harness.setHand(player1, List.of(new Shock()));
-            harness.addMana(player1, ManaColor.RED, 1);
-            UUID golemTokenId = getAnyGolemTokenId(player1);
+            UUID originalTargetId = golem1.getId();
+            DealDamageToAnyTargetEffect damageEffect = new DealDamageToAnyTargetEffect(2);
+            Card shockCard = createSpellCard("Shock", List.of(damageEffect));
+            StackEntry spellSnapshot = spellEntry(shockCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(damageEffect), originalTargetId);
 
-            harness.castInstant(player1, 0, golemTokenId);
-            harness.passBothPriorities(); // resolve triggered ability
-            harness.passBothPriorities(); // resolve first copy
-            harness.passBothPriorities(); // resolve second copy
-            harness.passBothPriorities(); // resolve original Shock
+            CopySpellForEachOtherSubtypePermanentEffect effect =
+                    new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
 
-            assertThat(gd.stack).isEmpty();
-            // All 3 Golems survive (2 damage < 3 toughness)
-            long golemCount = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.GOLEM))
-                    .count();
-            assertThat(golemCount).isEqualTo(3);
+            Card triggerCard = createCard("Precursor Golem");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Precursor Golem trigger", List.of(effect));
+
+            when(validTargetService.canPermanentBeTargetedBySpell(gd, opponentGolem, shockCard, player1Id))
+                    .thenReturn(true);
+
+            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(opponentGolem.getId());
         }
     }
 
     // =========================================================================
-    // Helpers
+    // resolveCopyForEachOtherPlayer — CopySpellForEachOtherPlayerEffect
     // =========================================================================
 
-    private void castAndResolveGolemWithTokens() {
-        harness.setHand(player1, List.of(new PrecursorGolem()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+    @Nested
+    @DisplayName("resolveCopyForEachOtherPlayer")
+    class ResolveCopyForEachOtherPlayer {
+
+        @Test
+        @DisplayName("Creates a copy for each other player")
+        void createsCopyForEachOtherPlayer() {
+            Card spellCard = createSpellCard("Syphon Mind", List.of());
+            StackEntry spellSnapshot = spellEntry(spellCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+
+            CopySpellForEachOtherPlayerEffect effect =
+                    new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+
+            Card triggerCard = createCard("Radiate");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Radiate trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+
+            // One copy for player2 (the only other player)
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().isCopy()).isTrue();
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Copy preserves target from the spell snapshot")
+        void copyPreservesTarget() {
+            Card spellCard = createSpellCard("Lightning Bolt", List.of());
+            UUID targetPermId = UUID.randomUUID();
+            StackEntry spellSnapshot = spellEntry(spellCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(new DealDamageToAnyTargetEffect(3)), targetPermId);
+
+            CopySpellForEachOtherPlayerEffect effect =
+                    new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+
+            Card triggerCard = createCard("Radiate");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Radiate trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+
+            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(targetPermId);
+        }
+
+        @Test
+        @DisplayName("Does nothing when spell snapshot is null")
+        void doesNothingWhenSpellSnapshotIsNull() {
+            CopySpellForEachOtherPlayerEffect effect =
+                    new CopySpellForEachOtherPlayerEffect(null, player1Id);
+
+            Card triggerCard = createCard("Radiate");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Radiate trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+
+            assertThat(gd.stack).isEmpty();
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+        }
+
+        @Test
+        @DisplayName("Game log records copy creation for each other player")
+        void gameLogRecordsCopyForEachPlayer() {
+            Card spellCard = createSpellCard("Syphon Mind", List.of());
+            StackEntry spellSnapshot = spellEntry(spellCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+
+            CopySpellForEachOtherPlayerEffect effect =
+                    new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+
+            Card triggerCard = createCard("Radiate");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Radiate trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("A copy of Syphon Mind is created for Player2."));
+        }
+
+        @Test
+        @DisplayName("Queues retarget PendingMayAbility when copy has a target")
+        void queuesRetargetMayAbilityWhenCopyHasTarget() {
+            Card spellCard = createSpellCard("Lightning Bolt", List.of());
+            UUID targetPermId = UUID.randomUUID();
+            StackEntry spellSnapshot = spellEntry(spellCard, player1Id, StackEntryType.INSTANT_SPELL,
+                    List.of(new DealDamageToAnyTargetEffect(3)), targetPermId);
+
+            CopySpellForEachOtherPlayerEffect effect =
+                    new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+
+            Card triggerCard = createCard("Radiate");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Radiate trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+            PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+            assertThat(ability.controllerId()).isEqualTo(player2Id);
+            assertThat(ability.description()).contains("Choose new targets");
+        }
+
+        @Test
+        @DisplayName("No retarget PendingMayAbility when copy has no target")
+        void noRetargetMayAbilityWhenNoTarget() {
+            Card spellCard = createSpellCard("Syphon Mind", List.of());
+            StackEntry spellSnapshot = spellEntry(spellCard, player1Id, StackEntryType.SORCERY_SPELL,
+                    List.of(), null);
+
+            CopySpellForEachOtherPlayerEffect effect =
+                    new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+
+            Card triggerCard = createCard("Radiate");
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                    "Radiate trigger", List.of(effect));
+
+            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+
+            assertThat(gd.pendingMayAbilities).isEmpty();
+        }
     }
 
-    private UUID getAnyGolemTokenId(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Golem"))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No Golem token found"))
-                .getId();
-    }
+    // =========================================================================
+    // resolveBecomeCopyOfTargetCreature — BecomeCopyOfTargetCreatureEffect
+    // =========================================================================
 
-    private Permanent addGolemPermanent(Player player) {
-        GrizzlyBears golemCard = new GrizzlyBears();
-        golemCard.setName("Golem");
-        golemCard.setSubtypes(List.of(CardSubtype.GOLEM));
-        Permanent perm = new Permanent(golemCard);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Nested
+    @DisplayName("resolveBecomeCopyOfTargetCreature")
+    class ResolveBecomeCopyOfTargetCreature {
+
+        @Test
+        @DisplayName("Queues a PendingMayAbility for the become-copy choice")
+        void queuesMayAbilityForBecomeCopyChoice() {
+            Card cloneCard = createCard("Clone");
+            Permanent targetCreature = createCreaturePermanent("Serra Angel", List.of(CardSubtype.ANGEL));
+            gd.playerBattlefields.get(player2Id).add(targetCreature);
+
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, cloneCard, player1Id,
+                    cloneCard.getName(), List.of(new BecomeCopyOfTargetCreatureEffect()), 0,
+                    targetCreature.getId(), null, null, null, null, null);
+
+            when(gameQueryService.findPermanentById(gd, targetCreature.getId())).thenReturn(targetCreature);
+
+            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+            PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+            assertThat(ability.controllerId()).isEqualTo(player1Id);
+            assertThat(ability.description()).contains("Clone");
+            assertThat(ability.description()).contains("Serra Angel");
+            assertThat(ability.targetCardId()).isEqualTo(targetCreature.getId());
+        }
+
+        @Test
+        @DisplayName("Does nothing when targetPermanentId is null")
+        void doesNothingWhenTargetIdIsNull() {
+            Card cloneCard = createCard("Clone");
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, cloneCard, player1Id,
+                    cloneCard.getName(), List.of(new BecomeCopyOfTargetCreatureEffect()), 0,
+                    (UUID) null, null, null, null, null, null);
+
+            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+
+            assertThat(gd.pendingMayAbilities).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Does nothing when target creature is no longer on the battlefield")
+        void doesNothingWhenTargetCreatureGone() {
+            Card cloneCard = createCard("Clone");
+            UUID removedCreatureId = UUID.randomUUID();
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, cloneCard, player1Id,
+                    cloneCard.getName(), List.of(new BecomeCopyOfTargetCreatureEffect()), 0,
+                    removedCreatureId, null, null, null, null, null);
+
+            when(gameQueryService.findPermanentById(gd, removedCreatureId)).thenReturn(null);
+
+            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+
+            assertThat(gd.pendingMayAbilities).isEmpty();
+        }
+
+        @Test
+        @DisplayName("PendingMayAbility effects contain BecomeCopyOfTargetCreatureEffect")
+        void mayAbilityEffectsContainBecomeCopyEffect() {
+            Card cloneCard = createCard("Clone");
+            Permanent targetCreature = createCreaturePermanent("Grizzly Bears", List.of(CardSubtype.BEAR));
+            gd.playerBattlefields.get(player2Id).add(targetCreature);
+
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, cloneCard, player1Id,
+                    cloneCard.getName(), List.of(new BecomeCopyOfTargetCreatureEffect()), 0,
+                    targetCreature.getId(), null, null, null, null, null);
+
+            when(gameQueryService.findPermanentById(gd, targetCreature.getId())).thenReturn(targetCreature);
+
+            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+
+            PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
+            assertThat(ability.effects())
+                    .hasSize(1)
+                    .first()
+                    .isInstanceOf(BecomeCopyOfTargetCreatureEffect.class);
+        }
     }
 }
