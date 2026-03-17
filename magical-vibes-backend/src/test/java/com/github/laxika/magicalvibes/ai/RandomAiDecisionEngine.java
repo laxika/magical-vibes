@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -93,6 +95,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         }
 
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
 
         // Collect all castable spell indices
         List<Integer> castableIndices = new ArrayList<>();
@@ -110,6 +113,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Skip spells that target spells on the stack (e.g. Twincast) — AI can't pick spell targets
             if (card.isNeedsSpellTarget()) {
+                continue;
+            }
+
+            // Skip spells that require exiling a card from the graveyard if no valid card exists
+            ExileCardFromGraveyardCost exileCost = findExileGraveyardCost(card);
+            if (exileCost != null && findValidGraveyardIndex(graveyard, exileCost) == null) {
                 continue;
             }
 
@@ -141,6 +150,16 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
+            // Determine exile graveyard card index if needed
+            Integer exileGraveyardCardIndex = null;
+            ExileCardFromGraveyardCost exileCost = findExileGraveyardCost(card);
+            if (exileCost != null) {
+                exileGraveyardCardIndex = findValidGraveyardIndex(graveyard, exileCost);
+                if (exileGraveyardCardIndex == null) {
+                    continue; // No valid graveyard card, try next spell
+                }
+            }
+
             // Calculate X value and tap lands
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = null;
@@ -161,8 +180,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             int handSizeBefore = hand.size();
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;
+            final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
             send(() -> messageHandler.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, finalExileGraveyardCardIndex)));
 
             if (hand.size() >= handSizeBefore) {
                 log.warn("Random AI: PlayCard failed silently in game {}", gameId);
@@ -171,6 +191,36 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Finds an ExileCardFromGraveyardCost in the card's SPELL effects, if any.
+     */
+    private ExileCardFromGraveyardCost findExileGraveyardCost(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ExileCardFromGraveyardCost cost) {
+                return cost;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds a random valid graveyard card index matching the exile cost's required type.
+     * Returns null if no valid card exists.
+     */
+    private Integer findValidGraveyardIndex(List<Card> graveyard, ExileCardFromGraveyardCost cost) {
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            Card graveyardCard = graveyard.get(i);
+            if (cost.requiredType() == null || graveyardCard.hasType(cost.requiredType())) {
+                validIndices.add(i);
+            }
+        }
+        if (validIndices.isEmpty()) {
+            return null;
+        }
+        return validIndices.get(rng.nextInt(validIndices.size()));
     }
 
     // ===== Random Target Selection =====
