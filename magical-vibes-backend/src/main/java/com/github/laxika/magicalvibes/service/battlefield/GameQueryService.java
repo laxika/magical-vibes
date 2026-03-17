@@ -1293,13 +1293,6 @@ public class GameQueryService {
                         && !isEquipped(gameData, creature));
     }
 
-    private static final Map<Keyword, CardSubtype> LANDWALK_MAP = Map.of(
-            Keyword.FORESTWALK, CardSubtype.FOREST,
-            Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
-            Keyword.ISLANDWALK, CardSubtype.ISLAND,
-            Keyword.SWAMPWALK, CardSubtype.SWAMP
-    );
-
     /**
      * Returns {@code true} if the given blocker can legally block the given attacker,
      * considering all evasion abilities, blocking restrictions, landwalk, and protection.
@@ -1362,7 +1355,7 @@ public class GameQueryService {
             }
         }
         if (defenderBattlefield != null) {
-            for (var entry : LANDWALK_MAP.entrySet()) {
+            for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
                 if (hasKeyword(gameData, attacker, entry.getKey())
                         && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
                     return Optional.of(attacker.getCard().getName() + " can't be blocked (" + entry.getValue().getDisplayName().toLowerCase() + "walk)");

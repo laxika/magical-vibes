@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.Map;
+
 public enum Keyword {
 
     FLYING,
@@ -31,5 +33,15 @@ public enum Keyword {
     DEATHTOUCH,
     SCRY,
     FLASHBACK,
-    TRANSFORM
+    TRANSFORM;
+
+    /**
+     * Maps each landwalk keyword to the land subtype it walks over.
+     */
+    public static final Map<Keyword, CardSubtype> LANDWALK_MAP = Map.of(
+            FORESTWALK, CardSubtype.FOREST,
+            MOUNTAINWALK, CardSubtype.MOUNTAIN,
+            ISLANDWALK, CardSubtype.ISLAND,
+            SWAMPWALK, CardSubtype.SWAMP
+    );
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,13 +25,6 @@ import java.util.UUID;
 public class CombatSimulator {
 
     private static final int MAX_ATTACKER_SUBSET_BITS = 12;
-
-    private static final Map<Keyword, CardSubtype> LANDWALK_MAP = Map.of(
-            Keyword.FORESTWALK, CardSubtype.FOREST,
-            Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
-            Keyword.ISLANDWALK, CardSubtype.ISLAND,
-            Keyword.SWAMPWALK, CardSubtype.SWAMP
-    );
 
     private final GameQueryService gameQueryService;
     private final BoardEvaluator boardEvaluator;
@@ -640,7 +632,7 @@ public class CombatSimulator {
     private boolean hasLandwalkAgainstDefender(GameData gameData, Permanent attacker,
                                                 List<Permanent> defenderBattlefield) {
         if (defenderBattlefield == null) return false;
-        for (var entry : LANDWALK_MAP.entrySet()) {
+        for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
             if (gameQueryService.hasKeyword(gameData, attacker, entry.getKey())
                     && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
                 return true;
