@@ -75,6 +75,9 @@
 @if (!preview && permanent && permanent.phylacteryCounters > 0) {
   <div class="card-charge-badge">Phylactery x{{ permanent.phylacteryCounters }}</div>
 }
+@if (!preview && permanent && permanent.slimeCounters > 0) {
+  <div class="card-charge-badge">Slime x{{ permanent.slimeCounters }}</div>
+}
 @if (!preview && permanent && permanent.wishCounters > 0) {
   <div class="card-charge-badge">Wish x{{ permanent.wishCounters }}</div>
 }

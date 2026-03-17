@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanent
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSlimeCounterAndCreateOozeTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -84,6 +86,42 @@ public class PermanentControlResolutionService {
     @HandlesEffect(CreateCreatureTokenEffect.class)
     private void resolveCreateCreatureToken(GameData gameData, StackEntry entry, CreateCreatureTokenEffect effect) {
         applyCreateCreatureToken(gameData, entry.getControllerId(), effect, entry.getCard().getSetCode());
+    }
+
+    @HandlesEffect(PutSlimeCounterAndCreateOozeTokenEffect.class)
+    private void resolvePutSlimeCounterAndCreateOozeToken(GameData gameData, StackEntry entry) {
+        UUID sourcePermId = entry.getSourcePermanentId();
+        if (sourcePermId == null) {
+            log.warn("Game {} - PutSlimeCounterAndCreateOozeTokenEffect has no sourcePermanentId", gameData.id);
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
+        if (source == null) {
+            log.info("Game {} - Gutter Grime no longer on battlefield, effect fizzles", gameData.id);
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, source)) {
+            return;
+        }
+
+        // Put a slime counter on the source
+        source.setSlimeCounters(source.getSlimeCounters() + 1);
+        int slimeCount = source.getSlimeCounters();
+
+        String counterLog = source.getCard().getName() + " gets a slime counter (" + slimeCount + " total).";
+        gameBroadcastService.logAndBroadcast(gameData, counterLog);
+        log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
+
+        // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                1, "Ooze", 0, 0,
+                CardColor.GREEN, List.of(CardSubtype.OOZE),
+                Set.of(), Set.of(),
+                Map.of(EffectSlot.STATIC, new BoostSelfBySlimeCountersOnLinkedPermanentEffect(sourcePermId))
+        );
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateXCreatureTokenEffect.class)

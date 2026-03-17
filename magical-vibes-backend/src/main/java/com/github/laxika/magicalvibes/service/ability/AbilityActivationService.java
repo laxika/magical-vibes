@@ -574,6 +574,7 @@ public class AbilityActivationService {
             int available = switch (ct) {
                 case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
                 case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
+                case SLIME -> permanent.getSlimeCounters();
                 case WISH -> permanent.getWishCounters();
                 case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
             };
@@ -654,6 +655,9 @@ public class AbilityActivationService {
                 case PLUS_ONE_PLUS_ONE -> {
                     removedPlus = count;
                     permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - count);
+                }
+                case SLIME -> {
+                    permanent.setSlimeCounters(permanent.getSlimeCounters() - count);
                 }
                 case WISH -> {
                     permanent.setWishCounters(permanent.getWishCounters() - count);

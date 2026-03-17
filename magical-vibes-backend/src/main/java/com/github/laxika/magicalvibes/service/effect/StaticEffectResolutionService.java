@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGra
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
@@ -661,6 +662,15 @@ public class StaticEffectResolutionService {
         }
         accumulator.addPower(totalPoison * boost.powerPerCounter());
         accumulator.addToughness(totalPoison * boost.toughnessPerCounter());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfBySlimeCountersOnLinkedPermanentEffect.class, selfOnly = true)
+    private void resolveBoostSelfBySlimeCountersOnLinkedPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfBySlimeCountersOnLinkedPermanentEffect) effect;
+        Permanent linked = gameQueryService.findPermanentById(context.gameData(), boost.linkedPermanentId());
+        int slimeCount = (linked != null) ? linked.getSlimeCounters() : 0;
+        accumulator.addPower(slimeCount);
+        accumulator.addToughness(slimeCount);
     }
 
     @HandlesStaticEffect(value = BoostSelfPerControlledSubtypeEffect.class, selfOnly = true)

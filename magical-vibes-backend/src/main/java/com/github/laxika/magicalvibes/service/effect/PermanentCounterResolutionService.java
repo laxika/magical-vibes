@@ -307,6 +307,13 @@ public class PermanentCounterResolutionService {
             remaining -= remove;
         }
 
+        if (remaining > 0 && target.getSlimeCounters() > 0) {
+            int remove = Math.min(remaining, target.getSlimeCounters());
+            target.setSlimeCounters(target.getSlimeCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
         if (remaining > 0 && target.getMinusOneMinusOneCounters() > 0) {
             int remove = Math.min(remaining, target.getMinusOneMinusOneCounters());
             target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() - remove);
@@ -417,7 +424,8 @@ public class PermanentCounterResolutionService {
         gameData.forEachPermanent((playerId, p) -> {
             if (p.getPlusOnePlusOneCounters() > 0
                     || p.getMinusOneMinusOneCounters() > 0
-                    || p.getLoyaltyCounters() > 0) {
+                    || p.getLoyaltyCounters() > 0
+                    || p.getSlimeCounters() > 0) {
                 eligiblePermanentIds.add(p.getId());
             }
         });

@@ -206,6 +206,7 @@ export interface Permanent {
   loyaltyCounters: number;
   chargeCounters: number;
   phylacteryCounters: number;
+  slimeCounters: number;
   wishCounters: number;
   attackTargetId: string | null;
   markedDamage: number;

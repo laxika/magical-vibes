@@ -22,7 +22,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 
 Effects that implicitly target their source permanent (boost-self, animate-self, regenerate-self, etc.) override `isSelfTargeting()` to return `true`. This is used by `ActivatedAbilityExecutionService` to auto-assign the source as the target when no explicit target is provided.
 
-Effects returning `true`: `BoostSelfEffect`, `UntapSelfEffect`, `AnimateSelfEffect`, `AnimateSelfByChargeCountersEffect`, `AnimateSelfWithStatsEffect`, `AnimateLandEffect`, `PutChargeCounterOnSelfEffect`.
+Effects returning `true`: `BoostSelfEffect`, `UntapSelfEffect`, `AnimateSelfEffect`, `AnimateSelfByChargeCountersEffect`, `AnimateSelfWithStatsEffect`, `AnimateLandEffect`, `PutChargeCounterOnSelfEffect`, `PutSlimeCounterAndCreateOozeTokenEffect`.
 
 Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` → `scope == SELF`.
 
@@ -30,7 +30,7 @@ Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` 
 
 Effects that are characteristic-defining abilities (CDAs) for power/toughness (`*/*` effects) override `isPowerToughnessDefining()` to return `true`. Per CR 707.9d, when a copy effect provides specific P/T values (e.g. "except it's 7/7"), CDAs that define P/T are not copied. Used by `CopyPermanentOnEnterEffect` with `powerOverride`/`toughnessOverride`.
 
-Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInControllerGraveyardEffect`, `PowerToughnessEqualToCardsInHandEffect`, `PowerToughnessEqualToControllerLifeTotalEffect`.
+Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToControlledSubtypeCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInControllerGraveyardEffect`, `PowerToughnessEqualToCardsInHandEffect`, `PowerToughnessEqualToControllerLifeTotalEffect`, `BoostSelfBySlimeCountersOnLinkedPermanentEffect`.
 
 ---
 
@@ -501,6 +501,7 @@ Pass `null` as filter to allow any card.
 | `CreateTokenPerOpponentPoisonCounterEffect` | `(String tokenName, int power, int toughness, CardColor color, List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes)` | create creature tokens equal to the total number of poison counters on opponents. Used by Phyrexian Swarmlord |
 | `CreateLifeTotalAvatarTokenEffect` | `(String tokenName, CardColor color, List<CardSubtype> subtypes)` | create a creature token with P/T = controller's life total (CDA). Token gets `PowerToughnessEqualToControllerLifeTotalEffect` as a static effect so P/T updates dynamically. Used by Ajani Goldmane |
 | `LivingWeaponEffect` | `()` | living weapon ETB: create 0/0 black Phyrexian Germ token and attach this equipment to it (resolved by PermanentControlResolutionService) |
+| `PutSlimeCounterAndCreateOozeTokenEffect` | `()` | composite: puts a slime counter on the source permanent, then creates a 0/0 green Ooze creature token with a CDA linking its P/T to the number of slime counters on the source. The token gets a `BoostSelfBySlimeCountersOnLinkedPermanentEffect` as a static effect. Place in `ON_ALLY_NONTOKEN_CREATURE_DIES` slot. Used by Gutter Grime |
 
 ## Life
 
@@ -614,6 +615,7 @@ Pass `null` as filter to allow any card.
 | `PowerToughnessEqualToCardsInControllerGraveyardEffect` | `(CardPredicate filter)` | P/T = number of cards matching filter in controller's graveyard only (static). E.g. `new CardTypePredicate(CardType.CREATURE)` for creature cards |
 | `PowerToughnessEqualToCardsInHandEffect` | `()` | P/T = number of cards in controller's hand (static) |
 | `PowerToughnessEqualToControllerLifeTotalEffect` | `()` | P/T = controller's life total (static CDA, e.g. Ajani Goldmane's Avatar token, Serra Avatar) |
+| `BoostSelfBySlimeCountersOnLinkedPermanentEffect` | `(UUID linkedPermanentId)` | CDA static self-effect placed on tokens: P/T equals the number of slime counters on the linked permanent. If the linked permanent has left the battlefield, P/T is 0/0 (token dies to SBA). Created automatically by `PutSlimeCounterAndCreateOozeTokenEffect`. Used by Gutter Grime's Ooze tokens |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
 | `PutPlusOnePlusOneCounterOnEachControlledPermanentEffect` | `(PermanentPredicate predicate)` | put a +1/+1 counter on each permanent you control matching the predicate. Use `PermanentAllOfPredicate` to combine filters (e.g. artifact + creature) |
 | `PutPlusOnePlusOneCounterOnEachOwnCreatureEffect` | `()` | put a +1/+1 counter on each creature you control |

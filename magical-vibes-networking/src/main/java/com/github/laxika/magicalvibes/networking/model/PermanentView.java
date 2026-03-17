@@ -24,6 +24,7 @@ public record PermanentView(
         int loyaltyCounters,
         int chargeCounters,
         int phylacteryCounters,
+        int slimeCounters,
         int wishCounters,
         UUID attackTargetId,
         int markedDamage,

@@ -284,6 +284,37 @@ public class DeathTriggerService {
         });
     }
 
+    public void checkAllyNontokenCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Card dyingCard) {
+        if (dyingCard.isToken()) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, may);
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            dyingCreatureControllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
+                    ));
+                }
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (ally nontoken creature died)", gameData.id, perm.getCard().getName());
+            }
+        }
+    }
+
     public void checkAnyNontokenCreatureDeathTriggers(GameData gameData, Card dyingCard) {
         if (dyingCard.isToken()) return;
 

@@ -4,5 +4,6 @@ public enum CounterType {
     ANY,
     MINUS_ONE_MINUS_ONE,
     PLUS_ONE_PLUS_ONE,
+    SLIME,
     WISH
 }

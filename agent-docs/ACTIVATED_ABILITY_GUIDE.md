@@ -450,6 +450,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` | An artifact is put into an opponent's graveyard from the battlefield. Only fires when the graveyard owner is an opponent of this permanent's controller. Supports MayEffect wrapping. |
 | `ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD` | Any other creature enters battlefield |
 | `ON_ALLY_CREATURE_DIES` | A creature you control dies |
+| `ON_ALLY_NONTOKEN_CREATURE_DIES` | A nontoken creature you control dies. Only fires for nontoken creatures (tokens are excluded). Used by Gutter Grime |
 | `ON_DAMAGED_CREATURE_DIES` | A creature damaged by this permanent dies |
 | `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
 | `ON_CONTROLLER_CASTS_SPELL` | Controller casts a spell ("whenever you cast...") |

@@ -407,6 +407,9 @@ public class MultiPermanentChoiceHandlerService {
                         if (perm.getLoyaltyCounters() > 0) {
                             perm.setLoyaltyCounters(perm.getLoyaltyCounters() + 1);
                         }
+                        if (perm.getSlimeCounters() > 0) {
+                            perm.setSlimeCounters(perm.getSlimeCounters() + 1);
+                        }
                         if (perm.getAwakeningCounters() > 0) {
                             perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
                         }
@@ -431,6 +434,7 @@ public class MultiPermanentChoiceHandlerService {
                 if (p.getPlusOnePlusOneCounters() > 0
                         || p.getMinusOneMinusOneCounters() > 0
                         || p.getLoyaltyCounters() > 0
+                        || p.getSlimeCounters() > 0
                         || p.getAwakeningCounters() > 0) {
                     eligiblePermanentIds.add(p.getId());
                 }
