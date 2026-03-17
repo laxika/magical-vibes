@@ -1,66 +1,153 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
-import com.github.laxika.magicalvibes.cards.d.DivineOffering;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HoardSmelterDragon;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.l.LordOfThePit;
-import com.github.laxika.magicalvibes.cards.m.MeltTerrain;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.cards.p.PlagueWind;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.s.Shatter;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.cards.t.Terror;
-import com.github.laxika.magicalvibes.cards.t.TurnToSlag;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-class DestructionResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class DestructionResolutionServiceTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
+    @Mock private BattlefieldEntryService battlefieldEntryService;
+    @Mock private GraveyardService graveyardService;
+    @Mock private DamagePreventionService damagePreventionService;
+    @Mock private GameOutcomeService gameOutcomeService;
+    @Mock private PermanentRemovalService permanentRemovalService;
+    @Mock private GameQueryService gameQueryService;
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private PlayerInputService playerInputService;
+    @Mock private LifeResolutionService lifeResolutionService;
+
+    @InjectMocks private DestructionResolutionService service;
+
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
+    @BeforeEach
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
     }
 
-    private static Card indestructibleCreature() {
+    // ===== Helper methods =====
+
+    private Card createCard(String name) {
         Card card = new Card();
-        card.setName("Indestructible Golem");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}");
-        card.setColor(null);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
+        card.setName(name);
         return card;
     }
 
+    private Card createCreatureCard(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.CREATURE);
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
+    }
+
+    private Card createLandCard(String name) {
+        Card card = createCard(name);
+        card.setType(CardType.LAND);
+        return card;
+    }
+
+    private Card createArtifactCard(String name, String manaCost) {
+        Card card = createCard(name);
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost(manaCost);
+        return card;
+    }
+
+    private Permanent addPermanent(UUID playerId, Card card) {
+        Permanent permanent = new Permanent(card);
+        gd.playerBattlefields.get(playerId).add(permanent);
+        return permanent;
+    }
+
+    private Permanent addCreature(UUID playerId, String name) {
+        return addPermanent(playerId, createCreatureCard(name));
+    }
+
+    private StackEntry sorceryEntry(Card card, UUID controllerId, UUID targetPermanentId) {
+        return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId,
+                card.getName(), List.of(), 0, targetPermanentId, null);
+    }
+
+    private StackEntry instantEntry(Card card, UUID controllerId, UUID targetPermanentId) {
+        return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
+                card.getName(), List.of(), 0, targetPermanentId, null);
+    }
+
+    private StackEntry triggeredAbilityEntry(Card card, UUID controllerId, UUID targetPermanentId, UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                card.getName(), List.of(), targetPermanentId, sourcePermanentId);
+    }
+
+    private StackEntry activatedAbilityEntry(Card card, UUID controllerId, UUID targetPermanentId, UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.ACTIVATED_ABILITY, card, controllerId,
+                card.getName(), List.of(), targetPermanentId, sourcePermanentId);
+    }
+
     // =========================================================================
-    // DestroyAllPermanentsEffect (via Wrath of God — sorcery, {2}{W}{W}, all creatures, can't be regenerated)
+    // DestroyAllPermanentsEffect
     // =========================================================================
 
     @Nested
@@ -68,105 +155,180 @@ class DestructionResolutionServiceTest extends BaseCardTest {
     class ResolveDestroyAllPermanents {
 
         @Test
-        @DisplayName("Wrath of God destroys all creatures on both sides")
+        @DisplayName("Destroys all creatures on both sides")
         void destroysAllCreaturesOnBothSides() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player2, new SerraAngel());
+            Permanent bears = addCreature(player1Id, "Grizzly Bears");
+            Permanent angel = addCreature(player2Id, "Serra Angel");
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            Card wrathCard = createCard("Wrath of God");
+            StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
-            harness.assertInGraveyard(player1, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Serra Angel");
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Serra Angel");
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
+            verify(gameBroadcastService).logAndBroadcast(gd, "Serra Angel is destroyed.");
         }
 
         @Test
-        @DisplayName("Wrath of God does not destroy non-creature permanents")
+        @DisplayName("Does not destroy non-creature permanents")
         void doesNotDestroyNonCreatures() {
-            harness.addToBattlefield(player1, new Spellbook());
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Card spellbookCard = createArtifactCard("Spellbook", "{0}");
+            Permanent spellbook = addPermanent(player1Id, spellbookCard);
+            Permanent bears = addCreature(player1Id, "Grizzly Bears");
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            Card wrathCard = createCard("Wrath of God");
+            StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            when(gameQueryService.matchesPermanentPredicate(eq(spellbook), eq(filter), any())).thenReturn(false);
+            when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
-            harness.assertOnBattlefield(player1, "Spellbook");
-            harness.assertInGraveyard(player1, "Grizzly Bears");
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, spellbook);
         }
 
         @Test
-        @DisplayName("Indestructible creatures survive Wrath of God")
+        @DisplayName("Indestructible creatures survive")
         void indestructibleCreaturesSurvive() {
-            harness.addToBattlefield(player2, indestructibleCreature());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            Permanent golem = addCreature(player2Id, "Indestructible Golem");
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            Card wrathCard = createCard("Wrath of God");
+            StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            when(gameQueryService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
 
-            harness.assertOnBattlefield(player2, "Indestructible Golem");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, golem);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
         }
 
         @Test
         @DisplayName("Indestructible status is logged")
         void indestructibleIsLogged() {
-            harness.addToBattlefield(player2, indestructibleCreature());
+            Permanent golem = addCreature(player2Id, "Indestructible Golem");
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            Card wrathCard = createCard("Wrath of God");
+            StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            when(gameQueryService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Indestructible Golem") && log.contains("indestructible"));
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(gd, "Indestructible Golem is indestructible.");
         }
 
         @Test
-        @DisplayName("Plague Wind only destroys opponents' creatures")
-        void plagueWindOnlyDestroysOpponentsCreatures() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player2, new SerraAngel());
-            harness.addToBattlefield(player2, new LlanowarElves());
+        @DisplayName("Regenerated creature survives when cannotBeRegenerated is false")
+        void regeneratedCreatureSurvives() {
+            Permanent bears = addCreature(player1Id, "Grizzly Bears");
+            Permanent elves = addCreature(player2Id, "Llanowar Elves");
 
-            harness.setHand(player1, List.of(new PlagueWind()));
-            harness.addMana(player1, ManaColor.BLACK, 9);
+            Card plagueWindCard = createCard("Plague Wind");
+            StackEntry entry = sorceryEntry(plagueWindCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(false);
+            when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, elves, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, elves)).thenReturn(true);
 
-            // Player1's creatures survive
-            harness.assertOnBattlefield(player1, "Grizzly Bears");
-            // Player2's creatures are destroyed
-            harness.assertInGraveyard(player2, "Serra Angel");
-            harness.assertInGraveyard(player2, "Llanowar Elves");
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(graveyardService).tryRegenerate(gd, elves);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, elves);
+        }
+
+        @Test
+        @DisplayName("Regeneration is skipped when cannotBeRegenerated is true")
+        void regenerationSkippedWhenCannotBeRegenerated() {
+            Permanent bears = addCreature(player1Id, "Grizzly Bears");
+
+            Card wrathCard = createCard("Wrath of God");
+            StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+
+            when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(graveyardService, never()).tryRegenerate(any(), any());
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+        }
+
+        @Test
+        @DisplayName("Only destroys opponents' creatures when filter excludes controller")
+        void onlyDestroysOpponentsCreatures() {
+            Permanent myBears = addCreature(player1Id, "Grizzly Bears");
+            Permanent angel = addCreature(player2Id, "Serra Angel");
+            Permanent elves = addCreature(player2Id, "Llanowar Elves");
+
+            Card plagueWindCard = createCard("Plague Wind");
+            StackEntry entry = sorceryEntry(plagueWindCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false);
+
+            // Filter excludes controller's creatures (Plague Wind behavior)
+            when(gameQueryService.matchesPermanentPredicate(eq(myBears), eq(filter), any())).thenReturn(false);
+            when(gameQueryService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
+
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, myBears);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
         }
 
         @Test
         @DisplayName("Destruction is logged for each destroyed creature")
         void destructionIsLogged() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player2, new LlanowarElves());
+            Permanent bears = addCreature(player1Id, "Grizzly Bears");
+            Permanent elves = addCreature(player2Id, "Llanowar Elves");
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
+            Card wrathCard = createCard("Wrath of God");
+            StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-            harness.castAndResolveSorcery(player1, 0, 0);
+            when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
+            when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("destroyed"));
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Llanowar Elves") && log.contains("destroyed"));
+            service.resolveDestroyAllPermanents(gd, entry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
+            verify(gameBroadcastService).logAndBroadcast(gd, "Llanowar Elves is destroyed.");
         }
     }
 
     // =========================================================================
-    // DestroyTargetPermanentEffect (via Terror — instant, {1}{B}, destroy nonartifact nonblack creature)
+    // DestroyTargetPermanentEffect
     // =========================================================================
 
     @Nested
@@ -174,83 +336,125 @@ class DestructionResolutionServiceTest extends BaseCardTest {
     class ResolveDestroyTargetPermanent {
 
         @Test
-        @DisplayName("Terror destroys target creature")
+        @DisplayName("Destroys target creature")
         void destroysTargetCreature() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card terrorCard = createCard("Terror");
+            StackEntry entry = instantEntry(terrorCard, player1Id, bears.getId());
+            DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect();
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            service.resolveDestroyTargetPermanent(gd, entry, effect);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
         }
 
         @Test
-        @DisplayName("Shatter destroys target artifact")
+        @DisplayName("Destroys target artifact")
         void destroysTargetArtifact() {
-            harness.addToBattlefield(player2, new Spellbook());
+            Card spellbookCard = createArtifactCard("Spellbook", "{0}");
+            Permanent spellbook = addPermanent(player2Id, spellbookCard);
 
-            harness.setHand(player1, List.of(new Shatter()));
-            harness.addMana(player1, ManaColor.RED, 2);
+            Card shatterCard = createCard("Shatter");
+            StackEntry entry = instantEntry(shatterCard, player1Id, spellbook.getId());
+            DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect();
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Spellbook"));
+            when(gameQueryService.findPermanentById(gd, spellbook.getId())).thenReturn(spellbook);
+            when(gameQueryService.findPermanentController(gd, spellbook.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, spellbook, false)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Spellbook");
-            harness.assertNotOnBattlefield(player2, "Spellbook");
+            service.resolveDestroyTargetPermanent(gd, entry, effect);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, spellbook, false);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Spellbook is destroyed.");
         }
 
         @Test
-        @DisplayName("Fizzles when target is removed before resolution")
+        @DisplayName("Does nothing when target is not found (fizzle)")
         void fizzlesWhenTargetRemoved() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            UUID removedId = UUID.randomUUID();
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card terrorCard = createCard("Terror");
+            StackEntry entry = instantEntry(terrorCard, player1Id, removedId);
+            DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect();
 
-            harness.castInstant(player1, 0, bearsId);
+            when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
 
-            // Remove target before resolution
-            gd.playerBattlefields.get(player2.getId()).clear();
+            service.resolveDestroyTargetPermanent(gd, entry, effect);
 
-            harness.passBothPriorities();
-
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
         }
 
         @Test
         @DisplayName("Indestructible creature survives targeted destruction")
         void indestructibleSurvivesTargetedDestruction() {
-            harness.addToBattlefield(player2, indestructibleCreature());
+            Permanent golem = addCreature(player2Id, "Indestructible Golem");
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card terrorCard = createCard("Terror");
+            StackEntry entry = instantEntry(terrorCard, player1Id, golem.getId());
+            DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect();
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Indestructible Golem"));
+            when(gameQueryService.findPermanentById(gd, golem.getId())).thenReturn(golem);
+            when(gameQueryService.findPermanentController(gd, golem.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, golem, false)).thenReturn(false);
 
-            harness.assertOnBattlefield(player2, "Indestructible Golem");
-            harness.assertNotInGraveyard(player2, "Indestructible Golem");
+            service.resolveDestroyTargetPermanent(gd, entry, effect);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, golem, false);
+            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), eq("Indestructible Golem is destroyed."));
         }
 
         @Test
         @DisplayName("Destruction is logged")
         void destructionIsLogged() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            harness.setHand(player1, List.of(new Terror()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card terrorCard = createCard("Terror");
+            StackEntry entry = instantEntry(terrorCard, player1Id, bears.getId());
+            DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect();
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("destroyed"));
+            service.resolveDestroyTargetPermanent(gd, entry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
+        }
+
+        @Test
+        @DisplayName("Creates token for target's controller when tokenForController is set")
+        void createsTokenForControllerWhenSpecified() {
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
+
+            Card beastWithinCard = createCard("Beast Within");
+            StackEntry entry = instantEntry(beastWithinCard, player1Id, bears.getId());
+            CreateCreatureTokenEffect token = new CreateCreatureTokenEffect(
+                    "Beast", 3, 3, CardColor.GREEN, List.of(CardSubtype.BEAST),
+                    Set.of(), Set.of());
+            DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect(false, token);
+
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
+            when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+            service.resolveDestroyTargetPermanent(gd, entry, effect);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), any());
+            verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player2Id), any(Card.class), eq(null), eq(false));
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 creates a 3/3 green Beast creature token.");
         }
     }
 
     // =========================================================================
-    // DestroyEquipmentAttachedToTargetCreatureEffect (via Turn to Slag — sorcery, {3}{R}{R})
+    // DestroyEquipmentAttachedToTargetCreatureEffect
     // =========================================================================
 
     @Nested
@@ -260,43 +464,40 @@ class DestructionResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys equipment attached to target creature")
         void destroysAttachedEquipment() {
-            // Add creature and equipment attached to it
-            harness.addToBattlefield(player2, new SerraAngel());
-            UUID angelId = harness.getPermanentId(player2, "Serra Angel");
+            Permanent angel = addCreature(player2Id, "Serra Angel");
 
-            harness.addToBattlefield(player2, new LeoninScimitar());
-            Permanent scimitar = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Leonin Scimitar"))
-                    .findFirst().orElseThrow();
-            scimitar.setAttachedTo(angelId);
+            Card scimitarCard = createArtifactCard("Leonin Scimitar", "{1}");
+            scimitarCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+            Permanent scimitar = addPermanent(player2Id, scimitarCard);
+            scimitar.setAttachedTo(angel.getId());
 
-            harness.setHand(player1, List.of(new TurnToSlag()));
-            harness.addMana(player1, ManaColor.RED, 5);
+            Card turnToSlagCard = createCard("Turn to Slag");
+            StackEntry entry = sorceryEntry(turnToSlagCard, player1Id, angel.getId());
 
-            harness.castAndResolveSorcery(player1, 0, angelId);
+            when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Leonin Scimitar");
-            harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+            service.resolveDestroyEquipmentAttachedToTargetCreature(gd, entry);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Leonin Scimitar is destroyed.");
         }
 
         @Test
         @DisplayName("No equipment to destroy resolves without error")
         void noEquipmentResolvesCleanly() {
-            harness.addToBattlefield(player2, new SerraAngel());
-            UUID angelId = harness.getPermanentId(player2, "Serra Angel");
+            Permanent angel = addCreature(player2Id, "Serra Angel");
 
-            harness.setHand(player1, List.of(new TurnToSlag()));
-            harness.addMana(player1, ManaColor.RED, 5);
+            Card turnToSlagCard = createCard("Turn to Slag");
+            StackEntry entry = sorceryEntry(turnToSlagCard, player1Id, angel.getId());
 
-            // Should resolve without error — the 5 damage kills Serra Angel (4/4)
-            harness.castAndResolveSorcery(player1, 0, angelId);
+            service.resolveDestroyEquipmentAttachedToTargetCreature(gd, entry);
 
-            harness.assertInGraveyard(player2, "Serra Angel");
+            verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
         }
     }
 
     // =========================================================================
-    // DestroyTargetLandAndDamageControllerEffect (via Melt Terrain — sorcery, {2}{R}{R}, 2 damage)
+    // DestroyTargetLandAndDamageControllerEffect
     // =========================================================================
 
     @Nested
@@ -306,57 +507,78 @@ class DestructionResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys target land and deals 2 damage to its controller")
         void destroysLandAndDealsDamage() {
-            harness.addToBattlefield(player2, new Mountain());
+            Card mountainCard = createLandCard("Mountain");
+            Permanent mountain = addPermanent(player2Id, mountainCard);
 
-            harness.setHand(player1, List.of(new MeltTerrain()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            Card meltTerrainCard = createCard("Melt Terrain");
+            StackEntry entry = sorceryEntry(meltTerrainCard, player1Id, mountain.getId());
+            DestroyTargetLandAndDamageControllerEffect effect = new DestroyTargetLandAndDamageControllerEffect(2);
 
-            harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Mountain"));
+            when(gameQueryService.findPermanentById(gd, mountain.getId())).thenReturn(mountain);
+            when(gameQueryService.findPermanentController(gd, mountain.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, mountain, false)).thenReturn(true);
+            when(gameQueryService.applyDamageMultiplier(gd, 2)).thenReturn(2);
+            when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player2Id), any())).thenReturn(false);
+            when(damagePreventionService.applyPlayerPreventionShield(gd, player2Id, 2)).thenReturn(2);
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gd, player2Id, 2, "Melt Terrain")).thenReturn(2);
+            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Mountain");
-            harness.assertNotOnBattlefield(player2, "Mountain");
-            harness.assertLife(player2, 18);
+            service.resolveDestroyTargetLandAndDamageController(gd, entry, effect);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, mountain, false);
+            assertThat(gd.getLife(player2Id)).isEqualTo(18);
+            verify(gameOutcomeService).checkWinCondition(gd);
         }
 
         @Test
-        @DisplayName("Fizzles when target land is removed before resolution")
+        @DisplayName("Does nothing when target is not found (fizzle)")
         void fizzlesWhenTargetRemoved() {
-            harness.addToBattlefield(player2, new Mountain());
-            UUID mountainId = harness.getPermanentId(player2, "Mountain");
+            UUID removedId = UUID.randomUUID();
 
-            harness.setHand(player1, List.of(new MeltTerrain()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            Card meltTerrainCard = createCard("Melt Terrain");
+            StackEntry entry = sorceryEntry(meltTerrainCard, player1Id, removedId);
+            DestroyTargetLandAndDamageControllerEffect effect = new DestroyTargetLandAndDamageControllerEffect(2);
 
-            harness.castSorcery(player1, 0, mountainId);
+            when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
 
-            // Remove land before resolution
-            gd.playerBattlefields.get(player2.getId()).clear();
+            service.resolveDestroyTargetLandAndDamageController(gd, entry, effect);
 
-            harness.passBothPriorities();
-
-            // Player2 life should remain unchanged since the spell fizzled
-            harness.assertLife(player2, 20);
+            assertThat(gd.getLife(player2Id)).isEqualTo(20);
+            verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
         }
 
         @Test
         @DisplayName("Destruction and damage are logged")
         void destructionAndDamageAreLogged() {
-            harness.addToBattlefield(player2, new Mountain());
+            Card mountainCard = createLandCard("Mountain");
+            Permanent mountain = addPermanent(player2Id, mountainCard);
 
-            harness.setHand(player1, List.of(new MeltTerrain()));
-            harness.addMana(player1, ManaColor.RED, 4);
+            Card meltTerrainCard = createCard("Melt Terrain");
+            StackEntry entry = sorceryEntry(meltTerrainCard, player1Id, mountain.getId());
+            DestroyTargetLandAndDamageControllerEffect effect = new DestroyTargetLandAndDamageControllerEffect(2);
 
-            harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Mountain"));
+            when(gameQueryService.findPermanentById(gd, mountain.getId())).thenReturn(mountain);
+            when(gameQueryService.findPermanentController(gd, mountain.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, mountain, false)).thenReturn(true);
+            when(gameQueryService.applyDamageMultiplier(gd, 2)).thenReturn(2);
+            when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player2Id), any())).thenReturn(false);
+            when(damagePreventionService.applyPlayerPreventionShield(gd, player2Id, 2)).thenReturn(2);
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gd, player2Id, 2, "Melt Terrain")).thenReturn(2);
+            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Mountain") && log.contains("destroyed"));
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("damage") && log.contains("Melt Terrain"));
+            service.resolveDestroyTargetLandAndDamageController(gd, entry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(gd, "Mountain is destroyed.");
+            verify(gameBroadcastService).logAndBroadcast(gd, "Melt Terrain deals 2 damage to Player2.");
         }
     }
 
     // =========================================================================
-    // SacrificeCreatureEffect (via Cruel Edict — sorcery, {1}{B})
+    // SacrificeCreatureEffect
     // =========================================================================
 
     @Nested
@@ -366,66 +588,69 @@ class DestructionResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Opponent with one creature sacrifices it automatically")
         void autoSacrificesOnlyCreature() {
-            Permanent creature = new Permanent(new GrizzlyBears());
-            gd.playerBattlefields.get(player2.getId()).add(creature);
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card edictCard = createCard("Cruel Edict");
+            StackEntry entry = sorceryEntry(edictCard, player1Id, player2Id);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            service.resolveSacrificeCreature(gd, entry);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
         }
 
         @Test
         @DisplayName("Opponent with multiple creatures is prompted to choose")
         void promptsChoiceWithMultipleCreatures() {
-            gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
-            gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GiantSpider()));
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
+            Permanent spider = addCreature(player2Id, "Giant Spider");
 
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card edictCard = createCard("Cruel Edict");
+            StackEntry entry = sorceryEntry(edictCard, player1Id, player2Id);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, spider)).thenReturn(true);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+            service.resolveSacrificeCreature(gd, entry);
+
             assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player2Id), any(), anyString());
         }
 
         @Test
         @DisplayName("No effect when opponent has no creatures")
         void noEffectWithNoCreatures() {
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card edictCard = createCard("Cruel Edict");
+            StackEntry entry = sorceryEntry(edictCard, player1Id, player2Id);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            service.resolveSacrificeCreature(gd, entry);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no creatures to sacrifice"));
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no creatures to sacrifice.");
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
         @Test
         @DisplayName("Sacrifice is logged")
         void sacrificeIsLogged() {
-            gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            harness.setHand(player1, List.of(new CruelEdict()));
-            harness.addMana(player1, ManaColor.BLACK, 2);
+            Card edictCard = createCard("Cruel Edict");
+            StackEntry entry = sorceryEntry(edictCard, player1Id, player2Id);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("sacrifices") && log.contains("Grizzly Bears"));
+            service.resolveSacrificeCreature(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
         }
     }
 
     // =========================================================================
-    // SacrificeOtherCreatureOrDamageEffect (via Lord of the Pit — upkeep trigger, 7 damage)
+    // SacrificeOtherCreatureOrDamageEffect
     // =========================================================================
 
     @Nested
@@ -435,59 +660,100 @@ class DestructionResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Deals 7 damage to controller when no other creatures are present")
         void dealsDamageWhenNoOtherCreatures() {
-            harness.addToBattlefield(player1, new LordOfThePit());
+            Card lordCard = createCreatureCard("Lord of the Pit");
+            Permanent lord = addPermanent(player1Id, lordCard);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities(); // resolve trigger
+            StackEntry entry = triggeredAbilityEntry(lordCard, player1Id, null, lord.getId());
+            SacrificeOtherCreatureOrDamageEffect effect = new SacrificeOtherCreatureOrDamageEffect(7);
 
-            harness.assertLife(player1, 13);
+            // Lord is a creature but is the source, so no "other" creatures
+            when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
+            when(gameQueryService.applyDamageMultiplier(gd, 7)).thenReturn(7);
+            when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
+            when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);
+            when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
+
+            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+
+            assertThat(gd.getLife(player1Id)).isEqualTo(13);
+            verify(gameOutcomeService).checkWinCondition(gd);
         }
 
         @Test
         @DisplayName("Sacrifices the only other creature automatically")
         void autoSacrificesOnlyOtherCreature() {
-            harness.addToBattlefield(player1, new LordOfThePit());
-            harness.addToBattlefield(player1, new LlanowarElves());
+            Card lordCard = createCreatureCard("Lord of the Pit");
+            Permanent lord = addPermanent(player1Id, lordCard);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities(); // resolve trigger
+            Card elvesCard = createCreatureCard("Llanowar Elves");
+            Permanent elves = addPermanent(player1Id, elvesCard);
 
-            harness.assertInGraveyard(player1, "Llanowar Elves");
-            harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-            // No damage dealt when sacrifice succeeds
-            harness.assertLife(player1, 20);
+            StackEntry entry = triggeredAbilityEntry(lordCard, player1Id, null, lord.getId());
+            SacrificeOtherCreatureOrDamageEffect effect = new SacrificeOtherCreatureOrDamageEffect(7);
+
+            when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, elves)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
+
+            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player1 sacrifices Llanowar Elves.");
+            // No damage dealt
+            assertThat(gd.getLife(player1Id)).isEqualTo(20);
         }
 
         @Test
         @DisplayName("Prompts choice when multiple other creatures exist")
         void promptsChoiceWithMultipleOtherCreatures() {
-            harness.addToBattlefield(player1, new LordOfThePit());
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player1, new LlanowarElves());
+            Card lordCard = createCreatureCard("Lord of the Pit");
+            Permanent lord = addPermanent(player1Id, lordCard);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities(); // resolve trigger
+            Permanent bears = addCreature(player1Id, "Grizzly Bears");
+            Permanent elves = addCreature(player1Id, "Llanowar Elves");
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+            StackEntry entry = triggeredAbilityEntry(lordCard, player1Id, null, lord.getId());
+            SacrificeOtherCreatureOrDamageEffect effect = new SacrificeOtherCreatureOrDamageEffect(7);
+
+            when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, elves)).thenReturn(true);
+
+            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+
             assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), anyString());
         }
 
         @Test
         @DisplayName("Damage is logged when no creatures to sacrifice")
         void damageIsLogged() {
-            harness.addToBattlefield(player1, new LordOfThePit());
+            Card lordCard = createCreatureCard("Lord of the Pit");
+            Permanent lord = addPermanent(player1Id, lordCard);
 
-            advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            StackEntry entry = triggeredAbilityEntry(lordCard, player1Id, null, lord.getId());
+            SacrificeOtherCreatureOrDamageEffect effect = new SacrificeOtherCreatureOrDamageEffect(7);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Lord of the Pit") && log.contains("7 damage"));
+            when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
+            when(gameQueryService.applyDamageMultiplier(gd, 7)).thenReturn(7);
+            when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
+            when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);
+            when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
+
+            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+
+            verify(gameBroadcastService).logAndBroadcast(gd, "Lord of the Pit deals 7 damage to Player1.");
         }
     }
 
     // =========================================================================
-    // DestroyTargetPermanentAndBoostSelfByManaValueEffect (via Hoard-Smelter Dragon — {3}{R} ability)
+    // DestroyTargetPermanentAndBoostSelfByManaValueEffect
     // =========================================================================
 
     @Nested
@@ -497,78 +763,71 @@ class DestructionResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys target artifact and boosts self by its mana value")
         void destroysArtifactAndBoostsSelf() {
-            HoardSmelterDragon dragonCard = new HoardSmelterDragon();
-            harness.addToBattlefield(player1, dragonCard);
-            Permanent dragon = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Hoard-Smelter Dragon"))
-                    .findFirst().orElseThrow();
-            dragon.setSummoningSick(false);
+            Card dragonCard = createCreatureCard("Hoard-Smelter Dragon");
+            Permanent dragon = addPermanent(player1Id, dragonCard);
 
-            // Spellbook has mana value 0, so use Leonin Scimitar (mana value 1)
-            harness.addToBattlefield(player2, new LeoninScimitar());
-            UUID scimitarId = harness.getPermanentId(player2, "Leonin Scimitar");
+            Card scimitarCard = createArtifactCard("Leonin Scimitar", "{1}");
+            Permanent scimitar = addPermanent(player2Id, scimitarCard);
 
-            harness.addMana(player1, ManaColor.RED, 4);
+            StackEntry entry = activatedAbilityEntry(dragonCard, player1Id, scimitar.getId(), dragon.getId());
 
-            harness.activateAbility(player1, 0, null, scimitarId);
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, scimitar.getId())).thenReturn(scimitar);
+            when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
+            when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Leonin Scimitar");
+            service.resolveDestroyTargetArtifactAndBoostSelfByManaValue(gd, entry);
 
-            // Dragon gets +1/+0 from Leonin Scimitar's mana value of 1
+            verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
             assertThat(dragon.getPowerModifier()).isEqualTo(1);
         }
 
         @Test
         @DisplayName("Boost is zero when artifact has mana value 0")
         void noBoostForZeroManaValue() {
-            HoardSmelterDragon dragonCard = new HoardSmelterDragon();
-            harness.addToBattlefield(player1, dragonCard);
-            Permanent dragon = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Hoard-Smelter Dragon"))
-                    .findFirst().orElseThrow();
-            dragon.setSummoningSick(false);
+            Card dragonCard = createCreatureCard("Hoard-Smelter Dragon");
+            Permanent dragon = addPermanent(player1Id, dragonCard);
 
-            // Spellbook has mana value 0
-            harness.addToBattlefield(player2, new Spellbook());
-            UUID spellbookId = harness.getPermanentId(player2, "Spellbook");
+            Card spellbookCard = createArtifactCard("Spellbook", "{0}");
+            Permanent spellbook = addPermanent(player2Id, spellbookCard);
 
-            harness.addMana(player1, ManaColor.RED, 4);
+            StackEntry entry = activatedAbilityEntry(dragonCard, player1Id, spellbook.getId(), dragon.getId());
 
-            harness.activateAbility(player1, 0, null, spellbookId);
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, spellbook.getId())).thenReturn(spellbook);
+            when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
+            when(permanentRemovalService.tryDestroyPermanent(gd, spellbook, false)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Spellbook");
+            service.resolveDestroyTargetArtifactAndBoostSelfByManaValue(gd, entry);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, spellbook, false);
+            // Dragon is found (self != null) but mana value is 0, so no boost is applied
             assertThat(dragon.getPowerModifier()).isEqualTo(0);
+            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("+0/+0")));
         }
 
         @Test
         @DisplayName("Destruction and boost are logged")
         void destructionAndBoostAreLogged() {
-            HoardSmelterDragon dragonCard = new HoardSmelterDragon();
-            harness.addToBattlefield(player1, dragonCard);
-            Permanent dragon = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Hoard-Smelter Dragon"))
-                    .findFirst().orElseThrow();
-            dragon.setSummoningSick(false);
+            Card dragonCard = createCreatureCard("Hoard-Smelter Dragon");
+            Permanent dragon = addPermanent(player1Id, dragonCard);
 
-            harness.addToBattlefield(player2, new LeoninScimitar());
-            UUID scimitarId = harness.getPermanentId(player2, "Leonin Scimitar");
+            Card scimitarCard = createArtifactCard("Leonin Scimitar", "{1}");
+            Permanent scimitar = addPermanent(player2Id, scimitarCard);
 
-            harness.addMana(player1, ManaColor.RED, 4);
+            StackEntry entry = activatedAbilityEntry(dragonCard, player1Id, scimitar.getId(), dragon.getId());
 
-            harness.activateAbility(player1, 0, null, scimitarId);
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, scimitar.getId())).thenReturn(scimitar);
+            when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
+            when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Leonin Scimitar") && log.contains("destroyed"));
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("Hoard-Smelter Dragon") && log.contains("+1/+0"));
+            service.resolveDestroyTargetArtifactAndBoostSelfByManaValue(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(gd, "Leonin Scimitar is destroyed.");
+            verify(gameBroadcastService).logAndBroadcast(gd, "Hoard-Smelter Dragon gets +1/+0 until end of turn.");
         }
     }
 
     // =========================================================================
-    // DestroyTargetPermanentAndGainLifeEqualToManaValueEffect (via Divine Offering — instant, {1}{W})
+    // DestroyTargetPermanentAndGainLifeEqualToManaValueEffect
     // =========================================================================
 
     @Nested
@@ -578,70 +837,76 @@ class DestructionResolutionServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys artifact and gains life equal to its mana value")
         void destroysArtifactAndGainsLife() {
-            // Leonin Scimitar has mana value 1
-            harness.addToBattlefield(player2, new LeoninScimitar());
+            Card scimitarCard = createArtifactCard("Leonin Scimitar", "{1}");
+            Permanent scimitar = addPermanent(player2Id, scimitarCard);
 
-            harness.setHand(player1, List.of(new DivineOffering()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            Card divineOfferingCard = createCard("Divine Offering");
+            StackEntry entry = instantEntry(divineOfferingCard, player1Id, scimitar.getId());
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Leonin Scimitar"));
+            when(gameQueryService.findPermanentById(gd, scimitar.getId())).thenReturn(scimitar);
+            when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Leonin Scimitar");
-            harness.assertLife(player1, 21); // 20 + 1 (mana value of Leonin Scimitar)
+            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
+            verify(lifeResolutionService).applyGainLife(gd, player1Id, 1,
+                    "equal to Leonin Scimitar's mana value");
         }
 
         @Test
         @DisplayName("Gains no life from zero mana value artifact")
         void gainsNoLifeFromZeroManaValue() {
-            // Spellbook has mana value 0
-            harness.addToBattlefield(player2, new Spellbook());
+            Card spellbookCard = createArtifactCard("Spellbook", "{0}");
+            Permanent spellbook = addPermanent(player2Id, spellbookCard);
 
-            harness.setHand(player1, List.of(new DivineOffering()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            Card divineOfferingCard = createCard("Divine Offering");
+            StackEntry entry = instantEntry(divineOfferingCard, player1Id, spellbook.getId());
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Spellbook"));
+            when(gameQueryService.findPermanentById(gd, spellbook.getId())).thenReturn(spellbook);
+            when(permanentRemovalService.tryDestroyPermanent(gd, spellbook, false)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Spellbook");
-            harness.assertLife(player1, 20); // no life gain from 0 mana value
+            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
+
+            verify(lifeResolutionService, never()).applyGainLife(any(), any(), any(int.class), anyString());
         }
 
         @Test
-        @DisplayName("Fizzles when target is removed before resolution")
+        @DisplayName("Does nothing when target is not found (fizzle)")
         void fizzlesWhenTargetRemoved() {
-            harness.addToBattlefield(player2, new Spellbook());
-            UUID spellbookId = harness.getPermanentId(player2, "Spellbook");
+            UUID removedId = UUID.randomUUID();
 
-            harness.setHand(player1, List.of(new DivineOffering()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            Card divineOfferingCard = createCard("Divine Offering");
+            StackEntry entry = instantEntry(divineOfferingCard, player1Id, removedId);
 
-            harness.castInstant(player1, 0, spellbookId);
+            when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
 
-            // Remove target before resolution
-            gd.playerBattlefields.get(player2.getId()).clear();
+            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
 
-            harness.passBothPriorities();
-
-            harness.assertLife(player1, 20);
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
+            verify(lifeResolutionService, never()).applyGainLife(any(), any(), any(int.class), anyString());
         }
 
         @Test
-        @DisplayName("Life gain is logged")
-        void lifeGainIsLogged() {
-            harness.addToBattlefield(player2, new LeoninScimitar());
+        @DisplayName("Life gain is logged via lifeResolutionService")
+        void lifeGainIsDelegated() {
+            Card scimitarCard = createArtifactCard("Leonin Scimitar", "{1}");
+            Permanent scimitar = addPermanent(player2Id, scimitarCard);
 
-            harness.setHand(player1, List.of(new DivineOffering()));
-            harness.addMana(player1, ManaColor.WHITE, 2);
+            Card divineOfferingCard = createCard("Divine Offering");
+            StackEntry entry = instantEntry(divineOfferingCard, player1Id, scimitar.getId());
 
-            harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Leonin Scimitar"));
+            when(gameQueryService.findPermanentById(gd, scimitar.getId())).thenReturn(scimitar);
+            when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            assertThat(gd.gameLog)
-                    .anyMatch(log -> log.contains("gains") && log.contains("1 life"));
+            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
+
+            verify(lifeResolutionService).applyGainLife(gd, player1Id, 1,
+                    "equal to Leonin Scimitar's mana value");
         }
     }
 
     // =========================================================================
-    // DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect (via Flesh Allergy — sorcery, {2}{B}{B})
+    // DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect
     // =========================================================================
 
     @Nested
@@ -649,50 +914,59 @@ class DestructionResolutionServiceTest extends BaseCardTest {
     class ResolveDestroyTargetAndControllerLosesLifePerCreatureDeaths {
 
         @Test
-        @DisplayName("Counts creature deaths including the sacrificed and destroyed creatures")
+        @DisplayName("Controller loses life equal to creature deaths this turn")
         void countsAllCreatureDeathsThisTurn() {
-            Permanent sacrifice = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            Permanent target = new Permanent(new GrizzlyBears());
-            gd.playerBattlefields.get(player2.getId()).add(target);
+            Card fleshAllergyCard = createCard("Flesh Allergy");
+            StackEntry entry = sorceryEntry(fleshAllergyCard, player1Id, bears.getId());
+            DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect effect =
+                    new DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect();
 
-            harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.f.FleshAllergy()));
-            harness.addMana(player1, ManaColor.BLACK, 4);
+            // Simulate 2 creatures already died this turn
+            gd.creatureDeathCountThisTurn.put(player1Id, 1);
+            gd.creatureDeathCountThisTurn.put(player2Id, 1);
 
-            harness.castSorceryWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
-            harness.passBothPriorities();
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
+            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            harness.assertInGraveyard(player2, "Grizzly Bears");
-            // 2 creature deaths: sacrificed + destroyed → 2 life loss
-            harness.assertLife(player2, 18);
+            service.resolveDestroyTargetAndControllerLosesLifePerCreatureDeaths(gd, entry, effect);
+
+            assertThat(gd.getLife(player2Id)).isEqualTo(18);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 loses 2 life (Flesh Allergy).");
+            verify(gameOutcomeService).checkWinCondition(gd);
         }
 
         @Test
         @DisplayName("Includes earlier deaths from the same turn")
         void includesEarlierDeaths() {
-            Permanent sacrifice = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            Permanent target = new Permanent(new GrizzlyBears());
-            gd.playerBattlefields.get(player2.getId()).add(target);
+            Card fleshAllergyCard = createCard("Flesh Allergy");
+            StackEntry entry = sorceryEntry(fleshAllergyCard, player1Id, bears.getId());
+            DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect effect =
+                    new DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect();
 
-            // Simulate a creature that died earlier
-            gd.creatureDeathCountThisTurn.merge(player1.getId(), 2, Integer::sum);
+            // 4 creature deaths: 2 earlier + sacrifice + destroyed = 4
+            gd.creatureDeathCountThisTurn.put(player1Id, 3);
+            gd.creatureDeathCountThisTurn.put(player2Id, 1);
 
-            harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.f.FleshAllergy()));
-            harness.addMana(player1, ManaColor.BLACK, 4);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
+            when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            harness.castSorceryWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
-            harness.passBothPriorities();
+            service.resolveDestroyTargetAndControllerLosesLifePerCreatureDeaths(gd, entry, effect);
 
-            // 4 creature deaths: 2 earlier + sacrificed + destroyed → 4 life loss
-            harness.assertLife(player2, 16);
+            assertThat(gd.getLife(player2Id)).isEqualTo(16);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 loses 4 life (Flesh Allergy).");
         }
     }
 
     // =========================================================================
-    // EachOpponentSacrificesCreatureEffect (via Grave Pact — enchantment, triggered on ally creature death)
+    // EachOpponentSacrificesCreatureEffect
     // =========================================================================
 
     @Nested
@@ -700,51 +974,32 @@ class DestructionResolutionServiceTest extends BaseCardTest {
     class ResolveEachOpponentSacrificesCreature {
 
         @Test
-        @DisplayName("Opponent with one creature sacrifices it when your creature dies")
-        void opponentSacrificesWhenYourCreatureDies() {
-            harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.g.GravePact());
-            Permanent myCreature = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(myCreature);
+        @DisplayName("Opponent with one creature sacrifices it")
+        void opponentSacrificesOnlyCreature() {
+            Permanent bears = addCreature(player2Id, "Grizzly Bears");
 
-            Permanent opponentCreature = new Permanent(new GrizzlyBears());
-            gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+            Card gravePactCard = createCard("Grave Pact");
+            StackEntry entry = triggeredAbilityEntry(gravePactCard, player1Id, null, null);
 
-            // Kill player1's creature to trigger Grave Pact
-            harness.setHand(player2, List.of(new Terror()));
-            harness.addMana(player2, ManaColor.BLACK, 2);
-            harness.forceActivePlayer(player2);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            harness.castInstant(player2, 0, myCreature.getId());
-            harness.passBothPriorities(); // resolve Terror
-            harness.passBothPriorities(); // resolve Grave Pact trigger
+            service.resolveEachOpponentSacrificesCreature(gd, entry);
 
-            harness.assertInGraveyard(player1, "Llanowar Elves");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
         }
 
         @Test
         @DisplayName("No effect when opponent has no creatures")
         void noEffectWhenOpponentHasNoCreatures() {
-            harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.g.GravePact());
-            Permanent myCreature = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(myCreature);
+            Card gravePactCard = createCard("Grave Pact");
+            StackEntry entry = triggeredAbilityEntry(gravePactCard, player1Id, null, null);
 
-            // Player2 has no creatures
+            service.resolveEachOpponentSacrificesCreature(gd, entry);
 
-            harness.setHand(player2, List.of(new Terror()));
-            harness.addMana(player2, ManaColor.BLACK, 2);
-            harness.forceActivePlayer(player2);
-            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-            harness.clearPriorityPassed();
-
-            harness.castInstant(player2, 0, myCreature.getId());
-            harness.passBothPriorities(); // resolve Terror
-            harness.passBothPriorities(); // resolve Grave Pact trigger
-
-            harness.assertInGraveyard(player1, "Llanowar Elves");
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no creatures to sacrifice"));
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no creatures to sacrifice.");
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
     }
 }
