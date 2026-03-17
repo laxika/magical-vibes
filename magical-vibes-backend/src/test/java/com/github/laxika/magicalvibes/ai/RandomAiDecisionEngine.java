@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -228,6 +229,22 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         // Ensure creatures with "attacks each combat if able" are included
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
+
+        // CR 508.1b: if only one attacker selected and it can't attack alone, fix it
+        if (attackerIndices.size() == 1) {
+            Permanent sole = battlefield.get(attackerIndices.getFirst());
+            if (sole.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance)) {
+                // Try to add another random attacker; if none available, remove the lone attacker
+                List<Integer> others = new ArrayList<>(availableIndices);
+                others.removeAll(attackerIndices);
+                if (!others.isEmpty()) {
+                    attackerIndices.add(others.get(rng.nextInt(others.size())));
+                } else {
+                    attackerIndices.clear();
+                }
+            }
+        }
 
         log.info("Random AI: Declaring {} of {} attackers in game {}",
                 attackerIndices.size(), availableIndices.size(), gameId);
