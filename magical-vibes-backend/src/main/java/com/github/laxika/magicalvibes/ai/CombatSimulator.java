@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,6 +25,13 @@ import java.util.UUID;
 public class CombatSimulator {
 
     private static final int MAX_ATTACKER_SUBSET_BITS = 12;
+
+    private static final Map<Keyword, CardSubtype> LANDWALK_MAP = Map.of(
+            Keyword.FORESTWALK, CardSubtype.FOREST,
+            Keyword.MOUNTAINWALK, CardSubtype.MOUNTAIN,
+            Keyword.ISLANDWALK, CardSubtype.ISLAND,
+            Keyword.SWAMPWALK, CardSubtype.SWAMP
+    );
 
     private final GameQueryService gameQueryService;
     private final BoardEvaluator boardEvaluator;
@@ -567,7 +575,8 @@ public class CombatSimulator {
         int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
 
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
-                || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield);
+                || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield)
+                || hasLandwalkAgainstDefender(gameData, perm, defenderBattlefield);
 
         return new CreatureInfo(
                 index,
@@ -591,6 +600,18 @@ public class CombatSimulator {
                 perm.getCard().getColor(),
                 boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId)
         );
+    }
+
+    private boolean hasLandwalkAgainstDefender(GameData gameData, Permanent attacker,
+                                                List<Permanent> defenderBattlefield) {
+        if (defenderBattlefield == null) return false;
+        for (var entry : LANDWALK_MAP.entrySet()) {
+            if (gameQueryService.hasKeyword(gameData, attacker, entry.getKey())
+                    && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isCantBeBlockedDueToDefenderCondition(GameData gameData, Permanent attacker,
