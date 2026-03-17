@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
@@ -77,6 +78,52 @@ public class LibrarySearchResolutionService {
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
+
+    /**
+     * Destroys the targeted permanent, then its controller searches their library for a card
+     * matching the filter and puts it onto the battlefield. When {@code may} is true, the
+     * search is optional (controller may decline). Used by Ghost Quarter.
+     */
+    @HandlesEffect(DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect.class)
+    void resolveDestroyTargetPermanentAndControllerSearchesLibraryToBattlefield(
+            GameData gameData, StackEntry entry,
+            DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        // Find the controller of the targeted permanent before destruction
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetControllerId == null) {
+            return;
+        }
+
+        // Attempt to destroy the permanent
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
+            String logEntry = target.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        // The target's controller searches their library
+        String desc = CardPredicateUtils.describeFilter(effect.searchFilter());
+        String descPlural = desc.replace(" card", " cards");
+        String prompt = effect.may()
+                ? "You may search your library for a " + desc + " and put it onto the battlefield."
+                : "Search your library for a " + desc + " and put it onto the battlefield.";
+
+        performLibrarySearch(
+                gameData,
+                targetControllerId,
+                card -> gameQueryService.matchesCardPredicate(card, effect.searchFilter(), null),
+                descPlural,
+                prompt,
+                false,
+                effect.may(),
+                LibrarySearchDestination.BATTLEFIELD
+        );
+    }
 
     /**
      * Searches the controller's library for a basic land card and puts it into their hand.
