@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
@@ -71,7 +74,7 @@ public class CombatSimulator {
         List<CreatureInfo> optionalAttackerInfos = new ArrayList<>();
         for (int idx : availableAttackerIndices) {
             Permanent perm = aiBattlefield.get(idx);
-            CreatureInfo info = buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId);
+            CreatureInfo info = buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId, oppBattlefield);
             if (mustAttackSet.contains(idx)) {
                 forcedAttackerInfos.add(info);
             } else {
@@ -175,7 +178,7 @@ public class CombatSimulator {
         List<CreatureInfo> attackerInfos = new ArrayList<>();
         for (int idx : attackerIndices) {
             Permanent perm = oppBattlefield.get(idx);
-            attackerInfos.add(buildCreatureInfo(gameData, perm, idx, opponentId, aiPlayerId));
+            attackerInfos.add(buildCreatureInfo(gameData, perm, idx, opponentId, aiPlayerId, aiBattlefield));
         }
 
         List<CreatureInfo> blockerInfos = new ArrayList<>();
@@ -554,8 +557,17 @@ public class CombatSimulator {
 
     CreatureInfo buildCreatureInfo(GameData gameData, Permanent perm, int index,
                                            UUID controllerId, UUID opponentId) {
+        return buildCreatureInfo(gameData, perm, index, controllerId, opponentId, null);
+    }
+
+    CreatureInfo buildCreatureInfo(GameData gameData, Permanent perm, int index,
+                                           UUID controllerId, UUID opponentId,
+                                           List<Permanent> defenderBattlefield) {
         int power = gameQueryService.getEffectivePower(gameData, perm);
         int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
+
+        boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
+                || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield);
 
         return new CreatureInfo(
                 index,
@@ -573,12 +585,27 @@ public class CombatSimulator {
                 gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.REACH),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER),
-                gameQueryService.hasCantBeBlocked(gameData, perm),
+                cantBeBlocked,
                 gameQueryService.isArtifact(perm),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.INFECT),
                 perm.getCard().getColor(),
                 boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId)
         );
+    }
+
+    private boolean isCantBeBlockedDueToDefenderCondition(GameData gameData, Permanent attacker,
+                                                           List<Permanent> defenderBattlefield) {
+        if (defenderBattlefield == null) return false;
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
+                boolean defenderMatches = defenderBattlefield.stream()
+                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                if (defenderMatches) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {
