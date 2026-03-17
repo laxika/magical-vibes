@@ -171,6 +171,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep sacrifice/discard | `r/RazormaneMasticore.java` | UPKEEP_TRIGGERED + DRAW_TRIGGERED |
 | Upkeep sacrifice other + opponent life loss | `x/XathridDemon.java` | UPKEEP_TRIGGERED SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect(7) — sacrifice other creature, opponents lose life equal to its power; or tap self + lose 7 life |
 | Exile-from-graveyard cost + damage | `m/MoltenTailMasticore.java` | ExileCardFromGraveyardCost(CREATURE) + DealDamageToAnyTargetEffect + RegenerateEffect |
+| Enters tapped + doesn't untap + sac-another-creature untap + attack trigger destroy+counter | `g/GrimgrinCorpseBorn.java` | EntersTappedEffect + DoesntUntapDuringUntapStepEffect + SacrificeCreatureCost(excludeSelf=true)+UntapSelfEffect+PutCountersOnSourceEffect(1,1,1) activated ability + ON_ATTACK DestroyTargetPermanentEffect+PutCountersOnSourceEffect(1,1,1) with PermanentPredicateTargetFilter for opponent creatures |
 | Upkeep bounce | `s/StampedingWildebeests.java` | BounceCreatureOnUpkeepEffect |
 | Upkeep token | `v/VerdantForce.java` | EACH_UPKEEP_TRIGGERED CreateCreatureTokenEffect |
 | Upkeep conditional self-bounce + tokens | `t/ThopterAssembly.java` | UPKEEP_TRIGGERED NoOtherSubtypeConditionalEffect(THOPTER, ReturnSelfToHandAndCreateTokensEffect) — intervening-if "no other Thopters", returns self + creates 5 tokens |

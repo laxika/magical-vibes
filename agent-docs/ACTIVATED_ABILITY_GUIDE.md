@@ -304,6 +304,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 |------------|-------------|----------|
 | `SacrificeSelfCost` | `()` | "Sacrifice this: ..." |
 | `SacrificeCreatureCost` | `()` | "Sacrifice a creature: ..." |
+| `SacrificeCreatureCost` | `(false, false, false, true)` | "Sacrifice another creature: ..." (excludeSelf prevents sacrificing the source) |
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype)` | "Sacrifice a Goblin: ..." |
 | `SacrificeArtifactCost` | `()` | "Sacrifice an artifact: ..." |
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |

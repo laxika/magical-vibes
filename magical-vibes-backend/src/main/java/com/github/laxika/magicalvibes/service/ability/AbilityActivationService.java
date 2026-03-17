@@ -501,8 +501,9 @@ public class AbilityActivationService {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, ability.getTargetFilter(), playerId);
         }
 
+        UUID sourceId = permanent.getId();
         List<PermanentChoiceCostHandler> permanentChoiceCosts = abilityEffects.stream()
-                .map(this::toPermanentChoiceCostHandler)
+                .map(e -> toPermanentChoiceCostHandler(e, sourceId))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -721,9 +722,9 @@ public class AbilityActivationService {
                 effectiveXValue, targetPermanentId, targetZone, nonTargeting, effectiveIndex, targetPermanentIds);
     }
 
-    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect) {
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
-        if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction);
+        if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);
@@ -776,7 +777,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated ability no longer has the required cost");
         }
 
-        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect());
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }

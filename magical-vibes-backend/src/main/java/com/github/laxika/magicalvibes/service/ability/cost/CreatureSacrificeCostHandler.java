@@ -20,11 +20,17 @@ public class CreatureSacrificeCostHandler implements PermanentChoiceCostHandler 
     private final SacrificeCreatureCost cost;
     private final GameQueryService gameQueryService;
     private final PermanentSacrificeAction sacrificeAction;
+    private final UUID sourcePermanentId;
 
     public CreatureSacrificeCostHandler(SacrificeCreatureCost cost, GameQueryService gameQueryService, PermanentSacrificeAction sacrificeAction) {
+        this(cost, gameQueryService, sacrificeAction, null);
+    }
+
+    public CreatureSacrificeCostHandler(SacrificeCreatureCost cost, GameQueryService gameQueryService, PermanentSacrificeAction sacrificeAction, UUID sourcePermanentId) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
         this.sacrificeAction = sacrificeAction;
+        this.sourcePermanentId = sourcePermanentId;
     }
 
     @Override public CardEffect costEffect() { return cost; }
@@ -43,6 +49,7 @@ public class CreatureSacrificeCostHandler implements PermanentChoiceCostHandler 
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> !cost.excludeSelf() || !p.getId().equals(sourcePermanentId))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -52,11 +59,14 @@ public class CreatureSacrificeCostHandler implements PermanentChoiceCostHandler 
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must sacrifice a creature");
         }
+        if (cost.excludeSelf() && chosen.getId().equals(sourcePermanentId)) {
+            throw new IllegalStateException("Cannot sacrifice this permanent to its own ability");
+        }
         sacrificeAction.sacrifice(gameData, player, chosen);
     }
 
     @Override
     public String getPromptMessage(int remaining) {
-        return "Choose a creature to sacrifice.";
+        return cost.excludeSelf() ? "Choose another creature to sacrifice." : "Choose a creature to sacrifice.";
     }
 }
