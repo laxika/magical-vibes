@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.fail;
  *
  * <p>Disabled by default; enable manually to run.</p>
  */
-@Disabled("Fuzz test — runs many random games to find engine bugs; enable manually")
+@EnabledIfSystemProperty(named = "runCardFuzz", matches = "true")
 class RandomAiFuzzTest {
 
     private static final int DEFAULT_GAME_COUNT = 50;

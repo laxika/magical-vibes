@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.fail;
  *
  * <p>Disabled by default; enable manually to run.</p>
  */
-@Disabled("Soak test — runs forever to stress-test game engine; enable manually")
+@EnabledIfSystemProperty(named = "runAiStress", matches = "true")
 class AiVsAiStressTest {
 
     private static final int DECK_SIZE = 40;
