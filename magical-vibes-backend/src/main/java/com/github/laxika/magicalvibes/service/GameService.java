@@ -310,10 +310,14 @@ public class GameService {
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId, List<UUID> targetPermanentIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId);
+            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, targetPermanentIds);
         }
     }
 

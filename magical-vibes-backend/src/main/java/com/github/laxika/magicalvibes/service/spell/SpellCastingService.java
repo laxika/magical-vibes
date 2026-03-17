@@ -703,7 +703,12 @@ public class SpellCastingService {
     // --- Play with flashback from graveyard ---
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId, List<UUID> targetPermanentIds) {
         int effectiveXValue = xValue != null ? xValue : 0;
+        if (targetPermanentIds == null) targetPermanentIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -743,20 +748,31 @@ public class SpellCastingService {
         // Remove card from graveyard
         graveyard.remove(graveyardCardIndex);
 
-        // Validate target
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
-        if (targetPermanentId != null && card.isNeedsTarget()) {
-            targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, true);
-        } else if (card.isNeedsTarget() && targetPermanentId == null) {
-            throw new IllegalStateException("Spell requires a target");
-        }
-
-        // Create stack entry
         StackEntryType entryType = card.hasType(CardType.INSTANT) ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
-        StackEntry stackEntry = new StackEntry(
-                entryType, card, playerId, card.getName(),
-                spellEffects, effectiveXValue, targetPermanentId, null
-        );
+
+        StackEntry stackEntry;
+        if (!targetPermanentIds.isEmpty()) {
+            // Multi-target flashback spell
+            if (card.getMaxTargets() > 0) {
+                targetLegalityService.validateMultiSpellTargets(gameData, card, targetPermanentIds, playerId);
+            }
+            stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    spellEffects, effectiveXValue, targetPermanentIds
+            );
+        } else {
+            // Single-target or no-target flashback spell
+            if (targetPermanentId != null && card.isNeedsTarget()) {
+                targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, true);
+            } else if (card.isNeedsTarget() && targetPermanentId == null) {
+                throw new IllegalStateException("Spell requires a target");
+            }
+            stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    spellEffects, effectiveXValue, targetPermanentId, null
+            );
+        }
         stackEntry.setCastWithFlashback(true);
         gameData.stack.add(stackEntry);
 
