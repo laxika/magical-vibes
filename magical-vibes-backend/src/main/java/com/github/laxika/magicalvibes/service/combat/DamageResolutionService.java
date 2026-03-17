@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEff
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerAndDealDamageByHighestManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
@@ -456,6 +457,52 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link MillControllerAndDealDamageByHighestManaValueEffect} — mills N cards from the
+     * controller's library, then deals damage to any target equal to the greatest mana value
+     * among the milled cards. Used by Heretic's Punishment.
+     */
+    @HandlesEffect(MillControllerAndDealDamageByHighestManaValueEffect.class)
+    void resolveMillControllerAndDealDamageByHighestManaValue(GameData gameData, StackEntry entry,
+                                                              MillControllerAndDealDamageByHighestManaValueEffect effect) {
+        UUID targetId = entry.getTargetPermanentId();
+        if (targetId == null) return;
+
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String cardName = entry.getCard().getName();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        int cardsToMill = Math.min(effect.count(), deck.size());
+
+        if (cardsToMill == 0) {
+            String logEntry = controllerName + "'s library is empty — " + cardName + " deals no damage.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        // Snapshot the cards before milling to compute highest mana value
+        List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
+
+        int highestManaValue = milledCards.stream()
+                .mapToInt(Card::getManaValue)
+                .max()
+                .orElse(0);
+
+        // Perform the actual mill
+        graveyardService.resolveMillPlayer(gameData, controllerId, effect.count());
+
+        if (highestManaValue == 0) {
+            String logEntry = cardName + " deals 0 damage (greatest mana value among milled cards is 0).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        int damage = gameQueryService.applyDamageMultiplier(gameData, highestManaValue, entry);
+        resolveAnyTargetDamage(gameData, entry, targetId, damage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
 
