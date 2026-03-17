@@ -256,6 +256,34 @@ public class DeathTriggerService {
         });
     }
 
+    public void checkAnyCreatureDeathTriggers(GameData gameData) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
+                    gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+                            perm.getCard(), playerId, new ArrayList<>(List.of(effect))
+                    ));
+                } else if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(perm.getCard(), playerId, may);
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                }
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (any creature died)", gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
     public void checkAnyNontokenCreatureDeathTriggers(GameData gameData, Card dyingCard) {
         if (dyingCard.isToken()) return;
 
