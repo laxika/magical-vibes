@@ -268,7 +268,7 @@ public class GraveyardReturnResolutionService {
                 if (effect.destination() == GraveyardChoiceDestination.HAND) {
                     gameData.addCardToHand(targetPlayerId, card);
                 } else {
-                    putCardOntoBattlefield(gameData, targetPlayerId, card, null, null, effect.enterTapped());
+                    putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
                 }
                 returnedNames.add(card.getName());
             }

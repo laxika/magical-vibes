@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
@@ -175,6 +177,38 @@ public class PermanentCounterResolutionService {
         log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, self.getCard().getName(), self.getChargeCounters());
     }
 
+    @HandlesEffect(PutCounterOnSelfEffect.class)
+    private void resolvePutCounterOnSelf(GameData gameData, StackEntry entry, PutCounterOnSelfEffect effect) {
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
+        if (self == null) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, self)) {
+            return;
+        }
+
+        String counterName = switch (effect.counterType()) {
+            case CHARGE -> { self.setChargeCounters(self.getChargeCounters() + 1); yield "charge"; }
+            case SLIME -> { self.setSlimeCounters(self.getSlimeCounters() + 1); yield "slime"; }
+            case STUDY -> { self.setStudyCounters(self.getStudyCounters() + 1); yield "study"; }
+            case WISH -> { self.setWishCounters(self.getWishCounters() + 1); yield "wish"; }
+            case PLUS_ONE_PLUS_ONE -> { self.setPlusOnePlusOneCounters(self.getPlusOnePlusOneCounters() + 1); yield "+1/+1"; }
+            case MINUS_ONE_MINUS_ONE -> {
+                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, self)) { yield null; }
+                self.setMinusOneMinusOneCounters(self.getMinusOneMinusOneCounters() + 1);
+                yield "-1/-1";
+            }
+            default -> throw new IllegalStateException("Unsupported counter type for PutCounterOnSelfEffect: " + effect.counterType());
+        };
+        if (counterName == null) return;
+
+        String logEntry = self.getCard().getName() + " gets a " + counterName + " counter.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
+    }
+
     @HandlesEffect(PutChargeCounterOnTargetPermanentEffect.class)
     private void resolvePutChargeCounterOnTargetPermanent(GameData gameData, StackEntry entry) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
@@ -310,6 +344,13 @@ public class PermanentCounterResolutionService {
         if (remaining > 0 && target.getSlimeCounters() > 0) {
             int remove = Math.min(remaining, target.getSlimeCounters());
             target.setSlimeCounters(target.getSlimeCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
+        if (remaining > 0 && target.getStudyCounters() > 0) {
+            int remove = Math.min(remaining, target.getStudyCounters());
+            target.setStudyCounters(target.getStudyCounters() - remove);
             totalRemoved += remove;
             remaining -= remove;
         }

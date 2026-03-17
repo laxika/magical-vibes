@@ -554,7 +554,8 @@ public class AbilityActivationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Integer> validDiscardIndices = collectDiscardIndicesForType(hand, discardCardTypeCost.requiredType());
             if (validDiscardIndices.isEmpty()) {
-                throw new IllegalStateException("Must discard a " + discardCardTypeCost.requiredType().name().toLowerCase() + " card to activate ability");
+                String typeLabel = discardCardTypeCost.requiredType() != null ? discardCardTypeCost.requiredType().name().toLowerCase() + " " : "";
+                throw new IllegalStateException("Must discard a " + typeLabel + "card to activate ability");
             }
             if (discardCardIndex == null) {
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetPermanentId, targetZone,
@@ -572,9 +573,11 @@ public class AbilityActivationService {
             int required = removeCounterCost.get().count();
             CounterType ct = removeCounterCost.get().counterType();
             int available = switch (ct) {
+                case CHARGE -> permanent.getChargeCounters();
                 case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
                 case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
                 case SLIME -> permanent.getSlimeCounters();
+                case STUDY -> permanent.getStudyCounters();
                 case WISH -> permanent.getWishCounters();
                 case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
             };
@@ -648,6 +651,9 @@ public class AbilityActivationService {
             int removedMinus = 0;
             int removedPlus = 0;
             switch (ct) {
+                case CHARGE -> {
+                    permanent.setChargeCounters(permanent.getChargeCounters() - count);
+                }
                 case MINUS_ONE_MINUS_ONE -> {
                     removedMinus = count;
                     permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - count);
@@ -658,6 +664,9 @@ public class AbilityActivationService {
                 }
                 case SLIME -> {
                     permanent.setSlimeCounters(permanent.getSlimeCounters() - count);
+                }
+                case STUDY -> {
+                    permanent.setStudyCounters(permanent.getStudyCounters() - count);
                 }
                 case WISH -> {
                     permanent.setWishCounters(permanent.getWishCounters() - count);
@@ -673,7 +682,13 @@ public class AbilityActivationService {
                 }
             }
             String counterTypeLabel;
-            if (ct == CounterType.WISH) {
+            if (ct == CounterType.CHARGE) {
+                counterTypeLabel = "charge";
+            } else if (ct == CounterType.SLIME) {
+                counterTypeLabel = "slime";
+            } else if (ct == CounterType.STUDY) {
+                counterTypeLabel = "study";
+            } else if (ct == CounterType.WISH) {
                 counterTypeLabel = "wish";
             } else if (removedMinus > 0 && removedPlus == 0) {
                 counterTypeLabel = "-1/-1";
@@ -1032,7 +1047,7 @@ public class AbilityActivationService {
             return validIndices;
         }
         for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i).getType() == requiredType) {
+            if (requiredType == null || hand.get(i).getType() == requiredType) {
                 validIndices.add(i);
             }
         }
@@ -1050,9 +1065,10 @@ public class AbilityActivationService {
                 requiredType
         );
         gameData.interaction.beginCardChoice(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE, playerId, new HashSet<>(validDiscardIndices), null);
+        String typeLabel = requiredType != null ? requiredType.name().toLowerCase() + " " : "";
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
                 validDiscardIndices,
-                "Choose a " + requiredType.name().toLowerCase() + " card to discard as an activation cost."
+                "Choose a " + typeLabel + "card to discard as an activation cost."
         ));
     }
 
@@ -1065,7 +1081,8 @@ public class AbilityActivationService {
         List<Integer> validDiscardIndices = collectDiscardIndicesForType(hand, requiredType);
         Set<Integer> validSet = new HashSet<>(validDiscardIndices);
         if (!validSet.contains(discardCardIndex)) {
-            throw new IllegalStateException("Must discard a " + requiredType.name().toLowerCase() + " card");
+            String typeLabel = requiredType != null ? requiredType.name().toLowerCase() + " " : "";
+            throw new IllegalStateException("Must discard a " + typeLabel + "card");
         }
 
         Card discarded = hand.remove((int) discardCardIndex);

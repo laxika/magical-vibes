@@ -61,6 +61,7 @@ function makePermanent(id: string, card: Card, overrides?: Partial<Permanent>): 
     chargeCounters: 0,
     phylacteryCounters: 0,
     slimeCounters: 0,
+    studyCounters: 0,
     wishCounters: 0,
     attackTargetId: null,
     markedDamage: 0,

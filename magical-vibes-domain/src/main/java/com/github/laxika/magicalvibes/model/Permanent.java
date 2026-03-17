@@ -62,6 +62,7 @@ public class Permanent {
     @Setter private int phylacteryCounters;
     @Setter private int awakeningCounters;
     @Setter private int slimeCounters;
+    @Setter private int studyCounters;
     @Setter private int wishCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
@@ -165,6 +166,7 @@ public class Permanent {
         this.phylacteryCounters = source.phylacteryCounters;
         this.awakeningCounters = source.awakeningCounters;
         this.slimeCounters = source.slimeCounters;
+        this.studyCounters = source.studyCounters;
         this.wishCounters = source.wishCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
