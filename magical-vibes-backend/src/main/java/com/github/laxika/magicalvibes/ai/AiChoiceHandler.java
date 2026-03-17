@@ -258,6 +258,23 @@ class AiChoiceHandler {
             return;
         }
 
+        if (colorChoice.context() instanceof ColorChoiceContext.PermanentTypeChoice) {
+            // Pick the permanent type with the most cards in our graveyard
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of());
+            Map<CardType, Long> typeCounts = new HashMap<>();
+            for (CardType type : List.of(CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT, CardType.LAND, CardType.PLANESWALKER)) {
+                typeCounts.put(type, graveyard.stream().filter(c -> c.hasType(type)).count());
+            }
+            CardType bestType = typeCounts.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(CardType.CREATURE);
+            log.info("AI: Choosing permanent type {} in game {}", bestType.name(), gameId);
+            final String typeName = bestType.name();
+            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, typeName)));
+            return;
+        }
+
         if (colorChoice.context() instanceof ColorChoiceContext.ExileByNameChoice ctx) {
             UUID targetId = ctx.targetPlayerId();
             List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());
