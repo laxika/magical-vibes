@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
@@ -265,7 +266,36 @@ public class CombatSimulator {
             }
         }
 
+        // Enforce "must be blocked by all creatures" (Lure / Prized Unicorn):
+        // any blocker that can block a lure attacker MUST do so.
+        List<CreatureInfo> lureAttackers = attackerInfos.stream()
+                .filter(a -> hasLureEffect(gameData, a.perm))
+                .toList();
+        if (!lureAttackers.isEmpty()) {
+            for (CreatureInfo blocker : blockerInfos) {
+                if (blockerUsed[blocker.index]) continue;
+                for (CreatureInfo lureAttacker : lureAttackers) {
+                    if (blockerUsed[blocker.index]) break;
+                    if (!canBlock(gameData, blocker, lureAttacker)) continue;
+                    // Check if this blocker is already assigned to this lure attacker
+                    boolean alreadyAssigned = assignments.stream()
+                            .anyMatch(a -> a[0] == blocker.index && a[1] == lureAttacker.index);
+                    if (!alreadyAssigned) {
+                        assignments.add(new int[]{blocker.index, lureAttacker.index});
+                        blockerUsed[blocker.index] = true;
+                    }
+                }
+            }
+        }
+
         return assignments;
+    }
+
+    private boolean hasLureEffect(GameData gameData, Permanent attacker) {
+        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance);
+        if (hasOnCard) return true;
+        return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
     }
 
     /**
