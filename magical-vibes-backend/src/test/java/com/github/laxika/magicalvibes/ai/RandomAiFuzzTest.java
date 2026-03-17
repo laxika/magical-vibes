@@ -3,16 +3,13 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
-import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -56,8 +53,6 @@ class RandomAiFuzzTest {
     private static final long POLL_INTERVAL_MS = 200;
     private static final long MAX_GAME_DURATION_MS = 300_000;
     private static final long AI_DECISION_DELAY_MS = 10;
-    /** After this many consecutive same-states, force-unstick the game instead of failing. */
-    private static final int UNSTICK_THRESHOLD = 15;
 
     private static final Map<CardColor, CardPrinting> BASIC_LAND_PRINTINGS = new EnumMap<>(CardColor.class);
     private static List<CardPrinting> allNonLandPrintings;
@@ -68,24 +63,23 @@ class RandomAiFuzzTest {
         Long fixedSeed = Long.getLong("fuzzSeed");
 
         int passed = 0;
-        int unstickCount = 0;
         for (int game = 1; game <= gameCount; game++) {
             long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
             System.out.printf("=== Game #%d/%d  seed=%d ===%n", game, gameCount, seed);
             long start = System.currentTimeMillis();
-            unstickCount += runOneGame(game, new Random(seed));
+            runOneGame(game, new Random(seed));
             long elapsed = System.currentTimeMillis() - start;
             System.out.printf("=== Game #%d completed in %d ms ===%n%n", game, elapsed);
             passed++;
         }
-        System.out.printf("All %d fuzz games passed (%d unstick interventions).%n", passed, unstickCount);
+        System.out.printf("All %d fuzz games passed.%n", passed);
     }
 
     // ------------------------------------------------------------------
-    // Game lifecycle — returns number of unstick interventions
+    // Game lifecycle
     // ------------------------------------------------------------------
 
-    private int runOneGame(int gameNumber, Random rng) throws Exception {
+    private void runOneGame(int gameNumber, Random rng) throws Exception {
         // 1. Bootstrap the full service graph via the test harness
         GameTestHarness harness = new GameTestHarness();
         initializeCardPool();
@@ -114,7 +108,6 @@ class RandomAiFuzzTest {
         assignDeck(gd, player2.getId(), deck2);
 
         // 4. Replace the harness's FakeConnections with Random AI connections
-        //    Keep references to fake connections for unstick fallback
         FakeConnection fakeConn1 = harness.getConn1();
         FakeConnection fakeConn2 = harness.getConn2();
         sessionManager.unregisterSession(fakeConn1.getId());
@@ -147,7 +140,6 @@ class RandomAiFuzzTest {
         // 6. Poll until the game finishes (or gets stuck)
         String lastFingerprint = "";
         int sameCount = 0;
-        int unstickCount = 0;
         long startTime = System.currentTimeMillis();
 
         while (gd.status != GameStatus.FINISHED) {
@@ -163,17 +155,6 @@ class RandomAiFuzzTest {
             String fingerprint = computeFingerprint(gd, player1.getId(), player2.getId());
             if (fingerprint.equals(lastFingerprint)) {
                 sameCount++;
-
-                // Try to unstick the game by force-sending a response for awaited input.
-                // This handles a known engine issue where AVAILABLE_BLOCKERS messages
-                // sometimes don't reach the AI connection.
-                if (sameCount == UNSTICK_THRESHOLD) {
-                    if (tryUnstick(gd, player1, player2, messageHandler, aiConn1, aiConn2)) {
-                        unstickCount++;
-                        sameCount = 0;
-                        continue;
-                    }
-                }
 
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
                     dumpGameState(gameNumber, gd, player1, player2);
@@ -191,38 +172,6 @@ class RandomAiFuzzTest {
         // 7. Clean up executor threads
         aiConn1.close();
         aiConn2.close();
-        return unstickCount;
-    }
-
-    /**
-     * Attempts to unstick the game by force-sending a response for the current awaited input.
-     * Returns true if an intervention was made.
-     */
-    private boolean tryUnstick(GameData gd, Player p1, Player p2,
-                               MessageHandler messageHandler,
-                               AiConnection aiConn1, AiConnection aiConn2) {
-        synchronized (gd) {
-            if (!gd.interaction.isAwaitingInput()) {
-                return false;
-            }
-
-            // Determine which player needs to respond
-            if (gd.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)
-                    && gd.interaction.currentContext() instanceof InteractionContext.BlockerDeclaration bd) {
-                UUID defenderId = bd.defenderId();
-                AiConnection conn = defenderId.equals(p1.getId()) ? aiConn1 : aiConn2;
-                System.err.printf("  [UNSTICK] Force-sending empty blockers for %s on turn %d%n",
-                        defenderId.equals(p1.getId()) ? p1.getUsername() : p2.getUsername(),
-                        gd.turnNumber);
-                try {
-                    messageHandler.handleDeclareBlockers(conn, new DeclareBlockersRequest(List.of()));
-                } catch (Exception e) {
-                    System.err.println("  [UNSTICK] Empty blockers also rejected: " + e.getMessage());
-                }
-                return true;
-            }
-        }
-        return false;
     }
 
     // ------------------------------------------------------------------
