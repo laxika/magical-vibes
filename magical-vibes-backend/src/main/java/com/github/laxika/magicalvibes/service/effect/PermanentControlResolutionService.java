@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSour
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentWhileSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
@@ -806,6 +808,48 @@ public class PermanentControlResolutionService {
         if (effect.grantedSubtype() != null && !target.getGrantedSubtypes().contains(effect.grantedSubtype())) {
             target.getGrantedSubtypes().add(effect.grantedSubtype());
             String subtypeLog = target.getCard().getName() + " becomes a " + effect.grantedSubtype().getDisplayName() + " in addition to its other types.";
+            gameBroadcastService.logAndBroadcast(gameData, subtypeLog);
+        }
+    }
+
+    @HandlesEffect(GainControlOfTargetPermanentWhileSourceEffect.class)
+    private void resolveGainControlOfTargetPermanentWhileSource(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) return;
+
+        // Per ruling: if you lose control of the source permanent before this resolves,
+        // the ability resolves with no effect.
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            String logEntry = entry.getCard().getName() + "'s ability has no effect (source left the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+        UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+        if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
+            String logEntry = entry.getCard().getName() + "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (oldController != null && !oldController.equals(entry.getControllerId())) {
+            creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
+            gameData.sourceDependentStolenCreatures.put(target.getId(), sourcePermanentId);
+        }
+    }
+
+    @HandlesEffect(GrantSubtypeToTargetCreatureEffect.class)
+    private void resolveGrantSubtypeToTargetCreature(GameData gameData, StackEntry entry, GrantSubtypeToTargetCreatureEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) return;
+
+        if (!target.getGrantedSubtypes().contains(effect.subtype())) {
+            target.getGrantedSubtypes().add(effect.subtype());
+            String subtypeLog = target.getCard().getName() + " becomes a " + effect.subtype().getDisplayName() + " in addition to its other types.";
             gameBroadcastService.logAndBroadcast(gameData, subtypeLog);
         }
     }

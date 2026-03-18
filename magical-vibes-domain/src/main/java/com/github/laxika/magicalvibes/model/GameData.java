@@ -109,6 +109,9 @@ public class GameData {
     public final Set<UUID> untilEndOfTurnStolenCreatures = ConcurrentHashMap.newKeySet();
     public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
     public final Set<UUID> permanentControlStolenCreatures = ConcurrentHashMap.newKeySet();
+    /** Maps stolen creature ID → source permanent ID for "gain control for as long as you control [source]" effects.
+     *  When the source permanent leaves the battlefield or changes controllers, the stolen creature is returned. */
+    public final Map<UUID, UUID> sourceDependentStolenCreatures = new ConcurrentHashMap<>();
     public boolean endTurnRequested;
     public final Deque<PermanentChoiceContext.DeathTriggerTarget> pendingDeathTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
@@ -474,6 +477,7 @@ public class GameData {
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
+        copy.sourceDependentStolenCreatures.putAll(this.sourceDependentStolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) -> {

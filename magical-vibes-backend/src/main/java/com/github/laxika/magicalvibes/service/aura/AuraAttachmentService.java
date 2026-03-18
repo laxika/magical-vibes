@@ -109,6 +109,23 @@ public class AuraAttachmentService {
                 continue;
             }
 
+            // Check source-dependent steals ("for as long as you control [source]")
+            UUID dependentSourceId = gameData.sourceDependentStolenCreatures.get(creatureId);
+            if (dependentSourceId != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, dependentSourceId);
+                if (source != null) {
+                    UUID sourceController = gameQueryService.findPermanentController(gameData, dependentSourceId);
+                    UUID creatureController = gameQueryService.findPermanentController(gameData, creatureId);
+                    if (sourceController != null && sourceController.equals(creatureController)) {
+                        if (includeUntilEndOfTurn) {
+                            gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
+                        }
+                        continue;
+                    }
+                }
+                gameData.sourceDependentStolenCreatures.remove(creatureId);
+            }
+
             if (gameQueryService.hasAuraWithEffect(gameData, creature, ControlEnchantedCreatureEffect.class)) {
                 if (includeUntilEndOfTurn) {
                     gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
@@ -156,6 +173,7 @@ public class AuraAttachmentService {
         gameData.enchantmentDependentStolenCreatures.remove(creatureId);
         gameData.untilEndOfTurnStolenCreatures.remove(creatureId);
         gameData.permanentControlStolenCreatures.remove(creatureId);
+        gameData.sourceDependentStolenCreatures.remove(creatureId);
     }
 }
 
