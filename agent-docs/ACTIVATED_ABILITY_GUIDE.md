@@ -29,6 +29,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_WHILE_ATTACKING` | Activate only if this creature is attacking (checks `permanent.isAttacking()`) |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
+| `MORBID` | Activate only if a creature died this turn (checks `gameQueryService.isMorbidMet()`) |
 | `POWER_4_OR_GREATER` | Activate only if this creature's power is 4 or greater (checks effective power incl. static bonuses) |
 
 ---

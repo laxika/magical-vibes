@@ -769,7 +769,7 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService);
-        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService);
+        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         return null;
     }
 
@@ -924,6 +924,11 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.METALCRAFT) {
                 if (!gameQueryService.isMetalcraftMet(gameData, playerId)) {
                     throw new IllegalStateException("Metalcraft — activate only if you control three or more artifacts");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.MORBID) {
+                if (!gameQueryService.isMorbidMet(gameData)) {
+                    throw new IllegalStateException("Morbid — activate only if a creature died this turn");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING) {

@@ -24,14 +24,23 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final TriggerCollectionService triggerCollectionService;
+    private final UUID sourcePermanentId;
 
     public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, GameQueryService gameQueryService,
                                            GameBroadcastService gameBroadcastService,
                                            TriggerCollectionService triggerCollectionService) {
+        this(cost, gameQueryService, gameBroadcastService, triggerCollectionService, null);
+    }
+
+    public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, GameQueryService gameQueryService,
+                                           GameBroadcastService gameBroadcastService,
+                                           TriggerCollectionService triggerCollectionService,
+                                           UUID sourcePermanentId) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
+        this.sourcePermanentId = sourcePermanentId;
     }
 
     @Override public CardEffect costEffect() { return cost; }
@@ -51,6 +60,7 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> !p.isTapped())
+                .filter(p -> !cost.excludeSource() || !p.getId().equals(sourcePermanentId))
                 .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cost.filter()))
                 .map(Permanent::getId)
                 .toList();
@@ -60,6 +70,9 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (chosen.isTapped()) {
             throw new IllegalStateException("Permanent is already tapped");
+        }
+        if (cost.excludeSource() && chosen.getId().equals(sourcePermanentId)) {
+            throw new IllegalStateException("Cannot tap the source permanent for this cost");
         }
         if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, cost.filter())) {
             throw new IllegalStateException("Permanent does not match the required predicate");
