@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypeP
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.ValidTargetService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

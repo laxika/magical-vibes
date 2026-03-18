@@ -82,7 +82,7 @@ import com.github.laxika.magicalvibes.service.turn.AutoPassService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
-import com.github.laxika.magicalvibes.service.ValidTargetService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
 import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;

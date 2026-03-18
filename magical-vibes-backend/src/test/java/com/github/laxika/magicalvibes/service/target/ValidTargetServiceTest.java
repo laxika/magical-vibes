@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.target;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;

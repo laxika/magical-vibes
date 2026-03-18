@@ -63,7 +63,7 @@ import java.util.Map;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.LoginService;
-import com.github.laxika.magicalvibes.service.ValidTargetService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
