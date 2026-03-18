@@ -113,6 +113,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapSubtypeBoost(gameData, playerId, permanentIds);
         } else if (gameData.pendingCapriciousEfreetState != null) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
+        } else if (gameData.pendingPileSeparation) {
+            handlePileSeparation(gameData, permanentIds);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }
@@ -618,5 +620,9 @@ public class MultiPermanentChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {
+        destructionResolutionService.completePileSeparationStep1(gameData, permanentIds);
     }
 }

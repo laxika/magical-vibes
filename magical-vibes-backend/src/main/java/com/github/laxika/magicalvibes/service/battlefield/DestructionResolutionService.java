@@ -48,6 +48,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -1300,5 +1302,123 @@ public class DestructionResolutionService {
         String logEntry = target.getCard().getName() + " will be destroyed at the beginning of the next end step.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} scheduled for destruction at end step", gameData.id, target.getCard().getName());
+    }
+
+    /**
+     * Resolves a {@link SeparatePermanentsIntoPilesAndSacrificeEffect}. The controller
+     * of the ability separates all permanents the target player controls into two piles,
+     * then the target player chooses which pile to sacrifice.
+     */
+    @HandlesEffect(SeparatePermanentsIntoPilesAndSacrificeEffect.class)
+    void resolveSeparatePermanentsIntoPilesAndSacrifice(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+        UUID controllerId = entry.getControllerId();
+
+        List<Permanent> permanents = gameData.playerBattlefields.get(targetPlayerId);
+        if (permanents == null || permanents.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " has no permanents to separate.");
+            log.info("Game {} - {} has no permanents to separate", gameData.id, playerName);
+            return;
+        }
+
+        List<UUID> allPermanentIds = permanents.stream().map(Permanent::getId).toList();
+
+        // Store pile separation state
+        gameData.pendingPileSeparation = true;
+        gameData.pendingPileSeparationControllerId = controllerId;
+        gameData.pendingPileSeparationTargetPlayerId = targetPlayerId;
+        gameData.pendingPileSeparationAllPermanentIds.clear();
+        gameData.pendingPileSeparationAllPermanentIds.addAll(allPermanentIds);
+        gameData.pendingPileSeparationPile1Ids.clear();
+        gameData.pendingPileSeparationPile2Ids.clear();
+
+        // Prompt the controller to choose permanents for pile 1
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, allPermanentIds,
+                allPermanentIds.size(),
+                "Separate permanents into two piles. Select permanents for Pile 1 (unselected form Pile 2).");
+    }
+
+    /**
+     * Completes step 1 of pile separation: the controller has assigned permanents to pile 1.
+     * Now prompt the target player to choose which pile to sacrifice.
+     */
+    public void completePileSeparationStep1(GameData gameData, List<UUID> pile1Ids) {
+        UUID targetPlayerId = gameData.pendingPileSeparationTargetPlayerId;
+
+        gameData.pendingPileSeparationPile1Ids.addAll(pile1Ids);
+        // Pile 2 is everything not in pile 1
+        for (UUID permId : gameData.pendingPileSeparationAllPermanentIds) {
+            if (!pile1Ids.contains(permId)) {
+                gameData.pendingPileSeparationPile2Ids.add(permId);
+            }
+        }
+
+        // Build pile descriptions for the prompt
+        String pile1Desc = buildPileDescription(gameData, gameData.pendingPileSeparationPile1Ids);
+        String pile2Desc = buildPileDescription(gameData, gameData.pendingPileSeparationPile2Ids);
+
+        String controllerName = gameData.playerIdToName.get(gameData.pendingPileSeparationControllerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                controllerName + " separates permanents into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + ".");
+
+        // Prompt target player to choose which pile to sacrifice
+        String prompt = "Choose a pile to sacrifice. Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, targetPlayerId, List.of(), prompt));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Completes step 2 of pile separation: the target player has chosen which pile to sacrifice.
+     *
+     * @param accepted true = sacrifice pile 1, false = sacrifice pile 2
+     */
+    public void completePileSeparationStep2(GameData gameData, boolean accepted) {
+        List<UUID> pileToSacrifice = accepted
+                ? new ArrayList<>(gameData.pendingPileSeparationPile1Ids)
+                : new ArrayList<>(gameData.pendingPileSeparationPile2Ids);
+        String pileName = accepted ? "Pile 1" : "Pile 2";
+
+        UUID targetPlayerId = gameData.pendingPileSeparationTargetPlayerId;
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        // Clean up pending state
+        gameData.pendingPileSeparation = false;
+        gameData.pendingPileSeparationControllerId = null;
+        gameData.pendingPileSeparationTargetPlayerId = null;
+        gameData.pendingPileSeparationAllPermanentIds.clear();
+        gameData.pendingPileSeparationPile1Ids.clear();
+        gameData.pendingPileSeparationPile2Ids.clear();
+
+        String sacrificedDesc = buildPileDescription(gameData, pileToSacrifice);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " sacrifices " + pileName + ": " + sacrificedDesc + ".");
+
+        // Sacrifice all permanents in the chosen pile
+        for (UUID permId : pileToSacrifice) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+            }
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    private String buildPileDescription(GameData gameData, List<UUID> permanentIds) {
+        if (permanentIds.isEmpty()) {
+            return "empty";
+        }
+        List<String> names = new ArrayList<>();
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                names.add(perm.getCard().getName());
+            }
+        }
+        return String.join(", ", names);
     }
 }

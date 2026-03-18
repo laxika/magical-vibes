@@ -415,6 +415,12 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | X-cost mass destroy (combat damage gated) | `s/SteelHellkite.java` | BoostSelfEffect pump + DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect with maxActivationsPerTurn=1 — X-cost, once per turn, only affects damaged player's permanents |
 | Loyalty (no target) | `a/AjaniOutlandChaperone.java` | `(+1, effects, false, description)` |
 | Loyalty (with target filter) | `a/AjaniOutlandChaperone.java` | `(-2, effects, true, description, filter)` |
+
+## Planeswalkers
+
+| Pattern | Reference | Notes |
+|---------|-----------|-------|
+| Planeswalker with discard/sacrifice/pile separation | `l/LilianaOfTheVeil.java` | +1 EachPlayerDiscardsEffect, -2 SacrificeCreatureEffect (targets player), -6 SeparatePermanentsIntoPilesAndSacrificeEffect |
 | Variable loyalty (-X) | `c/ChandraNalaar.java` | `ActivatedAbility.variableLoyaltyAbility(effects, desc, filter)` — loyalty cost is -X chosen by player, X stored in xValue |
 | Multi-target tap ability (equip mover) | `b/BrassSquire.java` | `ActivatedAbility(true, null, effects, desc, multiTargetFilters, 2, 2)` — tap to attach Equipment to creature, instant speed, uses `AttachTargetEquipmentToTargetCreatureEffect` |
 | Transform DFC | `b/BloodlineKeeper.java` | Front face with `setBackFaceCard(new LordOfLineage())` + `getBackFaceClassName()` override. Activated ability with `TransformSelfEffect` + subtype count restriction (`CardSubtype.VAMPIRE, 5`). Back face is a separate Card subclass (`LordOfLineage`) |

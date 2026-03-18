@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
@@ -76,6 +77,7 @@ public class MayAbilityHandlerService {
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
+    private final DestructionResolutionService destructionResolutionService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -89,6 +91,13 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMayAbilityChoice();
+
+        // Pile separation (Liliana of the Veil ultimate): target player chooses which pile to sacrifice
+        if (gameData.pendingPileSeparation) {
+            destructionResolutionService.completePileSeparationStep2(gameData, accepted);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         // CR 603.5: resolution-time "you may" choice for triggered abilities on the stack.
         if (gameData.resolvingMayEffectFromStack) {

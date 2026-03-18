@@ -164,6 +164,13 @@ public class GameData {
     public String pendingDestroyRestSourceName;
     public boolean pendingAwakeningCounterPlacement;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
+    /** Pile separation state (Liliana of the Veil ultimate): controller divides, target player chooses pile to sacrifice. */
+    public boolean pendingPileSeparation;
+    public UUID pendingPileSeparationControllerId;
+    public UUID pendingPileSeparationTargetPlayerId;
+    public final List<UUID> pendingPileSeparationAllPermanentIds = Collections.synchronizedList(new ArrayList<>());
+    public final List<UUID> pendingPileSeparationPile1Ids = Collections.synchronizedList(new ArrayList<>());
+    public final List<UUID> pendingPileSeparationPile2Ids = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
@@ -421,6 +428,12 @@ public class GameData {
         copy.pendingDestroyRestSourceName = this.pendingDestroyRestSourceName;
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
         copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
+        copy.pendingPileSeparation = this.pendingPileSeparation;
+        copy.pendingPileSeparationControllerId = this.pendingPileSeparationControllerId;
+        copy.pendingPileSeparationTargetPlayerId = this.pendingPileSeparationTargetPlayerId;
+        copy.pendingPileSeparationAllPermanentIds.addAll(this.pendingPileSeparationAllPermanentIds);
+        copy.pendingPileSeparationPile1Ids.addAll(this.pendingPileSeparationPile1Ids);
+        copy.pendingPileSeparationPile2Ids.addAll(this.pendingPileSeparationPile2Ids);
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);
