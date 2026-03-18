@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
@@ -639,6 +640,12 @@ public class GameBroadcastService {
                         Card imprinted = perm.getCard().getImprintedCard();
                         if (imprinted != null) {
                             forbidden.add(imprinted.getName());
+                        }
+                    }
+                    if (effect instanceof SpellsWithChosenNameCantBeCastEffect) {
+                        String chosenName = perm.getChosenName();
+                        if (chosenName != null) {
+                            forbidden.add(chosenName);
                         }
                     }
                 }

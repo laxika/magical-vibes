@@ -879,6 +879,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `CantCastSpellsWithSameNameAsExiledCardEffect` | `()` | no player can cast spells with the same name as the card exiled by the source permanent (static, Exclusion Ritual) |
+| `SpellsWithChosenNameCantBeCastEffect` | `()` | no player can cast spells with the same name as the chosen name on the source permanent (static, Nevermore) |
 | `CantCastSpellTypeEffect` | `(Set<CardType> restrictedTypes)` | controller can't cast spells of specified types (static) |
 | `CantSearchLibrariesEffect` | `()` | players can't search libraries; any player may pay {2} to ignore until end of turn (static, Leonin Arbiter) |
 | `PlayersCannotDrawCardsEffect` | `()` | players can't draw cards (static, Omen Machine) |
