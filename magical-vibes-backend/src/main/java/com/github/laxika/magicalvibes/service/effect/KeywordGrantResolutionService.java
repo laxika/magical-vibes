@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
@@ -178,6 +182,39 @@ public class KeywordGrantResolutionService {
         String logEntry = target.getCard().getName() + " loses " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(), remove.scope());
+    }
+
+    @HandlesEffect(GrantFlashbackToGraveyardCardsEffect.class)
+    private void resolveGrantFlashbackToGraveyard(GameData gameData, StackEntry entry, GrantFlashbackToGraveyardCardsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard == null) {
+            return;
+        }
+
+        int count = 0;
+        for (Card card : graveyard) {
+            boolean matchesType = false;
+            for (CardType type : effect.cardTypes()) {
+                if (card.hasType(type)) {
+                    matchesType = true;
+                    break;
+                }
+            }
+            if (!matchesType) {
+                continue;
+            }
+            // Skip cards that already have a native flashback option
+            if (card.getCastingOption(FlashbackCast.class).isPresent()) {
+                continue;
+            }
+            gameData.cardsGrantedFlashbackUntilEndOfTurn.add(card.getId());
+            count++;
+        }
+
+        String logEntry = entry.getCard().getName() + " grants flashback to " + count + " card(s) in graveyard until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} grants flashback to {} graveyard card(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     @HandlesEffect(GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect.class)

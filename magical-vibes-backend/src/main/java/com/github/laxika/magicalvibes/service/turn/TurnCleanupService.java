@@ -87,6 +87,7 @@ public class TurnCleanupService {
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
     }
 
     /**

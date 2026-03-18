@@ -429,8 +429,15 @@ public class GameBroadcastService {
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
+            if (spellLimitReached || cantCastDueToAttack) {
+                continue;
+            }
+
             var flashback = card.getCastingOption(FlashbackCast.class);
-            if (flashback.isEmpty() || spellLimitReached || cantCastDueToAttack) {
+            boolean grantedFlashback = flashback.isEmpty()
+                    && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
+
+            if (flashback.isEmpty() && !grantedFlashback) {
                 continue;
             }
 
@@ -440,11 +447,14 @@ public class GameBroadcastService {
                 continue;
             }
 
-            var manaCostOpt = flashback.get().getCost(ManaCastingCost.class);
-            if (manaCostOpt.isEmpty()) {
+            // For granted flashback, the cost equals the card's mana cost
+            String manaCostStr = grantedFlashback
+                    ? card.getManaCost()
+                    : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
+            if (manaCostStr == null) {
                 continue;
             }
-            ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
+            ManaCost cost = new ManaCost(manaCostStr);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = getCastCostModifier(gameData, playerId, card);
             if (cost.canPay(pool, additionalCost)) {

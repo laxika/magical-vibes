@@ -815,8 +815,12 @@ public class SpellCastingService {
         }
 
         Card card = graveyard.get(graveyardCardIndex);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class)
-                .orElseThrow(() -> new IllegalStateException("Card does not have flashback"));
+        var flashbackOpt = card.getCastingOption(FlashbackCast.class);
+        boolean grantedFlashback = flashbackOpt.isEmpty()
+                && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
+        if (flashbackOpt.isEmpty() && !grantedFlashback) {
+            throw new IllegalStateException("Card does not have flashback");
+        }
 
         // Validate timing
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
@@ -828,10 +832,12 @@ public class SpellCastingService {
             throw new IllegalStateException("Cannot cast sorcery-speed flashback spell now");
         }
 
-        // Validate and pay flashback cost
-        String manaCostStr = flashback.getCost(ManaCastingCost.class)
-                .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))
-                .manaCost();
+        // Validate and pay flashback cost (granted flashback uses the card's mana cost)
+        String manaCostStr = grantedFlashback
+                ? card.getManaCost()
+                : flashbackOpt.get().getCost(ManaCastingCost.class)
+                        .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))
+                        .manaCost();
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
