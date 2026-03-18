@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.service.target;
 
-import com.github.laxika.magicalvibes.cards.a.Asceticism;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KarplusanStrider;
-import com.github.laxika.magicalvibes.cards.m.MirranCrusader;
-import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,17 +29,23 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
-import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -48,16 +54,56 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
-class TargetLegalityServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class TargetLegalityServiceTest {
 
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private TargetValidationService targetValidationService;
+
+    @InjectMocks
     private TargetLegalityService sut;
 
+    private GameData gd;
+    private UUID player1Id;
+    private UUID player2Id;
+
     @BeforeEach
-    void setUpService() {
-        TargetValidatorRegistry registry = new TargetValidatorRegistry();
-        TargetValidationService targetValidationService = new TargetValidationService(gqs, registry);
-        sut = new TargetLegalityService(gqs, targetValidationService);
+    void setUp() {
+        player1Id = UUID.randomUUID();
+        player2Id = UUID.randomUUID();
+        gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerIds.add(player1Id);
+        gd.playerIds.add(player2Id);
+        gd.playerIdToName.put(player1Id, "Player1");
+        gd.playerIdToName.put(player2Id, "Player2");
+        gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        gd.playerManaPools.put(player1Id, new ManaPool());
+        gd.playerManaPools.put(player2Id, new ManaPool());
+        gd.playerLifeTotals.put(player1Id, 20);
+        gd.playerLifeTotals.put(player2Id, 20);
+        gd.status = GameStatus.RUNNING;
+        gd.activePlayerId = player1Id;
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
     }
 
     // ===== Helpers =====
@@ -93,6 +139,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(playerId).add(perm);
+        lenient().when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
         return perm;
     }
 
@@ -105,7 +152,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when targetId is null")
         void throwsWhenTargetIdIsNull() {
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, null, null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, null, null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target a spell on the stack");
         }
@@ -113,7 +160,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when spell is not on the stack")
         void throwsWhenSpellNotOnStack() {
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, UUID.randomUUID(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, UUID.randomUUID(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be a spell on the stack");
         }
@@ -121,21 +168,21 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("accepts a spell on the stack")
         void acceptsSpellOnStack() {
-            Card spell = new GrizzlyBears();
-            StackEntry entry = new StackEntry(spell, player2.getId());
+            Card spell = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(spell, player2Id);
             gd.stack.add(entry);
 
-            sut.validateSpellTargetOnStack(gd, spell.getId(), null, player1.getId());
+            sut.validateSpellTargetOnStack(gd, spell.getId(), null, player1Id);
         }
 
         @Test
         @DisplayName("rejects an ability on the stack without HasTarget predicate")
         void rejectsAbilityWithoutHasTargetPredicate() {
-            Card source = new GrizzlyBears();
-            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player2.getId(), "test", List.of());
+            Card source = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be a spell on the stack");
         }
@@ -143,28 +190,28 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("accepts an ability on the stack when filter contains HasTarget predicate")
         void acceptsAbilityWithHasTargetPredicate() {
-            Card source = new GrizzlyBears();
-            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player2.getId(), "test", List.of());
+            Card source = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
             StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
                     new StackEntryHasTargetPredicate(), "error");
 
-            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1.getId());
+            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1Id);
         }
 
         @Test
         @DisplayName("throws when stack entry predicate does not match")
         void throwsWhenPredicateDoesNotMatch() {
-            Card spell = new GrizzlyBears();
-            StackEntry entry = new StackEntry(spell, player2.getId());
+            Card spell = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(spell, player2Id);
             gd.stack.add(entry);
 
             StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
                     new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL)),
                     "Must target an instant spell");
 
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, spell.getId(), filter, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, spell.getId(), filter, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target an instant spell");
         }
@@ -172,25 +219,25 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("passes when stack entry predicate matches")
         void passesWhenPredicateMatches() {
-            Card spell = new GrizzlyBears();
-            StackEntry entry = new StackEntry(spell, player2.getId());
+            Card spell = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(spell, player2Id);
             gd.stack.add(entry);
 
             StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
                     new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                     "Must target a creature spell");
 
-            sut.validateSpellTargetOnStack(gd, spell.getId(), filter, player1.getId());
+            sut.validateSpellTargetOnStack(gd, spell.getId(), filter, player1Id);
         }
 
         @Test
         @DisplayName("rejects triggered ability without HasTarget predicate")
         void rejectsTriggeredAbilityWithoutHasTargetPredicate() {
-            Card source = new GrizzlyBears();
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player2.getId(), "test", List.of());
+            Card source = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
-            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be a spell on the stack");
         }
@@ -198,8 +245,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("accepts triggered ability with HasTarget predicate nested in AllOf")
         void acceptsAbilityWithNestedHasTargetPredicate() {
-            Card source = new GrizzlyBears();
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player2.getId(), "test", List.of());
+            Card source = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
             StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
@@ -208,7 +255,18 @@ class TargetLegalityServiceTest extends BaseCardTest {
                             new StackEntryTypeInPredicate(Set.of(StackEntryType.TRIGGERED_ABILITY))
                     )), "error");
 
-            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1.getId());
+            sut.validateSpellTargetOnStack(gd, source.getId(), filter, player1Id);
+        }
+
+        @Test
+        @DisplayName("throws when HasTarget predicate present but target not found on stack")
+        void throwsWhenHasTargetPredicateButTargetNotOnStack() {
+            StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
+                    new StackEntryHasTargetPredicate(), "error");
+
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, UUID.randomUUID(), filter, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Target must be a spell or ability on the stack");
         }
     }
 
@@ -223,7 +281,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenTargetIsInvalid() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, UUID.randomUUID(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, UUID.randomUUID(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Invalid target");
         }
@@ -231,10 +289,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("passes when targeting a valid permanent")
         void passesWhenTargetingValidPermanent() {
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
 
-            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId());
+            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id);
         }
 
         @Test
@@ -242,17 +300,18 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void passesWhenTargetingPlayer() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
 
-            sut.validateSpellTargeting(gd, spell, player2.getId(), null, player1.getId());
+            sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id);
         }
 
         @Test
         @DisplayName("throws when target has shroud")
         void throwsWhenTargetHasShroud() {
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Shrouded Guy", CardColor.GREEN, Keyword.SHROUD));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has shroud and can't be targeted");
         }
@@ -260,11 +319,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when opponent's target has hexproof")
         void throwsWhenOpponentTargetHasHexproof() {
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(false);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.HEXPROOF)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
         }
@@ -272,21 +334,22 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("passes when own target has hexproof")
         void passesWhenOwnTargetHasHexproof() {
-            Permanent target = addPermanent(player1.getId(),
+            Permanent target = addPermanent(player1Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId());
+            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id);
         }
 
         @Test
         @DisplayName("throws when target has protection from spell color")
         void throwsWhenTargetHasProtectionFromSpellColor() {
-            // MirranCrusader has protection from BLACK and GREEN
-            Permanent target = addPermanent(player2.getId(), new MirranCrusader());
+            Permanent target = addPermanent(player2Id, createCreature("Crusader", CardColor.WHITE));
             Card spell = createTargetingSpell("Dark Bolt", CardColor.BLACK);
+            when(gameQueryService.hasProtectionFrom(gd, target, CardColor.BLACK)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has protection from black");
         }
@@ -294,11 +357,11 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when target can't be targeted by spell color")
         void throwsWhenTargetCantBeTargetedBySpellColor() {
-            // KarplusanStrider: CantBeTargetedBySpellColorsEffect for BLUE and BLACK
-            Permanent target = addPermanent(player2.getId(), new KarplusanStrider());
+            Permanent target = addPermanent(player2Id, createCreature("Strider", CardColor.GREEN));
             Card spell = createTargetingSpell("Blue Bolt", CardColor.BLUE);
+            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("can't be the target of blue spells");
         }
@@ -306,12 +369,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when opponent's creature has CantBeTargetOfSpellsOrAbilitiesEffect")
         void throwsWhenTargetHasCantBeTargetEffect() {
-            // Asceticism grants CantBeTargetOfSpellsOrAbilitiesEffect to own creatures
-            addPermanent(player2.getId(), new Asceticism());
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
         }
@@ -319,22 +382,20 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("passes when own creature has CantBeTargetOfSpellsOrAbilitiesEffect")
         void passesWhenOwnTargetHasCantBeTargetEffect() {
-            // Asceticism grants CantBeTargetOfSpellsOrAbilitiesEffect to own creatures
-            addPermanent(player1.getId(), new Asceticism());
-            Permanent target = addPermanent(player1.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId());
+            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id);
         }
 
         @Test
         @DisplayName("throws when player target has shroud")
         void throwsWhenPlayerTargetHasShroud() {
-            // TrueBeliever grants controller shroud
-            addPermanent(player2.getId(), new TrueBeliever());
             Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.playerHasShroud(gd, player2Id)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has shroud and can't be targeted");
         }
@@ -346,7 +407,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must target an opponent"));
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player1.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player1Id, null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target an opponent");
         }
@@ -358,20 +419,69 @@ class TargetLegalityServiceTest extends BaseCardTest {
             spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must target an opponent"));
 
-            sut.validateSpellTargeting(gd, spell, player2.getId(), null, player1.getId());
+            sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id);
         }
 
         @Test
         @DisplayName("validates target filter on permanent target")
         void validatesTargetFilter() {
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Artifact Blast", CardColor.RED);
             spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
+            doThrow(new IllegalStateException("Target must be an artifact"))
+                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
 
-            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId()))
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be an artifact");
+        }
+
+        @Test
+        @DisplayName("throws when target has protection from source card type")
+        void throwsWhenTargetHasProtectionFromSourceCardType() {
+            Permanent target = addPermanent(player2Id, createCreature("Protected", CardColor.WHITE));
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.hasProtectionFromSourceCardTypes(target, spell)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("has protection from");
+        }
+
+        @Test
+        @DisplayName("throws when target has protection from source subtype")
+        void throwsWhenTargetHasProtectionFromSourceSubtype() {
+            Permanent target = addPermanent(player2Id, createCreature("Protected", CardColor.WHITE));
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.hasProtectionFromSourceSubtypes(target, spell)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("has protection from source's subtype");
+        }
+
+        @Test
+        @DisplayName("throws when target can't be targeted by non-color sources")
+        void throwsWhenTargetCantBeTargetedByNonColorSources() {
+            Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, spell)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("can't be targeted by this source");
+        }
+
+        @Test
+        @DisplayName("throws when opponent player target has hexproof")
+        void throwsWhenOpponentPlayerTargetHasHexproof() {
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            when(gameQueryService.playerHasHexproof(gd, player2Id)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("has hexproof and can't be targeted");
         }
     }
 
@@ -384,23 +494,24 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("passes with valid permanent target")
         void passesWithValidTarget() {
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
 
-            sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability, List.of(),
+            sut.validateActivatedAbilityTargeting(gd, player1Id, ability, List.of(),
                     target.getId(), null, sourceCard, 0);
         }
 
         @Test
         @DisplayName("throws when target has shroud")
         void throwsWhenTargetHasShroud() {
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Shrouded", CardColor.GREEN, Keyword.SHROUD));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has shroud and can't be targeted");
@@ -409,12 +520,15 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when opponent's target has hexproof")
         void throwsWhenOpponentTargetHasHexproof() {
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(false);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.HEXPROOF)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
@@ -423,24 +537,26 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("passes when own target has hexproof")
         void passesWhenOwnTargetHasHexproof() {
-            Permanent target = addPermanent(player1.getId(),
+            Permanent target = addPermanent(player1Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability, List.of(),
+            sut.validateActivatedAbilityTargeting(gd, player1Id, ability, List.of(),
                     target.getId(), null, sourceCard, 0);
         }
 
         @Test
         @DisplayName("throws when opponent's target has CantBeTargetOfSpellsOrAbilitiesEffect")
         void throwsWhenTargetHasCantBeTargetEffect() {
-            addPermanent(player2.getId(), new Asceticism());
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
@@ -449,12 +565,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("validates ability target filter on permanent")
         void validatesAbilityTargetFilter() {
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test",
                     new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Target must be an artifact"));
+            doThrow(new IllegalStateException("Target must be an artifact"))
+                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
 
-            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be an artifact");
@@ -468,8 +586,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
                     new PlayerPredicateTargetFilter(
                             new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must target an opponent"));
 
-            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability,
-                    List.of(), player1.getId(), null, sourceCard, 0))
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                    List.of(), player1Id, null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target an opponent");
         }
@@ -482,8 +600,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
                     new PlayerPredicateTargetFilter(
                             new PlayerRelationPredicate(PlayerRelation.SELF), "Must target yourself"));
 
-            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability,
-                    List.of(), player2.getId(), null, sourceCard, 0))
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                    List.of(), player2Id, null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target yourself");
         }
@@ -491,14 +609,51 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when player target has shroud")
         void throwsWhenPlayerTargetHasShroud() {
-            addPermanent(player2.getId(), new TrueBeliever());
+            Card sourceCard = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
+            when(gameQueryService.playerHasShroud(gd, player2Id)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                    List.of(), player2Id, null, sourceCard, 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("has shroud and can't be targeted");
+        }
+
+        @Test
+        @DisplayName("throws when target can't be targeted by non-color sources")
+        void throwsWhenTargetCantBeTargetedByNonColorSources() {
+            Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
+            Card sourceCard = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, sourceCard)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                    List.of(), target.getId(), null, sourceCard, 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("can't be targeted by this source");
+        }
+
+        @Test
+        @DisplayName("passes when targetPermanentId is null")
+        void passesWhenTargetIsNull() {
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
 
-            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1.getId(), ability,
-                    List.of(), player2.getId(), null, sourceCard, 0))
+            sut.validateActivatedAbilityTargeting(gd, player1Id, ability, List.of(),
+                    null, null, sourceCard, 0);
+        }
+
+        @Test
+        @DisplayName("throws when opponent player target has hexproof")
+        void throwsWhenOpponentPlayerTargetHasHexproof() {
+            Card sourceCard = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
+            when(gameQueryService.playerHasHexproof(gd, player2Id)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                    List.of(), player2Id, null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("has shroud and can't be targeted");
+                    .hasMessageContaining("has hexproof and can't be targeted");
         }
     }
 
@@ -513,9 +668,9 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenTooFewTargets() {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 2, 3);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(p1.getId()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must target between 2 and 3 targets");
@@ -526,11 +681,11 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenTooManyTargets() {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
-            Permanent p2 = addPermanent(player2.getId(), new GrizzlyBears());
-            Permanent p3 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear1", CardColor.GREEN));
+            Permanent p2 = addPermanent(player2Id, createCreature("Bear2", CardColor.GREEN));
+            Permanent p3 = addPermanent(player2Id, createCreature("Bear3", CardColor.GREEN));
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(p1.getId(), p2.getId(), p3.getId()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must target between 1 and 2 targets");
@@ -541,9 +696,9 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenDuplicateTargets() {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 3);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(p1.getId(), p1.getId()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("All targets must be different");
@@ -555,7 +710,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 3);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability, null, source))
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability, null, source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must target between");
         }
@@ -565,10 +720,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void passesWithValidTargets() {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 3);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
-            Permanent p2 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear1", CardColor.GREEN));
+            Permanent p2 = addPermanent(player2Id, createCreature("Bear2", CardColor.GREEN));
 
-            sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(p1.getId(), p2.getId()), source);
         }
 
@@ -577,10 +732,11 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenPermanentTargetHasShroud() {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
-            Permanent p1 = addPermanent(player2.getId(),
+            Permanent p1 = addPermanent(player2Id,
                     createCreatureWithKeyword("Shrouded", CardColor.GREEN, Keyword.SHROUD));
+            when(gameQueryService.hasKeyword(gd, p1, Keyword.SHROUD)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(p1.getId()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has shroud and can't be targeted");
@@ -591,10 +747,13 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenOpponentPermanentHasHexproof() {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
-            Permanent p1 = addPermanent(player2.getId(),
+            Permanent p1 = addPermanent(player2Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
+            when(gameQueryService.hasKeyword(gd, p1, Keyword.SHROUD)).thenReturn(false);
+            when(gameQueryService.findPermanentController(gd, p1.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasKeyword(gd, p1, Keyword.HEXPROOF)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(p1.getId()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
@@ -605,10 +764,11 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void passesWhenOwnPermanentHasHexproof() {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
-            Permanent p1 = addPermanent(player1.getId(),
+            Permanent p1 = addPermanent(player1Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
+            when(gameQueryService.findPermanentController(gd, p1.getId())).thenReturn(player1Id);
 
-            sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(p1.getId()), source);
         }
 
@@ -618,7 +778,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             Card source = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(UUID.randomUUID()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Invalid target");
@@ -628,14 +788,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when player target has shroud")
         void throwsWhenPlayerTargetHasShroud() {
             Card source = createCreature("Source", CardColor.RED);
-            addPermanent(player2.getId(), new TrueBeliever());
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test",
                     List.of(new PlayerPredicateTargetFilter(
                             new PlayerRelationPredicate(PlayerRelation.ANY), "target player")),
                     1, 1);
+            when(gameQueryService.playerHasShroud(gd, player2Id)).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
-                    List.of(player2.getId()), source))
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(player2Id), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has shroud and can't be targeted");
         }
@@ -649,8 +809,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
                             new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must target an opponent")),
                     1, 1);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
-                    List.of(player1.getId()), source))
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(player1Id), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target an opponent");
         }
@@ -664,8 +824,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
                             new PlayerRelationPredicate(PlayerRelation.SELF), "Must target yourself")),
                     1, 1);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
-                    List.of(player2.getId()), source))
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(player2Id), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target yourself");
         }
@@ -674,11 +834,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when opponent's creature has CantBeTargetOfSpellsOrAbilitiesEffect")
         void throwsWhenTargetHasCantBeTargetEffect() {
             Card source = createCreature("Source", CardColor.RED);
-            addPermanent(player2.getId(), new Asceticism());
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
@@ -688,16 +849,47 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("validates per-position target filter")
         void validatesPerPositionFilter() {
             Card source = createCreature("Source", CardColor.RED);
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test",
                     List.of(new PermanentPredicateTargetFilter(
                             new PermanentIsArtifactPredicate(), "Target must be an artifact")),
                     1, 1);
+            doThrow(new IllegalStateException("Target must be an artifact"))
+                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
 
-            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1.getId(), ability,
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be an artifact");
+        }
+
+        @Test
+        @DisplayName("throws when target can't be targeted by non-color sources")
+        void throwsWhenTargetCantBeTargetedByNonColorSources() {
+            Card source = createCreature("Source", CardColor.RED);
+            Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, source)).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(target.getId()), source))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("can't be targeted by this source");
+        }
+
+        @Test
+        @DisplayName("throws when player position filter gets non-player target")
+        void throwsWhenPlayerPositionFilterGetsNonPlayerTarget() {
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test",
+                    List.of(new PlayerPredicateTargetFilter(
+                            new PlayerRelationPredicate(PlayerRelation.ANY), "target player")),
+                    1, 1);
+
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(UUID.randomUUID()), source))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Invalid player target");
         }
     }
 
@@ -722,9 +914,9 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when too few targets")
         void throwsWhenTooFewTargets() {
             Card spell = createMultiTargetSpell(2, 3);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
 
-            assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell, List.of(p1.getId()), player1.getId()))
+            assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell, List.of(p1.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must target between 2 and 3 targets");
         }
@@ -733,12 +925,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when too many targets")
         void throwsWhenTooManyTargets() {
             Card spell = createMultiTargetSpell(1, 2);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
-            Permanent p2 = addPermanent(player2.getId(), new GrizzlyBears());
-            Permanent p3 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear1", CardColor.GREEN));
+            Permanent p2 = addPermanent(player2Id, createCreature("Bear2", CardColor.GREEN));
+            Permanent p3 = addPermanent(player2Id, createCreature("Bear3", CardColor.GREEN));
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(p1.getId(), p2.getId(), p3.getId()), player1.getId()))
+                    List.of(p1.getId(), p2.getId(), p3.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Must target between 1 and 2 targets");
         }
@@ -747,10 +939,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when targets are duplicated")
         void throwsWhenDuplicateTargets() {
             Card spell = createMultiTargetSpell(1, 3);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(p1.getId(), p1.getId()), player1.getId()))
+                    List.of(p1.getId(), p1.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("All targets must be different");
         }
@@ -761,7 +953,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             Card spell = createMultiTargetSpell(1, 2);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(UUID.randomUUID()), player1.getId()))
+                    List.of(UUID.randomUUID()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Invalid target");
         }
@@ -769,7 +961,6 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("throws when player target not allowed by spell effects")
         void throwsWhenPlayerTargetNotAllowed() {
-            // Spell with no effects that allow both player + permanent targeting
             Card spell = new Card();
             spell.setName("Creature Only");
             spell.setType(CardType.SORCERY);
@@ -778,7 +969,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             spell.target(null, 1, 2);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(player2.getId()), player1.getId()))
+                    List.of(player2Id), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("This spell cannot target players");
         }
@@ -787,10 +978,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("passes with valid creature targets")
         void passesWithValidCreatureTargets() {
             Card spell = createMultiTargetSpell(1, 3);
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
-            Permanent p2 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear1", CardColor.GREEN));
+            Permanent p2 = addPermanent(player2Id, createCreature("Bear2", CardColor.GREEN));
+            when(gameQueryService.isCreature(gd, p1)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, p2)).thenReturn(true);
 
-            sut.validateMultiSpellTargets(gd, spell, List.of(p1.getId(), p2.getId()), player1.getId());
+            sut.validateMultiSpellTargets(gd, spell, List.of(p1.getId(), p2.getId()), player1Id);
         }
 
         @Test
@@ -798,18 +991,20 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void passesWhenTargetingPlayerWithAllowedSpell() {
             Card spell = createMultiTargetSpell(1, 2);
 
-            sut.validateMultiSpellTargets(gd, spell, List.of(player2.getId()), player1.getId());
+            sut.validateMultiSpellTargets(gd, spell, List.of(player2Id), player1Id);
         }
 
         @Test
         @DisplayName("throws when target has shroud")
         void throwsWhenTargetHasShroud() {
             Card spell = createMultiTargetSpell(1, 2);
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Shrouded", CardColor.GREEN, Keyword.SHROUD));
+            when(gameQueryService.isCreature(gd, target)).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(target.getId()), player1.getId()))
+                    List.of(target.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has shroud and can't be targeted");
         }
@@ -818,11 +1013,15 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when opponent's target has hexproof")
         void throwsWhenOpponentTargetHasHexproof() {
             Card spell = createMultiTargetSpell(1, 2);
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
+            when(gameQueryService.isCreature(gd, target)).thenReturn(true);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(false);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.HEXPROOF)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(target.getId()), player1.getId()))
+                    List.of(target.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
         }
@@ -832,10 +1031,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenTargetHasProtectionFromColor() {
             Card spell = createMultiTargetSpell(1, 2);
             spell.setColor(CardColor.BLACK);
-            Permanent target = addPermanent(player2.getId(), new MirranCrusader());
+            Permanent target = addPermanent(player2Id, createCreature("Crusader", CardColor.WHITE));
+            when(gameQueryService.isCreature(gd, target)).thenReturn(true);
+            when(gameQueryService.hasProtectionFrom(gd, target, CardColor.BLACK)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(target.getId()), player1.getId()))
+                    List.of(target.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has protection from black");
         }
@@ -845,10 +1046,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void throwsWhenTargetCantBeTargetedBySpellColor() {
             Card spell = createMultiTargetSpell(1, 2);
             spell.setColor(CardColor.BLUE);
-            Permanent target = addPermanent(player2.getId(), new KarplusanStrider());
+            Permanent target = addPermanent(player2Id, createCreature("Strider", CardColor.GREEN));
+            when(gameQueryService.isCreature(gd, target)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.BLUE)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(target.getId()), player1.getId()))
+                    List.of(target.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("can't be the target of blue spells");
         }
@@ -861,10 +1064,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
             artifact.setName("Test Artifact");
             artifact.setType(CardType.ARTIFACT);
             artifact.setManaCost("{1}");
-            Permanent target = addPermanent(player2.getId(), artifact);
+            Permanent target = addPermanent(player2Id, artifact);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(target.getId()), player1.getId()))
+                    List.of(target.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("is not a creature");
         }
@@ -873,10 +1076,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when player target has shroud")
         void throwsWhenPlayerTargetHasShroud() {
             Card spell = createMultiTargetSpell(1, 2);
-            addPermanent(player2.getId(), new TrueBeliever());
+            when(gameQueryService.playerHasShroud(gd, player2Id)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(player2.getId()), player1.getId()))
+                    List.of(player2Id), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has shroud and can't be targeted");
         }
@@ -891,12 +1094,37 @@ class TargetLegalityServiceTest extends BaseCardTest {
             artifact.setName("Test Artifact");
             artifact.setType(CardType.ARTIFACT);
             artifact.setManaCost("{1}");
-            Permanent target = addPermanent(player2.getId(), artifact);
+            Permanent target = addPermanent(player2Id, artifact);
+            doThrow(new IllegalStateException("Target must be a creature"))
+                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
-                    List.of(target.getId()), player1.getId()))
+                    List.of(target.getId()), player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be a creature");
+        }
+
+        @Test
+        @DisplayName("validates per-position filter over card-level filter")
+        void validatesPerPositionFilterOverCardFilter() {
+            Card spell = new Card();
+            spell.setName("Per-Position Spell");
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost("{R}");
+            spell.setColor(CardColor.RED);
+            spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature"));
+            spell.target(new PermanentPredicateTargetFilter(
+                    new PermanentIsArtifactPredicate(), "Target must be an artifact"))
+                    .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            doThrow(new IllegalStateException("Target must be an artifact"))
+                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+
+            assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
+                    List.of(target.getId()), player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Target must be an artifact");
         }
     }
 
@@ -909,8 +1137,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false for non-targeting entry")
         void returnsFalseForNonTargetingEntry() {
-            Card card = new GrizzlyBears();
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1.getId(), "test", List.of());
+            Card card = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id, "test", List.of());
             entry.setNonTargeting(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -919,9 +1147,9 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false when target is still on battlefield")
         void returnsFalseWhenTargetStillOnBattlefield() {
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Burn",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -931,7 +1159,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("returns true when target left the battlefield")
         void returnsTrueWhenTargetLeftBattlefield() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Burn",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, UUID.randomUUID(), Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -941,8 +1169,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("returns false when target is a player")
         void returnsFalseForPlayerTarget() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, player2.getId(), Map.of());
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
+                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -950,11 +1178,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns true when target has shroud")
         void returnsTrueWhenTargetHasShroud() {
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Shrouded", CardColor.GREEN, Keyword.SHROUD));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Burn",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -962,11 +1191,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns true when target has hexproof and is controlled by opponent")
         void returnsTrueWhenTargetHasHexproofAndControlledByOpponent() {
-            Permanent target = addPermanent(player2.getId(),
+            Permanent target = addPermanent(player2Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Burn",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+            when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(false);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasKeyword(gd, target, Keyword.HEXPROOF)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -974,11 +1206,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false when target has hexproof but is controlled by self")
         void returnsFalseWhenTargetHasHexproofButControlledBySelf() {
-            Permanent target = addPermanent(player1.getId(),
+            Permanent target = addPermanent(player1Id,
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Burn",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -986,11 +1219,12 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns true when target has CantBeTargetOfSpellsOrAbilitiesEffect from opponent")
         void returnsTrueWhenTargetHasCantBeTargetEffect() {
-            addPermanent(player2.getId(), new Asceticism());
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Burn",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1002,13 +1236,15 @@ class TargetLegalityServiceTest extends BaseCardTest {
             artifact.setName("Test Artifact");
             artifact.setType(CardType.ARTIFACT);
             artifact.setManaCost("{1}");
-            Permanent target = addPermanent(player2.getId(), artifact);
+            Permanent target = addPermanent(player2Id, artifact);
 
             Card spell = createTargetingSpell("Destroy", CardColor.RED);
             spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsCreaturePredicate(), "Target must be a creature"));
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Destroy",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Destroy",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+            doThrow(new IllegalStateException("Target must be a creature"))
+                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1016,15 +1252,56 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("uses entry target filter over card target filter")
         void usesEntryTargetFilterOverCardFilter() {
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Spell", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Spell",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Spell",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
-            // Entry has a filter that rejects creatures
             entry.setTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
+            doThrow(new IllegalStateException("Target must be an artifact"))
+                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+        }
+
+        // ----- Spell protection at resolution -----
+
+        @Test
+        @DisplayName("returns true when target gained spell-color protection after cast")
+        void returnsTrueWhenTargetGainedSpellColorProtection() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
+                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.RED)).thenReturn(true);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns true when target has non-color source restriction at resolution")
+        void returnsTrueWhenTargetHasNonColorSourceRestriction() {
+            Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
+                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, spell)).thenReturn(true);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when activated ability target has spell-color protection")
+        void returnsFalseWhenAbilityTargetHasSpellColorProtection() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card source = createCreature("Source", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player1Id, "ability",
+                    List.of(), 0, target.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
 
         // ----- Graveyard targets -----
@@ -1032,14 +1309,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false when graveyard target is present")
         void returnsFalseWhenGraveyardTargetPresent() {
-            Card cardInGY = new GrizzlyBears();
-            gd.playerGraveyards.get(player2.getId()).add(cardInGY);
+            Card cardInGY = createCreature("Bear", CardColor.GREEN);
 
             Card spell = new Card();
             spell.setName("Raise Dead");
             spell.setType(CardType.SORCERY);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Raise Dead",
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Raise Dead",
                     List.of(), cardInGY.getId(), Zone.GRAVEYARD);
+            when(gameQueryService.findCardInGraveyardById(gd, cardInGY.getId())).thenReturn(cardInGY);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -1050,7 +1327,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             Card spell = new Card();
             spell.setName("Raise Dead");
             spell.setType(CardType.SORCERY);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Raise Dead",
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Raise Dead",
                     List.of(), UUID.randomUUID(), Zone.GRAVEYARD);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -1061,14 +1338,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false when stack target is still on stack")
         void returnsFalseWhenStackTargetPresent() {
-            Card targetSpell = new GrizzlyBears();
-            StackEntry targetEntry = new StackEntry(targetSpell, player2.getId());
+            Card targetSpell = createCreature("Bear", CardColor.GREEN);
+            StackEntry targetEntry = new StackEntry(targetSpell, player2Id);
             gd.stack.add(targetEntry);
 
             Card counterSpell = new Card();
             counterSpell.setName("Counter");
             counterSpell.setType(CardType.INSTANT);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, counterSpell, player1.getId(), "Counter",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, counterSpell, player1Id, "Counter",
                     List.of(), targetSpell.getId(), Zone.STACK);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -1080,7 +1357,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             Card counterSpell = new Card();
             counterSpell.setName("Counter");
             counterSpell.setType(CardType.INSTANT);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, counterSpell, player1.getId(), "Counter",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, counterSpell, player1Id, "Counter",
                     List.of(), UUID.randomUUID(), Zone.STACK);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -1092,7 +1369,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("returns true when all multi-target permanents are gone")
         void returnsTrueWhenAllMultiTargetPermanentsGone() {
             Card spell = createTargetingSpell("Multi", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Multi",
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Multi",
                     spell.getEffects(EffectSlot.SPELL), 0, List.of(UUID.randomUUID(), UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -1101,9 +1378,9 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false when some multi-target permanents remain")
         void returnsFalseWhenSomeMultiTargetPermanentsRemain() {
-            Permanent p1 = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p1 = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Multi", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Multi",
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Multi",
                     spell.getEffects(EffectSlot.SPELL), 0, List.of(p1.getId(), UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -1113,8 +1390,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("returns false when multi-target includes a player")
         void returnsFalseWhenMultiTargetIncludesPlayer() {
             Card spell = createTargetingSpell("Multi", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Multi",
-                    spell.getEffects(EffectSlot.SPELL), 0, List.of(player2.getId(), UUID.randomUUID()));
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Multi",
+                    spell.getEffects(EffectSlot.SPELL), 0, List.of(player2Id, UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -1127,7 +1404,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             Card spell = new Card();
             spell.setName("Exile Cards");
             spell.setType(CardType.SORCERY);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Exile",
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Exile",
                     List.of(), List.of(UUID.randomUUID(), UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -1136,14 +1413,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false when some multi-target card IDs remain in graveyard")
         void returnsFalseWhenSomeTargetCardIdsRemain() {
-            Card cardInGY = new GrizzlyBears();
-            gd.playerGraveyards.get(player2.getId()).add(cardInGY);
+            Card cardInGY = createCreature("Bear", CardColor.GREEN);
 
             Card spell = new Card();
             spell.setName("Exile Cards");
             spell.setType(CardType.SORCERY);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1.getId(), "Exile",
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Exile",
                     List.of(), List.of(cardInGY.getId(), UUID.randomUUID()));
+            when(gameQueryService.findCardInGraveyardById(gd, cardInGY.getId())).thenReturn(cardInGY);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -1151,8 +1428,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("returns false when entry has no target at all")
         void returnsFalseWhenNoTargetAtAll() {
-            Card card = new GrizzlyBears();
-            StackEntry entry = new StackEntry(card, player1.getId());
+            Card card = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -1167,22 +1444,22 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @Test
         @DisplayName("matches StackEntryTypeInPredicate")
         void matchesTypeInPredicate() {
-            Card card = new GrizzlyBears();
-            StackEntry entry = new StackEntry(card, player1.getId());
+            Card card = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)), player2.getId()))
+                    new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)), player2Id))
                     .isTrue();
         }
 
         @Test
         @DisplayName("rejects StackEntryTypeInPredicate when not matching")
         void rejectsTypeInPredicateWhenNotMatching() {
-            Card card = new GrizzlyBears();
-            StackEntry entry = new StackEntry(card, player1.getId());
+            Card card = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL)), player2.getId()))
+                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL)), player2Id))
                     .isFalse();
         }
 
@@ -1190,10 +1467,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("matches StackEntryColorInPredicate")
         void matchesColorInPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryColorInPredicate(Set.of(CardColor.GREEN)), player2.getId()))
+                    new StackEntryColorInPredicate(Set.of(CardColor.GREEN)), player2Id))
                     .isTrue();
         }
 
@@ -1201,23 +1478,23 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("rejects StackEntryColorInPredicate when not matching")
         void rejectsColorInPredicateWhenNotMatching() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryColorInPredicate(Set.of(CardColor.RED)), player2.getId()))
+                    new StackEntryColorInPredicate(Set.of(CardColor.RED)), player2Id))
                     .isFalse();
         }
 
         @Test
         @DisplayName("matches StackEntryIsSingleTargetPredicate with single target")
         void matchesSingleTargetPredicate() {
-            Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card card = createTargetingSpell("Bolt", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, player1.getId(), "Bolt",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, player1Id, "Bolt",
                     card.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryIsSingleTargetPredicate(), player2.getId()))
+                    new StackEntryIsSingleTargetPredicate(), player2Id))
                     .isTrue();
         }
 
@@ -1225,10 +1502,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("rejects StackEntryIsSingleTargetPredicate when no target")
         void rejectsSingleTargetPredicateWhenNoTarget() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryIsSingleTargetPredicate(), player2.getId()))
+                    new StackEntryIsSingleTargetPredicate(), player2Id))
                     .isFalse();
         }
 
@@ -1236,10 +1513,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("StackEntryHasTargetPredicate always returns true")
         void hasTargetPredicateAlwaysReturnsTrue() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryHasTargetPredicate(), player2.getId()))
+                    new StackEntryHasTargetPredicate(), player2Id))
                     .isTrue();
         }
 
@@ -1248,10 +1525,10 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void matchesManaValuePredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
             card.setManaCost("{1}{G}"); // mana value 2
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryManaValuePredicate(2), player2.getId()))
+                    new StackEntryManaValuePredicate(2), player2Id))
                     .isTrue();
         }
 
@@ -1260,49 +1537,52 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void rejectsManaValuePredicateWhenNotMatching() {
             Card card = createCreature("Bear", CardColor.GREEN);
             card.setManaCost("{1}{G}"); // mana value 2
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryManaValuePredicate(3), player2.getId()))
+                    new StackEntryManaValuePredicate(3), player2Id))
                     .isFalse();
         }
 
         @Test
         @DisplayName("matches StackEntryTargetsYourPermanentPredicate when targeting your permanent")
         void matchesTargetsYourPermanentPredicate() {
-            Permanent p1Creature = addPermanent(player1.getId(), new GrizzlyBears());
+            Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2.getId(), "Bolt",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
                     spell.getEffects(EffectSlot.SPELL), 0, p1Creature.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryTargetsYourPermanentPredicate(), player1.getId()))
+                    new StackEntryTargetsYourPermanentPredicate(), player1Id))
                     .isTrue();
         }
 
         @Test
         @DisplayName("rejects StackEntryTargetsYourPermanentPredicate when not targeting your permanent")
         void rejectsTargetsYourPermanentPredicateWhenNotTargetingYours() {
-            Permanent p2Creature = addPermanent(player2.getId(), new GrizzlyBears());
+            Permanent p2Creature = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Bolt",
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Bolt",
                     spell.getEffects(EffectSlot.SPELL), 0, p2Creature.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, p2Creature.getId())).thenReturn(player2Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryTargetsYourPermanentPredicate(), player1.getId()))
+                    new StackEntryTargetsYourPermanentPredicate(), player1Id))
                     .isFalse();
         }
 
         @Test
         @DisplayName("matches StackEntryTargetsYourPermanentPredicate via multi-target")
         void matchesTargetsYourPermanentPredicateViaMultiTarget() {
-            Permanent p1Creature = addPermanent(player1.getId(), new GrizzlyBears());
+            Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Multi", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player2.getId(), "Multi",
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player2Id, "Multi",
                     spell.getEffects(EffectSlot.SPELL), 0, List.of(p1Creature.getId()));
+            when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new StackEntryTargetsYourPermanentPredicate(), player1.getId()))
+                    new StackEntryTargetsYourPermanentPredicate(), player1Id))
                     .isTrue();
         }
 
@@ -1310,13 +1590,13 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("matches AllOfPredicate when all inner predicates match")
         void matchesAllOfPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryAllOfPredicate(List.of(
                             new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                             new StackEntryColorInPredicate(Set.of(CardColor.GREEN))
-                    )), player2.getId()))
+                    )), player2Id))
                     .isTrue();
         }
 
@@ -1324,13 +1604,13 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("rejects AllOfPredicate when one inner predicate does not match")
         void rejectsAllOfPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryAllOfPredicate(List.of(
                             new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                             new StackEntryColorInPredicate(Set.of(CardColor.RED))
-                    )), player2.getId()))
+                    )), player2Id))
                     .isFalse();
         }
 
@@ -1338,13 +1618,13 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("matches AnyOfPredicate when one inner predicate matches")
         void matchesAnyOfPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryAnyOfPredicate(List.of(
                             new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL)),
                             new StackEntryColorInPredicate(Set.of(CardColor.GREEN))
-                    )), player2.getId()))
+                    )), player2Id))
                     .isTrue();
         }
 
@@ -1352,13 +1632,13 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("rejects AnyOfPredicate when no inner predicate matches")
         void rejectsAnyOfPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryAnyOfPredicate(List.of(
                             new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL)),
                             new StackEntryColorInPredicate(Set.of(CardColor.RED))
-                    )), player2.getId()))
+                    )), player2Id))
                     .isFalse();
         }
 
@@ -1366,11 +1646,11 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("matches NotPredicate when inner does not match")
         void matchesNotPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryNotPredicate(new StackEntryColorInPredicate(Set.of(CardColor.RED))),
-                    player2.getId()))
+                    player2Id))
                     .isTrue();
         }
 
@@ -1378,11 +1658,11 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("rejects NotPredicate when inner matches")
         void rejectsNotPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryNotPredicate(new StackEntryColorInPredicate(Set.of(CardColor.GREEN))),
-                    player2.getId()))
+                    player2Id))
                     .isFalse();
         }
 
@@ -1390,14 +1670,14 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("returns false for unknown predicate type")
         void returnsFalseForUnknownPredicate() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1.getId());
+            StackEntry entry = new StackEntry(card, player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new UnknownPredicate(), player2.getId()))
+                    new UnknownPredicate(), player2Id))
                     .isFalse();
         }
 
-        private record UnknownPredicate() implements com.github.laxika.magicalvibes.model.filter.StackEntryPredicate {}
+        private record UnknownPredicate() implements StackEntryPredicate {}
     }
 
     // ===== validateEffectTargetInZone =====
