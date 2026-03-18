@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
@@ -641,6 +642,39 @@ public class BattlefieldEntryService {
                         log.info("Game {} - {} triggers for {} entering (power {} >= {})",
                                 gameData.id, perm.getCard().getName(), enteringCreature.getName(),
                                 enteringCreature.getPower(), conditional.minPower());
+                    }
+                } else if (effect instanceof EnteringCreatureMaxPowerConditionalEffect conditional) {
+                    if (enteringCreature.getPower() == null || enteringCreature.getPower() > conditional.maxPower()) {
+                        continue;
+                    }
+                    CardEffect innerEffect = conditional.wrapped();
+                    if (innerEffect instanceof MayPayManaEffect mayPay) {
+                        gameData.queueMayAbility(perm.getCard(), controllerId, mayPay, null);
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for {} entering (power {} <= {})",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
+                                enteringCreature.getPower(), conditional.maxPower());
+                    } else if (innerEffect instanceof MayEffect may) {
+                        gameData.queueMayAbility(perm.getCard(), controllerId, may);
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for {} entering (power {} <= {})",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
+                                enteringCreature.getPower(), conditional.maxPower());
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                controllerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(innerEffect))
+                        ));
+                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        log.info("Game {} - {} triggers for {} entering (power {} <= {})",
+                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
+                                enteringCreature.getPower(), conditional.maxPower());
                     }
                 } else if (effect instanceof EnteringCreatureSubtypeConditionalEffect conditional) {
                     if (!enteringCreature.getSubtypes().contains(conditional.subtype())) {
