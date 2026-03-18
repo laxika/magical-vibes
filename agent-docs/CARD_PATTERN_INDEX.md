@@ -170,6 +170,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | On death | `b/BogardanFirefiend.java` | ON_DEATH DealDamageToTargetCreatureEffect |
 | On death with cascading tokens | `m/MitoticSlime.java` | ON_DEATH CreateCreatureTokenEffect with TokenEffectEntry — tokens themselves have death triggers creating smaller tokens |
+| On death exile self + random return | `m/MoldgrafMonstrosity.java` | ON_DEATH ReturnCardFromGraveyardEffect with `exileSourceFromGraveyard(true)` + `returnAtRandom(true)` + `randomCount(2)` + creature filter — exiles self then returns random creatures to battlefield |
 | Upkeep sacrifice/discard | `r/RazormaneMasticore.java` | UPKEEP_TRIGGERED + DRAW_TRIGGERED |
 | Upkeep sacrifice other + opponent life loss | `x/XathridDemon.java` | UPKEEP_TRIGGERED SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect(7) — sacrifice other creature, opponents lose life equal to its power; or tap self + lose 7 life |
 | Exile-from-graveyard cost + damage | `m/MoltenTailMasticore.java` | ExileCardFromGraveyardCost(CREATURE) + DealDamageToAnyTargetEffect + RegenerateEffect |

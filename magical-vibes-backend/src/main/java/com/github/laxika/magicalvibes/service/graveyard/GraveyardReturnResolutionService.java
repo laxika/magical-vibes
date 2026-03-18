@@ -292,6 +292,22 @@ public class GraveyardReturnResolutionService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
+        // Exile the source card from graveyard before selecting random cards (e.g. Moldgraf Monstrosity)
+        if (effect.exileSourceFromGraveyard() && graveyard != null && sourceCardId != null) {
+            Card sourceCard = graveyard.stream()
+                    .filter(c -> c.getId().equals(sourceCardId))
+                    .findFirst()
+                    .orElse(null);
+            if (sourceCard != null) {
+                graveyard.remove(sourceCard);
+                exileService.exileCard(gameData, controllerId, sourceCard);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                String exileLog = playerName + " exiles " + sourceCard.getName() + " from graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                log.info("Game {} - {} exiles {} from graveyard", gameData.id, playerName, sourceCard.getName());
+            }
+        }
+
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

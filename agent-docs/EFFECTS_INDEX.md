@@ -272,6 +272,7 @@ ReturnCardFromGraveyardEffect.builder()
     .underOwnersControl(boolean)               // true = put each card onto battlefield under its owner's control (default: false)
     .returnAtRandom(boolean)                   // true = return a random matching card instead of player choice (default: false)
     .choosePermanentType(boolean)              // true = prompt controller to choose a permanent type at resolution, then return all matching (default: false); implies returnAll
+    .exileSourceFromGraveyard(boolean)         // true = exile the source card from graveyard before selecting random cards (default: false); e.g. Moldgraf Monstrosity
     .build()
 ```
 
@@ -350,6 +351,7 @@ Pass `null` as filter to allow any card.
 | Charmbreaker Devils | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardAnyOfPredicate(List.of(new CardTypePredicate(INSTANT), new CardTypePredicate(SORCERY)))).returnAtRandom(true).build()` — return a random instant or sorcery from your graveyard to hand |
 | Make a Wish | `ReturnCardFromGraveyardEffect.builder().destination(HAND).returnAtRandom(true).randomCount(2).build()` — return two cards at random from your graveyard to hand |
 | Creeping Renaissance | `ReturnCardFromGraveyardEffect.builder().destination(HAND).returnAll(true).choosePermanentType(true).build()` — choose a permanent type, return all cards of that type from your graveyard to hand |
+| Moldgraf Monstrosity | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).returnAtRandom(true).randomCount(2).exileSourceFromGraveyard(true).build()` — on death, exile self from graveyard then return two random creature cards to battlefield |
 
 ### Other graveyard effects
 

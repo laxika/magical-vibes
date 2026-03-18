@@ -79,6 +79,9 @@ import lombok.Builder;
  * @param choosePermanentType  {@code true} to prompt the controller to choose a permanent type
  *                             at resolution time, then return all cards of that type from the
  *                             graveyard (e.g. Creeping Renaissance); implies {@code returnAll}
+ * @param exileSourceFromGraveyard {@code true} to exile the source card from the controller's
+ *                             graveyard before performing the return (e.g. Moldgraf Monstrosity);
+ *                             ensures the source cannot be one of the randomly returned cards
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -100,7 +103,8 @@ public record ReturnCardFromGraveyardEffect(
         boolean underOwnersControl,
         boolean returnAtRandom,
         int randomCount,
-        boolean choosePermanentType
+        boolean choosePermanentType,
+        boolean exileSourceFromGraveyard
 ) implements CardEffect {
 
     /**
