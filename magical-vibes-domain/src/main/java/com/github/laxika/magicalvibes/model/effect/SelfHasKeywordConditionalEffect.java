@@ -11,12 +11,12 @@ public record SelfHasKeywordConditionalEffect(Keyword keyword, CardEffect wrappe
 
     @Override
     public String conditionName() {
-        return "has " + keyword.getDisplayName();
+        return "has " + keyword.name().toLowerCase().replace("_", " ");
     }
 
     @Override
     public String conditionNotMetReason() {
-        return "does not have " + keyword.getDisplayName();
+        return "does not have " + keyword.name().toLowerCase().replace("_", " ");
     }
 
     @Override
