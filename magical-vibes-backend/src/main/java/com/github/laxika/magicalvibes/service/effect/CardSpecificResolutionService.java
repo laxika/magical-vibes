@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -638,6 +639,95 @@ public class CardSpecificResolutionService {
             if (types.contains(additionalType)) return true;
         }
         return false;
+    }
+
+    @HandlesEffect(ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect.class)
+    void resolveShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefield(GameData gameData, StackEntry entry,
+                                                                         ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect effect) {
+        // Find source permanent on the battlefield
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return; // Already left the battlefield — nothing happens
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+        if (controllerId == null) {
+            return;
+        }
+
+        // Owner may differ from controller (e.g. stolen creatures)
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(self.getId(), controllerId);
+        String ownerName = gameData.playerIdToName.get(ownerId);
+        String cardName = self.getCard().getName();
+
+        // Shuffle self into owner's library
+        permanentRemovalService.removePermanentToLibraryBottom(gameData, self);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                ownerName + " shuffles " + cardName + " into their library.");
+
+        // Reveal cards from top of owner's library until finding the named card
+        List<Card> deck = gameData.playerDecks.get(ownerId);
+        List<Card> revealedCards = new ArrayList<>();
+        Card foundCard = null;
+
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            revealedCards.add(card);
+            if (card.getName().equals(effect.cardName())) {
+                foundCard = card;
+                break;
+            }
+        }
+
+        if (revealedCards.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    ownerName + "'s library is empty — no cards are revealed.");
+            return;
+        }
+
+        String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+        gameBroadcastService.logAndBroadcast(gameData, ownerName + " reveals " + revealedNames + ".");
+
+        if (foundCard != null) {
+            // Remove found card from the revealed list (it goes to battlefield, not graveyard)
+            revealedCards.remove(foundCard);
+
+            // Put found card onto the battlefield under the owner's control
+            Permanent perm = new Permanent(foundCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    foundCard.getName() + " enters the battlefield under " + ownerName + "'s control.");
+
+            if (foundCard.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, foundCard, null, false);
+            }
+
+            if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {
+                perm.setLoyaltyCounters(foundCard.getLoyalty());
+                perm.setSummoningSick(false);
+            }
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    ownerName + " reveals their entire library — no card named " + effect.cardName() + " was found.");
+        }
+
+        // All other revealed cards go to owner's graveyard
+        for (Card card : revealedCards) {
+            graveyardService.addCardToGraveyard(gameData, ownerId, card);
+        }
+
+        // Check legend rule
+        if (foundCard != null && !gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, ownerId);
+        }
+
+        log.info("Game {} - {} shuffled {} into library, revealed {} cards, found={}",
+                gameData.id, ownerName, cardName, revealedCards.size() + (foundCard != null ? 1 : 0),
+                foundCard != null ? foundCard.getName() : "none");
     }
 
     private List<UUID> findLegalAuraAttachments(GameData gameData, Card auraCard, UUID auraControllerId, List<UUID> baseTargetIds) {

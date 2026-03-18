@@ -439,6 +439,7 @@ Pass `null` as filter to allow any card.
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |
 | `ShuffleGraveyardIntoLibraryEffect` | `()` | shuffle graveyard into library |
 | `ShuffleSelfAndGraveyardIntoLibraryEffect` | `()` | shuffle source permanent and controller's graveyard into library |
+| `ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect` | `(String cardName)` | shuffle source permanent into owner's library, then reveal cards until finding one with the given name — found card goes to battlefield under owner's control, all other revealed cards go to owner's graveyard |
 | `ShuffleLibraryEffect` | `()` | shuffle controller's library (no cards moved) — used with MayEffect for "you may shuffle" |
 
 ## Mill
