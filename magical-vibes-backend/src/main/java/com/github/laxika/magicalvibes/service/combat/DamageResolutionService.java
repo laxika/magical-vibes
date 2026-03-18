@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstTargetFightsSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
@@ -1371,6 +1372,58 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage, biter);
+    }
+
+    /**
+     * Resolves {@link FirstTargetFightsSecondTargetEffect} — the first targeted creature and the second
+     * targeted creature deal damage to each other equal to their respective powers (fight mechanic).
+     * Protection is checked against each creature's color rather than the spell's color.
+     */
+    @HandlesEffect(FirstTargetFightsSecondTargetEffect.class)
+    void resolveFirstTargetFightsSecondTarget(GameData gameData, StackEntry entry) {
+        List<UUID> targets = entry.getTargetPermanentIds();
+        if (targets == null || targets.size() < 2) {
+            return;
+        }
+
+        UUID firstId = targets.get(0);
+        UUID secondId = targets.get(1);
+
+        Permanent first = gameQueryService.findPermanentById(gameData, firstId);
+        Permanent second = gameQueryService.findPermanentById(gameData, secondId);
+        if (first == null || second == null) {
+            return;
+        }
+
+        // First creature deals damage equal to its power to second creature
+        int firstPower = gameQueryService.getEffectivePower(gameData, first);
+        if (firstPower > 0) {
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, first)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        first.getCard().getName() + "'s damage is prevented.");
+            } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, second, first)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        second.getCard().getName() + " has protection — damage from " + first.getCard().getName() + " prevented.");
+            } else {
+                int damage = gameQueryService.applyDamageMultiplier(gameData, firstPower, entry);
+                dealDamageAndDestroyIfLethal(gameData, entry, second, damage, first);
+            }
+        }
+
+        // Second creature deals damage equal to its power to first creature
+        int secondPower = gameQueryService.getEffectivePower(gameData, second);
+        if (secondPower > 0) {
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, second)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        second.getCard().getName() + "'s damage is prevented.");
+            } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, first, second)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        first.getCard().getName() + " has protection — damage from " + second.getCard().getName() + " prevented.");
+            } else {
+                int damage = gameQueryService.applyDamageMultiplier(gameData, secondPower, entry);
+                dealDamageAndDestroyIfLethal(gameData, entry, first, damage, second);
+            }
+        }
     }
 
     /**
