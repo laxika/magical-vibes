@@ -616,6 +616,7 @@ Pass `null` as filter to allow any card.
 | `BoostFirstTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | first target creature in multi-target spell gets +X/+Y until end of turn |
 | `BoostSecondTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | second target creature in multi-target spell gets +X/+Y until end of turn |
 | `BoostSelfPerEnchantmentOnBattlefieldEffect` | `(int powerPerEnchantment, int toughnessPerEnchantment)` | +X/+Y per enchantment on battlefield (static) |
+| `BoostSelfPerOpponentPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | +X/+Y per permanent opponents control matching the filter (static, selfOnly). Use `PermanentIsCreaturePredicate` for creatures, etc. |
 | `BoostSelfPerOpponentPoisonCounterEffect` | `(int powerPerCounter, int toughnessPerCounter)` | +X/+Y per poison counter on opponents (static). Counts total poison counters across all opponents, excludes controller's own counters |
 | `BoostSelfByImprintedCreaturePTEffect` | `()` | +X/+Y where X is the imprinted creature card's power and Y is its toughness (static, selfOnly). Used by Phyrexian Ingester |
 | `BoostSelfPerBlockingCreatureEffect` | `(int powerPerBlockingCreature, int toughnessPerBlockingCreature)` | +X/+Y for each creature blocking this (combat trigger) |

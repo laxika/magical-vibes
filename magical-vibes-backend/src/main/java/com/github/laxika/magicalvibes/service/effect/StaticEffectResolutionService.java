@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttached
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
@@ -664,6 +665,23 @@ public class StaticEffectResolutionService {
         });
         accumulator.addPower(count[0] * boost.powerPerEnchantment());
         accumulator.addToughness(count[0] * boost.toughnessPerEnchantment());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfPerOpponentPermanentEffect.class, selfOnly = true)
+    private void resolveBoostSelfPerOpponentPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfPerOpponentPermanentEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+
+        final int[] count = {0};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (!playerId.equals(controllerId)
+                    && gameQueryService.matchesPermanentPredicate(context.gameData(), permanent, boost.filter())) {
+                count[0]++;
+            }
+        });
+        accumulator.addPower(count[0] * boost.powerPerPermanent());
+        accumulator.addToughness(count[0] * boost.toughnessPerPermanent());
     }
 
     @HandlesStaticEffect(value = BoostSelfPerEquipmentAttachedEffect.class, selfOnly = true)
