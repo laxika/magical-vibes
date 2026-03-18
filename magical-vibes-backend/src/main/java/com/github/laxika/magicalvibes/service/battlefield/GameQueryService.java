@@ -1075,23 +1075,61 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the target permanent has protection from non-[subtype] creatures
+     * and the source permanent is a creature that lacks that subtype.
+     */
+    public boolean hasProtectionFromNonSubtypeCreatures(GameData gameData, Permanent target, Permanent source) {
+        Set<CardSubtype> protectedFrom = target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn();
+        if (protectedFrom.isEmpty()) return false;
+        if (!isCreature(gameData, source)) return false;
+        for (CardSubtype subtype : protectedFrom) {
+            if (!permanentHasSubtype(source, subtype)
+                    && !(isCreatureSubtype(subtype) && hasKeyword(gameData, source, Keyword.CHANGELING))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if the target permanent has protection from non-[subtype] creatures
+     * and the source card (on the stack) is a creature card that lacks that subtype.
+     */
+    public boolean hasProtectionFromNonSubtypeCreatures(Permanent target, Card sourceCard) {
+        Set<CardSubtype> protectedFrom = target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn();
+        if (protectedFrom.isEmpty()) return false;
+        if (sourceCard.getType() != CardType.CREATURE
+                && !sourceCard.getAdditionalTypes().contains(CardType.CREATURE)) return false;
+        for (CardSubtype subtype : protectedFrom) {
+            if (!sourceCard.getSubtypes().contains(subtype)
+                    && !(isCreatureSubtype(subtype) && sourceCard.getKeywords().contains(Keyword.CHANGELING))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the target permanent has protection from the source permanent,
-     * checking color-based, card-type-based, and subtype-based protection.
+     * checking color-based, card-type-based, subtype-based, and non-subtype-creature protection.
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source) {
         return hasProtectionFrom(gameData, target, source.getEffectiveColor())
                 || hasProtectionFromSourceCardTypes(gameData, target, source)
-                || hasProtectionFromSourceSubtypes(gameData, target, source);
+                || hasProtectionFromSourceSubtypes(gameData, target, source)
+                || hasProtectionFromNonSubtypeCreatures(gameData, target, source);
     }
 
     /**
      * Returns {@code true} if the target permanent has protection from the source card
-     * (a spell on the stack), checking color-based, card-type-based, and subtype-based protection.
+     * (a spell on the stack), checking color-based, card-type-based, subtype-based,
+     * and non-subtype-creature protection.
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
         return hasProtectionFrom(gameData, target, sourceCard.getColor())
                 || hasProtectionFromSourceCardTypes(target, sourceCard)
-                || hasProtectionFromSourceSubtypes(target, sourceCard);
+                || hasProtectionFromSourceSubtypes(target, sourceCard)
+                || hasProtectionFromNonSubtypeCreatures(target, sourceCard);
     }
 
     /**

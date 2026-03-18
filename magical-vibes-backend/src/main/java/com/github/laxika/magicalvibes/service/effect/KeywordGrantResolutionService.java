@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -251,6 +252,28 @@ public class KeywordGrantResolutionService {
         String logEntry = entry.getCard().getName() + " grants flashback to " + targetCard.getName() + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} grants flashback to {} until end of turn", gameData.id, entry.getCard().getName(), targetCard.getName());
+    }
+
+    @HandlesEffect(GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect.class)
+    private void resolveGrantProtectionFromNonSubtypeCreatures(GameData gameData, StackEntry entry,
+            GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect effect) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        int count = 0;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    permanent.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().add(effect.excludedSubtype());
+                    count++;
+                }
+            }
+        }
+
+        String subtypeName = effect.excludedSubtype().getDisplayName();
+        String logEntry = entry.getCard().getName() + " grants protection from non-" + subtypeName
+                + " creatures to " + count + " creature(s) until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} grants protection from non-{} creatures to {} creature(s)",
+                gameData.id, entry.getCard().getName(), subtypeName, count);
     }
 
     @HandlesEffect(GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect.class)

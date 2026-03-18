@@ -85,6 +85,10 @@ public class Permanent {
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
     private final Set<CardColor> protectionFromColorsUntilEndOfTurn = EnumSet.noneOf(CardColor.class);
+    /** Subtypes for "protection from non-[subtype] creatures" granted until end of turn.
+     *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
+     *  Cleared by {@link #resetModifiers()}. */
+    private final Set<CardSubtype> protectionFromNonSubtypeCreaturesUntilEndOfTurn = EnumSet.noneOf(CardSubtype.class);
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
@@ -180,6 +184,7 @@ public class Permanent {
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
+        this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
@@ -338,6 +343,7 @@ public class Permanent {
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
+        this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
     }
