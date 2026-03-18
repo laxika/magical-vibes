@@ -6,4 +6,9 @@ public record DestroyTargetPermanentAndControllerLosesLifeEffect(int lifeLoss) i
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

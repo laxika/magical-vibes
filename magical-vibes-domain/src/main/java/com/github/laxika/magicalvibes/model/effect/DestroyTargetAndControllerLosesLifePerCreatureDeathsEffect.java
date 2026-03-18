@@ -11,4 +11,9 @@ public record DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect() imple
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

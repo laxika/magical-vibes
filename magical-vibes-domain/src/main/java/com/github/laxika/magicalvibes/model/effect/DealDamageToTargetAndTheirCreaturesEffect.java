@@ -16,4 +16,9 @@ public record DealDamageToTargetAndTheirCreaturesEffect(int damage) implements C
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

@@ -6,4 +6,9 @@ public record DestroyTargetPermanentAtEndStepEffect() implements CardEffect {
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

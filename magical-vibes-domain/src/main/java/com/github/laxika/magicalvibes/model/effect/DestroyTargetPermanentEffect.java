@@ -24,4 +24,9 @@ public record DestroyTargetPermanentEffect(
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

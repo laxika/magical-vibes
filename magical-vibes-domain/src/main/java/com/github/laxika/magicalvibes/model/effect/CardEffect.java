@@ -17,6 +17,12 @@ public interface CardEffect {
     default boolean isSelfTargeting() { return false; }
 
     /**
+     * Returns {@code true} if this effect deals damage or destroys a permanent.
+     * Used by targeting validation to check protection from source.
+     */
+    default boolean isDamageOrDestruction() { return false; }
+
+    /**
      * Returns {@code true} if this effect is a characteristic-defining ability
      * that sets power and/or toughness (e.g. "* / * where * is ...").
      * Used by copy effects with P/T overrides (CR 707.9d): when a copy effect

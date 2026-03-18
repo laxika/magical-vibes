@@ -11,4 +11,9 @@ public record DealDamageEqualToSourcePowerToAnyTargetEffect() implements CardEff
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

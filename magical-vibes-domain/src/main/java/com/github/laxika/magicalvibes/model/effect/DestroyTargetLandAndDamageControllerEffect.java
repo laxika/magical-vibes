@@ -6,4 +6,9 @@ public record DestroyTargetLandAndDamageControllerEffect(int damage) implements 
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

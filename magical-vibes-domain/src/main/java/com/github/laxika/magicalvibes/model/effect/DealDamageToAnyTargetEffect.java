@@ -15,4 +15,9 @@ public record DealDamageToAnyTargetEffect(int damage, boolean cantRegenerate) im
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

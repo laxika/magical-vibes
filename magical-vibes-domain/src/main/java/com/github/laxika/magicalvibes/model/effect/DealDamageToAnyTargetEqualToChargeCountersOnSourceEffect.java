@@ -11,4 +11,9 @@ public record DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect() impleme
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

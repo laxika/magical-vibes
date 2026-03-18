@@ -17,4 +17,9 @@ public record PlaneswalkerDealDamageAndReceivePowerDamageEffect(int damage) impl
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

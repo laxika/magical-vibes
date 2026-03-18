@@ -273,10 +273,9 @@ public class ValidTargetService {
         }
 
         // Protection from source color/type/subtype (for abilities that deal damage or destroy)
-        boolean dealsDamage = ability.getEffects().stream().anyMatch(e ->
-                e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
-                        || e.getClass().getSimpleName().contains("Destroy")));
-        if (dealsDamage) {
+        boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
+                e.canTargetPermanent() && e.isDamageOrDestruction());
+        if (dealsDamageOrDestroys) {
             if (sourceCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
                 return false;
             }

@@ -18,4 +18,9 @@ public record DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEff
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

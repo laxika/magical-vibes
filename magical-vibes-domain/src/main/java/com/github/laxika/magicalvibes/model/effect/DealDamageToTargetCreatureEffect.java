@@ -10,4 +10,9 @@ public record DealDamageToTargetCreatureEffect(int damage, boolean unpreventable
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }

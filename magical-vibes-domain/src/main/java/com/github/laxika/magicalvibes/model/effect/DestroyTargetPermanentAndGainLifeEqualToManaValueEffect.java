@@ -12,4 +12,9 @@ public record DestroyTargetPermanentAndGainLifeEqualToManaValueEffect() implemen
     public boolean canTargetPermanent() {
         return true;
     }
+
+    @Override
+    public boolean isDamageOrDestruction() {
+        return true;
+    }
 }
