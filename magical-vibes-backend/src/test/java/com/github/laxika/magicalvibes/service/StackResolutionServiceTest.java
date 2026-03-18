@@ -1,31 +1,106 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-class StackResolutionServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class StackResolutionServiceTest {
 
-    private StackResolutionService svc() {
-        return harness.getStackResolutionService();
+    @Mock private BattlefieldEntryService battlefieldEntryService;
+    @Mock private CloneService cloneService;
+    @Mock private GraveyardService graveyardService;
+    @Mock private LegendRuleService legendRuleService;
+    @Mock private StateBasedActionService stateBasedActionService;
+    @Mock private GameQueryService gameQueryService;
+    @Mock private TargetLegalityService targetLegalityService;
+    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private EffectResolutionService effectResolutionService;
+    @Mock private PlayerInputService playerInputService;
+    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private CreatureControlService creatureControlService;
+    @Mock private StateTriggerService stateTriggerService;
+    @Mock private ExileService exileService;
+
+    @InjectMocks
+    private StackResolutionService svc;
+
+    @Captor private ArgumentCaptor<Permanent> permanentCaptor;
+
+    private GameData gd;
+
+    private static final UUID PLAYER1_ID = UUID.randomUUID();
+    private static final UUID PLAYER2_ID = UUID.randomUUID();
+
+    @BeforeEach
+    void setUp() {
+        gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
+        gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
+        gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
+        gd.playerIdToName.put(PLAYER1_ID, "Player1");
+        gd.playerIdToName.put(PLAYER2_ID, "Player2");
+        gd.playerBattlefields.put(PLAYER1_ID, new ArrayList<>());
+        gd.playerBattlefields.put(PLAYER2_ID, new ArrayList<>());
+        gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>());
+        gd.playerGraveyards.put(PLAYER2_ID, new ArrayList<>());
+        gd.playerExiledCards.put(PLAYER1_ID, new ArrayList<>());
+        gd.playerExiledCards.put(PLAYER2_ID, new ArrayList<>());
+        gd.playerDecks.put(PLAYER1_ID, new ArrayList<>());
+        gd.playerDecks.put(PLAYER2_ID, new ArrayList<>());
+        gd.playerHands.put(PLAYER1_ID, new ArrayList<>());
+        gd.playerHands.put(PLAYER2_ID, new ArrayList<>());
     }
 
     private Card createCreature(String name) {
@@ -52,6 +127,15 @@ class StackResolutionServiceTest extends BaseCardTest {
         card.setType(CardType.ENCHANTMENT);
         card.setSubtypes(List.of(CardSubtype.AURA));
         card.setManaCost("1W");
+        return card;
+    }
+
+    private Card createCurseAura(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setSubtypes(List.of(CardSubtype.AURA, CardSubtype.CURSE));
+        card.setManaCost("2B");
         return card;
     }
 
@@ -97,21 +181,46 @@ class StackResolutionServiceTest extends BaseCardTest {
         void doesNothingWhenStackEmpty() {
             gd.stack.clear();
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            // No exception, battlefield unchanged
             assertThat(gd.stack).isEmpty();
+            verifyNoInteractions(battlefieldEntryService, graveyardService,
+                    effectResolutionService, stateBasedActionService,
+                    gameBroadcastService, stateTriggerService);
+        }
+
+        @Test
+        @DisplayName("Cleans up state-trigger tracking when entry leaves the stack")
+        void cleansUpStateTriggerTracking() {
+            Card card = createCreature("Trigger Creature");
+            StackEntry entry = new StackEntry(card, PLAYER1_ID);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(stateTriggerService).cleanupResolvedStateTrigger(gd, entry);
+        }
+
+        @Test
+        @DisplayName("Broadcasts game state after resolution completes")
+        void broadcastsGameStateAfterResolution() {
+            Card card = createCreature("Broadcast Creature");
+            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(gameBroadcastService).broadcastGameState(gd);
         }
 
         @Test
         @DisplayName("Clears priorityPassedBy after resolution")
         void clearsPriorityPassedBy() {
             Card card = createCreature("Test Creature");
-            gd.stack.addLast(new StackEntry(card, player1.getId()));
-            gd.priorityPassedBy.add(player1.getId());
-            gd.priorityPassedBy.add(player2.getId());
+            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
+            gd.priorityPassedBy.add(PLAYER1_ID);
+            gd.priorityPassedBy.add(PLAYER2_ID);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
             assertThat(gd.priorityPassedBy).isEmpty();
         }
@@ -121,16 +230,80 @@ class StackResolutionServiceTest extends BaseCardTest {
         void resolvesTopEntry() {
             Card first = createCreature("First Creature");
             Card second = createCreature("Second Creature");
-            gd.stack.addLast(new StackEntry(first, player1.getId()));
-            gd.stack.addLast(new StackEntry(second, player1.getId()));
+            gd.stack.addLast(new StackEntry(first, PLAYER1_ID));
+            gd.stack.addLast(new StackEntry(second, PLAYER1_ID));
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            // Second creature (top of stack) should have entered the battlefield
-            harness.assertOnBattlefield(player1, "Second Creature");
+            // Second creature (top of stack) should have been passed to battlefield entry
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Second Creature");
             // First creature should still be on the stack
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("First Creature");
+        }
+
+        @Test
+        @DisplayName("Skips SBA when interaction is awaiting input after resolution")
+        void skipsStateBasedActionsWhenAwaitingInput() {
+            Card card = createCreature("ETB Creature");
+            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
+            doAnswer(inv -> {
+                gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+                return null;
+            }).when(battlefieldEntryService).handleCreatureEnteredBattlefield(
+                    any(), any(), any(), any(), anyBoolean(), anyInt());
+
+            svc.resolveTopOfStack(gd);
+
+            verify(stateBasedActionService, never()).performStateBasedActions(any());
+            verify(legendRuleService, never()).checkLegendRule(any(), any());
+        }
+
+        @Test
+        @DisplayName("Processes pending discard self triggers after SBA")
+        void processesPendingDiscardSelfTriggers() {
+            Card spell = createInstant("Trigger Instant");
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
+                    PLAYER1_ID, spell.getName(), List.of());
+            gd.stack.addLast(entry);
+            gd.pendingDiscardSelfTriggers.add(
+                    new PermanentChoiceContext.DiscardTriggerAnyTarget(createCreature("Discard Source"), PLAYER1_ID, List.of()));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(triggerCollectionService).processNextDiscardSelfTrigger(gd);
+        }
+
+        @Test
+        @DisplayName("Processes pending death trigger targets after SBA")
+        void processesPendingDeathTriggerTargets() {
+            Card spell = createInstant("Death Instant");
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
+                    PLAYER1_ID, spell.getName(), List.of());
+            gd.stack.addLast(entry);
+            gd.pendingDeathTriggerTargets.add(
+                    new PermanentChoiceContext.DeathTriggerTarget(createCreature("Dying Source"), PLAYER1_ID, List.of()));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(triggerCollectionService).processNextDeathTriggerTarget(gd);
+        }
+
+        @Test
+        @DisplayName("Processes pending may abilities after SBA")
+        void processesPendingMayAbilities() {
+            Card spell = createInstant("May Instant");
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
+                    PLAYER1_ID, spell.getName(), List.of());
+            gd.stack.addLast(entry);
+            gd.pendingMayAbilities.add(
+                    new PendingMayAbility(createCreature("May Source"), PLAYER1_ID, List.of(), "May ability"));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(playerInputService).processNextMayAbility(gd);
         }
     }
 
@@ -142,11 +315,13 @@ class StackResolutionServiceTest extends BaseCardTest {
         @DisplayName("Creature enters the battlefield under controller's control")
         void creatureEntersBattlefield() {
             Card card = createCreature("Test Creature");
-            gd.stack.addLast(new StackEntry(card, player1.getId()));
+            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "Test Creature");
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Creature");
             assertThat(gd.stack).isEmpty();
         }
 
@@ -154,12 +329,87 @@ class StackResolutionServiceTest extends BaseCardTest {
         @DisplayName("Creature enters under player 2's control when they cast it")
         void creatureEntersForCorrectPlayer() {
             Card card = createCreature("P2 Creature");
-            gd.stack.addLast(new StackEntry(card, player2.getId()));
+            gd.stack.addLast(new StackEntry(card, PLAYER2_ID));
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player2, "P2 Creature");
-            harness.assertNotOnBattlefield(player1, "P2 Creature");
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER2_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("P2 Creature");
+        }
+
+        @Test
+        @DisplayName("Creature enters with X +1/+1 counters")
+        void creatureEntersWithXPlusOnePlusOneCounters() {
+            Card card = createCreature("Hydra");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of(), 3);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Creature enters with fixed wish counters")
+        void creatureEntersWithFixedWishCounters() {
+            Card card = createCreature("Wish Creature");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(2));
+            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getWishCounters()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("CantHaveCountersEffect prevents +1/+1 counters on creature")
+        void cantHaveCountersPreventsCreaturePlusOnePlusOneCounters() {
+            Card card = createCreature("No Counter Hydra");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
+            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
+            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of(), 5);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isZero();
+        }
+
+        @Test
+        @DisplayName("CantHaveCountersEffect prevents wish counters on creature")
+        void cantHaveCountersPreventsCreatureWishCounters() {
+            Card card = createCreature("No Wish Creature");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(3));
+            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
+            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getWishCounters()).isZero();
+        }
+
+        @Test
+        @DisplayName("Clone replacement effect skips normal creature resolution")
+        void cloneReplacementEffectSkipsCreatureResolution() {
+            Card card = createCreature("Clone");
+            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
+            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any())).thenReturn(true);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
         }
     }
 
@@ -172,33 +422,35 @@ class StackResolutionServiceTest extends BaseCardTest {
         void nonAuraEntersBattlefield() {
             Card card = createEnchantment("Test Enchantment");
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "Test Enchantment");
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Enchantment");
         }
 
         @Test
         @DisplayName("Aura attaches to its target permanent")
         void auraAttachesToTarget() {
-            Card target = createCreature("Target Creature");
-            harness.addToBattlefield(player2, target);
-            UUID targetId = harness.getPermanentId(player2, "Target Creature");
+            Card targetCard = createCreature("Target Creature");
+            Permanent targetPerm = new Permanent(targetCard);
+            UUID targetId = targetPerm.getId();
+            gd.playerBattlefields.get(PLAYER2_ID).add(targetPerm);
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(targetPerm);
 
             Card aura = createAura("Test Aura");
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, aura,
-                    player1.getId(), aura.getName(), List.of(), 0, targetId, null);
+                    PLAYER1_ID, aura.getName(), List.of(), 0, targetId, null);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "Test Aura");
-            Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Test Aura"))
-                    .findFirst().orElseThrow();
-            assertThat(auraPerm.getAttachedTo()).isEqualTo(targetId);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getAttachedTo()).isEqualTo(targetId);
         }
 
         @Test
@@ -208,13 +460,63 @@ class StackResolutionServiceTest extends BaseCardTest {
 
             Card aura = createAura("Fizzle Aura");
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, aura,
-                    player1.getId(), aura.getName(), List.of(), 0, removedTargetId, null);
+                    PLAYER1_ID, aura.getName(), List.of(), 0, removedTargetId, null);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertNotOnBattlefield(player1, "Fizzle Aura");
-            harness.assertInGraveyard(player1, "Fizzle Aura");
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, aura);
+        }
+
+        @Test
+        @DisplayName("Curse aura enters the battlefield attached to target player")
+        void curseAuraEntersAttachedToPlayer() {
+            Card curse = createCurseAura("Test Curse");
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, curse,
+                    PLAYER1_ID, curse.getName(), List.of(), 0, PLAYER2_ID, null);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getAttachedTo()).isEqualTo(PLAYER2_ID);
+        }
+
+        @Test
+        @DisplayName("Curse aura fizzles when target player is no longer in the game")
+        void curseAuraFizzlesWhenTargetPlayerGone() {
+            UUID nonExistentPlayerId = UUID.randomUUID();
+            Card curse = createCurseAura("Fizzle Curse");
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, curse,
+                    PLAYER1_ID, curse.getName(), List.of(), 0, nonExistentPlayerId, null);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, curse);
+        }
+
+        @Test
+        @DisplayName("Control-changing aura steals the enchanted permanent")
+        void controlChangingAuraStealsPermanent() {
+            Card targetCard = createCreature("Steal Target");
+            Permanent targetPerm = new Permanent(targetCard);
+            UUID targetId = targetPerm.getId();
+            gd.playerBattlefields.get(PLAYER2_ID).add(targetPerm);
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(targetPerm);
+
+            Card aura = createAura("Control Aura");
+            aura.addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, aura,
+                    PLAYER1_ID, aura.getName(), List.of(), 0, targetId, null);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(creatureControlService).stealPermanent(gd, PLAYER1_ID, targetPerm);
         }
     }
 
@@ -227,12 +529,14 @@ class StackResolutionServiceTest extends BaseCardTest {
         void artifactEntersBattlefield() {
             Card card = createArtifact("Test Artifact");
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "Test Artifact");
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Artifact");
         }
 
         @Test
@@ -241,16 +545,14 @@ class StackResolutionServiceTest extends BaseCardTest {
             Card card = createArtifact("X Counter Artifact");
             card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXChargeCountersEffect());
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    player1.getId(), card.getName(), List.of(), 5);
+                    PLAYER1_ID, card.getName(), List.of(), 5);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "X Counter Artifact");
-            Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("X Counter Artifact"))
-                    .findFirst().orElseThrow();
-            assertThat(perm.getChargeCounters()).isEqualTo(5);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getChargeCounters()).isEqualTo(5);
         }
 
         @Test
@@ -259,16 +561,46 @@ class StackResolutionServiceTest extends BaseCardTest {
             Card card = createArtifact("Fixed Counter Artifact");
             card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedChargeCountersEffect(3));
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "Fixed Counter Artifact");
-            Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Fixed Counter Artifact"))
-                    .findFirst().orElseThrow();
-            assertThat(perm.getChargeCounters()).isEqualTo(3);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getChargeCounters()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Artifact enters with X +1/+1 counters")
+        void artifactEntersWithXPlusOnePlusOneCounters() {
+            Card card = createArtifact("Modular Artifact");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
+            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of(), 4);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("Artifact enters with fixed wish counters")
+        void artifactEntersWithFixedWishCounters() {
+            Card card = createArtifact("Wish Artifact");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(3));
+            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getWishCounters()).isEqualTo(3);
         }
 
         @Test
@@ -278,16 +610,14 @@ class StackResolutionServiceTest extends BaseCardTest {
             card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXChargeCountersEffect());
             card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    player1.getId(), card.getName(), List.of(), 5);
+                    PLAYER1_ID, card.getName(), List.of(), 5);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "No Counter Artifact");
-            Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("No Counter Artifact"))
-                    .findFirst().orElseThrow();
-            assertThat(perm.getChargeCounters()).isZero();
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getChargeCounters()).isZero();
         }
 
         @Test
@@ -297,15 +627,77 @@ class StackResolutionServiceTest extends BaseCardTest {
             card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedChargeCountersEffect(4));
             card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("No Fixed Counter Artifact"))
-                    .findFirst().orElseThrow();
-            assertThat(perm.getChargeCounters()).isZero();
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getChargeCounters()).isZero();
+        }
+
+        @Test
+        @DisplayName("CantHaveCountersEffect prevents +1/+1 counters on artifact")
+        void cantHaveCountersPreventsArtifactPlusOnePlusOneCounters() {
+            Card card = createArtifact("No +1 Artifact");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
+            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
+            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of(), 5);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isZero();
+        }
+
+        @Test
+        @DisplayName("CantHaveCountersEffect prevents wish counters on artifact")
+        void cantHaveCountersPreventsArtifactWishCounters() {
+            Card card = createArtifact("No Wish Artifact");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(3));
+            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
+            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getWishCounters()).isZero();
+        }
+
+        @Test
+        @DisplayName("Clone replacement effect skips normal artifact resolution")
+        void cloneReplacementEffectSkipsArtifactResolution() {
+            Card card = createArtifact("Clone Artifact");
+            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            gd.stack.addLast(entry);
+            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any())).thenReturn(true);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("ChooseCardNameOnEnterEffect defers resolution for name choice")
+        void chooseCardNameOnEnterDefersResolution() {
+            Card card = createArtifact("Pithing Needle");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect());
+            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(playerInputService).beginCardNameChoice(gd, PLAYER1_ID, card, List.of());
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
         }
     }
 
@@ -318,16 +710,14 @@ class StackResolutionServiceTest extends BaseCardTest {
         void planeswalkerEntersWithLoyalty() {
             Card card = createPlaneswalker("Test Planeswalker", 4);
             StackEntry entry = new StackEntry(StackEntryType.PLANESWALKER_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertOnBattlefield(player1, "Test Planeswalker");
-            Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Test Planeswalker"))
-                    .findFirst().orElseThrow();
-            assertThat(perm.getLoyaltyCounters()).isEqualTo(4);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getLoyaltyCounters()).isEqualTo(4);
         }
 
         @Test
@@ -335,15 +725,14 @@ class StackResolutionServiceTest extends BaseCardTest {
         void planeswalkerNotSummoningSick() {
             Card card = createPlaneswalker("Active Planeswalker", 3);
             StackEntry entry = new StackEntry(StackEntryType.PLANESWALKER_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Active Planeswalker"))
-                    .findFirst().orElseThrow();
-            assertThat(perm.isSummoningSick()).isFalse();
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().isSummoningSick()).isFalse();
         }
 
         @Test
@@ -352,13 +741,16 @@ class StackResolutionServiceTest extends BaseCardTest {
             Card card = createPlaneswalker("Zero PW", 0);
             card.setLoyalty(null);
             StackEntry entry = new StackEntry(StackEntryType.PLANESWALKER_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            // Planeswalker with 0 loyalty will be destroyed by SBA, so check graveyard
-            harness.assertInGraveyard(player1, "Zero PW");
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getLoyaltyCounters()).isZero();
+            // SBA would destroy the 0-loyalty planeswalker in production
+            verify(stateBasedActionService).performStateBasedActions(gd);
         }
     }
 
@@ -371,12 +763,13 @@ class StackResolutionServiceTest extends BaseCardTest {
         void instantGoesToGraveyard() {
             Card card = createInstant("Test Instant");
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertInGraveyard(player1, "Test Instant");
+            verify(effectResolutionService).resolveEffects(gd, entry);
+            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
         }
 
         @Test
@@ -384,12 +777,13 @@ class StackResolutionServiceTest extends BaseCardTest {
         void sorceryGoesToGraveyard() {
             Card card = createSorcery("Test Sorcery");
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertInGraveyard(player1, "Test Sorcery");
+            verify(effectResolutionService).resolveEffects(gd, entry);
+            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
         }
 
         @Test
@@ -398,12 +792,14 @@ class StackResolutionServiceTest extends BaseCardTest {
             UUID nonExistentTarget = UUID.randomUUID();
             Card card = createInstant("Fizzle Instant");
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card,
-                    player1.getId(), card.getName(), List.of(), 0, nonExistentTarget, null);
+                    PLAYER1_ID, card.getName(), List.of(), 0, nonExistentTarget, null);
             gd.stack.addLast(entry);
+            when(targetLegalityService.isTargetIllegalOnResolution(gd, entry)).thenReturn(true);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertInGraveyard(player1, "Fizzle Instant");
+            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
+            verify(effectResolutionService, never()).resolveEffects(any(), any());
         }
 
         @Test
@@ -412,13 +808,14 @@ class StackResolutionServiceTest extends BaseCardTest {
             UUID nonExistentTarget = UUID.randomUUID();
             Card card = createInstant("Copy Fizzle");
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card,
-                    player1.getId(), card.getName(), List.of(), 0, nonExistentTarget, null);
+                    PLAYER1_ID, card.getName(), List.of(), 0, nonExistentTarget, null);
             entry.setCopy(true);
             gd.stack.addLast(entry);
+            when(targetLegalityService.isTargetIllegalOnResolution(gd, entry)).thenReturn(true);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertNotInGraveyard(player1, "Copy Fizzle");
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
 
         @Test
@@ -427,13 +824,65 @@ class StackResolutionServiceTest extends BaseCardTest {
             UUID nonExistentTarget = UUID.randomUUID();
             Card card = createCreature("Trigger Source");
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card,
-                    player1.getId(), "Trigger Source's ability", List.of(), 0, nonExistentTarget, null);
+                    PLAYER1_ID, "Trigger Source's ability", List.of(), 0, nonExistentTarget, null);
+            gd.stack.addLast(entry);
+            when(targetLegalityService.isTargetIllegalOnResolution(gd, entry)).thenReturn(true);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Flashback spell that fizzles is exiled instead of going to graveyard")
+        void flashbackSpellFizzlesIsExiled() {
+            UUID nonExistentTarget = UUID.randomUUID();
+            Card card = createInstant("Flashback Fizzle");
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of(), 0, nonExistentTarget, null);
+            entry.setCastWithFlashback(true);
+            gd.stack.addLast(entry);
+            when(targetLegalityService.isTargetIllegalOnResolution(gd, entry)).thenReturn(true);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(exileService).exileCard(gd, PLAYER1_ID, card);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Flashback spell resolves and is exiled instead of going to graveyard (CR 702.33a)")
+        void flashbackSpellResolvesIsExiled() {
+            Card card = createSorcery("Flashback Sorcery");
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            entry.setCastWithFlashback(true);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            // Abilities don't go to graveyard — only spells do
-            harness.assertNotInGraveyard(player1, "Trigger Source");
+            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+                    .anyMatch(c -> c.getName().equals("Flashback Sorcery"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Flashback overrides return-to-hand (CR 702.33a)")
+        void flashbackOverridesReturnToHand() {
+            Card card = createSorcery("Flashback Buyback");
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            entry.setCastWithFlashback(true);
+            entry.setReturnToHandAfterResolving(true);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            // Flashback exile overrides return-to-hand per CR 702.33a
+            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+                    .anyMatch(c -> c.getName().equals("Flashback Buyback"));
+            assertThat(gd.playerHands.get(PLAYER1_ID))
+                    .noneMatch(c -> c.getName().equals("Flashback Buyback"));
         }
 
         @Test
@@ -441,14 +890,14 @@ class StackResolutionServiceTest extends BaseCardTest {
         void exileSpellEffectExilesSpell() {
             Card card = createInstant("Exile Instant");
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card,
-                    player1.getId(), card.getName(), List.of(new ExileSpellEffect()));
+                    PLAYER1_ID, card.getName(), List.of(new ExileSpellEffect()));
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Exile Instant"));
-            harness.assertNotInGraveyard(player1, "Exile Instant");
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
 
         @Test
@@ -456,14 +905,34 @@ class StackResolutionServiceTest extends BaseCardTest {
         void returnToHandAfterResolving() {
             Card card = createSorcery("Buyback Sorcery");
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             entry.setReturnToHandAfterResolving(true);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertInHand(player1, "Buyback Sorcery");
-            harness.assertNotInGraveyard(player1, "Buyback Sorcery");
+            assertThat(gd.playerHands.get(PLAYER1_ID))
+                    .anyMatch(c -> c.getName().equals("Buyback Sorcery"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Pending return-to-hand on discard defers spell disposition")
+        void pendingReturnToHandOnDiscardDefersDisposition() {
+            Card card = createSorcery("Deferred Sorcery");
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            gd.stack.addLast(entry);
+            gd.pendingReturnToHandOnDiscardType = new PendingReturnToHandOnDiscardType(card, PLAYER1_ID, CardType.LAND);
+
+            svc.resolveTopOfStack(gd);
+
+            // Spell disposition is deferred — card stays in limbo
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+                    .noneMatch(c -> c.getName().equals("Deferred Sorcery"));
+            assertThat(gd.playerHands.get(PLAYER1_ID))
+                    .noneMatch(c -> c.getName().equals("Deferred Sorcery"));
         }
 
         @Test
@@ -471,14 +940,14 @@ class StackResolutionServiceTest extends BaseCardTest {
         void shuffleIntoLibraryEffect() {
             Card card = createSorcery("Shuffle Sorcery");
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
-                    player1.getId(), card.getName(), List.of(new ShuffleIntoLibraryEffect()));
+                    PLAYER1_ID, card.getName(), List.of(new ShuffleIntoLibraryEffect()));
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            assertThat(gd.playerDecks.get(player1.getId()))
+            assertThat(gd.playerDecks.get(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Shuffle Sorcery"));
-            harness.assertNotInGraveyard(player1, "Shuffle Sorcery");
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
 
         @Test
@@ -486,14 +955,14 @@ class StackResolutionServiceTest extends BaseCardTest {
         void copyCeasesToExist() {
             Card card = createInstant("Copied Spell");
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             entry.setCopy(true);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertNotInGraveyard(player1, "Copied Spell");
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
                     .noneMatch(c -> c.getName().equals("Copied Spell"));
         }
 
@@ -502,12 +971,12 @@ class StackResolutionServiceTest extends BaseCardTest {
         void activatedAbilityDoesNotGoToGraveyard() {
             Card card = createCreature("Ability Source");
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, card,
-                    player1.getId(), "Ability Source's ability", List.of());
+                    PLAYER1_ID, "Ability Source's ability", List.of());
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            harness.assertNotInGraveyard(player1, "Ability Source");
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
 
         @Test
@@ -515,15 +984,14 @@ class StackResolutionServiceTest extends BaseCardTest {
         void endTurnRequestedExilesSpell() {
             Card card = createSorcery("End Turn Sorcery");
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
             gd.endTurnRequested = true;
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            assertThat(gd.playerExiledCards.get(player1.getId()))
-                    .anyMatch(c -> c.getName().equals("End Turn Sorcery"));
-            harness.assertNotInGraveyard(player1, "End Turn Sorcery");
+            verify(exileService).exileCard(gd, PLAYER1_ID, card);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
             assertThat(gd.endTurnRequested).isFalse();
         }
 
@@ -532,16 +1000,15 @@ class StackResolutionServiceTest extends BaseCardTest {
         void endTurnRequestedCopyCeasesToExist() {
             Card card = createInstant("End Turn Copy");
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card,
-                    player1.getId(), card.getName(), List.of());
+                    PLAYER1_ID, card.getName(), List.of());
             entry.setCopy(true);
             gd.stack.addLast(entry);
             gd.endTurnRequested = true;
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
-            assertThat(gd.playerExiledCards.get(player1.getId()))
-                    .noneMatch(c -> c.getName().equals("End Turn Copy"));
-            harness.assertNotInGraveyard(player1, "End Turn Copy");
+            verify(exileService, never()).exileCard(any(), any(), any());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
 
         @Test
@@ -550,14 +1017,15 @@ class StackResolutionServiceTest extends BaseCardTest {
             UUID nonExistentTarget = UUID.randomUUID();
             Card card = createSorcery("Non-Targeting Sorcery");
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card,
-                    player1.getId(), card.getName(), List.of(), 0, nonExistentTarget, null);
+                    PLAYER1_ID, card.getName(), List.of(), 0, nonExistentTarget, null);
             entry.setNonTargeting(true);
             gd.stack.addLast(entry);
 
-            svc().resolveTopOfStack(gd);
+            svc.resolveTopOfStack(gd);
 
             // Spell resolved normally and goes to graveyard (not fizzled)
-            harness.assertInGraveyard(player1, "Non-Targeting Sorcery");
+            verify(effectResolutionService).resolveEffects(gd, entry);
+            verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, card);
         }
     }
 }
