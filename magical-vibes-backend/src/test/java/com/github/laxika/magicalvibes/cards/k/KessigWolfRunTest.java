@@ -45,10 +45,10 @@ class KessigWolfRunTest extends BaseCardTest {
     void tappingForManaAddsColorless() {
         Permanent landPerm = addKessigWolfRun(player1);
 
-        harness.activateAbility(player1, 0, 0);
+        harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerManaPools.get(player1.getId()).getColorless()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(landPerm.isTapped()).isTrue();
     }
 

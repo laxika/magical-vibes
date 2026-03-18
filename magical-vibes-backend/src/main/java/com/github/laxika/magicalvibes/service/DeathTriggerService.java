@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermane
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
@@ -268,6 +269,16 @@ public class DeathTriggerService {
                     ));
                 } else if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), playerId, may);
+                } else if (effect instanceof PutCountersOnSourceEffect) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
+                    ));
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
