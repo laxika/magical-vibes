@@ -7,6 +7,8 @@ nul
 .project
 token-usage-output.txt
 
+.claude/worktrees/*
+
 **/build
 **/build2
 
