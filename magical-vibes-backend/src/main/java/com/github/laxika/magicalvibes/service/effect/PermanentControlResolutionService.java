@@ -166,7 +166,8 @@ public class PermanentControlResolutionService {
         if (creatureCount <= 0) return;
         CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
                 creatureCount, effect.tokenName(), effect.power(), effect.toughness(),
-                effect.color(), effect.subtypes(), effect.tappedAndAttacking()
+                effect.color(), null, effect.subtypes(), effect.keywords(), effect.additionalTypes(),
+                effect.tappedAndAttacking(), false, Map.of(), false
         );
         applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     }
