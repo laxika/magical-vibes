@@ -9,4 +9,5 @@ import com.github.laxika.magicalvibes.model.CardType;
  */
 public record ExileTargetCardFromGraveyardEffect(CardType requiredType) implements CardEffect {
     @Override public boolean canTargetGraveyard() { return true; }
+    @Override public boolean canTargetAnyGraveyard() { return true; }
 }

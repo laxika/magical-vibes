@@ -926,15 +926,26 @@ public class SpellCastingService {
             );
         } else {
             // Single-target or no-target flashback spell
-            if (targetPermanentId != null && card.isNeedsTarget()) {
+            boolean needsGraveyardEffectTargeting = spellEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
+            if (targetPermanentId != null && card.isNeedsTarget() && needsGraveyardEffectTargeting) {
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
+            } else if (targetPermanentId != null && card.isNeedsTarget()) {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, true);
             } else if (card.isNeedsTarget() && targetPermanentId == null) {
                 throw new IllegalStateException("Spell requires a target");
             }
-            stackEntry = new StackEntry(
-                    entryType, card, playerId, card.getName(),
-                    spellEffects, effectiveXValue, targetPermanentId, null
-            );
+            if (needsGraveyardEffectTargeting) {
+                stackEntry = new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        spellEffects, effectiveXValue, targetPermanentId, null,
+                        Map.of(), Zone.GRAVEYARD, List.of(), List.of()
+                );
+            } else {
+                stackEntry = new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        spellEffects, effectiveXValue, targetPermanentId, null
+                );
+            }
         }
         stackEntry.setCastWithFlashback(true);
         gameData.stack.add(stackEntry);

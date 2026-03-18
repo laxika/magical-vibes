@@ -223,6 +223,17 @@ public class StackResolutionService {
                 }
             }
         } else {
+            // "As enters" card name choice (e.g. Nevermore) — name must be chosen
+            // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
+            var chooseNameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
+                    .map(e -> (ChooseCardNameOnEnterEffect) e)
+                    .findFirst().orElse(null);
+            if (chooseNameEffect != null) {
+                playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
+                return;
+            }
+
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
             logEnterBattlefield(gameData, card, controllerId);
 
