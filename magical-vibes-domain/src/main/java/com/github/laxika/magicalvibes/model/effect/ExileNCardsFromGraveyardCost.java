@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 
 /**
  * Cost effect that requires exiling exactly N cards of the specified type from the controller's graveyard.
+ * Unlike {@link ExileXCardsFromGraveyardCost}, this requires an exact count and does not set the X value.
  * If requiredType is null, any card in the graveyard qualifies.
  * Uses exileGraveyardCardIndices (List&lt;Integer&gt;) from PlayCardRequest.
  *

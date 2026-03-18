@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -456,21 +457,23 @@ public class GameBroadcastService {
             }
 
             var flashback = card.getCastingOption(FlashbackCast.class);
+            var graveyardCast = card.getCastingOption(GraveyardCast.class);
             boolean grantedFlashback = flashback.isEmpty()
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
 
-            if (flashback.isEmpty() && !grantedFlashback) {
+            if (flashback.isEmpty() && !grantedFlashback && graveyardCast.isEmpty()) {
                 continue;
             }
 
+            boolean isGraveyardCast = graveyardCast.isPresent() && flashback.isEmpty() && !grantedFlashback;
             boolean isInstantSpeed = card.hasType(CardType.INSTANT);
             boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
             if (!canCastTiming) {
                 continue;
             }
 
-            // For granted flashback, the cost equals the card's mana cost
-            String manaCostStr = grantedFlashback
+            // GraveyardCast and granted flashback use the card's mana cost
+            String manaCostStr = (isGraveyardCast || grantedFlashback)
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
@@ -479,9 +482,29 @@ public class GameBroadcastService {
             ManaCost cost = new ManaCost(manaCostStr);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = getCastCostModifier(gameData, playerId, card);
-            if (cost.canPay(pool, additionalCost)) {
-                playable.add(i);
+            if (!cost.canPay(pool, additionalCost)) {
+                continue;
             }
+
+            // For GraveyardCast with ExileNCardsFromGraveyardCost, check that enough
+            // qualifying cards exist in the graveyard (excluding the card being cast)
+            if (isGraveyardCast) {
+                ExileNCardsFromGraveyardCost exileNCost = card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                        .map(ExileNCardsFromGraveyardCost.class::cast)
+                        .findFirst().orElse(null);
+                if (exileNCost != null) {
+                    long availableCards = graveyard.stream()
+                            .filter(c -> c != card)
+                            .filter(c -> exileNCost.requiredType() == null || c.hasType(exileNCost.requiredType()))
+                            .count();
+                    if (availableCards < exileNCost.count()) {
+                        continue;
+                    }
+                }
+            }
+
+            playable.add(i);
         }
 
         return playable;

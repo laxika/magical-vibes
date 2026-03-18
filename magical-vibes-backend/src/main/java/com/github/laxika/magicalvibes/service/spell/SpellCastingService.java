@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -849,6 +850,9 @@ public class SpellCastingService {
         if (graveyard == null || graveyard.size() < cost.count()) {
             throw new IllegalStateException("Not enough cards in graveyard to exile");
         }
+        if (exileGraveyardCardIndices.stream().distinct().count() != exileGraveyardCardIndices.size()) {
+            throw new IllegalStateException("Duplicate graveyard card indices");
+        }
         for (int idx : exileGraveyardCardIndices) {
             if (idx < 0 || idx >= graveyard.size()) {
                 throw new IllegalStateException("Invalid graveyard card index: " + idx);
@@ -876,10 +880,16 @@ public class SpellCastingService {
     // --- Play with flashback from graveyard ---
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId) {
-        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, List.of());
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, List.of(), null);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId, List<UUID> targetPermanentIds) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, targetPermanentIds, null);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetPermanentId, List<UUID> targetPermanentIds,
+                                    List<Integer> exileGraveyardCardIndices) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetPermanentIds == null) targetPermanentIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
@@ -894,10 +904,12 @@ public class SpellCastingService {
 
         Card card = graveyard.get(graveyardCardIndex);
         var flashbackOpt = card.getCastingOption(FlashbackCast.class);
+        var graveyardCastOpt = card.getCastingOption(GraveyardCast.class);
         boolean grantedFlashback = flashbackOpt.isEmpty()
                 && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
-        if (flashbackOpt.isEmpty() && !grantedFlashback) {
-            throw new IllegalStateException("Card does not have flashback");
+        boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty() && !grantedFlashback;
+        if (flashbackOpt.isEmpty() && !grantedFlashback && !isGraveyardCast) {
+            throw new IllegalStateException("Card cannot be cast from graveyard");
         }
 
         // Validate timing
@@ -907,11 +919,11 @@ public class SpellCastingService {
         boolean stackEmpty = gameData.stack.isEmpty();
         boolean isInstantSpeed = card.hasType(CardType.INSTANT);
         if (!isInstantSpeed && !(isActivePlayer && isMainPhase && stackEmpty)) {
-            throw new IllegalStateException("Cannot cast sorcery-speed flashback spell now");
+            throw new IllegalStateException("Cannot cast sorcery-speed spell from graveyard now");
         }
 
-        // Validate and pay flashback cost (granted flashback uses the card's mana cost)
-        String manaCostStr = grantedFlashback
+        // Validate and pay mana cost (graveyard cast uses the card's normal mana cost)
+        String manaCostStr = (isGraveyardCast || grantedFlashback)
                 ? card.getManaCost()
                 : flashbackOpt.get().getCost(ManaCastingCost.class)
                         .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))
@@ -920,14 +932,30 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
         if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
-            throw new IllegalStateException("Not enough mana to pay flashback cost");
+            throw new IllegalStateException("Not enough mana to pay " + (isGraveyardCast ? "casting" : "flashback") + " cost");
         }
         cost.pay(pool, effectiveXValue + additionalCost);
 
         // Remove card from graveyard
         graveyard.remove(graveyardCardIndex);
 
+        // Pay exile-N-cards-from-graveyard cost if present (e.g. Skaab Ruinator)
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        ExileNCardsFromGraveyardCost exileNCost = extractAndRemoveExileNCardsFromGraveyardCost(spellEffects);
+        payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
+
+        if (isGraveyardCast) {
+            // GraveyardCast: creature/permanent spell — enters battlefield on resolution, no exile
+            StackEntryType entryType = cardTypeToStackEntryType(card.getType());
+            StackEntry stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    List.of(), 0, targetPermanentId, null
+            );
+            gameData.stack.add(stackEntry);
+            finishSpellCast(gameData, playerId, player, graveyard, card, false);
+            return;
+        }
+
         StackEntryType entryType = card.hasType(CardType.INSTANT) ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
 
         // Check for "target player shuffles up to N cards from their graveyard" flashback spells (e.g. Memory's Journey)

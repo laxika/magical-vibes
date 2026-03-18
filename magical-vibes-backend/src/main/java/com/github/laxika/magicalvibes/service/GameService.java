@@ -318,14 +318,20 @@ public class GameService {
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId) {
-        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, List.of());
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, List.of(), null);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId, List<UUID> targetPermanentIds) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, targetPermanentIds, null);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetPermanentId, List<UUID> targetPermanentIds,
+                                    List<Integer> exileGraveyardCardIndices) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, targetPermanentIds);
+            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, targetPermanentIds, exileGraveyardCardIndices);
         }
     }
 

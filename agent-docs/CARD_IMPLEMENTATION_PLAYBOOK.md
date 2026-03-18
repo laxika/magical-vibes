@@ -127,6 +127,12 @@ public class ExampleCard extends Card {
   - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`)
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
 
+- Graveyard cast ("You may cast this card from your graveyard"):
+  - `addCastingOption(new GraveyardCast())` — uses the card's normal mana cost, no exile after resolution (unlike flashback)
+  - Card goes to graveyard normally if it dies, allowing repeated graveyard casts
+  - Can be combined with additional costs like `ExileNCardsFromGraveyardCost`
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SkaabRuinator.java`
+
 - Graveyard activated ability (pay mana from graveyard zone):
   - `addGraveyardActivatedAbility(new ActivatedAbility(false, cost, List.of(effect), description))` — activated ability usable while card is in graveyard
   - Distinct from `GRAVEYARD_UPKEEP_TRIGGERED` which is a triggered ability firing on upkeep
