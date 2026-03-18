@@ -254,7 +254,7 @@ public class GameTestHarness {
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 destructionResolutionService,
-                new MillResolutionService(graveyardService, gameBroadcastService, permanentControlResolutionService),
+                new MillResolutionService(graveyardService, gameBroadcastService, gameQueryService, permanentControlResolutionService),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 librarySearchResolutionService,
                 new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, battlefieldEntryService, exileService),

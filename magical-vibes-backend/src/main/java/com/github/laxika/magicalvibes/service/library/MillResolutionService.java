@@ -13,9 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +40,7 @@ public class MillResolutionService {
 
     private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameQueryService gameQueryService;
     private final PermanentControlResolutionService permanentControlResolutionService;
 
     /**
@@ -225,6 +229,48 @@ public class MillResolutionService {
                     gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode()
             );
         }
+    }
+
+    /**
+     * Mills one card from the target player's library, then boosts the source creature
+     * by +X/+X until end of turn, where X is the milled card's mana value.
+     * Used by Mindshrieker.
+     */
+    @HandlesEffect(MillTargetPlayerAndBoostSelfByManaValueEffect.class)
+    void resolveMillTargetPlayerAndBoostSelfByManaValue(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String cardName = entry.getCard().getName();
+        String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (deck.isEmpty()) {
+            String logEntry = targetPlayerName + "'s library is empty — " + cardName + "'s ability does nothing.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        // Snapshot the top card before milling to get its mana value
+        Card topCard = deck.getFirst();
+        int manaValue = topCard.getManaValue();
+
+        // Mill one card
+        graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
+
+        // Boost the source creature
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return;
+        }
+
+        if (manaValue > 0) {
+            self.setPowerModifier(self.getPowerModifier() + manaValue);
+            self.setToughnessModifier(self.getToughnessModifier() + manaValue);
+        }
+
+        String logEntry = cardName + " gets +" + manaValue + "/+" + manaValue
+                + " until end of turn (milled " + topCard.getName() + ", mana value " + manaValue + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets +{}/+{} from milling {}", gameData.id, cardName, manaValue, manaValue, topCard.getName());
     }
 
     private static String pluralCards(int count) {
