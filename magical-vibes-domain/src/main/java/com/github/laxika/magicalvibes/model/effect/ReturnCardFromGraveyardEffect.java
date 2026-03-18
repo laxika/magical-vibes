@@ -73,6 +73,9 @@ import lombok.Builder;
  *                             than the spell controller's control (e.g. Open the Vaults)
  * @param returnAtRandom       {@code true} to return a random matching card instead of letting
  *                             the controller choose (e.g. Charmbreaker Devils)
+ * @param randomCount          when {@link #returnAtRandom} is {@code true}, the number of random
+ *                             cards to return (defaults to {@code 1}); capped at the number of
+ *                             matching cards available (e.g. Make a Wish returns 2 at random)
  * @param choosePermanentType  {@code true} to prompt the controller to choose a permanent type
  *                             at resolution time, then return all cards of that type from the
  *                             graveyard (e.g. Creeping Renaissance); implies {@code returnAll}
@@ -96,6 +99,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean enterTapped,
         boolean underOwnersControl,
         boolean returnAtRandom,
+        int randomCount,
         boolean choosePermanentType
 ) implements CardEffect {
 
@@ -106,6 +110,7 @@ public record ReturnCardFromGraveyardEffect(
     public static class ReturnCardFromGraveyardEffectBuilder {
 
         private GraveyardSearchScope source = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
+        private int randomCount = 1;
     }
 
     @Override

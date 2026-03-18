@@ -311,21 +311,27 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
-        graveyard.remove(randomCard);
+        int count = Math.min(effect.randomCount(), matchingCards.size());
+        List<String> returnedNames = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
+            matchingCards.remove(randomCard);
+            graveyard.remove(randomCard);
 
-        if (effect.destination() == GraveyardChoiceDestination.HAND) {
-            gameData.addCardToHand(controllerId, randomCard);
-        } else {
-            putCardOntoBattlefield(gameData, controllerId, randomCard, null, null, effect.enterTapped());
+            if (effect.destination() == GraveyardChoiceDestination.HAND) {
+                gameData.addCardToHand(controllerId, randomCard);
+            } else {
+                putCardOntoBattlefield(gameData, controllerId, randomCard, null, null, effect.enterTapped());
+            }
+            returnedNames.add(randomCard.getName());
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
-        String logEntry = playerName + " returns " + randomCard.getName() + " at random from graveyard to " + destText + ".";
+        String logEntry = playerName + " returns " + String.join(", ", returnedNames) + " at random from graveyard to " + destText + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} returns {} at random from graveyard to {}",
-                gameData.id, playerName, randomCard.getName(), destText);
+                gameData.id, playerName, String.join(", ", returnedNames), destText);
     }
 
     private void resolveFromControllersGraveyard(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
