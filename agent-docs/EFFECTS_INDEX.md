@@ -377,6 +377,7 @@ Pass `null` as filter to allow any card.
 | `DrawXCardsForTargetPlayerEffect` | `()` | target player draws X cards (reads X from stack entry xValue; targets player) |
 | `DrawCardsEqualToChargeCountersOnSourceEffect` | `()` | draw cards equal to charge counters on source (reads snapshotted count from xValue) |
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
+| `DrawAndDiscardCardEffect` | `(int drawAmount, int discardAmount)` | draw N then discard N cards (loot). Convenience ctor: `()` defaults to `(1, 1)`. Commonly wrapped in MayEffect for "you may draw a card. If you do, discard a card." |
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
 | `EachPlayerDiscardsEffect` | `(int amount)` | each player discards N cards in APNAP order (active player first). Uses queued sequential discard interaction. Controller's discard has `discardCausedByOpponent=false`; others have `true`. |
 | `EachOpponentDiscardsEffect` | `(int amount)` | each opponent discards N cards in APNAP order (skips controller). Uses same queued sequential discard interaction as EachPlayerDiscardsEffect. All discards have `discardCausedByOpponent=true`. Convenience ctor: `()` defaults to amount=1. |

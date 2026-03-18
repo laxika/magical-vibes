@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerRandomDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
@@ -316,6 +317,14 @@ public class PlayerInteractionResolutionService {
         // Then discard a card
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, controllerId, 1);
+    }
+
+    @HandlesEffect(DrawAndDiscardCardEffect.class)
+    private void resolveDrawAndDiscard(GameData gameData, StackEntry entry, DrawAndDiscardCardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        applyDrawCards(gameData, controllerId, effect.drawAmount());
+        gameData.discardCausedByOpponent = false;
+        resolveDiscardCards(gameData, controllerId, effect.discardAmount());
     }
 
     @HandlesEffect(EachPlayerDiscardsEffect.class)
