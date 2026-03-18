@@ -232,6 +232,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Land tap trigger | `m/Manabarbs.java` | ON_ANY_PLAYER_TAPS_LAND DealDamageOnLandTapEffect |
 | Land tap mana doubling + opponent untap lock | `v/VorinclexVoiceOfHunger.java` | ON_ANY_PLAYER_TAPS_LAND AddOneOfEachManaTypeProducedByLandEffect + OpponentTappedLandDoesntUntapEffect — doubles controller's land mana, opponent lands skip next untap step |
 | End step self-destruct | `s/SparkElemental.java` | END_STEP_TRIGGERED SacrificeSelfEffect |
+| End step morbid destroy | `r/ReaperFromTheAbyss.java` | END_STEP_TRIGGERED MorbidConditionalEffect(DestroyTargetPermanentEffect()) + target(PermanentPredicateTargetFilter(non-Demon creature)) — intervening-if morbid check at trigger time, targeting via `pendingEndStepTriggerTargets` |
 | Controller end step draw | `j/JinGitaxiasCoreAugur.java` | CONTROLLER_END_STEP_TRIGGERED DrawCardEffect(7) — "your end step" trigger (only fires on controller's turn) + STATIC ReduceOpponentMaxHandSizeEffect(7) |
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |
 | Imprint ETB + dies | `c/CloneShell.java` | Artifact Creature — ON_ENTER_BATTLEFIELD ImprintFromTopCardsEffect + ON_DEATH PutImprintedCreatureOntoBattlefieldEffect |

@@ -431,6 +431,38 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleEndStepTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EndStepTriggerTarget est) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                est.sourceCard(),
+                est.controllerId(),
+                est.sourceCard().getName() + "'s end step ability",
+                new ArrayList<>(est.effects()),
+                permanentId,
+                est.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, permanentId);
+        String logEntry = est.sourceCard().getName() + "'s ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} end-step trigger targets {}", gameData.id, est.sourceCard().getName(), targetName);
+
+        if (!gameData.pendingEndStepTriggerTargets.isEmpty()) {
+            turnProgressionService.processNextEndStepTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     private String getTargetDisplayName(GameData gameData, UUID targetId) {
         String playerName = gameData.playerIdToName.get(targetId);
         if (playerName != null) return playerName;

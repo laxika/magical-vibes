@@ -223,4 +223,8 @@ public class TurnProgressionService {
     public void processNextCapriciousEfreetTarget(GameData gameData) {
         stepTriggerService.processNextCapriciousEfreetTarget(gameData);
     }
+
+    public void processNextEndStepTriggerTarget(GameData gameData) {
+        stepTriggerService.processNextEndStepTriggerTarget(gameData);
+    }
 }

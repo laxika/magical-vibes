@@ -101,6 +101,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepCopyTrigger(gameData, permanentId, uct);
         } else if (context instanceof PermanentChoiceContext.CapriciousEfreetOwnTarget ceo) {
             triggerHandler.handleCapriciousEfreetOwnTarget(gameData, permanentId, ceo);
+        } else if (context instanceof PermanentChoiceContext.EndStepTriggerTarget est) {
+            triggerHandler.handleEndStepTrigger(gameData, permanentId, est);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);
         } else {

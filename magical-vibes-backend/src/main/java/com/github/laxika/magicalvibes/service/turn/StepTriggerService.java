@@ -22,13 +22,18 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEff
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
@@ -794,6 +799,32 @@ public class StepTriggerService {
                 for (CardEffect effect : endStepEffects) {
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may);
+                    } else if (effect instanceof MorbidConditionalEffect morbid) {
+                        // Intervening-if: only trigger if morbid condition is met (CR 603.4)
+                        if (!gameQueryService.isMorbidMet(gameData)) {
+                            log.info("Game {} - {} end-step morbid trigger skipped (no creature died this turn)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        CardEffect wrapped = morbid.wrapped();
+                        if (wrapped.canTargetPermanent() || wrapped.canTargetPlayer()) {
+                            // Targeting triggered ability — queue for target selection
+                            gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    playerId,
+                                    perm.getCard().getName() + "'s end step ability",
+                                    new ArrayList<>(List.of(effect)),
+                                    null,
+                                    perm.getId()
+                            ));
+                            String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} end-step morbid trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                        }
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -862,6 +893,91 @@ public class StepTriggerService {
             }
         }
 
+        // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid)
+        if (!gameData.pendingEndStepTriggerTargets.isEmpty()) {
+            processNextEndStepTriggerTarget(gameData);
+            return;
+        }
+
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Processes the next pending end-step targeted trigger.
+     * Presents the controller with a permanent choice; when selected, the trigger is
+     * pushed onto the stack with the chosen target.
+     *
+     * @param gameData the current game state to modify
+     */
+    public void processNextEndStepTriggerTarget(GameData gameData) {
+        if (gameData.pendingEndStepTriggerTargets.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.EndStepTriggerTarget trigger = gameData.pendingEndStepTriggerTargets.removeFirst();
+
+        // Collect valid targets, respecting the card's target filter if present
+        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
+        FilterContext filterCtx = targetFilter != null
+                ? new FilterContext(gameData, trigger.sourceCard().getId(), trigger.controllerId())
+                : null;
+
+        List<UUID> validTargets = new ArrayList<>();
+        boolean canTargetPlayers = trigger.effects().stream().anyMatch(e -> {
+            CardEffect inner = e instanceof ConditionalEffect ce ? ce.wrapped() : e;
+            return inner.canTargetPlayer();
+        });
+        boolean canTargetPermanents = trigger.effects().stream().anyMatch(e -> {
+            CardEffect inner = e instanceof ConditionalEffect ce ? ce.wrapped() : e;
+            return inner.canTargetPermanent();
+        });
+
+        if (canTargetPlayers) {
+            validTargets.addAll(gameData.orderedPlayerIds);
+        }
+        if (canTargetPermanents) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (!gameQueryService.isCreature(gameData, p)) continue;
+                    if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+                        if (!gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
+                    }
+                    validTargets.add(p.getId());
+                }
+            }
+        }
+
+        if (validTargets.isEmpty()) {
+            String logEntry = trigger.sourceCard().getName() + "'s end step trigger has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} end-step trigger skipped (no valid targets)",
+                    gameData.id, trigger.sourceCard().getName());
+            // Try next pending trigger
+            processNextEndStepTriggerTarget(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+
+        String targetDescription;
+        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+            targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
+        } else if (canTargetPlayers && canTargetPermanents) {
+            targetDescription = "any target";
+        } else if (canTargetPlayers) {
+            targetDescription = "target player";
+        } else {
+            targetDescription = "target creature";
+        }
+
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+
+        String logEntry = trigger.sourceCard().getName() + "'s end step trigger — choose " + targetDescription + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} end-step trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
     }
 }

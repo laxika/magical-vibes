@@ -35,16 +35,19 @@ public class AutoPassService {
     private final GameBroadcastService gameBroadcastService;
     private final TriggerCollectionService triggerCollectionService;
     private final StackResolutionService stackResolutionService;
+    private final StepTriggerService stepTriggerService;
 
     public AutoPassService(
             GameQueryService gameQueryService,
             GameBroadcastService gameBroadcastService,
             TriggerCollectionService triggerCollectionService,
-            StackResolutionService stackResolutionService) {
+            StackResolutionService stackResolutionService,
+            StepTriggerService stepTriggerService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
         this.stackResolutionService = stackResolutionService;
+        this.stepTriggerService = stepTriggerService;
     }
 
     /**
@@ -80,6 +83,11 @@ public class AutoPassService {
         // Process any pending targeted death triggers before auto-passing
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
+        }
+
+        // Process any pending end-step targeted triggers
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingEndStepTriggerTargets.isEmpty()) {
+            stepTriggerService.processNextEndStepTriggerTarget(gameData);
         }
 
         for (int safety = 0; safety < 100; safety++) {
