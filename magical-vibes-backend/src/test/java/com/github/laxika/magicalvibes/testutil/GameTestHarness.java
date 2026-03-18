@@ -48,7 +48,7 @@ import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionSer
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionService;
 import com.github.laxika.magicalvibes.service.library.MillResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.PlayerInputService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
