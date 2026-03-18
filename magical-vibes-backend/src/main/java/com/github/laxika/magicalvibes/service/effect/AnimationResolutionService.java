@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndTransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -185,6 +186,35 @@ public class AnimationResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
         }
+    }
+
+    @HandlesEffect(TransformAllEffect.class)
+    private void resolveTransformAll(GameData gameData, StackEntry entry, TransformAllEffect effect) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!gameQueryService.matchesPermanentPredicate(gameData, perm, effect.filter())) {
+                return;
+            }
+            Card originalCard = perm.getOriginalCard();
+            if (!perm.isTransformed()) {
+                Card backFace = originalCard.getBackFaceCard();
+                if (backFace == null) {
+                    return;
+                }
+                String frontName = perm.getCard().getName();
+                perm.setCard(backFace);
+                perm.setTransformed(true);
+                String logEntry = frontName + " transforms into " + backFace.getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
+            } else {
+                String backName = perm.getCard().getName();
+                perm.setCard(originalCard);
+                perm.setTransformed(false);
+                String logEntry = backName + " transforms into " + originalCard.getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+            }
+        });
     }
 
     @HandlesEffect(TapAndTransformSelfEffect.class)

@@ -83,6 +83,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Graveyard to top of library + draw | `f/FranticSalvage.java` | PutTargetCardsFromGraveyardOnTopOfLibraryEffect(CardTypePredicate(ARTIFACT)) + DrawCardEffect — any number of target artifact cards, multi-graveyard targeting at cast time |
 | Graveyard shuffle into library (target player) | `m/MemorysJourney.java` | ShuffleTargetCardsFromGraveyardIntoLibraryEffect(null, 3) + FlashbackCast("{G}") — target player shuffles up to 3 cards from their graveyard into their library, targets any player's graveyard |
 | Prevent combat damage | `h/HolyDay.java` | PreventAllCombatDamageEffect |
+| Prevent combat damage (selective) | `m/Moonmist.java` | TransformAllEffect(PermanentHasSubtypePredicate(HUMAN)) + PreventCombatDamageExceptBySubtypesEffect(PermanentHasAnySubtypePredicate(WEREWOLF, WOLF)) — transform all Humans, prevent combat damage by non-Werewolves/Wolves |
 | Steal creature (temp) | `t/Threaten.java` | GainControlOfTargetCreatureUntilEndOfTurn + haste + untap |
 | Steal artifact (temp) | `m/MetallicMastery.java` | GainControlOfTargetPermanentUntilEndOfTurn + untap + haste + PermanentIsArtifactPredicate filter |
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |

@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public class GameData {
 
@@ -70,6 +71,8 @@ public class GameData {
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
+    /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
+    public PermanentPredicate combatDamageExemptPredicate;
     public boolean allPermanentsEnterTappedThisTurn;
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
@@ -395,6 +398,7 @@ public class GameData {
         copy.turnNumber = this.turnNumber;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
+        copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;

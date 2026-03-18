@@ -761,6 +761,7 @@ Pass `null` as filter to allow any card.
 | `PreventDamageToTargetEffect` | `(int amount)` | prevent next N damage to target |
 | `PreventNextDamageEffect` | `(int amount)` | prevent next N damage to target creature or player |
 | `PreventAllCombatDamageEffect` | `()` | prevent all combat damage this turn |
+| `PreventCombatDamageExceptBySubtypesEffect` | `(PermanentPredicate exemptPredicate)` | prevent all combat damage this turn by creatures NOT matching the exempt predicate. Used by Moonmist with `PermanentHasAnySubtypePredicate(Set.of(WEREWOLF, WOLF))` |
 | `PreventAllCombatDamageToAndByEnchantedCreatureEffect` | `()` | prevent all combat damage to and dealt by enchanted creature (non-combat damage still applies) |
 | `PreventAllDamageEffect` | `()` | prevent all damage (e.g. Fog-style) |
 | `PreventAllDamageToAndByEnchantedCreatureEffect` | `()` | prevent all damage to and dealt by enchanted creature |
@@ -844,6 +845,7 @@ Pass `null` as filter to allow any card.
 | `AnimateTargetLandWhileSourceOnBattlefieldEffect` | `(int power, int toughness, CardColor color, List<CardSubtype> grantedSubtypes)` | target land becomes creature with P/T + color + subtypes for as long as source remains on battlefield; reverts when source leaves. Uses `sourceLinkedAnimations` tracking on GameData. canTargetPermanent=true. Used by Awakener Druid |
 | `AnimateNoncreatureArtifactsEffect` | `()` | animate all noncreature artifacts into creatures (March of the Machines-style) |
 | `TransformSelfEffect` | `()` | Transforms the source permanent to its back face (or back to front if already transformed). Used by double-faced cards with Transform |
+| `TransformAllEffect` | `(PermanentPredicate filter)` | Transforms all permanents on the battlefield matching the given predicate. Each matching permanent flips to its back face (or back to front if already transformed). Used by Moonmist with `PermanentHasSubtypePredicate(HUMAN)` |
 | `TapAndTransformSelfEffect` | `()` | Taps the source permanent and then transforms it. Used with `DidntAttackConditionalEffect` for back-face triggers (e.g. Homicidal Brute) |
 | `DrawDiscardTransformIfCreatureDiscardedEffect` | `()` | Draw 1, discard 1; if creature discarded, untap + transform source. Loot with conditional transform (e.g. Civilized Scholar) |
 | `AddCardTypeToTargetPermanentEffect` | `(CardType cardType)` | target permanent becomes the given card type in addition to its other types until end of turn (e.g. Liquimetal Coating makes target an artifact) |

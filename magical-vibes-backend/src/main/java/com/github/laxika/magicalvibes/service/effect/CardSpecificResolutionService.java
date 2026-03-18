@@ -933,6 +933,7 @@ public class CardSpecificResolutionService {
         gameData.globalDamagePreventionShield = 0;
         gameData.damageRedirectShields.clear();
         gameData.preventAllCombatDamage = false;
+        gameData.combatDamageExemptPredicate = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.endTurnRequested = false;
         gameData.additionalCombatMainPhasePairs = 0;

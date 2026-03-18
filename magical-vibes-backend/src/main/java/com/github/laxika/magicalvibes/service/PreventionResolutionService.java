@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCo
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageExceptBySubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
@@ -79,6 +80,15 @@ public class PreventionResolutionService {
         gameData.preventAllCombatDamage = true;
 
         String logEntry = "All combat damage will be prevented this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+    }
+
+    @HandlesEffect(PreventCombatDamageExceptBySubtypesEffect.class)
+    void resolvePreventCombatDamageExceptBySubtypes(GameData gameData, StackEntry entry,
+                                                     PreventCombatDamageExceptBySubtypesEffect effect) {
+        gameData.combatDamageExemptPredicate = effect.exemptPredicate();
+
+        String logEntry = "Combat damage from creatures that don't match the exemption will be prevented this turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 

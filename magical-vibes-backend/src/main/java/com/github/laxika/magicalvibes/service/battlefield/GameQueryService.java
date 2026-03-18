@@ -1646,6 +1646,10 @@ public class GameQueryService {
         if (isCombatDamage && hasAuraWithEffect(gameData, creature, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) {
             return true;
         }
+        if (isCombatDamage && gameData.combatDamageExemptPredicate != null
+                && !matchesPermanentPredicate(gameData, creature, gameData.combatDamageExemptPredicate)) {
+            return true;
+        }
         return false;
     }
 
