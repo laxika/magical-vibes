@@ -899,6 +899,7 @@ Pass `null` as filter to allow any card.
 | `LimitSpellsPerTurnEffect` | `(int maxSpells)` | each player can cast at most N spells per turn (static) |
 | `IncreaseOpponentCastCostEffect` | `(Set<CardType> affectedTypes, int amount)` | opponent's spells of types cost N more (static) |
 | `RequirePaymentToAttackEffect` | `(int amountPerAttacker)` | must pay N mana per attacking creature (static) |
+| `AlternativeCostForSpellsEffect` | `(int cost, CardPredicate filter)` | controller may pay the alternative cost rather than the mana cost for spells matching the filter (static, from battlefield permanent, e.g. Rooftop Storm with cost=0 and creature+zombie filter) |
 | `ReduceOwnCastCostForCardTypeEffect` | `(Set<CardType> affectedTypes, int amount)` | reduce controller's spells of given types by N (static, from battlefield permanent, e.g. Heartless Summoning) |
 | `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect` | `(int minimumCreatureDifference, int amount)` | reduce cast cost by N if opponent has M+ more creatures |
 | `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` | `(int amount)` | reduce cast cost of controller's spells by N if they share a card type with the imprinted card (static, Semblance Anvil) |

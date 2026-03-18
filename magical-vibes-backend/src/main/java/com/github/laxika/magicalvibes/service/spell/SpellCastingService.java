@@ -290,7 +290,7 @@ public class SpellCastingService {
             }
         }
 
-        if (!usingAlternateCost) {
+        if (!usingAlternateCost && !gameBroadcastService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
             // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
             if (card.getManaCost() != null) {
                 ManaCost cost = new ManaCost(card.getManaCost());
@@ -1008,6 +1008,8 @@ public class SpellCastingService {
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount) {
         if (card.getManaCost() == null) return;
+        // Alternative zero cost (e.g. Rooftop Storm): skip mana payment entirely
+        if (gameBroadcastService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);

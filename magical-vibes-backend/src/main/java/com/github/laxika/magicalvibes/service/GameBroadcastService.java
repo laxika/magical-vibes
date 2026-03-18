@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsE
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 
+import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
@@ -314,31 +315,36 @@ public class GameBroadcastService {
                 boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
 
                 if (canCastTiming) {
-                    ManaCost cost = new ManaCost(card.getManaCost());
-                    ManaPool pool = gameData.playerManaPools.get(playerId);
-                    int additionalCost = getCastCostModifier(gameData, playerId, card);
-                    boolean isArtifact = card.hasType(CardType.ARTIFACT);
-                    boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
-                    boolean hasRestrictedRedContext = isArtifact
-                            || card.hasType(CardType.CREATURE);
-                    boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
-                            ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
-                            : cost.canPay(pool, additionalCost);
-                    if (canAfford && card.isRequiresCreatureMana()) {
-                        canAfford = cost.canPayCreatureOnly(pool, additionalCost);
-                    }
-                    if (canAfford) {
+                    // Alternative zero cost (e.g. Rooftop Storm for Zombie creature spells)
+                    if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                         playable.add(i);
-                    } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
-                        // Check if castable with convoke: mana pool + untapped creatures >= total cost
-                        int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
-                        int totalAvailable = pool.getTotal() + convokeCreatures;
-                        if (totalAvailable >= cost.getManaValue() + additionalCost) {
+                    } else {
+                        ManaCost cost = new ManaCost(card.getManaCost());
+                        ManaPool pool = gameData.playerManaPools.get(playerId);
+                        int additionalCost = getCastCostModifier(gameData, playerId, card);
+                        boolean isArtifact = card.hasType(CardType.ARTIFACT);
+                        boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+                        boolean hasRestrictedRedContext = isArtifact
+                                || card.hasType(CardType.CREATURE);
+                        boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
+                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
+                                : cost.canPay(pool, additionalCost);
+                        if (canAfford && card.isRequiresCreatureMana()) {
+                            canAfford = cost.canPayCreatureOnly(pool, additionalCost);
+                        }
+                        if (canAfford) {
+                            playable.add(i);
+                        } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
+                            // Check if castable with convoke: mana pool + untapped creatures >= total cost
+                            int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
+                            int totalAvailable = pool.getTotal() + convokeCreatures;
+                            if (totalAvailable >= cost.getManaValue() + additionalCost) {
+                                playable.add(i);
+                            }
+                        }
+                        if (!playable.contains(i) && canAlternateCast(gameData, playerId, card, battlefield)) {
                             playable.add(i);
                         }
-                    }
-                    if (!playable.contains(i) && canAlternateCast(gameData, playerId, card, battlefield)) {
-                        playable.add(i);
                     }
                 }
             } else if (card.getManaCost() == null && canAlternateCast(gameData, playerId, card, battlefield)) {
@@ -519,17 +525,21 @@ public class GameBroadcastService {
             boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
 
             if (canCastTiming) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                int additionalCost = getCastCostModifier(gameData, playerId, card);
-                boolean isArtifact = card.hasType(CardType.ARTIFACT);
-                boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
-                boolean hasRestrictedRedContext = isArtifact
-                        || card.hasType(CardType.CREATURE);
-                boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
-                        ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
-                        : cost.canPay(pool, additionalCost);
-                if (canAfford) {
+                if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                     playable.add(cardViewFactory.create(card));
+                } else {
+                    ManaCost cost = new ManaCost(card.getManaCost());
+                    int additionalCost = getCastCostModifier(gameData, playerId, card);
+                    boolean isArtifact = card.hasType(CardType.ARTIFACT);
+                    boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+                    boolean hasRestrictedRedContext = isArtifact
+                            || card.hasType(CardType.CREATURE);
+                    boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
+                            ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
+                            : cost.canPay(pool, additionalCost);
+                    if (canAfford) {
+                        playable.add(cardViewFactory.create(card));
+                    }
                 }
             }
         }
@@ -547,6 +557,21 @@ public class GameBroadcastService {
                             || card.hasType(grant.cardType())) {
                         return true;
                     }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AlternativeCostForSpellsEffect altCost
+                        && altCost.cost() == 0
+                        && gameQueryService.matchesCardPredicate(card, altCost.filter(), null)) {
+                    return true;
                 }
             }
         }
