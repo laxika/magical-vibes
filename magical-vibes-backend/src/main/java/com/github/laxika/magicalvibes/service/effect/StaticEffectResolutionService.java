@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -967,6 +968,8 @@ public class StaticEffectResolutionService {
             return target.getCard().hasType(CardType.LAND);
         if (filter instanceof PermanentIsPlaneswalkerPredicate)
             return target.getCard().hasType(CardType.PLANESWALKER);
+        if (filter instanceof PermanentIsTokenPredicate)
+            return target.getCard().isToken();
         if (filter instanceof PermanentNotPredicate p)
             return !matchesStaticFilter(target, p.predicate());
         if (filter instanceof PermanentAllOfPredicate p)
