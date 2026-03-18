@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -137,6 +138,7 @@ public class AbilityActivationService {
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
+        validateNotBlockedByStaticAbilityLock(gameData, permanent);
 
         permanent.tap();
 
@@ -199,6 +201,7 @@ public class AbilityActivationService {
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
+        validateNotBlockedByStaticAbilityLock(gameData, permanent);
 
         // Validate target for effects that need one
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)) {
@@ -476,6 +479,7 @@ public class AbilityActivationService {
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
+        validateNotBlockedByStaticAbilityLock(gameData, permanent);
 
         // Validate activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, permanent, ability);
@@ -1204,6 +1208,21 @@ public class AbilityActivationService {
 
     private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {
         validateNotBlockedByNameLock(gameData, permanent.getCard().getName(), isManaAbility(ability));
+    }
+
+    private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent) {
+        for (UUID pid : gameData.playerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock) {
+                        if (gameQueryService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
+                            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
+                                    + " can't be activated (" + p.getCard().getName() + ")");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void validateNotBlockedByNameLock(GameData gameData, String cardName, boolean manaAbility) {

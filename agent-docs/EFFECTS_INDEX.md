@@ -929,6 +929,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `ChooseCardNameOnEnterEffect` | `()` or `(List<CardType> excludedTypes)` | choose a card name as ETB (implements `ChooseCardNameEffect` marker). No-arg allows any name (Pithing Needle); with excludedTypes filters the name list (e.g. `List.of(LAND)` for Phyrexian Revoker) |
 | `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect` | `()` or `(boolean blocksManaAbilities)` | activated abilities of chosen name can't be activated (static). No-arg (false) excludes mana abilities (Pithing Needle); `true` also blocks mana abilities (Phyrexian Revoker) |
+| `ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect` | `(PermanentPredicate predicate)` | all activated abilities (including mana abilities) of permanents matching the predicate can't be activated (static). Used by Stony Silence with `PermanentIsArtifactPredicate` |
 | `ChooseColorOnEnterEffect` | `()` | choose a color as ETB (implements `ChooseColorEffect` marker) |
 | `ChooseSubtypeOnEnterEffect` | `()` | choose a creature type as ETB. Detected by `StackResolutionService.resolveEnchantmentSpell()` to prompt `beginSubtypeChoice`. Stores result in `Permanent.chosenSubtype` |
 | `ChooseBasicLandTypeOnEnterEffect` | `()` | choose a basic land type as ETB. Detected by `StackResolutionService.resolveEnchantmentSpell()` (aura path) to prompt `beginBasicLandTypeChoice`. Stores result in `Permanent.chosenSubtype`. Used by Convincing Mirage |
