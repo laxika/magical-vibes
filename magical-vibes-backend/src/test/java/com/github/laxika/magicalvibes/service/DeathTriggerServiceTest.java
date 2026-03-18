@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -17,28 +18,57 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-class DeathTriggerServiceTest extends BaseCardTest {
+@ExtendWith(MockitoExtension.class)
+class DeathTriggerServiceTest {
+
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private GameBroadcastService gameBroadcastService;
 
     private DeathTriggerService svc;
+    private GameData gd;
+
+    private static final UUID PLAYER1_ID = UUID.randomUUID();
+    private static final UUID PLAYER2_ID = UUID.randomUUID();
 
     @BeforeEach
-    void initService() {
-        svc = new DeathTriggerService(gqs, harness.getGameBroadcastService());
+    void setUp() {
+        svc = new DeathTriggerService(gameQueryService, gameBroadcastService);
+        gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
+        gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
+        gd.playerIdToName.put(PLAYER1_ID, "Player1");
+        gd.playerIdToName.put(PLAYER2_ID, "Player2");
+        gd.playerBattlefields.put(PLAYER1_ID, new ArrayList<>());
+        gd.playerBattlefields.put(PLAYER2_ID, new ArrayList<>());
+        gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>());
+        gd.playerGraveyards.put(PLAYER2_ID, new ArrayList<>());
     }
 
     private Card createCreature(String name, int power, int toughness) {
@@ -76,6 +106,12 @@ class DeathTriggerServiceTest extends BaseCardTest {
         return card;
     }
 
+    private Permanent addToBattlefield(UUID playerId, Card card) {
+        Permanent perm = new Permanent(card);
+        gd.playerBattlefields.get(playerId).add(perm);
+        return perm;
+    }
+
     // ==================== collectDeathTrigger ====================
 
     @Nested
@@ -87,7 +123,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void noEffects_doesNothing() {
             Card card = createCreature("Vanilla", 2, 2);
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingDeathTriggerTargets).isEmpty();
@@ -100,13 +136,13 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card card = createCreature("Dying Dude", 2, 2);
             card.addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1));
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard()).isEqualTo(card);
-            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
             assertThat(entry.getDescription()).isEqualTo("Dying Dude's ability");
             assertThat(entry.getEffectsToResolve()).hasSize(1);
             assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
@@ -118,13 +154,13 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card card = createCreature("Targeting Dude", 3, 3);
             card.addEffect(EffectSlot.ON_DEATH, new PutChargeCounterOnTargetPermanentEffect());
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
             PermanentChoiceContext.DeathTriggerTarget target = gd.pendingDeathTriggerTargets.peek();
             assertThat(target.dyingCard()).isEqualTo(card);
-            assertThat(target.controllerId()).isEqualTo(player1.getId());
+            assertThat(target.controllerId()).isEqualTo(PLAYER1_ID);
             assertThat(target.effects()).hasSize(1);
             assertThat(target.effects().get(0)).isInstanceOf(PutChargeCounterOnTargetPermanentEffect.class);
         }
@@ -136,13 +172,13 @@ class DeathTriggerServiceTest extends BaseCardTest {
             MayEffect may = new MayEffect(new DrawCardEffect(1), "Draw a card?");
             card.addEffect(EffectSlot.ON_DEATH, may);
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true);
 
             // CR 603.5 — "you may" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getCard()).isEqualTo(card);
-            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
             assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
         }
 
@@ -153,7 +189,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             MayPayManaEffect mayPay = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay 2 to draw?");
             card.addEffect(EffectSlot.ON_DEATH, mayPay);
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true);
 
             // CR 603.5 — "you may pay" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -169,7 +205,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             card.addEffect(EffectSlot.ON_DEATH, new TargetPlayerLosesLifeEqualToPowerEffect());
             Permanent perm = new Permanent(card);
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true, perm);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
 
             assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
             PermanentChoiceContext.DeathTriggerTarget target = gd.pendingDeathTriggerTargets.peek();
@@ -185,7 +221,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card card = createCreature("Vengeful Ghost", 3, 2);
             card.addEffect(EffectSlot.ON_DEATH, new TargetPlayerLosesLifeEqualToPowerEffect());
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true, null);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, null);
 
             assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
             TargetPlayerLosesLifeEffect resolved =
@@ -201,7 +237,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Permanent perm = new Permanent(card);
             perm.setPowerModifier(-5);
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true, perm);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
 
             TargetPlayerLosesLifeEffect resolved =
                     (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
@@ -222,7 +258,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
                 perm.getBlockingTargetPermanentIds().add(attackerId);
                 gd.currentStep = TurnStep.COMBAT_DAMAGE;
 
-                svc.collectDeathTrigger(gd, card, player1.getId(), true, perm);
+                svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
 
                 assertThat(gd.stack).hasSize(1);
                 StackEntry entry = gd.stack.get(0);
@@ -239,7 +275,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
                 perm.getBlockingTargetPermanentIds().add(UUID.randomUUID());
                 gd.currentStep = TurnStep.PRECOMBAT_MAIN;
 
-                svc.collectDeathTrigger(gd, card, player1.getId(), true, perm);
+                svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
 
                 assertThat(gd.stack).isEmpty();
             }
@@ -252,7 +288,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
                 Permanent perm = new Permanent(card);
                 gd.currentStep = TurnStep.COMBAT_DAMAGE;
 
-                svc.collectDeathTrigger(gd, card, player1.getId(), true, perm);
+                svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
 
                 assertThat(gd.stack).isEmpty();
             }
@@ -264,7 +300,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
                 card.addEffect(EffectSlot.ON_DEATH, new DealDamageToBlockedAttackersOnDeathEffect(2));
                 gd.currentStep = TurnStep.COMBAT_DAMAGE;
 
-                svc.collectDeathTrigger(gd, card, player1.getId(), true, null);
+                svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, null);
 
                 assertThat(gd.stack).isEmpty();
             }
@@ -278,7 +314,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
                 perm.getBlockingTargetPermanentIds().add(UUID.randomUUID());
                 gd.currentStep = TurnStep.BEGINNING_OF_COMBAT;
 
-                svc.collectDeathTrigger(gd, card, player1.getId(), true, perm);
+                svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
 
                 assertThat(gd.stack).hasSize(1);
             }
@@ -292,7 +328,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
                 perm.getBlockingTargetPermanentIds().add(UUID.randomUUID());
                 gd.currentStep = TurnStep.END_OF_COMBAT;
 
-                svc.collectDeathTrigger(gd, card, player1.getId(), true, perm);
+                svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
 
                 assertThat(gd.stack).hasSize(1);
             }
@@ -305,7 +341,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             card.addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1));
             card.addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(2));
 
-            svc.collectDeathTrigger(gd, card, player1.getId(), true);
+            svc.collectDeathTrigger(gd, card, PLAYER1_ID, true);
 
             assertThat(gd.stack).hasSize(2);
         }
@@ -322,18 +358,19 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void appliesPoisonCounters() {
             UUID cardId = UUID.randomUUID();
             gd.creatureGivingControllerPoisonOnDeathThisTurn.put(cardId, 3);
+            when(gameQueryService.canPlayerGetPoisonCounters(gd, PLAYER1_ID)).thenReturn(true);
 
-            svc.triggerDelayedPoisonOnDeath(gd, cardId, player1.getId());
+            svc.triggerDelayedPoisonOnDeath(gd, cardId, PLAYER1_ID);
 
-            assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(3);
+            assertThat(gd.playerPoisonCounters.get(PLAYER1_ID)).isEqualTo(3);
         }
 
         @Test
         @DisplayName("Does nothing when no delayed trigger for this card")
         void noDelayedTrigger_doesNothing() {
-            svc.triggerDelayedPoisonOnDeath(gd, UUID.randomUUID(), player1.getId());
+            svc.triggerDelayedPoisonOnDeath(gd, UUID.randomUUID(), PLAYER1_ID);
 
-            assertThat(gd.playerPoisonCounters.get(player1.getId())).isNull();
+            assertThat(gd.playerPoisonCounters.get(PLAYER1_ID)).isNull();
         }
 
         @Test
@@ -342,21 +379,22 @@ class DeathTriggerServiceTest extends BaseCardTest {
             UUID cardId = UUID.randomUUID();
             gd.creatureGivingControllerPoisonOnDeathThisTurn.put(cardId, 0);
 
-            svc.triggerDelayedPoisonOnDeath(gd, cardId, player1.getId());
+            svc.triggerDelayedPoisonOnDeath(gd, cardId, PLAYER1_ID);
 
-            assertThat(gd.playerPoisonCounters.get(player1.getId())).isNull();
+            assertThat(gd.playerPoisonCounters.get(PLAYER1_ID)).isNull();
         }
 
         @Test
         @DisplayName("Stacks on top of existing poison counters")
         void stacksOnExisting() {
             UUID cardId = UUID.randomUUID();
-            gd.playerPoisonCounters.put(player1.getId(), 2);
+            gd.playerPoisonCounters.put(PLAYER1_ID, 2);
             gd.creatureGivingControllerPoisonOnDeathThisTurn.put(cardId, 3);
+            when(gameQueryService.canPlayerGetPoisonCounters(gd, PLAYER1_ID)).thenReturn(true);
 
-            svc.triggerDelayedPoisonOnDeath(gd, cardId, player1.getId());
+            svc.triggerDelayedPoisonOnDeath(gd, cardId, PLAYER1_ID);
 
-            assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(5);
+            assertThat(gd.playerPoisonCounters.get(PLAYER1_ID)).isEqualTo(5);
         }
 
         @Test
@@ -364,10 +402,24 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void removesEntry() {
             UUID cardId = UUID.randomUUID();
             gd.creatureGivingControllerPoisonOnDeathThisTurn.put(cardId, 1);
+            when(gameQueryService.canPlayerGetPoisonCounters(gd, PLAYER1_ID)).thenReturn(true);
 
-            svc.triggerDelayedPoisonOnDeath(gd, cardId, player1.getId());
+            svc.triggerDelayedPoisonOnDeath(gd, cardId, PLAYER1_ID);
 
             assertThat(gd.creatureGivingControllerPoisonOnDeathThisTurn).doesNotContainKey(cardId);
+        }
+
+        @Test
+        @DisplayName("Does not apply poison when player cannot get poison counters")
+        void cannotGetPoisonCounters_doesNothing() {
+            UUID cardId = UUID.randomUUID();
+            gd.creatureGivingControllerPoisonOnDeathThisTurn.put(cardId, 3);
+            when(gameQueryService.canPlayerGetPoisonCounters(gd, PLAYER1_ID)).thenReturn(false);
+
+            svc.triggerDelayedPoisonOnDeath(gd, cardId, PLAYER1_ID);
+
+            assertThat(gd.playerPoisonCounters.get(PLAYER1_ID)).isNull();
+            verifyNoInteractions(gameBroadcastService);
         }
 
         @Test
@@ -375,10 +427,11 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void addsGameLog() {
             UUID cardId = UUID.randomUUID();
             gd.creatureGivingControllerPoisonOnDeathThisTurn.put(cardId, 2);
+            when(gameQueryService.canPlayerGetPoisonCounters(gd, PLAYER1_ID)).thenReturn(true);
 
-            svc.triggerDelayedPoisonOnDeath(gd, cardId, player1.getId());
+            svc.triggerDelayedPoisonOnDeath(gd, cardId, PLAYER1_ID);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("poison counter"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("poison counter")));
         }
     }
 
@@ -391,9 +444,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Does nothing when battlefield is null")
         void nullBattlefield_doesNothing() {
-            gd.playerBattlefields.remove(player1.getId());
+            gd.playerBattlefields.remove(PLAYER1_ID);
 
-            svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -401,9 +454,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Does nothing when no permanents have ON_ALLY_CREATURE_DIES effects")
         void noEffects_doesNothing() {
-            harness.addToBattlefield(player1, createCreature("Vanilla", 2, 2));
+            addToBattlefield(PLAYER1_ID, createCreature("Vanilla", 2, 2));
 
-            svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -413,15 +466,15 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void nonMayEffect_addsToStack() {
             Card watcher = createCreature("Watcher", 1, 1);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new DrawCardEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard()).isEqualTo(watcher);
-            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
         }
 
         @Test
@@ -429,9 +482,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void mayEffect_queuesMayAbility() {
             Card watcher = createCreature("May Watcher", 1, 1);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new MayEffect(new DrawCardEffect(1), "Draw?"));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
 
             // CR 603.5 — "you may" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -443,9 +496,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void mayPayManaEffect_queuesMayAbility() {
             Card watcher = createCreature("Pay Watcher", 1, 1);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay to draw?"));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
 
             // CR 603.5 — "you may pay" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -457,11 +510,11 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void logsMessage() {
             Card watcher = createCreature("Blood Artist", 1, 1);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new DrawCardEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("Blood Artist") && log.contains("triggers"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Blood Artist") && msg.contains("triggers")));
         }
 
         @Test
@@ -469,9 +522,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void onlyOwnBattlefield() {
             Card watcher = createCreature("Enemy Watcher", 1, 1);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new DrawCardEffect(1));
-            harness.addToBattlefield(player2, watcher);
+            addToBattlefield(PLAYER2_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, player1.getId());
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -486,9 +539,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         @Test
         @DisplayName("Does nothing when battlefield is null")
         void nullBattlefield_doesNothing() {
-            gd.playerBattlefields.remove(player1.getId());
+            gd.playerBattlefields.remove(PLAYER1_ID);
 
-            svc.checkEquippedCreatureDeathTriggers(gd, UUID.randomUUID(), player1.getId());
+            svc.checkEquippedCreatureDeathTriggers(gd, UUID.randomUUID(), PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -498,15 +551,15 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void triggersForAttachedEquipment() {
             Card creature = createCreature("Dying Guy", 2, 2);
             Permanent creaturePerm = new Permanent(creature);
-            gd.playerBattlefields.get(player1.getId()).add(creaturePerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
 
             Card equipment = createEquipment("Death Sword");
             equipment.addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new DrawCardEffect(1));
             Permanent equipPerm = new Permanent(equipment);
             equipPerm.setAttachedTo(creaturePerm.getId());
-            gd.playerBattlefields.get(player1.getId()).add(equipPerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(equipPerm);
 
-            svc.checkEquippedCreatureDeathTriggers(gd, creaturePerm.getId(), player1.getId());
+            svc.checkEquippedCreatureDeathTriggers(gd, creaturePerm.getId(), PLAYER1_ID);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
@@ -521,9 +574,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
             equipment.addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new DrawCardEffect(1));
             Permanent equipPerm = new Permanent(equipment);
             equipPerm.setAttachedTo(UUID.randomUUID());
-            gd.playerBattlefields.get(player1.getId()).add(equipPerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(equipPerm);
 
-            svc.checkEquippedCreatureDeathTriggers(gd, UUID.randomUUID(), player1.getId());
+            svc.checkEquippedCreatureDeathTriggers(gd, UUID.randomUUID(), PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -533,15 +586,15 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void ignoresNonEquipment() {
             Card creature = createCreature("Dying Guy", 2, 2);
             Permanent creaturePerm = new Permanent(creature);
-            gd.playerBattlefields.get(player1.getId()).add(creaturePerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
 
             Card aura = createEnchantment("Some Aura");
             aura.addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new DrawCardEffect(1));
             Permanent auraPerm = new Permanent(aura);
             auraPerm.setAttachedTo(creaturePerm.getId());
-            gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(auraPerm);
 
-            svc.checkEquippedCreatureDeathTriggers(gd, creaturePerm.getId(), player1.getId());
+            svc.checkEquippedCreatureDeathTriggers(gd, creaturePerm.getId(), PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -551,17 +604,17 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void logsMessage() {
             Card creature = createCreature("Victim", 2, 2);
             Permanent creaturePerm = new Permanent(creature);
-            gd.playerBattlefields.get(player1.getId()).add(creaturePerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
 
             Card equipment = createEquipment("Trigger Blade");
             equipment.addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new DrawCardEffect(1));
             Permanent equipPerm = new Permanent(equipment);
             equipPerm.setAttachedTo(creaturePerm.getId());
-            gd.playerBattlefields.get(player1.getId()).add(equipPerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(equipPerm);
 
-            svc.checkEquippedCreatureDeathTriggers(gd, creaturePerm.getId(), player1.getId());
+            svc.checkEquippedCreatureDeathTriggers(gd, creaturePerm.getId(), PLAYER1_ID);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("Trigger Blade") && log.contains("equipped creature died"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Trigger Blade") && msg.contains("equipped creature died")));
         }
     }
 
@@ -576,20 +629,20 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void triggersForAttachedEnchantment() {
             Card creature = createCreature("Dying Guy", 2, 2);
             Permanent creaturePerm = new Permanent(creature);
-            gd.playerBattlefields.get(player1.getId()).add(creaturePerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
 
             Card aura = createEnchantment("Death Aura");
             aura.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new DrawCardEffect(1));
             Permanent auraPerm = new Permanent(aura);
             auraPerm.setAttachedTo(creaturePerm.getId());
-            gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(auraPerm);
 
             svc.checkEnchantedPermanentDeathTriggers(gd, creaturePerm.getId());
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getCard()).isEqualTo(aura);
-            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
         }
 
         @Test
@@ -597,13 +650,13 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void doesNotTriggerForEquipment() {
             Card creature = createCreature("Dying Guy", 2, 2);
             Permanent creaturePerm = new Permanent(creature);
-            gd.playerBattlefields.get(player1.getId()).add(creaturePerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
 
             Card equipment = createEquipment("Not an Aura");
             equipment.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new DrawCardEffect(1));
             Permanent equipPerm = new Permanent(equipment);
             equipPerm.setAttachedTo(creaturePerm.getId());
-            gd.playerBattlefields.get(player1.getId()).add(equipPerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(equipPerm);
 
             svc.checkEnchantedPermanentDeathTriggers(gd, creaturePerm.getId());
 
@@ -617,7 +670,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             aura.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new DrawCardEffect(1));
             Permanent auraPerm = new Permanent(aura);
             auraPerm.setAttachedTo(UUID.randomUUID());
-            gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(auraPerm);
 
             svc.checkEnchantedPermanentDeathTriggers(gd, UUID.randomUUID());
 
@@ -625,22 +678,67 @@ class DeathTriggerServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("ReturnSourceAuraToOpponentCreatureOnDeathEffect bakes dying creature's controller ID")
+        void returnAuraEffect_bakesControllerId() {
+            Card creature = createCreature("Plagued Creature", 2, 2);
+            Permanent creaturePerm = new Permanent(creature);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
+
+            Card aura = createEnchantment("Necrotic Plague");
+            aura.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new ReturnSourceAuraToOpponentCreatureOnDeathEffect());
+            Permanent auraPerm = new Permanent(aura);
+            auraPerm.setAttachedTo(creaturePerm.getId());
+            gd.playerBattlefields.get(PLAYER2_ID).add(auraPerm);
+
+            svc.checkEnchantedPermanentDeathTriggers(gd, creaturePerm.getId(), PLAYER1_ID);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            ReturnSourceAuraToOpponentCreatureOnDeathEffect resolved =
+                    (ReturnSourceAuraToOpponentCreatureOnDeathEffect) entry.getEffectsToResolve().get(0);
+            assertThat(resolved.enchantedCreatureControllerId()).isEqualTo(PLAYER1_ID);
+        }
+
+        @Test
+        @DisplayName("ReturnSourceAuraToOpponentCreatureOnDeathEffect does not bake controller when null")
+        void returnAuraEffect_nullControllerNotBaked() {
+            Card creature = createCreature("Dying Guy", 2, 2);
+            Permanent creaturePerm = new Permanent(creature);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
+
+            Card aura = createEnchantment("Necrotic Plague");
+            aura.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new ReturnSourceAuraToOpponentCreatureOnDeathEffect());
+            Permanent auraPerm = new Permanent(aura);
+            auraPerm.setAttachedTo(creaturePerm.getId());
+            gd.playerBattlefields.get(PLAYER2_ID).add(auraPerm);
+
+            // Call the overload without dyingPermanentControllerId
+            svc.checkEnchantedPermanentDeathTriggers(gd, creaturePerm.getId());
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            ReturnSourceAuraToOpponentCreatureOnDeathEffect resolved =
+                    (ReturnSourceAuraToOpponentCreatureOnDeathEffect) entry.getEffectsToResolve().get(0);
+            assertThat(resolved.enchantedCreatureControllerId()).isNull();
+        }
+
+        @Test
         @DisplayName("Triggers across players — enchantment on player2 attached to player1's permanent")
         void triggersAcrossPlayers() {
             Card creature = createCreature("Target", 2, 2);
             Permanent creaturePerm = new Permanent(creature);
-            gd.playerBattlefields.get(player1.getId()).add(creaturePerm);
+            gd.playerBattlefields.get(PLAYER1_ID).add(creaturePerm);
 
             Card aura = createEnchantment("Cross Aura");
             aura.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new DrawCardEffect(1));
             Permanent auraPerm = new Permanent(aura);
             auraPerm.setAttachedTo(creaturePerm.getId());
-            gd.playerBattlefields.get(player2.getId()).add(auraPerm);
+            gd.playerBattlefields.get(PLAYER2_ID).add(auraPerm);
 
             svc.checkEnchantedPermanentDeathTriggers(gd, creaturePerm.getId());
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getControllerId()).isEqualTo(player2.getId());
+            assertThat(gd.stack.get(0).getControllerId()).isEqualTo(PLAYER2_ID);
         }
     }
 
@@ -655,9 +753,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void triggersForAnyArtifactEffect() {
             Card watcher = createArtifact("Watcher Artifact");
             watcher.addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new DrawCardEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1.getId(), player1.getId());
+            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, PLAYER1_ID, PLAYER1_ID);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -668,13 +766,13 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card watcher = createArtifact("Damage Watcher");
             watcher.addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                     new DealDamageToTriggeringPermanentControllerEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player2.getId(), player2.getId());
+            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, PLAYER2_ID, PLAYER2_ID);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
-            assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+            assertThat(entry.getTargetPermanentId()).isEqualTo(PLAYER2_ID);
         }
 
         @Test
@@ -683,9 +781,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card watcher = createArtifact("Optional Watcher");
             watcher.addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                     new MayEffect(new DrawCardEffect(1), "Draw?"));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1.getId(), player1.getId());
+            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, PLAYER1_ID, PLAYER1_ID);
 
             // CR 603.5 — "you may" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -697,10 +795,10 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void opponentTrigger_onlyFiresForOpponent() {
             Card watcher = createArtifact("Opponent Watcher");
             watcher.addEffect(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, new DrawCardEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
             // Artifact goes into opponent's (player2) graveyard — should trigger
-            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player2.getId(), player2.getId());
+            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, PLAYER2_ID, PLAYER2_ID);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -710,10 +808,10 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void opponentTrigger_doesNotFireForOwn() {
             Card watcher = createArtifact("Opponent Watcher");
             watcher.addEffect(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, new DrawCardEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
             // Artifact goes into own (player1) graveyard — should NOT trigger
-            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1.getId(), player1.getId());
+            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, PLAYER1_ID, PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -723,11 +821,229 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void logsMessage() {
             Card watcher = createArtifact("Log Watcher");
             watcher.addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new DrawCardEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1.getId(), player1.getId());
+            svc.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, PLAYER1_ID, PLAYER1_ID);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("Log Watcher") && log.contains("triggers"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Log Watcher") && msg.contains("triggers")));
+        }
+    }
+
+    // ==================== checkAnyCreatureDeathTriggers ====================
+
+    @Nested
+    @DisplayName("checkAnyCreatureDeathTriggers")
+    class AnyCreatureDeathTriggers {
+
+        @Test
+        @DisplayName("Does nothing when no permanents have ON_ANY_CREATURE_DIES effects")
+        void noEffects_doesNothing() {
+            addToBattlefield(PLAYER1_ID, createCreature("Vanilla", 2, 2));
+
+            svc.checkAnyCreatureDeathTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingDeathTriggerTargets).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Non-targeting effect adds triggered ability to stack")
+        void nonTargetingEffect_addsToStack() {
+            Card watcher = createCreature("Death Counter", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(1));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAnyCreatureDeathTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getCard()).isEqualTo(watcher);
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
+            assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+        }
+
+        @Test
+        @DisplayName("Targeting effect queues DeathTriggerTarget")
+        void targetingEffect_queuesDeathTriggerTarget() {
+            Card watcher = createCreature("Target Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutChargeCounterOnTargetPermanentEffect());
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAnyCreatureDeathTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            PermanentChoiceContext.DeathTriggerTarget target = gd.pendingDeathTriggerTargets.peek();
+            assertThat(target.dyingCard()).isEqualTo(watcher);
+            assertThat(target.controllerId()).isEqualTo(PLAYER1_ID);
+            assertThat(target.effects().get(0)).isInstanceOf(PutChargeCounterOnTargetPermanentEffect.class);
+        }
+
+        @Test
+        @DisplayName("MayEffect queues may ability on stack")
+        void mayEffect_queuesMayAbility() {
+            Card watcher = createCreature("Optional Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new MayEffect(new DrawCardEffect(1), "Draw?"));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAnyCreatureDeathTriggers(gd);
+
+            // CR 603.5 — "you may" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
+        }
+
+        @Test
+        @DisplayName("PutCountersOnSourceEffect adds to stack with sourcePermanentId")
+        void putCountersOnSource_setsSourcePermanentId() {
+            Card watcher = createCreature("Growing Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
+            Permanent watcherPerm = addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAnyCreatureDeathTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(watcherPerm.getId());
+            assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(PutCountersOnSourceEffect.class);
+        }
+
+        @Test
+        @DisplayName("Triggers across all players' battlefields")
+        void triggersAcrossPlayers() {
+            Card watcher1 = createCreature("P1 Watcher", 1, 1);
+            watcher1.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(1));
+            addToBattlefield(PLAYER1_ID, watcher1);
+
+            Card watcher2 = createCreature("P2 Watcher", 1, 1);
+            watcher2.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(2));
+            addToBattlefield(PLAYER2_ID, watcher2);
+
+            svc.checkAnyCreatureDeathTriggers(gd);
+
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.get(0).getControllerId()).isEqualTo(PLAYER1_ID);
+            assertThat(gd.stack.get(1).getControllerId()).isEqualTo(PLAYER2_ID);
+        }
+
+        @Test
+        @DisplayName("Logs trigger message")
+        void logsMessage() {
+            Card watcher = createCreature("Morbid Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(1));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAnyCreatureDeathTriggers(gd);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Morbid Watcher") && msg.contains("triggers")));
+        }
+    }
+
+    // ==================== checkAllyNontokenCreatureDeathTriggers ====================
+
+    @Nested
+    @DisplayName("checkAllyNontokenCreatureDeathTriggers")
+    class AllyNontokenCreatureDeathTriggers {
+
+        @Test
+        @DisplayName("Does nothing when dying card is a token")
+        void tokenCard_doesNothing() {
+            Card token = createCreature("Token", 1, 1);
+            token.setToken(true);
+
+            Card watcher = createCreature("Ally Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new DrawCardEffect(1));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAllyNontokenCreatureDeathTriggers(gd, PLAYER1_ID, token);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Does nothing when battlefield is null")
+        void nullBattlefield_doesNothing() {
+            Card dying = createCreature("Dying Guy", 2, 2);
+            gd.playerBattlefields.remove(PLAYER1_ID);
+
+            svc.checkAllyNontokenCreatureDeathTriggers(gd, PLAYER1_ID, dying);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Does nothing when no permanents have ON_ALLY_NONTOKEN_CREATURE_DIES effects")
+        void noEffects_doesNothing() {
+            Card dying = createCreature("Dying Guy", 2, 2);
+            addToBattlefield(PLAYER1_ID, createCreature("Vanilla", 2, 2));
+
+            svc.checkAllyNontokenCreatureDeathTriggers(gd, PLAYER1_ID, dying);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Non-may effect adds to stack with sourcePermanentId")
+        void nonMayEffect_addsToStackWithSourcePermanentId() {
+            Card dying = createCreature("Dying Guy", 2, 2);
+
+            Card watcher = createCreature("Ally Tracker", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new DrawCardEffect(1));
+            Permanent watcherPerm = addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAllyNontokenCreatureDeathTriggers(gd, PLAYER1_ID, dying);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getCard()).isEqualTo(watcher);
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(watcherPerm.getId());
+        }
+
+        @Test
+        @DisplayName("MayEffect queues may ability on stack")
+        void mayEffect_queuesMayAbility() {
+            Card dying = createCreature("Dying Guy", 2, 2);
+
+            Card watcher = createCreature("May Ally Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new MayEffect(new DrawCardEffect(1), "Draw?"));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAllyNontokenCreatureDeathTriggers(gd, PLAYER1_ID, dying);
+
+            // CR 603.5 — "you may" triggered abilities go on the stack immediately
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
+        }
+
+        @Test
+        @DisplayName("Only triggers for permanents controlled by dying creature's controller")
+        void onlyOwnBattlefield() {
+            Card dying = createCreature("Dying Guy", 2, 2);
+
+            Card watcher = createCreature("Enemy Ally Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new DrawCardEffect(1));
+            addToBattlefield(PLAYER2_ID, watcher);
+
+            svc.checkAllyNontokenCreatureDeathTriggers(gd, PLAYER1_ID, dying);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Logs trigger message")
+        void logsMessage() {
+            Card dying = createCreature("Dying Guy", 2, 2);
+
+            Card watcher = createCreature("Morbid Ally", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new DrawCardEffect(1));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            svc.checkAllyNontokenCreatureDeathTriggers(gd, PLAYER1_ID, dying);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Morbid Ally") && msg.contains("triggers")));
         }
     }
 
@@ -746,7 +1062,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card watcher = createCreature("Imprint Watcher", 0, 1);
             watcher.addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
                     new MayEffect(new ImprintDyingCreatureEffect(), "Imprint?"));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
             svc.checkAnyNontokenCreatureDeathTriggers(gd, token);
 
@@ -761,7 +1077,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card watcher = createCreature("Mimic Vat", 0, 0);
             watcher.addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
                     new MayEffect(new ImprintDyingCreatureEffect(), "Exile and imprint?"));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
             svc.checkAnyNontokenCreatureDeathTriggers(gd, dying);
 
@@ -780,7 +1096,7 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card deathmantle = createEquipment("Nim Deathmantle");
             deathmantle.addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
                     new MayPayManaEffect("{4}", new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect(), "Pay 4 to return?"));
-            harness.addToBattlefield(player1, deathmantle);
+            addToBattlefield(PLAYER1_ID, deathmantle);
 
             // Card is NOT in player1's graveyard
             svc.checkAnyNontokenCreatureDeathTriggers(gd, dying);
@@ -796,10 +1112,10 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card deathmantle = createEquipment("Nim Deathmantle");
             deathmantle.addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
                     new MayPayManaEffect("{4}", new ReturnDyingCreatureToBattlefieldAndAttachSourceEffect(), "Pay 4 to return?"));
-            harness.addToBattlefield(player1, deathmantle);
+            addToBattlefield(PLAYER1_ID, deathmantle);
 
             // Put dying card in player1's graveyard
-            gd.playerGraveyards.get(player1.getId()).add(dying);
+            gd.playerGraveyards.get(PLAYER1_ID).add(dying);
 
             svc.checkAnyNontokenCreatureDeathTriggers(gd, dying);
 
@@ -818,11 +1134,11 @@ class DeathTriggerServiceTest extends BaseCardTest {
             Card watcher = createCreature("Vat", 0, 0);
             watcher.addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
                     new MayEffect(new ImprintDyingCreatureEffect(), "Imprint?"));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
             svc.checkAnyNontokenCreatureDeathTriggers(gd, dying);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("Vat") && log.contains("imprint"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Vat") && msg.contains("imprint")));
         }
     }
 
@@ -837,14 +1153,14 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void triggersForOpponentPermanent() {
             Card watcher = createCreature("Vulture", 1, 1);
             watcher.addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new DrawCardEffect(1));
-            harness.addToBattlefield(player2, watcher);
+            addToBattlefield(PLAYER2_ID, watcher);
 
-            svc.checkOpponentCreatureDeathTriggers(gd, player1.getId());
+            svc.checkOpponentCreatureDeathTriggers(gd, PLAYER1_ID);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
-            assertThat(entry.getControllerId()).isEqualTo(player2.getId());
-            assertThat(entry.getTargetPermanentId()).isEqualTo(player1.getId());
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER2_ID);
+            assertThat(entry.getTargetPermanentId()).isEqualTo(PLAYER1_ID);
         }
 
         @Test
@@ -852,9 +1168,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void doesNotTriggerForSamePlayer() {
             Card watcher = createCreature("Vulture", 1, 1);
             watcher.addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new DrawCardEffect(1));
-            harness.addToBattlefield(player1, watcher);
+            addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkOpponentCreatureDeathTriggers(gd, player1.getId());
+            svc.checkOpponentCreatureDeathTriggers(gd, PLAYER1_ID);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -864,9 +1180,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void mayEffect_queuesMayAbility() {
             Card watcher = createCreature("Optional Vulture", 1, 1);
             watcher.addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new MayEffect(new DrawCardEffect(1), "Draw?"));
-            harness.addToBattlefield(player2, watcher);
+            addToBattlefield(PLAYER2_ID, watcher);
 
-            svc.checkOpponentCreatureDeathTriggers(gd, player1.getId());
+            svc.checkOpponentCreatureDeathTriggers(gd, PLAYER1_ID);
 
             // CR 603.5 — "you may" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -878,11 +1194,11 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void logsMessage() {
             Card watcher = createCreature("Death Profiteer", 1, 1);
             watcher.addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new DrawCardEffect(1));
-            harness.addToBattlefield(player2, watcher);
+            addToBattlefield(PLAYER2_ID, watcher);
 
-            svc.checkOpponentCreatureDeathTriggers(gd, player1.getId());
+            svc.checkOpponentCreatureDeathTriggers(gd, PLAYER1_ID);
 
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("Death Profiteer") && log.contains("triggers"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Death Profiteer") && msg.contains("triggers")));
         }
 
         @Test
@@ -890,10 +1206,9 @@ class DeathTriggerServiceTest extends BaseCardTest {
         void setsSourcePermanentId() {
             Card watcher = createCreature("Tracker", 1, 1);
             watcher.addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new DrawCardEffect(1));
-            harness.addToBattlefield(player2, watcher);
-            Permanent watcherPerm = gd.playerBattlefields.get(player2.getId()).get(0);
+            Permanent watcherPerm = addToBattlefield(PLAYER2_ID, watcher);
 
-            svc.checkOpponentCreatureDeathTriggers(gd, player1.getId());
+            svc.checkOpponentCreatureDeathTriggers(gd, PLAYER1_ID);
 
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(watcherPerm.getId());
         }
