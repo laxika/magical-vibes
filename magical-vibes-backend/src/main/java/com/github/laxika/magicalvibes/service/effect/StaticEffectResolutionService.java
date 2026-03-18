@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCou
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
@@ -901,6 +902,21 @@ public class StaticEffectResolutionService {
                 accumulator.addKeywords(boost.grantedKeywords());
             } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
                 accumulator.addProtectionColors(protection.colors());
+            }
+        }
+    }
+
+    @HandlesStaticEffect(value = SelfHasKeywordConditionalEffect.class, selfOnly = true)
+    private void resolveSelfHasKeywordConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (SelfHasKeywordConditionalEffect) effect;
+        if (context.source().hasKeyword(conditional.keyword())) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof GrantKeywordEffect grant) {
+                accumulator.addKeyword(grant.keyword());
+            } else if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
             }
         }
     }
