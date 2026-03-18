@@ -302,7 +302,7 @@ public class GameTestHarness {
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, sessionManager, permanentRemovalService, triggerCollectionService, exileService);
-        ChoiceHandlerService colorChoiceHandlerService = new ChoiceHandlerService(
+        ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
                 sessionManager, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
@@ -348,7 +348,7 @@ public class GameTestHarness {
                 gameRegistry, gameQueryService, gameBroadcastService,
                 combatService,
                 turnProgressionService,
-                colorChoiceHandlerService, cardChoiceHandlerService,
+                listChoiceHandlerService, cardChoiceHandlerService,
                 permanentChoiceHandlerService, graveyardChoiceHandlerService,
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
@@ -743,8 +743,8 @@ public class GameTestHarness {
         gameService.handleGraveyardCardChosen(gameData, player, cardIndex);
     }
 
-    public void handleColorChosen(Player player, String colorName) {
-        gameService.handleColorChosen(gameData, player, colorName);
+    public void handleListChoice(Player player, String choiceName) {
+        gameService.handleListChoice(gameData, player, choiceName);
     }
 
     public void handleMayAbilityChosen(Player player, boolean accepted) {

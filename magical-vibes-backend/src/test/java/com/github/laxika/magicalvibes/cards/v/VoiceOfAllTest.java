@@ -122,7 +122,7 @@ class VoiceOfAllTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Voice of All"))
@@ -138,7 +138,7 @@ class VoiceOfAllTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "BLUE");
+        harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.interaction.colorChoice()).isNull();
@@ -152,7 +152,7 @@ class VoiceOfAllTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "BLACK");
+        harness.handleListChoice(player1, "BLACK");
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses black") && log.contains("Voice of All"));
     }
@@ -165,7 +165,7 @@ class VoiceOfAllTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Voice of All"))
@@ -193,7 +193,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleColorChosen(player2, "RED"))
+        assertThatThrownBy(() -> harness.handleListChoice(player2, "RED"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn");
     }
@@ -201,7 +201,7 @@ class VoiceOfAllTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot choose color when not awaiting color choice")
     void cannotChooseColorWhenNotAwaiting() {
-        assertThatThrownBy(() -> harness.handleColorChosen(player1, "RED"))
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "RED"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not awaiting color choice");
     }
@@ -397,7 +397,7 @@ class VoiceOfAllTest extends BaseCardTest {
 
             h.castCreature(p1, 0);
             h.passBothPriorities();
-            h.handleColorChosen(p1, colorName);
+            h.handleListChoice(p1, colorName);
 
             GameData data = h.getGameData();
             Permanent perm = data.playerBattlefields.get(p1.getId()).stream()

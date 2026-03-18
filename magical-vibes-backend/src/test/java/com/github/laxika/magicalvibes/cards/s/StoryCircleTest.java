@@ -92,7 +92,7 @@ class StoryCircleTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Story Circle"))
@@ -108,7 +108,7 @@ class StoryCircleTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "BLUE");
+        harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.interaction.colorChoice()).isNull();
@@ -122,7 +122,7 @@ class StoryCircleTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "BLACK");
+        harness.handleListChoice(player1, "BLACK");
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses black") && log.contains("Story Circle"));
     }

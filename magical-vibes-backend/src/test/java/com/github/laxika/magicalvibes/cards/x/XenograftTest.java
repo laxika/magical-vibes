@@ -92,7 +92,7 @@ class XenograftTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "GOBLIN");
+        harness.handleListChoice(player1, "GOBLIN");
 
         Permanent xenograft = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Xenograft"))
@@ -237,7 +237,7 @@ class XenograftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose Goblin
-        harness.handleColorChosen(player1, "GOBLIN");
+        harness.handleListChoice(player1, "GOBLIN");
 
         // Verify creature gains the chosen type
         Permanent bearPerm = gd.playerBattlefields.get(player1.getId()).stream()

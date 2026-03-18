@@ -51,7 +51,7 @@ class AbundanceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
 
-        harness.handleColorChosen(player1, "NONLAND");
+        harness.handleListChoice(player1, "NONLAND");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
@@ -100,7 +100,7 @@ class AbundanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleColorChosen(player1, "LAND");
+        harness.handleListChoice(player1, "LAND");
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
         gs.handleLibraryCardsReordered(gd, player1, List.of(1, 0));
@@ -128,7 +128,7 @@ class AbundanceTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        harness.handleColorChosen(player1, "NONLAND");
+        harness.handleListChoice(player1, "NONLAND");
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
         harness.handleMayAbilityChosen(player1, false);

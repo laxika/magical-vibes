@@ -62,7 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawDiscardTransformIfCreatur
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -973,7 +973,7 @@ public class PlayerInteractionResolutionService {
         List<String> options = new ArrayList<>();
         options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
         options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
-        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(options, "Choose a color word or basic land type to replace."));
+        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseFromListMessage(options, "Choose a color word or basic land type to replace."));
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
@@ -984,7 +984,7 @@ public class PlayerInteractionResolutionService {
         ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(entry.getControllerId(), false);
         gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseColorMessage(colors, "Choose a color of mana to add."));
+        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseFromListMessage(colors, "Choose a color of mana to add."));
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, playerName);

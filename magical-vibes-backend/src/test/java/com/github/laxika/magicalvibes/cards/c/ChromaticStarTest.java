@@ -84,7 +84,7 @@ class ChromaticStarTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
 
         // Choose red mana
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
 
         // Red mana should have been added immediately
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
@@ -109,7 +109,7 @@ class ChromaticStarTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             // Capture after activation cost is paid
             int manaBefore = gd.playerManaPools.get(player1.getId()).get(manaColor);
-            harness.handleColorChosen(player1, color);
+            harness.handleListChoice(player1, color);
 
             assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
                     .isEqualTo(manaBefore + 1);
@@ -131,7 +131,7 @@ class ChromaticStarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Choose mana color — mana added immediately
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
         // The draw trigger should still be on the stack

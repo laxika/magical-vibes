@@ -82,7 +82,7 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Prodigal Pyromancer");
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Pithing Needle"))
@@ -98,7 +98,7 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Prodigal Pyromancer");
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.interaction.colorChoice()).isNull();
@@ -112,7 +112,7 @@ class PithingNeedleTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Prodigal Pyromancer");
 
         assertThat(gd.gameLog).anyMatch(log ->
                 log.contains("Prodigal Pyromancer") && log.contains("Pithing Needle"));

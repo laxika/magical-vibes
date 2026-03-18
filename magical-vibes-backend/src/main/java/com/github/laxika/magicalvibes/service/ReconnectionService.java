@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
@@ -309,7 +309,7 @@ public class ReconnectionService {
                     options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     prompt = "Choose a color.";
                 }
-                sessionManager.sendToPlayer(playerId, new ChooseColorMessage(options, prompt));
+                sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(options, prompt));
             }
             case InteractionContext.MayAbilityChoice mc -> {
                 if (playerId.equals(mc.playerId())) {

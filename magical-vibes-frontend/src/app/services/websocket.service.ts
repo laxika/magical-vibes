@@ -30,8 +30,8 @@ export enum MessageType {
   GAME_OVER = 'GAME_OVER',
   CHOOSE_CARD_FROM_HAND = 'CHOOSE_CARD_FROM_HAND',
   CARD_CHOSEN = 'CARD_CHOSEN',
-  CHOOSE_COLOR = 'CHOOSE_COLOR',
-  COLOR_CHOSEN = 'COLOR_CHOSEN',
+  CHOOSE_FROM_LIST = 'CHOOSE_FROM_LIST',
+  CHOSEN_FROM_LIST = 'CHOSEN_FROM_LIST',
   MAY_ABILITY_CHOICE = 'MAY_ABILITY_CHOICE',
   MAY_ABILITY_CHOSEN = 'MAY_ABILITY_CHOSEN',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
@@ -372,9 +372,9 @@ export interface ChooseCardFromHandNotification {
   canDecline: boolean;
 }
 
-export interface ChooseColorNotification {
+export interface ChooseFromListNotification {
   type: MessageType;
-  colors: string[];
+  options: string[];
   prompt: string;
 }
 
@@ -574,7 +574,7 @@ export interface ValidTargetsResponse {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseColorNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse | ValidTargetsResponse;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseFromListNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsFromGraveyardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse | ValidTargetsResponse;
 
 export interface User {
   userId: string;
@@ -666,7 +666,7 @@ export class WebsocketService {
           if (message.type === MessageType.AVAILABLE_ATTACKERS ||
               message.type === MessageType.AVAILABLE_BLOCKERS ||
               message.type === MessageType.CHOOSE_CARD_FROM_HAND ||
-              message.type === MessageType.CHOOSE_COLOR ||
+              message.type === MessageType.CHOOSE_FROM_LIST ||
               message.type === MessageType.MAY_ABILITY_CHOICE ||
               message.type === MessageType.CHOOSE_PERMANENT ||
               message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS ||

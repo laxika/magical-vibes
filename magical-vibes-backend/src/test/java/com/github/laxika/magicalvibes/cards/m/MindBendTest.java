@@ -89,7 +89,7 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "BLACK");
+        harness.handleListChoice(player1, "BLACK");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
@@ -110,8 +110,8 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "BLACK");
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "GREEN");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNull();
@@ -135,8 +135,8 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "BLACK");
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "GREEN");
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("changes all instances of black to green") && log.contains("Paladin en-Vec"));
@@ -155,8 +155,8 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "SWAMP");
-        harness.handleColorChosen(player1, "FOREST");
+        harness.handleListChoice(player1, "SWAMP");
+        harness.handleListChoice(player1, "FOREST");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNull();
@@ -179,7 +179,7 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "ISLAND");
+        harness.handleListChoice(player1, "ISLAND");
 
         GameData gd = harness.getGameData();
         ChoiceContext.TextChangeToWord ctx = (ChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
@@ -206,8 +206,8 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "BLACK");
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "RED");
 
         assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.RED);
     }
@@ -228,8 +228,8 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "WHITE");
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "WHITE");
+        harness.handleListChoice(player1, "GREEN");
 
         assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.BLACK);
     }
@@ -247,8 +247,8 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "RED");
-        harness.handleColorChosen(player1, "BLUE");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "BLUE");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -290,8 +290,8 @@ class MindBendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First Mind Bend: change "black" to "green"
-        harness.handleColorChosen(player1, "BLACK");
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "GREEN");
 
         // Cast a second Mind Bend
         harness.setHand(player1, List.of(new MindBend()));
@@ -300,8 +300,8 @@ class MindBendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Second Mind Bend: change "red" to "blue"
-        harness.handleColorChosen(player1, "RED");
-        harness.handleColorChosen(player1, "BLUE");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "BLUE");
 
         Permanent perm = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
@@ -322,8 +322,8 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "RED");
-        harness.handleColorChosen(player1, "WHITE");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "WHITE");
 
         Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
@@ -345,7 +345,7 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleColorChosen(player1, "INVALID"))
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "INVALID"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -360,9 +360,9 @@ class MindBendTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "BLACK");
+        harness.handleListChoice(player1, "BLACK");
 
-        assertThatThrownBy(() -> harness.handleColorChosen(player1, "FOREST"))
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "FOREST"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

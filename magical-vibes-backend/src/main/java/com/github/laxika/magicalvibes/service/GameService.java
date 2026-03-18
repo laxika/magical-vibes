@@ -47,7 +47,7 @@ public class GameService {
     private final GameBroadcastService gameBroadcastService;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
-    private final ChoiceHandlerService colorChoiceHandlerService;
+    private final ChoiceHandlerService listChoiceHandlerService;
     private final CardChoiceHandlerService cardChoiceHandlerService;
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
@@ -390,10 +390,10 @@ public class GameService {
 
     // ===== Delegated user input handlers =====
 
-    public void handleColorChosen(GameData gameData, Player player, String colorName) {
+    public void handleListChoice(GameData gameData, Player player, String choiceName) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            colorChoiceHandlerService.handleColorChosen(gameData, player, colorName);
+            listChoiceHandlerService.handleListChoice(gameData, player, choiceName);
         }
     }
 
@@ -435,7 +435,7 @@ public class GameService {
             if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
-                colorChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
+                listChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
                 exileResolutionService.handleKnowledgePoolCastChoice(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {

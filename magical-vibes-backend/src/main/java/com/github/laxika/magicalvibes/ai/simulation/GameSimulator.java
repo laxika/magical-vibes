@@ -301,7 +301,7 @@ public class GameSimulator {
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, noOpSession, permanentRemovalService, triggerCollectionService, exileService);
-        ChoiceHandlerService colorChoiceHandlerService = new ChoiceHandlerService(
+        ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
                 noOpSession, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
@@ -347,7 +347,7 @@ public class GameSimulator {
                 gameRegistry, gameQueryService, gameBroadcastService,
                 combatService,
                 turnProgressionService,
-                colorChoiceHandlerService, cardChoiceHandlerService,
+                listChoiceHandlerService, cardChoiceHandlerService,
                 permanentChoiceHandlerService, graveyardChoiceHandlerService,
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
@@ -513,7 +513,7 @@ public class GameSimulator {
                     case SimulationAction.ChoosePermanent cp ->
                             gameService.handlePermanentChosen(gd, player, cp.permanentId());
                     case SimulationAction.ChooseColor col ->
-                            gameService.handleColorChosen(gd, player, col.color());
+                            gameService.handleListChoice(gd, player, col.color());
                     case SimulationAction.MayAbilityChoice mac ->
                             gameService.handleMayAbilityChosen(gd, player, mac.accept());
                     case SimulationAction.ActivateAbility aa ->
@@ -670,9 +670,9 @@ public class GameSimulator {
             case COLOR_CHOICE -> {
                 var ccCtx = gd.interaction.colorChoiceContextView();
                 if (ccCtx != null && ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
-                    gameService.handleColorChosen(gd, player, kgc.options().getFirst().name());
+                    gameService.handleListChoice(gd, player, kgc.options().getFirst().name());
                 } else {
-                    gameService.handleColorChosen(gd, player, "RED");
+                    gameService.handleListChoice(gd, player, "RED");
                 }
             }
             case MAY_ABILITY_CHOICE -> gameService.handleMayAbilityChosen(gd, player, true);

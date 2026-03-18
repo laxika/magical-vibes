@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -175,7 +175,7 @@ public class MayMiscHandlerService {
                     null,
                     new ChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind())
             );
-            sessionManager.sendToPlayer(drawingPlayerId, new ChooseColorMessage(
+            sessionManager.sendToPlayer(drawingPlayerId, new ChooseFromListMessage(
                     List.of("LAND", "NONLAND"),
                     "Choose land or nonland for Abundance."
             ));

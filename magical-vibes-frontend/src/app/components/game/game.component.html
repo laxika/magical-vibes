@@ -645,12 +645,12 @@
       </div>
     }
 
-    @if (choice.choosingColor) {
+    @if (choice.choosingFromList) {
       <div class="combat-banner color-choice-banner">
-        <span>{{ choice.colorChoicePrompt }}</span>
+        <span>{{ choice.listChoicePrompt }}</span>
         <div class="color-choice-buttons">
-          @for (color of choice.colorChoices; track color) {
-            <button class="btn-color-choice" [attr.data-color]="color" (click)="choice.chooseColor(color)">{{ choice.getColorDisplayName(color) }}</button>
+          @for (option of choice.listChoices; track option) {
+            <button class="btn-color-choice" [attr.data-color]="option" (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
           }
         </div>
       </div>

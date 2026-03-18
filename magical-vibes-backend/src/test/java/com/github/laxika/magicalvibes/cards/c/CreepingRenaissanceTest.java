@@ -38,7 +38,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).addAll(List.of(bear1, bear2));
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "CREATURE");
+        harness.handleListChoice(player1, "CREATURE");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(bear1, bear2);
@@ -56,7 +56,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(artifact);
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "ARTIFACT");
+        harness.handleListChoice(player1, "ARTIFACT");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(artifact);
@@ -74,7 +74,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(enchantment);
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "ENCHANTMENT");
+        harness.handleListChoice(player1, "ENCHANTMENT");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(enchantment);
@@ -92,7 +92,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(land);
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "LAND");
+        harness.handleListChoice(player1, "LAND");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(land);
@@ -112,7 +112,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).addAll(List.of(creature, artifact, land));
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "CREATURE");
+        harness.handleListChoice(player1, "CREATURE");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(creature)
@@ -129,7 +129,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "CREATURE");
+        harness.handleListChoice(player1, "CREATURE");
 
         // Only the spell itself should be in the graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -147,7 +147,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(creature);
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "ARTIFACT");
+        harness.handleListChoice(player1, "ARTIFACT");
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -168,7 +168,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "CREATURE");
+        harness.handleListChoice(player1, "CREATURE");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(creature);
@@ -188,7 +188,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(opponentCreature);
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "CREATURE");
+        harness.handleListChoice(player1, "CREATURE");
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .contains(opponentCreature);
@@ -206,7 +206,7 @@ class CreepingRenaissanceTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).addAll(List.of(instant, creature));
 
         castCreepingRenaissance();
-        harness.handleColorChosen(player1, "CREATURE");
+        harness.handleListChoice(player1, "CREATURE");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(creature)

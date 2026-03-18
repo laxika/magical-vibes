@@ -75,7 +75,7 @@ class BirdsOfParadiseTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
 
-            harness.handleColorChosen(player1, color);
+            harness.handleListChoice(player1, color);
 
             assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
             assertThat(gd.interaction.awaitingInputType()).isNull();

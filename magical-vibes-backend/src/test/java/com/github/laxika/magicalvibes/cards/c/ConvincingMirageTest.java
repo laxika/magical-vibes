@@ -92,7 +92,7 @@ class ConvincingMirageTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, forest.getId());
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "ISLAND");
+        harness.handleListChoice(player1, "ISLAND");
 
         Permanent mirage = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Convincing Mirage"))

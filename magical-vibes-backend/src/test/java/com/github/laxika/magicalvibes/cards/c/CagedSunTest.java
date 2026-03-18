@@ -98,7 +98,7 @@ class CagedSunTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
 
         Permanent cagedSun = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Caged Sun"))
@@ -287,7 +287,7 @@ class CagedSunTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose green
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
 
         // Verify creature is boosted
         Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()

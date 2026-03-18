@@ -89,7 +89,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
 
         // Opponent names wrong card
-        harness.handleColorChosen(player2, "Shock");
+        harness.handleListChoice(player2, "Shock");
 
         // Controller gets may ability prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -126,7 +126,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Opponent names the correct card
-        harness.handleColorChosen(player2, "Grizzly Bears");
+        harness.handleListChoice(player2, "Grizzly Bears");
 
         // No may ability — card should be returned to library
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -160,7 +160,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Opponent names a wrong card
-        harness.handleColorChosen(player2, "Grizzly Bears");
+        harness.handleListChoice(player2, "Grizzly Bears");
 
         // No may ability — non-creature card should be returned to library
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -195,7 +195,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         resolveCombat();
 
         gs.handleLibraryCardChosen(gd, player1, 0);
-        harness.handleColorChosen(player2, "Grizzly Bears");
+        harness.handleListChoice(player2, "Grizzly Bears");
 
         // Card name should NOT appear in any "reveals" log entry
         assertThat(gd.gameLog).noneMatch(log -> log.contains("reveals") && log.contains("Shock"));
@@ -216,7 +216,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         resolveCombat();
 
         gs.handleLibraryCardChosen(gd, player1, 0);
-        harness.handleColorChosen(player2, "Shock"); // wrong guess
+        harness.handleListChoice(player2, "Shock"); // wrong guess
         harness.handleMayAbilityChosen(player1, false); // decline
 
         // Creature should NOT be on controller's battlefield
@@ -249,7 +249,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         resolveCombat();
 
         gs.handleLibraryCardChosen(gd, player1, 0);
-        harness.handleColorChosen(player2, "Shock");
+        harness.handleListChoice(player2, "Shock");
         harness.handleMayAbilityChosen(player1, true);
 
         // Log should mention shuffling

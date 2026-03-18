@@ -79,7 +79,7 @@ class NevermoreTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Nevermore"))

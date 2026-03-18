@@ -113,7 +113,7 @@ assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
 ## Recipe: interaction-required effects
 
-- Use `handleMayAbilityChosen`, `handleCardChosen`, `handlePermanentChosen`, `handleColorChosen`, or graveyard/library helpers depending on awaiting input.
+- Use `handleMayAbilityChosen`, `handleCardChosen`, `handlePermanentChosen`, `handleListChoice`, or graveyard/library helpers depending on awaiting input.
 - After each choice, call `harness.passBothPriorities()` only if the stack is still pending.
 
 ## High-value regression checks per new card
@@ -179,7 +179,7 @@ assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 | `handleMultipleGraveyardCardsChosen` | `(Player, List<UUID>)` | Game awaits graveyard card selections |
 | `handleCardChosen` | `(Player, int cardIndex)` | Game awaits hand card selection |
 | `handleGraveyardCardChosen` | `(Player, int cardIndex)` | Game awaits graveyard card by index |
-| `handleColorChosen` | `(Player, String colorName)` | Game awaits color choice (e.g. "White") |
+| `handleListChoice` | `(Player, String colorName)` | Game awaits color choice (e.g. "White") |
 | `handleMayAbilityChosen` | `(Player, boolean)` | Game awaits may-ability yes/no |
 | `handleCombatDamageAssigned` | `(Player, int attackerIdx, Map<UUID, Integer>)` | Assign combat damage to blockers |
 

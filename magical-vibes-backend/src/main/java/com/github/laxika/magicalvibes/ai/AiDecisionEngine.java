@@ -91,7 +91,7 @@ public abstract class AiDecisionEngine {
             case "CHOOSE_CARD_FROM_HAND" -> handleCardChoice(gameData);
             case "CHOOSE_PERMANENT" -> choiceHandler.handlePermanentChoice(gameData);
             case "CHOOSE_MULTIPLE_PERMANENTS" -> choiceHandler.handleMultiPermanentChoice(gameData);
-            case "CHOOSE_COLOR" -> choiceHandler.handleColorChoice(gameData);
+            case "CHOOSE_FROM_LIST" -> choiceHandler.handleColorChoice(gameData);
             case "MAY_ABILITY_CHOICE" -> choiceHandler.handleMayAbilityChoice(gameData);
             case "X_VALUE_CHOICE" -> choiceHandler.handleXValueChoice(gameData);
             case "SCRY" -> choiceHandler.handleScry(gameData);

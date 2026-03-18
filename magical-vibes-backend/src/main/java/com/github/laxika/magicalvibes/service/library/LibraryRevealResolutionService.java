@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLo
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsTypeToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
@@ -790,7 +790,7 @@ public class LibraryRevealResolutionService {
         gameData.interaction.beginColorChoice(firstPlayerId, null, null, choiceContext);
 
         List<String> cardNames = collectAllCardNamesInGame(gameData);
-        sessionManager.sendToPlayer(firstPlayerId, new ChooseColorMessage(cardNames, "Choose a card name."));
+        sessionManager.sendToPlayer(firstPlayerId, new ChooseFromListMessage(cardNames, "Choose a card name."));
 
         String playerName = gameData.playerIdToName.get(firstPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (Conundrum Sphinx)", gameData.id, playerName);

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
@@ -193,14 +193,14 @@ class AiChoiceHandler {
         if (colorChoice.context() instanceof ChoiceContext.DrawReplacementChoice drc
                 && drc.kind() == DrawReplacementKind.ABUNDANCE) {
             log.info("AI: Choosing NONLAND for Abundance in game {}", gameId);
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, "NONLAND")));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, "NONLAND")));
             return;
         }
 
         if (colorChoice.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
             String chosenKeyword = kgc.options().getFirst().name();
             log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, chosenKeyword)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, chosenKeyword)));
             return;
         }
 
@@ -214,7 +214,7 @@ class AiChoiceHandler {
                     .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
             log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
             final String finalName = chosenName;
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, finalName)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
             return;
         }
 
@@ -224,7 +224,7 @@ class AiChoiceHandler {
             String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();
             log.info("AI: Choosing card name \"{}\" for reveal in game {}", chosenName, gameId);
             final String finalName = chosenName;
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, finalName)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
             return;
         }
 
@@ -232,7 +232,7 @@ class AiChoiceHandler {
             String chosenSubtype = "HUMAN";
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
             final String subtype = chosenSubtype;
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, subtype)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, subtype)));
             return;
         }
 
@@ -240,7 +240,7 @@ class AiChoiceHandler {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type {} in game {}", chosenType, gameId);
             final String landType = chosenType;
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, landType)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
             return;
         }
 
@@ -254,7 +254,7 @@ class AiChoiceHandler {
                     .orElse("Sphinx Ambassador");
             log.info("AI: Choosing card name \"{}\" for Sphinx Ambassador in game {}", chosenName, gameId);
             final String name = chosenName;
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, name)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
             return;
         }
 
@@ -271,7 +271,7 @@ class AiChoiceHandler {
                     .orElse(CardType.CREATURE);
             log.info("AI: Choosing permanent type {} in game {}", bestType.name(), gameId);
             final String typeName = bestType.name();
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, typeName)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, typeName)));
             return;
         }
 
@@ -285,7 +285,7 @@ class AiChoiceHandler {
                     .orElse("Lightning Bolt");
             log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
             final String name = chosenName;
-            send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, name)));
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
             return;
         }
 
@@ -312,7 +312,7 @@ class AiChoiceHandler {
 
         log.info("AI: Choosing color {} in game {}", bestColor.name(), gameId);
         final String colorName = bestColor.name();
-        send(() -> messageHandler.handleColorChosen(selfConnection, new ColorChosenRequest(null, colorName)));
+        send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, colorName)));
     }
 
     // ===== May Ability Choice =====

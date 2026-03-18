@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ColorChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -117,7 +117,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case PERMANENT_CHOSEN -> messageHandler.handlePermanentChosen(connection, objectMapper.treeToValue(jsonNode, PermanentChosenRequest.class));
                 case MULTIPLE_PERMANENTS_CHOSEN -> messageHandler.handleMultiplePermanentsChosen(connection, objectMapper.treeToValue(jsonNode, MultiplePermanentsChosenRequest.class));
                 case MULTIPLE_GRAVEYARD_CARDS_CHOSEN -> messageHandler.handleMultipleGraveyardCardsChosen(connection, objectMapper.treeToValue(jsonNode, MultipleGraveyardCardsChosenRequest.class));
-                case COLOR_CHOSEN -> messageHandler.handleColorChosen(connection, objectMapper.treeToValue(jsonNode, ColorChosenRequest.class));
+                case CHOSEN_FROM_LIST -> messageHandler.handleListChoice(connection, objectMapper.treeToValue(jsonNode, ChosenFromListRequest.class));
                 case MAY_ABILITY_CHOSEN -> messageHandler.handleMayAbilityChosen(connection, objectMapper.treeToValue(jsonNode, MayAbilityChosenRequest.class));
                 case SCRY_COMPLETED -> messageHandler.handleScryCompleted(connection, objectMapper.treeToValue(jsonNode, ScryCompletedRequest.class));
                 case LIBRARY_CARDS_REORDERED -> messageHandler.handleLibraryCardsReordered(connection, objectMapper.treeToValue(jsonNode, ReorderLibraryCardsRequest.class));

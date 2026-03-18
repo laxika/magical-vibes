@@ -54,7 +54,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         // Spell resolves, now awaiting color choice
         assertThat(gd.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)).isTrue();
 
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -72,7 +72,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "ARTIFACT");
+        harness.handleListChoice(player1, "ARTIFACT");
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -90,7 +90,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Gold Myr");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "BLACK");
+        harness.handleListChoice(player1, "BLACK");
 
         Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Gold Myr"))
@@ -194,7 +194,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -217,7 +217,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "WHITE");
+        harness.handleListChoice(player1, "WHITE");
 
         // Player paid 2 life for the Phyrexian mana
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);

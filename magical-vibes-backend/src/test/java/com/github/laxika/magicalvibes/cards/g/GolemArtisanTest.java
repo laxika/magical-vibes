@@ -175,7 +175,7 @@ class GolemArtisanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve effect -> prompts keyword choice
 
         // Player chooses flying
-        harness.handleColorChosen(player1, "FLYING");
+        harness.handleListChoice(player1, "FLYING");
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
@@ -190,7 +190,7 @@ class GolemArtisanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "TRAMPLE");
+        harness.handleListChoice(player1, "TRAMPLE");
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
@@ -205,7 +205,7 @@ class GolemArtisanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "HASTE");
+        harness.handleListChoice(player1, "HASTE");
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
@@ -219,7 +219,7 @@ class GolemArtisanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "FLYING");
+        harness.handleListChoice(player1, "FLYING");
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
@@ -240,7 +240,7 @@ class GolemArtisanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleColorChosen(player1, "FIRST_STRIKE"))
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "FIRST_STRIKE"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not among valid options");
     }

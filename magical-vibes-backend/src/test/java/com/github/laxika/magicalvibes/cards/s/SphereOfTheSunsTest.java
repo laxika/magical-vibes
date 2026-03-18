@@ -112,7 +112,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             int before = gd.playerManaPools.get(player1.getId()).get(manaColor);
 
-            harness.handleColorChosen(player1, color);
+            harness.handleListChoice(player1, color);
 
             assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
             assertThat(gd.interaction.awaitingInputType()).isNull();
@@ -129,17 +129,17 @@ class SphereOfTheSunsTest extends BaseCardTest {
 
         // First activation
         harness.activateAbility(player1, 0, null, null);
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
         sphere.untap();
 
         // Second activation
         harness.activateAbility(player1, 0, null, null);
-        harness.handleColorChosen(player1, "BLUE");
+        harness.handleListChoice(player1, "BLUE");
         sphere.untap();
 
         // Third activation
         harness.activateAbility(player1, 0, null, null);
-        harness.handleColorChosen(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
 
         assertThat(sphere.getChargeCounters()).isEqualTo(0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
@@ -169,7 +169,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
 
         // First activation taps it
         harness.activateAbility(player1, 0, null, null);
-        harness.handleColorChosen(player1, "WHITE");
+        harness.handleListChoice(player1, "WHITE");
 
         // Cannot activate again while tapped
         assertThat(sphere.isTapped()).isTrue();

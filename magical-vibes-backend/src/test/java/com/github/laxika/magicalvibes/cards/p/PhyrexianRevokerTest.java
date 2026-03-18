@@ -83,7 +83,7 @@ class PhyrexianRevokerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleColorChosen(player1, "Prodigal Pyromancer");
+        harness.handleListChoice(player1, "Prodigal Pyromancer");
 
         Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Phyrexian Revoker"))

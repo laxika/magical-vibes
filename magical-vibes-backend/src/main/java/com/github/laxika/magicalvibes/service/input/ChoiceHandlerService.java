@@ -21,7 +21,7 @@ import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -56,7 +56,7 @@ public class ChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final LegendRuleService legendRuleService;
 
-    public void handleColorChosen(GameData gameData, Player player, String colorName) {
+    public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)) {
             throw new IllegalStateException("Not awaiting color choice");
         }
@@ -195,7 +195,7 @@ public class ChoiceHandlerService {
             promptType = "basic land type";
         }
 
-        sessionManager.sendToPlayer(player.getId(), new ChooseColorMessage(remainingOptions, "Choose the replacement " + promptType + "."));
+        sessionManager.sendToPlayer(player.getId(), new ChooseFromListMessage(remainingOptions, "Choose the replacement " + promptType + "."));
         log.info("Game {} - Awaiting {} to choose replacement word for text change", gameData.id, player.getUsername());
     }
 
@@ -535,7 +535,7 @@ public class ChoiceHandlerService {
             gameData.interaction.beginColorChoice(nextPlayerId, null, null, nextContext);
 
             List<String> cardNames = collectAllCardNamesInGame(gameData);
-            sessionManager.sendToPlayer(nextPlayerId, new ChooseColorMessage(cardNames, "Choose a card name."));
+            sessionManager.sendToPlayer(nextPlayerId, new ChooseFromListMessage(cardNames, "Choose a card name."));
 
             String nextPlayerName = gameData.playerIdToName.get(nextPlayerId);
             log.info("Game {} - Awaiting {} to choose a card name (each player name/reveal)",

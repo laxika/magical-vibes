@@ -1,7 +1,7 @@
 import { inject, Injectable, Signal, signal } from '@angular/core';
 import {
   WebsocketService, Game, MessageType, Card, Permanent,
-  ChooseCardFromHandNotification, ChooseColorNotification, MayAbilityNotification,
+  ChooseCardFromHandNotification, ChooseFromListNotification, MayAbilityNotification,
   ChoosePermanentNotification, ChooseMultiplePermanentsNotification,
   ChooseMultipleCardsFromGraveyardsNotification, ScryNotification, ReorderLibraryCardsNotification,
   ChooseCardFromLibraryNotification, RevealHandNotification,
@@ -42,10 +42,10 @@ export class GameChoiceService {
     this.choosableHandIndices.set(new Set());
     this.handChoicePrompt = '';
     this.handChoiceCanDecline = false;
-    // Color choice
-    this.choosingColor = false;
-    this.colorChoices = [];
-    this.colorChoicePrompt = '';
+    // List choice
+    this.choosingFromList = false;
+    this.listChoices = [];
+    this.listChoicePrompt = '';
     // May ability
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
@@ -99,10 +99,10 @@ export class GameChoiceService {
   handChoicePrompt = '';
   handChoiceCanDecline = false;
 
-  // --- Color choice state ---
-  choosingColor = false;
-  colorChoices: string[] = [];
-  colorChoicePrompt = '';
+  // --- List choice state ---
+  choosingFromList = false;
+  listChoices: string[] = [];
+  listChoicePrompt = '';
 
   // --- May ability state ---
   awaitingMayAbility = false;
@@ -162,10 +162,10 @@ export class GameChoiceService {
     this.handChoiceCanDecline = msg.canDecline;
   }
 
-  handleChooseColor(msg: ChooseColorNotification): void {
-    this.choosingColor = true;
-    this.colorChoices = msg.colors;
-    this.colorChoicePrompt = msg.prompt;
+  handleChooseFromList(msg: ChooseFromListNotification): void {
+    this.choosingFromList = true;
+    this.listChoices = msg.options;
+    this.listChoicePrompt = msg.prompt;
   }
 
   handleMayAbilityChoice(msg: MayAbilityNotification): void {
@@ -281,15 +281,15 @@ export class GameChoiceService {
     this.handChoicePrompt = '';
   }
 
-  chooseColor(color: string): void {
-    if (!this.choosingColor) return;
+  chooseFromList(choice: string): void {
+    if (!this.choosingFromList) return;
     this.websocketService.send({
-      type: MessageType.COLOR_CHOSEN,
-      color: color
+      type: MessageType.CHOSEN_FROM_LIST,
+      choice: choice
     });
-    this.choosingColor = false;
-    this.colorChoices = [];
-    this.colorChoicePrompt = '';
+    this.choosingFromList = false;
+    this.listChoices = [];
+    this.listChoicePrompt = '';
   }
 
   acceptMayAbility(): void {
@@ -405,7 +405,7 @@ export class GameChoiceService {
     this.multiGraveyardPrompt = '';
   }
 
-  getColorDisplayName(color: string): string {
+  getOptionDisplayName(color: string): string {
     switch (color) {
       case 'WHITE': return 'White';
       case 'BLUE': return 'Blue';

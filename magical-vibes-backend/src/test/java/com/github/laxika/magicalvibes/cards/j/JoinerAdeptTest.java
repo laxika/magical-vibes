@@ -43,7 +43,7 @@ class JoinerAdeptTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
 
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 

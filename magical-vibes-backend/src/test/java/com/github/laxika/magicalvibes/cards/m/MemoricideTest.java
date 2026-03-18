@@ -88,7 +88,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_ZONE_EXILE_CHOICE);
     }
@@ -109,7 +109,7 @@ class MemoricideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose "Grizzly Bears"
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         // Select all matching cards to exile
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId()));
@@ -140,7 +140,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.playerExiledCards.get(player2.getId()))
@@ -163,7 +163,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.playerExiledCards.get(player2.getId()))
@@ -191,7 +191,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId(), bears3.getId()));
 
         // All 3 copies should be exiled
@@ -227,7 +227,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         // No card selection step — resolves immediately when no matches
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_ZONE_EXILE_CHOICE);
@@ -268,7 +268,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, bearsIds);
 
         // All Grizzly Bears exiled, only Peek should remain
@@ -299,7 +299,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         // Only select the one from hand — leave graveyard and library copies
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId()));
@@ -343,7 +343,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         // Select zero cards
         harness.handleMultipleGraveyardCardsChosen(player1, List.of());
@@ -377,7 +377,7 @@ class MemoricideTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
 
         // Grizzly Bears exiled from player1's hand
@@ -400,7 +400,7 @@ class MemoricideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No matching cards — resolves immediately without selection step
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -419,7 +419,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses") && log.contains("Grizzly Bears"));
     }
@@ -436,7 +436,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 1 card"));

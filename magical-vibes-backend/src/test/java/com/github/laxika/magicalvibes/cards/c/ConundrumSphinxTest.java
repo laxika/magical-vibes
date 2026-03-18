@@ -72,7 +72,7 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities(); // resolve trigger
 
-        harness.handleColorChosen(player1, "Lightning Bolt");
+        harness.handleListChoice(player1, "Lightning Bolt");
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
         assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player2.getId());
@@ -102,8 +102,8 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities(); // resolve trigger
 
-        harness.handleColorChosen(player1, "Lightning Bolt"); // correct guess
-        harness.handleColorChosen(player2, "Wrong Card"); // wrong guess
+        harness.handleListChoice(player1, "Lightning Bolt"); // correct guess
+        harness.handleListChoice(player2, "Wrong Card"); // wrong guess
 
         // Player1 guessed correctly — Lightning Bolt should be in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
@@ -134,8 +134,8 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities(); // resolve trigger
 
-        harness.handleColorChosen(player1, "Wrong Guess"); // wrong guess
-        harness.handleColorChosen(player2, "Wrong Card"); // wrong guess
+        harness.handleListChoice(player1, "Wrong Guess"); // wrong guess
+        harness.handleListChoice(player2, "Wrong Card"); // wrong guess
 
         // Player1 guessed wrong — hand should not grow
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore);
@@ -164,8 +164,8 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Lightning Bolt");
-        harness.handleColorChosen(player2, "Grizzly Bears");
+        harness.handleListChoice(player1, "Lightning Bolt");
+        harness.handleListChoice(player2, "Grizzly Bears");
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(p2HandBefore + 1);
@@ -189,8 +189,8 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Lightning Bolt");
-        harness.handleColorChosen(player2, "Grizzly Bears");
+        harness.handleListChoice(player1, "Lightning Bolt");
+        harness.handleListChoice(player2, "Grizzly Bears");
 
         // Player1 had empty library — hand unchanged
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore);
@@ -214,8 +214,8 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Lightning Bolt");
-        harness.handleColorChosen(player2, "Wrong Card");
+        harness.handleListChoice(player1, "Lightning Bolt");
+        harness.handleListChoice(player2, "Wrong Card");
 
         // Verify name choices are logged
         assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses \"Lightning Bolt\""));
@@ -240,8 +240,8 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        harness.handleColorChosen(player1, "Lightning Bolt");
-        harness.handleColorChosen(player2, "Grizzly Bears");
+        harness.handleListChoice(player1, "Lightning Bolt");
+        harness.handleListChoice(player2, "Grizzly Bears");
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
         assertThat(gd.interaction.colorChoice()).isNull();

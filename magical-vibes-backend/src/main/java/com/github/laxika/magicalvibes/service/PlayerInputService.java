@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
@@ -30,8 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Component
@@ -117,7 +116,7 @@ public class PlayerInputService {
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
         gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetPermanentId, gameData.interaction.colorChoiceContext());
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(colors, "Choose a color."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(colors, "Choose a color."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
@@ -132,7 +131,7 @@ public class PlayerInputService {
             options.addFirst("ARTIFACT");
         }
         String prompt = includeArtifacts ? "Choose a color or artifacts." : "Choose a color.";
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(options, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(options, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose protection", gameData.id, playerName);
@@ -143,7 +142,7 @@ public class PlayerInputService {
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> optionNames = options.stream().map(Keyword::name).toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(optionNames, "Choose a keyword to grant."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(optionNames, "Choose a keyword to grant."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
@@ -157,7 +156,7 @@ public class PlayerInputService {
                 .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
                 .map(CardSubtype::name)
                 .toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(creatureTypes, "Choose a creature type."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(creatureTypes, "Choose a creature type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
@@ -168,7 +167,7 @@ public class PlayerInputService {
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> permanentTypes = List.of("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(permanentTypes, "Choose a permanent type."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(permanentTypes, "Choose a permanent type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent type", gameData.id, playerName);
@@ -179,10 +178,14 @@ public class PlayerInputService {
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(basicLandTypes, "Choose a basic land type."));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(basicLandTypes, "Choose a basic land type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a basic land type", gameData.id, playerName);
+    }
+
+    private static List<Integer> allHandIndices(List<Card> hand) {
+        return IntStream.range(0, hand.size()).boxed().toList();
     }
 
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
@@ -205,7 +208,7 @@ public class PlayerInputService {
             String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
             prompt = "Choose a non" + excludedLabel + " card name.";
         }
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseColorMessage(cardNames, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(cardNames, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
@@ -218,7 +221,7 @@ public class PlayerInputService {
         List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
         String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
         String prompt = "Choose a non" + excludedLabel + " card name.";
-        sessionManager.sendToPlayer(choosingPlayerId, new ChooseColorMessage(cardNames, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseFromListMessage(cardNames, prompt));
 
         String playerName = gameData.playerIdToName.get(choosingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (exile from zones)", gameData.id, playerName);
@@ -230,7 +233,7 @@ public class PlayerInputService {
 
         List<String> cardNames = collectAllCardNamesInGame(gameData);
         String prompt = "Choose a card name.";
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, namingPlayerId), new ChooseColorMessage(cardNames, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, namingPlayerId), new ChooseFromListMessage(cardNames, prompt));
 
         String playerName = gameData.playerIdToName.get(namingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (Sphinx Ambassador)", gameData.id, playerName);
@@ -274,21 +277,7 @@ public class PlayerInputService {
     }
 
     private List<String> collectAllCardNamesInGame(GameData gameData) {
-        Set<String> names = new TreeSet<>();
-        for (UUID pid : gameData.playerIds) {
-            gameData.playerBattlefields.getOrDefault(pid, List.of())
-                    .forEach(p -> names.add(p.getCard().getName()));
-            gameData.playerHands.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerGraveyards.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerDecks.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerExiledCards.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-        }
-        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
-        return new ArrayList<>(names);
+        return collectCardNamesInGameExcluding(gameData, List.of());
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards, UUID targetPlayerId, String cardName) {
@@ -297,7 +286,7 @@ public class PlayerInputService {
         int maxCount = matchingCards.size();
 
         gameData.interaction.beginMultiZoneExileChoice(choosingPlayerId, new HashSet<>(validCardIds), maxCount, targetPlayerId, choosingPlayerId, cardName);
-        sessionManager.sendToPlayer(choosingPlayerId, new ChooseMultipleCardsFromGraveyardsMessage(
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseMultipleCardsFromGraveyardsMessage(
                 validCardIds, cardViews, maxCount,
                 "Choose any number of cards named \"" + cardName + "\" to exile."));
 
@@ -315,10 +304,7 @@ public class PlayerInputService {
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId) {
         List<Card> hand = gameData.playerHands.get(playerId);
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            validIndices.add(i);
-        }
+        List<Integer> validIndices = allHandIndices(hand);
 
         gameData.interaction.beginCardChoice(AwaitingInput.EXILE_FROM_HAND_CHOICE, playerId, new HashSet<>(validIndices), sourcePermanentId);
         sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, "Choose a card to exile."));
@@ -329,12 +315,7 @@ public class PlayerInputService {
 
     public void beginDiscardChoice(GameData gameData, UUID playerId) {
         List<Card> hand = gameData.playerHands.get(playerId);
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            validIndices.add(i);
-        }
-
-        beginDiscardChoice(gameData, playerId, validIndices, "Choose a card to discard.");
+        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.");
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {

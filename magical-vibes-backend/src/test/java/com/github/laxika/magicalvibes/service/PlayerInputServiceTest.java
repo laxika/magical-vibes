@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
@@ -417,8 +417,8 @@ class PlayerInputServiceTest {
             svc.beginColorChoice(gd, PLAYER1_ID, UUID.randomUUID(), null);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             assertThat(msg.prompt()).isEqualTo("Choose a color.");
         }
     }
@@ -439,8 +439,8 @@ class PlayerInputServiceTest {
             svc.beginProtectionColorChoice(gd, PLAYER1_ID, targetId, true);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).containsExactly("ARTIFACT", "WHITE", "BLUE", "BLACK", "RED", "GREEN");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).containsExactly("ARTIFACT", "WHITE", "BLUE", "BLACK", "RED", "GREEN");
             assertThat(msg.prompt()).isEqualTo("Choose a color or artifacts.");
         }
 
@@ -452,8 +452,8 @@ class PlayerInputServiceTest {
             svc.beginProtectionColorChoice(gd, PLAYER1_ID, targetId, false);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             assertThat(msg.prompt()).isEqualTo("Choose a color.");
         }
 
@@ -488,8 +488,8 @@ class PlayerInputServiceTest {
             svc.beginKeywordChoice(gd, PLAYER1_ID, targetId, options);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).containsExactly("FLYING", "TRAMPLE", "LIFELINK");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).containsExactly("FLYING", "TRAMPLE", "LIFELINK");
             assertThat(msg.prompt()).isEqualTo("Choose a keyword to grant.");
         }
 
@@ -524,8 +524,8 @@ class PlayerInputServiceTest {
             svc.beginSubtypeChoice(gd, PLAYER1_ID, permId);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).doesNotContain("FOREST", "MOUNTAIN", "ISLAND", "PLAINS", "SWAMP", "AURA", "EQUIPMENT", "LOCUS");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).doesNotContain("FOREST", "MOUNTAIN", "ISLAND", "PLAINS", "SWAMP", "AURA", "EQUIPMENT", "LOCUS");
             assertThat(msg.prompt()).isEqualTo("Choose a creature type.");
         }
 
@@ -556,8 +556,8 @@ class PlayerInputServiceTest {
             svc.beginPermanentTypeChoice(gd, PLAYER1_ID, GraveyardChoiceDestination.BATTLEFIELD, "some desc");
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).containsExactly("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).containsExactly("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
             assertThat(msg.prompt()).isEqualTo("Choose a permanent type.");
         }
 
@@ -590,8 +590,8 @@ class PlayerInputServiceTest {
             svc.beginBasicLandTypeChoice(gd, PLAYER1_ID, permId);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).containsExactly("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).containsExactly("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
             assertThat(msg.prompt()).isEqualTo("Choose a basic land type.");
         }
 
@@ -635,8 +635,8 @@ class PlayerInputServiceTest {
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of());
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).contains("Alpha", "Bravo", "Charlie", "Delta", "Echo");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).contains("Alpha", "Bravo", "Charlie", "Delta", "Echo");
             assertThat(msg.prompt()).isEqualTo("Choose a card name.");
         }
 
@@ -650,8 +650,8 @@ class PlayerInputServiceTest {
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of());
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).contains("StackCreature");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).contains("StackCreature");
         }
 
         @Test
@@ -667,9 +667,9 @@ class PlayerInputServiceTest {
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of(CardType.LAND));
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).contains("Bear");
-            assertThat(msg.colors()).doesNotContain("Mountain");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).contains("Bear");
+            assertThat(msg.options()).doesNotContain("Mountain");
             assertThat(msg.prompt()).isEqualTo("Choose a nonland card name.");
         }
 
@@ -687,9 +687,9 @@ class PlayerInputServiceTest {
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of(CardType.ARTIFACT));
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).contains("Bear");
-            assertThat(msg.colors()).doesNotContain("Golem");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).contains("Bear");
+            assertThat(msg.options()).doesNotContain("Golem");
         }
 
         @Test
@@ -707,11 +707,11 @@ class PlayerInputServiceTest {
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of());
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).doesNotHaveDuplicates();
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).doesNotHaveDuplicates();
             // Names should be sorted alphabetically (TreeSet)
-            int alphaIdx = msg.colors().indexOf("Alpha");
-            int zebraIdx = msg.colors().indexOf("Zebra");
+            int alphaIdx = msg.options().indexOf("Alpha");
+            int zebraIdx = msg.options().indexOf("Zebra");
             assertThat(alphaIdx).isLessThan(zebraIdx);
         }
 
@@ -740,14 +740,14 @@ class PlayerInputServiceTest {
     class BeginSpellCardNameChoice {
 
         @Test
-        @DisplayName("Sends to choosingPlayerId directly (no mind control redirect)")
-        void sendsToChoosingPlayerDirectly() {
+        @DisplayName("Sends to choosingPlayerId via mind control redirect")
+        void sendsToChoosingPlayer() {
             Card card = createCreature("Bear");
             gd.playerHands.get(PLAYER2_ID).add(card);
 
             svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND));
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseColorMessage.class));
+            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseFromListMessage.class));
         }
 
         @Test
@@ -779,8 +779,8 @@ class PlayerInputServiceTest {
             svc.beginSphinxAmbassadorCardNameChoice(gd, PLAYER2_ID, PLAYER1_ID);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER2_ID), messageCaptor.capture());
-            ChooseColorMessage msg = (ChooseColorMessage) messageCaptor.getValue();
-            assertThat(msg.colors()).contains("Sphinx");
+            ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+            assertThat(msg.options()).contains("Sphinx");
             assertThat(msg.prompt()).isEqualTo("Choose a card name.");
         }
 
