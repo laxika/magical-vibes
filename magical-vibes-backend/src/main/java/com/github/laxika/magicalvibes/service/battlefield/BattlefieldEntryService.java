@@ -604,6 +604,36 @@ public class BattlefieldEntryService {
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from your graveyard.");
     }
 
+    public void handleUpToNTargetPlayerGraveyardSpellTargeting(GameData gameData, UUID controllerId,
+                                            UUID targetPlayerId, Card card,
+                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
+                                            List<CardEffect> spellEffects) {
+        List<UUID> matchingCardIds = new ArrayList<>();
+        List<CardView> cardViews = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCardIds.add(graveyardCard.getId());
+                    cardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        int maxTargets = Math.min(maxTargetsCap, matchingCardIds.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.targetPlayerId = targetPlayerId;
+        String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
+                "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from " + targetPlayerName + "'s graveyard.");
+    }
+
     // ===== Enter triggers =====
 
     void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {

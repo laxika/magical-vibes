@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -185,6 +186,53 @@ public class LibraryShuffleResolutionService {
                             + ") into their library (" + cardName + ").");
             log.info("Game {} - {} shuffles hand ({}) and graveyard ({}) into library ({})",
                     gameData.id, playerName, handCount, graveyardCount, cardName);
+        }
+    }
+
+    /**
+     * Shuffles specific target cards from the target player's graveyard into their library.
+     * Used by cards like Memory's Journey.
+     */
+    @HandlesEffect(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class)
+    void resolveShuffleTargetCardsFromGraveyardIntoLibrary(GameData gameData, StackEntry entry,
+                                                           ShuffleTargetCardsFromGraveyardIntoLibraryEffect effect) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        List<UUID> targetCardIds = entry.getTargetCardIds();
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (targetPlayerId == null || targetCardIds == null || targetCardIds.isEmpty()) {
+            // No targets — just shuffle the target player's library if we have a target player
+            if (targetPlayerId != null) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " shuffles their library (" + entry.getCard().getName() + ").");
+            }
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        List<String> movedNames = new java.util.ArrayList<>();
+
+        for (UUID cardId : targetCardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                deck.add(card);
+                movedNames.add(card.getName());
+            }
+        }
+
+        LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+
+        if (!movedNames.isEmpty()) {
+            String logEntry = playerName + " shuffles " + String.join(", ", movedNames)
+                    + " from graveyard into their library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} shuffles {} card(s) from graveyard into library",
+                    gameData.id, playerName, movedNames.size());
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " shuffles their library (" + entry.getCard().getName() + ").");
         }
     }
 

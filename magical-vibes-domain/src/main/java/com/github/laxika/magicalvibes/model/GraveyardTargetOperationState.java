@@ -13,4 +13,8 @@ public class GraveyardTargetOperationState {
     public StackEntryType entryType;
     public int xValue;
     public boolean anyNumber;
+    /** Target player for effects like "Target player shuffles ... from their graveyard" */
+    public UUID targetPlayerId;
+    /** Whether the spell is being cast with flashback */
+    public boolean flashback;
 }

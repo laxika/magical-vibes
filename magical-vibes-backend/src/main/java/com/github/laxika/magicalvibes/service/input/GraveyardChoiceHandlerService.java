@@ -228,6 +228,8 @@ public class GraveyardChoiceHandlerService {
         List<CardEffect> pendingEffects = gameData.graveyardTargetOperation.effects;
         StackEntryType pendingEntryType = gameData.graveyardTargetOperation.entryType;
         int pendingXValue = gameData.graveyardTargetOperation.xValue;
+        UUID pendingTargetPlayerId = gameData.graveyardTargetOperation.targetPlayerId;
+        boolean pendingFlashback = gameData.graveyardTargetOperation.flashback;
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
@@ -238,6 +240,8 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.entryType = null;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = false;
+        gameData.graveyardTargetOperation.targetPlayerId = null;
+        gameData.graveyardTargetOperation.flashback = false;
 
         List<String> targetNames = new ArrayList<>();
         for (UUID cardId : cardIds) {
@@ -248,12 +252,16 @@ public class GraveyardChoiceHandlerService {
         }
 
         if (pendingEntryType != null) {
-            // Spell casting (e.g. Midnight Ritual) — put spell on stack with targets
-            gameData.stack.add(new StackEntry(
+            // Spell casting — put spell on stack with targets
+            StackEntry spellEntry = new StackEntry(
                     pendingEntryType, pendingCard, controllerId, pendingCard.getName(),
-                    new ArrayList<>(pendingEffects), pendingXValue, null,
+                    new ArrayList<>(pendingEffects), pendingXValue, pendingTargetPlayerId,
                     null, Map.of(), null, new ArrayList<>(cardIds), List.of()
-            ));
+            );
+            if (pendingFlashback) {
+                spellEntry.setCastWithFlashback(true);
+            }
+            gameData.stack.add(spellEntry);
 
             gameData.spellsCastThisTurn.merge(controllerId, 1, Integer::sum);
             gameData.priorityPassedBy.clear();
@@ -264,7 +272,8 @@ public class GraveyardChoiceHandlerService {
             log.info("Game {} - {} casts {} with {} graveyard targets", gameData.id, pendingCard.getName(),
                     pendingCard.getName(), cardIds.size());
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId);
+            triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId,
+                    !pendingFlashback);
             gameBroadcastService.broadcastGameState(gameData);
         } else {
             // ETB ability — put triggered ability on stack with targets

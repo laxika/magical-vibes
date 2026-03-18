@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import lombok.RequiredArgsConstructor;
@@ -494,7 +495,34 @@ public class SpellCastingService {
                             .filter(PutTargetCardsFromGraveyardOnTopOfLibraryEffect.class::isInstance)
                             .findFirst().orElse(null);
 
-            if (graveyardToHandEffect != null) {
+            // Check for "target player shuffles up to N cards from their graveyard" spells (e.g. Memory's Journey)
+            ShuffleTargetCardsFromGraveyardIntoLibraryEffect shuffleGraveyardCardsEffect =
+                    (ShuffleTargetCardsFromGraveyardIntoLibraryEffect) filteredSpellEffects.stream()
+                            .filter(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class::isInstance)
+                            .findFirst().orElse(null);
+
+            if (shuffleGraveyardCardsEffect != null) {
+                // Target player is specified via targetPermanentId
+                UUID targetGraveyardOwner = targetPermanentId;
+                if (targetGraveyardOwner == null) {
+                    throw new IllegalStateException("Must target a player");
+                }
+                long matchingCount = gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
+                        .filter(c -> gameQueryService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
+                        .count();
+                if (matchingCount > 0) {
+                    battlefieldEntryService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
+                            targetGraveyardOwner, card, entryType, shuffleGraveyardCardsEffect.filter(),
+                            shuffleGraveyardCardsEffect.maxTargets(), filteredSpellEffects);
+                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                }
+                // No matching cards in target player's graveyard — put spell on stack with 0 targets
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, targetPermanentId,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
+            } else if (graveyardToHandEffect != null) {
                 long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                         .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
                         .count();
@@ -817,6 +845,39 @@ public class SpellCastingService {
 
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         StackEntryType entryType = card.hasType(CardType.INSTANT) ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+
+        // Check for "target player shuffles up to N cards from their graveyard" flashback spells (e.g. Memory's Journey)
+        ShuffleTargetCardsFromGraveyardIntoLibraryEffect shuffleGraveyardCardsEffect =
+                (ShuffleTargetCardsFromGraveyardIntoLibraryEffect) spellEffects.stream()
+                        .filter(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class::isInstance)
+                        .findFirst().orElse(null);
+
+        if (shuffleGraveyardCardsEffect != null) {
+            UUID targetGraveyardOwner = targetPermanentId;
+            if (targetGraveyardOwner == null) {
+                throw new IllegalStateException("Must target a player");
+            }
+            long matchingCount = gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
+                    .filter(c -> gameQueryService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
+                    .count();
+            if (matchingCount > 0) {
+                battlefieldEntryService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
+                        targetGraveyardOwner, card, entryType, shuffleGraveyardCardsEffect.filter(),
+                        shuffleGraveyardCardsEffect.maxTargets(), spellEffects);
+                gameData.graveyardTargetOperation.flashback = true;
+                return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+            }
+            // No matching cards — put on stack with 0 targets
+            StackEntry stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    spellEffects, 0, targetPermanentId,
+                    null, Map.of(), null, List.of(), List.of()
+            );
+            stackEntry.setCastWithFlashback(true);
+            gameData.stack.add(stackEntry);
+            finishSpellCast(gameData, playerId, player, graveyard, card, false);
+            return;
+        }
 
         StackEntry stackEntry;
         if (!targetPermanentIds.isEmpty()) {
