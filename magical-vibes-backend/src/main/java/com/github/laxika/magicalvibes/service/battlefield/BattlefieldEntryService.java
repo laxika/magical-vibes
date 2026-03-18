@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -386,9 +387,13 @@ public class BattlefieldEntryService {
                 // Separate graveyard cast effects (need single-target selection at trigger time)
                 List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
                         .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect).toList();
+                // Separate graveyard flashback-grant effects (need single-target selection at trigger time)
+                List<CardEffect> graveyardFlashbackEffects = mandatoryEffects.stream()
+                        .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect).toList();
                 List<CardEffect> otherEffects = mandatoryEffects.stream()
                         .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
-                        .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)).toList();
+                        .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
+                        .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect)).toList();
 
                 // Put non-graveyard-exile effects on the stack as before
                 if (!otherEffects.isEmpty()) {
@@ -429,6 +434,11 @@ public class BattlefieldEntryService {
                 // Handle graveyard cast effects: target instant/sorcery in opponent's graveyard
                 for (CardEffect effect : graveyardCastEffects) {
                     handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
+                }
+
+                // Handle graveyard flashback-grant effects: target instant/sorcery in controller's graveyard
+                for (CardEffect effect : graveyardFlashbackEffects) {
+                    handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
                 }
             }
         }
@@ -522,6 +532,48 @@ public class BattlefieldEntryService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, eligibleCardIds, cardViews, 1,
                     "Choose target instant or sorcery card from a graveyard to cast.");
+        }
+    }
+
+    private void handleGrantFlashbackETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                     List<CardEffect> effects) {
+        GrantFlashbackToTargetGraveyardCardEffect flashbackEffect = effects.stream()
+                .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect)
+                .map(e -> (GrantFlashbackToTargetGraveyardCardEffect) e)
+                .findFirst().orElseThrow();
+
+        // Collect eligible cards from controller's own graveyard
+        List<UUID> eligibleCardIds = new ArrayList<>();
+        List<CardView> cardViews = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                boolean matchesType = false;
+                for (CardType type : flashbackEffect.cardTypes()) {
+                    if (graveyardCard.hasType(type)) {
+                        matchesType = true;
+                        break;
+                    }
+                }
+                if (matchesType) {
+                    eligibleCardIds.add(graveyardCard.getId());
+                    cardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        if (eligibleCardIds.isEmpty()) {
+            // No valid targets — trigger doesn't go on the stack
+            String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+            log.info("Game {} - {} ETB grant flashback has no valid targets", gameData.id, card.getName());
+        } else {
+            // Prompt player to choose a target before putting ability on the stack
+            gameData.graveyardTargetOperation.card = card;
+            gameData.graveyardTargetOperation.controllerId = controllerId;
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, eligibleCardIds, cardViews, 1,
+                    "Choose target instant or sorcery card in your graveyard to gain flashback.");
         }
     }
 

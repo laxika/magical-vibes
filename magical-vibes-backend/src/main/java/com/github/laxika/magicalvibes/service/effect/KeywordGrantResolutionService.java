@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEff
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
@@ -215,6 +216,41 @@ public class KeywordGrantResolutionService {
         String logEntry = entry.getCard().getName() + " grants flashback to " + count + " card(s) in graveyard until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} grants flashback to {} graveyard card(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(GrantFlashbackToTargetGraveyardCardEffect.class)
+    private void resolveGrantFlashbackToTargetGraveyardCard(GameData gameData, StackEntry entry,
+                                                             GrantFlashbackToTargetGraveyardCardEffect effect) {
+        if (entry.getTargetCardIds().isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+            return;
+        }
+
+        UUID targetCardId = entry.getTargetCardIds().getFirst();
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            return;
+        }
+
+        // Verify target still matches the required card types
+        boolean matchesType = false;
+        for (CardType type : effect.cardTypes()) {
+            if (targetCard.hasType(type)) {
+                matchesType = true;
+                break;
+            }
+        }
+        if (!matchesType) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target is not a valid card type).");
+            return;
+        }
+
+        gameData.cardsGrantedFlashbackUntilEndOfTurn.add(targetCard.getId());
+
+        String logEntry = entry.getCard().getName() + " grants flashback to " + targetCard.getName() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} grants flashback to {} until end of turn", gameData.id, entry.getCard().getName(), targetCard.getName());
     }
 
     @HandlesEffect(GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect.class)

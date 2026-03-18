@@ -111,6 +111,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Flashback spell | `a/AncientGrudge.java` | `addCastingOption(new FlashbackCast("{G}"))` + normal effects/targeting. Cast from graveyard for flashback cost, exiled after resolving or fizzling. Flashback is a spell cast (counterable, triggers "whenever you cast"), not an activated ability. |
 | Exile target + all same name | `s/SeverTheBloodline.java` | ExileTargetCreatureAndAllWithSameNameEffect + FlashbackCast("{5}{B}{B}") — exile target creature and all other creatures with the same name |
 | Grant flashback to graveyard | `p/PastInFlames.java` | `GrantFlashbackToGraveyardCardsEffect(Set.of(CardType.INSTANT, CardType.SORCERY))` + own `FlashbackCast("{4}{R}")`. Grants flashback (cost = mana cost) to matching cards in controller's graveyard until end of turn. Tracked in `GameData.cardsGrantedFlashbackUntilEndOfTurn`. |
+| ETB grant flashback to target graveyard card | `s/SnapcasterMage.java` | `GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY))` on ON_ENTER_BATTLEFIELD. Flash creature. Targets a single instant/sorcery in controller's graveyard, grants flashback (cost = mana cost) until end of turn. Uses multi-graveyard targeting at ETB trigger time. |
 
 ## Vanilla creatures (empty body, all from Scryfall)
 
