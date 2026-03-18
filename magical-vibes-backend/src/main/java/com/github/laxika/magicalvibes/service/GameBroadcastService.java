@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
@@ -364,6 +365,21 @@ public class GameBroadcastService {
             Card card = hand.get(i);
             if (card.hasType(CardType.LAND)) return false;
             return card.isNeedsSpellCastTarget() && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
+        });
+
+        // MTG rule 601.2b: can't cast if additional cost requiring N graveyard cards can't be paid
+        playable.removeIf(i -> {
+            Card card = hand.get(i);
+            if (card.hasType(CardType.LAND)) return false;
+            ExileNCardsFromGraveyardCost exileCost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).stream()
+                    .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                    .findFirst().orElse(null);
+            if (exileCost == null) return false;
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+            long matchingCount = graveyard.stream()
+                    .filter(c -> exileCost.requiredType() == null || c.hasType(exileCost.requiredType()))
+                    .count();
+            return matchingCount < exileCost.count();
         });
 
         return playable;
