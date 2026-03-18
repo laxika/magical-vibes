@@ -462,6 +462,7 @@ public class SpellCastingService {
             } else {
                 paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount);
             }
+            payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, 0);
             gameData.stack.add(new StackEntry(
                     cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
                     List.of(), stackX, stackTarget, null
