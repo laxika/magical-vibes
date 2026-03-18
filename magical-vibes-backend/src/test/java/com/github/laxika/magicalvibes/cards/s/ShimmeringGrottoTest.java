@@ -92,7 +92,7 @@ class ShimmeringGrottoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleColorChosen(player1, "RED");
+        harness.handleListChoice(player1, "RED");
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);

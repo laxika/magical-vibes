@@ -91,6 +91,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -692,6 +693,12 @@ public class GameQueryService {
                 return permanent.getEffectivePower() <= powerAtMostPredicate.maxPower();
             }
             return getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
+        }
+        if (predicate instanceof PermanentPowerAtLeastPredicate powerAtLeastPredicate) {
+            if (gameData == null) {
+                return permanent.getEffectivePower() >= powerAtLeastPredicate.minPower();
+            }
+            return getEffectivePower(gameData, permanent) >= powerAtLeastPredicate.minPower();
         }
         if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
             if (permanent.isColorOverridden()) {

@@ -42,6 +42,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Protection choice (color or artifacts) | `a/ApostlesBlessing.java` | GrantProtectionChoiceUntilEndOfTurnEffect(true) + ControlledPermanentPredicateTargetFilter(AnyOf(artifact, creature)). Phyrexian mana. On resolution, player chooses color or artifacts → protection until end of turn |
 | Pump attacking + keyword | `r/RallyTheForces.java` | BoostAllCreaturesEffect(filter) + GrantKeywordEffect(ALL_CREATURES, filter) with PermanentIsAttackingPredicate |
 | Targeted destroy | `t/Terror.java` | DestroyTargetPermanentEffect + target filter |
+| Targeted destroy (power filter) | `s/SmiteTheMonstrous.java` | DestroyTargetPermanentEffect + PermanentPowerAtLeastPredicate(4) creature filter |
 | Multi-effect removal | `c/Condemn.java` | PutTargetOnBottomOfLibrary + GainLifeEqualToTargetToughness |
 | Put on top of library | `b/BanishmentDecree.java` | PutTargetOnTopOfLibraryEffect + PermanentAnyOfPredicate filter (artifact/creature/enchantment) |
 | Metalcraft sacrifice instant | `d/DispenseJustice.java` | SacrificeAttackingCreaturesEffect(1, 2) + PlayerPredicateTargetFilter(ANY) — metalcraft checked at resolution |

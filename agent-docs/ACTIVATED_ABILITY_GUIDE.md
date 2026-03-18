@@ -368,6 +368,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
 | `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
 | `PermanentHasKeywordPredicate` | `(Keyword)` | permanents with specific keyword |
+| `PermanentPowerAtLeastPredicate` | `(int minPower)` | creatures with power >= N |
 | `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power |
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with the same name as the source permanent (uses current card name, works with clones) |
