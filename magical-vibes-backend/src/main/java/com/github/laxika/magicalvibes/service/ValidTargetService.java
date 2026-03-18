@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -66,7 +65,7 @@ public class ValidTargetService {
             if (singleTargetAllowsPlayers || multiTargetAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, card, playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -101,7 +100,7 @@ public class ValidTargetService {
                 // Player-targeting position: add valid players
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidAbilityPlayerTarget(gameData, ability, playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -133,7 +132,7 @@ public class ValidTargetService {
 
         if (targetsPlayer) {
             for (UUID playerId : gameData.playerIds) {
-                if (isValidAbilityPlayerTarget(gameData, ability, playerId, controllerId)) {
+                if (isValidPlayerTarget(gameData, ability.getTargetFilter(), playerId, controllerId)) {
                     validPlayerIds.add(playerId);
                 }
             }
@@ -165,25 +164,8 @@ public class ValidTargetService {
             return false;
         }
 
-        // Shroud
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) {
+        if (isBlockedByHexproofOrGrantedEffect(gameData, perm, castingPlayerId)) {
             return false;
-        }
-
-        // Hexproof (only blocks if target is opponent's)
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (targetController != null && !targetController.equals(castingPlayerId)) {
-                return false;
-            }
-        }
-
-        // CantBeTargetOfSpellsOrAbilitiesEffect (granted hexproof-like)
-        if (gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (targetController != null && !targetController.equals(castingPlayerId)) {
-                return false;
-            }
         }
 
         // Can't be targeted by spell color
@@ -197,15 +179,8 @@ public class ValidTargetService {
         }
 
         // Card's TargetFilter
-        if (spellCard.getTargetFilter() != null) {
-            try {
-                FilterContext filterContext = FilterContext.of(gameData)
-                        .withSourceCardId(spellCard.getId())
-                        .withSourceControllerId(castingPlayerId);
-                gameQueryService.validateTargetFilter(spellCard.getTargetFilter(), perm, filterContext);
-            } catch (IllegalStateException e) {
-                return false;
-            }
+        if (!passesTargetFilter(gameData, spellCard.getTargetFilter(), perm, spellCard.getId(), castingPlayerId)) {
+            return false;
         }
 
         return true;
@@ -218,15 +193,8 @@ public class ValidTargetService {
         }
 
         // Per-position filter for multi-target spells
-        if (positionFilter != null) {
-            try {
-                FilterContext filterContext = FilterContext.of(gameData)
-                        .withSourceCardId(card.getId())
-                        .withSourceControllerId(controllerId);
-                gameQueryService.validateTargetFilter(positionFilter, perm, filterContext);
-            } catch (IllegalStateException e) {
-                return false;
-            }
+        if (!passesTargetFilter(gameData, positionFilter, perm, card.getId(), controllerId)) {
+            return false;
         }
 
         // "Any target" in MTG means creature, planeswalker, or player — not all permanents.
@@ -250,7 +218,7 @@ public class ValidTargetService {
         return true;
     }
 
-    private boolean isValidPlayerTarget(GameData gameData, Card card, UUID playerId, UUID controllerId) {
+    private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId) {
         // Player shroud
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
             return false;
@@ -262,7 +230,7 @@ public class ValidTargetService {
         }
 
         // PlayerPredicateTargetFilter (e.g. "target opponent")
-        if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
+        if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
             if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
                 if (rel.relation() == PlayerRelation.OPPONENT && controllerId.equals(playerId)) {
                     return false;
@@ -290,25 +258,8 @@ public class ValidTargetService {
             }
         }
 
-        // Shroud
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) {
+        if (isBlockedByHexproofOrGrantedEffect(gameData, perm, controllerId)) {
             return false;
-        }
-
-        // Hexproof (only blocks if target is opponent's)
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (targetController != null && !targetController.equals(controllerId)) {
-                return false;
-            }
-        }
-
-        // CantBeTargetOfSpellsOrAbilitiesEffect
-        if (gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (targetController != null && !targetController.equals(controllerId)) {
-                return false;
-            }
         }
 
         // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
@@ -317,74 +268,29 @@ public class ValidTargetService {
         }
 
         // TargetFilter from ability
-        if (ability.getTargetFilter() != null) {
-            try {
-                FilterContext filterContext = FilterContext.of(gameData)
-                        .withSourceCardId(sourceCard.getId())
-                        .withSourceControllerId(controllerId);
-                gameQueryService.validateTargetFilter(ability.getTargetFilter(), perm, filterContext);
-            } catch (IllegalStateException e) {
-                return false;
-            }
+        if (!passesTargetFilter(gameData, ability.getTargetFilter(), perm, sourceCard.getId(), controllerId)) {
+            return false;
         }
 
-        // Protection from source color (for abilities that deal damage)
-        if (sourceCard.getColor() != null) {
-            boolean dealsDamage = ability.getEffects().stream().anyMatch(e ->
-                    e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
-                            || e.getClass().getSimpleName().contains("Destroy")));
-            if (dealsDamage && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
+        // Protection from source color/type/subtype (for abilities that deal damage or destroy)
+        boolean dealsDamage = ability.getEffects().stream().anyMatch(e ->
+                e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
+                        || e.getClass().getSimpleName().contains("Destroy")));
+        if (dealsDamage) {
+            if (sourceCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
                 return false;
             }
-        }
-        // Protection from source card type (for abilities that deal damage)
-        {
-            boolean dealsDamage = ability.getEffects().stream().anyMatch(e ->
-                    e.canTargetPermanent() && (e.getClass().getSimpleName().contains("DealDamage")
-                            || e.getClass().getSimpleName().contains("Destroy")));
-            if (dealsDamage && gameQueryService.hasProtectionFromSourceCardTypes(perm, sourceCard)) {
+            if (gameQueryService.hasProtectionFromSourceCardTypes(perm, sourceCard)) {
                 return false;
             }
-            if (dealsDamage && gameQueryService.hasProtectionFromSourceSubtypes(perm, sourceCard)) {
+            if (gameQueryService.hasProtectionFromSourceSubtypes(perm, sourceCard)) {
                 return false;
             }
         }
 
         // Per-position filter for multi-target abilities
-        if (positionFilter != null) {
-            try {
-                FilterContext filterContext = FilterContext.of(gameData)
-                        .withSourceCardId(sourceCard.getId())
-                        .withSourceControllerId(controllerId);
-                gameQueryService.validateTargetFilter(positionFilter, perm, filterContext);
-            } catch (IllegalStateException e) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private boolean isValidAbilityPlayerTarget(GameData gameData, ActivatedAbility ability, UUID playerId, UUID controllerId) {
-        if (gameQueryService.playerHasShroud(gameData, playerId)) {
+        if (!passesTargetFilter(gameData, positionFilter, perm, sourceCard.getId(), controllerId)) {
             return false;
-        }
-
-        // Player hexproof (only blocks opponents)
-        if (!controllerId.equals(playerId) && gameQueryService.playerHasHexproof(gameData, playerId)) {
-            return false;
-        }
-
-        // PlayerPredicateTargetFilter (e.g. "target opponent" for Mindslaver)
-        if (ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
-            if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
-                if (rel.relation() == PlayerRelation.OPPONENT && controllerId.equals(playerId)) {
-                    return false;
-                }
-                if (rel.relation() == PlayerRelation.SELF && !controllerId.equals(playerId)) {
-                    return false;
-                }
-            }
         }
 
         return true;
@@ -415,7 +321,7 @@ public class ValidTargetService {
 
             if (singleTargetAllowsPlayers || multiTargetAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
-                    if (isValidPlayerTarget(gameData, card, playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId)) {
                         return true;
                     }
                 }
@@ -431,6 +337,53 @@ public class ValidTargetService {
         }
 
         return false;
+    }
+
+    /**
+     * Checks shroud, hexproof, and CantBeTargetOfSpellsOrAbilitiesEffect on a permanent.
+     * Returns true if the permanent is blocked from being targeted by the given controller.
+     */
+    private boolean isBlockedByHexproofOrGrantedEffect(GameData gameData, Permanent perm, UUID controllerId) {
+        // Shroud
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) {
+            return true;
+        }
+
+        // Hexproof (only blocks if target is opponent's)
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
+            if (targetController != null && !targetController.equals(controllerId)) {
+                return true;
+            }
+        }
+
+        // CantBeTargetOfSpellsOrAbilitiesEffect (granted hexproof-like)
+        if (gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
+            if (targetController != null && !targetController.equals(controllerId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Validates a target filter against a permanent. Returns true if the filter is null or the permanent passes.
+     */
+    private boolean passesTargetFilter(GameData gameData, TargetFilter filter, Permanent perm, UUID sourceCardId, UUID controllerId) {
+        if (filter == null) {
+            return true;
+        }
+        try {
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(sourceCardId)
+                    .withSourceControllerId(controllerId);
+            gameQueryService.validateTargetFilter(filter, perm, filterContext);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
     }
 
     private boolean isPlaneswalker(Permanent perm) {
