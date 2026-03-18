@@ -373,6 +373,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Boost + grant card type equip | `s/SilverskinArmor.java` | STATIC StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE) + GrantCardTypeEffect(ARTIFACT, EQUIPPED_CREATURE) + equip. Makes equipped creature an artifact in addition to its other types (counts for metalcraft, artifact targeting, etc.) |
 | Sword cycle (boost + protection + combat trigger) | `s/SwordOfWarAndPeace.java` | STATIC StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE) + ProtectionFromColorsEffect(RED, WHITE) + ON_COMBAT_DAMAGE_TO_PLAYER DealDamageToTargetPlayerByHandSizeEffect + GainLifePerCardsInHandEffect + equip. Also: `SwordOfFeastAndFamine` (discard + untap lands), `SwordOfBodyAndMind` (token + mill) |
 | Evasion + sacrifice-equip-to-deal-damage | `b/BlazingTorch.java` | STATIC CanBeBlockedOnlyByFilterEffect(PermanentNotPredicate(vampires/zombies)) + GrantActivatedAbilityEffect(EQUIPPED_CREATURE) with SacrificeSourceEquipmentCost + DealDamageToAnyTargetEffect + equip |
+| Double combat damage dealt/received equip | `i/InquisitorsFlail.java` | STATIC DoubleEquippedCreatureCombatDamageEffect + equip. Doubles combat damage dealt by and received by equipped creature |
 
 ## Activated abilities
 

@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
@@ -1582,6 +1583,43 @@ public class GameQueryService {
             }
         });
         return multiplier[0];
+    }
+
+    /**
+     * Returns the combat damage multiplier for a creature based on
+     * {@link DoubleEquippedCreatureCombatDamageEffect} on attached equipment.
+     * Each such equipment doubles the multiplier.
+     */
+    public int getEquippedCreatureCombatDamageMultiplier(GameData gameData, Permanent creature) {
+        int[] multiplier = {1};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (p.isAttached() && p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof DoubleEquippedCreatureCombatDamageEffect) {
+                        multiplier[0] *= 2;
+                    }
+                }
+            }
+        });
+        return multiplier[0];
+    }
+
+    /**
+     * Applies the global damage multiplier and creature-specific combat damage multipliers
+     * to the given combat damage amount. The source multiplier doubles damage dealt by the
+     * source creature, and the target multiplier doubles damage received by the target creature.
+     *
+     * @param source the creature dealing combat damage
+     * @param target the creature receiving combat damage, or {@code null} if damage is to a player
+     * @return the damage after applying all multipliers
+     */
+    public int applyCombatDamageMultiplier(GameData gameData, int damage, Permanent source, Permanent target) {
+        int result = damage * getDamageMultiplier(gameData);
+        result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
+        if (target != null) {
+            result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);
+        }
+        return result;
     }
 
     /**

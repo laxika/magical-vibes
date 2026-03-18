@@ -387,7 +387,7 @@ public class CombatDamageService {
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
                 if (atkParticipates && !gameQueryService.isPreventedFromDealingDamage(gameData, atk, true)) {
-                    int power = gameQueryService.applyDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk));
+                    int power = gameQueryService.applyCombatDamageMultiplier(gameData, gameQueryService.getEffectiveCombatDamage(gameData, atk), atk, null);
                     accumulatePlayerDamage(gameData, atk, power, defenderId, redirectTarget, state);
                 }
             } else {
@@ -421,7 +421,7 @@ public class CombatDamageService {
                             assignedDmg = Math.min(blkRemaining, lethalNeeded);
                             blockerRemainingDamage.put(blkIdx, blkRemaining - assignedDmg);
                         }
-                        int actualDmg = gameQueryService.applyDamageMultiplier(gameData, assignedDmg);
+                        int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, assignedDmg, blk, atk);
                         applyCombatCreatureDamage(gameData, blk, atk, atkIdx, actualDmg, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
                         state.combatDamageDealt.merge(blk, actualDmg, Integer::sum);
                         recordCombatDamageToCreature(gameData, state, blk, defenderId, atk, actualDmg);
@@ -451,7 +451,7 @@ public class CombatDamageService {
                     : gameQueryService.getEffectiveToughness(gameData, blk) - state.defDamageTaken.getOrDefault(blkIdx, 0);
             int dmg = Math.min(remaining, Math.max(0, lethalNeeded));
             if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, blk, atk))) {
-                int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
+                int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
                 applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                 state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                 recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);
@@ -459,7 +459,7 @@ public class CombatDamageService {
             remaining -= dmg;
         }
         if (remaining > 0 && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
-            int doubledRemaining = gameQueryService.applyDamageMultiplier(gameData, remaining);
+            int doubledRemaining = gameQueryService.applyCombatDamageMultiplier(gameData, remaining, atk, null);
             accumulatePlayerDamage(gameData, atk, doubledRemaining, defenderId, redirectTarget, state);
         }
     }
@@ -477,14 +477,14 @@ public class CombatDamageService {
             if (dmg <= 0) continue;
             if (targetId.equals(overflowTargetId)) {
                 // Overflow damage to the attack target (player or planeswalker)
-                int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
+                int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, null);
                 accumulatePlayerDamage(gameData, atk, actualDmg, defenderId, redirectTarget, state);
             } else {
                 for (int blkIdx : blkIndices) {
                     Permanent blk = defBf.get(blkIdx);
                     if (blk.getId().equals(targetId)) {
                         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, blk, atk))) {
-                            int actualDmg = gameQueryService.applyDamageMultiplier(gameData, dmg);
+                            int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);
                             applyCombatCreatureDamage(gameData, atk, blk, blkIdx, actualDmg, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
                             state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);
                             recordCombatDamageToCreature(gameData, state, atk, activeId, blk, actualDmg);

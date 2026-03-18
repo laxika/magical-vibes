@@ -140,7 +140,7 @@ class CombatDamageServiceTest {
                     boolean deathtouch = inv.getArgument(2);
                     return damage >= toughness || (deathtouch && damage >= 1);
                 });
-        when(gameQueryService.applyDamageMultiplier(eq(gameData), anyInt()))
+        when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))
