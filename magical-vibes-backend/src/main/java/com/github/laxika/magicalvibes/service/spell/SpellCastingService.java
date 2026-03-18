@@ -382,6 +382,13 @@ public class SpellCastingService {
             targetLegalityService.validateMultiSpellTargets(gameData, card, targetPermanentIds, playerId);
         }
 
+        // Validate permanent targets for spells that also target a spell on the stack (e.g. Lost in the Mist)
+        if (unwrappedNeedsSpellTarget && unwrappedNeedsTarget && !targetPermanentIds.isEmpty()) {
+            for (UUID permTargetId : targetPermanentIds) {
+                targetLegalityService.validateSpellTargeting(gameData, card, permTargetId, null, playerId, true);
+            }
+        }
+
         // Validate and apply convoke
         List<ManaColor> convokeContributions = List.of();
         if (!convokeCreatureIds.isEmpty() && card.getKeywords().contains(Keyword.CONVOKE)) {
@@ -582,10 +589,19 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, null, damageAssignments
                 ));
             } else if (unwrappedNeedsSpellTarget) {
-                gameData.stack.add(new StackEntry(
-                        entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, targetPermanentId, Zone.STACK
-                ));
+                if (unwrappedNeedsTarget && !targetPermanentIds.isEmpty()) {
+                    // Spell targets both a spell on the stack and permanent(s) (e.g. Lost in the Mist)
+                    gameData.stack.add(new StackEntry(
+                            entryType, card, playerId, card.getName(),
+                            filteredSpellEffects, resolvedXValue, targetPermanentId,
+                            null, Map.of(), Zone.STACK, List.of(), targetPermanentIds
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            entryType, card, playerId, card.getName(),
+                            filteredSpellEffects, targetPermanentId, Zone.STACK
+                    ));
+                }
             } else if (!targetPermanentIds.isEmpty() && !sacFlags.usesSacrificeAllCreaturesCost()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
                 gameData.stack.add(new StackEntry(

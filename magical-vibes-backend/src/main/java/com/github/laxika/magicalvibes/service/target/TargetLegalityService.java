@@ -237,6 +237,18 @@ public class TargetLegalityService {
             return false;
         }
 
+        // Multi-zone targeting: spell targets both a spell on the stack and permanent(s)
+        // (e.g. Lost in the Mist). Per MTG CR 608.2b: fizzles only when ALL targets become illegal.
+        if (entry.getTargetPermanentId() != null && entry.getTargetZone() == Zone.STACK
+                && !entry.getTargetPermanentIds().isEmpty()) {
+            boolean spellTargetLegal = gameData.stack.stream()
+                    .anyMatch(se -> se.getCard().getId().equals(entry.getTargetPermanentId()));
+            boolean anyPermanentTargetLegal = entry.getTargetPermanentIds().stream()
+                    .anyMatch(id -> gameQueryService.findPermanentById(gameData, id) != null
+                            || gameData.playerIds.contains(id));
+            return !spellTargetLegal && !anyPermanentTargetLegal;
+        }
+
         boolean targetFizzled = false;
         if (entry.getTargetPermanentId() != null) {
             if (entry.getTargetZone() == Zone.GRAVEYARD) {
