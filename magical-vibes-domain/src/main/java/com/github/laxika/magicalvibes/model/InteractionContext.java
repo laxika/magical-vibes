@@ -83,7 +83,7 @@ public sealed interface InteractionContext permits
     record HandTopBottomChoice(UUID playerId, List<Card> cards) implements InteractionContext {}
 
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
-                              int remainingCount, boolean discardMode, List<Card> chosenCards) implements InteractionContext {}
+                              int remainingCount, boolean discardMode, boolean exileMode, List<Card> chosenCards) implements InteractionContext {}
 
     record MultiZoneExileChoice(UUID playerId, Set<UUID> validCardIds, int maxCount, UUID targetPlayerId, UUID controllerId, String cardName) implements InteractionContext {}
 

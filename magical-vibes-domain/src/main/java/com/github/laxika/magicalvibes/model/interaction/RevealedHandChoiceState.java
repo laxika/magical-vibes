@@ -16,16 +16,24 @@ public class RevealedHandChoiceState {
     private int remainingCount;
     private final List<Card> chosenCards = new ArrayList<>();
     private boolean discardMode;
+    private boolean exileMode;
     private int discardRemainingCount;
 
     public RevealedHandChoiceState(UUID choosingPlayerId, Set<Integer> validIndices,
                                    UUID targetPlayerId, int remainingCount,
                                    boolean discardMode, List<Card> initialChosenCards) {
+        this(choosingPlayerId, validIndices, targetPlayerId, remainingCount, discardMode, false, initialChosenCards);
+    }
+
+    public RevealedHandChoiceState(UUID choosingPlayerId, Set<Integer> validIndices,
+                                   UUID targetPlayerId, int remainingCount,
+                                   boolean discardMode, boolean exileMode, List<Card> initialChosenCards) {
         this.choosingPlayerId = choosingPlayerId;
         this.validIndices = validIndices;
         this.targetPlayerId = targetPlayerId;
         this.remainingCount = remainingCount;
         this.discardMode = discardMode;
+        this.exileMode = exileMode;
         if (initialChosenCards != null) {
             this.chosenCards.addAll(initialChosenCards);
         }
@@ -74,6 +82,10 @@ public class RevealedHandChoiceState {
         return discardMode;
     }
 
+    public boolean exileMode() {
+        return exileMode;
+    }
+
     public int discardRemainingCount() {
         return discardRemainingCount;
     }
@@ -93,6 +105,7 @@ public class RevealedHandChoiceState {
         this.targetPlayerId = null;
         this.remainingCount = 0;
         this.discardMode = false;
+        this.exileMode = false;
         this.chosenCards.clear();
     }
 
@@ -103,6 +116,7 @@ public class RevealedHandChoiceState {
                 targetPlayerId,
                 remainingCount,
                 discardMode,
+                exileMode,
                 chosenCards
         );
         copy.discardRemainingCount = this.discardRemainingCount;

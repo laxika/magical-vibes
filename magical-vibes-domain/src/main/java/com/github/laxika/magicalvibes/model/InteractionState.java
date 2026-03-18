@@ -586,16 +586,21 @@ public class InteractionState {
 
     public void beginRevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
                                         int remainingCount, boolean discardMode, List<Card> chosenCards) {
+        beginRevealedHandChoice(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, false, chosenCards);
+    }
+
+    public void beginRevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
+                                        int remainingCount, boolean discardMode, boolean exileMode, List<Card> chosenCards) {
         this.awaitingInput = AwaitingInput.REVEALED_HAND_CHOICE;
         this.revealedHandChoice = new RevealedHandChoiceState(
                 choosingPlayerId, new HashSet<>(validIndices), targetPlayerId,
-                remainingCount, discardMode, chosenCards
+                remainingCount, discardMode, exileMode, chosenCards
         );
         // Also update cardChoice for backwards compatibility (shared fields)
         this.cardChoice = new CardChoiceState(choosingPlayerId, new HashSet<>(validIndices), null);
         this.context = new InteractionContext.RevealedHandChoice(
                 choosingPlayerId, targetPlayerId, new HashSet<>(validIndices),
-                remainingCount, discardMode,
+                remainingCount, discardMode, exileMode,
                 new ArrayList<>(revealedHandChoice.chosenCardsSnapshot())
         );
     }
@@ -608,6 +613,7 @@ public class InteractionState {
                 choosingPlayerId, targetPlayerId, validIndices,
                 revealedHandChoice.remainingCount(),
                 revealedHandChoice.discardMode(),
+                revealedHandChoice.exileMode(),
                 chosenCardsSnapshot
         );
     }
@@ -634,7 +640,8 @@ public class InteractionState {
         return new InteractionContext.RevealedHandChoice(
                 revealedHandChoice.choosingPlayerId(), revealedHandChoice.targetPlayerId(),
                 revealedHandChoice.validIndices(), revealedHandChoice.remainingCount(),
-                revealedHandChoice.discardMode(), revealedHandChoice.chosenCardsSnapshot());
+                revealedHandChoice.discardMode(), revealedHandChoice.exileMode(),
+                revealedHandChoice.chosenCardsSnapshot());
     }
 
     // ========================================================================

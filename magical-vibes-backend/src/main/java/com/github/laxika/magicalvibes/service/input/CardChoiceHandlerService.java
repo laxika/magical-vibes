@@ -284,6 +284,7 @@ public class CardChoiceHandlerService {
 
         int remainingChoices = gameData.interaction.decrementRevealedHandChoiceRemainingCount();
         boolean discardMode = gameData.interaction.revealedHandChoice().discardMode();
+        boolean exileMode = gameData.interaction.revealedHandChoice().exileMode();
 
         if (remainingChoices > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again
@@ -292,9 +293,14 @@ public class CardChoiceHandlerService {
                 newValidIndices.add(i);
             }
 
-            String prompt = discardMode
-                    ? "Choose another card to discard."
-                    : "Choose another card to put on top of " + targetName + "'s library.";
+            String prompt;
+            if (discardMode) {
+                prompt = "Choose another card to discard.";
+            } else if (exileMode) {
+                prompt = "Choose another card to exile.";
+            } else {
+                prompt = "Choose another card to put on top of " + targetName + "'s library.";
+            }
             playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices, prompt);
         } else {
             // All cards chosen
@@ -339,6 +345,16 @@ public class CardChoiceHandlerService {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, replaced, null, false);
                     }
                 }
+            } else if (exileMode) {
+                // Exile chosen cards
+                for (Card exiled : chosenCards) {
+                    exileService.exileCard(gameData, targetPlayerId, exiled);
+                }
+
+                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+                String exileLog = player.getUsername() + " exiles " + cardNames + " from " + targetName + "'s hand.";
+                gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
             } else {
                 // Put chosen cards on top of library
                 List<Card> deck = gameData.playerDecks.get(targetPlayerId);

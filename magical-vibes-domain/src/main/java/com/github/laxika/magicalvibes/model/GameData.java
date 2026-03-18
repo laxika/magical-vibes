@@ -744,7 +744,7 @@ public class GameData {
                             htbc.cards() != null ? new ArrayList<>(htbc.cards()) : null);
             case InteractionContext.RevealedHandChoice rhc ->
                     targetInteraction.beginRevealedHandChoice(rhc.choosingPlayerId(), rhc.targetPlayerId(),
-                            rhc.validIndices(), rhc.remainingCount(), rhc.discardMode(), rhc.chosenCards());
+                            rhc.validIndices(), rhc.remainingCount(), rhc.discardMode(), rhc.exileMode(), rhc.chosenCards());
             case InteractionContext.MultiZoneExileChoice mzec ->
                     targetInteraction.beginMultiZoneExileChoice(mzec.playerId(),
                             mzec.validCardIds() != null ? new HashSet<>(mzec.validCardIds()) : null,

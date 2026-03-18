@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
@@ -465,7 +466,12 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(ChooseCardFromTargetHandToDiscardEffect.class)
     private void resolveChooseCardFromTargetHandToDiscardHandler(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToDiscardEffect effect) {
         gameData.discardCausedByOpponent = true;
-        resolveChooseCardFromTargetHandToDiscard(gameData, entry, effect);
+        resolveHandRevealAndChoose(gameData, entry, effect.count(), effect.excludedTypes(), effect.includedTypes(), true, false);
+    }
+
+    @HandlesEffect(ChooseCardFromTargetHandToExileEffect.class)
+    private void resolveChooseCardFromTargetHandToExileHandler(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToExileEffect effect) {
+        resolveHandRevealAndChoose(gameData, entry, effect.count(), effect.excludedTypes(), effect.includedTypes(), false, true);
     }
 
     @HandlesEffect(ChooseCardNameAndExileFromZonesEffect.class)
@@ -886,12 +892,15 @@ public class PlayerInteractionResolutionService {
                 gameData.id, casterName, cardsToChoose, targetName);
     }
 
-    private void resolveChooseCardFromTargetHandToDiscard(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToDiscardEffect effect) {
+    private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
+                                             int count, List<CardType> excludedTypes, List<CardType> includedTypes,
+                                             boolean discardMode, boolean exileMode) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);
+        String actionVerb = exileMode ? "exile" : "discard";
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
@@ -909,14 +918,14 @@ public class PlayerInteractionResolutionService {
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
             Card handCard = hand.get(i);
-            if (!effect.includedTypes().isEmpty()) {
+            if (!includedTypes.isEmpty()) {
                 // Included mode: card must match at least one included type (primary or additional)
-                boolean matches = effect.includedTypes().contains(handCard.getType())
-                        || handCard.getAdditionalTypes().stream().anyMatch(effect.includedTypes()::contains);
+                boolean matches = includedTypes.contains(handCard.getType())
+                        || handCard.getAdditionalTypes().stream().anyMatch(includedTypes::contains);
                 if (matches) {
                     validIndices.add(i);
                 }
-            } else if (!effect.excludedTypes().contains(handCard.getType())) {
+            } else if (!excludedTypes.contains(handCard.getType())) {
                 validIndices.add(i);
             }
         }
@@ -928,26 +937,26 @@ public class PlayerInteractionResolutionService {
             return;
         }
 
-        int cardsToChoose = Math.min(effect.count(), validIndices.size());
+        int cardsToChoose = Math.min(count, validIndices.size());
 
         gameData.interaction.beginRevealedHandChoice(casterId, targetPlayerId, Set.copyOf(validIndices),
-                cardsToChoose, true, List.of());
+                cardsToChoose, discardMode, exileMode, List.of());
 
         String choicePrompt;
-        if (!effect.includedTypes().isEmpty()) {
-            String typeNames = effect.includedTypes().stream()
+        if (!includedTypes.isEmpty()) {
+            String typeNames = includedTypes.stream()
                     .map(CardType::getDisplayName)
                     .reduce((a, b) -> a + " or " + b)
                     .orElse("card");
-            choicePrompt = "Choose a " + typeNames.toLowerCase() + " card to discard.";
+            choicePrompt = "Choose a " + typeNames.toLowerCase() + " card to " + actionVerb + ".";
         } else {
-            choicePrompt = "Choose a nonland card to discard.";
+            choicePrompt = "Choose a nonland card to " + actionVerb + ".";
         }
         playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
                 choicePrompt);
 
-        log.info("Game {} - {} choosing {} card(s) from {}'s hand to discard",
-                gameData.id, casterName, cardsToChoose, targetName);
+        log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
+                gameData.id, casterName, cardsToChoose, targetName, actionVerb);
     }
 
     @HandlesEffect(ChangeColorTextEffect.class)
