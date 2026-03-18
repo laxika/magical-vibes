@@ -434,6 +434,7 @@ Pass `null` as filter to allow any card.
 | `ScryEffect` | `(int count)` | scry N — look at top N cards, put any number on bottom in any order, rest on top in any order |
 | `RevealTopCardDealManaValueDamageEffect` | `(boolean damageTargetPlayer, boolean damageTargetCreatures, boolean returnToHandIfLand)` | reveal top card of target's library, deal mana value damage to player/creatures, optionally return to hand if land |
 | `RevealTopCardPutIntoHandAndLoseLifeEffect` | `()` | reveal top card of controller's library, put into hand, lose life equal to mana value (Dark Confidant/Dark Tutelage style) |
+| `RevealTopCardsTypeToHandRestToGraveyardEffect` | `(int count, Set<CardType> cardTypes)` | reveal top N cards of controller's library; all cards matching the specified types go to hand, the rest go to graveyard. No player choice — deterministic sorting. Used by Mulch (count=4, LAND) |
 | `RevealTopCardOfLibraryEffect` | `()` | reveal top card of target player's library (one-shot activated ability, e.g. Aven Windreader) |
 | `PlayWithTopCardRevealedEffect` | `()` | static marker: "Play with the top card of your library revealed." While on battlefield, controller's library top card is visible to all players in UI. Used by Vampire Nocturnus |
 | `RevealTopCardCreatureToBattlefieldOrMayBottomEffect` | `()` | reveal top card of controller's library; if creature, put onto battlefield; otherwise, may put on bottom of library. Used by Lurking Predators (ON_OPPONENT_CASTS_SPELL trigger) |

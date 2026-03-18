@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardsTypeToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseColorMessage;
@@ -864,6 +865,62 @@ public class LibraryRevealResolutionService {
                             + " on the bottom of your library?"
             ));
         }
+    }
+
+    /**
+     * Reveals the top N cards of the controller's library. All cards matching the specified
+     * types go to the controller's hand; the rest go to the graveyard.
+     * No player choice is involved — the sorting is deterministic.
+     * Used by Mulch (lands to hand, rest to graveyard).
+     */
+    @HandlesEffect(RevealTopCardsTypeToHandRestToGraveyardEffect.class)
+    void resolveRevealTopCardsTypeToHandRestToGraveyard(
+            GameData gameData,
+            StackEntry entry,
+            RevealTopCardsTypeToHandRestToGraveyardEffect effect
+    ) {
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        String cardName = entry.getCard().getName();
+
+        List<Card> toHand = new ArrayList<>();
+        List<Card> toGraveyard = new ArrayList<>();
+        for (Card card : topCards) {
+            if (matchesCardTypes(card, effect.cardTypes())) {
+                toHand.add(card);
+            } else {
+                toGraveyard.add(card);
+            }
+        }
+
+        // Broadcast the reveal with all card names
+        String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+
+        for (Card card : toHand) {
+            gameData.addCardToHand(controllerId, card);
+        }
+        for (Card card : toGraveyard) {
+            gameData.playerGraveyards.get(controllerId).add(card);
+        }
+
+        if (!toHand.isEmpty()) {
+            String landNames = toHand.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " puts " + landNames + " into their hand.");
+        }
+        if (!toGraveyard.isEmpty()) {
+            String restNames = toGraveyard.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " puts " + restNames + " into their graveyard.");
+        }
+
+        log.info("Game {} - {} resolving {} — {} to hand, {} to graveyard",
+                gameData.id, playerName, cardName, toHand.size(), toGraveyard.size());
     }
 
     // =========================================================================
