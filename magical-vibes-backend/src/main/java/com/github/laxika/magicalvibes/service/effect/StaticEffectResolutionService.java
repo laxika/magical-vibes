@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
@@ -178,6 +179,29 @@ public class StaticEffectResolutionService {
         int count = countCardsInAllGraveyards(context.gameData(), boost.filter());
         accumulator.addPower(count);
         accumulator.addToughness(count);
+    }
+
+    @HandlesStaticEffect(BoostCreaturePerCardsInControllerGraveyardEffect.class)
+    private void resolveBoostCreaturePerCardsInControllerGraveyard(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostCreaturePerCardsInControllerGraveyardEffect) effect;
+        if (!matchesCreatureScope(context, boost.scope(), null)) {
+            return;
+        }
+
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        List<Card> graveyard = context.gameData().playerGraveyards.get(controllerId);
+        int count = 0;
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                if (gameQueryService.matchesCardPredicate(card, boost.filter(), null)) {
+                    count++;
+                }
+            }
+        }
+        accumulator.addPower(count * boost.powerPerCard());
+        accumulator.addToughness(count * boost.toughnessPerCard());
     }
 
     @HandlesStaticEffect(BoostCreaturePerMatchingLandNameEffect.class)
