@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerCo
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnDamageDealerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -662,6 +663,7 @@ public class CombatDamageService {
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId);
+            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId);
         }
     }
 
@@ -719,6 +721,41 @@ public class CombatDamageService {
                 }
             }
         });
+    }
+
+    /**
+     * Checks for permanents the attacker controls that trigger when an ally creature deals
+     * combat damage to a player. E.g. Rakish Heir: "Whenever a Vampire you control deals
+     * combat damage to a player, put a +1/+1 counter on it."
+     */
+    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId) {
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
+        if (attackerBattlefield == null) return;
+
+        for (Permanent perm : attackerBattlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER);
+            for (CardEffect effect : effects) {
+                if (effect instanceof PutCountersOnDamageDealerEffect dealerEffect) {
+                    if (dealerEffect.predicate() != null
+                            && !gameQueryService.matchesPermanentPredicate(gameData, creature, dealerEffect.predicate())) {
+                        continue;
+                    }
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            attackerId,
+                            perm.getCard().getName() + "'s triggered ability",
+                            List.of(new PutCountersOnSourceEffect(dealerEffect.powerModifier(), dealerEffect.toughnessModifier(), dealerEffect.amount())),
+                            null,
+                            creature.getId()
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName()
+                            + "'s triggered ability goes on the stack.");
+                }
+            }
+        }
     }
 
     private void processCombatDamageToCreatureTriggers(GameData gameData,
