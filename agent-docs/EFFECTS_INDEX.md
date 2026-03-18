@@ -473,6 +473,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `ExileTargetCreatureAndAllWithSameNameEffect` | `()` | exile target creature and all other creatures on the battlefield with the same name. Fizzles if target leaves. Used by Sever the Bloodline |
 | `ExileTargetPermanentEffect` | `()` | exile target permanent (also handles multi-target via targetPermanentIds) |
 | `ExilePermanentDamagedPlayerControlsEffect` | `(PermanentPredicate predicate)` | exile target permanent controlled by the damaged player (combat damage trigger); use inside MayEffect with ON_COMBAT_DAMAGE_TO_PLAYER |
 | `ExileCardsFromGraveyardEffect` | `(int maxTargets, int lifeGain)` | exile up to N cards from graveyard, gain lifeGain per card |

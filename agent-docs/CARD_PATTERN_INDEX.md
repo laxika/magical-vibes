@@ -108,6 +108,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 
 | Static self-boost per controlled subtype | `e/EarthServant.java` | STATIC BoostSelfPerControlledSubtypeEffect(MOUNTAIN, 0, 1) — +0/+1 for each Mountain you control |
 | Flashback spell | `a/AncientGrudge.java` | `addCastingOption(new FlashbackCast("{G}"))` + normal effects/targeting. Cast from graveyard for flashback cost, exiled after resolving or fizzling. Flashback is a spell cast (counterable, triggers "whenever you cast"), not an activated ability. |
+| Exile target + all same name | `s/SeverTheBloodline.java` | ExileTargetCreatureAndAllWithSameNameEffect + FlashbackCast("{5}{B}{B}") — exile target creature and all other creatures with the same name |
 | Grant flashback to graveyard | `p/PastInFlames.java` | `GrantFlashbackToGraveyardCardsEffect(Set.of(CardType.INSTANT, CardType.SORCERY))` + own `FlashbackCast("{4}{R}")`. Grants flashback (cost = mana cost) to matching cards in controller's graveyard until end of turn. Tracked in `GameData.cardsGrantedFlashbackUntilEndOfTurn`. |
 
 ## Vanilla creatures (empty body, all from Scryfall)

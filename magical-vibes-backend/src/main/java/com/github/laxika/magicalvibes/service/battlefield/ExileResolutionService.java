@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEf
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAllWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -88,6 +89,43 @@ public class ExileResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Exiles the target creature and all other creatures on the battlefield with the same name.
+     * Fizzles if the target creature has already left the battlefield.
+     */
+    @HandlesEffect(ExileTargetCreatureAndAllWithSameNameEffect.class)
+    void resolveExileTargetCreatureAndAllWithSameName(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        if (target == null) {
+            return;
+        }
+
+        String targetName = target.getCard().getName();
+
+        // Collect all creatures with the same name across all battlefields (including the target)
+        List<Permanent> toExile = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm)
+                        && perm.getCard().getName().equals(targetName)) {
+                    toExile.add(perm);
+                }
+            }
+        }
+
+        for (Permanent perm : toExile) {
+            permanentRemovalService.removePermanentToExile(gameData, perm);
+            String logEntry = perm.getCard().getName() + " is exiled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is exiled by {}",
+                    gameData.id, perm.getCard().getName(), entry.getCard().getName());
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
