@@ -170,7 +170,8 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect` | `()` | destroy target creature; its controller loses life equal to the number of creatures put into all graveyards from the battlefield this turn (counts ALL players' creature deaths). Used with `SacrificeCreatureCost` for Flesh Allergy |
 | `DestroyOneOfTargetsAtRandomEffect` | `()` | destroy one permanent at random from `targetPermanentIds` on the stack entry. Filters out targets that left the battlefield before resolution. Used by Capricious Efreet's upkeep trigger (multi-target random destruction) |
 | `DestroyEquipmentAttachedToTargetCreatureEffect` | `()` | destroy all Equipment attached to the target creature. Uses same target as co-located damage effect. Effect order doesn't matter; lethal damage destruction is deferred until all effects on the stack entry resolve. Resolved by `DestructionResolutionService` |
-| `SacrificeCreatureEffect` | `()` | controller sacrifices a creature |
+| `SacrificeCreatureEffect` | `()` | target player sacrifices a creature (has `canTargetPlayer()`) |
+| `ControllerSacrificesCreatureEffect` | `()` | controller sacrifices a creature (non-targeting, uses `entry.getControllerId()`). Use for abilities where the controller sacrifices without targeting a player (e.g. Stitcher's Apprentice) |
 | `SacrificeAttackingCreaturesEffect` | `(int baseCount, int metalcraftCount)` | target player sacrifices attacking creatures; metalcraft upgrades count |
 | `EachOpponentSacrificesCreatureEffect` | `()` | each opponent sacrifices a creature |
 | `EachOpponentSacrificesPermanentsEffect` | `(int count, PermanentPredicate filter)` | each opponent sacrifices N permanents matching filter. Controller is excluded. Same APNAP simultaneous-sacrifice logic as EachPlayerSacrificesPermanentsEffect. Used by Yawning Fissure |

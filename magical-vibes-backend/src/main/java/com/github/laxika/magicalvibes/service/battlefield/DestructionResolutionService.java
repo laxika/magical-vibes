@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanent
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
@@ -773,6 +774,16 @@ public class DestructionResolutionService {
         }
 
         performSacrificeCreatureForPlayer(gameData, targetPlayerId);
+    }
+
+    /**
+     * Resolves a {@link ControllerSacrificesCreatureEffect}, forcing the controller to sacrifice
+     * a creature. Unlike {@link SacrificeCreatureEffect}, this does not target a player.
+     */
+    @HandlesEffect(ControllerSacrificesCreatureEffect.class)
+    void resolveControllerSacrificesCreature(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        performSacrificeCreatureForPlayer(gameData, controllerId);
     }
 
     /**
