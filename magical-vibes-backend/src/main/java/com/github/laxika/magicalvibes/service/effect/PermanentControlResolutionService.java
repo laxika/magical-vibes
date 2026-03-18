@@ -347,9 +347,11 @@ public class PermanentControlResolutionService {
     }
 
     public void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token, String sourceSetCode) {
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        int totalAmount = token.amount() * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        for (int i = 0; i < token.amount(); i++) {
+        for (int i = 0; i < totalAmount; i++) {
             Card tokenCard = new Card();
             tokenCard.setName(token.tokenName());
             tokenCard.setType(CardType.CREATURE);
@@ -413,7 +415,7 @@ public class PermanentControlResolutionService {
             }
         }
 
-        log.info("Game {} - {} {} token(s) created for player {}", gameData.id, token.amount(), token.tokenName(), controllerId);
+        log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);
     }
 
     @HandlesEffect(CreateTokenPerEquipmentOnSourceEffect.class)
@@ -483,89 +485,100 @@ public class PermanentControlResolutionService {
     @HandlesEffect(CreateLifeTotalAvatarTokenEffect.class)
     private void resolveCreateLifeTotalAvatarToken(GameData gameData, StackEntry entry, CreateLifeTotalAvatarTokenEffect effect) {
         UUID controllerId = entry.getControllerId();
-
-        Card tokenCard = new Card();
-        tokenCard.setName(effect.tokenName());
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setManaCost("");
-        tokenCard.setToken(true);
-        tokenCard.setColor(effect.color());
-        tokenCard.setPower(0);
-        tokenCard.setToughness(0);
-        tokenCard.setSubtypes(effect.subtypes());
-
-        // CDA: "This creature's power and toughness are each equal to your life total."
-        tokenCard.addEffect(EffectSlot.STATIC, new PowerToughnessEqualToControllerLifeTotalEffect());
-
-        ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
-                entry.getCard().getSetCode(), effect.tokenName(), 0, 0, effect.color()
-        );
-        if (imageData != null) {
-            tokenCard.setSetCode(imageData.setCode());
-            tokenCard.setCollectorNumber(imageData.collectorNumber());
-        }
-
-        Permanent tokenPermanent = new Permanent(tokenCard);
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
-        int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
-        String logEntry = entry.getCard().getName() + " creates a " + lifeTotal + "/" + lifeTotal
-                + " white " + effect.tokenName() + " creature token.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} creates a {}/{} {} token", gameData.id, entry.getCard().getName(),
-                lifeTotal, lifeTotal, effect.tokenName());
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            Card tokenCard = new Card();
+            tokenCard.setName(effect.tokenName());
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setToken(true);
+            tokenCard.setColor(effect.color());
+            tokenCard.setPower(0);
+            tokenCard.setToughness(0);
+            tokenCard.setSubtypes(effect.subtypes());
+
+            // CDA: "This creature's power and toughness are each equal to your life total."
+            tokenCard.addEffect(EffectSlot.STATIC, new PowerToughnessEqualToControllerLifeTotalEffect());
+
+            ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
+                    entry.getCard().getSetCode(), effect.tokenName(), 0, 0, effect.color()
+            );
+            if (imageData != null) {
+                tokenCard.setSetCode(imageData.setCode());
+                tokenCard.setCollectorNumber(imageData.collectorNumber());
+            }
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+
+            int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
+            String logEntry = entry.getCard().getName() + " creates a " + lifeTotal + "/" + lifeTotal
+                    + " white " + effect.tokenName() + " creature token.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} creates a {}/{} {} token", gameData.id, entry.getCard().getName(),
+                    lifeTotal, lifeTotal, effect.tokenName());
+        }
     }
 
     @HandlesEffect(LivingWeaponEffect.class)
     private void resolveLivingWeapon(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
-
-        // Create a 0/0 black Phyrexian Germ creature token
-        Card tokenCard = new Card();
-        tokenCard.setName("Phyrexian Germ");
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setManaCost("");
-        tokenCard.setToken(true);
-        tokenCard.setColor(CardColor.BLACK);
-        tokenCard.setPower(0);
-        tokenCard.setToughness(0);
-        tokenCard.setSubtypes(List.of(CardSubtype.PHYREXIAN, CardSubtype.GERM));
-
-        // Look up token image from Scryfall token set
-        // Scryfall names this token "Germ" (subtypes are Phyrexian Germ)
-        ScryfallOracleLoader.TokenImageData germImageData = ScryfallOracleLoader.getTokenImage(
-                entry.getCard().getSetCode(), "Germ", 0, 0, CardColor.BLACK
-        );
-        if (germImageData != null) {
-            tokenCard.setSetCode(germImageData.setCode());
-            tokenCard.setCollectorNumber(germImageData.collectorNumber());
-        }
-
-        Permanent tokenPermanent = new Permanent(tokenCard);
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
-        String logEntry = "A 0/0 black Phyrexian Germ creature token enters the battlefield.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        Permanent lastTokenPermanent = null;
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            // Create a 0/0 black Phyrexian Germ creature token
+            Card tokenCard = new Card();
+            tokenCard.setName("Phyrexian Germ");
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setToken(true);
+            tokenCard.setColor(CardColor.BLACK);
+            tokenCard.setPower(0);
+            tokenCard.setToughness(0);
+            tokenCard.setSubtypes(List.of(CardSubtype.PHYREXIAN, CardSubtype.GERM));
 
-        // Attach the equipment to the token
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment != null) {
-            equipment.setAttachedTo(tokenPermanent.getId());
-            String attachLog = entry.getCard().getName() + " is now attached to Phyrexian Germ.";
-            gameBroadcastService.logAndBroadcast(gameData, attachLog);
-            log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
+            // Look up token image from Scryfall token set
+            // Scryfall names this token "Germ" (subtypes are Phyrexian Germ)
+            ScryfallOracleLoader.TokenImageData germImageData = ScryfallOracleLoader.getTokenImage(
+                    entry.getCard().getSetCode(), "Germ", 0, 0, CardColor.BLACK
+            );
+            if (germImageData != null) {
+                tokenCard.setSetCode(germImageData.setCode());
+                tokenCard.setCollectorNumber(germImageData.collectorNumber());
+            }
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+
+            String logEntry = "A 0/0 black Phyrexian Germ creature token enters the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            if (!gameData.interaction.isAwaitingInput()) {
+                legendRuleService.checkLegendRule(gameData, controllerId);
+            }
+
+            lastTokenPermanent = tokenPermanent;
         }
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-        if (!gameData.interaction.isAwaitingInput()) {
-            legendRuleService.checkLegendRule(gameData, controllerId);
+        // Attach the equipment to the last token created (per CR 614.6b)
+        if (lastTokenPermanent != null) {
+            Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (equipment != null) {
+                equipment.setAttachedTo(lastTokenPermanent.getId());
+                String attachLog = entry.getCard().getName() + " is now attached to Phyrexian Germ.";
+                gameBroadcastService.logAndBroadcast(gameData, attachLog);
+                log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
+            }
         }
 
-        log.info("Game {} - Living weapon: Phyrexian Germ token created for player {}", gameData.id, controllerId);
+        log.info("Game {} - Living weapon: {} Phyrexian Germ token(s) created for player {}", gameData.id, tokenMultiplier, controllerId);
     }
 
     @HandlesEffect(PutAuraFromHandOntoSelfEffect.class)
@@ -915,57 +928,60 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        // Create a token that's a copy of the imprinted card (copying all copiable values)
-        Card tokenCard = new Card();
-        tokenCard.setName(imprintedCard.getName());
-        tokenCard.setType(imprintedCard.getType());
-        tokenCard.setAdditionalTypes(imprintedCard.getAdditionalTypes());
-        tokenCard.setManaCost(imprintedCard.getManaCost() != null ? imprintedCard.getManaCost() : "");
-        tokenCard.setToken(true);
-        tokenCard.setColor(imprintedCard.getColor());
-        tokenCard.setSupertypes(imprintedCard.getSupertypes());
-        tokenCard.setPower(imprintedCard.getPower());
-        tokenCard.setToughness(imprintedCard.getToughness());
-        tokenCard.setSubtypes(imprintedCard.getSubtypes());
-        tokenCard.setCardText(imprintedCard.getCardText());
-        tokenCard.setSetCode(imprintedCard.getSetCode());
-        tokenCard.setCollectorNumber(imprintedCard.getCollectorNumber());
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            // Create a token that's a copy of the imprinted card (copying all copiable values)
+            Card tokenCard = new Card();
+            tokenCard.setName(imprintedCard.getName());
+            tokenCard.setType(imprintedCard.getType());
+            tokenCard.setAdditionalTypes(imprintedCard.getAdditionalTypes());
+            tokenCard.setManaCost(imprintedCard.getManaCost() != null ? imprintedCard.getManaCost() : "");
+            tokenCard.setToken(true);
+            tokenCard.setColor(imprintedCard.getColor());
+            tokenCard.setSupertypes(imprintedCard.getSupertypes());
+            tokenCard.setPower(imprintedCard.getPower());
+            tokenCard.setToughness(imprintedCard.getToughness());
+            tokenCard.setSubtypes(imprintedCard.getSubtypes());
+            tokenCard.setCardText(imprintedCard.getCardText());
+            tokenCard.setSetCode(imprintedCard.getSetCode());
+            tokenCard.setCollectorNumber(imprintedCard.getCollectorNumber());
 
-        // Copy keywords (conditionally add haste)
-        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-        if (imprintedCard.getKeywords() != null) {
-            keywords.addAll(imprintedCard.getKeywords());
-        }
-        if (effect.grantHaste()) {
-            keywords.add(Keyword.HASTE);
-        }
-        tokenCard.setKeywords(keywords);
-
-        // Copy effects and activated abilities (copiable characteristics per CR 707.2)
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (EffectRegistration reg : imprintedCard.getEffectRegistrations(slot)) {
-                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+            // Copy keywords (conditionally add haste)
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            if (imprintedCard.getKeywords() != null) {
+                keywords.addAll(imprintedCard.getKeywords());
             }
+            if (effect.grantHaste()) {
+                keywords.add(Keyword.HASTE);
+            }
+            tokenCard.setKeywords(keywords);
+
+            // Copy effects and activated abilities (copiable characteristics per CR 707.2)
+            for (EffectSlot slot : EffectSlot.values()) {
+                for (EffectRegistration reg : imprintedCard.getEffectRegistrations(slot)) {
+                    tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+                }
+            }
+            for (ActivatedAbility ability : imprintedCard.getActivatedAbilities()) {
+                tokenCard.addActivatedAbility(ability);
+            }
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+
+            // Conditionally schedule for exile at beginning of next end step
+            if (effect.exileAtEndStep()) {
+                gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+            }
+
+            String logMsg = effect.grantHaste()
+                    ? "A token copy of " + imprintedCard.getName() + " is created with haste."
+                    : "A token copy of " + imprintedCard.getName() + " is created.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
         }
-        for (ActivatedAbility ability : imprintedCard.getActivatedAbilities()) {
-            tokenCard.addActivatedAbility(ability);
-        }
-
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
-
-        // Conditionally schedule for exile at beginning of next end step
-        if (effect.exileAtEndStep()) {
-            gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
-        }
-
-        String logMsg = effect.grantHaste()
-                ? "A token copy of " + imprintedCard.getName() + " is created with haste."
-                : "A token copy of " + imprintedCard.getName() + " is created.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
-
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
     }
 
     @HandlesEffect(CreateTokenCopyOfExiledCostCardEffect.class)
@@ -983,45 +999,48 @@ public class PermanentControlResolutionService {
 
         Card sourceCard = sourcePermanent.getCard();
 
-        // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
-        Card tokenCard = new Card();
-        tokenCard.setName(sourceCard.getName());
-        tokenCard.setType(sourceCard.getType());
-        tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
-        tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
-        tokenCard.setToken(true);
-        tokenCard.setColor(sourceCard.getColor());
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
-        tokenCard.setPower(sourceCard.getPower());
-        tokenCard.setToughness(sourceCard.getToughness());
-        tokenCard.setSubtypes(sourceCard.getSubtypes());
-        tokenCard.setCardText(sourceCard.getCardText());
-        tokenCard.setSetCode(sourceCard.getSetCode());
-        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
+            Card tokenCard = new Card();
+            tokenCard.setName(sourceCard.getName());
+            tokenCard.setType(sourceCard.getType());
+            tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+            tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
+            tokenCard.setToken(true);
+            tokenCard.setColor(sourceCard.getColor());
+            tokenCard.setSupertypes(sourceCard.getSupertypes());
+            tokenCard.setPower(sourceCard.getPower());
+            tokenCard.setToughness(sourceCard.getToughness());
+            tokenCard.setSubtypes(sourceCard.getSubtypes());
+            tokenCard.setCardText(sourceCard.getCardText());
+            tokenCard.setSetCode(sourceCard.getSetCode());
+            tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
-        // Copy keywords
-        if (sourceCard.getKeywords() != null) {
-            tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
-        }
-
-        // Copy effects and activated abilities (copiable characteristics per CR 707.2)
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
-                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+            // Copy keywords
+            if (sourceCard.getKeywords() != null) {
+                tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
             }
+
+            // Copy effects and activated abilities (copiable characteristics per CR 707.2)
+            for (EffectSlot slot : EffectSlot.values()) {
+                for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                    tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+                }
+            }
+            for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
+                tokenCard.addActivatedAbility(ability);
+            }
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+
+            String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
         }
-        for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
-            tokenCard.addActivatedAbility(ability);
-        }
-
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
-
-        String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
-
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
     }
 
     @HandlesEffect(CreateTokenCopyOfTargetPermanentEffect.class)
@@ -1034,45 +1053,48 @@ public class PermanentControlResolutionService {
 
         Card sourceCard = targetPermanent.getCard();
 
-        // Create a token that's a copy of the target permanent (copying all copiable values per CR 707.2)
-        Card tokenCard = new Card();
-        tokenCard.setName(sourceCard.getName());
-        tokenCard.setType(sourceCard.getType());
-        tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
-        tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
-        tokenCard.setToken(true);
-        tokenCard.setColor(sourceCard.getColor());
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
-        tokenCard.setPower(sourceCard.getPower());
-        tokenCard.setToughness(sourceCard.getToughness());
-        tokenCard.setSubtypes(sourceCard.getSubtypes());
-        tokenCard.setCardText(sourceCard.getCardText());
-        tokenCard.setSetCode(sourceCard.getSetCode());
-        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            // Create a token that's a copy of the target permanent (copying all copiable values per CR 707.2)
+            Card tokenCard = new Card();
+            tokenCard.setName(sourceCard.getName());
+            tokenCard.setType(sourceCard.getType());
+            tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+            tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
+            tokenCard.setToken(true);
+            tokenCard.setColor(sourceCard.getColor());
+            tokenCard.setSupertypes(sourceCard.getSupertypes());
+            tokenCard.setPower(sourceCard.getPower());
+            tokenCard.setToughness(sourceCard.getToughness());
+            tokenCard.setSubtypes(sourceCard.getSubtypes());
+            tokenCard.setCardText(sourceCard.getCardText());
+            tokenCard.setSetCode(sourceCard.getSetCode());
+            tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
-        // Copy keywords
-        if (sourceCard.getKeywords() != null) {
-            tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
-        }
-
-        // Copy effects and activated abilities (copiable characteristics per CR 707.2)
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
-                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+            // Copy keywords
+            if (sourceCard.getKeywords() != null) {
+                tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
             }
+
+            // Copy effects and activated abilities (copiable characteristics per CR 707.2)
+            for (EffectSlot slot : EffectSlot.values()) {
+                for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                    tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+                }
+            }
+            for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
+                tokenCard.addActivatedAbility(ability);
+            }
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+
+            String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - Token copy of {} created via Mirrorworks-like ability", gameData.id, sourceCard.getName());
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
         }
-        for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
-            tokenCard.addActivatedAbility(ability);
-        }
-
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
-
-        String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - Token copy of {} created via Mirrorworks-like ability", gameData.id, sourceCard.getName());
-
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
     }
 
 }

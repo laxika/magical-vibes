@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
@@ -1548,6 +1549,26 @@ public class GameQueryService {
      */
     public int applyDamageMultiplier(GameData gameData, int damage) {
         return damage * getDamageMultiplier(gameData);
+    }
+
+    /**
+     * Returns the token creation multiplier for a specific player based on
+     * {@link MultiplyTokenCreationEffect} permanents they control.
+     * Unlike {@link #getDamageMultiplier} which is global, this is controller-specific:
+     * only permanents controlled by the given player contribute to the multiplier.
+     * Multiple instances stack multiplicatively (e.g. two Parallel Lives = 4x tokens).
+     */
+    public int getTokenMultiplier(GameData gameData, UUID controllerId) {
+        int[] multiplier = {1};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!playerId.equals(controllerId)) return;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof MultiplyTokenCreationEffect mtce) {
+                    multiplier[0] *= mtce.multiplier();
+                }
+            }
+        });
+        return multiplier[0];
     }
 
     /**

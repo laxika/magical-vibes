@@ -867,7 +867,9 @@ public class GraveyardReturnResolutionService {
             }
         }
 
-        for (int i = 0; i < tokensToCreate; i++) {
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        int totalTokens = tokensToCreate * tokenMultiplier;
+        for (int i = 0; i < totalTokens; i++) {
             Card tokenCard = new Card();
             tokenCard.setName("Zombie");
             tokenCard.setType(CardType.CREATURE);

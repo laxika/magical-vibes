@@ -316,34 +316,37 @@ public class DestructionResolutionService {
             destroyedCount++;
         }
 
-        // Create token with P/T = destroyed count
+        // Create token with P/T = destroyed count (doubled by token creation replacement effects)
         UUID controllerId = entry.getControllerId();
-        Card tokenCard = new Card();
-        tokenCard.setName(effect.tokenName());
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setManaCost("");
-        tokenCard.setToken(true);
-        tokenCard.setColor(null);
-        tokenCard.setPower(destroyedCount);
-        tokenCard.setToughness(destroyedCount);
-        tokenCard.setSubtypes(effect.tokenSubtypes());
-        if (effect.tokenAdditionalTypes() != null && !effect.tokenAdditionalTypes().isEmpty()) {
-            tokenCard.setAdditionalTypes(effect.tokenAdditionalTypes());
-        }
-
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            Card tokenCard = new Card();
+            tokenCard.setName(effect.tokenName());
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setToken(true);
+            tokenCard.setColor(null);
+            tokenCard.setPower(destroyedCount);
+            tokenCard.setToughness(destroyedCount);
+            tokenCard.setSubtypes(effect.tokenSubtypes());
+            if (effect.tokenAdditionalTypes() != null && !effect.tokenAdditionalTypes().isEmpty()) {
+                tokenCard.setAdditionalTypes(effect.tokenAdditionalTypes());
+            }
 
-        String logEntry = "A " + destroyedCount + "/" + destroyedCount + " " + effect.tokenName()
-                + " artifact creature token enters the battlefield.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} creates a {}/{} {} artifact creature token",
-                gameData.id, sourceName, destroyedCount, destroyedCount, effect.tokenName());
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            String logEntry = "A " + destroyedCount + "/" + destroyedCount + " " + effect.tokenName()
+                    + " artifact creature token enters the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} creates a {}/{} {} artifact creature token",
+                    gameData.id, sourceName, destroyedCount, destroyedCount, effect.tokenName());
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+        }
     }
 
     /**
@@ -1265,37 +1268,40 @@ public class DestructionResolutionService {
 
     private void createTokenForPlayer(GameData gameData, UUID controllerId,
                                       CreateCreatureTokenEffect token, String sourceName) {
-        Card tokenCard = new Card();
-        tokenCard.setName(token.tokenName());
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setManaCost("");
-        tokenCard.setToken(true);
-        tokenCard.setColor(token.color());
-        tokenCard.setPower(token.power());
-        tokenCard.setToughness(token.toughness());
-        tokenCard.setSubtypes(token.subtypes());
-        if (token.keywords() != null && !token.keywords().isEmpty()) {
-            tokenCard.setKeywords(token.keywords());
-        }
-        if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
-            tokenCard.setAdditionalTypes(token.additionalTypes());
-        }
-
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            Card tokenCard = new Card();
+            tokenCard.setName(token.tokenName());
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setToken(true);
+            tokenCard.setColor(token.color());
+            tokenCard.setPower(token.power());
+            tokenCard.setToughness(token.toughness());
+            tokenCard.setSubtypes(token.subtypes());
+            if (token.keywords() != null && !token.keywords().isEmpty()) {
+                tokenCard.setKeywords(token.keywords());
+            }
+            if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
+                tokenCard.setAdditionalTypes(token.additionalTypes());
+            }
 
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
-        String logEntry = playerName + " creates a " + token.power() + "/" + token.toughness()
-                + " " + colorName + token.tokenName() + " creature token.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
-                token.power(), token.toughness(), token.tokenName(), playerName);
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
+            String logEntry = playerName + " creates a " + token.power() + "/" + token.toughness()
+                    + " " + colorName + token.tokenName() + " creature token.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
+                    token.power(), token.toughness(), token.tokenName(), playerName);
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+        }
     }
 
     @HandlesEffect(SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect.class)
