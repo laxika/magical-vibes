@@ -426,6 +426,10 @@ public class ValidTargetService {
             return true;
         }
 
+        if (allowedTargets.contains(TargetType.EXILE)) {
+            return true;
+        }
+
         return false;
     }
 

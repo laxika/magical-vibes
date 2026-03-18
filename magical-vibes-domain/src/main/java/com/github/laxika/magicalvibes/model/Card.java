@@ -262,12 +262,13 @@ public class Card {
         if (e.canTargetPermanent()) out.add(TargetType.PERMANENT);
         if (e.canTargetSpell()) out.add(TargetType.SPELL_ON_STACK);
         if (e.canTargetGraveyard()) out.add(TargetType.GRAVEYARD);
+        if (e.canTargetExile()) out.add(TargetType.EXILE);
     }
 
     public boolean isNeedsTarget() {
         Set<TargetType> t = getAllowedTargets();
         return t.contains(TargetType.PLAYER) || t.contains(TargetType.PERMANENT)
-                || t.contains(TargetType.GRAVEYARD);
+                || t.contains(TargetType.GRAVEYARD) || t.contains(TargetType.EXILE);
     }
 
     /**
@@ -291,7 +292,7 @@ public class Card {
             collectTargetTypes(e, result);
         }
         return result.contains(TargetType.PLAYER) || result.contains(TargetType.PERMANENT)
-                || result.contains(TargetType.GRAVEYARD);
+                || result.contains(TargetType.GRAVEYARD) || result.contains(TargetType.EXILE);
     }
 
     public boolean isNeedsSpellTarget() {

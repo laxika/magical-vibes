@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.exile.ExileReturnResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.library.LibraryRevealResolutionService;
@@ -113,6 +114,7 @@ import com.github.laxika.magicalvibes.service.validate.BounceTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.CreatureModTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.DamageTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.DestructionTargetValidators;
+import com.github.laxika.magicalvibes.service.validate.ExileTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.LibraryTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.LifeTargetValidators;
@@ -234,6 +236,7 @@ public class GameTestHarness {
                 new CreatureModTargetValidators(targetValidationService),
                 new DestructionTargetValidators(targetValidationService, gameQueryService),
                 new GraveyardTargetValidators(targetValidationService, gameQueryService),
+                new ExileTargetValidators(gameQueryService),
                 new BounceTargetValidators(targetValidationService),
                 new LibraryTargetValidators(targetValidationService),
                 new PermanentControlTargetValidators(targetValidationService, gameQueryService),
@@ -264,6 +267,7 @@ public class GameTestHarness {
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService),
+                new ExileReturnResolutionService(gameQueryService, gameBroadcastService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService),
                 lifeResolutionService,
                 new AnimationResolutionService(gameQueryService, gameBroadcastService),
@@ -410,6 +414,10 @@ public class GameTestHarness {
 
     public void setGraveyard(Player player, List<Card> cards) {
         gameData.playerGraveyards.put(player.getId(), new ArrayList<>(cards));
+    }
+
+    public void setExile(Player player, List<Card> cards) {
+        gameData.playerExiledCards.put(player.getId(), new ArrayList<>(cards));
     }
 
     public void setLife(Player player, int life) {

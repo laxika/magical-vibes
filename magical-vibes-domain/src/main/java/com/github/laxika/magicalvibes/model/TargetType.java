@@ -4,5 +4,6 @@ public enum TargetType {
     PLAYER,
     PERMANENT,
     SPELL_ON_STACK,
-    GRAVEYARD
+    GRAVEYARD,
+    EXILE
 }

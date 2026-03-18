@@ -251,7 +251,9 @@ public class TargetLegalityService {
 
         boolean targetFizzled = false;
         if (entry.getTargetPermanentId() != null) {
-            if (entry.getTargetZone() == Zone.GRAVEYARD) {
+            if (entry.getTargetZone() == Zone.EXILE) {
+                targetFizzled = gameQueryService.findCardInExileById(gameData, entry.getTargetPermanentId()) == null;
+            } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId()) == null;
             } else if (entry.getTargetZone() == Zone.STACK) {
                 targetFizzled = gameData.stack.stream().noneMatch(se -> se.getCard().getId().equals(entry.getTargetPermanentId()));

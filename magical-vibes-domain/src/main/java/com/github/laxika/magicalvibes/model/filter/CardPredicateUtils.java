@@ -25,6 +25,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsPermanentPredicate) {
             return "permanent card";
         }
+        if (predicate instanceof CardHasFlashbackPredicate) {
+            return "card with flashback";
+        }
         if (predicate instanceof CardSupertypePredicate p) {
             return p.supertype().getDisplayName().toLowerCase();
         }

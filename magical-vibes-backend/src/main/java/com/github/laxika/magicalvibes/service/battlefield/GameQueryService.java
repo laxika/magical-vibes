@@ -59,6 +59,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
+import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -252,6 +254,36 @@ public class GameQueryService {
         return findInGraveyards(gameData, cardId, (playerId, c) -> playerId);
     }
 
+    /**
+     * Finds a card in any player's exile zone by its unique ID.
+     *
+     * @return the card, or {@code null} if not found
+     */
+    public Card findCardInExileById(GameData gameData, UUID cardId) {
+        return findInExile(gameData, cardId, (playerId, c) -> c);
+    }
+
+    /**
+     * Finds the owner (player ID) of a card in exile by the card's unique ID.
+     *
+     * @return the owning player's ID, or {@code null} if the card is not in any exile zone
+     */
+    public UUID findExileOwnerById(GameData gameData, UUID cardId) {
+        return findInExile(gameData, cardId, (playerId, c) -> playerId);
+    }
+
+    private <T> T findInExile(GameData gameData, UUID id, BiFunction<UUID, Card, T> mapper) {
+        if (id == null) return null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> exile = gameData.playerExiledCards.get(playerId);
+            if (exile == null) continue;
+            for (Card c : exile) {
+                if (c.getId().equals(id)) return mapper.apply(playerId, c);
+            }
+        }
+        return null;
+    }
+
     // --- Card predicate matching ---
 
     /**
@@ -287,6 +319,9 @@ public class GameQueryService {
         }
         if (predicate instanceof CardIsAuraPredicate) {
             return card.isAura();
+        }
+        if (predicate instanceof CardHasFlashbackPredicate) {
+            return card.getCastingOption(FlashbackCast.class).isPresent();
         }
         if (predicate instanceof CardIsPermanentPredicate) {
             return card.getType().isPermanentType();

@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -343,9 +344,26 @@ public class SpellCastingService {
                 && card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetGraveyard());
         boolean canTargetAnyGraveyard = card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetAnyGraveyard());
 
+        // Detect exile targeting effects (e.g. ReturnTargetCardFromExileToHandEffect)
+        ReturnTargetCardFromExileToHandEffect exileReturnEffect = (ReturnTargetCardFromExileToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e instanceof ReturnTargetCardFromExileToHandEffect)
+                .findFirst().orElse(null);
+        boolean needsExileTargeting = exileReturnEffect != null;
+
         // Validate target if specified (can be a permanent or a player)
         if (targetPermanentId != null && !unwrappedNeedsSpellTarget) {
-            if (needsSingleGraveyardTargeting) {
+            if (needsExileTargeting) {
+                if (exileReturnEffect.ownedOnly()) {
+                    boolean inControllersExile = gameData.playerExiledCards
+                            .getOrDefault(playerId, List.of())
+                            .stream()
+                            .anyMatch(c -> c.getId().equals(targetPermanentId));
+                    if (!inControllersExile) {
+                        throw new IllegalStateException("Target must be an exiled card you own");
+                    }
+                }
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.EXILE);
+            } else if (needsSingleGraveyardTargeting) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
                     boolean inControllersGraveyard = gameData.playerGraveyards
@@ -371,6 +389,11 @@ public class SpellCastingService {
             } else {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, unwrappedNeedsTarget);
             }
+        } else if (unwrappedNeedsTarget && needsExileTargeting) {
+            String exileFilterLabel = CardPredicateUtils.describeFilter(exileReturnEffect.filter());
+            throw new IllegalStateException(exileReturnEffect.ownedOnly()
+                    ? "Must target an exiled " + exileFilterLabel + " you own"
+                    : "Must target an exiled " + exileFilterLabel);
         } else if (unwrappedNeedsTarget && needsSingleGraveyardTargeting) {
             String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
             throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
@@ -636,6 +659,12 @@ public class SpellCastingService {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetPermanentIds
+                ));
+            } else if (needsExileTargeting) {
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, resolvedXValue, targetPermanentId, null,
+                        Map.of(), Zone.EXILE, List.of(), List.of()
                 ));
             } else if (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) {
                 gameData.stack.add(new StackEntry(
