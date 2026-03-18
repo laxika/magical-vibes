@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEf
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -90,6 +92,7 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(perm.isTapped()).isFalse();
+            verify(gameBroadcastService).logAndBroadcast(gd, "Player1 untaps their permanents.");
         }
 
         @Test
@@ -247,6 +250,37 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(tappedPerm.isTapped()).isFalse();
+            verify(gameBroadcastService).logAndBroadcast(gd,
+                    "Player2 untaps their permanents due to Seedborn Muse.");
+        }
+
+        @Test
+        @DisplayName("Filtered untap effect only untaps matching permanents")
+        void filteredEffectOnlyUntapsMatchingPermanents() {
+            // Player 2 controls a permanent with a filtered untap effect
+            PermanentPredicate filter = new PermanentPredicate() {};
+            Card effectCard = createCardWithName("Filtered Untapper");
+            effectCard.addEffect(EffectSlot.STATIC,
+                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
+            addPermanent(player2Id, effectCard);
+
+            // Player 2 has two tapped creatures — only one matches the filter
+            Permanent matchingPerm = addPermanent(player2Id, createCardWithName("Matching Creature"));
+            matchingPerm.tap();
+            Permanent nonMatchingPerm = addPermanent(player2Id, createCardWithName("Non-Matching Creature"));
+            nonMatchingPerm.tap();
+
+            // Default: permanents don't match the filter
+            when(gameQueryService.matchesPermanentPredicate(eq(gd), any(), eq(filter))).thenReturn(false);
+            // Only the matching permanent passes the filter
+            when(gameQueryService.matchesPermanentPredicate(gd, matchingPerm, filter)).thenReturn(true);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(matchingPerm.isTapped()).isFalse();
+            assertThat(nonMatchingPerm.isTapped()).isTrue();
+            verify(gameBroadcastService).logAndBroadcast(gd,
+                    "Player2 untaps some permanents during opponent's untap step.");
         }
 
         @Test
