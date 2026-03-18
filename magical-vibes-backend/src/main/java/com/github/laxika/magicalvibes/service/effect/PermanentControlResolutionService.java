@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControll
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledCreatureSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensPerCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerOwnCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCostCardEffect;
@@ -145,6 +146,27 @@ public class PermanentControlResolutionService {
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
         applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+    }
+
+    @HandlesEffect(CreateTokensPerCreatureCardInGraveyardEffect.class)
+    private void resolveCreateTokensPerCreatureCardInGraveyard(GameData gameData, StackEntry entry,
+                                                                CreateTokensPerCreatureCardInGraveyardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        int creatureCount = 0;
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (card.hasType(CardType.CREATURE)) {
+                    creatureCount++;
+                }
+            }
+        }
+        if (creatureCount <= 0) return;
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                creatureCount, effect.tokenName(), effect.power(), effect.toughness(),
+                effect.color(), effect.subtypes(), effect.tappedAndAttacking()
+        );
+        applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensEqualToChargeCountersOnSourceEffect.class)
