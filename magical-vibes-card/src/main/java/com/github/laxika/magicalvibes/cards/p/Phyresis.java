@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Phyresis extends Card {
 
     public Phyresis() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE));
+        ))
+                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE));
     }
 }

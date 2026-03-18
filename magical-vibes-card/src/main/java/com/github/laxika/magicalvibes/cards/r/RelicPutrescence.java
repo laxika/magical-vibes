@@ -11,11 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class RelicPutrescence extends Card {
 
     public RelicPutrescence() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+        )).addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
                 new GiveEnchantedPermanentControllerPoisonCountersEffect(1));
     }
 }

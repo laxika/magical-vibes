@@ -12,11 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class InstillInfection extends Card {
 
     public InstillInfection() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new PutMinusOneMinusOneCounterOnTargetCreatureEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        )).addEffect(EffectSlot.SPELL, new PutMinusOneMinusOneCounterOnTargetCreatureEffect())
+          .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

@@ -12,12 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Curiosity extends Card {
 
     public Curiosity() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-
-        // Whenever enchanted creature deals damage to an opponent, you may draw a card.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        ))
+                // Whenever enchanted creature deals damage to an opponent, you may draw a card.
+                .addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

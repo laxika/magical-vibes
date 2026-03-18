@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class AetherAdept extends Card {
 
     public AetherAdept() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetPermanentToHandEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetPermanentToHandEffect());
     }
 }

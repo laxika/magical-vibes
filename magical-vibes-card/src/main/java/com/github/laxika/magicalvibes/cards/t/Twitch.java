@@ -17,15 +17,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Twitch extends Card {
 
     public Twitch() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, creature, or land"
-        ));
-        addEffect(EffectSlot.SPELL, new TapOrUntapTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        )).addEffect(EffectSlot.SPELL, new TapOrUntapTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

@@ -14,11 +14,11 @@ public class Dispatch extends Card {
 
     public Dispatch() {
         // Tap target creature. Metalcraft — If you control three or more artifacts, exile that creature.
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new TapTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new MetalcraftConditionalEffect(new ExileTargetPermanentEffect()));
+        ))
+                .addEffect(EffectSlot.SPELL, new TapTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new MetalcraftConditionalEffect(new ExileTargetPermanentEffect()));
     }
 }

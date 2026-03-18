@@ -19,13 +19,12 @@ import java.util.Set;
 public class DoomBlade extends Card {
 
     public DoomBlade() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )),
                 "Target must be a nonblack creature"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class PithDriller extends Card {
 
     public PithDriller() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutMinusOneMinusOneCounterOnTargetCreatureEffect(1));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutMinusOneMinusOneCounterOnTargetCreatureEffect(1));
     }
 }

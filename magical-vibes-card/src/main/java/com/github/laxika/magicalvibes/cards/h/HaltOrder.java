@@ -15,11 +15,10 @@ import java.util.Set;
 public class HaltOrder extends Card {
 
     public HaltOrder() {
-        setTargetFilter(new StackEntryPredicateTargetFilter(
+        target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.ARTIFACT_SPELL)),
                 "Target must be an artifact spell."
-        ));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect())
+          .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

@@ -16,13 +16,13 @@ import java.util.List;
 public class PistusStrike extends Card {
 
     public PistusStrike() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )),
                 "Target must be a creature with flying"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndGiveControllerPoisonCountersEffect(1));
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndGiveControllerPoisonCountersEffect(1));
     }
 }

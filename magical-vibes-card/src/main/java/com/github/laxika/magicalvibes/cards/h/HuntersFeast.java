@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerGainsLifeEffe
 public class HuntersFeast extends Card {
 
     public HuntersFeast() {
-        setMinTargets(0);
-        setMaxTargets(99);
-        addEffect(EffectSlot.SPELL, new EachTargetPlayerGainsLifeEffect(6));
+        target(null, 0, 99).addEffect(EffectSlot.SPELL, new EachTargetPlayerGainsLifeEffect(6));
     }
 }

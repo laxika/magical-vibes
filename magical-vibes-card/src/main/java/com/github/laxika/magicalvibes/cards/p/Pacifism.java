@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Pacifism extends Card {
 
     public Pacifism() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
+        ))
+                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
     }
 }

@@ -20,11 +20,11 @@ public class PistonSledge extends Card {
 
     public PistonSledge() {
         // When this Equipment enters, attach it to target creature you control.
-        setTargetFilter(new ControlledPermanentPredicateTargetFilter(
+        target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equipped creature gets +3/+1.
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));

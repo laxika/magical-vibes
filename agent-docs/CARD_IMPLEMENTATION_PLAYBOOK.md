@@ -8,7 +8,7 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 2. Reuse existing effects from `EFFECTS_INDEX.md`.
 3. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and EffectSlot reference.
 4. Add card class + `@CardRegistration`.
-5. Add/adjust target flags and target filter.
+5. Use `target(filter).addEffect(slot, effect)` for targeting spells.
 6. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
 7. Only if needed: add new effect record + annotated resolver method (see below).
 
@@ -18,8 +18,10 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 @CardRegistration(set = "10E", collectorNumber = "000")
 public class ExampleCard extends Card {
     public ExampleCard() {
-        // Optional: setTargetFilter(...)
-        // addEffect(...) and/or addActivatedAbility(...)
+        // For targeting spells: target(filter).addEffect(slot, effect)
+        // For non-targeting effects: addEffect(slot, effect)
+        // For multi-target: multiple target() calls, one per target
+        // For activated abilities: addActivatedAbility(...)
     }
 }
 ```
@@ -36,8 +38,8 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/Condemn.java`
 
 - Spell that targets stack entries:
-  - `addEffect(EffectSlot.SPELL, new CounterSpellEffect())` (or `CopySpellEffect`, etc.)
-  - `setTargetFilter(new StackEntryPredicateTargetFilter(...))` if restricted
+  - `target(new StackEntryPredicateTargetFilter(...)).addEffect(EffectSlot.SPELL, new CounterSpellEffect())` if restricted
+  - `addEffect(EffectSlot.SPELL, new CounterSpellEffect())` if targeting any spell (no filter needed)
   - Spell targeting is computed from effects — no `setNeedsSpellTarget` call needed.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 

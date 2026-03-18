@@ -15,12 +15,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class MetallicMastery extends Card {
 
     public MetallicMastery() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new GainControlOfTargetPermanentUntilEndOfTurnEffect());
-        addEffect(EffectSlot.SPELL, new UntapTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+        ))
+                .addEffect(EffectSlot.SPELL, new GainControlOfTargetPermanentUntilEndOfTurnEffect())
+                .addEffect(EffectSlot.SPELL, new UntapTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

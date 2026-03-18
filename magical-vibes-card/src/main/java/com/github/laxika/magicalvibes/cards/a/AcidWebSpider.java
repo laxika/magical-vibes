@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class AcidWebSpider extends Card {
 
     public AcidWebSpider() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target Equipment?"));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target Equipment?"));
     }
 }

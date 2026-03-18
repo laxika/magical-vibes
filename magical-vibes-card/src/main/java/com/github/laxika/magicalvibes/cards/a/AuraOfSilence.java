@@ -19,13 +19,13 @@ public class AuraOfSilence extends Card {
 
     public AuraOfSilence() {
         addEffect(EffectSlot.STATIC, new IncreaseOpponentCastCostEffect(Set.of(CardType.ARTIFACT, CardType.ENCHANTMENT), 2));
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact or enchantment"
-        ));
-        addEffect(EffectSlot.ON_SACRIFICE, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.ON_SACRIFICE, new DestroyTargetPermanentEffect());
     }
 }

@@ -12,15 +12,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Claustrophobia extends Card {
 
     public Claustrophobia() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-
-        // When this Aura enters, tap enchanted creature.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapTargetPermanentEffect());
-
-        // Enchanted creature doesn't untap during its controller's untap step.
-        addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
+        ))
+                // When this Aura enters, tap enchanted creature.
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapTargetPermanentEffect())
+                // Enchanted creature doesn't untap during its controller's untap step.
+                .addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
     }
 }

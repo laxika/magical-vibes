@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Overgrowth extends Card {
 
     public Overgrowth() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Target must be a land"
-        ));
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddManaOnEnchantedLandTapEffect(ManaColor.GREEN, 2));
+        ))
+                .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddManaOnEnchantedLandTapEffect(ManaColor.GREEN, 2));
     }
 }

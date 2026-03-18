@@ -13,11 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Incite extends Card {
 
     public Incite() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.RED));
-        addEffect(EffectSlot.SPELL, new MustAttackThisTurnEffect(false));
+        )).addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.RED))
+          .addEffect(EffectSlot.SPELL, new MustAttackThisTurnEffect(false));
     }
 }

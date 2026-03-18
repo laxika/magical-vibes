@@ -15,11 +15,10 @@ public class SpineOfIshSah extends Card {
 
     public SpineOfIshSah() {
         // When Spine of Ish Sah enters the battlefield, destroy target permanent.
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentTruePredicate(),
                 "Target can be any permanent"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
 
         // When Spine of Ish Sah is put into a graveyard from the battlefield,
         // return Spine of Ish Sah to its owner's hand.

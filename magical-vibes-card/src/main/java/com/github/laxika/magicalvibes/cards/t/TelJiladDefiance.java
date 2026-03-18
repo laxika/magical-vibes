@@ -13,11 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class TelJiladDefiance extends Card {
 
     public TelJiladDefiance() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new GrantProtectionFromCardTypeUntilEndOfTurnEffect(CardType.ARTIFACT));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        )).addEffect(EffectSlot.SPELL, new GrantProtectionFromCardTypeUntilEndOfTurnEffect(CardType.ARTIFACT))
+                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

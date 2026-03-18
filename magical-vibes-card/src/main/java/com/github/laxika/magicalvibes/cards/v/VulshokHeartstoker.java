@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class VulshokHeartstoker extends Card {
 
     public VulshokHeartstoker() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(2, 0));
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(2, 0));
     }
 }

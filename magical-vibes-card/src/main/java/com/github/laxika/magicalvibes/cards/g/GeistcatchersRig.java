@@ -17,14 +17,13 @@ import java.util.List;
 public class GeistcatchersRig extends Card {
 
     public GeistcatchersRig() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )),
                 "Target must be a creature with flying"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new DealDamageToTargetCreatureEffect(4),
                 "Deal 4 damage to target creature with flying?"
         ));

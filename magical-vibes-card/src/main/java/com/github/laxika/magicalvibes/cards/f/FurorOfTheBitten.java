@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class FurorOfTheBitten extends Card {
 
     public FurorOfTheBitten() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        ))
+                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC, new MustAttackEffect());
     }
 }

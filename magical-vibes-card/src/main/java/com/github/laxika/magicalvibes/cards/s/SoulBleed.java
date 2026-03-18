@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class SoulBleed extends Card {
 
     public SoulBleed() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        // At the beginning of the upkeep of enchanted creature's controller, that player loses 1 life.
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-
-        // At the beginning of the upkeep of enchanted creature's controller, that player loses 1 life.
-        addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new EnchantedCreatureControllerLosesLifeEffect(1));
+        )).addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new EnchantedCreatureControllerLosesLifeEffect(1));
     }
 }

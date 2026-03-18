@@ -14,10 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class UnholyStrength extends Card {
 
     public UnholyStrength() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE));
+        )).addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

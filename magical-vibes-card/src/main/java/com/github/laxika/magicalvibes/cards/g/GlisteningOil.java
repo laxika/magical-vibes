@@ -17,16 +17,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class GlisteningOil extends Card {
 
     public GlisteningOil() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-
+        ))
         // Enchanted creature has infect.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE));
+        .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE))
 
         // At the beginning of your upkeep, put a -1/-1 counter on enchanted creature.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutMinusOneMinusOneCounterOnEnchantedCreatureEffect());
+        .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutMinusOneMinusOneCounterOnEnchantedCreatureEffect());
 
         // When Glistening Oil is put into a graveyard from the battlefield,
         // return Glistening Oil to its owner's hand.

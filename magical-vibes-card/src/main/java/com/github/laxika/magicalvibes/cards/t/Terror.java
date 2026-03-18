@@ -19,14 +19,13 @@ import java.util.Set;
 public class Terror extends Card {
 
     public Terror() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )),
                 "Target must be a nonartifact, nonblack creature"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
     }
 }

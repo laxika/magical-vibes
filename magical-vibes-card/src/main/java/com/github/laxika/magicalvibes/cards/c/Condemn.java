@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Condemn extends Card {
 
     public Condemn() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsAttackingPredicate(),
                 "Target must be an attacking creature"
-        ));
-        addEffect(EffectSlot.SPELL, new GainLifeEqualToTargetToughnessEffect());
-        addEffect(EffectSlot.SPELL, new PutTargetOnBottomOfLibraryEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new GainLifeEqualToTargetToughnessEffect())
+                .addEffect(EffectSlot.SPELL, new PutTargetOnBottomOfLibraryEffect());
     }
 }

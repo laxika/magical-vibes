@@ -14,12 +14,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class IceCage extends Card {
 
     public IceCage() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, new DestroySourcePermanentEffect());
+        )).addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
+          .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect())
+          .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, new DestroySourcePermanentEffect());
     }
 }

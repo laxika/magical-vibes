@@ -19,13 +19,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Deathmark extends Card {
 
     public Deathmark() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE))
                 )),
                 "Target must be a green or white creature"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

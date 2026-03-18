@@ -16,12 +16,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ActOfTreason extends Card {
 
     public ActOfTreason() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new UntapTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new GainControlOfTargetPermanentUntilEndOfTurnEffect());
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+        ))
+                .addEffect(EffectSlot.SPELL, new UntapTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new GainControlOfTargetPermanentUntilEndOfTurnEffect())
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

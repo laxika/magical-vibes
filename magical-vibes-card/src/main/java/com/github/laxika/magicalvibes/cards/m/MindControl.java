@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MindControl extends Card {
 
     public MindControl() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+        ))
+                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
     }
 }

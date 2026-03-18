@@ -203,11 +203,8 @@ public class CopyResolutionService {
         copy.setPower(original.getPower());
         copy.setToughness(original.getToughness());
         copy.setKeywords(original.getKeywords());
-        copy.setTargetFilter(original.getTargetFilter());
         copy.setLoyalty(original.getLoyalty());
         copy.setXColorRestriction(original.getXColorRestriction());
-        copy.setMinTargets(original.getMinTargets());
-        copy.setMaxTargets(original.getMaxTargets());
 
         // Target validation for copied spells relies on card-level spell effects.
         for (EffectSlot slot : EffectSlot.values()) {
@@ -215,6 +212,9 @@ public class CopyResolutionService {
                 copy.addEffect(slot, reg.effect(), reg.triggerMode());
             }
         }
+
+        // Copy targeting configuration (SpellTargets, effect-target mapping, modal overrides)
+        copy.copyTargetingFrom(original);
 
         return copy;
     }

@@ -13,10 +13,10 @@ public class NeurokInvisimancer extends Card {
 
     public NeurokInvisimancer() {
         addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MakeCreatureUnblockableEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MakeCreatureUnblockableEffect());
     }
 }

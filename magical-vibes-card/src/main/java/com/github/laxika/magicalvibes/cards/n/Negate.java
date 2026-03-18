@@ -16,12 +16,12 @@ import java.util.Set;
 public class Negate extends Card {
 
     public Negate() {
-        setTargetFilter(new StackEntryPredicateTargetFilter(
+        target(new StackEntryPredicateTargetFilter(
                 new StackEntryNotPredicate(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
                 ),
                 "Target must be a noncreature spell."
-        ));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

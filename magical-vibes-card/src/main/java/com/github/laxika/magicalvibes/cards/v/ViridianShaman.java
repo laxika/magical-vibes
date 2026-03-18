@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ViridianShaman extends Card {
 
     public ViridianShaman() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
     }
 }

@@ -119,7 +119,7 @@ public class SpellCastingService {
                 effects.set(i, chosen.effect());
                 // Apply per-mode target filter so downstream validation uses the correct filter
                 if (chosen.targetFilter() != null) {
-                    card.setTargetFilter(chosen.targetFilter());
+                    card.setCastTimeTargetFilter(chosen.targetFilter());
                 }
                 return 0;
             }

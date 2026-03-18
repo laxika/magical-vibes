@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class BondsOfQuicksilver extends Card {
 
     public BondsOfQuicksilver() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
+        ))
+                .addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
     }
 }

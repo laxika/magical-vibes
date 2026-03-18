@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class RavenousRats extends Card {
 
     public RavenousRats() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerDiscardsEffect(1));
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerDiscardsEffect(1));
     }
 }

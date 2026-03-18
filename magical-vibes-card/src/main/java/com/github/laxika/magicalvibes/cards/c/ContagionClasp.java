@@ -15,11 +15,11 @@ import java.util.List;
 public class ContagionClasp extends Card {
 
     public ContagionClasp() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutMinusOneMinusOneCounterOnTargetCreatureEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutMinusOneMinusOneCounterOnTargetCreatureEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

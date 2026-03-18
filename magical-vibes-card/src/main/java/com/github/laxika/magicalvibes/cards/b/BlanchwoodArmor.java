@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class BlanchwoodArmor extends Card {
 
     public BlanchwoodArmor() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new BoostCreaturePerControlledSubtypeEffect(CardSubtype.FOREST, 1, 1, GrantScope.ENCHANTED_CREATURE));
+        ))
+                .addEffect(EffectSlot.STATIC, new BoostCreaturePerControlledSubtypeEffect(CardSubtype.FOREST, 1, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

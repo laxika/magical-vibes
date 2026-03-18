@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Shatter extends Card {
 
     public Shatter() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

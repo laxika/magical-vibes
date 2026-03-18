@@ -14,11 +14,10 @@ public class InvaderParasite extends Card {
 
     public InvaderParasite() {
         // Imprint — When Invader Parasite enters the battlefield, exile target land.
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Target must be a land"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndImprintEffect());
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndImprintEffect());
 
         // Whenever a land with the same name as the exiled card enters the battlefield
         // under an opponent's control, Invader Parasite deals 2 damage to that player.

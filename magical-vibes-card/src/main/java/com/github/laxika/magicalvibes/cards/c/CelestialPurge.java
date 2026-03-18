@@ -15,10 +15,10 @@ import java.util.Set;
 public class CelestialPurge extends Card {
 
     public CelestialPurge() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK, CardColor.RED)),
                 "Target must be a black or red permanent"
-        ));
-        addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
     }
 }

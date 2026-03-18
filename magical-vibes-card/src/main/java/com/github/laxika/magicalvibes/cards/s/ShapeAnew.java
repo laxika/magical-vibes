@@ -14,10 +14,9 @@ import java.util.Set;
 public class ShapeAnew extends Card {
 
     public ShapeAnew() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set.of(CardType.ARTIFACT)));
+        )).addEffect(EffectSlot.SPELL, new SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set.of(CardType.ARTIFACT)));
     }
 }

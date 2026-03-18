@@ -12,11 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class GraspOfPhantoms extends Card {
 
     public GraspOfPhantoms() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
+        )).addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
         addCastingOption(new FlashbackCast("{7}{U}"));
     }
 }

@@ -14,11 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class SignInBlood extends Card {
 
     public SignInBlood() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ));
-        addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2));
-        addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(2));
+        )).addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2))
+                .addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(2));
     }
 }

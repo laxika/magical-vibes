@@ -17,14 +17,13 @@ import java.util.List;
 public class SolemnOffering extends Card {
 
     public SolemnOffering() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact or enchantment"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
     }
 }

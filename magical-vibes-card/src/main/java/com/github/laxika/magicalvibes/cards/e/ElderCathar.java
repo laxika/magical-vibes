@@ -15,14 +15,13 @@ public class ElderCathar extends Card {
     public ElderCathar() {
         // When Elder Cathar dies, put a +1/+1 counter on target creature you control.
         // If that creature is a Human, put two +1/+1 counters on it instead.
-        addEffect(EffectSlot.ON_DEATH, new TargetSubtypeReplacementEffect(
+        target(new ControlledPermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature you control"
+        )).addEffect(EffectSlot.ON_DEATH, new TargetSubtypeReplacementEffect(
                 CardSubtype.HUMAN,
                 new PutPlusOnePlusOneCounterOnTargetCreatureEffect(1),
                 new PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)
-        ));
-        setTargetFilter(new ControlledPermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature you control"
         ));
     }
 }

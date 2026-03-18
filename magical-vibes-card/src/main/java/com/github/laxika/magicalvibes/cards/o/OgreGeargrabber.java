@@ -18,14 +18,14 @@ import java.util.List;
 public class OgreGeargrabber extends Card {
 
     public OgreGeargrabber() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be an Equipment an opponent controls"
-        ));
-        addEffect(EffectSlot.ON_ATTACK, new GainControlOfTargetPermanentUntilEndOfTurnEffect());
-        addEffect(EffectSlot.ON_ATTACK, new AttachTargetToSourcePermanentEffect());
+        ))
+                .addEffect(EffectSlot.ON_ATTACK, new GainControlOfTargetPermanentUntilEndOfTurnEffect())
+                .addEffect(EffectSlot.ON_ATTACK, new AttachTargetToSourcePermanentEffect());
     }
 }

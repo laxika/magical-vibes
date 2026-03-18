@@ -14,11 +14,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CorruptedConscience extends Card {
 
     public CorruptedConscience() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE));
+        ))
+                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE));
     }
 }

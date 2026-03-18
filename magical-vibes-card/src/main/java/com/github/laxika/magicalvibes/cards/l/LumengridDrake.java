@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class LumengridDrake extends Card {
 
     public LumengridDrake() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MetalcraftConditionalEffect(
-                        new ReturnTargetPermanentToHandEffect()));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new MetalcraftConditionalEffect(
+                                new ReturnTargetPermanentToHandEffect()));
     }
 }

@@ -343,7 +343,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("throws when player predicate filter rejects target (OPPONENT targeting self)")
         void throwsWhenPlayerPredicateRejectsTarget() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            spell.setTargetFilter(new PlayerPredicateTargetFilter(
+            spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must target an opponent"));
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player1.getId(), null, player1.getId()))
@@ -355,7 +355,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("passes when player predicate filter accepts target (OPPONENT targeting opponent)")
         void passesWhenPlayerPredicateAcceptsTarget() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            spell.setTargetFilter(new PlayerPredicateTargetFilter(
+            spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must target an opponent"));
 
             sut.validateSpellTargeting(gd, spell, player2.getId(), null, player1.getId());
@@ -366,7 +366,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         void validatesTargetFilter() {
             Permanent target = addPermanent(player2.getId(), new GrizzlyBears());
             Card spell = createTargetingSpell("Artifact Blast", CardColor.RED);
-            spell.setTargetFilter(new PermanentPredicateTargetFilter(
+            spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1.getId()))
@@ -713,9 +713,8 @@ class TargetLegalityServiceTest extends BaseCardTest {
             card.setType(CardType.SORCERY);
             card.setManaCost("{R}");
             card.setColor(CardColor.RED);
-            card.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
-            card.setMinTargets(minTargets);
-            card.setMaxTargets(maxTargets);
+            card.target(null, minTargets, maxTargets)
+                    .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
             return card;
         }
 
@@ -776,8 +775,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{R}");
             spell.setColor(CardColor.RED);
-            spell.setMinTargets(1);
-            spell.setMaxTargets(2);
+            spell.target(null, 1, 2);
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(player2.getId()), player1.getId()))
@@ -887,7 +885,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
         @DisplayName("validates target filter when present")
         void validatesTargetFilterWhenPresent() {
             Card spell = createMultiTargetSpell(1, 2);
-            spell.setTargetFilter(new PermanentPredicateTargetFilter(
+            spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsCreaturePredicate(), "Target must be a creature"));
             Card artifact = new Card();
             artifact.setName("Test Artifact");
@@ -1007,7 +1005,7 @@ class TargetLegalityServiceTest extends BaseCardTest {
             Permanent target = addPermanent(player2.getId(), artifact);
 
             Card spell = createTargetingSpell("Destroy", CardColor.RED);
-            spell.setTargetFilter(new PermanentPredicateTargetFilter(
+            spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsCreaturePredicate(), "Target must be a creature"));
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1.getId(), "Destroy",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());

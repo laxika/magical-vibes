@@ -133,12 +133,27 @@ public class EffectResolutionService {
                 }
             }
 
+            // Multi-target support: set entry.targetPermanentId to the correct target
+            // for this effect based on the Card's SpellTarget declarations.
+            int targetIdx = entry.getCard().getEffectTargetIndex(effect);
+            UUID savedTargetId = entry.getTargetPermanentId();
+            if (targetIdx >= 0 && entry.getTargetPermanentIds() != null
+                    && targetIdx < entry.getTargetPermanentIds().size()) {
+                entry.setTargetPermanentId(entry.getTargetPermanentIds().get(targetIdx));
+            }
+
             EffectHandler handler = registry.getHandler(effectToResolve);
             if (handler != null) {
                 handler.resolve(gameData, entry, effectToResolve);
             } else {
                 log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
             }
+
+            // Restore original targetPermanentId after multi-target override
+            if (targetIdx >= 0) {
+                entry.setTargetPermanentId(savedTargetId);
+            }
+
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 // Store state for resumption after async input completes.
                 // X_VALUE_CHOICE and resolution-time MayEffect re-run the same effect on re-entry.

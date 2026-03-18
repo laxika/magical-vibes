@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Pariah extends Card {
 
     public Pariah() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new RedirectPlayerDamageToEnchantedCreatureEffect());
+        ))
+                .addEffect(EffectSlot.STATIC, new RedirectPlayerDamageToEnchantedCreatureEffect());
     }
 }

@@ -12,13 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class FulgentDistraction extends Card {
 
     public FulgentDistraction() {
-        setMinTargets(2);
-        setMaxTargets(2);
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new TapTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new UnattachEquipmentFromTargetPermanentsEffect());
+        ), 2, 2)
+                .addEffect(EffectSlot.SPELL, new TapTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new UnattachEquipmentFromTargetPermanentsEffect());
     }
 }

@@ -15,13 +15,12 @@ import java.util.List;
 public class DivineVerdict extends Card {
 
     public DivineVerdict() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentIsBlockingPredicate()
                 )),
                 "Target must be an attacking or blocking creature"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

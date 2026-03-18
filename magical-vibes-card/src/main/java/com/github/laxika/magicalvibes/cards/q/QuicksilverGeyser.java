@@ -12,12 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class QuicksilverGeyser extends Card {
 
     public QuicksilverGeyser() {
-        setMinTargets(0);
-        setMaxTargets(2);
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        ));
-        addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
+        ), 0, 2).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
     }
 }

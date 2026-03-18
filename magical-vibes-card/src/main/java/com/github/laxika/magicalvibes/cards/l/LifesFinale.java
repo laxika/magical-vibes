@@ -18,10 +18,10 @@ public class LifesFinale extends Card {
 
     public LifesFinale() {
         addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new SearchTargetLibraryForCardsToGraveyardEffect(3, Set.of(CardType.CREATURE)));
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
-        ));
+        ))
+                .addEffect(EffectSlot.SPELL, new SearchTargetLibraryForCardsToGraveyardEffect(3, Set.of(CardType.CREATURE)));
     }
 }

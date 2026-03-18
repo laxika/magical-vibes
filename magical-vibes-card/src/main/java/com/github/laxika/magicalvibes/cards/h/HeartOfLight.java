@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HeartOfLight extends Card {
 
     public HeartOfLight() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new PreventAllDamageToAndByEnchantedCreatureEffect());
+        )).addEffect(EffectSlot.STATIC, new PreventAllDamageToAndByEnchantedCreatureEffect());
     }
 }

@@ -16,10 +16,10 @@ public class Combust extends Card {
 
     public Combust() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5, true));
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE)),
                 "Target must be a white or blue creature."
-        ));
+        ))
+                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5, true));
     }
 }

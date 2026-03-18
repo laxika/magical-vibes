@@ -19,20 +19,19 @@ import java.util.List;
 public class ShivsEmbrace extends Card {
 
     public ShivsEmbrace() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                new ActivatedAbility(
-                        false,
-                        "{R}",
-                        List.of(new BoostSelfEffect(1, 0)),
-                        "{R}: This creature gets +1/+0 until end of turn."
-                ),
-                GrantScope.ENCHANTED_CREATURE
-        ));
+        )).addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                        new ActivatedAbility(
+                                false,
+                                "{R}",
+                                List.of(new BoostSelfEffect(1, 0)),
+                                "{R}: This creature gets +1/+0 until end of turn."
+                        ),
+                        GrantScope.ENCHANTED_CREATURE
+                ));
     }
 }

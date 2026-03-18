@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Enslave extends Card {
 
     public Enslave() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new EnchantedCreatureDealsDamageToItsOwnerEffect(1));
+        ))
+                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new EnchantedCreatureDealsDamageToItsOwnerEffect(1));
     }
 }

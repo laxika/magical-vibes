@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanen
 public class TurnAside extends Card {
 
     public TurnAside() {
-        setTargetFilter(new StackEntryPredicateTargetFilter(
+        target(new StackEntryPredicateTargetFilter(
                 new StackEntryTargetsYourPermanentPredicate(),
                 "Target spell must target a permanent you control."
-        ));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

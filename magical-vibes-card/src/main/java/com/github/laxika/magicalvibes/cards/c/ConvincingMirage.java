@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ConvincingMirage extends Card {
 
     public ConvincingMirage() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Target must be a land"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesChosenTypeEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect())
+                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesChosenTypeEffect());
     }
 }

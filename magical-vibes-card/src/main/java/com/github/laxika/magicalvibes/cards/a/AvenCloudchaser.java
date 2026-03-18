@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AvenCloudchaser extends Card {
 
     public AvenCloudchaser() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(),
                 "Target must be an enchantment"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
     }
 }

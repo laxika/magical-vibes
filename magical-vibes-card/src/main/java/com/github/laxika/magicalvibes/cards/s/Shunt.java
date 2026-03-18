@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 public class Shunt extends Card {
 
     public Shunt() {
-        setTargetFilter(new StackEntryPredicateTargetFilter(
+        target(new StackEntryPredicateTargetFilter(
                 new StackEntryIsSingleTargetPredicate(),
                 "Target spell must have a single target."
-        ));
-        addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
+        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
     }
 }

@@ -16,13 +16,13 @@ import java.util.List;
 public class Crush extends Card {
 
     public Crush() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate())
                 )),
                 "Target must be a noncreature artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

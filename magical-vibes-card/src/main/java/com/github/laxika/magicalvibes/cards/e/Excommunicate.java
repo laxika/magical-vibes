@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Excommunicate extends Card {
 
     public Excommunicate() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
+        )).addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
     }
 }

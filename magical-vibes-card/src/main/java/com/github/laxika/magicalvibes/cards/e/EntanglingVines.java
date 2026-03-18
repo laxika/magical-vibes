@@ -15,13 +15,12 @@ import java.util.List;
 public class EntanglingVines extends Card {
 
     public EntanglingVines() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"
-        ));
-        addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
+        )).addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
     }
 }

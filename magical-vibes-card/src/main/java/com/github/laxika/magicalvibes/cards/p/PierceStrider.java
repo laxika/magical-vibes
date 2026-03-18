@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class PierceStrider extends Card {
 
     public PierceStrider() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerLosesLifeEffect(3));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerLosesLifeEffect(3));
     }
 }

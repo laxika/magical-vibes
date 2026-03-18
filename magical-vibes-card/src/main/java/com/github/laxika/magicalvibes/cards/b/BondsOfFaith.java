@@ -15,14 +15,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BondsOfFaith extends Card {
 
     public BondsOfFaith() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureSubtypeConditionalEffect(
-                CardSubtype.HUMAN,
-                new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
-                new EnchantedCreatureCantAttackOrBlockEffect()
-        ));
+        ))
+                .addEffect(EffectSlot.STATIC, new EnchantedCreatureSubtypeConditionalEffect(
+                        CardSubtype.HUMAN,
+                        new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
+                        new EnchantedCreatureCantAttackOrBlockEffect()
+                ));
     }
 }

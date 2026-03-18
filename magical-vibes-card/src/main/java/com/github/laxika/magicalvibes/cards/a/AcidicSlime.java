@@ -17,14 +17,14 @@ import java.util.List;
 public class AcidicSlime extends Card {
 
     public AcidicSlime() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, enchantment, or land"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
     }
 }

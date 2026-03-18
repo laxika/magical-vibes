@@ -12,13 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class FeelingOfDread extends Card {
 
     public FeelingOfDread() {
-        setMinTargets(0);
-        setMaxTargets(2);
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new TapTargetPermanentEffect());
+        ), 0, 2).addEffect(EffectSlot.SPELL, new TapTargetPermanentEffect());
         addCastingOption(new FlashbackCast("{1}{U}"));
     }
 }

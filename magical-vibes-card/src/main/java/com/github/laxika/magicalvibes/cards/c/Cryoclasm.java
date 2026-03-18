@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Cryoclasm extends Card {
 
     public Cryoclasm() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLAINS, CardSubtype.ISLAND)),
                 "Target must be a Plains or Island"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetLandAndDamageControllerEffect(3));
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetLandAndDamageControllerEffect(3));
     }
 }

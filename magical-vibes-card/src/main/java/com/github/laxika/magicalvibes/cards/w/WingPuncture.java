@@ -17,21 +17,17 @@ import java.util.List;
 public class WingPuncture extends Card {
 
     public WingPuncture() {
-        setMinTargets(2);
-        setMaxTargets(2);
-        setMultiTargetFilters(List.of(
-                new ControlledPermanentPredicateTargetFilter(
+        target(new ControlledPermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "First target must be a creature you control"
+        )).addEffect(EffectSlot.SPELL, new FirstTargetDealsPowerDamageToSecondTargetEffect());
+
+        target(new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        "First target must be a creature you control"
-                ),
-                new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasKeywordPredicate(Keyword.FLYING)
-                        )),
-                        "Second target must be a creature with flying"
-                )
+                        new PermanentHasKeywordPredicate(Keyword.FLYING)
+                )),
+                "Second target must be a creature with flying"
         ));
-        addEffect(EffectSlot.SPELL, new FirstTargetDealsPowerDamageToSecondTargetEffect());
     }
 }

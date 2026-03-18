@@ -15,13 +15,13 @@ import java.util.List;
 public class ApostlesBlessing extends Card {
 
     public ApostlesBlessing() {
-        setTargetFilter(new ControlledPermanentPredicateTargetFilter(
+        target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature you control"
-        ));
-        addEffect(EffectSlot.SPELL, new GrantProtectionChoiceUntilEndOfTurnEffect(true));
+        ))
+                .addEffect(EffectSlot.SPELL, new GrantProtectionChoiceUntilEndOfTurnEffect(true));
     }
 }

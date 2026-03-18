@@ -14,10 +14,10 @@ import java.util.Set;
 public class Polymorph extends Card {
 
     public Polymorph() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetThenRevealUntilTypeToBattlefieldEffect(true, Set.of(CardType.CREATURE)));
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetThenRevealUntilTypeToBattlefieldEffect(true, Set.of(CardType.CREATURE)));
     }
 }

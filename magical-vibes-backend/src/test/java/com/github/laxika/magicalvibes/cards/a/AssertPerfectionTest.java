@@ -101,6 +101,7 @@ class AssertPerfectionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target opponent creature as first target")
     void cannotTargetOpponentCreatureAsFirstTarget() {
+        harness.addToBattlefield(player1, new LlanowarElves()); // needed so the spell is castable
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.setHand(player1, List.of(new AssertPerfection()));

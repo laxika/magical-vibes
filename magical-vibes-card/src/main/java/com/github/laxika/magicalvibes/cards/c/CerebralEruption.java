@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class CerebralEruption extends Card {
 
     public CerebralEruption() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ));
-        addEffect(EffectSlot.SPELL, new RevealTopCardDealManaValueDamageEffect(true, true, true));
+        ))
+                .addEffect(EffectSlot.SPELL, new RevealTopCardDealManaValueDamageEffect(true, true, true));
     }
 }

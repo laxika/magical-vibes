@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ConeOfFlame extends Card {
 
     public ConeOfFlame() {
-        setMinTargets(3);
-        setMaxTargets(3);
-        addEffect(EffectSlot.SPELL, new DealOrderedDamageToAnyTargetsEffect(List.of(1, 2, 3)));
+        target(null, 3, 3)
+                .addEffect(EffectSlot.SPELL, new DealOrderedDamageToAnyTargetsEffect(List.of(1, 2, 3)));
     }
 }

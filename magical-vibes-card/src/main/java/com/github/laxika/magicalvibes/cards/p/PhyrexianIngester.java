@@ -18,17 +18,17 @@ import java.util.List;
 public class PhyrexianIngester extends Card {
 
     public PhyrexianIngester() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                 )),
                 "Target must be a nontoken creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new ExileTargetPermanentAndImprintEffect(),
-                "Exile target nontoken creature?"
-        ));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+                        new ExileTargetPermanentAndImprintEffect(),
+                        "Exile target nontoken creature?"
+                ));
         addEffect(EffectSlot.STATIC, new BoostSelfByImprintedCreaturePTEffect());
     }
 }

@@ -20,15 +20,15 @@ import java.util.List;
 public class ActOfAggression extends Card {
 
     public ActOfAggression() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature an opponent controls"
-        ));
-        addEffect(EffectSlot.SPELL, new GainControlOfTargetPermanentUntilEndOfTurnEffect());
-        addEffect(EffectSlot.SPELL, new UntapTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+        ))
+                .addEffect(EffectSlot.SPELL, new GainControlOfTargetPermanentUntilEndOfTurnEffect())
+                .addEffect(EffectSlot.SPELL, new UntapTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

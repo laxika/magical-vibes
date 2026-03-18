@@ -16,13 +16,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Demolish extends Card {
 
     public Demolish() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

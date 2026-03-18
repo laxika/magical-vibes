@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Skinrender extends Card {
 
     public Skinrender() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutMinusOneMinusOneCounterOnTargetCreatureEffect(3));
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutMinusOneMinusOneCounterOnTargetCreatureEffect(3));
     }
 }

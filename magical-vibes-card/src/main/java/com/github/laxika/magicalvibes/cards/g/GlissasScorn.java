@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class GlissasScorn extends Card {
 
     public GlissasScorn() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndControllerLosesLifeEffect(1));
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndControllerLosesLifeEffect(1));
     }
 }

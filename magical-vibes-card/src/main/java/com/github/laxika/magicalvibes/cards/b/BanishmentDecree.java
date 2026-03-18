@@ -16,14 +16,14 @@ import java.util.List;
 public class BanishmentDecree extends Card {
 
     public BanishmentDecree() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact, creature, or enchantment"
-        ));
-        addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
     }
 }

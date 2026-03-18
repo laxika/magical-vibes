@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class CacklingCounterpart extends Card {
 
     public CacklingCounterpart() {
-        setTargetFilter(new ControlledPermanentPredicateTargetFilter(
+        target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        ));
-        addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect());
         addCastingOption(new FlashbackCast("{5}{U}{U}"));
     }
 }

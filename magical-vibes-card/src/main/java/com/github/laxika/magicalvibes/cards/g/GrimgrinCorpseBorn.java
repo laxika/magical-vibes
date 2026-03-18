@@ -42,14 +42,13 @@ public class GrimgrinCorpseBorn extends Card {
 
         // Whenever Grimgrin attacks, destroy target creature defending player controls,
         // then put a +1/+1 counter on Grimgrin
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature defending player controls"
-        ));
-        addEffect(EffectSlot.ON_ATTACK, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSourceEffect(1, 1, 1));
+        )).addEffect(EffectSlot.ON_ATTACK, new DestroyTargetPermanentEffect())
+          .addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

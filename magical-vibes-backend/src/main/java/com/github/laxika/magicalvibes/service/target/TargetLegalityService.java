@@ -212,9 +212,13 @@ public class TargetLegalityService {
                 throw new IllegalStateException("Invalid target");
             }
 
-            // When the card has a targetFilter, let it handle type validation;
-            // otherwise fall back to requiring a creature target.
-            if (card.getTargetFilter() != null) {
+            // Apply per-position target filter if available; otherwise fall back to
+            // the card-level targetFilter, or require a creature target as default.
+            TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
+            if (positionFilter != null) {
+                gameQueryService.validateTargetFilter(positionFilter, target,
+                        filterContext(gameData, card.getId(), controllerId));
+            } else if (card.getTargetFilter() != null) {
                 gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
                         filterContext(gameData, card.getId(), controllerId));
             } else if (!gameQueryService.isCreature(gameData, target)) {
@@ -224,13 +228,6 @@ public class TargetLegalityService {
             if (card.isNeedsTarget()) {
                 validateSpellProtections(gameData, target, card);
                 validatePermanentTargetable(gameData, target, controllerId);
-            }
-
-            // Apply per-position target filter if available
-            TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
-            if (positionFilter != null) {
-                gameQueryService.validateTargetFilter(positionFilter, target,
-                        filterContext(gameData, card.getId(), controllerId));
             }
         }
     }

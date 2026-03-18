@@ -14,11 +14,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GhostlyPossession extends Card {
 
     public GhostlyPossession() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new PreventAllCombatDamageToAndByEnchantedCreatureEffect());
+        )).addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
+          .addEffect(EffectSlot.STATIC, new PreventAllCombatDamageToAndByEnchantedCreatureEffect());
     }
 }

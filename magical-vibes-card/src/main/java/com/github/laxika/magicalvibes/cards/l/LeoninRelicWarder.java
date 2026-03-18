@@ -16,14 +16,14 @@ import java.util.List;
 public class LeoninRelicWarder extends Card {
 
     public LeoninRelicWarder() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact or enchantment"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(), "Exile target artifact or enchantment?"));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(), "Exile target artifact or enchantment?"));
     }
 }

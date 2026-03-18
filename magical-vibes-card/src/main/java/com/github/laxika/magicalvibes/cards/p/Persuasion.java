@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Persuasion extends Card {
 
     public Persuasion() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+        ))
+                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
     }
 }

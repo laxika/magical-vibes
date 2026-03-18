@@ -13,11 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class GethsVerdict extends Card {
 
     public GethsVerdict() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ));
-        addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(1));
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureEffect());
+        )).addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(1))
+          .addEffect(EffectSlot.SPELL, new SacrificeCreatureEffect());
     }
 }

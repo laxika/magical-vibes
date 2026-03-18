@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ExclusionRitual extends Card {
 
     public ExclusionRitual() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndImprintEffect());
-        addEffect(EffectSlot.STATIC, new CantCastSpellsWithSameNameAsExiledCardEffect());
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndImprintEffect())
+                .addEffect(EffectSlot.STATIC, new CantCastSpellsWithSameNameAsExiledCardEffect());
     }
 }

@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Disperse extends Card {
 
     public Disperse() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        ));
-        addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
+        )).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
     }
 }

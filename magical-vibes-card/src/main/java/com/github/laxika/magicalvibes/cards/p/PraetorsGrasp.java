@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class PraetorsGrasp extends Card {
 
     public PraetorsGrasp() {
-        addEffect(EffectSlot.SPELL, new SearchTargetLibraryForCardToExileWithPlayPermissionEffect());
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
-        ));
+        ))
+                .addEffect(EffectSlot.SPELL, new SearchTargetLibraryForCardToExileWithPlayPermissionEffect());
     }
 }

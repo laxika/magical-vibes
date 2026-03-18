@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class Mindculling extends Card {
 
     public Mindculling() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new TargetPlayerDiscardsEffect(2));
+        ))
+                .addEffect(EffectSlot.SPELL, new TargetPlayerDiscardsEffect(2));
     }
 }

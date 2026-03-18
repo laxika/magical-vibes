@@ -16,11 +16,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ArmoredAscension extends Card {
 
     public ArmoredAscension() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new BoostCreaturePerControlledSubtypeEffect(CardSubtype.PLAINS, 1, 1, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+        ))
+                .addEffect(EffectSlot.STATIC, new BoostCreaturePerControlledSubtypeEffect(CardSubtype.PLAINS, 1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
     }
 }

@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class DivineOffering extends Card {
 
     public DivineOffering() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndGainLifeEqualToManaValueEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndGainLifeEqualToManaValueEffect());
     }
 }

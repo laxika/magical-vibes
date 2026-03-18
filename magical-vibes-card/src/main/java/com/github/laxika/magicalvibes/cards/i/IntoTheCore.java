@@ -11,12 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class IntoTheCore extends Card {
 
     public IntoTheCore() {
-        setMinTargets(2);
-        setMaxTargets(2);
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        ), 2, 2).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
     }
 }

@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MentalMisstep extends Card {
 
     public MentalMisstep() {
-        setTargetFilter(new StackEntryPredicateTargetFilter(
+        target(new StackEntryPredicateTargetFilter(
                 new StackEntryManaValuePredicate(1),
                 "Target spell must have mana value 1."
-        ));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class QuagSickness extends Card {
 
     public QuagSickness() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new BoostCreaturePerControlledSubtypeEffect(CardSubtype.SWAMP, -1, -1, GrantScope.ENCHANTED_CREATURE));
+        )).addEffect(EffectSlot.STATIC, new BoostCreaturePerControlledSubtypeEffect(CardSubtype.SWAMP, -1, -1, GrantScope.ENCHANTED_CREATURE));
     }
 }

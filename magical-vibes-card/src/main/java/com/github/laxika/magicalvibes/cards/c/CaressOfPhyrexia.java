@@ -14,12 +14,12 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class CaressOfPhyrexia extends Card {
 
     public CaressOfPhyrexia() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ));
-        addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(3, false));
-        addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(3));
-        addEffect(EffectSlot.SPELL, new GiveTargetPlayerPoisonCountersEffect(3));
+        ))
+                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(3, false))
+                .addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(3))
+                .addEffect(EffectSlot.SPELL, new GiveTargetPlayerPoisonCountersEffect(3));
     }
 }

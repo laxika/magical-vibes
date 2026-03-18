@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Arrest extends Card {
 
     public Arrest() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
+        ))
+                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
+                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
     }
 }

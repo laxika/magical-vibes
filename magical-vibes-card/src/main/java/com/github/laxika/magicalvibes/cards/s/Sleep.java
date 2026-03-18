@@ -17,11 +17,10 @@ public class Sleep extends Card {
     public Sleep() {
         // Tap all creatures target player controls.
         // Those creatures don't untap during that player's next untap step.
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ));
-        addEffect(EffectSlot.SPELL, new TapPermanentsOfTargetPlayerEffect(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new SkipNextUntapPermanentsOfTargetPlayerEffect(new PermanentIsCreaturePredicate()));
+        )).addEffect(EffectSlot.SPELL, new TapPermanentsOfTargetPlayerEffect(new PermanentIsCreaturePredicate()))
+                .addEffect(EffectSlot.SPELL, new SkipNextUntapPermanentsOfTargetPlayerEffect(new PermanentIsCreaturePredicate()));
     }
 }

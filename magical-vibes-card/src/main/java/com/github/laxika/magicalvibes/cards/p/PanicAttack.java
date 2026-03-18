@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class PanicAttack extends Card {
 
     public PanicAttack() {
-        setMinTargets(0);
-        setMaxTargets(3);
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new TargetCreatureCantBlockThisTurnEffect());
+        ), 0, 3)
+                .addEffect(EffectSlot.SPELL, new TargetCreatureCantBlockThisTurnEffect());
     }
 }

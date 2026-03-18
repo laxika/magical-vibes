@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class MeltTerrain extends Card {
 
     public MeltTerrain() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Target must be a land"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetLandAndDamageControllerEffect(2));
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetLandAndDamageControllerEffect(2));
     }
 }

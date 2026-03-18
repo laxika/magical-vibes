@@ -17,16 +17,16 @@ import java.util.List;
 public class CyclopsGladiator extends Card {
 
     public CyclopsGladiator() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature the defending player controls"
-        ));
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
-                new SourceFightsTargetCreatureEffect(),
-                "Deal damage equal to power to target creature? That creature deals damage equal to its power back."
-        ));
+        ))
+                .addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+                        new SourceFightsTargetCreatureEffect(),
+                        "Deal damage equal to power to target creature? That creature deals damage equal to its power back."
+                ));
     }
 }

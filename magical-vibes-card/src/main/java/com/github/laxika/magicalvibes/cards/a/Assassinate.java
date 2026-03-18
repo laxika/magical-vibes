@@ -17,13 +17,13 @@ import java.util.List;
 public class Assassinate extends Card {
 
     public Assassinate() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

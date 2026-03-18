@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class MindShatter extends Card {
 
     public MindShatter() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ));
-        addEffect(EffectSlot.SPELL, new TargetPlayerRandomDiscardXEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new TargetPlayerRandomDiscardXEffect());
     }
 }

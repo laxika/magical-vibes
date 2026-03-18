@@ -17,14 +17,13 @@ import java.util.Set;
 public class ParasiticImplant extends Card {
 
     public ParasiticImplant() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-
-        // At the beginning of your upkeep, enchanted creature's controller sacrifices it
-        // and you create a 1/1 colorless Phyrexian Myr artifact creature token.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeEnchantedCreatureAndCreateTokenEffect(
+        ))
+                // At the beginning of your upkeep, enchanted creature's controller sacrifices it
+                // and you create a 1/1 colorless Phyrexian Myr artifact creature token.
+                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeEnchantedCreatureAndCreateTokenEffect(
                 new CreateCreatureTokenEffect(
                         "Phyrexian Myr",
                         1, 1,

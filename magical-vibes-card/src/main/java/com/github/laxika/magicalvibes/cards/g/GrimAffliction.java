@@ -12,11 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class GrimAffliction extends Card {
 
     public GrimAffliction() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new PutMinusOneMinusOneCounterOnTargetCreatureEffect());
-        addEffect(EffectSlot.SPELL, new ProliferateEffect());
+        )).addEffect(EffectSlot.SPELL, new PutMinusOneMinusOneCounterOnTargetCreatureEffect())
+          .addEffect(EffectSlot.SPELL, new ProliferateEffect());
     }
 }

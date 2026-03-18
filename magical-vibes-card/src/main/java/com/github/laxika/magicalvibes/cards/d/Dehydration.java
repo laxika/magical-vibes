@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Dehydration extends Card {
 
     public Dehydration() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
+        )).addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect());
     }
 }

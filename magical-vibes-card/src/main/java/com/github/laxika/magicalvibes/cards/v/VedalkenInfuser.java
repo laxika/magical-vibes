@@ -12,11 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class VedalkenInfuser extends Card {
 
     public VedalkenInfuser() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact."
-        ));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                 new PutChargeCounterOnTargetPermanentEffect(),
                 "Put a charge counter on target artifact?"
         ));

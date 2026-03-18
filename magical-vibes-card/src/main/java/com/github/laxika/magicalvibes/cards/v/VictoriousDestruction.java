@@ -15,13 +15,12 @@ import java.util.List;
 public class VictoriousDestruction extends Card {
 
     public VictoriousDestruction() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndControllerLosesLifeEffect(1));
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndControllerLosesLifeEffect(1));
     }
 }

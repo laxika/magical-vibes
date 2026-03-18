@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Unsummon extends Card {
 
     public Unsummon() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
+        )).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
     }
 }

@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ViridianHarvest extends Card {
 
     public ViridianHarvest() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        // When enchanted artifact is put into a graveyard, you gain 6 life.
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-
-        // When enchanted artifact is put into a graveyard, you gain 6 life.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new GainLifeEffect(6));
+        )).addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new GainLifeEffect(6));
     }
 }

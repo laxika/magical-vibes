@@ -13,11 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class SleeperAgent extends Card {
 
     public SleeperAgent() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect());
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DealDamageToControllerEffect(2));
     }
 }

@@ -16,13 +16,13 @@ import java.util.List;
 public class Plummet extends Card {
 
     public Plummet() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )),
                 "Target must be a creature with flying"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

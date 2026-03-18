@@ -10,9 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Fireball extends Card {
 
     public Fireball() {
-        setMinTargets(1);
-        setMaxTargets(99);
         setAdditionalCostPerExtraTarget(1);
-        addEffect(EffectSlot.SPELL, new DealXDamageDividedEvenlyAmongTargetsEffect());
+        target(null, 1, 99).addEffect(EffectSlot.SPELL, new DealXDamageDividedEvenlyAmongTargetsEffect());
     }
 }

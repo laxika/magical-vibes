@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class VaporSnag extends Card {
 
     public VaporSnag() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect(1));
+        )).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect(1));
     }
 }

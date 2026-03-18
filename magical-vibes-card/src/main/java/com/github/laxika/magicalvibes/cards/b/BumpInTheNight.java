@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class BumpInTheNight extends Card {
 
     public BumpInTheNight() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ));
-        addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(3));
+        ))
+                .addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect(3));
         addCastingOption(new FlashbackCast("{5}{R}"));
     }
 }

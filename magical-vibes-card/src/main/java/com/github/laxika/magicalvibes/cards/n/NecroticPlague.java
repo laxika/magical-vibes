@@ -12,17 +12,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class NecroticPlague extends Card {
 
     public NecroticPlague() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
+        ))
+                // Enchanted creature has "At the beginning of your upkeep, sacrifice this creature."
+                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new SacrificeEnchantedCreatureEffect())
 
-        // Enchanted creature has "At the beginning of your upkeep, sacrifice this creature."
-        addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new SacrificeEnchantedCreatureEffect());
-
-        // When enchanted creature dies, its controller chooses target creature one of their
-        // opponents controls. Return Necrotic Plague from its owner's graveyard to the battlefield
-        // attached to that creature.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new ReturnSourceAuraToOpponentCreatureOnDeathEffect());
+                // When enchanted creature dies, its controller chooses target creature one of their
+                // opponents controls. Return Necrotic Plague from its owner's graveyard to the battlefield
+                // attached to that creature.
+                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new ReturnSourceAuraToOpponentCreatureOnDeathEffect());
     }
 }

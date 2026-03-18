@@ -19,15 +19,12 @@ public class IgniteDisorder extends Card {
     public IgniteDisorder() {
         // Ignite Disorder deals 3 damage divided as you choose among
         // one, two, or three target white and/or blue creatures.
-        setMinTargets(1);
-        setMaxTargets(3);
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE))
                 )),
                 "Target must be a white or blue creature."
-        ));
-        addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+        ), 1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
     }
 }

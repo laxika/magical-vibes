@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class AncientGrudge extends Card {
 
     public AncientGrudge() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
         addCastingOption(new FlashbackCast("{G}"));
     }
 }

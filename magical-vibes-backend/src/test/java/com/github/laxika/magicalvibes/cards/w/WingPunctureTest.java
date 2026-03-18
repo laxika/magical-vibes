@@ -78,6 +78,7 @@ class WingPunctureTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target opponent's creature as first target")
     void cannotTargetOpponentCreatureAsFirstTarget() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // needed so the spell is castable
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new AirElemental());
         harness.setHand(player1, List.of(new WingPuncture()));

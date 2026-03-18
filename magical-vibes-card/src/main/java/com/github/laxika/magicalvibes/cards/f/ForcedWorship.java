@@ -15,11 +15,10 @@ import java.util.List;
 public class ForcedWorship extends Card {
 
     public ForcedWorship() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackEffect());
+        )).addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackEffect());
         addActivatedAbility(new ActivatedAbility(false, "{2}{W}", List.of(new ReturnSelfToHandEffect()), "{2}{W}: Return Forced Worship to its owner's hand."));
     }
 }

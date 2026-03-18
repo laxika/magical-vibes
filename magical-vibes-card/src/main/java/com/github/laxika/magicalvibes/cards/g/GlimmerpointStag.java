@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class GlimmerpointStag extends Card {
 
     public GlimmerpointStag() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                 "Target must be another permanent"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndReturnAtEndStepEffect());
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndReturnAtEndStepEffect());
     }
 }

@@ -11,6 +11,8 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,18 +47,22 @@ public class Card {
     @Setter private Integer power;
     @Setter private Integer toughness;
     @Setter private Set<Keyword> keywords = Set.of();
-    @Setter private TargetFilter targetFilter;
     @Setter private Integer loyalty;
     @Setter private ManaColor xColorRestriction;
-    @Setter private int minTargets;
-    @Setter private int maxTargets;
     @Setter private String setCode;
     @Setter private String collectorNumber;
 
     @Setter private boolean token;
-    @Setter private List<TargetFilter> multiTargetFilters = List.of();
     @Setter private boolean requiresCreatureMana;
     @Setter private int additionalCostPerExtraTarget;
+
+    // Target-first targeting system: each target() call adds a SpellTarget
+    @Getter(AccessLevel.NONE)
+    private final List<SpellTarget> spellTargets = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    private final Map<CardEffect, Integer> effectTargetIndexMap = new IdentityHashMap<>();
+    // Runtime override set by modal spells (ChooseOneEffect) at cast time
+    @Setter private TargetFilter castTimeTargetFilter;
     @Setter private Card imprintedCard;
     @Setter private String watermark;
     @Setter private Card backFaceCard;
@@ -86,6 +92,93 @@ public class Card {
             this.watermark = oracle.watermark();
         }
     }
+
+    // ── Target-first builder API ──────────────────────────────────────
+
+    /**
+     * Declares a required target (min=1, max=1) and returns a builder
+     * whose {@code addEffect()} associates effects with this target.
+     */
+    public SpellTarget target(TargetFilter filter) {
+        return target(filter, 1, 1);
+    }
+
+    /**
+     * Declares a target with custom min/max counts and returns a builder
+     * whose {@code addEffect()} associates effects with this target.
+     */
+    public SpellTarget target(TargetFilter filter, int minTargets, int maxTargets) {
+        SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets, spellTargets.size());
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
+     * Called by {@link SpellTarget#addEffect} to map an effect instance to its target index.
+     */
+    public void registerEffectTargetIndex(CardEffect effect, int targetIndex) {
+        effectTargetIndexMap.put(effect, targetIndex);
+    }
+
+    // ── Derived targeting getters (replace old stored fields) ────────
+
+    /**
+     * Returns the target filter for single-target spells, or the first target's
+     * filter for multi-target spells. For modal spells, returns the cast-time override.
+     */
+    public TargetFilter getTargetFilter() {
+        if (castTimeTargetFilter != null) return castTimeTargetFilter;
+        if (spellTargets.isEmpty()) return null;
+        return spellTargets.getFirst().getFilter();
+    }
+
+    /**
+     * Returns per-position target filters for multi-target spells.
+     */
+    public List<TargetFilter> getMultiTargetFilters() {
+        return spellTargets.stream().map(SpellTarget::getFilter).toList();
+    }
+
+    /**
+     * Returns the minimum total number of targets required.
+     */
+    public int getMinTargets() {
+        return spellTargets.stream().mapToInt(SpellTarget::getMinTargets).sum();
+    }
+
+    /**
+     * Returns the maximum total number of targets allowed.
+     */
+    public int getMaxTargets() {
+        return spellTargets.stream().mapToInt(SpellTarget::getMaxTargets).sum();
+    }
+
+    /**
+     * Returns the spell target declarations.
+     */
+    public List<SpellTarget> getSpellTargets() {
+        return spellTargets;
+    }
+
+    /**
+     * Returns the target index for the given effect instance, or -1 if not mapped.
+     */
+    public int getEffectTargetIndex(CardEffect effect) {
+        return effectTargetIndexMap.getOrDefault(effect, -1);
+    }
+
+    /**
+     * Copies targeting configuration from another card (used by spell copy effects).
+     */
+    public void copyTargetingFrom(Card original) {
+        for (SpellTarget st : original.spellTargets) {
+            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(), st.getIndex()));
+        }
+        effectTargetIndexMap.putAll(original.effectTargetIndexMap);
+        castTimeTargetFilter = original.castTimeTargetFilter;
+    }
+
+    // ── Effect management ───────────────────────────────────────────
 
     public List<CardEffect> getEffects(EffectSlot slot) {
         return effectRegistrations.getOrDefault(slot, List.of()).stream()

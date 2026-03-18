@@ -11,12 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class SoulParry extends Card {
 
     public SoulParry() {
-        setMinTargets(1);
-        setMaxTargets(2);
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new PreventAllDamageByTargetCreatureEffect());
+        ), 1, 2).addEffect(EffectSlot.SPELL, new PreventAllDamageByTargetCreatureEffect());
     }
 }

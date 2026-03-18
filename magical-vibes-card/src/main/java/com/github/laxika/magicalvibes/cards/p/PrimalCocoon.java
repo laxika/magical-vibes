@@ -12,16 +12,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class PrimalCocoon extends Card {
 
     public PrimalCocoon() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
+        ))
+                // At the beginning of your upkeep, put a +1/+1 counter on enchanted creature.
+                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutPlusOnePlusOneCounterOnEnchantedCreatureEffect())
 
-        // At the beginning of your upkeep, put a +1/+1 counter on enchanted creature.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutPlusOnePlusOneCounterOnEnchantedCreatureEffect());
-
-        // When enchanted creature attacks or blocks, sacrifice Primal Cocoon.
-        addEffect(EffectSlot.ON_ATTACK, new SacrificeSelfEffect());
-        addEffect(EffectSlot.ON_BLOCK, new SacrificeSelfEffect());
+                // When enchanted creature attacks or blocks, sacrifice Primal Cocoon.
+                .addEffect(EffectSlot.ON_ATTACK, new SacrificeSelfEffect())
+                .addEffect(EffectSlot.ON_BLOCK, new SacrificeSelfEffect());
     }
 }

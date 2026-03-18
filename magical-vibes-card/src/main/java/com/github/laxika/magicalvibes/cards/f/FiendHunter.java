@@ -17,14 +17,13 @@ import java.util.List;
 public class FiendHunter extends Card {
 
     public FiendHunter() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(), "Exile another target creature?"));
     }
 }

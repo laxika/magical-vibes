@@ -16,14 +16,14 @@ import java.util.List;
 public class CreepingMold extends Card {
 
     public CreepingMold() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, enchantment, or land"
-        ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

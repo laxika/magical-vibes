@@ -16,20 +16,19 @@ import java.util.List;
 public class BrutalizerExarch extends Card {
 
     public BrutalizerExarch() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 "Target must be a noncreature permanent"
-        ));
-
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption(
-                        "Search your library for a creature card, reveal it, then shuffle and put that card on top",
-                        new SearchLibraryForCreatureToTopOfLibraryEffect()
-                ),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Put target noncreature permanent on the bottom of its owner's library",
-                        new PutTargetOnBottomOfLibraryEffect()
-                )
-        )));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Search your library for a creature card, reveal it, then shuffle and put that card on top",
+                                new SearchLibraryForCreatureToTopOfLibraryEffect()
+                        ),
+                        new ChooseOneEffect.ChooseOneOption(
+                                "Put target noncreature permanent on the bottom of its owner's library",
+                                new PutTargetOnBottomOfLibraryEffect()
+                        )
+                )));
     }
 }

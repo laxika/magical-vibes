@@ -12,11 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class WarPriestOfThune extends Card {
 
     public WarPriestOfThune() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(),
                 "Target must be an enchantment"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target enchantment?"));
     }
 }

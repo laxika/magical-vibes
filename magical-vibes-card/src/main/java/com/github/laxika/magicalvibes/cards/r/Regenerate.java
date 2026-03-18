@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Regenerate extends Card {
 
     public Regenerate() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new RegenerateEffect(true));
+        )).addEffect(EffectSlot.SPELL, new RegenerateEffect(true));
     }
 }

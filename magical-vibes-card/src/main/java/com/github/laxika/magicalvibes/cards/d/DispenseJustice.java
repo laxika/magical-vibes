@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class DispenseJustice extends Card {
 
     public DispenseJustice() {
-        setTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ));
-        addEffect(EffectSlot.SPELL, new SacrificeAttackingCreaturesEffect(1, 2));
+        )).addEffect(EffectSlot.SPELL, new SacrificeAttackingCreaturesEffect(1, 2));
     }
 }

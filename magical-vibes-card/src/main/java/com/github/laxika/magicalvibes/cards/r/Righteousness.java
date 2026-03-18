@@ -16,13 +16,12 @@ import java.util.List;
 public class Righteousness extends Card {
 
     public Righteousness() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsBlockingPredicate()
                 )),
                 "Target must be a blocking creature"
-        ));
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(7, 7));
+        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(7, 7));
     }
 }

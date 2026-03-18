@@ -16,12 +16,12 @@ import java.util.List;
 public class AwakenerDruid extends Card {
 
     public AwakenerDruid() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                 "Target must be a Forest"
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new AnimateTargetLandWhileSourceOnBattlefieldEffect(
-                        4, 5, CardColor.GREEN, List.of(CardSubtype.TREEFOLK)));
+        ))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new AnimateTargetLandWhileSourceOnBattlefieldEffect(
+                                4, 5, CardColor.GREEN, List.of(CardSubtype.TREEFOLK)));
     }
 }

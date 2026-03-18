@@ -18,17 +18,16 @@ import java.util.List;
 public class TreetopBracers extends Card {
 
     public TreetopBracers() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasKeywordPredicate(Keyword.FLYING)
-                )),
-                "creatures with flying"
-        ));
+        )).addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentHasKeywordPredicate(Keyword.FLYING)
+                        )),
+                        "creatures with flying"
+                ));
     }
 }

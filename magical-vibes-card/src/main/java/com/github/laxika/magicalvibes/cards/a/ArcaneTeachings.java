@@ -17,19 +17,19 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ArcaneTeachings extends Card {
 
     public ArcaneTeachings() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                new ActivatedAbility(
-                        true,
-                        null,
-                        List.of(new DealDamageToAnyTargetEffect(1)),
-                        "{T}: This creature deals 1 damage to any target."
-                ),
-                GrantScope.ENCHANTED_CREATURE
-        ));
+        ))
+                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                        new ActivatedAbility(
+                                true,
+                                null,
+                                List.of(new DealDamageToAnyTargetEffect(1)),
+                                "{T}: This creature deals 1 damage to any target."
+                        ),
+                        GrantScope.ENCHANTED_CREATURE
+                ));
     }
 }

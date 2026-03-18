@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class FleshAllergy extends Card {
 
     public FleshAllergy() {
-        setTargetFilter(new PermanentPredicateTargetFilter(
+        target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ));
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
-        addEffect(EffectSlot.SPELL, new DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect());
+        ))
+                .addEffect(EffectSlot.SPELL, new SacrificeCreatureCost())
+                .addEffect(EffectSlot.SPELL, new DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect());
     }
 }
