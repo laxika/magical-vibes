@@ -48,7 +48,8 @@ class MakeAWishTest extends BaseCardTest {
 
         // Two of the three graveyard cards should be in hand now
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        // 1 remaining card + Make a Wish itself goes to graveyard after resolution
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -64,7 +65,9 @@ class MakeAWishTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        // Only Make a Wish itself in graveyard after resolution
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Make a Wish");
     }
 
     @Test
@@ -82,7 +85,9 @@ class MakeAWishTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        // Only Make a Wish itself in graveyard after resolution
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Make a Wish");
     }
 
     @Test
