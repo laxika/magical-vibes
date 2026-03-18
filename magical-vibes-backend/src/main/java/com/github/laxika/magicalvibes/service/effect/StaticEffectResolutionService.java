@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -356,6 +357,16 @@ public class StaticEffectResolutionService {
     private void resolveStaticBoost(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (StaticBoostEffect) effect;
         if (matchesCreatureScope(context, boost.scope(), boost.filter())) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
+            accumulator.addKeywords(boost.grantedKeywords());
+        }
+    }
+
+    @HandlesStaticEffect(value = StaticBoostEffect.class, selfOnly = true)
+    private void resolveStaticBoostSelf(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (StaticBoostEffect) effect;
+        if (boost.scope() == GrantScope.SELF && matchesStaticFilter(context.target(), boost.filter())) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
             accumulator.addKeywords(boost.grantedKeywords());
@@ -976,6 +987,8 @@ public class StaticEffectResolutionService {
             return p.predicates().stream().allMatch(inner -> matchesStaticFilter(target, inner));
         if (filter instanceof PermanentAnyOfPredicate p)
             return p.predicates().stream().anyMatch(inner -> matchesStaticFilter(target, inner));
+        if (filter instanceof PermanentIsAttackingPredicate)
+            return target.isAttacking();
         if (filter instanceof PermanentTruePredicate) return true;
         throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());
     }
