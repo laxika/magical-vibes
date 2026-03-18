@@ -205,6 +205,7 @@ export interface Permanent {
   animatedCreature: boolean;
   loyaltyCounters: number;
   chargeCounters: number;
+  hatchlingCounters: number;
   phylacteryCounters: number;
   slimeCounters: number;
   studyCounters: number;

@@ -59,6 +59,7 @@ function makePermanent(id: string, card: Card, overrides?: Partial<Permanent>): 
     animatedCreature: false,
     loyaltyCounters: 0,
     chargeCounters: 0,
+    hatchlingCounters: 0,
     phylacteryCounters: 0,
     slimeCounters: 0,
     studyCounters: 0,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
@@ -191,6 +193,7 @@ public class PermanentCounterResolutionService {
 
         String counterName = switch (effect.counterType()) {
             case CHARGE -> { self.setChargeCounters(self.getChargeCounters() + 1); yield "charge"; }
+            case HATCHLING -> { self.setHatchlingCounters(self.getHatchlingCounters() + 1); yield "hatchling"; }
             case SLIME -> { self.setSlimeCounters(self.getSlimeCounters() + 1); yield "slime"; }
             case STUDY -> { self.setStudyCounters(self.getStudyCounters() + 1); yield "study"; }
             case WISH -> { self.setWishCounters(self.getWishCounters() + 1); yield "wish"; }
@@ -207,6 +210,92 @@ public class PermanentCounterResolutionService {
         String logEntry = self.getCard().getName() + " gets a " + counterName + " counter.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
+    }
+
+    @HandlesEffect(PutCounterOnSelfThenTransformIfThresholdEffect.class)
+    private void resolvePutCounterOnSelfThenTransformIfThreshold(GameData gameData, StackEntry entry,
+                                                                  PutCounterOnSelfThenTransformIfThresholdEffect effect) {
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
+        if (self == null) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, self)) {
+            return;
+        }
+
+        // Put the counter
+        String counterName = switch (effect.counterType()) {
+            case CHARGE -> { self.setChargeCounters(self.getChargeCounters() + 1); yield "charge"; }
+            case HATCHLING -> { self.setHatchlingCounters(self.getHatchlingCounters() + 1); yield "hatchling"; }
+            case SLIME -> { self.setSlimeCounters(self.getSlimeCounters() + 1); yield "slime"; }
+            case STUDY -> { self.setStudyCounters(self.getStudyCounters() + 1); yield "study"; }
+            case WISH -> { self.setWishCounters(self.getWishCounters() + 1); yield "wish"; }
+            case PLUS_ONE_PLUS_ONE -> { self.setPlusOnePlusOneCounters(self.getPlusOnePlusOneCounters() + 1); yield "+1/+1"; }
+            case MINUS_ONE_MINUS_ONE -> {
+                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, self)) { yield null; }
+                self.setMinusOneMinusOneCounters(self.getMinusOneMinusOneCounters() + 1);
+                yield "-1/-1";
+            }
+            default -> throw new IllegalStateException("Unsupported counter type: " + effect.counterType());
+        };
+        if (counterName == null) return;
+
+        String logEntry = self.getCard().getName() + " gets a " + counterName + " counter.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
+
+        // Check threshold and transform if met
+        int currentCount = switch (effect.counterType()) {
+            case CHARGE -> self.getChargeCounters();
+            case HATCHLING -> self.getHatchlingCounters();
+            case SLIME -> self.getSlimeCounters();
+            case STUDY -> self.getStudyCounters();
+            case WISH -> self.getWishCounters();
+            case PLUS_ONE_PLUS_ONE -> self.getPlusOnePlusOneCounters();
+            case MINUS_ONE_MINUS_ONE -> self.getMinusOneMinusOneCounters();
+            default -> 0;
+        };
+
+        if (currentCount >= effect.threshold()) {
+            // Remove all counters of that type
+            switch (effect.counterType()) {
+                case CHARGE -> self.setChargeCounters(0);
+                case HATCHLING -> self.setHatchlingCounters(0);
+                case SLIME -> self.setSlimeCounters(0);
+                case STUDY -> self.setStudyCounters(0);
+                case WISH -> self.setWishCounters(0);
+                case PLUS_ONE_PLUS_ONE -> self.setPlusOnePlusOneCounters(0);
+                case MINUS_ONE_MINUS_ONE -> self.setMinusOneMinusOneCounters(0);
+                default -> throw new IllegalStateException("Unsupported counter type: " + effect.counterType());
+            }
+
+            String removeLog = "All " + counterName + " counters removed from " + self.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, removeLog);
+            log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
+
+            // Transform
+            Card originalCard = self.getOriginalCard();
+            if (!self.isTransformed()) {
+                Card backFace = originalCard.getBackFaceCard();
+                if (backFace != null) {
+                    String frontName = self.getCard().getName();
+                    self.setCard(backFace);
+                    self.setTransformed(true);
+                    String transformLog = frontName + " transforms into " + backFace.getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                    log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
+                }
+            } else {
+                String backName = self.getCard().getName();
+                self.setCard(originalCard);
+                self.setTransformed(false);
+                String transformLog = backName + " transforms into " + originalCard.getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+            }
+        }
     }
 
     @HandlesEffect(PutChargeCounterOnTargetPermanentEffect.class)
@@ -348,6 +437,13 @@ public class PermanentCounterResolutionService {
             remaining -= remove;
         }
 
+        if (remaining > 0 && target.getHatchlingCounters() > 0) {
+            int remove = Math.min(remaining, target.getHatchlingCounters());
+            target.setHatchlingCounters(target.getHatchlingCounters() - remove);
+            totalRemoved += remove;
+            remaining -= remove;
+        }
+
         if (remaining > 0 && target.getStudyCounters() > 0) {
             int remove = Math.min(remaining, target.getStudyCounters());
             target.setStudyCounters(target.getStudyCounters() - remove);
@@ -466,7 +562,8 @@ public class PermanentCounterResolutionService {
             if (p.getPlusOnePlusOneCounters() > 0
                     || p.getMinusOneMinusOneCounters() > 0
                     || p.getLoyaltyCounters() > 0
-                    || p.getSlimeCounters() > 0) {
+                    || p.getSlimeCounters() > 0
+                    || p.getHatchlingCounters() > 0) {
                 eligiblePermanentIds.add(p.getId());
             }
         });

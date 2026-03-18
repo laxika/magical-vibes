@@ -23,6 +23,7 @@ public record PermanentView(
         boolean animatedCreature,
         int loyaltyCounters,
         int chargeCounters,
+        int hatchlingCounters,
         int phylacteryCounters,
         int slimeCounters,
         int studyCounters,

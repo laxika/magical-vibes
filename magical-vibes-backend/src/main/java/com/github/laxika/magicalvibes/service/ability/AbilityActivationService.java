@@ -574,6 +574,7 @@ public class AbilityActivationService {
             CounterType ct = removeCounterCost.get().counterType();
             int available = switch (ct) {
                 case CHARGE -> permanent.getChargeCounters();
+                case HATCHLING -> permanent.getHatchlingCounters();
                 case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
                 case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
                 case SLIME -> permanent.getSlimeCounters();
@@ -653,6 +654,9 @@ public class AbilityActivationService {
             switch (ct) {
                 case CHARGE -> {
                     permanent.setChargeCounters(permanent.getChargeCounters() - count);
+                }
+                case HATCHLING -> {
+                    permanent.setHatchlingCounters(permanent.getHatchlingCounters() - count);
                 }
                 case MINUS_ONE_MINUS_ONE -> {
                     removedMinus = count;

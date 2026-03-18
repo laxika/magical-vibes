@@ -80,6 +80,7 @@ public class PermanentViewFactory {
                 animatedCreature || p.isPermanentlyAnimated(),
                 p.getLoyaltyCounters(),
                 p.getChargeCounters(),
+                p.getHatchlingCounters(),
                 p.getPhylacteryCounters(),
                 p.getSlimeCounters(),
                 p.getStudyCounters(),

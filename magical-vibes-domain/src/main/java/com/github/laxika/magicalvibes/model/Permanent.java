@@ -62,6 +62,7 @@ public class Permanent {
     @Setter private int phylacteryCounters;
     @Setter private int awakeningCounters;
     @Setter private int slimeCounters;
+    @Setter private int hatchlingCounters;
     @Setter private int studyCounters;
     @Setter private int wishCounters;
     @Setter private boolean loyaltyAbilityUsedThisTurn;
@@ -166,6 +167,7 @@ public class Permanent {
         this.phylacteryCounters = source.phylacteryCounters;
         this.awakeningCounters = source.awakeningCounters;
         this.slimeCounters = source.slimeCounters;
+        this.hatchlingCounters = source.hatchlingCounters;
         this.studyCounters = source.studyCounters;
         this.wishCounters = source.wishCounters;
         this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
