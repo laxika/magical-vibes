@@ -518,6 +518,23 @@ public class AbilityActivationService {
             handler.validateCanPay(gameData, playerId);
         }
 
+        // Pre-validate mana cost before entering interactive cost choices (CR 602.2b)
+        if (abilityCost != null) {
+            ManaCost preCheck = new ManaCost(abilityCost);
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            boolean artifactCtx = gameQueryService.isArtifact(permanent);
+            boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
+            if (preCheck.hasX()) {
+                if (!preCheck.canPay(pool, effectiveXValue, artifactCtx, myrCtx)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+            } else {
+                if (!preCheck.canPay(pool, 0, artifactCtx, myrCtx)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+            }
+        }
+
         ExileCardFromGraveyardCost exileGraveyardCost = abilityEffects.stream()
                 .filter(ExileCardFromGraveyardCost.class::isInstance)
                 .map(ExileCardFromGraveyardCost.class::cast)

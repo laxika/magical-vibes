@@ -164,6 +164,7 @@ public class GameTestHarness {
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
+    private final StateBasedActionService stateBasedActionService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -217,7 +218,7 @@ public class GameTestHarness {
                 triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
         StateTriggerService stateTriggerService = new StateTriggerService(gameBroadcastService);
-        StateBasedActionService stateBasedActionService = new StateBasedActionService(
+        stateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
         LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
@@ -401,6 +402,10 @@ public class GameTestHarness {
 
     public void addToBattlefield(Player player, Card card) {
         gameData.playerBattlefields.get(player.getId()).add(new Permanent(card));
+    }
+
+    public void runStateBasedActions() {
+        stateBasedActionService.performStateBasedActions(gameData);
     }
 
     public void setGraveyard(Player player, List<Card> cards) {

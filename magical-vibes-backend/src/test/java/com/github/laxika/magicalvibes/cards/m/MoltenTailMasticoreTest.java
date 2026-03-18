@@ -229,9 +229,8 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3); // not enough mana
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        // The graveyard exile cost prompt should happen first (before mana is checked)
-        harness.activateAbility(player1, 0, 0, null, bearsId);
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+        // Mana is validated upfront before entering interactive cost choices (CR 602.2b)
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bearsId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
     }

@@ -61,8 +61,9 @@ class KessigWolfRunTest extends BaseCardTest {
         Permanent creature = addCreature(player2);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, 2, creature.getId());
+        harness.activateAbility(player1, 0, 1, 2, creature.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -82,7 +83,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, 1, 3, creature.getId());
+        harness.activateAbility(player1, 0, 1, 3, creature.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -100,7 +101,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 1, 0, creature.getId());
+        harness.activateAbility(player1, 0, 1, 0, creature.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -118,7 +119,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, 2, creature.getId());
+        harness.activateAbility(player1, 0, 1, 2, creature.getId());
 
         // X=2 + {R} + {G} = 4 mana total
         GameData gd = harness.getGameData();
@@ -133,7 +134,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 1, 0, creature.getId());
+        harness.activateAbility(player1, 0, 1, 0, creature.getId());
 
         assertThat(landPerm.isTapped()).isTrue();
     }
@@ -148,7 +149,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, 1, 0, creature.getId());
+        harness.activateAbility(player1, 0, 1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
@@ -165,7 +166,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, landPerm.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 0, landPerm.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
@@ -179,7 +180,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, 2, creature.getId());
+        harness.activateAbility(player1, 0, 1, 2, creature.getId());
 
         // Remove target before resolution
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
@@ -201,7 +202,7 @@ class KessigWolfRunTest extends BaseCardTest {
         // Only add red, no green
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, creature.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
@@ -215,7 +216,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, creature.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }

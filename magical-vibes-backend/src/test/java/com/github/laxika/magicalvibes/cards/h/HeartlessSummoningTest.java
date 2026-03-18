@@ -99,6 +99,7 @@ class HeartlessSummoningTest extends BaseCardTest {
     void creatureWithOneToughnessDies() {
         harness.addToBattlefield(player1, new HeartlessSummoning());
         harness.addToBattlefield(player1, new EliteVanguard());
+        harness.runStateBasedActions();
 
         // EliteVanguard is 2/1, with -1/-1 becomes 1/0 and should die to SBA
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -157,14 +158,9 @@ class HeartlessSummoningTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HeartlessSummoning());
         harness.addToBattlefield(player1, new HeartlessSummoning());
         harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        harness.runStateBasedActions();
 
         // 2/2 base - 2/2 from two Heartless = 0/0 -> should die to SBA
-        // Actually if 0/0, SBA kills it. Let me check if it's still on the battlefield.
-        // If it died, the stream won't find it. Let me restructure this test.
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
