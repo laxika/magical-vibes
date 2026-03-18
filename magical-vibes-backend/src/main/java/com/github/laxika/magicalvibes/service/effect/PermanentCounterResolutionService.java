@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBo
 import com.github.laxika.magicalvibes.model.effect.PutXMinusOneMinusOneCountersOnEachCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -610,9 +611,10 @@ public class PermanentCounterResolutionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) return;
 
+        FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         int count = 0;
         for (Permanent p : battlefield) {
-            if (!gameQueryService.matchesPermanentPredicate(gameData, p, effect.predicate())) continue;
+            if (!gameQueryService.matchesPermanentPredicate(p, effect.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
 
             p.setPlusOnePlusOneCounters(p.getPlusOnePlusOneCounters() + 1);
