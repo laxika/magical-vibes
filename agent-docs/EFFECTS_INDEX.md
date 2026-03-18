@@ -562,6 +562,7 @@ Pass `null` as filter to allow any card.
 | `TargetPlayerLosesGameEffect` | `(UUID playerId)` | target player loses the game |
 | `LoseGameIfNotCastFromHandEffect` | `()` | lose the game if not cast from hand (ETB check) |
 | `WinGameIfCreaturesInGraveyardEffect` | `(int threshold)` | win if N+ creature cards in graveyard |
+| `WinGameOnEmptyLibraryDrawEffect` | `()` | static: if controller would draw from empty library, they win the game instead (Laboratory Maniac). Checked in `DrawService.performDrawCard()` |
 | `CantHaveCountersEffect` | `()` | this permanent can't have counters put on it (static) |
 | `CantHaveMinusOneMinusOneCountersEffect` | `()` | this creature can't have -1/-1 counters put on it (granted via GrantEffectEffect). Checked by `GameQueryService.cantHaveMinusOneMinusOneCounters()` |
 | `PlayerCantGetPoisonCountersEffect` | `()` | controller can't get poison counters (static on source permanent). Checked at all poison counter application points |

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,6 +131,23 @@ public class DrawService {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
+            // Check for Laboratory Maniac-style replacement: win instead of lose
+            if (hasWinOnEmptyLibraryDraw(gameData, playerId)) {
+                UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+                if (gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
+                    String winLog = gameData.playerIdToName.get(playerId) + " wins the game (drew from an empty library with a replacement effect).";
+                    gameBroadcastService.logAndBroadcast(gameData, winLog);
+                    log.info("Game {} - {} wins (empty library draw replacement)", gameData.id, gameData.playerIdToName.get(playerId));
+                    gameOutcomeService.declareWinner(gameData, playerId);
+                } else {
+                    String blockedLog = gameData.playerIdToName.get(playerId) + "'s win condition is met but " +
+                            gameData.playerIdToName.get(opponentId) + " can't lose the game.";
+                    gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+                    log.info("Game {} - {} empty library win prevented — opponent can't lose", gameData.id, gameData.playerIdToName.get(playerId));
+                }
+                return;
+            }
+
             // CR 704.5b — player who attempted to draw from an empty library loses the game
             if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
@@ -184,6 +202,17 @@ public class DrawService {
                 }
             }
         }
+    }
+
+    private boolean hasWinOnEmptyLibraryDraw(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof WinGameOnEmptyLibraryDrawEffect);
+            if (hasEffect) return true;
+        }
+        return false;
     }
 
     public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {
