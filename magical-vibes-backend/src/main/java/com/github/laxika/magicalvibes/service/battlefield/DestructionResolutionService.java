@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsAndGainLifePerDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
@@ -103,6 +104,60 @@ public class DestructionResolutionService {
         });
 
         destroyBatch(gameData, toDestroy, entry.getCard().getName(), effect.cannotBeRegenerated());
+    }
+
+    /**
+     * Resolves a {@link DestroyAllPermanentsAndGainLifePerDestroyedEffect}, destroying all
+     * permanents matching the filter and granting the controller life for each actually destroyed.
+     * Indestructible and regenerated permanents do not count toward the life gain.
+     */
+    @HandlesEffect(DestroyAllPermanentsAndGainLifePerDestroyedEffect.class)
+    void resolveDestroyAllPermanentsAndGainLifePerDestroyed(
+            GameData gameData, StackEntry entry,
+            DestroyAllPermanentsAndGainLifePerDestroyedEffect effect) {
+        List<Permanent> toDestroy = new ArrayList<>();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.matchesPermanentPredicate(perm, effect.filter(), filterContext)) {
+                    toDestroy.add(perm);
+                }
+            }
+        });
+
+        // Snapshot indestructible before any removals
+        Set<Permanent> indestructible = new HashSet<>();
+        for (Permanent perm : toDestroy) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                indestructible.add(perm);
+            }
+        }
+
+        // Destroy and count
+        int destroyedCount = 0;
+        String sourceName = entry.getCard().getName();
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is indestructible.");
+                continue;
+            }
+            if (graveyardService.tryRegenerate(gameData, perm)) {
+                continue;
+            }
+            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+            gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is destroyed.");
+            log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
+            destroyedCount++;
+        }
+
+        // Gain life for each destroyed permanent
+        if (destroyedCount > 0) {
+            int totalLife = destroyedCount * effect.lifePerDestroyed();
+            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), totalLife, sourceName);
+        }
     }
 
     /**
