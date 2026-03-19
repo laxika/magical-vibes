@@ -41,7 +41,7 @@ public class TurnResolutionService {
     private final ExileService exileService;
 
     @HandlesEffect(ExtraTurnEffect.class)
-    private void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
+    void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
@@ -59,7 +59,7 @@ public class TurnResolutionService {
     }
 
     @HandlesEffect(EndTurnEffect.class)
-    private void resolveEndTurn(GameData gameData, StackEntry entry) {
+    void resolveEndTurn(GameData gameData, StackEntry entry) {
         // Rule 723.1a: Triggered abilities that haven't been put on the stack yet cease to exist
         gameData.pendingMayAbilities.clear();
 
@@ -100,7 +100,7 @@ public class TurnResolutionService {
     }
 
     @HandlesEffect(ControlTargetPlayerNextTurnEffect.class)
-    private void resolveControlTargetPlayerNextTurn(GameData gameData, StackEntry entry, ControlTargetPlayerNextTurnEffect effect) {
+    void resolveControlTargetPlayerNextTurn(GameData gameData, StackEntry entry, ControlTargetPlayerNextTurnEffect effect) {
         UUID targetPlayerId = entry.getTargetPermanentId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
@@ -118,7 +118,7 @@ public class TurnResolutionService {
     }
 
     @HandlesEffect(AdditionalCombatMainPhaseEffect.class)
-    private void resolveAdditionalCombatMainPhase(GameData gameData, StackEntry entry, AdditionalCombatMainPhaseEffect effect) {
+    void resolveAdditionalCombatMainPhase(GameData gameData, StackEntry entry, AdditionalCombatMainPhaseEffect effect) {
         if (effect.count() <= 0) {
             return;
         }
