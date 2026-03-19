@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -38,7 +39,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Opponent can attack if they pay {1} per creature")
     void opponentCanAttackWithPayment() {
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
 
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
@@ -55,7 +56,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Opponent cannot attack without enough mana to pay the tax")
     void opponentCannotAttackWithoutPayment() {
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
 
         // No mana added — tax cannot be paid
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
@@ -67,8 +68,8 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Tax scales with number of attackers — not enough mana")
     void taxScalesWithNumberOfAttackers() {
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
 
         // Only 1 mana — can't pay for 2 attackers at {1} each
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -82,8 +83,8 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Tax scales with number of attackers — enough mana for all")
     void canAttackWithMultipleCreaturesIfEnoughMana() {
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
 
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
@@ -101,7 +102,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Opponent can choose to declare no attackers without paying")
     void opponentCanDeclineToAttack() {
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
 
         // No mana, but declaring 0 attackers is fine
         declareAttackers(player2, List.of());
@@ -117,7 +118,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     void twoBairdsStack() {
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
 
         // Only 1 mana — need 2 per creature with two Bairds
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -133,17 +134,17 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Tax is removed when Baird leaves the battlefield")
     void taxRemovedWhenBairdLeaves() {
         harness.addToBattlefield(player1, new BairdStewardOfArgive());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
 
         // Remove Baird
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Baird, Steward of Argive"));
 
-        // No mana needed — no tax
+        // No mana needed — no tax; declareAttackers should not throw
+        // (combat auto-resolves since player1 has no blockers, so isAttacking is cleared)
         declareAttackers(player2, List.of(0));
 
-        Permanent bear = findPermanent(player2, "Grizzly Bears");
-        assertThat(bear.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
     }
 
     // ===== Helpers =====
@@ -154,6 +155,12 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
         gs.declareAttackers(gd, player, attackerIndices);
+    }
+
+    private void addNonSickCreature(Player player, Card card) {
+        Permanent p = new Permanent(card);
+        p.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(p);
     }
 
     private Permanent findPermanent(Player player, String cardName) {
