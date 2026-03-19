@@ -35,7 +35,7 @@ public class TargetRedirectionResolutionService {
     private final TargetLegalityService targetLegalityService;
 
     @HandlesEffect(ChangeTargetOfTargetSpellWithSingleTargetEffect.class)
-    private void resolveChangeTargetOfTargetSpellWithSingleTarget(GameData gameData, StackEntry entry) {
+    void resolveChangeTargetOfTargetSpellWithSingleTarget(GameData gameData, StackEntry entry) {
         StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetId());
         if (targetSpell == null) {
             return;
@@ -64,7 +64,7 @@ public class TargetRedirectionResolutionService {
     }
 
     @HandlesEffect(ChangeTargetOfTargetSpellToSourceEffect.class)
-    private void resolveChangeTargetOfTargetSpellToSource(GameData gameData, StackEntry entry) {
+    void resolveChangeTargetOfTargetSpellToSource(GameData gameData, StackEntry entry) {
         StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetId());
         if (targetSpell == null) {
             return;
