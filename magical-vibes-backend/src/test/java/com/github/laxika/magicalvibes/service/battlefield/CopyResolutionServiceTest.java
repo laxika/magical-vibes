@@ -83,14 +83,14 @@ class CopyResolutionServiceTest {
     }
 
     private StackEntry spellEntry(Card card, UUID controllerId, StackEntryType type,
-                                  List<CardEffect> effects, int xValue, UUID targetPermanentId) {
+                                  List<CardEffect> effects, int xValue, UUID targetId) {
         return new StackEntry(type, card, controllerId, card.getName(), effects, xValue,
-                targetPermanentId, null, null, null, null, null);
+                targetId, null, null, null, null, null);
     }
 
     private StackEntry spellEntry(Card card, UUID controllerId, StackEntryType type,
-                                  List<CardEffect> effects, UUID targetPermanentId) {
-        return spellEntry(card, controllerId, type, effects, 0, targetPermanentId);
+                                  List<CardEffect> effects, UUID targetId) {
+        return spellEntry(card, controllerId, type, effects, 0, targetId);
     }
 
     private StackEntry copySpellTriggerEntry(Card twincastCard, UUID controllerId, UUID targetCardId) {
@@ -269,7 +269,7 @@ class CopyResolutionServiceTest {
             service.resolveCopySpell(gd, twincastEntry);
 
             StackEntry copyEntry = gd.stack.getLast();
-            assertThat(copyEntry.getTargetPermanentId()).isEqualTo(bearsPermId);
+            assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
         }
 
         @Test
@@ -304,7 +304,7 @@ class CopyResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("Does nothing when targetPermanentId is null")
+        @DisplayName("Does nothing when targetId is null")
         void doesNothingWhenTargetIdIsNull() {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = new StackEntry(StackEntryType.INSTANT_SPELL, twincastCard, player2Id,
@@ -424,7 +424,7 @@ class CopyResolutionServiceTest {
             service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
 
             List<UUID> copyTargets = gd.stack.stream()
-                    .map(StackEntry::getTargetPermanentId)
+                    .map(StackEntry::getTargetId)
                     .toList();
 
             assertThat(copyTargets).hasSize(2);
@@ -555,7 +555,7 @@ class CopyResolutionServiceTest {
 
             // Only 1 copy created (for golem2)
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(golem2.getId());
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(golem2.getId());
         }
 
         @Test
@@ -656,7 +656,7 @@ class CopyResolutionServiceTest {
             service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(opponentGolem.getId());
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(opponentGolem.getId());
         }
     }
 
@@ -707,7 +707,7 @@ class CopyResolutionServiceTest {
 
             service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
 
-            assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(targetPermId);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetPermId);
         }
 
         @Test
@@ -821,7 +821,7 @@ class CopyResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("Does nothing when targetPermanentId is null")
+        @DisplayName("Does nothing when targetId is null")
         void doesNothingWhenTargetIdIsNull() {
             Card cloneCard = createCard("Clone");
             StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, cloneCard, player1Id,

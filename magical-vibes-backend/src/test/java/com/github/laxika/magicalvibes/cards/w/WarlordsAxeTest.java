@@ -101,7 +101,7 @@ class WarlordsAxeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Warlord's Axe");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(creature.getId());
+        assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
     @Test

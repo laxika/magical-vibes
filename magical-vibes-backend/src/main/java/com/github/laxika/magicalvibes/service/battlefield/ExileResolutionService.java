@@ -75,7 +75,7 @@ public class ExileResolutionService {
     @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
         List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
-                ? List.of(entry.getTargetPermanentId())
+                ? List.of(entry.getTargetId())
                 : entry.getTargetPermanentIds();
 
         for (UUID targetId : targetIds) {
@@ -100,7 +100,7 @@ public class ExileResolutionService {
      */
     @HandlesEffect(ExileTargetCreatureAndAllWithSameNameEffect.class)
     void resolveExileTargetCreatureAndAllWithSameName(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -134,13 +134,13 @@ public class ExileResolutionService {
     /**
      * Exiles a permanent controlled by the player who was dealt combat damage.
      * Presents a multi-permanent choice filtered by the effect's predicate.
-     * Context: StackEntry.targetPermanentId = damaged player ID.
+     * Context: StackEntry.targetId = damaged player ID.
      */
     @HandlesEffect(ExilePermanentDamagedPlayerControlsEffect.class)
     void resolveExilePermanentDamagedPlayerControls(GameData gameData, StackEntry entry,
                                                      ExilePermanentDamagedPlayerControlsEffect effect) {
 
-        UUID defenderId = entry.getTargetPermanentId();
+        UUID defenderId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
 
         if (defenderId == null) return;
@@ -176,7 +176,7 @@ public class ExileResolutionService {
      */
     @HandlesEffect(ExileTargetPermanentAndTrackWithSourceEffect.class)
     void resolveExileTargetPermanentAndTrackWithSource(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -219,7 +219,7 @@ public class ExileResolutionService {
      */
     @HandlesEffect(ExileTargetPermanentAndImprintEffect.class)
     void resolveExileTargetPermanentAndImprint(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -253,7 +253,7 @@ public class ExileResolutionService {
      */
     @HandlesEffect(ExileTargetPermanentAndReturnAtEndStepEffect.class)
     void resolveExileTargetPermanentAndReturnAtEndStep(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -306,7 +306,7 @@ public class ExileResolutionService {
      */
     @HandlesEffect(ExileTargetPermanentUntilSourceLeavesEffect.class)
     void resolveExileTargetPermanentUntilSourceLeaves(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -359,7 +359,7 @@ public class ExileResolutionService {
         if (dyingCardId == null) return;
 
         // Find the source permanent (Mimic Vat) on the battlefield
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (sourcePermanent == null) {
             log.info("Game {} - Mimic Vat no longer on battlefield, imprint fizzles", gameData.id);
             return;
@@ -427,7 +427,7 @@ public class ExileResolutionService {
      */
     @HandlesEffect(ExileFromHandToImprintEffect.class)
     void resolveExileFromHandToImprint(GameData gameData, StackEntry entry, ExileFromHandToImprintEffect effect) {
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (sourcePermanent == null) {
             log.info("Game {} - Source permanent no longer on battlefield, imprint from hand fizzles", gameData.id);
             return;
@@ -703,7 +703,7 @@ public class ExileResolutionService {
 
     @HandlesEffect(OmenMachineDrawStepEffect.class)
     void resolveOmenMachineDrawStep(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String sourceName = entry.getCard().getName();

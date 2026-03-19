@@ -50,7 +50,7 @@ public class CounterResolutionService {
      */
     @HandlesEffect(CounterSpellEffect.class)
     void resolveCounterSpell(GameData gameData, StackEntry entry) {
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
         StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
@@ -68,7 +68,7 @@ public class CounterResolutionService {
      */
     @HandlesEffect(CounterSpellAndExileEffect.class)
     void resolveCounterSpellAndExile(GameData gameData, StackEntry entry) {
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
         StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
@@ -86,7 +86,7 @@ public class CounterResolutionService {
      */
     @HandlesEffect(CounterSpellIfControllerPoisonedEffect.class)
     void resolveCounterSpellIfControllerPoisoned(GameData gameData, StackEntry entry) {
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
         StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
@@ -115,7 +115,7 @@ public class CounterResolutionService {
      */
     @HandlesEffect(CounterUnlessPaysEffect.class)
     void resolveCounterUnlessPays(GameData gameData, StackEntry entry, CounterUnlessPaysEffect effect) {
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
         StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);

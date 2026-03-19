@@ -247,9 +247,9 @@ public class TriggerCollectionService {
 
     public void checkBecomesTargetOfSpellTriggers(GameData gameData, StackEntry spellEntry) {
         List<UUID> targetIds = new ArrayList<>();
-        if (spellEntry.getTargetPermanentId() != null
+        if (spellEntry.getTargetId() != null
                 && spellEntry.getTargetZone() == null) {
-            targetIds.add(spellEntry.getTargetPermanentId());
+            targetIds.add(spellEntry.getTargetId());
         }
         if (spellEntry.getTargetPermanentIds() != null) {
             targetIds.addAll(spellEntry.getTargetPermanentIds());
@@ -302,10 +302,10 @@ public class TriggerCollectionService {
         if (gameData.stack.isEmpty()) return;
         StackEntry abilityEntry = gameData.stack.getLast();
         List<UUID> targetIds = new ArrayList<>();
-        if (abilityEntry.getTargetPermanentId() != null
+        if (abilityEntry.getTargetId() != null
                 && abilityEntry.getTargetZone() == null
                 && !abilityEntry.isNonTargeting()) {
-            targetIds.add(abilityEntry.getTargetPermanentId());
+            targetIds.add(abilityEntry.getTargetId());
         }
         if (abilityEntry.getTargetPermanentIds() != null) {
             targetIds.addAll(abilityEntry.getTargetPermanentIds());

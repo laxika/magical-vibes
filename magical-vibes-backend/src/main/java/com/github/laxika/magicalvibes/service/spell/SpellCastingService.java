@@ -160,29 +160,29 @@ public class SpellCastingService {
 
     // --- Main methods ---
 
-    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
-        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, null, null, null);
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, null, null, null);
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount) {
-        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, null, null);
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, null, null);
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds) {
-        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, null);
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, null);
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex) {
-        playCard(gameData, player, cardIndex, xValue, targetPermanentId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, null);
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, null);
     }
 
-    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices) {
@@ -342,7 +342,7 @@ public class SpellCastingService {
 
         // Validate spell target (targeting a spell on the stack)
         if (unwrappedNeedsSpellTarget) {
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, card.getTargetFilter(), playerId);
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
         }
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).stream()
@@ -362,43 +362,43 @@ public class SpellCastingService {
         boolean needsExileTargeting = exileReturnEffect != null;
 
         // Validate target if specified (can be a permanent or a player)
-        if (targetPermanentId != null && !unwrappedNeedsSpellTarget) {
+        if (targetId != null && !unwrappedNeedsSpellTarget) {
             if (needsExileTargeting) {
                 if (exileReturnEffect.ownedOnly()) {
                     boolean inControllersExile = gameData.playerExiledCards
                             .getOrDefault(playerId, List.of())
                             .stream()
-                            .anyMatch(c -> c.getId().equals(targetPermanentId));
+                            .anyMatch(c -> c.getId().equals(targetId));
                     if (!inControllersExile) {
                         throw new IllegalStateException("Target must be an exiled card you own");
                     }
                 }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.EXILE);
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE);
             } else if (needsSingleGraveyardTargeting) {
                 String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
                 if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
                     boolean inControllersGraveyard = gameData.playerGraveyards
                             .getOrDefault(playerId, List.of())
                             .stream()
-                            .anyMatch(c -> c.getId().equals(targetPermanentId));
+                            .anyMatch(c -> c.getId().equals(targetId));
                     if (!inControllersGraveyard) {
                         throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
                     }
                 }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD, effectiveXValue);
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue);
             } else if (needsGraveyardEffectTargeting) {
                 if (!canTargetAnyGraveyard) {
                     boolean inControllersGraveyard = gameData.playerGraveyards
                             .getOrDefault(playerId, List.of())
                             .stream()
-                            .anyMatch(c -> c.getId().equals(targetPermanentId));
+                            .anyMatch(c -> c.getId().equals(targetId));
                     if (inControllersGraveyard) {
                         throw new IllegalStateException("Target must be in an opponent's graveyard");
                     }
                 }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
             } else {
-                targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, unwrappedNeedsTarget);
+                targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, unwrappedNeedsTarget);
             }
         } else if (unwrappedNeedsTarget && needsExileTargeting) {
             String exileFilterLabel = CardPredicateUtils.describeFilter(exileReturnEffect.filter());
@@ -490,7 +490,7 @@ public class SpellCastingService {
             int manaCostX = (card.hasType(CardType.ARTIFACT)) ? effectiveXValue : 0;
             int stackX = (card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT))
                     ? effectiveXValue : 0;
-            UUID stackTarget = (card.hasType(CardType.PLANESWALKER)) ? null : targetPermanentId;
+            UUID stackTarget = (card.hasType(CardType.PLANESWALKER)) ? null : targetId;
 
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
@@ -538,8 +538,8 @@ public class SpellCastingService {
                             .findFirst().orElse(null);
 
             if (shuffleGraveyardCardsEffect != null) {
-                // Target player is specified via targetPermanentId
-                UUID targetGraveyardOwner = targetPermanentId;
+                // Target player is specified via targetId
+                UUID targetGraveyardOwner = targetId;
                 if (targetGraveyardOwner == null) {
                     throw new IllegalStateException("Must target a player");
                 }
@@ -555,7 +555,7 @@ public class SpellCastingService {
                 // No matching cards in target player's graveyard — put spell on stack with 0 targets
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, 0, targetPermanentId,
+                        filteredSpellEffects, 0, targetId,
                         null, Map.of(), null, List.of(), List.of()
                 ));
             } else if (graveyardToHandEffect != null) {
@@ -658,13 +658,13 @@ public class SpellCastingService {
                     // Spell targets both a spell on the stack and permanent(s) (e.g. Lost in the Mist)
                     gameData.stack.add(new StackEntry(
                             entryType, card, playerId, card.getName(),
-                            filteredSpellEffects, resolvedXValue, targetPermanentId,
+                            filteredSpellEffects, resolvedXValue, targetId,
                             null, Map.of(), Zone.STACK, List.of(), targetPermanentIds
                     ));
                 } else {
                     gameData.stack.add(new StackEntry(
                             entryType, card, playerId, card.getName(),
-                            filteredSpellEffects, targetPermanentId, Zone.STACK
+                            filteredSpellEffects, targetId, Zone.STACK
                     ));
                 }
             } else if (!targetPermanentIds.isEmpty() && !sacFlags.usesSacrificeAllCreaturesCost()) {
@@ -676,19 +676,19 @@ public class SpellCastingService {
             } else if (needsExileTargeting) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, resolvedXValue, targetPermanentId, null,
+                        filteredSpellEffects, resolvedXValue, targetId, null,
                         Map.of(), Zone.EXILE, List.of(), List.of()
                 ));
             } else if (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, resolvedXValue, targetPermanentId, null,
+                        filteredSpellEffects, resolvedXValue, targetId, null,
                         Map.of(), Zone.GRAVEYARD, List.of(), List.of()
                 ));
             } else {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, resolvedXValue, targetPermanentId, null
+                        filteredSpellEffects, resolvedXValue, targetId, null
                 ));
             }
             finishSpellCast(gameData, playerId, player, hand, card);
@@ -879,16 +879,16 @@ public class SpellCastingService {
 
     // --- Play with flashback from graveyard ---
 
-    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId) {
-        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, List.of(), null);
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, List.of(), null);
     }
 
-    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetPermanentId, List<UUID> targetPermanentIds) {
-        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId, targetPermanentIds, null);
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetPermanentIds) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetPermanentIds, null);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
-                                    UUID targetPermanentId, List<UUID> targetPermanentIds,
+                                    UUID targetId, List<UUID> targetPermanentIds,
                                     List<Integer> exileGraveyardCardIndices) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetPermanentIds == null) targetPermanentIds = List.of();
@@ -949,7 +949,7 @@ public class SpellCastingService {
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());
             StackEntry stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),
-                    List.of(), 0, targetPermanentId, null
+                    List.of(), 0, targetId, null
             );
             gameData.stack.add(stackEntry);
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
@@ -965,7 +965,7 @@ public class SpellCastingService {
                         .findFirst().orElse(null);
 
         if (shuffleGraveyardCardsEffect != null) {
-            UUID targetGraveyardOwner = targetPermanentId;
+            UUID targetGraveyardOwner = targetId;
             if (targetGraveyardOwner == null) {
                 throw new IllegalStateException("Must target a player");
             }
@@ -982,7 +982,7 @@ public class SpellCastingService {
             // No matching cards — put on stack with 0 targets
             StackEntry stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),
-                    spellEffects, 0, targetPermanentId,
+                    spellEffects, 0, targetId,
                     null, Map.of(), null, List.of(), List.of()
             );
             stackEntry.setCastWithFlashback(true);
@@ -1004,23 +1004,23 @@ public class SpellCastingService {
         } else {
             // Single-target or no-target flashback spell
             boolean needsGraveyardEffectTargeting = spellEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
-            if (targetPermanentId != null && card.isNeedsTarget() && needsGraveyardEffectTargeting) {
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetPermanentId, Zone.GRAVEYARD);
-            } else if (targetPermanentId != null && card.isNeedsTarget()) {
-                targetLegalityService.validateSpellTargeting(gameData, card, targetPermanentId, null, playerId, true);
-            } else if (card.isNeedsTarget() && targetPermanentId == null) {
+            if (targetId != null && card.isNeedsTarget() && needsGraveyardEffectTargeting) {
+                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
+            } else if (targetId != null && card.isNeedsTarget()) {
+                targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, true);
+            } else if (card.isNeedsTarget() && targetId == null) {
                 throw new IllegalStateException("Spell requires a target");
             }
             if (needsGraveyardEffectTargeting) {
                 stackEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        spellEffects, effectiveXValue, targetPermanentId, null,
+                        spellEffects, effectiveXValue, targetId, null,
                         Map.of(), Zone.GRAVEYARD, List.of(), List.of()
                 );
             } else {
                 stackEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        spellEffects, effectiveXValue, targetPermanentId, null
+                        spellEffects, effectiveXValue, targetId, null
                 );
             }
         }
@@ -1032,7 +1032,7 @@ public class SpellCastingService {
 
     // --- Play from exile ---
 
-    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetPermanentId) {
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -1100,7 +1100,7 @@ public class SpellCastingService {
 
         gameData.stack.add(new StackEntry(
                 entryType, card, playerId, card.getName(),
-                effectsToResolve, effectiveXValue, targetPermanentId, null
+                effectsToResolve, effectiveXValue, targetId, null
         ));
 
         // Use null hand list — card was already removed from exile

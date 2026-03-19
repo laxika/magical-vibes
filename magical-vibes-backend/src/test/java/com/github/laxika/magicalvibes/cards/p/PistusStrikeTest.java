@@ -34,7 +34,7 @@ class PistusStrikeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Pistus Strike");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(angel.getId());
+        assertThat(entry.getTargetId()).isEqualTo(angel.getId());
     }
 
     @Test

@@ -55,7 +55,7 @@ class ThunderStrikeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Thunder Strike");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetId);
     }
 
     @Test

@@ -33,7 +33,7 @@ public class AnimationResolutionService {
 
     @HandlesEffect(AnimateLandEffect.class)
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (self == null) {
             return;
         }
@@ -55,7 +55,7 @@ public class AnimationResolutionService {
 
     @HandlesEffect(AnimateSelfEffect.class)
     private void resolveAnimateSelf(GameData gameData, StackEntry entry, AnimateSelfEffect effect) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (self == null) {
             return;
         }
@@ -75,7 +75,7 @@ public class AnimationResolutionService {
 
     @HandlesEffect(AnimateSelfByChargeCountersEffect.class)
     private void resolveAnimateSelfByChargeCounters(GameData gameData, StackEntry entry, AnimateSelfByChargeCountersEffect effect) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (self == null) {
             return;
         }
@@ -95,7 +95,7 @@ public class AnimationResolutionService {
 
     @HandlesEffect(AnimateSelfWithStatsEffect.class)
     private void resolveAnimateSelfWithStats(GameData gameData, StackEntry entry, AnimateSelfWithStatsEffect effect) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (self == null) {
             return;
         }
@@ -117,7 +117,7 @@ public class AnimationResolutionService {
 
     @HandlesEffect(AddCardTypeToTargetPermanentEffect.class)
     private void resolveAddCardTypeToTargetPermanent(GameData gameData, StackEntry entry, AddCardTypeToTargetPermanentEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -133,7 +133,7 @@ public class AnimationResolutionService {
 
     @HandlesEffect(AnimateTargetPermanentEffect.class)
     private void resolveAnimateTargetPermanent(GameData gameData, StackEntry entry, AnimateTargetPermanentEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -257,7 +257,7 @@ public class AnimationResolutionService {
     @HandlesEffect(AnimateTargetLandWhileSourceOnBattlefieldEffect.class)
     private void resolveAnimateTargetLandWhileSourceOnBattlefield(GameData gameData, StackEntry entry,
                                                                    AnimateTargetLandWhileSourceOnBattlefieldEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }

@@ -78,7 +78,7 @@ class KnightOfDuskTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Knight of Dusk");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(blocker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
     }
 
     @Test

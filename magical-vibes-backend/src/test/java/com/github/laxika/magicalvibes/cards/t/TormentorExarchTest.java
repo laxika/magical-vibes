@@ -124,15 +124,15 @@ class TormentorExarchTest extends BaseCardTest {
         }
     }
 
-    private void castWithBoostMode(UUID targetPermanentId) {
+    private void castWithBoostMode(UUID targetId) {
         harness.setHand(player1, List.of(new TormentorExarch()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0, 0, targetPermanentId); // mode 0 = +2/+0
+        harness.castCreature(player1, 0, 0, targetId); // mode 0 = +2/+0
     }
 
-    private void castWithDebuffMode(UUID targetPermanentId) {
+    private void castWithDebuffMode(UUID targetId) {
         harness.setHand(player1, List.of(new TormentorExarch()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0, 1, targetPermanentId); // mode 1 = -0/-2
+        harness.castCreature(player1, 0, 1, targetId); // mode 1 = -0/-2
     }
 }

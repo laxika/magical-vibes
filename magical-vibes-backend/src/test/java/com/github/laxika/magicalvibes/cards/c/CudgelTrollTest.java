@@ -79,7 +79,7 @@ class CudgelTrollTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(trollPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(trollPerm.getId());
     }
 
     @Test

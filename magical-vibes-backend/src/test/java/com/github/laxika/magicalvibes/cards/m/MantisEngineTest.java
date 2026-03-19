@@ -110,7 +110,7 @@ class MantisEngineTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Mantis Engine");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(mantis.getId());
+        assertThat(entry.getTargetId()).isEqualTo(mantis.getId());
     }
 
     @Test
@@ -158,7 +158,7 @@ class MantisEngineTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Mantis Engine");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(mantis.getId());
+        assertThat(entry.getTargetId()).isEqualTo(mantis.getId());
     }
 
     @Test

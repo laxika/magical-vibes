@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Target player draws X cards, where X comes from the stack entry's xValue.
- * The target player is stored in the stack entry's targetPermanentId field.
+ * The target player is stored in the stack entry's targetId field.
  */
 public record DrawXCardsForTargetPlayerEffect() implements CardEffect {
 

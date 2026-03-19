@@ -60,7 +60,7 @@ class FleshAllergyTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Flesh Allergy");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
 
         // Sacrificed creature should be gone from battlefield and in graveyard
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");

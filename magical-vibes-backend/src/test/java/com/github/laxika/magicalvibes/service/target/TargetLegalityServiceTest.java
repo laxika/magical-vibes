@@ -634,7 +634,7 @@ class TargetLegalityServiceTest {
         }
 
         @Test
-        @DisplayName("passes when targetPermanentId is null")
+        @DisplayName("passes when targetId is null")
         void passesWhenTargetIsNull() {
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");

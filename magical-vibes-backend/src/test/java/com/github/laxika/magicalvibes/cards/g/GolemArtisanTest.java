@@ -105,7 +105,7 @@ class GolemArtisanTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Golem Artisan");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     @Test
@@ -161,7 +161,7 @@ class GolemArtisanTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Golem Artisan");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     @Test

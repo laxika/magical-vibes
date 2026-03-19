@@ -434,9 +434,9 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, mode, null, null);
     }
 
-    public void castCreature(Player player, int cardIndex, int mode, UUID targetPermanentId) {
+    public void castCreature(Player player, int cardIndex, int mode, UUID targetId) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, mode, targetPermanentId, null);
+        gameService.playCard(gameData, player, cardIndex, mode, targetId, null);
     }
 
     public void castCreatureWithGraveyardExile(Player player, int cardIndex, int exileGraveyardCardIndex) {
@@ -469,9 +469,9 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
-    public void castEnchantment(Player player, int cardIndex, UUID targetPermanentId) {
+    public void castEnchantment(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
     }
 
     public void castArtifact(Player player, int cardIndex) {
@@ -479,9 +479,9 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
-    public void castArtifact(Player player, int cardIndex, UUID targetPermanentId) {
+    public void castArtifact(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
     }
 
     public void playGraveyardLand(Player player, int cardIndex) {
@@ -524,9 +524,9 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
-    public void castSorceryWithSacrifice(Player player, int cardIndex, UUID targetPermanentId, UUID sacrificePermanentId) {
+    public void castSorceryWithSacrifice(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, sacrificePermanentId);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
     public void castInstant(Player player, int cardIndex) {
@@ -534,14 +534,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null);
     }
 
-    public void castInstant(Player player, int cardIndex, UUID targetPermanentId) {
+    public void castInstant(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
     }
 
-    public void castInstant(Player player, int cardIndex, int xValue, UUID targetPermanentId) {
+    public void castInstant(Player player, int cardIndex, int xValue, UUID targetId) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, xValue, targetPermanentId, null);
+        gameService.playCard(gameData, player, cardIndex, xValue, targetId, null);
     }
 
     public void castInstant(Player player, int cardIndex, List<UUID> targetPermanentIds) {
@@ -559,19 +559,19 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments);
     }
 
-    public void castInstantWithSacrifice(Player player, int cardIndex, UUID targetPermanentId, UUID sacrificePermanentId) {
+    public void castInstantWithSacrifice(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, sacrificePermanentId);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
-    public void castInstantWithGraveyardExile(Player player, int cardIndex, UUID targetPermanentId, int exileGraveyardCardIndex) {
+    public void castInstantWithGraveyardExile(Player player, int cardIndex, UUID targetId, int exileGraveyardCardIndex) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, null, null, null, exileGraveyardCardIndex);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, exileGraveyardCardIndex);
     }
 
-    public void castInstantWithMultipleGraveyardExile(Player player, int cardIndex, UUID targetPermanentId, List<Integer> exileGraveyardCardIndices) {
+    public void castInstantWithMultipleGraveyardExile(Player player, int cardIndex, UUID targetId, List<Integer> exileGraveyardCardIndices) {
         ensurePriority(player);
-        gameService.playCard(gameData, player, cardIndex, 0, targetPermanentId, null, List.of(), List.of(), false, null, null, null, null, exileGraveyardCardIndices);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, exileGraveyardCardIndices);
     }
 
     public void castInstantWithConvoke(Player player, int cardIndex, List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds) {
@@ -579,9 +579,9 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetPermanentIds, convokeCreatureIds);
     }
 
-    public void castFlashback(Player player, int graveyardCardIndex, UUID targetPermanentId) {
+    public void castFlashback(Player player, int graveyardCardIndex, UUID targetId) {
         ensurePriority(player);
-        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetPermanentId);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId);
     }
 
     public void castFlashback(Player player, int graveyardCardIndex) {
@@ -589,9 +589,9 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, (UUID) null);
     }
 
-    public void castFlashback(Player player, int graveyardCardIndex, int xValue, UUID targetPermanentId) {
+    public void castFlashback(Player player, int graveyardCardIndex, int xValue, UUID targetId) {
         ensurePriority(player);
-        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetPermanentId);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId);
     }
 
     public void castFlashback(Player player, int graveyardCardIndex, List<UUID> targetPermanentIds) {
@@ -599,8 +599,8 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetPermanentIds);
     }
 
-    public void castAndResolveFlashback(Player player, int graveyardCardIndex, UUID targetPermanentId) {
-        castFlashback(player, graveyardCardIndex, targetPermanentId);
+    public void castAndResolveFlashback(Player player, int graveyardCardIndex, UUID targetId) {
+        castFlashback(player, graveyardCardIndex, targetId);
         passBothPriorities();
     }
 
@@ -609,8 +609,8 @@ public class GameTestHarness {
         passBothPriorities();
     }
 
-    public void castAndResolveInstant(Player player, int cardIndex, UUID targetPermanentId) {
-        castInstant(player, cardIndex, targetPermanentId);
+    public void castAndResolveInstant(Player player, int cardIndex, UUID targetId) {
+        castInstant(player, cardIndex, targetId);
         passBothPriorities();
     }
 
@@ -644,29 +644,29 @@ public class GameTestHarness {
         gameService.tapPermanent(gameData, player, permanentIndex);
     }
 
-    public void sacrificePermanent(Player player, int permanentIndex, UUID targetPermanentId) {
+    public void sacrificePermanent(Player player, int permanentIndex, UUID targetId) {
         ensurePriority(player);
-        gameService.sacrificePermanent(gameData, player, permanentIndex, targetPermanentId);
+        gameService.sacrificePermanent(gameData, player, permanentIndex, targetId);
     }
 
-    public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId) {
+    public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetId) {
         ensurePriority(player);
-        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, null);
+        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetId, null);
     }
 
-    public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetPermanentId, Zone Zone) {
+    public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetId, Zone Zone) {
         ensurePriority(player);
-        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetPermanentId, Zone);
+        gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetId, Zone);
     }
 
-    public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetPermanentId) {
+    public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetId) {
         ensurePriority(player);
-        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, null);
+        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, null);
     }
 
-    public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone) {
+    public void activateAbility(Player player, int permanentIndex, int abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         ensurePriority(player);
-        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone);
+        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
     }
 
     public void activateAbilityWithMultiTargets(Player player, int permanentIndex, int abilityIndex, List<UUID> targetPermanentIds) {

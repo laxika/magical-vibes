@@ -43,7 +43,7 @@ class DivineVerdictTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Divine Verdict");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(attacker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test
@@ -68,7 +68,7 @@ class DivineVerdictTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Divine Verdict");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(blocker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
     }
 
     @Test

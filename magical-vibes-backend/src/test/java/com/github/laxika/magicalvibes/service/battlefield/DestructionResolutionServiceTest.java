@@ -126,24 +126,24 @@ class DestructionResolutionServiceTest {
         return addPermanent(playerId, createCreatureCard(name));
     }
 
-    private StackEntry sorceryEntry(Card card, UUID controllerId, UUID targetPermanentId) {
+    private StackEntry sorceryEntry(Card card, UUID controllerId, UUID targetId) {
         return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId,
-                card.getName(), List.of(), 0, targetPermanentId, null);
+                card.getName(), List.of(), 0, targetId, null);
     }
 
-    private StackEntry instantEntry(Card card, UUID controllerId, UUID targetPermanentId) {
+    private StackEntry instantEntry(Card card, UUID controllerId, UUID targetId) {
         return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
-                card.getName(), List.of(), 0, targetPermanentId, null);
+                card.getName(), List.of(), 0, targetId, null);
     }
 
-    private StackEntry triggeredAbilityEntry(Card card, UUID controllerId, UUID targetPermanentId, UUID sourcePermanentId) {
+    private StackEntry triggeredAbilityEntry(Card card, UUID controllerId, UUID targetId, UUID sourcePermanentId) {
         return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                card.getName(), List.of(), targetPermanentId, sourcePermanentId);
+                card.getName(), List.of(), targetId, sourcePermanentId);
     }
 
-    private StackEntry activatedAbilityEntry(Card card, UUID controllerId, UUID targetPermanentId, UUID sourcePermanentId) {
+    private StackEntry activatedAbilityEntry(Card card, UUID controllerId, UUID targetId, UUID sourcePermanentId) {
         return new StackEntry(StackEntryType.ACTIVATED_ABILITY, card, controllerId,
-                card.getName(), List.of(), targetPermanentId, sourcePermanentId);
+                card.getName(), List.of(), targetId, sourcePermanentId);
     }
 
     // =========================================================================

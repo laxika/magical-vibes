@@ -62,7 +62,7 @@ class NeurokReplicaTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Neurok Replica");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     // ===== Resolution =====

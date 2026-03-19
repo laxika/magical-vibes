@@ -48,7 +48,7 @@ class PierceStriderTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Pierce Strider"));
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test

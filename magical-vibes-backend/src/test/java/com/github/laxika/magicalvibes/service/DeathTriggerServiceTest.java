@@ -772,7 +772,7 @@ class DeathTriggerServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
-            assertThat(entry.getTargetPermanentId()).isEqualTo(PLAYER2_ID);
+            assertThat(entry.getTargetId()).isEqualTo(PLAYER2_ID);
         }
 
         @Test
@@ -1160,7 +1160,7 @@ class DeathTriggerServiceTest {
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getControllerId()).isEqualTo(PLAYER2_ID);
-            assertThat(entry.getTargetPermanentId()).isEqualTo(PLAYER1_ID);
+            assertThat(entry.getTargetId()).isEqualTo(PLAYER1_ID);
         }
 
         @Test

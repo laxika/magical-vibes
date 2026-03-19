@@ -80,7 +80,7 @@ class WallOfBoneTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Wall of Bone");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(wallPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(wallPerm.getId());
     }
 
     @Test

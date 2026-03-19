@@ -47,7 +47,7 @@ class GraspOfDarknessTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Grasp of Darkness");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bearId);
+        assertThat(entry.getTargetId()).isEqualTo(bearId);
     }
 
     @Test
@@ -79,7 +79,7 @@ class GraspOfDarknessTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bearId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearId);
     }
 
     @Test

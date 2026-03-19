@@ -80,7 +80,7 @@ class TangleHulkTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Tangle Hulk");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(hulkPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(hulkPerm.getId());
     }
 
     @Test

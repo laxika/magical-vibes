@@ -74,7 +74,7 @@ public class LibraryShuffleResolutionService {
      */
     @HandlesEffect(ShuffleGraveyardIntoLibraryEffect.class)
     void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -196,7 +196,7 @@ public class LibraryShuffleResolutionService {
     @HandlesEffect(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class)
     void resolveShuffleTargetCardsFromGraveyardIntoLibrary(GameData gameData, StackEntry entry,
                                                            ShuffleTargetCardsFromGraveyardIntoLibraryEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<UUID> targetCardIds = entry.getTargetCardIds();
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 

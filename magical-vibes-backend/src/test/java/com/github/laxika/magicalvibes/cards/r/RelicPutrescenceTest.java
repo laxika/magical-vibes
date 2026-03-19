@@ -55,7 +55,7 @@ class RelicPutrescenceTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Relic Putrescence");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(artifact.getId());
+        assertThat(entry.getTargetId()).isEqualTo(artifact.getId());
     }
 
     @Test

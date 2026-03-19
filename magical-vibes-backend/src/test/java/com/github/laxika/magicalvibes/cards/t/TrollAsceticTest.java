@@ -110,7 +110,7 @@ class TrollAsceticTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Giant Growth");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(trollPerm.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(trollPerm.getId());
     }
 
     // ===== Hexproof: hasKeyword check =====
@@ -138,7 +138,7 @@ class TrollAsceticTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Troll Ascetic");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(trollPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(trollPerm.getId());
     }
 
     @Test

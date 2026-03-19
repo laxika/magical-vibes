@@ -32,13 +32,13 @@ public sealed interface InteractionContext permits
 
     record BlockerDeclaration(UUID defenderId) implements InteractionContext {}
 
-    record CardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetPermanentId) implements InteractionContext {}
+    record CardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetId) implements InteractionContext {}
 
     record PermanentChoice(UUID playerId, Set<UUID> validIds, PermanentChoiceContext context) implements InteractionContext {}
 
     record GraveyardChoice(UUID playerId, Set<Integer> validIndices, GraveyardChoiceDestination destination, List<Card> cardPool) implements InteractionContext {}
 
-    record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetPermanentId, ChoiceContext context) implements InteractionContext {}
+    record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context) implements InteractionContext {}
 
     record MayAbilityChoice(UUID playerId, String description) implements InteractionContext {}
 

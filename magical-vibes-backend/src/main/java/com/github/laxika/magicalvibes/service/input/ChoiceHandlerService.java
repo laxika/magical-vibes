@@ -125,7 +125,7 @@ public class ChoiceHandlerService {
         }
         CardColor color = CardColor.valueOf(colorName);
         UUID permanentId = colorChoice.permanentId();
-        UUID etbTargetId = colorChoice.etbTargetPermanentId();
+        UUID etbTargetId = colorChoice.etbTargetId();
 
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
@@ -182,7 +182,7 @@ public class ChoiceHandlerService {
         }
 
         ChoiceContext.TextChangeToWord choiceContext =
-                new ChoiceContext.TextChangeToWord(ctx.targetPermanentId(), chosenWord, isColor);
+                new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor);
         gameData.interaction.beginColorChoice(player.getId(), null, null, choiceContext);
 
         List<String> remainingOptions;
@@ -213,7 +213,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
             String fromText = textChangeChoiceToWord(ctx.fromWord());
             String toText = textChangeChoiceToWord(chosenWord);
@@ -295,7 +295,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
             target.getGrantedKeywords().add(keyword);
 
@@ -392,7 +392,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
-        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
             if ("ARTIFACT".equals(chosenValue)) {
                 target.getProtectionFromCardTypes().add(CardType.ARTIFACT);

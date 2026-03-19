@@ -59,7 +59,7 @@ class MentalMisstepTest extends BaseCardTest {
         StackEntry misstepEntry = gd.stack.getLast();
         assertThat(misstepEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(misstepEntry.getCard().getName()).isEqualTo("Mental Misstep");
-        assertThat(misstepEntry.getTargetPermanentId()).isEqualTo(elves.getId());
+        assertThat(misstepEntry.getTargetId()).isEqualTo(elves.getId());
     }
 
     @Test
@@ -83,7 +83,7 @@ class MentalMisstepTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry misstepEntry = gd.stack.getLast();
         assertThat(misstepEntry.getCard().getName()).isEqualTo("Mental Misstep");
-        assertThat(misstepEntry.getTargetPermanentId()).isEqualTo(shock.getId());
+        assertThat(misstepEntry.getTargetId()).isEqualTo(shock.getId());
     }
 
     @Test

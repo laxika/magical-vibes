@@ -47,7 +47,7 @@ class HarmsWayTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Harm's Way");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -60,7 +60,7 @@ class HarmsWayTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bear.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bear.getId());
     }
 
     // ===== Resolution — source choice =====

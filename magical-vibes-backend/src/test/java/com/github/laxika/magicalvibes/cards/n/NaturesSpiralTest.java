@@ -117,7 +117,7 @@ class NaturesSpiralTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(creature.getId());
+        assertThat(entry.getTargetId()).isEqualTo(creature.getId());
         assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
     }
 }

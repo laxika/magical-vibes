@@ -144,7 +144,7 @@ class AncientGrudgeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Ancient Grudge");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
         assertThat(entry.isCastWithFlashback()).isTrue();
     }
 

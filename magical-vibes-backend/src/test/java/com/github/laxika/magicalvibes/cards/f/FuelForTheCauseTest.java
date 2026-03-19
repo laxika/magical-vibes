@@ -56,7 +56,7 @@ class FuelForTheCauseTest extends BaseCardTest {
         StackEntry fuelEntry = gd.stack.getLast();
         assertThat(fuelEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(fuelEntry.getCard().getName()).isEqualTo("Fuel for the Cause");
-        assertThat(fuelEntry.getTargetPermanentId()).isEqualTo(bearsCardId);
+        assertThat(fuelEntry.getTargetId()).isEqualTo(bearsCardId);
     }
 
     // ===== Resolving: counter =====

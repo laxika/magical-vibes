@@ -59,7 +59,7 @@ class ThrullSurgeonTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Thrull Surgeon");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test

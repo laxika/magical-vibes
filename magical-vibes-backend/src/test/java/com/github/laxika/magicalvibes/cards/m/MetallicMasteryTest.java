@@ -32,7 +32,7 @@ class MetallicMasteryTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Metallic Mastery");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(artifact.getId());
+        assertThat(entry.getTargetId()).isEqualTo(artifact.getId());
     }
 
     @Test

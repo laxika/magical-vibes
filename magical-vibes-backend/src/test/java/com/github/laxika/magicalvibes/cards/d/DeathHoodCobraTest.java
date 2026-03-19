@@ -67,7 +67,7 @@ class DeathHoodCobraTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Death-Hood Cobra");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(cobra.getId());
+        assertThat(entry.getTargetId()).isEqualTo(cobra.getId());
     }
 
     @Test
@@ -118,7 +118,7 @@ class DeathHoodCobraTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Death-Hood Cobra");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(cobra.getId());
+        assertThat(entry.getTargetId()).isEqualTo(cobra.getId());
     }
 
     @Test

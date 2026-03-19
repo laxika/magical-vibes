@@ -62,7 +62,7 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(TapOrUntapTargetPermanentEffect.class)
     private void resolveTapOrUntapTargetPermanent(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -103,7 +103,7 @@ public class TapUntapResolutionService {
         }
 
         // Single-target fallback
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -122,7 +122,7 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(SkipNextUntapOnTargetEffect.class)
     private void resolveSkipNextUntapOnTarget(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -136,7 +136,7 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(PreventTargetUntapWhileSourceTappedEffect.class)
     private void resolvePreventTargetUntapWhileSourceTapped(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -155,7 +155,7 @@ public class TapUntapResolutionService {
     @HandlesEffect(UntapAllTargetPermanentsEffect.class)
     private void resolveUntapAllTargetPermanents(GameData gameData, StackEntry entry) {
         List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
-                ? (entry.getTargetPermanentId() != null ? List.of(entry.getTargetPermanentId()) : List.of())
+                ? (entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of())
                 : entry.getTargetPermanentIds();
 
         for (UUID targetId : targetIds) {
@@ -174,7 +174,7 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(UntapTargetPermanentEffect.class)
     private void resolveUntapTargetPermanent(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -189,7 +189,7 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(UntapSelfEffect.class)
     private void resolveUntapSelf(GameData gameData, StackEntry entry) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (self == null) {
             return;
         }
@@ -249,7 +249,7 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(TapPermanentsOfTargetPlayerEffect.class)
     private void resolveTapPermanentsOfTargetPlayer(GameData gameData, StackEntry entry, TapPermanentsOfTargetPlayerEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
@@ -280,7 +280,7 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(SkipNextUntapPermanentsOfTargetPlayerEffect.class)
     private void resolveSkipNextUntapPermanentsOfTargetPlayer(GameData gameData, StackEntry entry, SkipNextUntapPermanentsOfTargetPlayerEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }

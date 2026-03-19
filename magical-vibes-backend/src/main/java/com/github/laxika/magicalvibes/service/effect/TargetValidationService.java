@@ -29,14 +29,14 @@ public class TargetValidationService {
     }
 
     public void requireTarget(TargetValidationContext ctx) {
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Ability requires a target");
         }
     }
 
     public Permanent requireBattlefieldTarget(TargetValidationContext ctx) {
         requireTarget(ctx);
-        Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
         if (target == null) {
             throw new IllegalStateException("Invalid target permanent");
         }
@@ -62,10 +62,10 @@ public class TargetValidationService {
     }
 
     public void requireTargetPlayer(TargetValidationContext ctx) {
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Ability requires a target player");
         }
-        if (!ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
+        if (!ctx.gameData().playerIds.contains(ctx.targetId())) {
             throw new IllegalStateException("Target must be a player");
         }
     }

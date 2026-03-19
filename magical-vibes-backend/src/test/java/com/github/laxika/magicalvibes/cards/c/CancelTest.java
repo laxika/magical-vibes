@@ -53,7 +53,7 @@ class CancelTest extends BaseCardTest {
         StackEntry cancelEntry = gd.stack.getLast();
         assertThat(cancelEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
-        assertThat(cancelEntry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(cancelEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
@@ -77,7 +77,7 @@ class CancelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry cancelEntry = gd.stack.getLast();
         assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
-        assertThat(cancelEntry.getTargetPermanentId()).isEqualTo(might.getId());
+        assertThat(cancelEntry.getTargetId()).isEqualTo(might.getId());
     }
 
     // ===== Resolving =====

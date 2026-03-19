@@ -121,7 +121,7 @@ class CallToMindTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(instant.getId());
+        assertThat(entry.getTargetId()).isEqualTo(instant.getId());
         assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
     }
 }

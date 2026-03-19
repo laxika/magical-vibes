@@ -61,7 +61,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(elf.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(elf.getId());
 
         harness.passBothPriorities();
 

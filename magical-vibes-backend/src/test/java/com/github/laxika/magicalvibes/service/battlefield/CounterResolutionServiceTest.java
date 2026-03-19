@@ -94,9 +94,9 @@ class CounterResolutionServiceTest {
                 card.getName(), List.of());
     }
 
-    private StackEntry instantSpellEntry(Card card, UUID controllerId, UUID targetPermanentId) {
+    private StackEntry instantSpellEntry(Card card, UUID controllerId, UUID targetId) {
         return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
-                card.getName(), List.of(new CounterSpellEffect()), 0, targetPermanentId, null);
+                card.getName(), List.of(new CounterSpellEffect()), 0, targetId, null);
     }
 
     private StackEntry counterSpellEntry(Card card, UUID controllerId, UUID targetCardId) {
@@ -228,7 +228,7 @@ class CounterResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("Does nothing when targetPermanentId is null")
+        @DisplayName("Does nothing when targetId is null")
         void doesNothingWhenTargetIdIsNull() {
             Card cancel = createInstantCard("Cancel");
             StackEntry cancelEntry = counterSpellEntry(cancel, player2Id, null);
@@ -336,7 +336,7 @@ class CounterResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("Does nothing when targetPermanentId is null")
+        @DisplayName("Does nothing when targetId is null")
         void doesNothingWhenTargetIdIsNull() {
             Card dissipate = createInstantCard("Dissipate");
             StackEntry dissipateEntry = counterAndExileEntry(dissipate, player2Id, null);
@@ -422,7 +422,7 @@ class CounterResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("Does nothing when targetPermanentId is null")
+        @DisplayName("Does nothing when targetId is null")
         void doesNothingWhenTargetIdIsNull() {
             Card corruptedResolve = createInstantCard("Corrupted Resolve");
             StackEntry counterEntry = counterIfPoisonedEntry(corruptedResolve, player2Id, null);
@@ -565,7 +565,7 @@ class CounterResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("Does nothing when targetPermanentId is null")
+        @DisplayName("Does nothing when targetId is null")
         void doesNothingWhenTargetIdIsNull() {
             Card hatchling = createCard("Spiketail Hatchling");
             StackEntry counterEntry = counterUnlessPaysEntry(hatchling, player2Id, null, 1);

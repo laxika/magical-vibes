@@ -59,7 +59,7 @@ class DiscombobulateTest extends BaseCardTest {
         StackEntry discombobulateEntry = gd.stack.getLast();
         assertThat(discombobulateEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(discombobulateEntry.getCard().getName()).isEqualTo("Discombobulate");
-        assertThat(discombobulateEntry.getTargetPermanentId()).isEqualTo(bearsCardId);
+        assertThat(discombobulateEntry.getTargetId()).isEqualTo(bearsCardId);
     }
 
     // ===== Resolving =====

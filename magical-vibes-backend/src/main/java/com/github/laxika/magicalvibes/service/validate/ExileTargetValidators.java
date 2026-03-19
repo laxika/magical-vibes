@@ -21,10 +21,10 @@ public class ExileTargetValidators {
         if (ctx.targetZone() != Zone.EXILE) {
             throw new IllegalStateException("Effect requires an exile target");
         }
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Effect requires a target card");
         }
-        Card exiledCard = gameQueryService.findCardInExileById(ctx.gameData(), ctx.targetPermanentId());
+        Card exiledCard = gameQueryService.findCardInExileById(ctx.gameData(), ctx.targetId());
         if (exiledCard == null) {
             throw new IllegalStateException("Target card not found in exile");
         }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Draws cards for the player stored in the stack entry's targetPermanentId field
+ * Draws cards for the player stored in the stack entry's targetId field
  * (typically the active player whose draw/upkeep step triggered the ability).
  *
  * @param amount                 number of cards to draw

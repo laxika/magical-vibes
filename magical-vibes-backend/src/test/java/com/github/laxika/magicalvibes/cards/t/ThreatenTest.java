@@ -57,7 +57,7 @@ class ThreatenTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Threaten");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     @Test

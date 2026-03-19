@@ -227,7 +227,7 @@ public class Permanent {
         this.blockingTargets.add(blockingTarget);
     }
 
-    public void addBlockingTargetPermanentId(UUID permanentId) {
+    public void addBlockingTargetId(UUID permanentId) {
         this.blockingTargetPermanentIds.add(permanentId);
     }
 

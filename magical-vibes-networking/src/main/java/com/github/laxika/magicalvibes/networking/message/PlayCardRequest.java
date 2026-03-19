@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments,
+public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                               List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,
                               UUID sacrificePermanentId, Integer phyrexianLifeCount, UUID fromExileCardId,
                               List<UUID> alternateCostSacrificePermanentIds, Boolean flashback,

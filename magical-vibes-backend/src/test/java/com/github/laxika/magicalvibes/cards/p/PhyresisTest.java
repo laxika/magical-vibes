@@ -60,7 +60,7 @@ class PhyresisTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Phyresis");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(creature.getId());
+        assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
     // ===== Resolution: infect keyword =====

@@ -50,7 +50,7 @@ class PestilentSouleaterTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Pestilent Souleater");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(souleater.getId());
+        assertThat(entry.getTargetId()).isEqualTo(souleater.getId());
     }
 
     @Test

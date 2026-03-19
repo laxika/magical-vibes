@@ -54,7 +54,7 @@ class VoltaicKeyTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Voltaic Key");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     @Test

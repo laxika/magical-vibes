@@ -175,7 +175,7 @@ class WildEvocationTest extends BaseCardTest {
 
         assertThat(gd.stack)
                 .anyMatch(se -> se.getCard().getName().equals("Lightning Bolt")
-                        && se.getTargetPermanentId().equals(creature.getId()));
+                        && se.getTargetId().equals(creature.getId()));
     }
 
     @Test

@@ -49,7 +49,7 @@ class AshmouthHoundTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Ashmouth Hound");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(attacker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
 
         harness.passBothPriorities();
 
@@ -76,7 +76,7 @@ class AshmouthHoundTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getTargetPermanentId()).isEqualTo(blocker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
         assertThat(entry.getSourcePermanentId()).isEqualTo(hound.getId());
 
         harness.passBothPriorities();

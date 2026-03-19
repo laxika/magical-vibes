@@ -51,7 +51,7 @@ public class PermanentChoiceTriggerHandlerService {
                 stt.sourceCard().getName() + "'s ability",
                 new ArrayList<>(stt.effects())
         );
-        entry.setTargetPermanentId(permanentId);
+        entry.setTargetId(permanentId);
         gameData.stack.add(entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);
@@ -81,7 +81,7 @@ public class PermanentChoiceTriggerHandlerService {
                 dtt.discardedCard().getName() + "'s ability",
                 new ArrayList<>(dtt.effects())
         );
-        entry.setTargetPermanentId(permanentId);
+        entry.setTargetId(permanentId);
         gameData.stack.add(entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);
@@ -116,7 +116,7 @@ public class PermanentChoiceTriggerHandlerService {
                 dtt.dyingCard().getName() + "'s ability",
                 new ArrayList<>(dtt.effects())
         );
-        entry.setTargetPermanentId(permanentId);
+        entry.setTargetId(permanentId);
         gameData.stack.add(entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);
@@ -145,7 +145,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (gameData.resolvedMayTargetingEntry != null) {
             StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
             gameData.resolvedMayTargetingEntry = null;
-            pendingEntry.setTargetPermanentId(permanentId);
+            pendingEntry.setTargetId(permanentId);
 
             Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
             boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
@@ -178,7 +178,7 @@ public class PermanentChoiceTriggerHandlerService {
                     mat.sourceCard().getName() + "'s ability",
                     new ArrayList<>(mat.effects())
             );
-            entry.setTargetPermanentId(permanentId);
+            entry.setTargetId(permanentId);
             gameData.stack.add(entry);
 
             if (isPlayerTarget) {
@@ -219,7 +219,7 @@ public class PermanentChoiceTriggerHandlerService {
                     null,
                     att.sourcePermanentId()
             );
-            entry.setTargetPermanentId(permanentId);
+            entry.setTargetId(permanentId);
             gameData.stack.add(entry);
 
             String logEntry = att.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
@@ -250,7 +250,7 @@ public class PermanentChoiceTriggerHandlerService {
                     ett.emblemDescription() + "'s ability",
                     new ArrayList<>(ett.effects())
             );
-            entry.setTargetPermanentId(permanentId);
+            entry.setTargetId(permanentId);
             gameData.stack.add(entry);
 
             String logEntry = ett.emblemDescription() + "'s ability targets " + target.getCard().getName() + ".";
@@ -330,7 +330,7 @@ public class PermanentChoiceTriggerHandlerService {
                     null,
                     uct.sourcePermanentId()
             );
-            entry.setTargetPermanentId(permanentId);
+            entry.setTargetId(permanentId);
             gameData.stack.add(entry);
 
             String logEntry = uct.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";

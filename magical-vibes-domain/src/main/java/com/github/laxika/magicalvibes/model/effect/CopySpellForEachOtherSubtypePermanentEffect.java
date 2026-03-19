@@ -21,7 +21,7 @@ public record CopySpellForEachOtherSubtypePermanentEffect(
         CardSubtype subtype,
         StackEntry spellSnapshot,
         UUID castingPlayerId,
-        UUID originalTargetPermanentId
+        UUID originalTargetId
 ) implements CardEffect {
 
     /** Card definition constructor — trigger marker only. */

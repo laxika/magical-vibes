@@ -302,7 +302,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(GainLifeEqualToTargetToughnessEffect.class)
     private void resolveGainLifeEqualToTargetToughness(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
@@ -375,7 +375,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(DoubleTargetPlayerLifeEffect.class)
     private void resolveDoubleTargetPlayerLife(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         int currentLife = gameData.getLife(targetPlayerId);
         int newLife = currentLife * 2;
 
@@ -497,7 +497,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(TargetSpellControllerLosesLifeEffect.class)
     private void resolveTargetSpellControllerLosesLife(GameData gameData, StackEntry entry, TargetSpellControllerLosesLifeEffect effect) {
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
         for (StackEntry se : gameData.stack) {
@@ -603,7 +603,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class)
     private void resolveTargetPlayerLosesLifeAndControllerGainsLife(GameData gameData, StackEntry entry, TargetPlayerLosesLifeAndControllerGainsLifeEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
 
         // Target loses life
@@ -627,7 +627,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(DrainLifePerControlledPermanentEffect.class)
     private void resolveDrainLifePerControlledPermanent(GameData gameData, StackEntry entry, DrainLifePerControlledPermanentEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
 
         // Count matching permanents the controller controls
@@ -661,7 +661,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(TargetPlayerLosesLifeEffect.class)
     private void resolveTargetPlayerLosesLife(GameData gameData, StackEntry entry, TargetPlayerLosesLifeEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
 
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
@@ -678,7 +678,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(TargetPlayerGainsLifeEffect.class)
     private void resolveTargetPlayerGainsLife(GameData gameData, StackEntry entry, TargetPlayerGainsLifeEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null) {
             return;
         }
@@ -749,7 +749,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(GiveTargetPlayerPoisonCountersEffect.class)
     private void resolveGiveTargetPlayerPoisonCounters(GameData gameData, StackEntry entry, GiveTargetPlayerPoisonCountersEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null) {
             return;
         }
@@ -772,7 +772,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(GiveControllerPoisonCountersOnTargetDeathThisTurnEffect.class)
     private void resolveGiveControllerPoisonCountersOnTargetDeathThisTurn(GameData gameData, StackEntry entry, GiveControllerPoisonCountersOnTargetDeathThisTurnEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             log.info("Game {} - Target creature no longer on battlefield, delayed poison trigger not registered", gameData.id);
             return;

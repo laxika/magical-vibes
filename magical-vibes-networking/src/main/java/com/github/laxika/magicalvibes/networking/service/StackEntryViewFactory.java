@@ -31,7 +31,7 @@ public class StackEntryViewFactory {
                 entry.getDescription(),
                 entry.getCard().getId(),
                 SPELL_TYPES.contains(entry.getEntryType()),
-                entry.getTargetPermanentId()
+                entry.getTargetId()
         );
     }
 }

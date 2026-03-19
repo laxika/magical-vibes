@@ -72,7 +72,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Guerrilla Tactics");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -88,7 +88,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     // ===== Spell damage (2 damage) =====
@@ -350,7 +350,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Guerrilla Tactics");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player1.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player1.getId());
     }
 
     // ===== Interaction with Megrim =====

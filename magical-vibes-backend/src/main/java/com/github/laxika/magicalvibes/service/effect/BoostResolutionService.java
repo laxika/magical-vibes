@@ -44,7 +44,7 @@ public class BoostResolutionService {
 
     @HandlesEffect(BoostSelfEffect.class)
     private void resolveBoostSelf(GameData gameData, StackEntry entry, BoostSelfEffect boost) {
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
@@ -61,7 +61,7 @@ public class BoostResolutionService {
 
     @HandlesEffect(BoostSelfPerBlockingCreatureEffect.class)
     private void resolveBoostSelfPerBlockingCreature(GameData gameData, StackEntry entry, BoostSelfPerBlockingCreatureEffect boost) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (self == null) {
             return;
         }
@@ -103,7 +103,7 @@ public class BoostResolutionService {
 
     @HandlesEffect(BoostSelfPerControlledPermanentEffect.class)
     private void resolveBoostSelfPerControlledPermanent(GameData gameData, StackEntry entry, BoostSelfPerControlledPermanentEffect boost) {
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
@@ -136,7 +136,7 @@ public class BoostResolutionService {
 
     @HandlesEffect(BoostTargetCreaturePerControlledPermanentEffect.class)
     private void resolveBoostTargetCreaturePerControlledPermanent(GameData gameData, StackEntry entry, BoostTargetCreaturePerControlledPermanentEffect boost) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -187,7 +187,7 @@ public class BoostResolutionService {
         }
 
         // Single-target fallback
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -207,7 +207,7 @@ public class BoostResolutionService {
         int powerBoost = effect.powerMultiplier() * xValue;
         int toughnessBoost = effect.toughnessMultiplier() * xValue;
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -224,7 +224,7 @@ public class BoostResolutionService {
 
     @HandlesEffect(SwitchPowerToughnessEffect.class)
     private void resolveSwitchPowerToughness(GameData gameData, StackEntry entry, SwitchPowerToughnessEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -412,7 +412,7 @@ public class BoostResolutionService {
 
     @HandlesEffect(SetBasePowerToughnessUntilEndOfTurnEffect.class)
     private void resolveSetBasePowerToughness(GameData gameData, StackEntry entry, SetBasePowerToughnessUntilEndOfTurnEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }

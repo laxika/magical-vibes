@@ -107,7 +107,7 @@ class BloodthroneVampireTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Bloodthrone Vampire");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(vampPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(vampPerm.getId());
         assertThat(entry.isNonTargeting()).isTrue();
     }
 

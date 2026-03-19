@@ -35,10 +35,10 @@ public class GraveyardTargetValidators {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Effect requires a graveyard target");
         }
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Effect requires a target card");
         }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
@@ -56,10 +56,10 @@ public class GraveyardTargetValidators {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Spell requires a graveyard target");
         }
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Spell requires a target card");
         }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
@@ -74,10 +74,10 @@ public class GraveyardTargetValidators {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Ability requires a graveyard target");
         }
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Ability requires a target card");
         }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
@@ -91,10 +91,10 @@ public class GraveyardTargetValidators {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Ability requires a graveyard target");
         }
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Ability requires a target card");
         }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
@@ -108,10 +108,10 @@ public class GraveyardTargetValidators {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Spell requires a graveyard target");
         }
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Spell requires a target card");
         }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
@@ -126,10 +126,10 @@ public class GraveyardTargetValidators {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Ability requires a graveyard target");
         }
-        if (ctx.targetPermanentId() == null) {
+        if (ctx.targetId() == null) {
             throw new IllegalStateException("Ability requires a target card");
         }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetPermanentId());
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
@@ -139,7 +139,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
-        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetPermanentId());
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
         UUID controllerId = tvs.findSourcePermanentController(ctx);
         if (graveyardOwnerId != null && graveyardOwnerId.equals(controllerId)) {
             throw new IllegalStateException("Target must be in an opponent's graveyard");

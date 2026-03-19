@@ -50,7 +50,7 @@ class AssaultStrobeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Assault Strobe");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetId);
     }
 
     @Test

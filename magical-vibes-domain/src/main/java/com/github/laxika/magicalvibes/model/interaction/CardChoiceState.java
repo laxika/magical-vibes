@@ -8,12 +8,12 @@ public class CardChoiceState {
 
     private UUID playerId;
     private Set<Integer> validIndices;
-    private UUID targetPermanentId;
+    private UUID targetId;
 
-    public CardChoiceState(UUID playerId, Set<Integer> validIndices, UUID targetPermanentId) {
+    public CardChoiceState(UUID playerId, Set<Integer> validIndices, UUID targetId) {
         this.playerId = playerId;
         this.validIndices = validIndices;
-        this.targetPermanentId = targetPermanentId;
+        this.targetId = targetId;
     }
 
     public UUID playerId() {
@@ -24,15 +24,15 @@ public class CardChoiceState {
         return validIndices;
     }
 
-    public UUID targetPermanentId() {
-        return targetPermanentId;
+    public UUID targetId() {
+        return targetId;
     }
 
     public CardChoiceState deepCopy() {
         return new CardChoiceState(
                 playerId,
                 validIndices != null ? new HashSet<>(validIndices) : null,
-                targetPermanentId
+                targetId
         );
     }
 }

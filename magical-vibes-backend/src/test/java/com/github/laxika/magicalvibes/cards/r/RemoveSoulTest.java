@@ -61,7 +61,7 @@ class RemoveSoulTest extends BaseCardTest {
         StackEntry removeSoulEntry = gd.stack.getLast();
         assertThat(removeSoulEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(removeSoulEntry.getCard().getName()).isEqualTo("Remove Soul");
-        assertThat(removeSoulEntry.getTargetPermanentId()).isEqualTo(elves.getId());
+        assertThat(removeSoulEntry.getTargetId()).isEqualTo(elves.getId());
     }
 
     @Test

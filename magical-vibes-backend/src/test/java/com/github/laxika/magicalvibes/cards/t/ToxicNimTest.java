@@ -73,7 +73,7 @@ class ToxicNimTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Toxic Nim");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(perm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(perm.getId());
     }
 
     @Test

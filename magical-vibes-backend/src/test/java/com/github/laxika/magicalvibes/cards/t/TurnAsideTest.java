@@ -67,7 +67,7 @@ class TurnAsideTest extends BaseCardTest {
         StackEntry turnAsideEntry = gd.stack.getLast();
         assertThat(turnAsideEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(turnAsideEntry.getCard().getName()).isEqualTo("Turn Aside");
-        assertThat(turnAsideEntry.getTargetPermanentId()).isEqualTo(shock.getId());
+        assertThat(turnAsideEntry.getTargetId()).isEqualTo(shock.getId());
     }
 
     @Test

@@ -42,7 +42,7 @@ public class TurnResolutionService {
 
     @HandlesEffect(ExtraTurnEffect.class)
     void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
@@ -101,7 +101,7 @@ public class TurnResolutionService {
 
     @HandlesEffect(ControlTargetPlayerNextTurnEffect.class)
     void resolveControlTargetPlayerNextTurn(GameData gameData, StackEntry entry, ControlTargetPlayerNextTurnEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }

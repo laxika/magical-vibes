@@ -61,7 +61,7 @@ class SmiteTheMonstrousTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Smite the Monstrous");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(wurm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(wurm.getId());
     }
 
     @Test

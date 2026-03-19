@@ -81,7 +81,7 @@ class NantukoShadeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Nantuko Shade");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(shadePerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(shadePerm.getId());
     }
 
     @Test

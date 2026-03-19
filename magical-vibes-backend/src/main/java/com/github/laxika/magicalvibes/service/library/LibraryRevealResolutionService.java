@@ -74,7 +74,7 @@ public class LibraryRevealResolutionService {
      */
     @HandlesEffect(RevealTopCardOfLibraryEffect.class)
     void resolveRevealTopCardOfLibrary(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
@@ -679,7 +679,7 @@ public class LibraryRevealResolutionService {
             LookAtTopCardsOfTargetLibraryMayExileOneEffect effect
     ) {
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);

@@ -118,7 +118,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 Integer xValue = null;
                 var tapAction = tapPermanentAction();
                 if (castCost.hasX()) {
-                    int smartX = manaManager.calculateSmartX(gameData, card, pc.targetPermanentId(), virtualPool);
+                    int smartX = manaManager.calculateSmartX(gameData, card, pc.targetId(), virtualPool);
                     if (smartX <= 0) {
                         return false;
                     }
@@ -131,7 +131,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         xValue != null ? " (X=" + xValue + ")" : "", gameId);
                 int handSizeBefore = hand.size();
                 final int cardIndex = pc.handIndex();
-                final UUID targetId = pc.targetPermanentId();
+                final UUID targetId = pc.targetId();
                 final Integer finalXValue = xValue;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
                         new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null, null, null, null, null, null, null, null)));

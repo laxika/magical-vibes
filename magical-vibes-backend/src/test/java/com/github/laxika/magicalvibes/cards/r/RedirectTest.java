@@ -63,7 +63,7 @@ class RedirectTest extends BaseCardTest {
         StackEntry redirectEntry = gd.stack.getLast();
         assertThat(redirectEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(redirectEntry.getCard().getName()).isEqualTo("Redirect");
-        assertThat(redirectEntry.getTargetPermanentId()).isEqualTo(boomerang.getId());
+        assertThat(redirectEntry.getTargetId()).isEqualTo(boomerang.getId());
     }
 
     @Test
@@ -151,7 +151,7 @@ class RedirectTest extends BaseCardTest {
         StackEntry boomerangEntry = gd.stack.stream()
                 .filter(se -> se.getCard().getName().equals("Boomerang"))
                 .findFirst().orElseThrow();
-        assertThat(boomerangEntry.getTargetPermanentId()).isEqualTo(bears2PermId);
+        assertThat(boomerangEntry.getTargetId()).isEqualTo(bears2PermId);
 
         // Resolve Boomerang — bounces player2's bears
         harness.passBothPriorities();

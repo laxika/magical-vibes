@@ -104,7 +104,7 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
         // Should target the Air Elemental (biggest threat)
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(airElemental.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
     }
 
     @Test

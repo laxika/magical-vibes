@@ -31,7 +31,7 @@ class CathedralMembraneTest extends BaseCardTest {
         membranePerm.setSummoningSick(false);
         membranePerm.setBlocking(true);
         membranePerm.addBlockingTarget(0);
-        membranePerm.addBlockingTargetPermanentId(attackerPerm.getId());
+        membranePerm.addBlockingTargetId(attackerPerm.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

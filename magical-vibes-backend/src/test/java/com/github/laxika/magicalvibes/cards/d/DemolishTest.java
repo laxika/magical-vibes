@@ -51,7 +51,7 @@ class DemolishTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Demolish");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     // ===== Resolving =====

@@ -19,7 +19,7 @@ public class StackEntry {
     private final String description;
     private final List<CardEffect> effectsToResolve;
     private final int xValue;
-    @Setter private UUID targetPermanentId;
+    @Setter private UUID targetId;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
     private final Zone targetZone;
@@ -40,7 +40,7 @@ public class StackEntry {
         this.description = card.getName();
         this.effectsToResolve = List.of();
         this.xValue = 0;
-        this.targetPermanentId = null;
+        this.targetId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;
@@ -57,7 +57,7 @@ public class StackEntry {
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
-        this.targetPermanentId = null;
+        this.targetId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;
@@ -74,7 +74,7 @@ public class StackEntry {
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
-        this.targetPermanentId = null;
+        this.targetId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;
@@ -84,14 +84,14 @@ public class StackEntry {
     }
 
     // Targeted or damage distribution spell constructor
-    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, UUID targetPermanentId, Map<UUID, Integer> damageAssignments) {
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, UUID targetId, Map<UUID, Integer> damageAssignments) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
-        this.targetPermanentId = targetPermanentId;
+        this.targetId = targetId;
         this.sourcePermanentId = null;
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
         this.targetZone = null;
@@ -101,14 +101,14 @@ public class StackEntry {
     }
 
     // Triggered ability with source and target permanent constructor
-    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetPermanentId, UUID sourcePermanentId) {
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetId, UUID sourcePermanentId) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
-        this.targetPermanentId = targetPermanentId;
+        this.targetId = targetId;
         this.sourcePermanentId = sourcePermanentId;
         this.damageAssignments = Map.of();
         this.targetZone = null;
@@ -118,14 +118,14 @@ public class StackEntry {
     }
 
     // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
-    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetPermanentId, Zone targetZone) {
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetId, Zone targetZone) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
-        this.targetPermanentId = targetPermanentId;
+        this.targetId = targetId;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = targetZone;
@@ -136,7 +136,7 @@ public class StackEntry {
 
     // Spell copy constructor - preserves all fields from the original stack entry
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
-                      List<CardEffect> effectsToResolve, int xValue, UUID targetPermanentId,
+                      List<CardEffect> effectsToResolve, int xValue, UUID targetId,
                       UUID sourcePermanentId, Map<UUID, Integer> damageAssignments,
                       Zone targetZone, List<UUID> targetCardIds, List<UUID> targetPermanentIds) {
         this.entryType = entryType;
@@ -145,7 +145,7 @@ public class StackEntry {
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
-        this.targetPermanentId = targetPermanentId;
+        this.targetId = targetId;
         this.sourcePermanentId = sourcePermanentId;
         this.damageAssignments = damageAssignments != null ? damageAssignments : Map.of();
         this.targetZone = targetZone;
@@ -162,7 +162,7 @@ public class StackEntry {
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = 0;
-        this.targetPermanentId = null;
+        this.targetId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;
@@ -182,7 +182,7 @@ public class StackEntry {
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.xValue = source.xValue;
-        this.targetPermanentId = source.targetPermanentId;
+        this.targetId = source.targetId;
         this.sourcePermanentId = source.sourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new HashMap<>(source.damageAssignments);
         this.targetZone = source.targetZone;
@@ -204,7 +204,7 @@ public class StackEntry {
         this.description = description;
         this.effectsToResolve = effectsToResolve;
         this.xValue = xValue;
-        this.targetPermanentId = null;
+        this.targetId = null;
         this.sourcePermanentId = null;
         this.damageAssignments = Map.of();
         this.targetZone = null;

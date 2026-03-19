@@ -93,7 +93,7 @@ class PistonSledgeTest extends BaseCardTest {
         StackEntry etb = gd.stack.getFirst();
         assertThat(etb.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(etb.getCard().getName()).isEqualTo("Piston Sledge");
-        assertThat(etb.getTargetPermanentId()).isEqualTo(bearsId);
+        assertThat(etb.getTargetId()).isEqualTo(bearsId);
     }
 
     @Test

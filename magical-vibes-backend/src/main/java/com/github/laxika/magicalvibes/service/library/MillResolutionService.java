@@ -49,7 +49,7 @@ public class MillResolutionService {
      */
     @HandlesEffect(MillByHandSizeEffect.class)
     void resolveMillByHandSize(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         int handSize = hand != null ? hand.size() : 0;
 
@@ -77,7 +77,7 @@ public class MillResolutionService {
      */
     @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
-        graveyardService.resolveMillPlayer(gameData, entry.getTargetPermanentId(), mill.count());
+        graveyardService.resolveMillPlayer(gameData, entry.getTargetId(), mill.count());
     }
 
     /**
@@ -98,7 +98,7 @@ public class MillResolutionService {
      */
     @HandlesEffect(ExileTopCardsRepeatOnDuplicateEffect.class)
     void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, StackEntry entry, ExileTopCardsRepeatOnDuplicateEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -157,7 +157,7 @@ public class MillResolutionService {
      */
     @HandlesEffect(MillTargetPlayerByChargeCountersEffect.class)
     void resolveMillTargetPlayerByChargeCounters(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         int chargeCounters = entry.getXValue();
 
         if (chargeCounters <= 0) {
@@ -177,7 +177,7 @@ public class MillResolutionService {
      */
     @HandlesEffect(MillHalfLibraryEffect.class)
     void resolveMillHalfLibrary(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
@@ -199,7 +199,7 @@ public class MillResolutionService {
     @HandlesEffect(MillBottomOfTargetLibraryConditionalTokenEffect.class)
     void resolveMillBottomOfTargetLibraryConditionalToken(GameData gameData, StackEntry entry,
                                                           MillBottomOfTargetLibraryConditionalTokenEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
         String sourceName = entry.getCard().getName();
@@ -238,7 +238,7 @@ public class MillResolutionService {
      */
     @HandlesEffect(MillTargetPlayerAndBoostSelfByManaValueEffect.class)
     void resolveMillTargetPlayerAndBoostSelfByManaValue(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String cardName = entry.getCard().getName();
         String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);

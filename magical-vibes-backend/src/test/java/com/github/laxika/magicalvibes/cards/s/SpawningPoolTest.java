@@ -92,7 +92,7 @@ class SpawningPoolTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Spawning Pool");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(pool.getId());
+        assertThat(entry.getTargetId()).isEqualTo(pool.getId());
     }
 
     @Test

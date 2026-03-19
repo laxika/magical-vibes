@@ -299,10 +299,10 @@ class FrostTitanTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void castFrostTitan(UUID targetPermanentId) {
+    private void castFrostTitan(UUID targetId) {
         harness.setHand(player1, List.of(new FrostTitan()));
         harness.addMana(player1, ManaColor.BLUE, 6);
-        harness.castCreature(player1, 0, 0, targetPermanentId);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     private Permanent addReadyFrostTitan(com.github.laxika.magicalvibes.model.Player player) {

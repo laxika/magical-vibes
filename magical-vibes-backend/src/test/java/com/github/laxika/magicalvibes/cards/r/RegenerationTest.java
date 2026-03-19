@@ -46,7 +46,7 @@ class RegenerationTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Regeneration");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test

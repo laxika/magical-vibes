@@ -81,7 +81,7 @@ class ChimericStaffTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Chimeric Staff");
         assertThat(entry.getXValue()).isEqualTo(3);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(staffPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(staffPerm.getId());
     }
 
     @Test

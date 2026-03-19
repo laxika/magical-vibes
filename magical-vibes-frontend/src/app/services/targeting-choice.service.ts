@@ -325,11 +325,11 @@ export class TargetingChoiceService {
     this.targetingPrompt = 'Choose a target for ' + card.name + ' (flashback).';
   }
 
-  private sendPlayCardMessage(cardIndex: number, targetPermanentId: string | null, extra?: Record<string, any>): void {
+  private sendPlayCardMessage(cardIndex: number, targetId: string | null, extra?: Record<string, any>): void {
     const msg: any = {
       type: MessageType.PLAY_CARD,
       cardIndex,
-      targetPermanentId
+      targetId
     };
     if (this.pendingPhyrexianLifeCount != null) {
       msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
@@ -414,7 +414,7 @@ export class TargetingChoiceService {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
         abilityIndex: this.targetingAbilityIndex,
-        targetPermanentId: permanentId
+        targetId: permanentId
       };
       if (this.pendingAbilityXValue != null) {
         msg.xValue = this.pendingAbilityXValue;
@@ -449,7 +449,7 @@ export class TargetingChoiceService {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
         abilityIndex: this.targetingAbilityIndex,
-        targetPermanentId: playerId
+        targetId: playerId
       });
     } else {
       const extra: Record<string, any> = {};
@@ -487,7 +487,7 @@ export class TargetingChoiceService {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingSpellCardIndex,
         abilityIndex: this.targetingAbilityIndex,
-        targetPermanentId: entry.cardId
+        targetId: entry.cardId
       });
     } else {
       this.sendPlayCardMessage(this.targetingSpellCardIndex, entry.cardId);
@@ -689,7 +689,7 @@ export class TargetingChoiceService {
         msg.targetPermanentIds = this.pendingMultiTargetIds;
       } else {
         // Single-target card that went through convoke flow
-        msg.targetPermanentId = this.pendingMultiTargetIds[0];
+        msg.targetId = this.pendingMultiTargetIds[0];
       }
     }
   }

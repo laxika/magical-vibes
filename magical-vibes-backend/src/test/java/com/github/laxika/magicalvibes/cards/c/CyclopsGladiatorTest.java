@@ -61,7 +61,7 @@ class CyclopsGladiatorTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(se ->
                 se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Cyclops Gladiator")
-                        && se.getTargetPermanentId().equals(opponentCreature.getId())
+                        && se.getTargetId().equals(opponentCreature.getId())
                         && se.getSourcePermanentId().equals(cyclops.getId()));
     }
 

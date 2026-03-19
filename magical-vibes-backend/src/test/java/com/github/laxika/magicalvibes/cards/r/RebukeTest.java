@@ -43,7 +43,7 @@ class RebukeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Rebuke");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(attacker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test

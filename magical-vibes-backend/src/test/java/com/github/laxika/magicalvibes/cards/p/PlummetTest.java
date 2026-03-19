@@ -60,7 +60,7 @@ class PlummetTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Plummet");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(airElemental.getId());
+        assertThat(entry.getTargetId()).isEqualTo(airElemental.getId());
     }
 
     @Test

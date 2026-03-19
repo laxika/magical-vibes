@@ -70,7 +70,7 @@ class TwincastTest extends BaseCardTest {
         StackEntry twincastEntry = gd.stack.getLast();
         assertThat(twincastEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(twincastEntry.getCard().getName()).isEqualTo("Twincast");
-        assertThat(twincastEntry.getTargetPermanentId()).isEqualTo(counselCardId);
+        assertThat(twincastEntry.getTargetId()).isEqualTo(counselCardId);
     }
 
     @Test
@@ -281,7 +281,7 @@ class TwincastTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         StackEntry copyEntry = gd.stack.getLast();
         assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
-        assertThat(copyEntry.getTargetPermanentId()).isEqualTo(bearsPermId);
+        assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
     }
 
     @Test
@@ -576,7 +576,7 @@ class TwincastTest extends BaseCardTest {
         // Verify the copy's target changed
         StackEntry copyEntry = gd.stack.getLast();
         assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
-        assertThat(copyEntry.getTargetPermanentId()).isEqualTo(bears2PermId);
+        assertThat(copyEntry.getTargetId()).isEqualTo(bears2PermId);
 
         // Resolve copy → bounces player2's bears
         harness.passBothPriorities();

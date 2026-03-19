@@ -57,7 +57,7 @@ class RighteousnessTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Righteousness");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(blockerPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(blockerPerm.getId());
     }
 
     @Test

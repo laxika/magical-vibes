@@ -105,15 +105,15 @@ class BounceResolutionServiceTest {
                 card.getName() + " trigger", effects, (UUID) null, sourcePermanentId);
     }
 
-    private StackEntry entryWithTarget(Card card, UUID controllerId, List<CardEffect> effects, UUID targetPermanentId) {
+    private StackEntry entryWithTarget(Card card, UUID controllerId, List<CardEffect> effects, UUID targetId) {
         return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                card.getName(), effects, 0, targetPermanentId, null);
+                card.getName(), effects, 0, targetId, null);
     }
 
     private StackEntry entryWithTargetAndSource(Card card, UUID controllerId, List<CardEffect> effects,
-                                                UUID targetPermanentId, UUID sourcePermanentId) {
+                                                UUID targetId, UUID sourcePermanentId) {
         return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                card.getName() + " trigger", effects, targetPermanentId, sourcePermanentId);
+                card.getName() + " trigger", effects, targetId, sourcePermanentId);
     }
 
     // =========================================================================

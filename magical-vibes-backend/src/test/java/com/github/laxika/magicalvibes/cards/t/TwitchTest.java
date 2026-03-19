@@ -58,7 +58,7 @@ class TwitchTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Twitch");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
     @Test

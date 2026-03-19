@@ -86,7 +86,7 @@ class WaterServantTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Water Servant");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(servantPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(servantPerm.getId());
     }
 
     @Test

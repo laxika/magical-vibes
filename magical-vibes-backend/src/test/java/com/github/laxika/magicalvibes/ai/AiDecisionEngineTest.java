@@ -117,7 +117,7 @@ class AiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(airElemental.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
     }
 
     @Test
@@ -146,7 +146,7 @@ class AiDecisionEngineTest {
         // AI should cast on the Grizzly Bears instead
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
@@ -201,7 +201,7 @@ class AiDecisionEngineTest {
 
         // Should target one of the unpacified bears (both 2/2, either is valid)
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId())
+        assertThat(gd.stack.getFirst().getTargetId())
                 .isIn(bears1.getId(), bears2.getId());
     }
 
@@ -227,7 +227,7 @@ class AiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Holy Strength");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
     }
 
     // ===== No target available =====
@@ -267,7 +267,7 @@ class AiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Awakener Druid");
         // Target must be one of the AI's Forests
-        UUID targetId = gd.stack.getFirst().getTargetPermanentId();
+        UUID targetId = gd.stack.getFirst().getTargetId();
         assertThat(gd.playerBattlefields.get(aiPlayer.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
                 .findFirst()
@@ -469,7 +469,7 @@ class AiDecisionEngineTest {
         // AI should cast Aven Cloudchaser targeting the enchantment, not the creature
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Aven Cloudchaser");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(chorus.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(chorus.getId());
     }
 
     @Test

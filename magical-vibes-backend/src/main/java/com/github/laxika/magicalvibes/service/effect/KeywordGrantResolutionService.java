@@ -89,8 +89,8 @@ public class KeywordGrantResolutionService {
         }
 
         UUID targetId = switch (grant.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
-            case TARGET -> entry.getTargetPermanentId();
+            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            case TARGET -> entry.getTargetId();
             default -> null;
         };
         if (targetId == null) {
@@ -111,7 +111,7 @@ public class KeywordGrantResolutionService {
 
     @HandlesEffect(GrantChosenKeywordToTargetEffect.class)
     private void resolveGrantChosenKeyword(GameData gameData, StackEntry entry, GrantChosenKeywordToTargetEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -121,7 +121,7 @@ public class KeywordGrantResolutionService {
 
     @HandlesEffect(GrantColorUntilEndOfTurnEffect.class)
     private void resolveGrantColorUntilEndOfTurn(GameData gameData, StackEntry entry, GrantColorUntilEndOfTurnEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -139,7 +139,7 @@ public class KeywordGrantResolutionService {
 
     @HandlesEffect(GrantProtectionChoiceUntilEndOfTurnEffect.class)
     private void resolveGrantProtectionChoice(GameData gameData, StackEntry entry, GrantProtectionChoiceUntilEndOfTurnEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -149,7 +149,7 @@ public class KeywordGrantResolutionService {
 
     @HandlesEffect(GrantProtectionFromCardTypeUntilEndOfTurnEffect.class)
     private void resolveGrantProtectionFromCardTypeUntilEndOfTurn(GameData gameData, StackEntry entry, GrantProtectionFromCardTypeUntilEndOfTurnEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -166,8 +166,8 @@ public class KeywordGrantResolutionService {
     @HandlesEffect(RemoveKeywordEffect.class)
     private void resolveRemoveKeyword(GameData gameData, StackEntry entry, RemoveKeywordEffect remove) {
         UUID targetId = switch (remove.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
-            case TARGET -> entry.getTargetPermanentId();
+            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            case TARGET -> entry.getTargetId();
             default -> null;
         };
         if (targetId == null) {

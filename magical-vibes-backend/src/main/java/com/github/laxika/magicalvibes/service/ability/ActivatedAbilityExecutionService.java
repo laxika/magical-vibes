@@ -101,7 +101,7 @@ public class ActivatedAbilityExecutionService {
      * @param abilityEffects                    the full effect list including cost effects
      * @param effectiveXValue                   the X value (from user input or 0); may be overridden
      *                                          by charge counter snapshotting
-     * @param targetPermanentId                 the chosen target permanent, or {@code null} if none
+     * @param targetId                 the chosen target permanent, or {@code null} if none
      * @param targetZone                        the zone of the target, or {@code null} for battlefield targets
      * @param markAsNonTargetingForSacCreatureCost if {@code true}, marks the resulting stack entry as
      *                                          non-targeting (used when the target selection was for a
@@ -113,10 +113,10 @@ public class ActivatedAbilityExecutionService {
                                              ActivatedAbility ability,
                                              List<CardEffect> abilityEffects,
                                              int effectiveXValue,
-                                             UUID targetPermanentId,
+                                             UUID targetId,
                                              Zone targetZone,
                                              boolean markAsNonTargetingForSacCreatureCost) {
-        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetPermanentId, targetZone, markAsNonTargetingForSacCreatureCost, null);
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetId, targetZone, markAsNonTargetingForSacCreatureCost, null);
     }
 
     public void completeActivationAfterCosts(GameData gameData,
@@ -125,7 +125,7 @@ public class ActivatedAbilityExecutionService {
                                              ActivatedAbility ability,
                                              List<CardEffect> abilityEffects,
                                              int effectiveXValue,
-                                             UUID targetPermanentId,
+                                             UUID targetId,
                                              Zone targetZone,
                                              boolean markAsNonTargetingForSacCreatureCost,
                                              List<UUID> targetPermanentIds) {
@@ -135,7 +135,7 @@ public class ActivatedAbilityExecutionService {
             throw new IllegalStateException("Invalid battlefield");
         }
 
-        UUID effectiveTargetId = targetPermanentId;
+        UUID effectiveTargetId = targetId;
         if (effectiveTargetId == null) {
             boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
                     e.isSelfTargeting() && !(e instanceof RegenerateEffect && permanent.getCard().isAura()));

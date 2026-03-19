@@ -52,7 +52,7 @@ class InsatiableSouleaterTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Insatiable Souleater");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(souleater.getId());
+        assertThat(entry.getTargetId()).isEqualTo(souleater.getId());
     }
 
     @Test

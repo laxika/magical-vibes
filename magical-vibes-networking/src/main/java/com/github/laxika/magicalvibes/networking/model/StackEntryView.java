@@ -11,6 +11,6 @@ public record StackEntryView(
         String description,
         UUID cardId,
         boolean isSpell,
-        UUID targetPermanentId
+        UUID targetId
 ) {
 }

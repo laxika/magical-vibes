@@ -411,7 +411,7 @@ class MiscTriggerCollectorServiceTest {
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getDescription()).contains("Sanguine Bond");
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(stackEntry.getTargetPermanentId()).isEqualTo(player2Id);
+            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
         }
 

@@ -49,7 +49,7 @@ class HexParasiteTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getXValue()).isEqualTo(2);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(targetPerm.getId());
     }
 
     @Test

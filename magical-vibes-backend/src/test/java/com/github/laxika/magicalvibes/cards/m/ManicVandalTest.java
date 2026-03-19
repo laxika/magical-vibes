@@ -50,7 +50,7 @@ class ManicVandalTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Manic Vandal");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -76,7 +76,7 @@ class ManicVandalTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Manic Vandal");
-        assertThat(trigger.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(trigger.getTargetId()).isEqualTo(targetId);
     }
 
     @Test

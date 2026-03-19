@@ -82,7 +82,7 @@ class WallOfTanglecordTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Wall of Tanglecord");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(wall.getId());
+        assertThat(entry.getTargetId()).isEqualTo(wall.getId());
     }
 
     @Test

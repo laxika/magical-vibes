@@ -9,7 +9,7 @@ import java.util.UUID;
  */
 public sealed interface SimulationAction {
 
-    record PlayCard(int handIndex, UUID targetPermanentId, int xValue) implements SimulationAction {}
+    record PlayCard(int handIndex, UUID targetId, int xValue) implements SimulationAction {}
 
     record PassPriority() implements SimulationAction {}
 
@@ -17,7 +17,7 @@ public sealed interface SimulationAction {
 
     record DeclareBlockers(List<int[]> blockerAssignments) implements SimulationAction {}
 
-    record ActivateAbility(UUID permanentId, int abilityIndex, UUID targetPermanentId) implements SimulationAction {}
+    record ActivateAbility(UUID permanentId, int abilityIndex, UUID targetId) implements SimulationAction {}
 
     record ChooseCard(int cardIndex) implements SimulationAction {}
 

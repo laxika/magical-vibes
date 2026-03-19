@@ -52,7 +52,7 @@ class DispenseJusticeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Dispense Justice");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     // ===== Without metalcraft =====

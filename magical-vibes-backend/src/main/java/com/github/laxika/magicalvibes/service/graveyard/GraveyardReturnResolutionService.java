@@ -102,7 +102,7 @@ public class GraveyardReturnResolutionService {
         }
 
         // Case 1: Pre-targeted (from spell cast or activated ability targeting)
-        if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetPermanentId() != null) {
+        if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
             resolvePreTargeted(gameData, entry, effect, controllerId, sourceCardId);
             return;
         }
@@ -129,7 +129,7 @@ public class GraveyardReturnResolutionService {
 
     private void resolvePreTargeted(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                     UUID controllerId, UUID sourceCardId) {
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         if (targetCard == null || (effect.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {
@@ -612,7 +612,7 @@ public class GraveyardReturnResolutionService {
     private record StolenCreatureResult(Permanent permanent, Card card, UUID originalOwnerId) {}
 
     private StolenCreatureResult stealFromOpponentGraveyard(GameData gameData, StackEntry entry, UUID controllerId) {
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
             return null;
@@ -763,7 +763,7 @@ public class GraveyardReturnResolutionService {
     @HandlesEffect(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class)
     void resolveExileTargetCardAndImprintOnSource(GameData gameData, StackEntry entry,
                                                    ExileTargetCardFromGraveyardAndImprintOnSourceEffect effect) {
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getDescription() + " fizzles (target no longer in a graveyard).");
@@ -812,7 +812,7 @@ public class GraveyardReturnResolutionService {
     @HandlesEffect(ExileTargetCardFromGraveyardEffect.class)
     void resolveExileTargetCardFromGraveyard(GameData gameData, StackEntry entry,
                                               ExileTargetCardFromGraveyardEffect effect) {
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetPermanentId());
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getDescription() + " fizzles (target no longer in a graveyard).");
@@ -897,11 +897,11 @@ public class GraveyardReturnResolutionService {
      * player's graveyard. Does nothing beyond logging if the graveyard is already empty.
      *
      * @param gameData the current game state
-     * @param entry    the stack entry being resolved (target player ID is in targetPermanentId)
+     * @param entry    the stack entry being resolved (target player ID is in targetId)
      */
     @HandlesEffect(ExileTargetPlayerGraveyardEffect.class)
     void resolveExileTargetPlayerGraveyard(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
@@ -929,11 +929,11 @@ public class GraveyardReturnResolutionService {
      * Finally, the target player shuffles their library.
      *
      * @param gameData the current game state
-     * @param entry    the stack entry being resolved (target player ID is in targetPermanentId)
+     * @param entry    the stack entry being resolved (target player ID is in targetId)
      */
     @HandlesEffect(ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect.class)
     void resolveExileNonBasicLandGraveyardAndSameNameFromLibrary(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
@@ -1109,7 +1109,7 @@ public class GraveyardReturnResolutionService {
      * card is no longer in a graveyard.
      *
      * @param gameData the current game state
-     * @param entry    the stack entry being resolved (targetPermanentId is the source equipment)
+     * @param entry    the stack entry being resolved (targetId is the source equipment)
      * @param effect   the return-and-attach effect (dyingCardId identifies the creature to return)
      */
     @HandlesEffect(ReturnDyingCreatureToBattlefieldAndAttachSourceEffect.class)
@@ -1139,7 +1139,7 @@ public class GraveyardReturnResolutionService {
         log.info("Game {} - {} returns {} to battlefield via {}", gameData.id, playerName, dyingCard.getName(), entry.getCard().getName());
 
         // Attach the source equipment to the returned creature
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (equipment != null) {
             equipment.setAttachedTo(creature.getId());
             String attachLog = entry.getCard().getName() + " is now attached to " + dyingCard.getName() + ".";
@@ -1332,7 +1332,7 @@ public class GraveyardReturnResolutionService {
     @HandlesEffect(TargetPlayerExilesCardFromGraveyardEffect.class)
     void resolveTargetPlayerExilesCardFromGraveyard(GameData gameData, StackEntry entry,
                                                      TargetPlayerExilesCardFromGraveyardEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);

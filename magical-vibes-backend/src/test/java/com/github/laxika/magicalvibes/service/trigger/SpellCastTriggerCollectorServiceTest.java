@@ -393,7 +393,7 @@ class SpellCastTriggerCollectorServiceTest {
             Permanent targetPerm = createPermanent("Goblin Guide");
             targetPerm.getCard().setSubtypes(List.of(CardSubtype.GOBLIN));
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
-            spellOnStack.setTargetPermanentId(targetPerm.getId());
+            spellOnStack.setTargetId(targetPerm.getId());
             gd.stack.add(spellOnStack);
 
             when(gameQueryService.findPermanentById(gd, targetPerm.getId())).thenReturn(targetPerm);
@@ -466,7 +466,7 @@ class SpellCastTriggerCollectorServiceTest {
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
-            spellOnStack.setTargetPermanentId(player2Id);
+            spellOnStack.setTargetId(player2Id);
             gd.stack.add(spellOnStack);
 
             boolean result = registry.dispatch(
@@ -486,7 +486,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             UUID missingPermanentId = UUID.randomUUID();
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
-            spellOnStack.setTargetPermanentId(missingPermanentId);
+            spellOnStack.setTargetId(missingPermanentId);
             gd.stack.add(spellOnStack);
 
             when(gameQueryService.findPermanentById(gd, missingPermanentId)).thenReturn(null);
@@ -509,7 +509,7 @@ class SpellCastTriggerCollectorServiceTest {
             Permanent targetPerm = createPermanent("Llanowar Elves");
             // No GOBLIN subtype
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
-            spellOnStack.setTargetPermanentId(targetPerm.getId());
+            spellOnStack.setTargetId(targetPerm.getId());
             gd.stack.add(spellOnStack);
 
             when(gameQueryService.findPermanentById(gd, targetPerm.getId())).thenReturn(targetPerm);
@@ -967,7 +967,7 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getDescription()).contains("Bloodchief Ascension");
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(stackEntry.getTargetPermanentId()).isEqualTo(player2Id);
+            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
         }
 
         @Test
@@ -1010,7 +1010,7 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getDescription()).contains("Chalice of the Void");
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(stackEntry.getTargetPermanentId()).isEqualTo(spellCard.getId());
+            assertThat(stackEntry.getTargetId()).isEqualTo(spellCard.getId());
             assertThat(stackEntry.getTargetZone()).isEqualTo(Zone.STACK);
         }
 
@@ -1096,7 +1096,7 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getDescription()).contains("Kambal, Consul of Allocation");
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(stackEntry.getTargetPermanentId()).isEqualTo(player2Id);
+            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
         }
 
         @Test

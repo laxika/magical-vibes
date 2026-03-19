@@ -46,7 +46,7 @@ class ShockTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Shock");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -64,7 +64,7 @@ class ShockTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Shock");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     @Test

@@ -45,7 +45,7 @@ public class PreventionResolutionService {
 
     @HandlesEffect(PreventDamageToTargetEffect.class)
     void resolvePreventDamageToTarget(GameData gameData, StackEntry entry, PreventDamageToTargetEffect prevent) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
@@ -200,7 +200,7 @@ public class PreventionResolutionService {
     @HandlesEffect(PreventXDamageToControllerAndRedirectToTargetPlayerEffect.class)
     void resolvePreventXDamageAndRedirect(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         int xValue = entry.getXValue();
 
         if (xValue <= 0 || targetPlayerId == null) return;
@@ -222,7 +222,7 @@ public class PreventionResolutionService {
     void resolvePreventDamageFromChosenSourceAndRedirect(GameData gameData, StackEntry entry,
                                                          PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect effect) {
         UUID controllerId = entry.getControllerId();
-        UUID redirectTargetId = entry.getTargetPermanentId();
+        UUID redirectTargetId = entry.getTargetId();
         if (redirectTargetId == null) return;
 
         // Collect all permanents on all battlefields as valid source choices

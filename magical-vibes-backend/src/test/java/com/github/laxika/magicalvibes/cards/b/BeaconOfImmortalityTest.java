@@ -47,7 +47,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Beacon of Immortality");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player1.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player1.getId());
     }
 
     @Test

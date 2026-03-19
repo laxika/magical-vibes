@@ -66,7 +66,7 @@ class NegateTest extends BaseCardTest {
         StackEntry negateEntry = gd.stack.getLast();
         assertThat(negateEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(negateEntry.getCard().getName()).isEqualTo("Negate");
-        assertThat(negateEntry.getTargetPermanentId()).isEqualTo(might.getId());
+        assertThat(negateEntry.getTargetId()).isEqualTo(might.getId());
     }
 
     @Test

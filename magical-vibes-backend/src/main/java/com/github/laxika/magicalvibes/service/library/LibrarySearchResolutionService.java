@@ -88,7 +88,7 @@ public class LibrarySearchResolutionService {
     void resolveDestroyTargetPermanentAndControllerSearchesLibraryToBattlefield(
             GameData gameData, StackEntry entry,
             DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -386,7 +386,7 @@ public class LibrarySearchResolutionService {
     void resolveSearchTargetLibraryForCardsToGraveyard(GameData gameData, StackEntry entry,
                                                        SearchTargetLibraryForCardsToGraveyardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
 
         if (isSearchPrevented(gameData, controllerId)) return;
 
@@ -428,7 +428,7 @@ public class LibrarySearchResolutionService {
     @HandlesEffect(SearchTargetLibraryForCardToExileWithPlayPermissionEffect.class)
     void resolveSearchTargetLibraryForCardToExileWithPlayPermission(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
 
         if (isSearchPrevented(gameData, controllerId)) return;
 
@@ -463,7 +463,7 @@ public class LibrarySearchResolutionService {
     @HandlesEffect(SphinxAmbassadorEffect.class)
     void resolveSphinxAmbassador(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
 
         if (isSearchPrevented(gameData, controllerId)) return;
 
@@ -642,7 +642,7 @@ public class LibrarySearchResolutionService {
     void resolveSearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayer(GameData gameData, StackEntry entry,
                                                                            SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect effect) {
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         CardSubtype requiredSubtype = effect.requiredSubtype();
         String subtypeName = requiredSubtype.getDisplayName();
 
@@ -737,7 +737,7 @@ public class LibrarySearchResolutionService {
     @HandlesEffect(HeadGamesEffect.class)
     void resolveHeadGames(GameData gameData, StackEntry entry, HeadGamesEffect effect) {
         UUID casterId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
         List<Card> targetDeck = gameData.playerDecks.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(casterId);

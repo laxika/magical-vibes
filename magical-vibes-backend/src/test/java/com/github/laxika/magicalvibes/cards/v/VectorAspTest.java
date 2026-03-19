@@ -82,7 +82,7 @@ class VectorAspTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Vector Asp");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(asp.getId());
+        assertThat(entry.getTargetId()).isEqualTo(asp.getId());
     }
 
     @Test

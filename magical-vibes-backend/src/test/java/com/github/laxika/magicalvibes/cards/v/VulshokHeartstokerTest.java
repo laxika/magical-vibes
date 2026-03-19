@@ -52,7 +52,7 @@ class VulshokHeartstokerTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Vulshok Heartstoker");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     @Test
@@ -75,7 +75,7 @@ class VulshokHeartstokerTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Vulshok Heartstoker");
-        assertThat(trigger.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(trigger.getTargetId()).isEqualTo(targetId);
     }
 
     @Test

@@ -100,7 +100,7 @@ class LoyalSentryTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Loyal Sentry");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(atkPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(atkPerm.getId());
         assertThat(entry.getSourcePermanentId()).isEqualTo(sentryPerm.getId());
     }
 

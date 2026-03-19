@@ -62,7 +62,7 @@ class FieryHellhoundTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Fiery Hellhound");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(hellhound.getId());
+        assertThat(entry.getTargetId()).isEqualTo(hellhound.getId());
     }
 
     @Test

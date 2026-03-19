@@ -103,7 +103,7 @@ class LeoninScimitarTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Leonin Scimitar");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(creature.getId());
+        assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
     @Test

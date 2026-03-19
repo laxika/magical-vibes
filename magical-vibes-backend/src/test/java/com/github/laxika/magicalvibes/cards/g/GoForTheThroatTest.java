@@ -60,7 +60,7 @@ class GoForTheThroatTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Go for the Throat");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test

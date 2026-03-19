@@ -171,10 +171,10 @@ public class InteractionState {
     // Card choice
     // ========================================================================
 
-    public void beginCardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetPermanentId) {
+    public void beginCardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetId) {
         this.awaitingInput = type;
-        this.cardChoice = new CardChoiceState(playerId, new HashSet<>(validIndices), targetPermanentId);
-        this.context = new InteractionContext.CardChoice(type, playerId, new HashSet<>(validIndices), targetPermanentId);
+        this.cardChoice = new CardChoiceState(playerId, new HashSet<>(validIndices), targetId);
+        this.context = new InteractionContext.CardChoice(type, playerId, new HashSet<>(validIndices), targetId);
     }
 
     public void clearCardChoice() {
@@ -185,7 +185,7 @@ public class InteractionState {
         if (context instanceof InteractionContext.CardChoice cc) return cc;
         if (cardChoice == null || awaitingInput == null) return null;
         return new InteractionContext.CardChoice(awaitingInput, cardChoice.playerId(),
-                cardChoice.validIndices(), cardChoice.targetPermanentId());
+                cardChoice.validIndices(), cardChoice.targetId());
     }
 
     // ========================================================================
@@ -327,9 +327,9 @@ public class InteractionState {
     // Equipment attach
     // ========================================================================
 
-    public void setPendingEquipmentAttach(UUID equipmentPermanentId, UUID targetPermanentId) {
+    public void setPendingEquipmentAttach(UUID equipmentPermanentId, UUID targetId) {
         this.pendingEquipmentAttachEquipmentId = equipmentPermanentId;
-        this.pendingEquipmentAttachTargetId = targetPermanentId;
+        this.pendingEquipmentAttachTargetId = targetId;
     }
 
     public UUID pendingEquipmentAttachEquipmentId() {
@@ -349,11 +349,11 @@ public class InteractionState {
     // Color choice
     // ========================================================================
 
-    public void beginColorChoice(UUID playerId, UUID permanentId, UUID etbTargetPermanentId,
+    public void beginColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId,
                                  ChoiceContext choiceContext) {
         this.awaitingInput = AwaitingInput.COLOR_CHOICE;
-        this.colorChoice = new ChoiceState(playerId, permanentId, etbTargetPermanentId, choiceContext);
-        this.context = new InteractionContext.ColorChoice(playerId, permanentId, etbTargetPermanentId, choiceContext);
+        this.colorChoice = new ChoiceState(playerId, permanentId, etbTargetId, choiceContext);
+        this.context = new InteractionContext.ColorChoice(playerId, permanentId, etbTargetId, choiceContext);
     }
 
     public void clearColorChoice() {
@@ -368,7 +368,7 @@ public class InteractionState {
         if (context instanceof InteractionContext.ColorChoice cc) return cc;
         if (colorChoice == null) return null;
         return new InteractionContext.ColorChoice(colorChoice.playerId(), colorChoice.permanentId(),
-                colorChoice.etbTargetPermanentId(), colorChoice.choiceContext());
+                colorChoice.etbTargetId(), colorChoice.choiceContext());
     }
 
     // ========================================================================

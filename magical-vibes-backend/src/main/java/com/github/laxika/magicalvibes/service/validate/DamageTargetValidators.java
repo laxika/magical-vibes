@@ -48,7 +48,7 @@ public class DamageTargetValidators {
     @ValidatesTarget(DealDamageToAnyTargetEffect.class)
     public void validateDealDamageToAnyTarget(TargetValidationContext ctx) {
         tvs.requireTarget(ctx);
-        if (ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
+        if (ctx.gameData().playerIds.contains(ctx.targetId())) {
             return;
         }
         Permanent target = tvs.requireBattlefieldTarget(ctx);
@@ -63,7 +63,7 @@ public class DamageTargetValidators {
     @ValidatesTarget(DealDamageToTargetAndTheirCreaturesEffect.class)
     public void validateDealDamageToTargetAndTheirCreatures(TargetValidationContext ctx) {
         tvs.requireTarget(ctx);
-        if (ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
+        if (ctx.gameData().playerIds.contains(ctx.targetId())) {
             return;
         }
         Permanent target = tvs.requireBattlefieldTarget(ctx);
@@ -76,7 +76,7 @@ public class DamageTargetValidators {
     @ValidatesTarget(DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect.class)
     public void validateDealDamageToAnyTargetEqualToSubtypeCountAndGainLife(TargetValidationContext ctx) {
         tvs.requireTarget(ctx);
-        if (ctx.gameData().playerIds.contains(ctx.targetPermanentId())) {
+        if (ctx.gameData().playerIds.contains(ctx.targetId())) {
             return;
         }
         Permanent target = tvs.requireBattlefieldTarget(ctx);

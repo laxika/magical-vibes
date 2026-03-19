@@ -62,7 +62,7 @@ class ReverberateTest extends BaseCardTest {
         StackEntry reverberateEntry = gd.stack.getLast();
         assertThat(reverberateEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(reverberateEntry.getCard().getName()).isEqualTo("Reverberate");
-        assertThat(reverberateEntry.getTargetPermanentId()).isEqualTo(counselCardId);
+        assertThat(reverberateEntry.getTargetId()).isEqualTo(counselCardId);
     }
 
     @Test

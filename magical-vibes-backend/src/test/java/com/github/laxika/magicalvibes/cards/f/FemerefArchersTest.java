@@ -46,7 +46,7 @@ class FemerefArchersTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Femeref Archers");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(attacker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test

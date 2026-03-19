@@ -51,7 +51,7 @@ class MindControlTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Mind Control");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(creature.getId());
+        assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
     // ===== Resolution =====

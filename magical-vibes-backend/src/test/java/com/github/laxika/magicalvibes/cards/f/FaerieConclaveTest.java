@@ -85,7 +85,7 @@ class FaerieConclaveTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Faerie Conclave");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(conclave.getId());
+        assertThat(entry.getTargetId()).isEqualTo(conclave.getId());
     }
 
     @Test

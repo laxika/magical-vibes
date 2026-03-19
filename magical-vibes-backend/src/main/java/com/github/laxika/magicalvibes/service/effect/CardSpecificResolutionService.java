@@ -342,12 +342,12 @@ public class CardSpecificResolutionService {
     @HandlesEffect(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)
     void resolveSacrificeTargetThenRevealUntilTypeToBattlefield(GameData gameData, StackEntry entry,
                                                                  SacrificeTargetThenRevealUntilTypeToBattlefieldEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetPermanentId());
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
         if (targetControllerId == null) {
             return;
         }
@@ -434,12 +434,12 @@ public class CardSpecificResolutionService {
     @HandlesEffect(DestroyTargetThenRevealUntilTypeToBattlefieldEffect.class)
     void resolveDestroyTargetThenRevealUntilTypeToBattlefield(GameData gameData, StackEntry entry,
                                                               DestroyTargetThenRevealUntilTypeToBattlefieldEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetPermanentId());
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
         if (targetControllerId == null) {
             return;
         }

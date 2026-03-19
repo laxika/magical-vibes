@@ -466,7 +466,7 @@ class PlayerInputServiceTest {
 
             assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.ProtectionColorChoice.class);
             ChoiceContext.ProtectionColorChoice ctx = (ChoiceContext.ProtectionColorChoice) gd.interaction.colorChoiceContext();
-            assertThat(ctx.targetPermanentId()).isEqualTo(targetId);
+            assertThat(ctx.targetId()).isEqualTo(targetId);
             assertThat(ctx.includeArtifacts()).isTrue();
         }
     }
@@ -503,7 +503,7 @@ class PlayerInputServiceTest {
 
             assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.KeywordGrantChoice.class);
             ChoiceContext.KeywordGrantChoice ctx = (ChoiceContext.KeywordGrantChoice) gd.interaction.colorChoiceContext();
-            assertThat(ctx.targetPermanentId()).isEqualTo(targetId);
+            assertThat(ctx.targetId()).isEqualTo(targetId);
             assertThat(ctx.options()).containsExactly(Keyword.FLYING, Keyword.FIRST_STRIKE);
         }
     }

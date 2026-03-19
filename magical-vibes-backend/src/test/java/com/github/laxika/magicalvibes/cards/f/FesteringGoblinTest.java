@@ -108,7 +108,7 @@ class FesteringGoblinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Festering Goblin");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bearsId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearsId);
 
         // Resolve the triggered ability
         harness.passBothPriorities();
@@ -302,7 +302,7 @@ class FesteringGoblinTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Festering Goblin")
-                && e.getTargetPermanentId().equals(survivorId));
+                && e.getTargetId().equals(survivorId));
     }
 }
 

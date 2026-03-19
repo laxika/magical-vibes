@@ -301,28 +301,28 @@ public class BattlefieldEntryService {
 
     // ===== ETB pipeline =====
 
-    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand) {
-        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetPermanentId, wasCastFromHand, 0);
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0);
     }
 
-    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand, int etbMode) {
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
         boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChooseColorEffect);
         if (needsColorChoice) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
-            playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetPermanentId);
+            playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), targetId);
             return;
         }
 
-        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId, wasCastFromHand, etbMode);
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode);
     }
 
-    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand) {
-        processCreatureETBEffects(gameData, controllerId, card, targetPermanentId, wasCastFromHand, 0);
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0);
     }
 
-    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId, boolean wasCastFromHand, int etbMode) {
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
         // Torpor Orb: "Creatures entering don't cause abilities to trigger."
         if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
             log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
@@ -397,7 +397,7 @@ public class BattlefieldEntryService {
 
                 // Put non-graveyard-exile effects on the stack as before
                 if (!otherEffects.isEmpty()) {
-                    if (!card.isNeedsTarget() || targetPermanentId != null) {
+                    if (!card.isNeedsTarget() || targetId != null) {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
@@ -408,7 +408,7 @@ public class BattlefieldEntryService {
                                 card.getName() + "'s ETB ability",
                                 new ArrayList<>(otherEffects),
                                 0,
-                                targetPermanentId,
+                                targetId,
                                 sourcePermanentId,
                                 Map.of(),
                                 null,

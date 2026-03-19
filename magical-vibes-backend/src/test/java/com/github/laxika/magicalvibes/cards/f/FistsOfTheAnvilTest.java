@@ -41,7 +41,7 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Fists of the Anvil");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bearId);
+        assertThat(entry.getTargetId()).isEqualTo(bearId);
     }
 
     @Test

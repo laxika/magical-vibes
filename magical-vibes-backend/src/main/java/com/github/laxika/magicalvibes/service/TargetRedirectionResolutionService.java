@@ -36,7 +36,7 @@ public class TargetRedirectionResolutionService {
 
     @HandlesEffect(ChangeTargetOfTargetSpellWithSingleTargetEffect.class)
     private void resolveChangeTargetOfTargetSpellWithSingleTarget(GameData gameData, StackEntry entry) {
-        StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetPermanentId());
+        StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetId());
         if (targetSpell == null) {
             return;
         }
@@ -65,7 +65,7 @@ public class TargetRedirectionResolutionService {
 
     @HandlesEffect(ChangeTargetOfTargetSpellToSourceEffect.class)
     private void resolveChangeTargetOfTargetSpellToSource(GameData gameData, StackEntry entry) {
-        StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetPermanentId());
+        StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetId());
         if (targetSpell == null) {
             return;
         }
@@ -85,13 +85,13 @@ public class TargetRedirectionResolutionService {
         }
 
         if (isSingleTargetSpell(targetSpell)) {
-            if (sourcePermanentId.equals(targetSpell.getTargetPermanentId())) {
+            if (sourcePermanentId.equals(targetSpell.getTargetId())) {
                 String logEntry = targetSpell.getCard().getName() + " already targets " + entry.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 return;
             }
             if (isValidNewTargetForSpell(gameData, targetSpell, sourcePermanentId)) {
-                targetSpell.setTargetPermanentId(sourcePermanentId);
+                targetSpell.setTargetId(sourcePermanentId);
                 String logEntry = targetSpell.getCard().getName() + "'s target is changed to " + entry.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else {
@@ -105,13 +105,13 @@ public class TargetRedirectionResolutionService {
     }
 
     private boolean hasAnyTarget(StackEntry stackEntry) {
-        return stackEntry.getTargetPermanentId() != null
+        return stackEntry.getTargetId() != null
                 || !stackEntry.getTargetPermanentIds().isEmpty()
                 || !stackEntry.getTargetCardIds().isEmpty();
     }
 
     private List<UUID> collectValidNewTargets(GameData gameData, StackEntry targetSpell) {
-        UUID currentTargetId = targetSpell.getTargetPermanentId();
+        UUID currentTargetId = targetSpell.getTargetId();
         List<UUID> candidates = new ArrayList<>();
 
         if (targetSpell.getTargetZone() == Zone.STACK) {
@@ -195,7 +195,7 @@ public class TargetRedirectionResolutionService {
     }
 
     private boolean isSingleTargetSpell(StackEntry stackEntry) {
-        return stackEntry.getTargetPermanentId() != null
+        return stackEntry.getTargetId() != null
                 && stackEntry.getTargetPermanentIds().isEmpty()
                 && stackEntry.getTargetCardIds().isEmpty();
     }

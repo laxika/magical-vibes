@@ -40,7 +40,7 @@ class AfflictTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Afflict");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bearId);
+        assertThat(entry.getTargetId()).isEqualTo(bearId);
     }
 
     @Test

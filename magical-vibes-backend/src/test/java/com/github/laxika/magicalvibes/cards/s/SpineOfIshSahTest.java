@@ -58,7 +58,7 @@ class SpineOfIshSahTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetId);
     }
 
     @Test
@@ -77,7 +77,7 @@ class SpineOfIshSahTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Spine of Ish Sah");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetId);
     }
 
     @Test

@@ -55,7 +55,7 @@ class UntamedMightTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Untamed Might");
         assertThat(entry.getXValue()).isEqualTo(3);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bearId);
+        assertThat(entry.getTargetId()).isEqualTo(bearId);
     }
 
     @Test

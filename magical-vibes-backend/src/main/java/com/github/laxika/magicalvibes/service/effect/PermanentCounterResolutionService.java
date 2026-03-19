@@ -94,7 +94,7 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect.class)
     private void resolvePutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControls(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null) return;
 
@@ -161,9 +161,9 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(PutChargeCounterOnSelfEffect.class)
     private void resolvePutChargeCounterOnSelf(GameData gameData, StackEntry entry) {
-        // Use sourcePermanentId (not targetPermanentId) because "self" always refers to the source
-        // permanent — targetPermanentId may point to a different target (e.g. a graveyard card).
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        // Use sourcePermanentId (not targetId) because "self" always refers to the source
+        // permanent — targetId may point to a different target (e.g. a graveyard card).
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
@@ -182,7 +182,7 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(PutCounterOnSelfEffect.class)
     private void resolvePutCounterOnSelf(GameData gameData, StackEntry entry, PutCounterOnSelfEffect effect) {
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
@@ -216,7 +216,7 @@ public class PermanentCounterResolutionService {
     @HandlesEffect(PutCounterOnSelfThenTransformIfThresholdEffect.class)
     private void resolvePutCounterOnSelfThenTransformIfThreshold(GameData gameData, StackEntry entry,
                                                                   PutCounterOnSelfThenTransformIfThresholdEffect effect) {
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetPermanentId();
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
@@ -301,7 +301,7 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(PutChargeCounterOnTargetPermanentEffect.class)
     private void resolvePutChargeCounterOnTargetPermanent(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -319,7 +319,7 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(PutPhylacteryCounterOnTargetPermanentEffect.class)
     private void resolvePutPhylacteryCounterOnTargetPermanent(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -337,7 +337,7 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class)
     private void resolvePutMinusOneMinusOneCounterOnTargetCreature(GameData gameData, StackEntry entry, PutMinusOneMinusOneCounterOnTargetCreatureEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
             return;
@@ -375,7 +375,7 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(RemoveChargeCountersFromTargetPermanentEffect.class)
     private void resolveRemoveChargeCountersFromTargetPermanent(GameData gameData, StackEntry entry, RemoveChargeCountersFromTargetPermanentEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -391,7 +391,7 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(RemoveCountersFromTargetAndBoostSelfEffect.class)
     private void resolveRemoveCountersFromTargetAndBoostSelf(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -550,7 +550,7 @@ public class PermanentCounterResolutionService {
         }
 
         // Single-target fallback
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
             return;

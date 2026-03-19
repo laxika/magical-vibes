@@ -176,10 +176,10 @@ class BrutalizerExarchTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0); // mode 0 = search library
     }
 
-    private void castWithMode2(UUID targetPermanentId) {
+    private void castWithMode2(UUID targetId) {
         harness.setHand(player1, List.of(new BrutalizerExarch()));
         harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0, 1, targetPermanentId); // mode 1 = put on bottom
+        harness.castCreature(player1, 0, 1, targetId); // mode 1 = put on bottom
     }
 
     private void setupLibraryWithCreatures() {

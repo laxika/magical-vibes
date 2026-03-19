@@ -690,7 +690,7 @@ class CombatDamageServiceTest {
         void survivingBlockerClearedWhenAttackerDies() {
             Permanent attacker = addAttacker("Elf", 1, 1);
             Permanent blocker = addBlocker("Spider", 2, 4, 0);
-            blocker.addBlockingTargetPermanentId(attacker.getId());
+            blocker.addBlockingTargetId(attacker.getId());
 
             combatDamageService.resolveCombatDamage(gameData);
 

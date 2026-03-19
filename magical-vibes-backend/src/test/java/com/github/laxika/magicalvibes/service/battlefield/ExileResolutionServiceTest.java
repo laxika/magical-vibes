@@ -143,10 +143,10 @@ class ExileResolutionServiceTest {
         return perm;
     }
 
-    private StackEntry createSingleTargetEntry(Card sourceCard, UUID controllerId, UUID targetPermanentId) {
+    private StackEntry createSingleTargetEntry(Card sourceCard, UUID controllerId, UUID targetId) {
         return new StackEntry(
                 StackEntryType.SORCERY_SPELL, sourceCard, controllerId, sourceCard.getName(),
-                List.of(new ExileTargetPermanentEffect()), 0, targetPermanentId, null
+                List.of(new ExileTargetPermanentEffect()), 0, targetId, null
         );
     }
 
@@ -509,10 +509,10 @@ class ExileResolutionServiceTest {
     @DisplayName("resolveExileTargetPermanentAndReturnAtEndStep")
     class ResolveExileTargetPermanentAndReturnAtEndStep {
 
-        private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetPermanentId) {
+        private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetId) {
             return new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, sourceCard.getName(),
-                    List.of(new ExileTargetPermanentAndReturnAtEndStepEffect()), 0, targetPermanentId, null
+                    List.of(new ExileTargetPermanentAndReturnAtEndStepEffect()), 0, targetId, null
             );
         }
 
@@ -667,10 +667,10 @@ class ExileResolutionServiceTest {
     @DisplayName("resolveExileTargetPermanentUntilSourceLeaves")
     class ResolveExileTargetPermanentUntilSourceLeaves {
 
-        private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetPermanentId) {
+        private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetId) {
             return new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, sourceCard.getName(),
-                    List.of(new ExileTargetPermanentUntilSourceLeavesEffect()), 0, targetPermanentId, null
+                    List.of(new ExileTargetPermanentUntilSourceLeavesEffect()), 0, targetId, null
             );
         }
 

@@ -64,7 +64,7 @@ class TimeWarpTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player1.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player1.getId());
     }
 
     // ===== Resolution =====

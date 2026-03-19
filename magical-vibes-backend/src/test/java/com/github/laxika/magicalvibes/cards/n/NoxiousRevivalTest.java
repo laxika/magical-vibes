@@ -44,7 +44,7 @@ class NoxiousRevivalTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(target.getId());
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
         assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
     }
 

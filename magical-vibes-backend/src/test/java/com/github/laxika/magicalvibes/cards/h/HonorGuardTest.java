@@ -81,7 +81,7 @@ class HonorGuardTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Honor Guard");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(guardPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(guardPerm.getId());
     }
 
     @Test

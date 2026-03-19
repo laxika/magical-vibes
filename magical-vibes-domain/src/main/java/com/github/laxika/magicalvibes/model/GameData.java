@@ -381,7 +381,7 @@ public class GameData {
                 new ArrayList<>(List.of(mayPay))
         );
         if (targetCardId != null) {
-            entry.setTargetPermanentId(targetCardId);
+            entry.setTargetId(targetCardId);
         }
         stack.add(entry);
     }
@@ -706,13 +706,13 @@ public class GameData {
             case InteractionContext.BlockerDeclaration bd ->
                     targetInteraction.beginBlockerDeclaration(bd.defenderId());
             case InteractionContext.CardChoice cc ->
-                    targetInteraction.beginCardChoice(cc.type(), cc.playerId(), cc.validIndices(), cc.targetPermanentId());
+                    targetInteraction.beginCardChoice(cc.type(), cc.playerId(), cc.validIndices(), cc.targetId());
             case InteractionContext.PermanentChoice pc ->
                     targetInteraction.beginPermanentChoice(pc.playerId(), pc.validIds(), pc.context());
             case InteractionContext.GraveyardChoice gc ->
                     targetInteraction.beginGraveyardChoice(gc.playerId(), gc.validIndices(), gc.destination(), gc.cardPool());
             case InteractionContext.ColorChoice cc ->
-                    targetInteraction.beginColorChoice(cc.playerId(), cc.permanentId(), cc.etbTargetPermanentId(), cc.context());
+                    targetInteraction.beginColorChoice(cc.playerId(), cc.permanentId(), cc.etbTargetId(), cc.context());
             case InteractionContext.MayAbilityChoice mc ->
                     targetInteraction.beginMayAbilityChoice(mc.playerId(), mc.description());
             case InteractionContext.MultiPermanentChoice mpc ->

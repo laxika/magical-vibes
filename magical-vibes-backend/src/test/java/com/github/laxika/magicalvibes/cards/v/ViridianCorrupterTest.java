@@ -52,7 +52,7 @@ class ViridianCorrupterTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Viridian Corrupter");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -78,7 +78,7 @@ class ViridianCorrupterTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Viridian Corrupter");
-        assertThat(trigger.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(trigger.getTargetId()).isEqualTo(targetId);
     }
 
     @Test

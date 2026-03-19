@@ -63,7 +63,7 @@ class DoomBladeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Doom Blade");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
@@ -96,7 +96,7 @@ class DoomBladeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(artifactCreature.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifactCreature.getId());
     }
 
     @Test

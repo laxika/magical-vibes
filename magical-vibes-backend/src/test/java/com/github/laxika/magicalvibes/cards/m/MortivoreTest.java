@@ -234,7 +234,7 @@ class MortivoreTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Mortivore");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(perm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(perm.getId());
     }
 
     @Test

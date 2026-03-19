@@ -84,7 +84,7 @@ public class CloneService {
         applyCloneCopy(clonePerm, targetPerm, powerOverride, toughnessOverride, Set.of());
     }
 
-    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
         CopyPermanentOnEnterEffect copyEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof CopyPermanentOnEnterEffect)
                 .map(e -> (CopyPermanentOnEnterEffect) e)
@@ -102,7 +102,7 @@ public class CloneService {
 
         gameData.cloneOperation.card = card;
         gameData.cloneOperation.controllerId = controllerId;
-        gameData.cloneOperation.etbTargetId = targetPermanentId;
+        gameData.cloneOperation.etbTargetId = targetId;
         gameData.cloneOperation.powerOverride = copyEffect.powerOverride();
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
@@ -119,7 +119,7 @@ public class CloneService {
         return true;
     }
 
-    public void completeCloneEntry(GameData gameData, UUID targetPermanentId) {
+    public void completeCloneEntry(GameData gameData, UUID targetId) {
         Card card = gameData.cloneOperation.card;
         UUID controllerId = gameData.cloneOperation.controllerId;
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
@@ -138,8 +138,8 @@ public class CloneService {
 
         Permanent perm = new Permanent(card);
 
-        if (targetPermanentId != null) {
-            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermanentId);
+        if (targetId != null) {
+            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
             if (targetPerm != null) {
                 applyCloneCopy(perm, targetPerm, powerOverride, toughnessOverride, additionalTypesOverride);
                 // "except it has..." — add additional abilities to the copy (e.g. Evil Twin)
@@ -153,8 +153,8 @@ public class CloneService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String originalName = card.getName();
-        if (targetPermanentId != null) {
-            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermanentId);
+        if (targetId != null) {
+            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
             String targetName = targetPerm != null ? targetPerm.getCard().getName() : perm.getCard().getName();
             String logEntry = originalName + " enters the battlefield as a copy of " + targetName + " under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

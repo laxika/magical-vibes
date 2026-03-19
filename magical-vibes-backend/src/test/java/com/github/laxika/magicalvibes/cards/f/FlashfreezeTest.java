@@ -63,7 +63,7 @@ class FlashfreezeTest extends BaseCardTest {
         StackEntry flashfreezeEntry = gd.stack.getLast();
         assertThat(flashfreezeEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(flashfreezeEntry.getCard().getName()).isEqualTo("Flashfreeze");
-        assertThat(flashfreezeEntry.getTargetPermanentId()).isEqualTo(elves.getId());
+        assertThat(flashfreezeEntry.getTargetId()).isEqualTo(elves.getId());
     }
 
     @Test

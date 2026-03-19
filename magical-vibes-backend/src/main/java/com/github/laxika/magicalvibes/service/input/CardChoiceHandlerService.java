@@ -87,7 +87,7 @@ public class CardChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearCardChoice();
 
-        UUID targetPermanentId = cardChoice.targetPermanentId();
+        UUID targetId = cardChoice.targetId();
 
         if (cardIndex == -1) {
             String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
@@ -102,7 +102,7 @@ public class CardChoiceHandlerService {
             Card card = hand.remove(cardIndex);
 
             if (isTargeted) {
-                resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetPermanentId);
+                resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetId);
             } else {
                 resolveUntargetedCardChoice(gameData, player, playerId, hand, card);
             }
@@ -217,12 +217,12 @@ public class CardChoiceHandlerService {
         Set<Integer> validIndices = cardChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
             log.warn("Game {} - {} sent invalid exile card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginExileFromHandChoice(gameData, player.getId(), cardChoice.targetPermanentId());
+            playerInputService.beginExileFromHandChoice(gameData, player.getId(), cardChoice.targetId());
             return;
         }
 
         UUID playerId = player.getId();
-        UUID sourcePermanentId = cardChoice.targetPermanentId();
+        UUID sourcePermanentId = cardChoice.targetId();
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
 
@@ -392,12 +392,12 @@ public class CardChoiceHandlerService {
         if (!validIndices.contains(cardIndex)) {
             log.warn("Game {} - {} sent invalid imprint card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginImprintFromHandChoice(gameData, player.getId(),
-                    new ArrayList<>(validIndices), "Choose a card from your hand.", cardChoice.targetPermanentId());
+                    new ArrayList<>(validIndices), "Choose a card from your hand.", cardChoice.targetId());
             return;
         }
 
         UUID playerId = player.getId();
-        UUID sourcePermanentId = cardChoice.targetPermanentId();
+        UUID sourcePermanentId = cardChoice.targetId();
 
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearCardChoice();
@@ -425,8 +425,8 @@ public class CardChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, UUID targetPermanentId) {
-        Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+    private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
             Permanent auraPerm = new Permanent(card);
             auraPerm.setAttachedTo(target.getId());

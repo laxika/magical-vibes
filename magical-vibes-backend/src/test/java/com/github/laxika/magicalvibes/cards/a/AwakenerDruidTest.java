@@ -59,7 +59,7 @@ class AwakenerDruidTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Awakener Druid");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(forestId);
+        assertThat(entry.getTargetId()).isEqualTo(forestId);
     }
 
     @Test
@@ -83,7 +83,7 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getTargetPermanentId()).isEqualTo(forestId);
+        assertThat(trigger.getTargetId()).isEqualTo(forestId);
     }
 
     @Test

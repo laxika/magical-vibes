@@ -81,7 +81,7 @@ class WallOfFaithTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Wall of Faith");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(wallPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(wallPerm.getId());
     }
 
     @Test

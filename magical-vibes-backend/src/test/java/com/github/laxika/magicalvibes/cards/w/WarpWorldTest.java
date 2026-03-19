@@ -59,7 +59,7 @@ class WarpWorldTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Warp World");
-        assertThat(entry.getTargetPermanentId()).isNull();
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test

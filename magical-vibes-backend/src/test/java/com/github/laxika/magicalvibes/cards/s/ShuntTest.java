@@ -123,7 +123,7 @@ class ShuntTest extends BaseCardTest {
         StackEntry boomerangEntry = gd.stack.getLast();
         assertThat(boomerangEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(boomerangEntry.getCard().getName()).isEqualTo("Boomerang");
-        assertThat(boomerangEntry.getTargetPermanentId()).isEqualTo(bearsPermId);
+        assertThat(boomerangEntry.getTargetId()).isEqualTo(bearsPermId);
     }
 
     @Test

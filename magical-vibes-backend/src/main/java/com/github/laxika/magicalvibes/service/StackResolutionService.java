@@ -111,7 +111,7 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId())) {
             return;
         }
 
@@ -155,9 +155,9 @@ public class StackResolutionService {
 
         // "As enters" phylactery counter placement — replacement effect (MTG Rule 614.1c),
         // happens as part of the entering process before state-based actions are checked.
-        handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetPermanentId());
+        handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetPermanentId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue());
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 
@@ -166,8 +166,8 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
 
         // Aura that enchants a player (e.g. Curses)
-        if (card.isAura() && card.isEnchantPlayer() && entry.getTargetPermanentId() != null) {
-            UUID targetPlayerId = entry.getTargetPermanentId();
+        if (card.isAura() && card.isEnchantPlayer() && entry.getTargetId() != null) {
+            UUID targetPlayerId = entry.getTargetId();
             if (!gameData.playerIds.contains(targetPlayerId)) {
                 String fizzleLog = card.getName() + " fizzles (enchanted player no longer in the game).";
                 gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
@@ -185,17 +185,17 @@ public class StackResolutionService {
                 log.info("Game {} - {} resolves, attached to player {} for {}", gameData.id, card.getName(), targetPlayerName, playerName);
             }
         // Aura fizzles if its target is no longer on the battlefield
-        } else if (card.isAura() && entry.getTargetPermanentId() != null) {
-            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        } else if (card.isAura() && entry.getTargetId() != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) {
                 String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";
                 gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
                 graveyardService.addCardToGraveyard(gameData, controllerId, card);
 
-                log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetPermanentId());
+                log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetId());
             } else {
                 Permanent perm = new Permanent(card);
-                perm.setAttachedTo(entry.getTargetPermanentId());
+                perm.setAttachedTo(entry.getTargetId());
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
@@ -221,7 +221,7 @@ public class StackResolutionService {
 
                 // Process aura ETB effects (e.g., Volition Reins)
                 if (!gameData.interaction.isAwaitingInput()) {
-                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true);
                 }
             }
         } else {
@@ -259,7 +259,7 @@ public class StackResolutionService {
 
             // Process general ETB effects (e.g., token creation, exile-until-leaves)
             if (!gameData.interaction.isAwaitingInput()) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetPermanentId(), true);
+                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true);
             }
 
             checkLegendRuleIfIdle(gameData, controllerId);
@@ -270,7 +270,7 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetPermanentId())) {
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId())) {
             return;
         }
 
@@ -347,7 +347,7 @@ public class StackResolutionService {
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
 
         // Process ETB effects for all artifacts (creature and non-creature)
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetPermanentId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue());
 
         checkLegendRuleIfIdle(gameData, controllerId);
     }
@@ -377,7 +377,7 @@ public class StackResolutionService {
             String fizzleLog = entry.getDescription() + " fizzles (illegal target).";
             gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             log.info("Game {} - {} fizzles, target {} is illegal",
-                    gameData.id, entry.getDescription(), entry.getTargetPermanentId());
+                    gameData.id, entry.getDescription(), entry.getTargetId());
 
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
@@ -457,21 +457,21 @@ public class StackResolutionService {
         }
     }
 
-    private void handlePhylacteryCounterPlacement(GameData gameData, UUID controllerId, Card card, UUID targetPermanentId) {
+    private void handlePhylacteryCounterPlacement(GameData gameData, UUID controllerId, Card card, UUID targetId) {
         boolean hasPhylacteryEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof PutPhylacteryCounterOnTargetPermanentEffect);
         if (!hasPhylacteryEffect) return;
 
         // Per MTG rulings: "If you control no artifacts as Phylactery Lich enters the
         // battlefield, its ability does nothing." No target was chosen — skip placement.
-        if (targetPermanentId == null) return;
+        if (targetId == null) return;
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) return;
 
         // Validate the chosen permanent is an artifact controlled by the caster.
         // This does NOT use targeting (shroud/hexproof don't prevent it per MTG rulings).
-        UUID targetController = gameQueryService.findPermanentController(gameData, targetPermanentId);
+        UUID targetController = gameQueryService.findPermanentController(gameData, targetId);
         if (!controllerId.equals(targetController)) return;
         if (!gameQueryService.isArtifact(gameData, target)) return;
         if (gameQueryService.cantHaveCounters(gameData, target)) return;

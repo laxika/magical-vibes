@@ -209,7 +209,7 @@ class HiveMindTest extends BaseCardTest {
         StackEntry copyEntry = gd.stack.stream()
                 .filter(se -> se.getDescription().equals("Copy of Boomerang"))
                 .findFirst().orElseThrow();
-        assertThat(copyEntry.getTargetPermanentId()).isEqualTo(bearsPermId);
+        assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
         assertThat(copyEntry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -248,7 +248,7 @@ class HiveMindTest extends BaseCardTest {
         StackEntry copyEntry = gd.stack.stream()
                 .filter(se -> se.getDescription().equals("Copy of Boomerang"))
                 .findFirst().orElseThrow();
-        assertThat(copyEntry.getTargetPermanentId()).isEqualTo(bears2PermId);
+        assertThat(copyEntry.getTargetId()).isEqualTo(bears2PermId);
     }
 
     // ===== Does not trigger on creature spells =====
@@ -397,6 +397,6 @@ class HiveMindTest extends BaseCardTest {
                 .filter(se -> se.getDescription().equals("Copy of Lightning Bolt"))
                 .findFirst().orElseThrow();
         assertThat(copyEntry.getControllerId()).isEqualTo(player1.getId());
-        assertThat(copyEntry.getTargetPermanentId()).isEqualTo(bearsPermId);
+        assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
     }
 }

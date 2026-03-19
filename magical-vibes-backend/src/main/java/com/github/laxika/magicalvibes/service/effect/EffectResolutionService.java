@@ -133,13 +133,13 @@ public class EffectResolutionService {
                 }
             }
 
-            // Multi-target support: set entry.targetPermanentId to the correct target
+            // Multi-target support: set entry.targetId to the correct target
             // for this effect based on the Card's SpellTarget declarations.
             int targetIdx = entry.getCard().getEffectTargetIndex(effect);
-            UUID savedTargetId = entry.getTargetPermanentId();
+            UUID savedTargetId = entry.getTargetId();
             if (targetIdx >= 0 && entry.getTargetPermanentIds() != null
                     && targetIdx < entry.getTargetPermanentIds().size()) {
-                entry.setTargetPermanentId(entry.getTargetPermanentIds().get(targetIdx));
+                entry.setTargetId(entry.getTargetPermanentIds().get(targetIdx));
             }
 
             EffectHandler handler = registry.getHandler(effectToResolve);
@@ -149,9 +149,9 @@ public class EffectResolutionService {
                 log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
             }
 
-            // Restore original targetPermanentId after multi-target override
+            // Restore original targetId after multi-target override
             if (targetIdx >= 0) {
-                entry.setTargetPermanentId(savedTargetId);
+                entry.setTargetId(savedTargetId);
             }
 
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
@@ -227,7 +227,7 @@ public class EffectResolutionService {
             case MorbidReplacementEffect ignored ->
                     gameQueryService.isMorbidMet(gameData);
             case TargetSubtypeReplacementEffect tsre -> {
-                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 yield target != null && target.getCard().getSubtypes().contains(tsre.subtype());
             }
             default -> {

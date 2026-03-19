@@ -29,13 +29,13 @@ public class ExileReturnResolutionService {
 
     @HandlesEffect(ReturnTargetCardFromExileToHandEffect.class)
     void resolveReturnTargetCardFromExileToHand(GameData gameData, StackEntry entry, ReturnTargetCardFromExileToHandEffect effect) {
-        if (entry.getTargetZone() != Zone.EXILE || entry.getTargetPermanentId() == null) {
+        if (entry.getTargetZone() != Zone.EXILE || entry.getTargetId() == null) {
             String fizzleLog = entry.getDescription() + " fizzles (no valid exile target).";
             gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             return;
         }
 
-        Card targetCard = gameQueryService.findCardInExileById(gameData, entry.getTargetPermanentId());
+        Card targetCard = gameQueryService.findCardInExileById(gameData, entry.getTargetId());
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         if (targetCard == null) {
@@ -51,7 +51,7 @@ public class ExileReturnResolutionService {
         }
 
         // Remove card from exile
-        UUID ownerId = gameQueryService.findExileOwnerById(gameData, entry.getTargetPermanentId());
+        UUID ownerId = gameQueryService.findExileOwnerById(gameData, entry.getTargetId());
         if (ownerId != null) {
             List<Card> exile = gameData.playerExiledCards.get(ownerId);
             if (exile != null) {

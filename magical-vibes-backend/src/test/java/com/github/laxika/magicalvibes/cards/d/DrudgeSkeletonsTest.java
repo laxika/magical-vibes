@@ -81,7 +81,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Drudge Skeletons");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(skelePerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(skelePerm.getId());
     }
 
     @Test

@@ -497,7 +497,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playGraveyardLand(index: number): void {
     if (this.isGraveyardLandPlayable(index)) {
-      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null, fromGraveyard: true });
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, fromGraveyard: true });
     }
   }
 
@@ -523,14 +523,14 @@ export class GameComponent implements OnInit, OnDestroy {
       if (card?.needsTarget) {
         this.choice.targeting.startFlashbackTargeting(index, card);
       } else {
-        this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetPermanentId: null, flashback: true });
+        this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, flashback: true });
       }
     }
   }
 
   playExileCard(card: Card): void {
     if (card.id) {
-      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetPermanentId: null, fromExileCardId: card.id });
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: null, fromExileCardId: card.id });
     }
   }
 
@@ -951,7 +951,7 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Stack display ==========
 
   onStackEntryHover(entry: StackEntry): void {
-    this.stackTargetId.set(entry.targetPermanentId);
+    this.stackTargetId.set(entry.targetId);
   }
 
   onStackEntryHoverEnd(): void {
@@ -974,18 +974,18 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   getStackEntryTargetName(entry: StackEntry): string | null {
-    if (!entry.targetPermanentId) return null;
+    if (!entry.targetId) return null;
     const g = this.game();
     if (!g) return null;
-    const playerIdx = g.playerIds.indexOf(entry.targetPermanentId);
+    const playerIdx = g.playerIds.indexOf(entry.targetId);
     if (playerIdx >= 0) return g.playerNames[playerIdx];
     for (const bf of g.battlefields) {
       for (const perm of bf) {
-        if (perm.id === entry.targetPermanentId) return perm.card.name;
+        if (perm.id === entry.targetId) return perm.card.name;
       }
     }
     for (const se of g.stack) {
-      if (se.cardId === entry.targetPermanentId) return se.card.name;
+      if (se.cardId === entry.targetId) return se.card.name;
     }
     return null;
   }

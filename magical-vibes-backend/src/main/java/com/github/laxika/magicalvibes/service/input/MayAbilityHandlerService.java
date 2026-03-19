@@ -419,7 +419,7 @@ public class MayAbilityHandlerService {
                             0
                     );
                 }
-                entry.setTargetPermanentId(ability.targetCardId());
+                entry.setTargetId(ability.targetCardId());
                 gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
@@ -486,7 +486,7 @@ public class MayAbilityHandlerService {
                 if (battlefield != null) {
                     for (Permanent p : battlefield) {
                         if (p.getCard() == ability.sourceCard()) {
-                            entry.setTargetPermanentId(p.getId());
+                            entry.setTargetId(p.getId());
                             break;
                         }
                     }
@@ -497,7 +497,7 @@ public class MayAbilityHandlerService {
             boolean needsEnteringTarget = ability.effects().stream()
                     .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect);
             if (needsEnteringTarget && ability.targetCardId() != null) {
-                entry.setTargetPermanentId(ability.targetCardId());
+                entry.setTargetId(ability.targetCardId());
             }
 
             gameData.stack.add(entry);
@@ -604,7 +604,7 @@ public class MayAbilityHandlerService {
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             boolean isTargetedPermanent = innerEffect != null && innerEffect.canTargetPermanent();
             boolean isTargetedPlayer = innerEffect != null && innerEffect.canTargetPlayer();
-            boolean targetAlreadySet = pendingEntry != null && pendingEntry.getTargetPermanentId() != null;
+            boolean targetAlreadySet = pendingEntry != null && pendingEntry.getTargetId() != null;
             if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
                 gameData.resolvedMayAccepted = true;
                 handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);
@@ -631,9 +631,9 @@ public class MayAbilityHandlerService {
     private void setUpSelfTargetIfNeeded(GameData gameData, PendingMayAbility ability, StackEntry pendingEntry, CardEffect innerEffect) {
         if (innerEffect == null) return;
         boolean needsSelfTarget = innerEffect instanceof PutChargeCounterOnSelfEffect || innerEffect instanceof AnimateSelfEffect || innerEffect instanceof AnimateSelfByChargeCountersEffect || innerEffect instanceof AnimateSelfWithStatsEffect || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
-        if (needsSelfTarget && pendingEntry.getTargetPermanentId() == null) {
+        if (needsSelfTarget && pendingEntry.getTargetId() == null) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
-            if (battlefield != null) { for (Permanent p : battlefield) { if (p.getCard() == ability.sourceCard()) { pendingEntry.setTargetPermanentId(p.getId()); break; } } }
+            if (battlefield != null) { for (Permanent p : battlefield) { if (p.getCard() == ability.sourceCard()) { pendingEntry.setTargetId(p.getId()); break; } } }
         }
     }
 

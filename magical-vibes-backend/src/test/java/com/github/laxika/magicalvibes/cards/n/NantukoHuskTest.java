@@ -107,7 +107,7 @@ class NantukoHuskTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Nantuko Husk");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(huskPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(huskPerm.getId());
         assertThat(entry.isNonTargeting()).isTrue();
     }
 

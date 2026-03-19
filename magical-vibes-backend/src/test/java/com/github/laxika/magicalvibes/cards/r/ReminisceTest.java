@@ -49,7 +49,7 @@ class ReminisceTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Reminisce");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player1.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player1.getId());
     }
 
     @Test

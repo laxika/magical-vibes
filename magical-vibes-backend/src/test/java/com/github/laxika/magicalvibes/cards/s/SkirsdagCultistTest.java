@@ -66,7 +66,7 @@ class SkirsdagCultistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, elvesId);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
         // Cultist should still be on battlefield

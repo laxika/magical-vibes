@@ -31,7 +31,7 @@ public sealed interface PermanentChoiceContext {
                                       UUID sourcePermanentId,
                                       Integer abilityIndex,
                                       Integer xValue,
-                                      UUID targetPermanentId,
+                                      UUID targetId,
                                       Zone targetZone,
                                       CardEffect costEffect,
                                       int remaining) implements PermanentChoiceContext {}

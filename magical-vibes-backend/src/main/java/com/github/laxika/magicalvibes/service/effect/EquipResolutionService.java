@@ -29,7 +29,7 @@ public class EquipResolutionService {
 
     @HandlesEffect(EquipEffect.class)
     private void resolveEquip(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             String logEntry = entry.getCard().getName() + "'s equip ability fizzles (target creature no longer exists).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -84,7 +84,7 @@ public class EquipResolutionService {
 
     @HandlesEffect(AttachSourceEquipmentToTargetCreatureEffect.class)
     private void resolveAttachSourceEquipmentToTargetCreature(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             String logEntry = entry.getCard().getName() + "'s attach ability fizzles (target creature no longer exists).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

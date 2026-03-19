@@ -8,14 +8,14 @@ public class ChoiceState {
 
     private final UUID playerId;
     private final UUID permanentId;
-    private final UUID etbTargetPermanentId;
+    private final UUID etbTargetId;
     private final ChoiceContext choiceContext;
 
-    public ChoiceState(UUID playerId, UUID permanentId, UUID etbTargetPermanentId,
+    public ChoiceState(UUID playerId, UUID permanentId, UUID etbTargetId,
                             ChoiceContext choiceContext) {
         this.playerId = playerId;
         this.permanentId = permanentId;
-        this.etbTargetPermanentId = etbTargetPermanentId;
+        this.etbTargetId = etbTargetId;
         this.choiceContext = choiceContext;
     }
 
@@ -27,8 +27,8 @@ public class ChoiceState {
         return permanentId;
     }
 
-    public UUID etbTargetPermanentId() {
-        return etbTargetPermanentId;
+    public UUID etbTargetId() {
+        return etbTargetId;
     }
 
     public ChoiceContext choiceContext() {
@@ -36,6 +36,6 @@ public class ChoiceState {
     }
 
     public ChoiceState deepCopy() {
-        return new ChoiceState(playerId, permanentId, etbTargetPermanentId, choiceContext);
+        return new ChoiceState(playerId, permanentId, etbTargetId, choiceContext);
     }
 }

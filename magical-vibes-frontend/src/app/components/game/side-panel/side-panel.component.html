@@ -94,9 +94,9 @@
                 <div class="stack-entry-controller">
                   ({{ getPlayerName(entry.controllerId) }})
                 </div>
-                @if (entry.targetPermanentId) {
+                @if (entry.targetId) {
                   <div class="stack-entry-target">
-                    Target: {{ getStackEntryTargetName(entry) ?? entry.targetPermanentId }}
+                    Target: {{ getStackEntryTargetName(entry) ?? entry.targetId }}
                   </div>
                 }
               </div>

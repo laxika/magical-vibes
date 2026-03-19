@@ -52,7 +52,7 @@ class DissipateTest extends BaseCardTest {
         StackEntry dissipateEntry = gd.stack.getLast();
         assertThat(dissipateEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(dissipateEntry.getCard().getName()).isEqualTo("Dissipate");
-        assertThat(dissipateEntry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(dissipateEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
     // ===== Resolving =====

@@ -196,7 +196,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Aura of Silence");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     @Test

@@ -48,7 +48,7 @@ class InciteTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(harness.getPermanentId(player2, "Grizzly Bears"));
+        assertThat(entry.getTargetId()).isEqualTo(harness.getPermanentId(player2, "Grizzly Bears"));
     }
 
     // ===== Resolving =====

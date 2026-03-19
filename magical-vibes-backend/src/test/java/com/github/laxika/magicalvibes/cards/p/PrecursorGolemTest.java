@@ -167,7 +167,7 @@ class PrecursorGolemTest extends BaseCardTest {
 
         // Collect all target IDs
         List<UUID> allTargets = gd.stack.stream()
-                .map(se -> se.getTargetPermanentId())
+                .map(se -> se.getTargetId())
                 .toList();
 
         // All 3 Golems should be targeted (original + 2 copies)

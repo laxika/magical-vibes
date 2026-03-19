@@ -104,11 +104,11 @@ public class SpellCastTriggerCollectorService {
 
         // Determine the single unique target
         UUID singleTargetId = null;
-        if (spellEntry.getTargetPermanentId() != null
+        if (spellEntry.getTargetId() != null
                 && spellEntry.getTargetZone() == null
                 && spellEntry.getTargetPermanentIds().isEmpty()) {
-            singleTargetId = spellEntry.getTargetPermanentId();
-        } else if (spellEntry.getTargetPermanentId() == null
+            singleTargetId = spellEntry.getTargetId();
+        } else if (spellEntry.getTargetId() == null
                 && !spellEntry.getTargetPermanentIds().isEmpty()
                 && spellEntry.getTargetPermanentIds().stream().distinct().count() == 1) {
             singleTargetId = spellEntry.getTargetPermanentIds().getFirst();
@@ -266,7 +266,7 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(trigger))
         );
-        entry.setTargetPermanentId(sc.castingPlayerId());
+        entry.setTargetId(sc.castingPlayerId());
         match.gameData().stack.add(entry);
         return true;
     }
@@ -316,7 +316,7 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(trigger))
         );
-        entry.setTargetPermanentId(sc.castingPlayerId());
+        entry.setTargetId(sc.castingPlayerId());
         match.gameData().stack.add(entry);
         return true;
     }

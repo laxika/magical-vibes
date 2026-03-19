@@ -58,7 +58,7 @@ class NeurokInvisimancerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(trigger.getTargetId()).isEqualTo(targetId);
 
         // Resolve ETB triggered ability
         harness.passBothPriorities();

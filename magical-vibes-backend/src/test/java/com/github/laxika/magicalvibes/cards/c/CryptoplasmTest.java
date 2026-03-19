@@ -60,7 +60,7 @@ class CryptoplasmTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType())
                 .isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getTargetPermanentId())
+        assertThat(gd.stack.getFirst().getTargetId())
                 .isEqualTo(bearsId);
     }
 
@@ -185,7 +185,7 @@ class CryptoplasmTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bearsId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearsId);
     }
 
     @Test

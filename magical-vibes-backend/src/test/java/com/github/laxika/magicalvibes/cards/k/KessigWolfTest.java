@@ -84,7 +84,7 @@ class KessigWolfTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Kessig Wolf");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(wolf.getId());
+        assertThat(entry.getTargetId()).isEqualTo(wolf.getId());
     }
 
     @Test

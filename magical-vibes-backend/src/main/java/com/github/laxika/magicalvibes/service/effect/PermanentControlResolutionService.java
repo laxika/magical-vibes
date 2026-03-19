@@ -628,7 +628,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(PutTargetOnBottomOfLibraryEffect.class)
     private void resolvePutTargetOnBottomOfLibrary(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         if (permanentRemovalService.removePermanentToLibraryBottom(gameData, target)) {
@@ -642,7 +642,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(PutTargetOnTopOfLibraryEffect.class)
     private void resolvePutTargetOnTopOfLibrary(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
@@ -701,7 +701,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(RegenerateEffect.class)
     private void resolveRegenerate(GameData gameData, StackEntry entry) {
-        UUID regenerationTargetId = entry.getTargetPermanentId();
+        UUID regenerationTargetId = entry.getTargetId();
         if (regenerationTargetId == null && entry.getSourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source != null) {
@@ -749,7 +749,7 @@ public class PermanentControlResolutionService {
     @HandlesEffect(GainControlOfTargetAuraEffect.class)
     private void resolveGainControlOfTargetAura(GameData gameData, StackEntry entry) {
         UUID casterId = entry.getControllerId();
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (aura == null) return;
 
         UUID currentControllerId = gameQueryService.findPermanentController(gameData, aura.getId());
@@ -781,7 +781,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(GainControlOfEnchantedTargetEffect.class)
     private void resolveGainControlOfEnchantedTarget(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         if (!gameQueryService.isEnchanted(gameData, target)) {
@@ -796,7 +796,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(GainControlOfTargetPermanentUntilEndOfTurnEffect.class)
     private void resolveGainControlOfTargetPermanentUntilEndOfTurn(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
@@ -810,7 +810,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(GainControlOfTargetPermanentEffect.class)
     private void resolveGainControlOfTargetPermanent(GameData gameData, StackEntry entry, GainControlOfTargetPermanentEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
@@ -828,7 +828,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(GainControlOfTargetPermanentWhileSourceEffect.class)
     private void resolveGainControlOfTargetPermanentWhileSource(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         UUID sourcePermanentId = entry.getSourcePermanentId();
@@ -858,7 +858,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(GrantSubtypeToTargetCreatureEffect.class)
     private void resolveGrantSubtypeToTargetCreature(GameData gameData, StackEntry entry, GrantSubtypeToTargetCreatureEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         if (!target.getGrantedSubtypes().contains(effect.subtype())) {
@@ -870,7 +870,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(AttachTargetToSourcePermanentEffect.class)
     private void resolveAttachTargetToSourcePermanent(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -884,11 +884,11 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(TargetPlayerGainsControlOfSourceCreatureEffect.class)
     private void resolveTargetPlayerGainsControlOfSourceCreature(GameData gameData, StackEntry entry) {
-        if (entry.getTargetPermanentId() == null || !gameData.playerIds.contains(entry.getTargetPermanentId())) {
+        if (entry.getTargetId() == null || !gameData.playerIds.contains(entry.getTargetId())) {
             return;
         }
 
-        UUID newControllerId = entry.getTargetPermanentId();
+        UUID newControllerId = entry.getTargetId();
         Permanent source = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1046,7 +1046,7 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(CreateTokenCopyOfTargetPermanentEffect.class)
     private void resolveCreateTokenCopyOfTargetPermanent(GameData gameData, StackEntry entry) {
-        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (targetPermanent == null) {
             log.info("Game {} - Target permanent no longer on battlefield, no token created", gameData.id);
             return;

@@ -54,7 +54,7 @@ class AuraGraftTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Aura Graft");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(aura.getId());
+        assertThat(entry.getTargetId()).isEqualTo(aura.getId());
     }
 
     // ===== Target validation =====

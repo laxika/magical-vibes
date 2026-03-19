@@ -390,7 +390,7 @@ class KnowledgePoolTest extends BaseCardTest {
         // Shock should now be on the stack targeting bears
         assertThat(gd.stack).anyMatch(se ->
                 se.getCard().getId().equals(shock.getId())
-                        && se.getTargetPermanentId().equals(bearsId));
+                        && se.getTargetId().equals(bearsId));
 
         // Resolve the Shock
         harness.passBothPriorities();

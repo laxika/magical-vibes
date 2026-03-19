@@ -50,7 +50,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Sparkmage Apprentice");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
     @Test
@@ -66,7 +66,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Sparkmage Apprentice");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     // ===== ETB trigger =====
@@ -93,7 +93,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Sparkmage Apprentice");
-        assertThat(trigger.getTargetPermanentId()).isEqualTo(targetId);
+        assertThat(trigger.getTargetId()).isEqualTo(targetId);
     }
 
     // ===== Damage to creature =====

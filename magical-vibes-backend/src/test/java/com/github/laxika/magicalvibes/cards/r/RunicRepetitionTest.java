@@ -103,7 +103,7 @@ class RunicRepetitionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(flashbackCard.getId());
+        assertThat(entry.getTargetId()).isEqualTo(flashbackCard.getId());
         assertThat(entry.getTargetZone()).isEqualTo(Zone.EXILE);
     }
 

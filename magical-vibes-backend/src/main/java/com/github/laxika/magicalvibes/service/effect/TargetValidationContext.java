@@ -8,13 +8,13 @@ import java.util.UUID;
 
 public record TargetValidationContext(
         GameData gameData,
-        UUID targetPermanentId,
+        UUID targetId,
         Zone targetZone,
         Card sourceCard,
         int xValue
 ) {
-    public TargetValidationContext(GameData gameData, UUID targetPermanentId, Zone targetZone, Card sourceCard) {
-        this(gameData, targetPermanentId, targetZone, sourceCard, 0);
+    public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard) {
+        this(gameData, targetId, targetZone, sourceCard, 0);
     }
 }
 

@@ -68,7 +68,7 @@ class HighwayRobberTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Highway Robber");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 
     // ===== ETB life drain =====

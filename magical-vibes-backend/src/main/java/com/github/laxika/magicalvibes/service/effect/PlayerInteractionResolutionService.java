@@ -178,7 +178,7 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect.class)
     private void resolveSacrificeSelfAndTargetDiscardsPerPoisonCounter(GameData gameData, StackEntry entry,
                                                                        SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
 
         if (targetPlayerId == null || sourcePermanentId == null) {
@@ -214,7 +214,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(DrawXCardsForTargetPlayerEffect.class)
     private void resolveDrawXCardsForTargetPlayer(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         int amount = entry.getXValue();
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String cardName = entry.getCard().getName();
@@ -387,7 +387,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(TargetPlayerExilesFromHandEffect.class)
     private void resolveTargetPlayerExilesFromHand(GameData gameData, StackEntry entry, TargetPlayerExilesFromHandEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         if (hand == null || hand.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -417,12 +417,12 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(TargetPlayerDiscardsEffect.class)
     private void resolveTargetPlayerDiscards(GameData gameData, StackEntry entry, TargetPlayerDiscardsEffect effect) {
         gameData.discardCausedByOpponent = true;
-        resolveDiscardCards(gameData, entry.getTargetPermanentId(), effect.amount());
+        resolveDiscardCards(gameData, entry.getTargetId(), effect.amount());
     }
 
     @HandlesEffect(TargetSpellControllerDiscardsEffect.class)
     private void resolveTargetSpellControllerDiscards(GameData gameData, StackEntry entry, TargetSpellControllerDiscardsEffect effect) {
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
         for (StackEntry se : gameData.stack) {
@@ -438,7 +438,7 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(TargetPlayerDiscardsByChargeCountersEffect.class)
     private void resolveTargetPlayerDiscardsByChargeCounters(GameData gameData, StackEntry entry) {
         int chargeCounters = entry.getXValue();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
 
         if (chargeCounters <= 0) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -453,7 +453,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(TargetPlayerDiscardsReturnSelfIfCardTypeEffect.class)
     private void resolveTargetPlayerDiscardsReturnSelfIfCardType(GameData gameData, StackEntry entry, TargetPlayerDiscardsReturnSelfIfCardTypeEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
         if (targetHand != null && !targetHand.isEmpty()) {
             gameData.pendingReturnToHandOnDiscardType = new PendingReturnToHandOnDiscardType(
@@ -476,7 +476,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(ChooseCardNameAndExileFromZonesEffect.class)
     private void resolveChooseCardNameAndExileFromZones(GameData gameData, StackEntry entry, ChooseCardNameAndExileFromZonesEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
         playerInputService.beginSpellCardNameChoice(gameData, controllerId, targetPlayerId, effect.excludedTypes());
     }
@@ -484,7 +484,7 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(ExileTargetGraveyardCardAndSameNameFromZonesEffect.class)
     private void resolveExileTargetGraveyardCardAndSameNameFromZones(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         Card targetedCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
@@ -535,14 +535,14 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(TargetPlayerRandomDiscardEffect.class)
     private void resolveTargetPlayerRandomDiscard(GameData gameData, StackEntry entry, TargetPlayerRandomDiscardEffect effect) {
         gameData.discardCausedByOpponent = effect.causedByOpponent();
-        UUID playerId = effect.causedByOpponent() ? entry.getTargetPermanentId() : entry.getControllerId();
+        UUID playerId = effect.causedByOpponent() ? entry.getTargetId() : entry.getControllerId();
         resolveRandomDiscardCards(gameData, playerId, entry.getCard().getName(), effect.amount());
     }
 
     @HandlesEffect(TargetPlayerRandomDiscardXEffect.class)
     private void resolveTargetPlayerRandomDiscardX(GameData gameData, StackEntry entry) {
         int x = entry.getXValue();
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
 
         if (x <= 0) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -573,7 +573,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(ReturnPermanentsOnCombatDamageToPlayerEffect.class)
     private void resolveReturnPermanentsOnCombatDamage(GameData gameData, StackEntry entry, ReturnPermanentsOnCombatDamageToPlayerEffect effect) {
-        UUID defenderId = entry.getTargetPermanentId();
+        UUID defenderId = entry.getTargetId();
         int damageDealt = entry.getXValue();
         UUID attackerId = entry.getControllerId();
         String creatureName = entry.getCard().getName();
@@ -650,7 +650,7 @@ public class PlayerInteractionResolutionService {
                 entry.getControllerId(),
                 List.of(mayEffect.wrapped()),
                 entry.getCard().getName() + " - " + mayEffect.prompt(),
-                entry.getTargetPermanentId(),
+                entry.getTargetId(),
                 null,
                 entry.getSourcePermanentId()
         ));
@@ -665,7 +665,7 @@ public class PlayerInteractionResolutionService {
                 entry.getControllerId(),
                 List.of(mayPayEffect.wrapped()),
                 entry.getCard().getName() + " - " + mayPayEffect.prompt(),
-                entry.getTargetPermanentId(),
+                entry.getTargetId(),
                 mayPayEffect.manaCost(),
                 entry.getSourcePermanentId()
         ));
@@ -807,7 +807,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(LookAtHandEffect.class)
     private void resolveLookAtHand(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String casterName = gameData.playerIdToName.get(entry.getControllerId());
@@ -829,7 +829,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(RevealRandomCardFromTargetPlayerHandEffect.class)
     private void resolveRevealRandomCardFromTargetPlayerHand(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String sourceName = entry.getCard().getName();
@@ -856,7 +856,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(ChooseCardsFromTargetHandToTopOfLibraryEffect.class)
     private void resolveChooseCardsFromTargetHandToTopOfLibrary(GameData gameData, StackEntry entry, ChooseCardsFromTargetHandToTopOfLibraryEffect choose) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -895,7 +895,7 @@ public class PlayerInteractionResolutionService {
     private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              boolean discardMode, boolean exileMode) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -961,13 +961,13 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(ChangeColorTextEffect.class)
     private void resolveChangeColorText(GameData gameData, StackEntry entry) {
-        UUID targetPermanentId = entry.getTargetPermanentId();
-        Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+        UUID targetId = entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }
 
-        ChoiceContext.TextChangeFromWord choiceContext = new ChoiceContext.TextChangeFromWord(targetPermanentId);
+        ChoiceContext.TextChangeFromWord choiceContext = new ChoiceContext.TextChangeFromWord(targetId);
         gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
 
         List<String> options = new ArrayList<>();
@@ -1033,7 +1033,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(RedirectDrawsEffect.class)
     private void resolveRedirectDraws(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
 
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -1068,7 +1068,7 @@ public class PlayerInteractionResolutionService {
             }
         }
 
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         for (int i = 0; i < effect.amount(); i++) {
             drawService.resolveDrawCard(gameData, targetPlayerId);
         }
@@ -1137,7 +1137,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(LoseLifeUnlessDiscardEffect.class)
     private void resolveLoseLifeUnlessDiscard(GameData gameData, StackEntry entry, LoseLifeUnlessDiscardEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -1167,7 +1167,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(LoseLifeUnlessPaysEffect.class)
     private void resolveLoseLifeUnlessPays(GameData gameData, StackEntry entry, LoseLifeUnlessPaysEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         com.github.laxika.magicalvibes.model.ManaCost cost = new com.github.laxika.magicalvibes.model.ManaCost("{" + effect.payAmount() + "}");
@@ -1262,7 +1262,7 @@ public class PlayerInteractionResolutionService {
 
     @HandlesEffect(RevealRandomHandCardAndPlayEffect.class)
     private void resolveRevealRandomHandCardAndPlay(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String sourceName = entry.getCard().getName();

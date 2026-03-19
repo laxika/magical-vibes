@@ -125,7 +125,7 @@ class AsceticismTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
     }
 
     // ===== Regenerate activated ability =====
@@ -142,7 +142,7 @@ class AsceticismTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Asceticism");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test

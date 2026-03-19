@@ -31,7 +31,7 @@ public class DestructionTargetValidators {
     @ValidatesTarget(DestroyCreatureBlockingThisEffect.class)
     public void validateDestroyCreatureBlockingThis(TargetValidationContext ctx) {
         tvs.requireTarget(ctx);
-        Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
         if (target == null || !gameQueryService.isCreature(ctx.gameData(), target) || !target.isBlocking()) {
             throw new IllegalStateException("Target must be a creature blocking this creature");
         }

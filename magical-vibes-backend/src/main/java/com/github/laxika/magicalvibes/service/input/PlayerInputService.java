@@ -61,8 +61,8 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
     }
 
-    public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetPermanentId) {
-        gameData.interaction.beginCardChoice(AwaitingInput.TARGETED_CARD_CHOICE, playerId, new HashSet<>(validIndices), targetPermanentId);
+    public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {
+        gameData.interaction.beginCardChoice(AwaitingInput.TARGETED_CARD_CHOICE, playerId, new HashSet<>(validIndices), targetId);
         sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt, true));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -113,8 +113,8 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
     }
 
-    public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetPermanentId) {
-        gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetPermanentId, gameData.interaction.colorChoiceContext());
+    public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {
+        gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetId, gameData.interaction.colorChoiceContext());
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(colors, "Choose a color."));
 
@@ -122,8 +122,8 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
-    public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetPermanentId, boolean includeArtifacts) {
-        ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetPermanentId, includeArtifacts);
+    public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetId, boolean includeArtifacts) {
+        ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetId, includeArtifacts);
         gameData.interaction.beginColorChoice(playerId, null, null, ctx);
 
         List<String> options = new java.util.ArrayList<>(List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"));
@@ -137,8 +137,8 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose protection", gameData.id, playerName);
     }
 
-    public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetPermanentId, List<Keyword> options) {
-        ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetPermanentId, options);
+    public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {
+        ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetId, options);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> optionNames = options.stream().map(Keyword::name).toList();

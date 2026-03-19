@@ -211,7 +211,7 @@ public class CombatBlockService {
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             blocker.setBlocking(true);
             blocker.addBlockingTarget(assignment.attackerIndex());
-            blocker.addBlockingTargetPermanentId(attacker.getId());
+            blocker.addBlockingTargetId(attacker.getId());
         }
 
         if (!blockerAssignments.isEmpty()) {

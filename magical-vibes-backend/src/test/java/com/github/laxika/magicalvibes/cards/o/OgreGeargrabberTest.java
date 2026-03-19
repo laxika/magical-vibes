@@ -128,7 +128,7 @@ class OgreGeargrabberTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(se ->
                 se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Ogre Geargrabber")
-                        && se.getTargetPermanentId().equals(opponentEquipment.getId())
+                        && se.getTargetId().equals(opponentEquipment.getId())
                         && se.getSourcePermanentId().equals(ogre.getId()));
     }
 

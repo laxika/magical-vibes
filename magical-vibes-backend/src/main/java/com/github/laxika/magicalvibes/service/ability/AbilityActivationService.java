@@ -180,11 +180,11 @@ public class AbilityActivationService {
      * @param gameData          the current game state
      * @param player            the player sacrificing the permanent
      * @param permanentIndex    index of the permanent on the player's battlefield
-     * @param targetPermanentId target for the sacrifice effect (e.g. for destroy-target abilities), or {@code null}
+     * @param targetId target for the sacrifice effect (e.g. for destroy-target abilities), or {@code null}
      * @throws IllegalStateException if the permanent has no sacrifice abilities, is blocked by Pithing Needle
      *                               or Arrest, or the target is invalid/protected
      */
-    public void sacrificePermanent(GameData gameData, Player player, int permanentIndex, UUID targetPermanentId) {
+    public void sacrificePermanent(GameData gameData, Player player, int permanentIndex, UUID targetId) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
@@ -206,10 +206,10 @@ public class AbilityActivationService {
         // Validate target for effects that need one
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)) {
             if (effect instanceof DestroyTargetPermanentEffect destroy) {
-                if (targetPermanentId == null) {
+                if (targetId == null) {
                     throw new IllegalStateException("Sacrifice ability requires a target");
                 }
-                Permanent target = gameQueryService.findPermanentById(gameData, targetPermanentId);
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     throw new IllegalStateException("Invalid target permanent");
                 }
@@ -245,7 +245,7 @@ public class AbilityActivationService {
                 permanent.getCard().getName() + "'s ability",
                 new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)),
                 0,
-                targetPermanentId,
+                targetId,
                 Map.of()
         ));
         gameData.priorityPassedBy.clear();
@@ -266,15 +266,15 @@ public class AbilityActivationService {
      * @param permanentIndex    index of the source permanent on the player's battlefield
      * @param abilityIndex      index of the ability to activate (defaults to 0 if {@code null})
      * @param xValue            value for X in the mana cost (defaults to 0 if {@code null})
-     * @param targetPermanentId target permanent for the ability, or creature to sacrifice as cost, or {@code null}
+     * @param targetId target permanent for the ability, or creature to sacrifice as cost, or {@code null}
      * @param targetZone        target zone for zone-targeted effects, or {@code null}
      */
-    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null, null, null);
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, null);
     }
 
-    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetPermanentId, Zone targetZone, List<UUID> targetPermanentIds) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetPermanentId, targetZone, null, null, targetPermanentIds);
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetPermanentIds) {
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetPermanentIds);
     }
 
     /**
@@ -398,7 +398,7 @@ public class AbilityActivationService {
                 permanentIndex,
                 pending.abilityIndex(),
                 pending.xValue(),
-                pending.targetPermanentId(),
+                pending.targetId(),
                 pending.targetZone(),
                 cardIndex,
                 null,
@@ -440,7 +440,7 @@ public class AbilityActivationService {
                 permanentIndex,
                 pending.abilityIndex(),
                 pending.xValue(),
-                pending.targetPermanentId(),
+                pending.targetId(),
                 pending.targetZone(),
                 null,
                 cardIndex,
@@ -449,7 +449,7 @@ public class AbilityActivationService {
     }
 
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
-                                         UUID targetPermanentId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
+                                         UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
                                          List<UUID> targetPermanentIds) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
@@ -502,7 +502,7 @@ public class AbilityActivationService {
 
         // Validate spell target for abilities that counter spells
         if (ability.isNeedsSpellTarget()) {
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetPermanentId, ability.getTargetFilter(), playerId);
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId);
         }
 
         UUID sourceId = permanent.getId();
@@ -516,7 +516,7 @@ public class AbilityActivationService {
             targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability, targetPermanentIds, permanent.getCard());
         } else {
             targetLegalityService.validateActivatedAbilityTargeting(
-                    gameData, playerId, ability, abilityEffects, targetPermanentId, targetZone, permanent.getCard(), effectiveXValue);
+                    gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
         }
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
             handler.validateCanPay(gameData, playerId);
@@ -553,7 +553,7 @@ public class AbilityActivationService {
                 throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
             }
             if (exileGraveyardCardIndex == null) {
-                beginGraveyardExileCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetPermanentId, targetZone,
+                beginGraveyardExileCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
                         exileGraveyardCost.requiredType(), validExileIndices);
                 return;
             }
@@ -579,7 +579,7 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Must discard a " + typeLabel + "card to activate ability");
             }
             if (discardCardIndex == null) {
-                beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetPermanentId, targetZone,
+                beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
                         discardCardTypeCost.requiredType(), validDiscardIndices);
                 return;
             }
@@ -756,14 +756,14 @@ public class AbilityActivationService {
                 }
             }
             if (handlePermanentChoiceCost(gameData, player, permanent, effectiveIndex,
-                    effectiveXValue, targetPermanentId, targetZone, handler)) {
+                    effectiveXValue, targetId, targetZone, handler)) {
                 return;
             }
         }
 
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects,
-                effectiveXValue, targetPermanentId, targetZone, nonTargeting, effectiveIndex, targetPermanentIds);
+                effectiveXValue, targetId, targetZone, nonTargeting, effectiveIndex, targetPermanentIds);
     }
 
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId) {
@@ -778,7 +778,7 @@ public class AbilityActivationService {
     }
 
     private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
-                                               int abilityIndex, int xValue, UUID targetPermanentId, Zone targetZone,
+                                               int abilityIndex, int xValue, UUID targetId, Zone targetZone,
                                                PermanentChoiceCostHandler handler) {
         List<UUID> validIds = handler.getValidChoiceIds(gameData, player.getId());
         int required = handler.requiredCount();
@@ -792,7 +792,7 @@ public class AbilityActivationService {
             return false;
         }
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
-                player.getId(), source.getId(), abilityIndex, xValue, targetPermanentId, targetZone,
+                player.getId(), source.getId(), abilityIndex, xValue, targetId, targetZone,
                 handler.costEffect(), required));
         playerInputService.beginPermanentChoice(gameData, player.getId(), validIds,
                 handler.getPromptMessage(required));
@@ -867,7 +867,7 @@ public class AbilityActivationService {
             } else {
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
                         playerId, context.sourcePermanentId(), context.abilityIndex(), context.xValue(),
-                        context.targetPermanentId(), context.targetZone(), context.costEffect(), remaining));
+                        context.targetId(), context.targetZone(), context.costEffect(), remaining));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
                 gameBroadcastService.broadcastGameState(gameData);
@@ -878,7 +878,7 @@ public class AbilityActivationService {
         int finalXValue = updatedXValue != null ? updatedXValue : (context.xValue() != null ? context.xValue() : 0);
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
-                finalXValue, context.targetPermanentId(), context.targetZone(), nonTargeting, effectiveIndex);
+                finalXValue, context.targetId(), context.targetZone(), nonTargeting, effectiveIndex);
     }
 
     private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
@@ -897,17 +897,17 @@ public class AbilityActivationService {
 
     private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
                                               ActivatedAbility ability, List<CardEffect> abilityEffects,
-                                              int xValue, UUID targetPermanentId, Zone targetZone,
+                                              int xValue, UUID targetId, Zone targetZone,
                                               boolean nonTargeting, int abilityIndex) {
-        completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects, xValue, targetPermanentId, targetZone, nonTargeting, abilityIndex, null);
+        completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting, abilityIndex, null);
     }
 
     private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
                                               ActivatedAbility ability, List<CardEffect> abilityEffects,
-                                              int xValue, UUID targetPermanentId, Zone targetZone,
+                                              int xValue, UUID targetId, Zone targetZone,
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetPermanentIds) {
         activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, permanent, ability, abilityEffects, xValue, targetPermanentId, targetZone, nonTargeting, targetPermanentIds);
+                gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting, targetPermanentIds);
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
     }
 
@@ -1085,12 +1085,12 @@ public class AbilityActivationService {
     }
 
     private void beginDiscardCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                        UUID targetPermanentId, Zone targetZone, CardType requiredType, List<Integer> validDiscardIndices) {
+                                        UUID targetId, Zone targetZone, CardType requiredType, List<Integer> validDiscardIndices) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
                 abilityIndex,
                 xValue,
-                targetPermanentId,
+                targetId,
                 targetZone,
                 requiredType
         );
@@ -1139,12 +1139,12 @@ public class AbilityActivationService {
     }
 
     private void beginGraveyardExileCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                               UUID targetPermanentId, Zone targetZone, CardType requiredType, List<Integer> validExileIndices) {
+                                               UUID targetId, Zone targetZone, CardType requiredType, List<Integer> validExileIndices) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
                 abilityIndex,
                 xValue,
-                targetPermanentId,
+                targetId,
                 targetZone,
                 null
         );

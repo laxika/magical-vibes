@@ -86,7 +86,7 @@ class NomadMythmakerTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Nomad Mythmaker");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(holyStrength.getId());
+        assertThat(entry.getTargetId()).isEqualTo(holyStrength.getId());
         assertThat(entry.getTargetZone()).isEqualTo(Zone.GRAVEYARD);
     }
 

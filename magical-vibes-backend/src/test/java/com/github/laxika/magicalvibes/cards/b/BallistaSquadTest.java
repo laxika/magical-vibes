@@ -83,7 +83,7 @@ class BallistaSquadTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Ballista Squad");
         assertThat(entry.getXValue()).isEqualTo(2);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(targetPerm.getId());
+        assertThat(entry.getTargetId()).isEqualTo(targetPerm.getId());
     }
 
     @Test
@@ -158,7 +158,7 @@ class BallistaSquadTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(blockerPerm.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(blockerPerm.getId());
     }
 
     @Test

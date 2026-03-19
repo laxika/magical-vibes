@@ -115,7 +115,7 @@ class PerilousMyrTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Perilous Myr");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bearsId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearsId);
 
         harness.passBothPriorities();
 

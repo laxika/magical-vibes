@@ -33,7 +33,7 @@ public class CopyResolutionService {
 
     @HandlesEffect(CopySpellEffect.class)
     void resolveCopySpell(GameData gameData, StackEntry entry) {
-        UUID targetCardId = entry.getTargetPermanentId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
         StackEntry targetEntry = null;
@@ -52,7 +52,7 @@ public class CopyResolutionService {
         // Create a copy of the stack entry preserving all fields, with the copy's controller
         UUID copyControllerId = entry.getControllerId();
         Card copyCard = createCopyCard(targetEntry.getCard());
-        StackEntry copyEntry = createCopyStackEntry(targetEntry, copyCard, copyControllerId, targetEntry.getTargetPermanentId());
+        StackEntry copyEntry = createCopyStackEntry(targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
 
         gameData.stack.add(copyEntry);
 
@@ -61,7 +61,7 @@ public class CopyResolutionService {
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
 
         // If the copy has a target, offer the controller a chance to choose new targets
-        if (copyEntry.getTargetPermanentId() != null) {
+        if (copyEntry.getTargetId() != null) {
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     copyControllerId,
@@ -80,7 +80,7 @@ public class CopyResolutionService {
 
         StackEntry spellSnapshot = effect.spellSnapshot();
         UUID castingPlayerId = effect.castingPlayerId();
-        UUID originalTargetId = effect.originalTargetPermanentId();
+        UUID originalTargetId = effect.originalTargetId();
         CardSubtype subtype = effect.subtype();
         Card spellCard = spellSnapshot.getCard();
 
@@ -122,7 +122,7 @@ public class CopyResolutionService {
             if (playerId.equals(castingPlayerId)) continue;
 
             Card copyCard = createCopyCard(spellCard);
-            StackEntry copyEntry = createCopyStackEntry(spellSnapshot, copyCard, playerId, spellSnapshot.getTargetPermanentId());
+            StackEntry copyEntry = createCopyStackEntry(spellSnapshot, copyCard, playerId, spellSnapshot.getTargetId());
 
             gameData.stack.add(copyEntry);
 
@@ -131,7 +131,7 @@ public class CopyResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
 
             // If the copy has a target, offer the controller a chance to choose new targets
-            if (copyEntry.getTargetPermanentId() != null) {
+            if (copyEntry.getTargetId() != null) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(
                         entry.getCard(),
                         playerId,
@@ -149,7 +149,7 @@ public class CopyResolutionService {
 
     @HandlesEffect(BecomeCopyOfTargetCreatureEffect.class)
     void resolveBecomeCopyOfTargetCreature(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
@@ -171,7 +171,7 @@ public class CopyResolutionService {
                 gameData.id, entry.getCard().getName(), targetPerm.getCard().getName());
     }
 
-    private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetPermanentId) {
+    private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetId) {
         StackEntry copy = new StackEntry(
                 source.getEntryType(),
                 copyCard,
@@ -179,7 +179,7 @@ public class CopyResolutionService {
                 "Copy of " + source.getCard().getName(),
                 new ArrayList<>(source.getEffectsToResolve()),
                 source.getXValue(),
-                targetPermanentId,
+                targetId,
                 source.getSourcePermanentId(),
                 source.getDamageAssignments(),
                 source.getTargetZone(),

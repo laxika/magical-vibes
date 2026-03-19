@@ -120,7 +120,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Bogardan Firefiend");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(bearsId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearsId);
 
         // Resolve the triggered ability — 2 damage to a 2/2 is lethal
         harness.passBothPriorities();
@@ -266,7 +266,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Bogardan Firefiend")
-                && e.getTargetPermanentId().equals(bearsId));
+                && e.getTargetId().equals(bearsId));
     }
 }
 

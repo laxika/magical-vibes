@@ -61,7 +61,7 @@ class HaltOrderTest extends BaseCardTest {
         StackEntry haltOrderEntry = gd.stack.getLast();
         assertThat(haltOrderEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(haltOrderEntry.getCard().getName()).isEqualTo("Halt Order");
-        assertThat(haltOrderEntry.getTargetPermanentId()).isEqualTo(millstone.getId());
+        assertThat(haltOrderEntry.getTargetId()).isEqualTo(millstone.getId());
     }
 
     @Test

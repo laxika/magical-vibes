@@ -128,7 +128,7 @@ class PurifyTheGraveTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Purify the Grave");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
     // ===== Flashback =====

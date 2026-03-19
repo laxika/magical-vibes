@@ -30,7 +30,7 @@ public class CombatRestrictionResolutionService {
 
     @HandlesEffect(CantBlockSourceEffect.class)
     private void resolveCantBlockSource(GameData gameData, StackEntry entry, CantBlockSourceEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null || effect.sourcePermanentId() == null) {
             return;
         }
@@ -48,7 +48,7 @@ public class CombatRestrictionResolutionService {
 
     @HandlesEffect(MustAttackThisTurnEffect.class)
     private void resolveMustAttackThisTurn(GameData gameData, StackEntry entry, MustAttackThisTurnEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -73,7 +73,7 @@ public class CombatRestrictionResolutionService {
 
     @HandlesEffect(MustBlockSourceEffect.class)
     private void resolveMustBlockSource(GameData gameData, StackEntry entry, MustBlockSourceEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null || effect.sourcePermanentId() == null) {
             return;
         }
@@ -107,7 +107,7 @@ public class CombatRestrictionResolutionService {
         }
 
         // Single-target fallback
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -121,7 +121,7 @@ public class CombatRestrictionResolutionService {
 
     @HandlesEffect(TargetPlayerCreaturesCantBlockThisTurnEffect.class)
     private void resolveTargetPlayerCreaturesCantBlock(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         // Determine the affected player: if target is a player, use directly;
@@ -179,7 +179,7 @@ public class CombatRestrictionResolutionService {
 
     @HandlesEffect(MakeCreatureUnblockableEffect.class)
     private void resolveMakeTargetUnblockable(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }

@@ -54,7 +54,7 @@ class EvilPresenceTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Evil Presence");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(forest.getId());
+        assertThat(entry.getTargetId()).isEqualTo(forest.getId());
     }
 
     @Test

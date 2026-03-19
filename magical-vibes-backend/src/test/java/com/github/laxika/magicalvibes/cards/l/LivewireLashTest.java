@@ -241,7 +241,7 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry trigger = gd.stack.getLast();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(trigger.getTargetId()).isEqualTo(player2.getId());
     }
 
     // ===== Trigger fires when spell is retargeted onto equipped creature (Shunt) =====

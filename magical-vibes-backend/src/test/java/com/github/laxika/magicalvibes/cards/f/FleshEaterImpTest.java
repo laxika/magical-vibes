@@ -68,7 +68,7 @@ class FleshEaterImpTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Flesh-Eater Imp");
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(impPerm.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(impPerm.getId());
         assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
     }
 

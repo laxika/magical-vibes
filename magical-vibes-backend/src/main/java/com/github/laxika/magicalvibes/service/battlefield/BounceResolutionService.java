@@ -80,7 +80,7 @@ public class BounceResolutionService {
     @HandlesEffect(ReturnTargetPermanentToHandEffect.class)
     void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry, ReturnTargetPermanentToHandEffect effect) {
         List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
-                ? List.of(entry.getTargetPermanentId())
+                ? List.of(entry.getTargetId())
                 : entry.getTargetPermanentIds();
 
         for (UUID targetId : targetIds) {
@@ -164,14 +164,14 @@ public class BounceResolutionService {
      * Returns all artifacts owned by the targeted player to that player's hand, regardless
      * of who controls them. Ownership is resolved via {@code stolenCreatures} to correctly
      * handle stolen artifacts (e.g. via Control Magic). The target player ID is stored in
-     * {@code targetPermanentId} on the stack entry.
+     * {@code targetId} on the stack entry.
      *
      * @param gameData the current game state
      * @param entry    the stack entry containing the target player ID and source card info
      */
     @HandlesEffect(ReturnArtifactsTargetPlayerOwnsToHandEffect.class)
     void resolveReturnArtifactsTargetPlayerOwnsToHand(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
@@ -212,8 +212,8 @@ public class BounceResolutionService {
     void resolveBounceCreatureOnUpkeep(GameData gameData, StackEntry entry, BounceCreatureOnUpkeepEffect bounceEffect) {
         UUID choosingPlayerId = switch (bounceEffect.scope()) {
             case SOURCE_CONTROLLER -> entry.getControllerId();
-            case TRIGGER_TARGET_PLAYER -> entry.getTargetPermanentId() != null
-                    ? entry.getTargetPermanentId()
+            case TRIGGER_TARGET_PLAYER -> entry.getTargetId() != null
+                    ? entry.getTargetId()
                     : entry.getControllerId();
         };
         String playerName = gameData.playerIdToName.get(choosingPlayerId);

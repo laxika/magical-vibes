@@ -134,13 +134,13 @@ class DamageResolutionServiceTest {
 
     private StackEntry createEntry(Card card, UUID controllerId, UUID targetId) {
         StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId, card.getName(), List.of());
-        entry.setTargetPermanentId(targetId);
+        entry.setTargetId(targetId);
         return entry;
     }
 
     private StackEntry createEntryWithXValue(Card card, UUID controllerId, int xValue, UUID targetId) {
         StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), List.of(), xValue);
-        entry.setTargetPermanentId(targetId);
+        entry.setTargetId(targetId);
         return entry;
     }
 

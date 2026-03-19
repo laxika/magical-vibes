@@ -306,7 +306,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
         }
 
         @Test
@@ -320,7 +320,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
         }
 
         @Test
@@ -334,7 +334,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
         }
 
         @Test
@@ -348,7 +348,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
         }
 
         @Test
@@ -362,7 +362,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getTargetPermanentId()).isEqualTo(perm.getId());
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(perm.getId());
         }
     }
 

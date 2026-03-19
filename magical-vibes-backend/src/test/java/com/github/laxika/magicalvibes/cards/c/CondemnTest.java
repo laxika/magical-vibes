@@ -60,7 +60,7 @@ class CondemnTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Condemn");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(attacker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test

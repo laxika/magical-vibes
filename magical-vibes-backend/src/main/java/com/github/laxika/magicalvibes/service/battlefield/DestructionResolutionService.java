@@ -530,7 +530,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyTargetPermanentEffect.class)
     void resolveDestroyTargetPermanent(GameData gameData, StackEntry entry, DestroyTargetPermanentEffect destroy) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -586,7 +586,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyEquipmentAttachedToTargetCreatureEffect.class)
     void resolveDestroyEquipmentAttachedToTargetCreature(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) {
             return;
         }
@@ -612,13 +612,13 @@ public class DestructionResolutionService {
     @HandlesEffect(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
     void resolveDestroyTargetAndControllerLosesLifePerCreatureDeaths(GameData gameData, StackEntry entry,
                                                                      DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
         // Find the controller before destruction
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetPermanentId());
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
         if (targetControllerId == null) {
             return;
         }
@@ -658,7 +658,7 @@ public class DestructionResolutionService {
     @HandlesEffect(DestroyTargetLandAndDamageControllerEffect.class)
     void resolveDestroyTargetLandAndDamageController(GameData gameData, StackEntry entry,
                                                       DestroyTargetLandAndDamageControllerEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -693,7 +693,7 @@ public class DestructionResolutionService {
     @HandlesEffect(DestroyTargetPermanentAndGiveControllerPoisonCountersEffect.class)
     void resolveDestroyTargetPermanentAndGiveControllerPoisonCounters(GameData gameData, StackEntry entry,
                                                                       DestroyTargetPermanentAndGiveControllerPoisonCountersEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -731,7 +731,7 @@ public class DestructionResolutionService {
     @HandlesEffect(DestroyTargetPermanentAndControllerLosesLifeEffect.class)
     void resolveDestroyTargetPermanentAndControllerLosesLife(GameData gameData, StackEntry entry,
                                                              DestroyTargetPermanentAndControllerLosesLifeEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -768,7 +768,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(SacrificeCreatureEffect.class)
     void resolveSacrificeCreature(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
@@ -794,7 +794,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(SacrificeAttackingCreaturesEffect.class)
     void resolveSacrificeAttackingCreatures(GameData gameData, StackEntry entry, SacrificeAttackingCreaturesEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
@@ -1158,7 +1158,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyCreatureBlockingThisEffect.class)
     void resolveDestroyCreatureBlockingThis(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -1178,7 +1178,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyBlockedCreatureAndSelfEffect.class)
     void resolveDestroyBlockedCreatureAndSelf(GameData gameData, StackEntry entry) {
-        Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (attacker != null) {
             tryDestroyAndLog(gameData, attacker, entry.getCard().getName());
         }
@@ -1210,7 +1210,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class)
     void resolveDestroyTargetArtifactAndBoostSelfByManaValue(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -1238,7 +1238,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyTargetPermanentAndGainLifeEqualToManaValueEffect.class)
     void resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -1262,7 +1262,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class)
     void resolveDestroyTargetCreatureAndGainLifeEqualToToughness(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -1317,7 +1317,7 @@ public class DestructionResolutionService {
 
     @HandlesEffect(SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect.class)
     void resolveSacrificeSelfToDestroyCreature(GameData gameData, StackEntry entry) {
-        UUID defenderId = entry.getTargetPermanentId();
+        UUID defenderId = entry.getTargetId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
         UUID controllerId = entry.getControllerId();
 
@@ -1364,7 +1364,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(DestroyTargetPermanentAtEndStepEffect.class)
     void resolveDestroyTargetPermanentAtEndStep(GameData gameData, StackEntry entry, DestroyTargetPermanentAtEndStepEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
@@ -1383,7 +1383,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(SeparatePermanentsIntoPilesAndSacrificeEffect.class)
     void resolveSeparatePermanentsIntoPilesAndSacrifice(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }

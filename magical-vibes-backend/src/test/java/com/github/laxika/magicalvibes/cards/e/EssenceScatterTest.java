@@ -60,7 +60,7 @@ class EssenceScatterTest extends BaseCardTest {
         StackEntry essenceScatterEntry = gd.stack.getLast();
         assertThat(essenceScatterEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(essenceScatterEntry.getCard().getName()).isEqualTo("Essence Scatter");
-        assertThat(essenceScatterEntry.getTargetPermanentId()).isEqualTo(elves.getId());
+        assertThat(essenceScatterEntry.getTargetId()).isEqualTo(elves.getId());
     }
 
     @Test

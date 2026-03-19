@@ -102,15 +102,15 @@ class DeceiverExarchTest extends BaseCardTest {
         }
     }
 
-    private void castWithUntapMode(UUID targetPermanentId) {
+    private void castWithUntapMode(UUID targetId) {
         harness.setHand(player1, List.of(new DeceiverExarch()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castCreature(player1, 0, 0, targetPermanentId); // mode 0 = untap
+        harness.castCreature(player1, 0, 0, targetId); // mode 0 = untap
     }
 
-    private void castWithTapMode(UUID targetPermanentId) {
+    private void castWithTapMode(UUID targetId) {
         harness.setHand(player1, List.of(new DeceiverExarch()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castCreature(player1, 0, 1, targetPermanentId); // mode 1 = tap
+        harness.castCreature(player1, 0, 1, targetId); // mode 1 = tap
     }
 }

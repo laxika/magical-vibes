@@ -47,7 +47,7 @@ class TrespassingSouleaterTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Trespassing Souleater");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(souleater.getId());
+        assertThat(entry.getTargetId()).isEqualTo(souleater.getId());
     }
 
     @Test

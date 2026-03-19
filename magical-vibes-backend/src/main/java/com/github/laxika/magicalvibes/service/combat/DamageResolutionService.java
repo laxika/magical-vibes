@@ -104,7 +104,7 @@ public class DamageResolutionService {
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         if (effect.unpreventable()) {
-            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) return;
             dealDamageAndDestroyIfLethalUnpreventable(gameData, entry, target, damage);
         } else {
@@ -159,7 +159,7 @@ public class DamageResolutionService {
             StackEntry entry,
             DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect effect
     ) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         int count = gameQueryService.countControlledSubtypePermanents(gameData, entry.getControllerId(), effect.subtype());
@@ -250,7 +250,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealXDamageToAnyTargetEffect.class)
     void resolveDealXDamageToAnyTarget(GameData gameData, StackEntry entry, DealXDamageToAnyTargetEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         // Mark the target creature for exile-instead-of-die before dealing damage,
@@ -279,8 +279,8 @@ public class DamageResolutionService {
         List<UUID> targets = entry.getTargetPermanentIds();
         if (targets.isEmpty()) {
             // Fall back to single target
-            if (entry.getTargetPermanentId() != null) {
-                targets = List.of(entry.getTargetPermanentId());
+            if (entry.getTargetId() != null) {
+                targets = List.of(entry.getTargetId());
             } else {
                 return;
             }
@@ -325,7 +325,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealXDamageToAnyTargetAndGainXLifeEffect.class)
     void resolveDealXDamageToAnyTargetAndGainXLife(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         int xValue = entry.getXValue();
@@ -343,7 +343,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToTargetPlayerEffect.class)
     void resolveDealDamageToTargetPlayer(GameData gameData, StackEntry entry, DealDamageToTargetPlayerEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetId)) return;
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
@@ -361,7 +361,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToTriggeringPermanentControllerEffect.class)
     void resolveDealDamageToArtifactController(GameData gameData, StackEntry entry, DealDamageToTriggeringPermanentControllerEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetId)) return;
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
@@ -378,7 +378,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToTargetPlayerByHandSizeEffect.class)
     void resolveDealDamageToTargetPlayerByHandSize(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetId)) return;
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
@@ -397,7 +397,7 @@ public class DamageResolutionService {
     @HandlesEffect(DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect.class)
     void resolveDealDamageToTargetPlayerEqualToCardTypeCountInGraveyard(
             GameData gameData, StackEntry entry, DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetId)) return;
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
@@ -424,7 +424,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageIfFewCardsInHandEffect.class)
     void resolveDealDamageIfFewCardsInHand(GameData gameData, StackEntry entry, DealDamageIfFewCardsInHandEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         String cardName = entry.getCard().getName();
 
         if (!gameData.playerIds.contains(targetId)) return;
@@ -453,7 +453,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToAnyTargetEffect.class)
     void resolveDealDamageToAnyTarget(GameData gameData, StackEntry entry, DealDamageToAnyTargetEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
@@ -469,7 +469,7 @@ public class DamageResolutionService {
     @HandlesEffect(MillControllerAndDealDamageByHighestManaValueEffect.class)
     void resolveMillControllerAndDealDamageByHighestManaValue(GameData gameData, StackEntry entry,
                                                               MillControllerAndDealDamageByHighestManaValueEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         UUID controllerId = entry.getControllerId();
@@ -556,7 +556,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToTargetAndTheirCreaturesEffect.class)
     void resolveDealDamageToTargetAndTheirCreatures(GameData gameData, StackEntry entry, DealDamageToTargetAndTheirCreaturesEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
@@ -613,11 +613,11 @@ public class DamageResolutionService {
     /**
      * Resolves {@link DealDamageToEachCreatureDamagedPlayerControlsEffect} — deals damage equal to
      * the combat damage dealt (stored in xValue) to each creature the damaged player controls
-     * (stored in targetPermanentId). Used by Balefire Dragon.
+     * (stored in targetId). Used by Balefire Dragon.
      */
     @HandlesEffect(DealDamageToEachCreatureDamagedPlayerControlsEffect.class)
     void resolveDealDamageToEachCreatureDamagedPlayerControls(GameData gameData, StackEntry entry) {
-        UUID damagedPlayerId = entry.getTargetPermanentId();
+        UUID damagedPlayerId = entry.getTargetId();
         if (damagedPlayerId == null) return;
 
         int damageDealt = entry.getXValue();
@@ -655,7 +655,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect.class)
     void resolveDealDamageToAnyTargetEqualToChargeCounters(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         int chargeCounters = entry.getXValue();
@@ -678,7 +678,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageEqualToSourcePowerToAnyTargetEffect.class)
     void resolveDealDamageEqualToSourcePowerToAnyTarget(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         UUID sourcePermanentId = entry.getSourcePermanentId();
@@ -706,7 +706,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(SourceFightsTargetCreatureEffect.class)
     void resolveSourceFightsTargetCreature(GameData gameData, StackEntry entry) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -773,7 +773,7 @@ public class DamageResolutionService {
     @HandlesEffect(PlaneswalkerDealDamageAndReceivePowerDamageEffect.class)
     void resolvePlaneswalkerDealDamageAndReceivePowerDamage(GameData gameData, StackEntry entry,
                                                             PlaneswalkerDealDamageAndReceivePowerDamageEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -831,7 +831,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(PackHuntEffect.class)
     void resolvePackHunt(GameData gameData, StackEntry entry, PackHuntEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -953,7 +953,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealDamageToAnyTargetAndGainLifeEffect.class)
     void resolveDealDamageToAnyTargetAndGainLife(GameData gameData, StackEntry entry, DealDamageToAnyTargetAndGainLifeEffect effect) {
-        UUID targetId = entry.getTargetPermanentId();
+        UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
@@ -1119,7 +1119,7 @@ public class DamageResolutionService {
     }
 
     private void resolveCreatureTargetDamage(GameData gameData, StackEntry entry, int damage) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
         if (isDamagePreventedForCreature(gameData, entry, target)) return;
         dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
@@ -1433,7 +1433,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(RevealTopCardDealManaValueDamageEffect.class)
     void resolveRevealTopCardDealManaValueDamage(GameData gameData, StackEntry entry, RevealTopCardDealManaValueDamageEffect effect) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetPlayerId)) return;
 
         String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
@@ -1558,7 +1558,7 @@ public class DamageResolutionService {
             StackEntry entry,
             DealDamageToTargetControllerIfTargetHasKeywordEffect effect
     ) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         if (!gameQueryService.hasKeyword(gameData, target, effect.keyword())) {
@@ -1589,7 +1589,7 @@ public class DamageResolutionService {
             StackEntry entry,
             DealDamageToTargetCreatureControllerEffect effect
     ) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
@@ -1712,7 +1712,7 @@ public class DamageResolutionService {
     @HandlesEffect(SacrificeSelfAndDealDamageToDamagedPlayerEffect.class)
     void resolveSacrificeSelfAndDealDamageToDamagedPlayer(GameData gameData, StackEntry entry,
                                                           SacrificeSelfAndDealDamageToDamagedPlayerEffect effect) {
-        UUID defenderId = entry.getTargetPermanentId();
+        UUID defenderId = entry.getTargetId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
 
         if (defenderId == null || sourcePermanentId == null) {

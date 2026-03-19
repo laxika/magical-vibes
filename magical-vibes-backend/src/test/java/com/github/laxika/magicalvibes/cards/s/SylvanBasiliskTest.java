@@ -46,7 +46,7 @@ class SylvanBasiliskTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Sylvan Basilisk");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(blocker.getId());
+        assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
         assertThat(entry.getSourcePermanentId()).isEqualTo(basilisk.getId());
         assertThat(entry.isNonTargeting()).isTrue();
     }

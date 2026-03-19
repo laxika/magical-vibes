@@ -46,7 +46,7 @@ class SoulblastTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Soulblast");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(player2.getId());
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
         assertThat(entry.getXValue()).isEqualTo(3);
         assertThat(entry.getEffectsToResolve()).hasSize(1);
         assertThat(entry.getEffectsToResolve().getFirst()).isInstanceOf(DealXDamageToAnyTargetEffect.class);

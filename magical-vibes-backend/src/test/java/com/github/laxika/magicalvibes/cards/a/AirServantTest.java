@@ -33,7 +33,7 @@ class AirServantTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(flyingTarget.getId());
+        assertThat(entry.getTargetId()).isEqualTo(flyingTarget.getId());
     }
 
     @Test

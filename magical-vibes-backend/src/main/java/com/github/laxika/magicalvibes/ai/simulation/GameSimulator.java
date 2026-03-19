@@ -496,7 +496,7 @@ public class GameSimulator {
                 switch (action) {
                     case SimulationAction.PlayCard pc -> {
                         tapLandsForCard(gd, playerId, gd.playerHands.get(playerId).get(pc.handIndex()), pc.xValue());
-                        gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetPermanentId(), null);
+                        gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
                     }
                     case SimulationAction.PassPriority ignored ->
                             gameService.passPriority(gd, player);
@@ -518,7 +518,7 @@ public class GameSimulator {
                             gameService.handleMayAbilityChosen(gd, player, mac.accept());
                     case SimulationAction.ActivateAbility aa ->
                             gameService.activateAbility(gd, player, findPermanentIndex(gd, playerId, aa.permanentId()),
-                                    aa.abilityIndex(), 0, aa.targetPermanentId(), null);
+                                    aa.abilityIndex(), 0, aa.targetId(), null);
                 }
             }
         } catch (Exception e) {

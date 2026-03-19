@@ -82,7 +82,7 @@ class BladedSentinelTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Bladed Sentinel");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(sentinel.getId());
+        assertThat(entry.getTargetId()).isEqualTo(sentinel.getId());
     }
 
     @Test

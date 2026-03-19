@@ -51,7 +51,7 @@ public class PermanentControlTargetValidators {
     @ValidatesTarget(GainControlOfTargetAuraEffect.class)
     public void validateGainControlOfTargetAura(TargetValidationContext ctx) {
         tvs.requireTarget(ctx);
-        Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetPermanentId());
+        Permanent target = gameQueryService.findPermanentById(ctx.gameData(), ctx.targetId());
         if (target == null || !target.getCard().hasType(CardType.ENCHANTMENT)
                 || !target.getCard().getSubtypes().contains(CardSubtype.AURA)
                 || !target.isAttached()) {

@@ -53,7 +53,7 @@ class ManaLeakTest extends BaseCardTest {
         var leakEntry = gd.stack.getLast();
         assertThat(leakEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(leakEntry.getCard().getName()).isEqualTo("Mana Leak");
-        assertThat(leakEntry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(leakEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
     // ===== Counter-unless-pays: opponent cannot pay =====

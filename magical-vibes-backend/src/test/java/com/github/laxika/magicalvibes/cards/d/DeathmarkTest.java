@@ -64,7 +64,7 @@ class DeathmarkTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Deathmark");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(bears.getId());
+        assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
@@ -80,7 +80,7 @@ class DeathmarkTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentId()).isEqualTo(knight.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(knight.getId());
     }
 
     @Test

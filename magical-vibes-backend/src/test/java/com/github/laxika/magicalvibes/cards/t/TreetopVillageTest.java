@@ -84,7 +84,7 @@ class TreetopVillageTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Treetop Village");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(village.getId());
+        assertThat(entry.getTargetId()).isEqualTo(village.getId());
     }
 
     @Test

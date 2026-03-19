@@ -63,7 +63,7 @@ class AssassinateTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Assassinate");
-        assertThat(entry.getTargetPermanentId()).isEqualTo(tappedCreature.getId());
+        assertThat(entry.getTargetId()).isEqualTo(tappedCreature.getId());
     }
 
     @Test

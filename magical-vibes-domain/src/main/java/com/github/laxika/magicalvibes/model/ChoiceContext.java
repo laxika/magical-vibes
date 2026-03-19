@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 
 public sealed interface ChoiceContext {
 
-    record TextChangeFromWord(UUID targetPermanentId) implements ChoiceContext {}
+    record TextChangeFromWord(UUID targetId) implements ChoiceContext {}
 
-    record TextChangeToWord(UUID targetPermanentId, String fromWord, boolean isColor) implements ChoiceContext {}
+    record TextChangeToWord(UUID targetId, String fromWord, boolean isColor) implements ChoiceContext {}
 
     record ManaColorChoice(UUID playerId, boolean fromCreature) implements ChoiceContext {}
 
@@ -18,11 +18,11 @@ public sealed interface ChoiceContext {
 
     record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
 
-    record KeywordGrantChoice(UUID targetPermanentId, List<Keyword> options) implements ChoiceContext {}
+    record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
 
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
 
-    record ProtectionColorChoice(UUID targetPermanentId, boolean includeArtifacts) implements ChoiceContext {}
+    record ProtectionColorChoice(UUID targetId, boolean includeArtifacts) implements ChoiceContext {}
 
     record SubtypeChoice(UUID permanentId) implements ChoiceContext {}
 

@@ -71,7 +71,7 @@ class KessigWolfRunTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Kessig Wolf Run");
         assertThat(entry.getXValue()).isEqualTo(2);
-        assertThat(entry.getTargetPermanentId()).isEqualTo(creature.getId());
+        assertThat(entry.getTargetId()).isEqualTo(creature.getId());
     }
 
     @Test
