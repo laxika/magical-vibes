@@ -419,6 +419,7 @@ Pass `null` as filter to allow any card.
 | `SacrificeCreatureSearchLibraryForCreatureToHandEffect` | `()` | sacrifice a creature (as effect, not cost); if you do, search library for a creature card, reveal it, put it into your hand, then shuffle. With 0 creatures nothing happens; with 1 auto-sacrifices; with 2+ prompts choice via `SacrificeCreatureThenSearchLibrary` context. Used by Garruk, the Veil-Cursed |
 | `SearchLibraryForCardToHandEffect` | `()` | search library for any card to hand |
 | `SearchLibraryForCardsByNameToHandEffect` | `(String cardName, int maxCount)` | search library for up to N cards with specified name, reveal them, put into hand. Multi-pick via remainingCount. Used by Squadron Hawk |
+| `SearchLibraryAndOrGraveyardForNamedCardToHandEffect` | `(String cardName)` | search library and/or graveyard for a card with specified name, reveal it, put into hand. Checks graveyard first; if not found, searches library (with shuffle). Used by Chandra's Outburst |
 | `SearchLibraryForBasicLandToHandEffect` | `()` | search library for basic land to hand |
 | `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect` | `()` | search library for up to two basic lands: one to battlefield tapped, one to hand. Single search action (one Leonin Arbiter check). Used by Cultivate, Kodama's Reach |
 | `SearchLibraryForCardTypesToHandEffect` | `(CardPredicate filter)` | search library for a card matching the CardPredicate and put into hand. Description auto-generated via `CardPredicateUtils.describeFilter()` |
