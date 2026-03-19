@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -1085,6 +1086,8 @@ public class StaticEffectResolutionService {
             return p.predicates().stream().allMatch(inner -> matchesStaticFilter(target, inner));
         if (filter instanceof PermanentAnyOfPredicate p)
             return p.predicates().stream().anyMatch(inner -> matchesStaticFilter(target, inner));
+        if (filter instanceof PermanentHasSupertypePredicate p)
+            return target.getCard().getSupertypes().contains(p.supertype());
         if (filter instanceof PermanentIsAttackingPredicate)
             return target.isAttacking();
         if (filter instanceof PermanentTruePredicate) return true;

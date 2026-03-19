@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourceP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -707,6 +708,9 @@ public class GameQueryService {
                 return permanent.getEffectivePower() >= powerAtLeastPredicate.minPower();
             }
             return getEffectivePower(gameData, permanent) >= powerAtLeastPredicate.minPower();
+        }
+        if (predicate instanceof PermanentHasSupertypePredicate hasSupertypePredicate) {
+            return permanent.getCard().getSupertypes().contains(hasSupertypePredicate.supertype());
         }
         if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
             if (permanent.isColorOverridden()) {
