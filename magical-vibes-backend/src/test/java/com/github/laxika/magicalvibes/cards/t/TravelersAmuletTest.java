@@ -84,7 +84,7 @@ class TravelersAmuletTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
 
         // Tap the amulet first — ability should still be activatable since it doesn't require tap
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
 
         harness.activateAbility(player1, 0, null, null);
 
