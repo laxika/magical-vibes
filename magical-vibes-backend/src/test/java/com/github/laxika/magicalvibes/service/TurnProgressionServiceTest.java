@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -22,6 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -76,6 +82,17 @@ class TurnProgressionServiceTest {
         gd.activePlayerId = player1Id;
         gd.status = GameStatus.RUNNING;
         gd.turnNumber = 1;
+    }
+
+    private void addCardsToHand(UUID playerId, int count) {
+        List<Card> hand = gd.playerHands.get(playerId);
+        for (int i = 0; i < count; i++) {
+            hand.add(new Card());
+        }
+    }
+
+    private PendingMayAbility newMayAbility() {
+        return new PendingMayAbility(new Card(), player1Id, null, "Test may ability");
     }
 
     // =========================================================================
@@ -373,10 +390,7 @@ class TurnProgressionServiceTest {
         void triggersDiscardWhenHandExceedsMax() {
             gd.currentStep = TurnStep.END_STEP;
             // Put 9 cards in active player's hand (max is 7)
-            List<Card> hand = gd.playerHands.get(player1Id);
-            for (int i = 0; i < 9; i++) {
-                hand.add(new Card());
-            }
+            addCardsToHand(player1Id, 9);
             when(turnCleanupService.getMaxHandSize(gd, player1Id)).thenReturn(7);
             when(turnCleanupService.hasNoMaximumHandSize(gd, player1Id)).thenReturn(false);
 
@@ -393,10 +407,7 @@ class TurnProgressionServiceTest {
         void noDiscardWhenHandWithinMax() {
             gd.currentStep = TurnStep.END_STEP;
             // Put 5 cards in hand (below max of 7)
-            List<Card> hand = gd.playerHands.get(player1Id);
-            for (int i = 0; i < 5; i++) {
-                hand.add(new Card());
-            }
+            addCardsToHand(player1Id, 5);
             when(turnCleanupService.getMaxHandSize(gd, player1Id)).thenReturn(7);
 
             turnProgressionService.advanceStep(gd);
@@ -410,10 +421,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Does not trigger discard when player has no maximum hand size")
         void noDiscardWhenNoMaxHandSize() {
             gd.currentStep = TurnStep.END_STEP;
-            List<Card> hand = gd.playerHands.get(player1Id);
-            for (int i = 0; i < 20; i++) {
-                hand.add(new Card());
-            }
+            addCardsToHand(player1Id, 20);
             when(turnCleanupService.getMaxHandSize(gd, player1Id)).thenReturn(7);
             when(turnCleanupService.hasNoMaximumHandSize(gd, player1Id)).thenReturn(true);
 
@@ -441,8 +449,7 @@ class TurnProgressionServiceTest {
         void maxHandSizeClampedToZero() {
             gd.currentStep = TurnStep.END_STEP;
             // 1 card in hand, max hand size returned as -2 (should be clamped to 0)
-            List<Card> hand = gd.playerHands.get(player1Id);
-            hand.add(new Card());
+            addCardsToHand(player1Id, 1);
             when(turnCleanupService.getMaxHandSize(gd, player1Id)).thenReturn(-2);
             when(turnCleanupService.hasNoMaximumHandSize(gd, player1Id)).thenReturn(false);
 
@@ -507,7 +514,7 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Clears awaiting input")
         void clearsAwaitingInput() {
-            gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
 
             turnProgressionService.advanceTurn(gd);
 
@@ -532,15 +539,15 @@ class TurnProgressionServiceTest {
             gd.spellsCastThisTurn.put(player1Id, 3);
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
             gd.playersSilencedThisTurn.add(player1Id);
-            gd.activatedAbilityUsesThisTurn.put(player1Id, new java.util.HashMap<>());
-            gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(player1Id, new java.util.HashSet<>());
+            gd.activatedAbilityUsesThisTurn.put(player1Id, new HashMap<>());
+            gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(player1Id, new HashSet<>());
             gd.creatureDeathCountThisTurn.put(player1Id, 2);
             gd.cardsDrawnThisTurn.put(player1Id, 3);
-            gd.combatDamageToPlayersThisTurn.put(UUID.randomUUID(), new java.util.HashSet<>());
+            gd.combatDamageToPlayersThisTurn.put(UUID.randomUUID(), new HashSet<>());
             gd.playersDealtDamageThisTurn.add(player1Id);
-            gd.creatureCardsDamagedThisTurnBySourcePermanent.put(UUID.randomUUID(), new java.util.HashSet<>());
+            gd.creatureCardsDamagedThisTurnBySourcePermanent.put(UUID.randomUUID(), new HashSet<>());
             gd.creatureGivingControllerPoisonOnDeathThisTurn.put(UUID.randomUUID(), 1);
-            gd.paidSearchTaxPermanentIds.put(player1Id, new java.util.HashSet<>());
+            gd.paidSearchTaxPermanentIds.put(player1Id, new HashSet<>());
 
             turnProgressionService.advanceTurn(gd);
 
@@ -637,8 +644,7 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Processes pending may abilities before completing turn advance")
         void processesPermayAbilitiesIfPresent() {
-            gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                    new Card(), player1Id, null, "Test may ability"));
+            gd.pendingMayAbilities.add(newMayAbility());
 
             turnProgressionService.advanceTurn(gd);
 
@@ -805,8 +811,7 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Processes pending may abilities before auto-passing when stack is empty")
         void processesMayAbilitiesBeforeAutoPass() {
-            gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                    new Card(), player1Id, null, "Test"));
+            gd.pendingMayAbilities.add(newMayAbility());
 
             turnProgressionService.resolveAutoPass(gd);
 
@@ -817,10 +822,9 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Does not process may abilities when stack is non-empty")
         void doesNotProcessMayAbilitiesWithStack() {
-            gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                    new Card(), player1Id, null, "Test"));
-            gd.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
-                    com.github.laxika.magicalvibes.model.StackEntryType.INSTANT_SPELL,
+            gd.pendingMayAbilities.add(newMayAbility());
+            gd.stack.add(new StackEntry(
+                    StackEntryType.INSTANT_SPELL,
                     new Card(), player1Id, "Test", List.of(), 0));
 
             turnProgressionService.resolveAutoPass(gd);
@@ -832,9 +836,8 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Does not process may abilities when awaiting input")
         void doesNotProcessMayAbilitiesWhenAwaitingInput() {
-            gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                    new Card(), player1Id, null, "Test"));
-            gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.PERMANENT_CHOICE);
+            gd.pendingMayAbilities.add(newMayAbility());
+            gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
 
             turnProgressionService.resolveAutoPass(gd);
 
