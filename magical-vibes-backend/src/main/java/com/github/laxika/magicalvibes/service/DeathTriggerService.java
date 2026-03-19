@@ -135,7 +135,9 @@ public class DeathTriggerService {
                             perm.getCard(),
                             dyingCreatureControllerId,
                             perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect))
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
                     ));
                 }
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
