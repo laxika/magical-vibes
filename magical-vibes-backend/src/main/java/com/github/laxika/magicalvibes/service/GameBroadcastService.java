@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
@@ -769,6 +770,11 @@ public class GameBroadcastService {
                 int totalCreatures = countCreaturesOnAllBattlefields(gameData);
                 reduction += perCreatureReduce.amountPerCreature() * totalCreatures;
             }
+            if (effect instanceof ReduceOwnCastCostIfControlsSubtypeEffect subtypeReduce) {
+                if (controlsSubtype(gameData, playerId, subtypeReduce.subtype())) {
+                    reduction += subtypeReduce.amount();
+                }
+            }
         }
 
         // Cost reduction from battlefield permanents (e.g. Semblance Anvil, Heartless Summoning)
@@ -792,6 +798,20 @@ public class GameBroadcastService {
         }
 
         return reduction;
+    }
+
+    private boolean controlsSubtype(GameData gameData, UUID playerId, CardSubtype subtype) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent p : battlefield) {
+            if (p.getCard().getSubtypes().contains(subtype)
+                    || p.getTransientSubtypes().contains(subtype)
+                    || p.getGrantedSubtypes().contains(subtype)
+                    || p.hasKeyword(Keyword.CHANGELING)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean sharesCardType(Card spell, Card imprinted) {

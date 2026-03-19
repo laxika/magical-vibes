@@ -917,6 +917,7 @@ Pass `null` as filter to allow any card.
 | `ReduceOwnCastCostForCardTypeEffect` | `(Set<CardType> affectedTypes, int amount)` | reduce controller's spells of given types by N (static, from battlefield permanent, e.g. Heartless Summoning) |
 | `ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect` | `(int minimumCreatureDifference, int amount)` | reduce cast cost by N if opponent has M+ more creatures |
 | `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` | `(int amount)` | reduce cast cost of controller's spells by N if they share a card type with the imprinted card (static, Semblance Anvil) |
+| `ReduceOwnCastCostIfControlsSubtypeEffect` | `(CardSubtype subtype, int amount)` | reduce this spell's cast cost by N if controller controls a permanent with the given subtype (static, Academy Journeymage) |
 | `ReduceOwnCastCostIfMetalcraftEffect` | `(int amount)` | reduce this spell's cast cost by N if controller has metalcraft (3+ artifacts) (static, Stoic Rebuttal) |
 | `ReduceOwnCastCostPerCreatureOnBattlefieldEffect` | `(int amountPerCreature)` | reduce this spell's cast cost by N for each creature on the battlefield across all players (static, Blasphemous Act) |
 | `NoMaximumHandSizeEffect` | `()` | you have no maximum hand size (static, requires permanent on battlefield) |
