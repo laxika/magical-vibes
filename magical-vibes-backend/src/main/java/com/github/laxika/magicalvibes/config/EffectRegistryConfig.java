@@ -120,10 +120,20 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
                         throw wrapException(t, method);
                     }
                 });
+            } else if (params.length == 1
+                    && params[0] == GameData.class) {
+                // Pattern C: (GameData)
+                effectHandlerRegistry.register(effectClass, (gd, entry, effect) -> {
+                    try {
+                        handle.invoke(gd);
+                    } catch (Throwable t) {
+                        throw wrapException(t, method);
+                    }
+                });
             } else {
                 throw new IllegalStateException(
                         "@HandlesEffect method " + method.getDeclaringClass().getSimpleName() + "." + method.getName()
-                                + " must have signature (GameData, StackEntry) or (GameData, StackEntry, <? extends CardEffect>)");
+                                + " must have signature (GameData), (GameData, StackEntry), or (GameData, StackEntry, <? extends CardEffect>)");
             }
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Cannot access @HandlesEffect method " + method.getName(), e);

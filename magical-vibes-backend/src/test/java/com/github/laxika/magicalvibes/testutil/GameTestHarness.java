@@ -954,6 +954,13 @@ public class GameTestHarness {
                         catch (RuntimeException re) { throw re; }
                         catch (Throwable t) { throw new RuntimeException(t); }
                     });
+                } else if (params.length == 1
+                        && params[0] == GameData.class) {
+                    registry.register(annotation.value(), (gd, entry, effect) -> {
+                        try { handle.invoke(gd); }
+                        catch (RuntimeException re) { throw re; }
+                        catch (Throwable t) { throw new RuntimeException(t); }
+                    });
                 }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);

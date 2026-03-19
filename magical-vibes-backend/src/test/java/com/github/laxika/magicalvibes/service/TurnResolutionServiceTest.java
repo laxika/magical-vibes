@@ -211,7 +211,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.pendingMayAbilities).isEmpty();
         }
@@ -232,7 +232,7 @@ class TurnResolutionServiceTest {
             Card timeStop = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(timeStop, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.stack).isEmpty();
             verify(exileService).exileCard(gd, player1Id, creatureCard);
@@ -252,7 +252,7 @@ class TurnResolutionServiceTest {
             Card timeStop = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(timeStop, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.stack).isEmpty();
             verify(exileService, never()).exileCard(eq(gd), eq(player1Id), eq(triggerSource));
@@ -264,7 +264,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             verify(combatService).clearCombatState(gd);
         }
@@ -278,7 +278,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
             assertThat(gd.pendingTokenExilesAtEndOfCombat).isEmpty();
@@ -292,7 +292,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         }
@@ -303,7 +303,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             verify(turnCleanupService).resetEndOfTurnModifiers(gd);
         }
@@ -314,7 +314,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             verify(auraAttachmentService).returnStolenCreatures(gd, true);
         }
@@ -328,7 +328,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.priorityPassedBy).isEmpty();
         }
@@ -341,7 +341,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.endTurnRequested).isTrue();
         }
@@ -352,7 +352,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("The turn ends."));
         }
@@ -380,7 +380,7 @@ class TurnResolutionServiceTest {
             Card timeStop = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(timeStop, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd, entry);
+            turnResolutionService.resolveEndTurn(gd);
 
             assertThat(gd.stack).isEmpty();
             verify(exileService).exileCard(gd, player1Id, instant);
@@ -404,7 +404,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry, effect);
+            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
 
             assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
         }
@@ -416,7 +416,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry, effect);
+            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Player1 will control Player2 during their next turn."));
@@ -429,7 +429,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, null, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry, effect);
+            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
 
             assertThat(gd.pendingTurnControl).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), org.mockito.ArgumentMatchers.anyString());
@@ -443,7 +443,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, unknownId, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry, effect);
+            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
 
             assertThat(gd.pendingTurnControl).isEmpty();
         }
@@ -457,7 +457,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry, effect);
+            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
 
             assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
         }
