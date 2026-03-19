@@ -471,6 +471,7 @@ Pass `null` as filter to allow any card.
 | `EachOpponentMillsEffect` | `(int count)` | each opponent mills N cards |
 | `MillOpponentOnLifeLossEffect` | `()` | triggered effect: whenever an opponent loses life, that player mills that many cards. Amount determined at trigger time. Used by Mindcrank |
 | `MillBottomOfTargetLibraryConditionalTokenEffect` | `(CardType conditionType, String tokenName, int tokenPower, int tokenToughness, CardColor tokenColor, List<CardSubtype> tokenSubtypes)` | target player puts bottom card of library into graveyard; if it matches conditionType, controller creates a creature token. Used by Cellar Door |
+| `RevealUntilTypeMillAndBoostAttackerEffect` | `(Set<CardType> cardTypes, int powerBoostPerCard, int toughnessBoostPerCard)` | defending player reveals cards from top of library until a card matching one of the specified types is found; equipped creature gets +powerBoostPerCard/+toughnessBoostPerCard per card revealed; all revealed cards go to graveyard. Used on equipment ON_ATTACK triggers. Defending player derived as opponent. Used by Trepanation Blade |
 
 ## Exile
 

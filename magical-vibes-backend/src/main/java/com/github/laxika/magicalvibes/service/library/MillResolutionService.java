@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilTypeMillAndBoostAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Resolves mill-related card effects during stack resolution.
@@ -271,6 +273,83 @@ public class MillResolutionService {
                 + " until end of turn (milled " + topCard.getName() + ", mana value " + manaValue + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets +{}/+{} from milling {}", gameData.id, cardName, manaValue, manaValue, topCard.getName());
+    }
+
+    /**
+     * Reveals cards from the top of the defending player's library until a card matching one of
+     * the specified types is found. All revealed cards are put into that player's graveyard.
+     * The equipped creature (found via the source equipment's attachedTo) gets a power/toughness
+     * boost until end of turn for each card revealed.
+     * Used by Trepanation Blade.
+     */
+    @HandlesEffect(RevealUntilTypeMillAndBoostAttackerEffect.class)
+    void resolveRevealUntilTypeMillAndBoostAttacker(GameData gameData, StackEntry entry,
+                                                     RevealUntilTypeMillAndBoostAttackerEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID defenderId = gameQueryService.getOpponentId(gameData, controllerId);
+        String defenderName = gameData.playerIdToName.get(defenderId);
+        String sourceName = entry.getCard().getName();
+
+        // Find the equipped creature via the source equipment's attachedTo
+        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (equipment == null || equipment.getAttachedTo() == null) {
+            log.info("Game {} - {} trigger fizzles: equipment no longer attached", gameData.id, sourceName);
+            return;
+        }
+        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        if (equippedCreature == null) {
+            log.info("Game {} - {} trigger fizzles: equipped creature no longer on battlefield", gameData.id, sourceName);
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(defenderId);
+        if (deck.isEmpty()) {
+            String logEntry = defenderName + "'s library is empty — " + sourceName + "'s ability does nothing.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        // Reveal cards until a matching type is found
+        List<Card> revealedCards = new ArrayList<>();
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            revealedCards.add(card);
+            if (effect.cardTypes().stream().anyMatch(card::hasType)) {
+                break;
+            }
+        }
+
+        // Log revealed cards
+        String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+        String revealLog = defenderName + " reveals " + revealedNames + ".";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+
+        // Boost the equipped creature
+        int revealedCount = revealedCards.size();
+        int powerBoost = revealedCount * effect.powerBoostPerCard();
+        int toughnessBoost = revealedCount * effect.toughnessBoostPerCard();
+        if (powerBoost != 0 || toughnessBoost != 0) {
+            equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + powerBoost);
+            equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + toughnessBoost);
+
+            String boostLog = equippedCreature.getCard().getName() + " gets +"
+                    + powerBoost + "/+" + toughnessBoost + " until end of turn ("
+                    + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).";
+            gameBroadcastService.logAndBroadcast(gameData, boostLog);
+        }
+
+        // Put all revealed cards into the graveyard
+        for (Card card : revealedCards) {
+            graveyardService.addCardToGraveyard(gameData, defenderId, card);
+        }
+
+        String millLog = defenderName + " puts " + revealedCount + " revealed "
+                + (revealedCount != 1 ? "cards" : "card") + " into their graveyard.";
+        gameBroadcastService.logAndBroadcast(gameData, millLog);
+
+        log.info("Game {} - {} reveals {} cards from {}'s library, {} gets +{}/+{}",
+                gameData.id, sourceName, revealedCount, defenderName,
+                equippedCreature.getCard().getName(), powerBoost, toughnessBoost);
     }
 
     private static String pluralCards(int count) {
