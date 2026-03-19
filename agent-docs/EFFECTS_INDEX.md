@@ -630,7 +630,9 @@ Pass `null` as filter to allow any card.
 | `BoostBySharedCreatureTypeEffect` | `()` | +1/+1 for each other creature sharing a creature type (static) |
 | `BoostFirstTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | first target creature in multi-target spell gets +X/+Y until end of turn |
 | `BoostSecondTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | second target creature in multi-target spell gets +X/+Y until end of turn |
+| `BoostSelfPerAttachmentEffect` | `(int power, int toughness, boolean countAuras, boolean countEquipment)` | +X/+Y per Aura and/or Equipment attached to this creature (static, selfOnly). Use `countAuras=true, countEquipment=true` for "each Aura and Equipment" (Champion of the Flame), or one flag for subsets |
 | `BoostSelfPerEnchantmentOnBattlefieldEffect` | `(int powerPerEnchantment, int toughnessPerEnchantment)` | +X/+Y per enchantment on battlefield (static) |
+| `BoostSelfPerEquipmentAttachedEffect` | `(int powerPerEquipment, int toughnessPerEquipment)` | +X/+Y per Equipment attached to this creature (static, selfOnly). Used by Goblin Gaveleer |
 | `BoostSelfPerOpponentPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | +X/+Y per permanent opponents control matching the filter (static, selfOnly). Use `PermanentIsCreaturePredicate` for creatures, etc. |
 | `BoostSelfPerOpponentPoisonCounterEffect` | `(int powerPerCounter, int toughnessPerCounter)` | +X/+Y per poison counter on opponents (static). Counts total poison counters across all opponents, excludes controller's own counters |
 | `BoostSelfByImprintedCreaturePTEffect` | `()` | +X/+Y where X is the imprinted creature card's power and Y is its toughness (static, selfOnly). Used by Phyrexian Ingester |

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSub
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerAttachmentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
@@ -732,6 +733,23 @@ public class StaticEffectResolutionService {
         });
         accumulator.addPower(count[0] * boost.powerPerEquipment());
         accumulator.addToughness(count[0] * boost.toughnessPerEquipment());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfPerAttachmentEffect.class, selfOnly = true)
+    private void resolveBoostSelfPerAttachment(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfPerAttachmentEffect) effect;
+        final int[] count = {0};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (permanent.isAttached() && permanent.getAttachedTo().equals(context.target().getId())) {
+                boolean isAura = permanent.getCard().getSubtypes().contains(CardSubtype.AURA);
+                boolean isEquipment = permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT);
+                if ((boost.countAuras() && isAura) || (boost.countEquipment() && isEquipment)) {
+                    count[0]++;
+                }
+            }
+        });
+        accumulator.addPower(count[0] * boost.power());
+        accumulator.addToughness(count[0] * boost.toughness());
     }
 
     @HandlesStaticEffect(value = BoostSelfByImprintedCreaturePTEffect.class, selfOnly = true)
