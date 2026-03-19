@@ -534,6 +534,22 @@ public class PermanentCounterResolutionService {
     @HandlesEffect(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class)
     private void resolvePutPlusOnePlusOneCounterOnTargetCreature(GameData gameData, StackEntry entry,
                                                                  PutPlusOnePlusOneCounterOnTargetCreatureEffect effect) {
+        // Multi-target: apply counters to each valid target
+        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetPermanentIds()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue; // Partially resolves — skip removed targets
+                }
+                if (gameQueryService.cantHaveCounters(gameData, target)) {
+                    continue;
+                }
+                applyPlusOnePlusOneCounters(gameData, entry, target, effect.count());
+            }
+            return;
+        }
+
+        // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetPermanentId());
         if (target == null) {
             log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
@@ -544,7 +560,10 @@ public class PermanentCounterResolutionService {
             return;
         }
 
-        int counters = effect.count();
+        applyPlusOnePlusOneCounters(gameData, entry, target, effect.count());
+    }
+
+    private void applyPlusOnePlusOneCounters(GameData gameData, StackEntry entry, Permanent target, int counters) {
         target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() + counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
