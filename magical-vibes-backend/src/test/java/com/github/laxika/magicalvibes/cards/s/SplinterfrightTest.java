@@ -117,6 +117,8 @@ class SplinterfrightTest extends BaseCardTest {
     @DisplayName("Splinterfright mills 2 cards at controller's upkeep")
     void millsAtUpkeep() {
         Permanent perm = addSplinterfrightReady(player1);
+        // Ensure Splinterfright has at least 1 toughness so it survives SBAs after mill resolves
+        harness.setGraveyard(player1, createCreatureCards(1));
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         int graveyardSizeBefore = gd.playerGraveyards.get(player1.getId()).size();
