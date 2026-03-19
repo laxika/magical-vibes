@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -737,6 +738,10 @@ public class GameQueryService {
             }
             List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
             return controllerBattlefield != null && controllerBattlefield.contains(permanent);
+        }
+        if (predicate instanceof PermanentAttachedToSourceControllerPredicate) {
+            return sourceControllerId != null && permanent.isAttached()
+                    && sourceControllerId.equals(permanent.getAttachedTo());
         }
         if (predicate instanceof PermanentToughnessLessThanSourcePowerPredicate) {
             if (gameData == null || sourceCardId == null) {

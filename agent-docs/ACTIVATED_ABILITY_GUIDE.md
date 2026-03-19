@@ -374,6 +374,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power |
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with the same name as the source permanent (uses current card name, works with clones) |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by the source's controller |
+| `PermanentAttachedToSourceControllerPredicate` | `()` | permanents attached to (enchanting/cursing) the source's controller |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |
 | `PermanentAllOfPredicate` | `(List<PermanentPredicate>)` | AND: all predicates must match |
 | `PermanentAnyOfPredicate` | `(List<PermanentPredicate>)` | OR: at least one predicate matches |
