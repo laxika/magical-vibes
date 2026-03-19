@@ -1,4 +1,6 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.turn;
+
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;

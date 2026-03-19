@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerServic
 import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
