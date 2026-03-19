@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +49,12 @@ class MiscTriggerCollectorServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+
+    @Mock
+    private ExileService exileService;
+
+    @Mock
+    private PermanentControlResolutionService permanentControlResolutionService;
 
     @InjectMocks
     private MiscTriggerCollectorService sut;

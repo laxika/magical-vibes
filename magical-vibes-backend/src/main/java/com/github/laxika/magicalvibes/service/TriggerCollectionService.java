@@ -493,6 +493,24 @@ public class TriggerCollectionService {
         });
     }
 
+    // ── Creature-card-milled triggers ─────────────────────────────────
+
+    public void checkCreatureCardMilledTriggers(GameData gameData, UUID milledPlayerId, Card milledCard) {
+        var ctx = new TriggerContext.CreatureCardMilled(milledPlayerId, milledCard);
+
+        // Snapshot battlefields: trigger handlers may add tokens to the battlefield
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerId.equals(milledPlayerId)) return;
+
+            for (Permanent perm : List.copyOf(battlefield)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED)) {
+                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
+                    registry.dispatch(match, EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED, effect, ctx);
+                }
+            }
+        });
+    }
+
     // ── Noncombat-damage-to-opponent triggers ──────────────────────────
 
     public void checkNoncombatDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId) {

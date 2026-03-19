@@ -60,4 +60,9 @@ public sealed interface TriggerContext {
      * Context for noncombat-damage-to-opponent triggers (ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).
      */
     record NoncombatDamageToOpponent(UUID damagedPlayerId) implements TriggerContext {}
+
+    /**
+     * Context for creature-card-milled triggers (ON_OPPONENT_CREATURE_CARD_MILLED).
+     */
+    record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
 }

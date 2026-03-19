@@ -1,18 +1,23 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -33,13 +39,29 @@ public class MiscTriggerCollectorService {
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final ExileService exileService;
+    // @Lazy to break indirect circular dependency:
+    // MiscTriggerCollectorService → PermanentControlResolutionService → TriggerCollectionService → MiscTriggerCollectorService
+    private PermanentControlResolutionService permanentControlResolutionService;
 
     public MiscTriggerCollectorService(GameBroadcastService gameBroadcastService,
                                        @Lazy GraveyardService graveyardService,
-                                       GameQueryService gameQueryService) {
+                                       GameQueryService gameQueryService,
+                                       ExileService exileService,
+                                       @Lazy PermanentControlResolutionService permanentControlResolutionService) {
         this.gameBroadcastService = gameBroadcastService;
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
+        this.exileService = exileService;
+        this.permanentControlResolutionService = permanentControlResolutionService;
+    }
+
+    /**
+     * Sets the PermanentControlResolutionService for manual (non-Spring) construction where
+     * the circular dependency prevents passing it in the constructor.
+     */
+    public void setPermanentControlResolutionService(PermanentControlResolutionService permanentControlResolutionService) {
+        this.permanentControlResolutionService = permanentControlResolutionService;
     }
 
     // ── ON_ALLY_PERMANENT_SACRIFICED ───────────────────────────────────
@@ -164,6 +186,40 @@ public class MiscTriggerCollectorService {
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
         log.info("Game {} - {} triggers on life gain ({} life), target opponent loses that much",
                 gameData.id, cardName, lg.lifeGainedAmount());
+        return true;
+    }
+
+    // ── ON_OPPONENT_CREATURE_CARD_MILLED ────────────────────────────────
+
+    @CollectsTrigger(value = ExileMilledCreatureAndCreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED)
+    private boolean handleExileMilledCreatureAndCreateToken(TriggerMatchContext match,
+            ExileMilledCreatureAndCreateTokenEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureCardMilled milled = (TriggerContext.CreatureCardMilled) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        String milledCardName = milled.milledCard().getName();
+
+        // Exile from graveyard if still there (may already be exiled by another trigger)
+        List<Card> graveyard = gameData.playerGraveyards.get(milled.milledPlayerId());
+        if (graveyard.remove(milled.milledCard())) {
+            exileService.exileCard(gameData, milled.milledPlayerId(), milled.milledCard());
+        }
+
+        // Create the token for the controller of the triggering permanent
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                effect.tokenName(), effect.tokenPower(), effect.tokenToughness(),
+                effect.tokenColor(), effect.tokenSubtypes(),
+                Set.of(), Set.of()
+        );
+        permanentControlResolutionService.applyCreateCreatureToken(
+                gameData, match.controllerId(), tokenEffect, match.permanent().getCard().getSetCode()
+        );
+
+        String logEntry = cardName + "'s ability triggers — exiling " + milledCardName
+                + " and creating a 2/2 black Zombie creature token.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} triggers on creature card milled: exile {} + create Zombie token",
+                gameData.id, cardName, milledCardName);
         return true;
     }
 

@@ -65,13 +65,22 @@ public class GraveyardService {
         int cardsToMill = Math.min(count, deck.size());
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
+        List<Card> creatureCardsEnteredGraveyard = new ArrayList<>();
         for (Card card : milledCards) {
-            addCardToGraveyard(gameData, targetPlayerId, card);
+            boolean entered = addCardToGraveyard(gameData, targetPlayerId, card);
+            if (entered && card.hasType(CardType.CREATURE)) {
+                creatureCardsEnteredGraveyard.add(card);
+            }
         }
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
+
+        // Fire creature-card-milled triggers (e.g. Undead Alchemist)
+        for (Card creatureCard : creatureCardsEnteredGraveyard) {
+            triggerCollectionService.checkCreatureCardMilledTriggers(gameData, targetPlayerId, creatureCard);
+        }
     }
 
     /**

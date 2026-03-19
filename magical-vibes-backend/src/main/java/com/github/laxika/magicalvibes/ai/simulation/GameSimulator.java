@@ -205,12 +205,13 @@ public class GameSimulator {
         PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
                 graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
         TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
+        MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService, exileService, null);
         List<Object> triggerCollectorBeans = List.of(
                 new SpellCastTriggerCollectorService(gameQueryService, gameBroadcastService),
                 new DiscardTriggerCollectorService(gameBroadcastService, gameQueryService, damagePreventionService, permanentRemovalService),
                 new LandTapTriggerCollectorService(gameQueryService, gameBroadcastService, damagePreventionService, permanentRemovalService),
                 new DamageTriggerCollectorService(gameQueryService, gameBroadcastService, permanentRemovalService, creatureControlService),
-                new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService)
+                miscTriggerCollectorService
         );
         for (Object bean : triggerCollectorBeans) {
             TriggerCollectorRegistry.scanBean(bean, triggerCollectorRegistry);
@@ -252,6 +253,7 @@ public class GameSimulator {
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         DestructionResolutionService destructionResolutionService = new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService);
         PermanentControlResolutionService permanentControlResolutionService = new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService);
+        miscTriggerCollectorService.setPermanentControlResolutionService(permanentControlResolutionService);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
         List<Object> effectServices = List.of(
                 damageResolutionService,

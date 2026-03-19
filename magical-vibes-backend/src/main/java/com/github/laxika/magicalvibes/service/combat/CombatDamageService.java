@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEff
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnDamageDealerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
@@ -1105,6 +1106,18 @@ public class CombatDamageService {
             return;
         }
 
+        // CR 614 — Replacement effect: if a matching creature would deal combat damage to a
+        // player, instead that player mills that many cards (e.g. Undead Alchemist).
+        if (damage > 0 && redirectTarget == null) {
+            UUID atkControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
+            if (atkControllerId != null && hasReplaceCombatDamageWithMill(gameData, atkControllerId, atk)) {
+                gameBroadcastService.logAndBroadcast(gameData, atk.getCard().getName()
+                        + "'s " + damage + " combat damage is replaced with milling.");
+                graveyardService.resolveMillPlayer(gameData, defenderId, damage);
+                return;
+            }
+        }
+
         boolean atkHasInfect = gameQueryService.hasKeyword(gameData, atk, Keyword.INFECT);
         if (redirectTarget != null) {
             if (atkHasInfect) {
@@ -1204,6 +1217,24 @@ public class CombatDamageService {
         boolean hasFirstStrike = gameQueryService.hasKeyword(gameData, creature, Keyword.FIRST_STRIKE);
         boolean hasDoubleStrike = gameQueryService.hasKeyword(gameData, creature, Keyword.DOUBLE_STRIKE);
         return isFirstStrikePhase ? (hasFirstStrike || hasDoubleStrike) : (!hasFirstStrike || hasDoubleStrike);
+    }
+
+    /**
+     * Returns {@code true} if any permanent on the controller's battlefield has a
+     * {@link ReplaceCombatDamageWithMillEffect} whose predicate matches the attacker.
+     */
+    private boolean hasReplaceCombatDamageWithMill(GameData gameData, UUID controllerId, Permanent attacker) {
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ReplaceCombatDamageWithMillEffect replacement
+                        && gameQueryService.matchesPermanentPredicate(gameData, attacker, replacement.attackerPredicate())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean assignsCombatDamageAsThoughUnblocked(Permanent attacker) {
