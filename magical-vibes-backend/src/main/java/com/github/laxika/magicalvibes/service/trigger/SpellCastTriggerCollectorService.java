@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -183,6 +184,36 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard());
+    }
+
+    @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleKickedSpellCastTrigger(TriggerMatchContext match,
+            KickedSpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+
+        // Check if the spell on the stack was kicked
+        boolean isKicked = false;
+        for (StackEntry se : match.gameData().stack) {
+            if (se.getCard().getId().equals(sc.spellCard().getId())) {
+                isKicked = se.isKicked();
+                break;
+            }
+        }
+        if (!isKicked) return false;
+
+        List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
+
+        StackEntry entry = selfTarget
+                ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId())
+                : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability", resolved);
+        match.gameData().stack.add(entry);
+
+        log.info("Game {} - {} kicked-spell-cast trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = CastFromGraveyardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
