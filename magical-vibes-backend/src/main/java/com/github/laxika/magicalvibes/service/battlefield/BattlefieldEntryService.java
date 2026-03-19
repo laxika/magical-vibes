@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
@@ -114,6 +116,7 @@ public class BattlefieldEntryService {
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         applyAllPermanentsEnterTapped(gameData, permanent);
         applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+        applyEnterWithPlusOnePlusOneCountersPerSubtype(gameData, controllerId, permanent);
         applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
@@ -259,6 +262,60 @@ public class BattlefieldEntryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Replacement effect (MTG Rule 614.1c): "This creature enters the battlefield with a +1/+1
+     * counter on it for each other [subtype] you control and each [subtype] card in your graveyard."
+     * Counts other permanents with the subtype on the controller's battlefield plus (optionally)
+     * cards with the subtype in the controller's graveyard. (e.g. Unbreathing Horde)
+     */
+    private void applyEnterWithPlusOnePlusOneCountersPerSubtype(GameData gameData, UUID controllerId,
+                                                                  Permanent permanent) {
+        var effect = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof EnterWithPlusOnePlusOneCountersPerSubtypeEffect)
+                .map(e -> (EnterWithPlusOnePlusOneCountersPerSubtypeEffect) e)
+                .findFirst().orElse(null);
+        if (effect == null) return;
+
+        boolean cantHaveCounters = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantHaveCountersEffect);
+        if (cantHaveCounters) return;
+
+        CardSubtype subtype = effect.subtype();
+        int count = 0;
+
+        // Count other permanents with the subtype on the controller's battlefield
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().getSubtypes().contains(subtype)
+                        || p.getTransientSubtypes().contains(subtype)
+                        || p.getGrantedSubtypes().contains(subtype)
+                        || p.hasKeyword(Keyword.CHANGELING)) {
+                    count++;
+                }
+            }
+        }
+
+        // Count cards with the subtype in the controller's graveyard
+        if (effect.includeGraveyard()) {
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            if (graveyard != null) {
+                for (Card card : graveyard) {
+                    if (card.getSubtypes().contains(subtype)
+                            || card.getKeywords().contains(Keyword.CHANGELING)) {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        if (count > 0) {
+            permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() + count);
+            log.info("Game {} - {} enters with {} +1/+1 counter(s) (per {} count)",
+                    gameData.id, permanent.getCard().getName(), count, subtype);
+        }
     }
 
     /**

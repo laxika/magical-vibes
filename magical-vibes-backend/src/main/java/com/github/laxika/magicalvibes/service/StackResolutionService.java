@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
@@ -143,7 +144,9 @@ public class StackResolutionService {
         Card enteredCard = perm.getCard();
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        if (hasXPlusOneCounterEffect && perm.getPlusOnePlusOneCounters() > 0) {
+        boolean hasSubtypeCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerSubtypeEffect);
+        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect) && perm.getPlusOnePlusOneCounters() > 0) {
             String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getPlusOnePlusOneCounters() + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (perm.getWishCounters() > 0) {

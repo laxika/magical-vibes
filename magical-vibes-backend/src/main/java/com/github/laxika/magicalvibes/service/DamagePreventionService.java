@@ -55,12 +55,18 @@ public class DamagePreventionService {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
             if (controllerId != null && gameData.playersWithAllDamagePrevented.contains(controllerId)) return 0;
         }
-        // Protean Hydra ruling: "If unpreventable damage is dealt, the second ability will try to prevent
-        // it and fail (meaning that damage has its normal results), and it will also remove that many +1/+1
-        // counters from Protean Hydra." — counters are removed regardless of whether damage is preventable.
-        if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect)) {
-            int countersToRemove = Math.min(damage, permanent.getPlusOnePlusOneCounters());
+        // Protean Hydra / Unbreathing Horde: "If damage would be dealt to this creature, prevent that
+        // damage and remove +1/+1 counters." Counters are removed regardless of whether damage is preventable.
+        // When removeOneOnly=true (Unbreathing Horde), exactly one counter is removed per damage event.
+        // When removeOneOnly=false (Protean Hydra), counters equal to the damage are removed.
+        var preventRemoveEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect)
+                .map(e -> (PreventDamageAndRemovePlusOnePlusOneCountersEffect) e)
+                .findFirst().orElse(null);
+        if (damage > 0 && preventRemoveEffect != null) {
+            int countersToRemove = preventRemoveEffect.removeOneOnly()
+                    ? Math.min(1, permanent.getPlusOnePlusOneCounters())
+                    : Math.min(damage, permanent.getPlusOnePlusOneCounters());
             if (countersToRemove > 0 && !gameQueryService.cantHaveCounters(gameData, permanent)) {
                 permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - countersToRemove);
                 registerDelayedRegrowth(gameData, permanent, countersToRemove);
