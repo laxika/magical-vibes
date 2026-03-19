@@ -906,15 +906,15 @@ public class CombatDamageService {
     }
 
     /**
-     * Removes dead permanent IDs from surviving blockers' blockingTargetPermanentIds.
+     * Removes dead permanent IDs from surviving blockers' blockingTargetIds.
      * If a blocker has no remaining blocking targets, clears its blocking state entirely.
      */
     private void clearOrphanedBlockingState(List<Permanent> battlefield, Set<UUID> deadIds) {
         if (deadIds.isEmpty()) return;
         for (Permanent p : battlefield) {
             if (!p.isBlocking()) continue;
-            p.getBlockingTargetPermanentIds().removeAll(deadIds);
-            if (p.getBlockingTargetPermanentIds().isEmpty()) {
+            p.getBlockingTargetIds().removeAll(deadIds);
+            if (p.getBlockingTargetIds().isEmpty()) {
                 p.setBlocking(false);
                 p.getBlockingTargets().clear();
             }

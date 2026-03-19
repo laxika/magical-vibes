@@ -239,7 +239,7 @@ class FireballTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Fireball");
         assertThat(entry.getXValue()).isEqualTo(3);
-        assertThat(entry.getTargetPermanentIds()).containsExactly(player2.getId());
+        assertThat(entry.getTargetIds()).containsExactly(player2.getId());
     }
 
     @Test

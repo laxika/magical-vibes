@@ -128,7 +128,7 @@ public class ActivatedAbilityExecutionService {
                                              UUID targetId,
                                              Zone targetZone,
                                              boolean markAsNonTargetingForSacCreatureCost,
-                                             List<UUID> targetPermanentIds) {
+                                             List<UUID> targetIds) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -226,7 +226,7 @@ public class ActivatedAbilityExecutionService {
             return;
         }
 
-        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetPermanentIds);
+        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetIds);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -372,7 +372,7 @@ public class ActivatedAbilityExecutionService {
                                     int effectiveXValue,
                                     UUID effectiveTargetId,
                                     Zone targetZone,
-                                    List<UUID> targetPermanentIds) {
+                                    List<UUID> targetIds) {
         Zone effectiveTargetZone = targetZone;
         if (ability.isNeedsSpellTarget()) {
             effectiveTargetZone = Zone.STACK;
@@ -380,7 +380,7 @@ public class ActivatedAbilityExecutionService {
         if (effectiveTargetZone == Zone.BATTLEFIELD) {
             effectiveTargetZone = null;
         }
-        List<UUID> effectiveTargetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
+        List<UUID> effectiveTargetIds = targetIds != null ? targetIds : List.of();
         StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 permanent.getCard(),
@@ -393,7 +393,7 @@ public class ActivatedAbilityExecutionService {
                 Map.of(),
                 effectiveTargetZone,
                 List.of(),
-                effectiveTargetPermanentIds
+                effectiveTargetIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);

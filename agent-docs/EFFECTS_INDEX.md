@@ -106,7 +106,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DealDamageToTargetAndTheirCreaturesEffect` | `(int damage)` | deal N damage to target player or planeswalker AND each creature that player or that planeswalker's controller controls (e.g. Chandra Nalaar ultimate) |
 | `DealDamageToEachCreatureDamagedPlayerControlsEffect` | `()` | deal damage equal to combat damage dealt (from xValue) to each creature the damaged player controls (from targetId). Used with ON_COMBAT_DAMAGE_TO_PLAYER slot. CombatDamageService passes damageDealt and defenderId automatically. Used by Balefire Dragon |
 | `DealDamageToTargetCreatureEffect` | `(int damage)` or `(int damage, boolean unpreventable)` | deal N damage to target creature. When `unpreventable=true`, bypasses all damage prevention (shields, protection, global prevention) |
-| `DealDamageToBlockedAttackersOnDeathEffect` | `(int damage)` | ON_DEATH marker: when this creature dies during combat, deal N damage to each creature it blocked this combat (e.g. Cathedral Membrane). Target permanent IDs baked in at trigger time from blockingTargetPermanentIds |
+| `DealDamageToBlockedAttackersOnDeathEffect` | `(int damage)` | ON_DEATH marker: when this creature dies during combat, deal N damage to each creature it blocked this combat (e.g. Cathedral Membrane). Target permanent IDs baked in at trigger time from blockingTargetIds |
 | `DealDamageToTargetPlayerEffect` | `(int damage)` | deal N damage to target player |
 | `DealDamageToTargetPlayerByHandSizeEffect` | `()` | deal damage equal to hand size to target player |
 | `MassDamageEffect` | `(int damage)` or `(int damage, boolean damagesPlayers)` or `(int damage, boolean usesXValue, boolean damagesPlayers, PermanentPredicate filter)` | deal N damage to all creatures (optionally filtered by predicate), optionally to all players too. Use `usesXValue=true` to use X value instead of fixed damage |
@@ -130,7 +130,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DealXDamageToAnyTargetAndGainXLifeEffect` | `()` | deal X damage and gain X life (X spell) |
 | `DealXDamageToTargetCreatureEffect` | `()` | deal X damage to target creature (X spell) |
 | `DealXDamageDividedAmongTargetAttackingCreaturesEffect` | `()` | deal X damage divided among attacking creatures |
-| `DealXDamageDividedEvenlyAmongTargetsEffect` | `()` | deal X damage divided evenly (rounded down) among any number of targets (creatures/players). Uses `targetPermanentIds` for target list. Pair with `setAdditionalCostPerExtraTarget(1)` for Fireball-style cost |
+| `DealXDamageDividedEvenlyAmongTargetsEffect` | `()` | deal X damage divided evenly (rounded down) among any number of targets (creatures/players). Uses `targetIds` for target list. Pair with `setAdditionalCostPerExtraTarget(1)` for Fireball-style cost |
 | `FirstTargetDealsPowerDamageToSecondTargetEffect` | `()` | first target creature deals damage equal to its power to second target creature (bite mechanic) |
 | `FirstTargetFightsSecondTargetEffect` | `()` | first and second target creatures deal damage to each other equal to their respective powers (fight mechanic). Protection checked per creature color |
 | `DoubleDamageEffect` | `()` | double all damage dealt (static) |
@@ -168,7 +168,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DestroyTargetPermanentAndBoostSelfByManaValueEffect` | `()` | destroy target permanent and boost source creature +X/+0 until end of turn, where X is the permanent's mana value. Boost applies even if destruction fails (indestructible). Target type restriction handled by ability's target filter. Used by Hoard-Smelter Dragon |
 | `DestroyTargetPermanentAndGainLifeEqualToManaValueEffect` | `()` | destroy target permanent and gain life equal to its mana value. Life gain occurs even if destruction fails (indestructible). Target type restriction handled by spell's target filter. Used by Divine Offering |
 | `DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect` | `()` | destroy target creature; its controller loses life equal to the number of creatures put into all graveyards from the battlefield this turn (counts ALL players' creature deaths). Used with `SacrificeCreatureCost` for Flesh Allergy |
-| `DestroyOneOfTargetsAtRandomEffect` | `()` | destroy one permanent at random from `targetPermanentIds` on the stack entry. Filters out targets that left the battlefield before resolution. Used by Capricious Efreet's upkeep trigger (multi-target random destruction) |
+| `DestroyOneOfTargetsAtRandomEffect` | `()` | destroy one permanent at random from `targetIds` on the stack entry. Filters out targets that left the battlefield before resolution. Used by Capricious Efreet's upkeep trigger (multi-target random destruction) |
 | `DestroyEquipmentAttachedToTargetCreatureEffect` | `()` | destroy all Equipment attached to the target creature. Uses same target as co-located damage effect. Effect order doesn't matter; lethal damage destruction is deferred until all effects on the stack entry resolve. Resolved by `DestructionResolutionService` |
 | `SacrificeCreatureEffect` | `()` | target player sacrifices a creature (has `canTargetPlayer()`) |
 | `ControllerSacrificesCreatureEffect` | `()` | controller sacrifices a creature (non-targeting, uses `entry.getControllerId()`). Use for abilities where the controller sacrifices without targeting a player (e.g. Stitcher's Apprentice) |
@@ -236,7 +236,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `ReturnTargetPermanentToHandEffect` | `()` or `(int lifeLoss)` | return target permanent(s) to owner's hand; supports single-target via `targetId` and multi-target via `targetPermanentIds`. When `lifeLoss > 0`, each bounced permanent's controller loses that much life (e.g. Vapor Snag) |
+| `ReturnTargetPermanentToHandEffect` | `()` or `(int lifeLoss)` | return target permanent(s) to owner's hand; supports single-target via `targetId` and multi-target via `targetIds`. When `lifeLoss > 0`, each bounced permanent's controller loses that much life (e.g. Vapor Snag) |
 | `ReturnCreaturesToOwnersHandEffect` | `(Set<TargetFilter> filters)` | return all creatures matching filters to owners' hands |
 | `ReturnSelfToHandEffect` | `()` | return this permanent to owner's hand |
 | `ReturnSelfToHandOnCoinFlipLossEffect` | `()` | return self to hand if coin flip is lost |
@@ -476,7 +476,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `ExileTargetCreatureAndAllWithSameNameEffect` | `()` | exile target creature and all other creatures on the battlefield with the same name. Fizzles if target leaves. Used by Sever the Bloodline |
-| `ExileTargetPermanentEffect` | `()` | exile target permanent (also handles multi-target via targetPermanentIds) |
+| `ExileTargetPermanentEffect` | `()` | exile target permanent (also handles multi-target via targetIds) |
 | `ExilePermanentDamagedPlayerControlsEffect` | `(PermanentPredicate predicate)` | exile target permanent controlled by the damaged player (combat damage trigger); use inside MayEffect with ON_COMBAT_DAMAGE_TO_PLAYER |
 | `ExileCardsFromGraveyardEffect` | `(int maxTargets, int lifeGain)` | exile up to N cards from graveyard, gain lifeGain per card |
 | `ExileCreaturesFromGraveyardAndCreateTokensEffect` | `()` | exile creature cards from graveyard, create tokens for each |
@@ -548,9 +548,9 @@ Pass `null` as filter to allow any card.
 | `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
 | `GainLifeEqualToXValueEffect` | `()` | gain life equal to xValue on stack entry (use with `SacrificeCreatureCost(trackToughness/power)` or other xValue-setting costs) |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
-| `EachTargetPlayerGainsLifeEffect` | `(int amount)` | each targeted player gains N life (multi-target, reads from `targetPermanentIds`). Pair with `setMinTargets(0)` and `setMaxTargets(99)` for "any number of target players". Used by Hunters' Feast |
+| `EachTargetPlayerGainsLifeEffect` | `(int amount)` | each targeted player gains N life (multi-target, reads from `targetIds`). Pair with `setMinTargets(0)` and `setMaxTargets(99)` for "any number of target players". Used by Hunters' Feast |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |
-| `ExchangeTargetPlayersLifeTotalsEffect` | `()` | two target players exchange life totals (multi-target player ability, reads targets from `targetPermanentIds`). CR 118.7: if either player's life can't change, the exchange doesn't occur |
+| `ExchangeTargetPlayersLifeTotalsEffect` | `()` | two target players exchange life totals (multi-target player ability, reads targets from `targetIds`). CR 118.7: if either player's life can't change, the exchange doesn't occur |
 | `LoseLifeEffect` | `(int amount)` | lose N life |
 | `EachOpponentLosesLifeEffect` | `(int amount)` | each opponent loses N life |
 | `EachOpponentLosesLifeAndControllerGainsLifeLostEffect` | `(int amount)` | each opponent loses N life, controller gains total life lost |
@@ -744,7 +744,7 @@ Pass `null` as filter to allow any card.
 | `TapTargetPermanentEffect` | `()` | tap target permanent |
 | `TapOrUntapTargetPermanentEffect` | `()` | tap or untap target permanent |
 | `UntapTargetPermanentEffect` | `()` | untap target permanent |
-| `UntapAllTargetPermanentsEffect` | `()` | untap all target permanents (multi-target variant, iterates over `getTargetPermanentIds()`) |
+| `UntapAllTargetPermanentsEffect` | `()` | untap all target permanents (multi-target variant, iterates over `getTargetIds()`) |
 | `UntapSelfEffect` | `()` | untap this permanent |
 | `UntapAttackedCreaturesEffect` | `()` | untap creatures that attacked this turn (end of combat) |
 | `TapCreaturesEffect` | `(Set<TargetFilter> filters)` | tap all creatures matching filters |
@@ -789,7 +789,7 @@ Pass `null` as filter to allow any card.
 | `PreventDamageFromColorsEffect` | `(Set<CardColor> colors)` | prevent all damage from sources of specified colors (static) |
 | `PreventNextColorDamageToControllerEffect` | `(CardColor chosenColor)` | prevent next damage of chosen color to controller |
 | `PreventAllDamageToControllerAndCreaturesEffect` | `()` | prevent all damage to controller and creatures controller controls this turn (Safe Passage-style) |
-| `PreventAllDamageByTargetCreatureEffect` | `()` | prevent all damage target creature(s) would deal this turn (multi-target via targetPermanentIds) |
+| `PreventAllDamageByTargetCreatureEffect` | `()` | prevent all damage target creature(s) would deal this turn (multi-target via targetIds) |
 | `PreventAllDamageFromChosenSourceEffect` | `()` | prevent all damage a chosen source would deal to controller this turn (prompts permanent choice on resolution) |
 | `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect` | `(int amount)` | prevent next N damage from a chosen source to controller/controller's permanents this turn; redirects to any target (player or creature). Source chosen on resolution, target chosen on cast. `canTargetPlayer()=true`, `canTargetPermanent()=true` (e.g. Harm's Way) |
 | `PreventXDamageToControllerAndRedirectToTargetPlayerEffect` | `()` | prevent next X damage to controller this turn; if prevented, source creature deals that much to target player (e.g. Vengeful Archon). Uses X-cost ability. `canTargetPlayer()=true` |
@@ -891,7 +891,7 @@ Pass `null` as filter to allow any card.
 | `BoostCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+Y per land matching imprinted card name (static) |
 | `SacrificeOnUnattachEffect` | `()` | whenever this equipment becomes unattached, sacrifice the previously-equipped creature (static marker) |
 | `AttachSourceEquipmentToTargetCreatureEffect` | `()` | attach source equipment to target creature on ETB. Reads sourcePermanentId as equipment, targetId as creature. Used by equipment with "When this Equipment enters, attach it to target creature you control." |
-| `AttachTargetEquipmentToTargetCreatureEffect` | `()` | attach target Equipment to target creature (multi-target; reads targetPermanentIds[0] as equipment, [1] as creature) |
+| `AttachTargetEquipmentToTargetCreatureEffect` | `()` | attach target Equipment to target creature (multi-target; reads targetIds[0] as equipment, [1] as creature) |
 | `SacrificeSourceEquipmentCost` | `()` | cost effect that sacrifices the equipment granting this ability (not the equipped creature). Used for equipment-granted abilities like Blazing Torch's "{T}, Sacrifice Blazing Torch: ..." where the creature activates the ability but the equipment is sacrificed. The source equipment is identified via `ActivatedAbility.grantSourcePermanentId`, which is set automatically by the static bonus system |
 
 ## Static restrictions / taxes

@@ -74,9 +74,9 @@ public class ExileResolutionService {
      */
     @HandlesEffect(ExileTargetPermanentEffect.class)
     void resolveExileTargetPermanent(GameData gameData, StackEntry entry) {
-        List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
+        List<UUID> targetIds = entry.getTargetIds().isEmpty()
                 ? List.of(entry.getTargetId())
-                : entry.getTargetPermanentIds();
+                : entry.getTargetIds();
 
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

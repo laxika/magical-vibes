@@ -120,7 +120,7 @@ public class DamageResolutionService {
     void resolveDealDamageToBlockedAttackers(GameData gameData, StackEntry entry, DealDamageToBlockedAttackersOnDeathEffect effect) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;
-        for (UUID targetId : entry.getTargetPermanentIds()) {
+        for (UUID targetId : entry.getTargetIds()) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) continue;
             if (!isDamagePreventedForCreature(gameData, entry, target)) {
@@ -276,7 +276,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealXDamageDividedEvenlyAmongTargetsEffect.class)
     void resolveDealXDamageDividedEvenlyAmongTargets(GameData gameData, StackEntry entry) {
-        List<UUID> targets = entry.getTargetPermanentIds();
+        List<UUID> targets = entry.getTargetIds();
         if (targets.isEmpty()) {
             // Fall back to single target
             if (entry.getTargetId() != null) {
@@ -909,7 +909,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(DealOrderedDamageToAnyTargetsEffect.class)
     void resolveDealOrderedDamageToAnyTargets(GameData gameData, StackEntry entry, DealOrderedDamageToAnyTargetsEffect effect) {
-        List<UUID> targets = entry.getTargetPermanentIds();
+        List<UUID> targets = entry.getTargetIds();
         List<Integer> damages = effect.damageAmounts().stream()
                 .map(d -> gameQueryService.applyDamageMultiplier(gameData, d, entry))
                 .toList();
@@ -1336,7 +1336,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(FirstTargetDealsPowerDamageToSecondTargetEffect.class)
     void resolveBite(GameData gameData, StackEntry entry) {
-        List<UUID> targets = entry.getTargetPermanentIds();
+        List<UUID> targets = entry.getTargetIds();
         if (targets == null || targets.size() < 2) {
             return; // No second target — "up to one" chose zero
         }
@@ -1381,7 +1381,7 @@ public class DamageResolutionService {
      */
     @HandlesEffect(FirstTargetFightsSecondTargetEffect.class)
     void resolveFirstTargetFightsSecondTarget(GameData gameData, StackEntry entry) {
-        List<UUID> targets = entry.getTargetPermanentIds();
+        List<UUID> targets = entry.getTargetIds();
         if (targets == null || targets.size() < 2) {
             return;
         }

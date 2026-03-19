@@ -98,7 +98,7 @@ class SoulConduitTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Soul Conduit");
-        assertThat(entry.getTargetPermanentIds()).containsExactly(player1.getId(), player2.getId());
+        assertThat(entry.getTargetIds()).containsExactly(player1.getId(), player2.getId());
     }
 
     // ===== Cost enforcement =====

@@ -169,8 +169,8 @@ public class BoostResolutionService {
     @HandlesEffect(BoostTargetCreatureEffect.class)
     private void resolveBoostTargetCreature(GameData gameData, StackEntry entry, BoostTargetCreatureEffect boost) {
         // Multi-target: apply boost to each valid target
-        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetPermanentIds()) {
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     continue; // Partially resolves — skip removed targets
@@ -239,11 +239,11 @@ public class BoostResolutionService {
 
     @HandlesEffect(BoostFirstTargetCreatureEffect.class)
     private void resolveBoostFirstTargetCreature(GameData gameData, StackEntry entry, BoostFirstTargetCreatureEffect boost) {
-        if (entry.getTargetPermanentIds() == null || entry.getTargetPermanentIds().isEmpty()) {
+        if (entry.getTargetIds() == null || entry.getTargetIds().isEmpty()) {
             return;
         }
 
-        UUID firstTargetId = entry.getTargetPermanentIds().getFirst();
+        UUID firstTargetId = entry.getTargetIds().getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, firstTargetId);
         if (target == null) {
             return;
@@ -260,11 +260,11 @@ public class BoostResolutionService {
 
     @HandlesEffect(BoostSecondTargetCreatureEffect.class)
     private void resolveBoostSecondTargetCreature(GameData gameData, StackEntry entry, BoostSecondTargetCreatureEffect boost) {
-        if (entry.getTargetPermanentIds() == null || entry.getTargetPermanentIds().size() < 2) {
+        if (entry.getTargetIds() == null || entry.getTargetIds().size() < 2) {
             return;
         }
 
-        UUID secondTargetId = entry.getTargetPermanentIds().get(1);
+        UUID secondTargetId = entry.getTargetIds().get(1);
         Permanent target = gameQueryService.findPermanentById(gameData, secondTargetId);
         if (target == null) {
             return;

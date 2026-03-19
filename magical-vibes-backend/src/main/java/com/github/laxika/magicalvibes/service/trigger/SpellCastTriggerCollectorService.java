@@ -106,12 +106,12 @@ public class SpellCastTriggerCollectorService {
         UUID singleTargetId = null;
         if (spellEntry.getTargetId() != null
                 && spellEntry.getTargetZone() == null
-                && spellEntry.getTargetPermanentIds().isEmpty()) {
+                && spellEntry.getTargetIds().isEmpty()) {
             singleTargetId = spellEntry.getTargetId();
         } else if (spellEntry.getTargetId() == null
-                && !spellEntry.getTargetPermanentIds().isEmpty()
-                && spellEntry.getTargetPermanentIds().stream().distinct().count() == 1) {
-            singleTargetId = spellEntry.getTargetPermanentIds().getFirst();
+                && !spellEntry.getTargetIds().isEmpty()
+                && spellEntry.getTargetIds().stream().distinct().count() == 1) {
+            singleTargetId = spellEntry.getTargetIds().getFirst();
         }
         if (singleTargetId == null) return false;
         if (match.gameData().playerIds.contains(singleTargetId)) return false;

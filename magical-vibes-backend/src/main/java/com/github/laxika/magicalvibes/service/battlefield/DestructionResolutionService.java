@@ -548,12 +548,12 @@ public class DestructionResolutionService {
 
     /**
      * Resolves a {@link DestroyOneOfTargetsAtRandomEffect}, picking one permanent at random
-     * from {@code targetPermanentIds} and destroying it. Targets that have left the battlefield
+     * from {@code targetIds} and destroying it. Targets that have left the battlefield
      * are removed before the random selection.
      */
     @HandlesEffect(DestroyOneOfTargetsAtRandomEffect.class)
     void resolveDestroyOneOfTargetsAtRandom(GameData gameData, StackEntry entry) {
-        List<UUID> targetIds = entry.getTargetPermanentIds();
+        List<UUID> targetIds = entry.getTargetIds();
         if (targetIds == null || targetIds.isEmpty()) {
             return;
         }

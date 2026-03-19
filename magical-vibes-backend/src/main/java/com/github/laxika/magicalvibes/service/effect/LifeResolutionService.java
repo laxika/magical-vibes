@@ -389,7 +389,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(ExchangeTargetPlayersLifeTotalsEffect.class)
     private void resolveExchangeTargetPlayersLifeTotals(GameData gameData, StackEntry entry) {
-        List<UUID> targets = entry.getTargetPermanentIds();
+        List<UUID> targets = entry.getTargetIds();
         if (targets.size() != 2) return;
 
         UUID playerA = targets.get(0);
@@ -687,7 +687,7 @@ public class LifeResolutionService {
 
     @HandlesEffect(EachTargetPlayerGainsLifeEffect.class)
     private void resolveEachTargetPlayerGainsLife(GameData gameData, StackEntry entry, EachTargetPlayerGainsLifeEffect effect) {
-        List<UUID> targets = entry.getTargetPermanentIds();
+        List<UUID> targets = entry.getTargetIds();
         if (targets == null || targets.isEmpty()) {
             return;
         }

@@ -161,33 +161,33 @@ public class SpellCastingService {
     // --- Main methods ---
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
-                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
-        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, null, null, null);
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, null, null, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
-                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount) {
-        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, null, null);
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, null, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
-                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds) {
-        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, null);
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
-                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex) {
-        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetPermanentIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, null);
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
-                  List<UUID> targetPermanentIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices) {
         int effectiveXValue = xValue != null ? xValue : 0;
-        if (targetPermanentIds == null) targetPermanentIds = List.of();
+        if (targetIds == null) targetIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
         if (alternateCostSacrificePermanentIds == null) alternateCostSacrificePermanentIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
@@ -312,7 +312,7 @@ public class SpellCastingService {
                     }
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
-                    int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetPermanentIds.size() - 1);
+                    int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
                     additionalCost += perTargetCost;
                     ManaRestrictionFlags flags = computeManaRestrictionFlags(card);
                     if (card.getXColorRestriction() != null) {
@@ -413,13 +413,13 @@ public class SpellCastingService {
         }
 
         // Validate multi-target permanent targeting
-        if (card.getMaxTargets() > 0 && !targetPermanentIds.isEmpty()) {
-            targetLegalityService.validateMultiSpellTargets(gameData, card, targetPermanentIds, playerId);
+        if (card.getMaxTargets() > 0 && !targetIds.isEmpty()) {
+            targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId);
         }
 
         // Validate permanent targets for spells that also target a spell on the stack (e.g. Lost in the Mist)
-        if (unwrappedNeedsSpellTarget && unwrappedNeedsTarget && !targetPermanentIds.isEmpty()) {
-            for (UUID permTargetId : targetPermanentIds) {
+        if (unwrappedNeedsSpellTarget && unwrappedNeedsTarget && !targetIds.isEmpty()) {
+            for (UUID permTargetId : targetIds) {
                 targetLegalityService.validateSpellTargeting(gameData, card, permTargetId, null, playerId, true);
             }
         }
@@ -508,7 +508,7 @@ public class SpellCastingService {
             // Sorcery/Instant spells: pay mana + sacrifice costs, handle targeting, put on stack
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());
             int resolvedXValue = effectiveXValue;
-            int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetPermanentIds.size() - 1);
+            int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
             } else {
@@ -654,12 +654,12 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, null, damageAssignments
                 ));
             } else if (unwrappedNeedsSpellTarget) {
-                if (unwrappedNeedsTarget && !targetPermanentIds.isEmpty()) {
+                if (unwrappedNeedsTarget && !targetIds.isEmpty()) {
                     // Spell targets both a spell on the stack and permanent(s) (e.g. Lost in the Mist)
                     gameData.stack.add(new StackEntry(
                             entryType, card, playerId, card.getName(),
                             filteredSpellEffects, resolvedXValue, targetId,
-                            null, Map.of(), Zone.STACK, List.of(), targetPermanentIds
+                            null, Map.of(), Zone.STACK, List.of(), targetIds
                     ));
                 } else {
                     gameData.stack.add(new StackEntry(
@@ -667,11 +667,11 @@ public class SpellCastingService {
                             filteredSpellEffects, targetId, Zone.STACK
                     ));
                 }
-            } else if (!targetPermanentIds.isEmpty() && !sacFlags.usesSacrificeAllCreaturesCost()) {
+            } else if (!targetIds.isEmpty() && !sacFlags.usesSacrificeAllCreaturesCost()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, resolvedXValue, targetPermanentIds
+                        filteredSpellEffects, resolvedXValue, targetIds
                 ));
             } else if (needsExileTargeting) {
                 gameData.stack.add(new StackEntry(
@@ -883,15 +883,15 @@ public class SpellCastingService {
         playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, List.of(), null);
     }
 
-    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetPermanentIds) {
-        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetPermanentIds, null);
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetIds) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds, null);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
-                                    UUID targetId, List<UUID> targetPermanentIds,
+                                    UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices) {
         int effectiveXValue = xValue != null ? xValue : 0;
-        if (targetPermanentIds == null) targetPermanentIds = List.of();
+        if (targetIds == null) targetIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -992,14 +992,14 @@ public class SpellCastingService {
         }
 
         StackEntry stackEntry;
-        if (!targetPermanentIds.isEmpty()) {
+        if (!targetIds.isEmpty()) {
             // Multi-target flashback spell
             if (card.getMaxTargets() > 0) {
-                targetLegalityService.validateMultiSpellTargets(gameData, card, targetPermanentIds, playerId);
+                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId);
             }
             stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),
-                    spellEffects, effectiveXValue, targetPermanentIds
+                    spellEffects, effectiveXValue, targetIds
             );
         } else {
             // Single-target or no-target flashback spell

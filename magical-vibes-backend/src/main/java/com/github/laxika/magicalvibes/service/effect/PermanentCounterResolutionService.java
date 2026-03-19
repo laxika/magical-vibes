@@ -535,8 +535,8 @@ public class PermanentCounterResolutionService {
     private void resolvePutPlusOnePlusOneCounterOnTargetCreature(GameData gameData, StackEntry entry,
                                                                  PutPlusOnePlusOneCounterOnTargetCreatureEffect effect) {
         // Multi-target: apply counters to each valid target
-        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetPermanentIds()) {
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     continue; // Partially resolves — skip removed targets
@@ -647,14 +647,14 @@ public class PermanentCounterResolutionService {
 
     @HandlesEffect(UnattachEquipmentFromTargetPermanentsEffect.class)
     private void resolveUnattachEquipmentFromTargetPermanents(GameData gameData, StackEntry entry) {
-        if (entry.getTargetPermanentIds() == null || entry.getTargetPermanentIds().isEmpty()) {
+        if (entry.getTargetIds() == null || entry.getTargetIds().isEmpty()) {
             return;
         }
 
         // Track creatures that need to be sacrificed due to SacrificeOnUnattachEffect
         Set<UUID> sacrificeTargetIds = new LinkedHashSet<>();
 
-        for (UUID targetId : entry.getTargetPermanentIds()) {
+        for (UUID targetId : entry.getTargetIds()) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 continue;

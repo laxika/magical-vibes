@@ -84,8 +84,8 @@ public class TapUntapResolutionService {
     @HandlesEffect(TapTargetPermanentEffect.class)
     private void resolveTapTargetPermanent(GameData gameData, StackEntry entry) {
         // Multi-target: tap each valid target
-        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetPermanentIds()) {
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     continue;
@@ -154,9 +154,9 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(UntapAllTargetPermanentsEffect.class)
     private void resolveUntapAllTargetPermanents(GameData gameData, StackEntry entry) {
-        List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
+        List<UUID> targetIds = entry.getTargetIds().isEmpty()
                 ? (entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of())
-                : entry.getTargetPermanentIds();
+                : entry.getTargetIds();
 
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

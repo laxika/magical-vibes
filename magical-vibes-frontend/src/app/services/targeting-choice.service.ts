@@ -45,7 +45,7 @@ export class TargetingChoiceService {
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
     this.pendingAbilityXValue = null;
-    this.validTargetPermanentIds.set(new Set());
+    this.validTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
     this.targetingPrompt = '';
     this.pendingTargetRequest = false;
@@ -110,7 +110,7 @@ export class TargetingChoiceService {
   targetingForAbility = false;
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;
-  validTargetPermanentIds = signal(new Set<string>());
+  validTargetIds = signal(new Set<string>());
   validTargetPlayerIds = signal(new Set<string>());
   targetingPrompt = '';
   pendingTargetRequest = false;
@@ -167,7 +167,7 @@ export class TargetingChoiceService {
       return;
     }
 
-    this.validTargetPermanentIds.set(new Set(msg.validPermanentIds));
+    this.validTargetIds.set(new Set(msg.validPermanentIds));
     this.validTargetPlayerIds.set(new Set(msg.validPlayerIds));
     this.targetingPrompt = msg.prompt;
 
@@ -320,7 +320,7 @@ export class TargetingChoiceService {
     const opBf = this.opponentBattlefieldFn();
     for (const p of myBf) allIds.add(p.id);
     for (const p of opBf) allIds.add(p.id);
-    this.validTargetPermanentIds.set(allIds);
+    this.validTargetIds.set(allIds);
     this.validTargetPlayerIds.set(new Set());
     this.targetingPrompt = 'Choose a target for ' + card.name + ' (flashback).';
   }
@@ -408,7 +408,7 @@ export class TargetingChoiceService {
 
   selectTarget(permanentId: string): void {
     if (!this.selectingTarget) return;
-    if (!this.validTargetPermanentIds().has(permanentId)) return;
+    if (!this.validTargetIds().has(permanentId)) return;
     if (this.targetingForAbility) {
       const msg: any = {
         type: MessageType.ACTIVATE_ABILITY,
@@ -467,7 +467,7 @@ export class TargetingChoiceService {
     this.targetingCardName = '';
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
-    this.validTargetPermanentIds.set(new Set());
+    this.validTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
     this.targetingPrompt = '';
     this.pendingAbilityXValue = null;
@@ -509,7 +509,7 @@ export class TargetingChoiceService {
   }
 
   isValidTarget(perm: Permanent): boolean {
-    return this.validTargetPermanentIds().has(perm.id);
+    return this.validTargetIds().has(perm.id);
   }
 
   // ========== Multi-target selection ==========
@@ -519,7 +519,7 @@ export class TargetingChoiceService {
     const current = this.multiTargetSelectedIds();
     if (current.includes(permanentId)) return;
     if (current.length >= this.multiTargetMaxCount) return;
-    if (!this.validTargetPermanentIds().has(permanentId)) return;
+    if (!this.validTargetIds().has(permanentId)) return;
     const newSelected = [...current, permanentId];
     this.multiTargetSelectedIds.set(newSelected);
     // Refresh valid targets for next position
@@ -575,7 +575,7 @@ export class TargetingChoiceService {
 
     this.multiTargeting = false;
     this.multiTargetSelectedIds.set([]);
-    this.validTargetPermanentIds.set(new Set());
+    this.validTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
 
     if (this.targetingForAbility) {
@@ -584,7 +584,7 @@ export class TargetingChoiceService {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.multiTargetCardIndex,
         abilityIndex: this.targetingAbilityIndex,
-        targetPermanentIds: this.pendingMultiTargetIds
+        targetIds: this.pendingMultiTargetIds
       });
       this.resetTargetingState();
       this.resetMultiTargetState();
@@ -598,7 +598,7 @@ export class TargetingChoiceService {
     }
 
     // Send directly
-    const multiExtra: Record<string, any> = { targetPermanentIds: this.pendingMultiTargetIds };
+    const multiExtra: Record<string, any> = { targetIds: this.pendingMultiTargetIds };
     if (this.pendingAbilityXValue != null) {
       multiExtra['xValue'] = this.pendingAbilityXValue;
     }
@@ -612,7 +612,7 @@ export class TargetingChoiceService {
     this.multiTargetCardIndex = -1;
     this.multiTargetCardName = '';
     this.multiTargetSelectedIds.set([]);
-    this.validTargetPermanentIds.set(new Set());
+    this.validTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());
     this.pendingConvokeCard = null;
     this.targetingForAbility = false;
@@ -686,7 +686,7 @@ export class TargetingChoiceService {
   private addPendingTargetsToMsg(msg: any): void {
     if (this.pendingMultiTargetIds.length > 0) {
       if (this.pendingConvokeCard && this.multiTargetMaxCount > 1) {
-        msg.targetPermanentIds = this.pendingMultiTargetIds;
+        msg.targetIds = this.pendingMultiTargetIds;
       } else {
         // Single-target card that went through convoke flow
         msg.targetId = this.pendingMultiTargetIds[0];

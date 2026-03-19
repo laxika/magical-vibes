@@ -109,7 +109,7 @@ public class EquipResolutionService {
 
     @HandlesEffect(AttachTargetEquipmentToTargetCreatureEffect.class)
     private void resolveAttachTargetEquipmentToTargetCreature(GameData gameData, StackEntry entry) {
-        List<UUID> targets = entry.getTargetPermanentIds();
+        List<UUID> targets = entry.getTargetIds();
         if (targets == null || targets.size() < 2) {
             String logEntry = entry.getCard().getName() + "'s ability fizzles (invalid targets).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

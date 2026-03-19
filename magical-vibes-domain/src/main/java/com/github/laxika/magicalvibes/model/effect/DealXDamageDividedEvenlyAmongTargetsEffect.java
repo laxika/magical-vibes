@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Deals X damage divided evenly (rounded down) among any number of targets (creatures and/or players).
- * Uses {@code entry.getXValue()} for the X value and {@code entry.getTargetPermanentIds()} for the target list.
+ * Uses {@code entry.getXValue()} for the X value and {@code entry.getTargetIds()} for the target list.
  * Each target receives {@code floor(X / numberOfTargets)} damage.
  * Used by Fireball.
  */

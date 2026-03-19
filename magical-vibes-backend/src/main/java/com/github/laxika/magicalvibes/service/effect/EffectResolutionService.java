@@ -137,9 +137,9 @@ public class EffectResolutionService {
             // for this effect based on the Card's SpellTarget declarations.
             int targetIdx = entry.getCard().getEffectTargetIndex(effect);
             UUID savedTargetId = entry.getTargetId();
-            if (targetIdx >= 0 && entry.getTargetPermanentIds() != null
-                    && targetIdx < entry.getTargetPermanentIds().size()) {
-                entry.setTargetId(entry.getTargetPermanentIds().get(targetIdx));
+            if (targetIdx >= 0 && entry.getTargetIds() != null
+                    && targetIdx < entry.getTargetIds().size()) {
+                entry.setTargetId(entry.getTargetIds().get(targetIdx));
             }
 
             EffectHandler handler = registry.getHandler(effectToResolve);

@@ -57,7 +57,7 @@ class IntoTheCoreTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Into the Core");
-        assertThat(entry.getTargetPermanentIds()).containsExactly(id1, id2);
+        assertThat(entry.getTargetIds()).containsExactly(id1, id2);
     }
 
     @Test

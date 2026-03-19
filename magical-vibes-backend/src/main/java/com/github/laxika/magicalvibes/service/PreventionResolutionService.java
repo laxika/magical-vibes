@@ -130,7 +130,7 @@ public class PreventionResolutionService {
 
     @HandlesEffect(PreventAllDamageByTargetCreatureEffect.class)
     void resolvePreventAllDamageByTargetCreatures(GameData gameData, StackEntry entry) {
-        List<UUID> targetIds = entry.getTargetPermanentIds();
+        List<UUID> targetIds = entry.getTargetIds();
         if (targetIds == null || targetIds.isEmpty()) return;
 
         for (UUID targetId : targetIds) {

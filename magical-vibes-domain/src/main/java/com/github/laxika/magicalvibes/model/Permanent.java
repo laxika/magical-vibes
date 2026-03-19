@@ -23,7 +23,7 @@ public class Permanent {
     private boolean attackedThisTurn;
     private boolean blocking;
     private final List<Integer> blockingTargets = new ArrayList<>();
-    private final List<UUID> blockingTargetPermanentIds = new ArrayList<>();
+    private final List<UUID> blockingTargetIds = new ArrayList<>();
     private boolean summoningSick;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
@@ -136,7 +136,7 @@ public class Permanent {
         this.attackedThisTurn = source.attackedThisTurn;
         this.blocking = source.blocking;
         this.blockingTargets.addAll(source.blockingTargets);
-        this.blockingTargetPermanentIds.addAll(source.blockingTargetPermanentIds);
+        this.blockingTargetIds.addAll(source.blockingTargetIds);
         this.summoningSick = source.summoningSick;
         this.powerModifier = source.powerModifier;
         this.toughnessModifier = source.toughnessModifier;
@@ -228,7 +228,7 @@ public class Permanent {
     }
 
     public void addBlockingTargetId(UUID permanentId) {
-        this.blockingTargetPermanentIds.add(permanentId);
+        this.blockingTargetIds.add(permanentId);
     }
 
     public void setSummoningSick(boolean summoningSick) {
@@ -244,7 +244,7 @@ public class Permanent {
         this.attackTarget = null;
         this.blocking = false;
         this.blockingTargets.clear();
-        this.blockingTargetPermanentIds.clear();
+        this.blockingTargetIds.clear();
     }
 
     public void setAttackedThisTurn(boolean attackedThisTurn) {

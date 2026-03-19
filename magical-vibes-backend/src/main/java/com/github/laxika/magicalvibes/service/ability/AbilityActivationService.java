@@ -273,8 +273,8 @@ public class AbilityActivationService {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, null);
     }
 
-    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetPermanentIds) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetPermanentIds);
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds) {
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds);
     }
 
     /**
@@ -450,7 +450,7 @@ public class AbilityActivationService {
 
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
-                                         List<UUID> targetPermanentIds) {
+                                         List<UUID> targetIds) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
@@ -513,7 +513,7 @@ public class AbilityActivationService {
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (ability.isMultiTarget()) {
-            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability, targetPermanentIds, permanent.getCard());
+            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability, targetIds, permanent.getCard());
         } else {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
@@ -763,7 +763,7 @@ public class AbilityActivationService {
 
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects,
-                effectiveXValue, targetId, targetZone, nonTargeting, effectiveIndex, targetPermanentIds);
+                effectiveXValue, targetId, targetZone, nonTargeting, effectiveIndex, targetIds);
     }
 
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId) {
@@ -905,9 +905,9 @@ public class AbilityActivationService {
     private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
                                               ActivatedAbility ability, List<CardEffect> abilityEffects,
                                               int xValue, UUID targetId, Zone targetZone,
-                                              boolean nonTargeting, int abilityIndex, List<UUID> targetPermanentIds) {
+                                              boolean nonTargeting, int abilityIndex, List<UUID> targetIds) {
         activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting, targetPermanentIds);
+                gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting, targetIds);
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
     }
 

@@ -68,12 +68,12 @@ public class TargetLegalityService {
         }
     }
 
-    public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetPermanentIds, Card sourceCard) {
-        validateMultiTargetCount(targetPermanentIds, ability.getMinTargets(), ability.getMaxTargets());
+    public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetIds, Card sourceCard) {
+        validateMultiTargetCount(targetIds, ability.getMinTargets(), ability.getMaxTargets());
 
         List<TargetFilter> perPositionFilters = ability.getMultiTargetFilters();
-        for (int i = 0; i < targetPermanentIds.size(); i++) {
-            UUID targetId = targetPermanentIds.get(i);
+        for (int i = 0; i < targetIds.size(); i++) {
+            UUID targetId = targetIds.get(i);
             TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
 
             // Player-targeting position
@@ -186,14 +186,14 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
     }
 
-    public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetPermanentIds, UUID controllerId) {
-        validateMultiTargetCount(targetPermanentIds, card.getMinTargets(), card.getMaxTargets());
+    public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
+        validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets());
 
         boolean allowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(CardEffect::canTargetPlayer);
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
-        for (int i = 0; i < targetPermanentIds.size(); i++) {
-            UUID targetId = targetPermanentIds.get(i);
+        for (int i = 0; i < targetIds.size(); i++) {
+            UUID targetId = targetIds.get(i);
 
             // Player-targeting position
             if (gameData.playerIds.contains(targetId)) {
@@ -240,10 +240,10 @@ public class TargetLegalityService {
         // Multi-zone targeting: spell targets both a spell on the stack and permanent(s)
         // (e.g. Lost in the Mist). Per MTG CR 608.2b: fizzles only when ALL targets become illegal.
         if (entry.getTargetId() != null && entry.getTargetZone() == Zone.STACK
-                && !entry.getTargetPermanentIds().isEmpty()) {
+                && !entry.getTargetIds().isEmpty()) {
             boolean spellTargetLegal = gameData.stack.stream()
                     .anyMatch(se -> se.getCard().getId().equals(entry.getTargetId()));
-            boolean anyPermanentTargetLegal = entry.getTargetPermanentIds().stream()
+            boolean anyPermanentTargetLegal = entry.getTargetIds().stream()
                     .anyMatch(id -> gameQueryService.findPermanentById(gameData, id) != null
                             || gameData.playerIds.contains(id));
             return !spellTargetLegal && !anyPermanentTargetLegal;
@@ -290,7 +290,7 @@ public class TargetLegalityService {
         }
 
         if (!targetFizzled) {
-            targetFizzled = allTargetsGone(entry.getTargetPermanentIds(),
+            targetFizzled = allTargetsGone(entry.getTargetIds(),
                     id -> gameQueryService.findPermanentById(gameData, id) != null || gameData.playerIds.contains(id));
         }
 
@@ -462,13 +462,13 @@ public class TargetLegalityService {
 
     private boolean isSingleTargetSpell(StackEntry stackEntry) {
         return stackEntry.getTargetId() != null
-                && stackEntry.getTargetPermanentIds().isEmpty()
+                && stackEntry.getTargetIds().isEmpty()
                 && stackEntry.getTargetCardIds().isEmpty();
     }
 
     private boolean hasAnyTarget(StackEntry stackEntry) {
         return stackEntry.getTargetId() != null
-                || !stackEntry.getTargetPermanentIds().isEmpty()
+                || !stackEntry.getTargetIds().isEmpty()
                 || !stackEntry.getTargetCardIds().isEmpty();
     }
 
@@ -524,8 +524,8 @@ public class TargetLegalityService {
             }
         }
         // Check multiple targets
-        if (stackEntry.getTargetPermanentIds() != null) {
-            for (UUID targetId : stackEntry.getTargetPermanentIds()) {
+        if (stackEntry.getTargetIds() != null) {
+            for (UUID targetId : stackEntry.getTargetIds()) {
                 UUID targetController = gameQueryService.findPermanentController(gameData, targetId);
                 if (controllerId.equals(targetController)) {
                     return true;

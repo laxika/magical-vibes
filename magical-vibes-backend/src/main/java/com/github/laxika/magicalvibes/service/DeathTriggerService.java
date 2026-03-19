@@ -53,8 +53,8 @@ public class DeathTriggerService {
                 if (dyingPermanent != null && step != null
                         && step.ordinal() >= TurnStep.BEGINNING_OF_COMBAT.ordinal()
                         && step.ordinal() <= TurnStep.END_OF_COMBAT.ordinal()
-                        && !dyingPermanent.getBlockingTargetPermanentIds().isEmpty()) {
-                    List<UUID> targetIds = new ArrayList<>(dyingPermanent.getBlockingTargetPermanentIds());
+                        && !dyingPermanent.getBlockingTargetIds().isEmpty()) {
+                    List<UUID> targetIds = new ArrayList<>(dyingPermanent.getBlockingTargetIds());
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             dyingCard,

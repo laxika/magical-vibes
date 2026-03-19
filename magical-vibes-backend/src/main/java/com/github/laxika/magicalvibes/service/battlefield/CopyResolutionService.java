@@ -184,7 +184,7 @@ public class CopyResolutionService {
                 source.getDamageAssignments(),
                 source.getTargetZone(),
                 source.getTargetCardIds() != null ? new ArrayList<>(source.getTargetCardIds()) : null,
-                source.getTargetPermanentIds() != null ? new ArrayList<>(source.getTargetPermanentIds()) : null
+                source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
         );
         copy.setCopy(true);
         return copy;

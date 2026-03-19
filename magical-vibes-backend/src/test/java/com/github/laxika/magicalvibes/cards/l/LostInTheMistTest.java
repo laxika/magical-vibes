@@ -60,7 +60,7 @@ class LostInTheMistTest extends BaseCardTest {
         assertThat(lostEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(lostEntry.getCard().getName()).isEqualTo("Lost in the Mist");
         assertThat(lostEntry.getTargetId()).isEqualTo(bears.getId());
-        assertThat(lostEntry.getTargetPermanentIds()).containsExactly(spellbookId);
+        assertThat(lostEntry.getTargetIds()).containsExactly(spellbookId);
     }
 
     // ===== Resolving =====

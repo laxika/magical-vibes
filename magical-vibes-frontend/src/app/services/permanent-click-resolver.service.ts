@@ -33,7 +33,7 @@ export class PermanentClickResolverService {
       return true;
     }
     if (this.choice.targeting.multiTargeting) {
-      if (perm && this.choice.targeting.validTargetPermanentIds().has(perm.id)) {
+      if (perm && this.choice.targeting.validTargetIds().has(perm.id)) {
         if (this.choice.targeting.isMultiTargetSelected(perm.id)) {
           this.choice.targeting.removeMultiTarget(perm.id);
         } else {

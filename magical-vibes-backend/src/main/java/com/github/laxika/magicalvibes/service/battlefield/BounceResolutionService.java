@@ -79,9 +79,9 @@ public class BounceResolutionService {
      */
     @HandlesEffect(ReturnTargetPermanentToHandEffect.class)
     void resolveReturnTargetPermanentToHand(GameData gameData, StackEntry entry, ReturnTargetPermanentToHandEffect effect) {
-        List<UUID> targetIds = entry.getTargetPermanentIds().isEmpty()
+        List<UUID> targetIds = entry.getTargetIds().isEmpty()
                 ? List.of(entry.getTargetId())
-                : entry.getTargetPermanentIds();
+                : entry.getTargetIds();
 
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

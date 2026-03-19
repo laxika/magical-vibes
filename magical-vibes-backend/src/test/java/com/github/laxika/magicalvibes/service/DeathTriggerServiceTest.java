@@ -255,7 +255,7 @@ class DeathTriggerServiceTest {
                 card.addEffect(EffectSlot.ON_DEATH, new DealDamageToBlockedAttackersOnDeathEffect(2));
                 Permanent perm = new Permanent(card);
                 UUID attackerId = UUID.randomUUID();
-                perm.getBlockingTargetPermanentIds().add(attackerId);
+                perm.getBlockingTargetIds().add(attackerId);
                 gd.currentStep = TurnStep.COMBAT_DAMAGE;
 
                 svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
@@ -263,7 +263,7 @@ class DeathTriggerServiceTest {
                 assertThat(gd.stack).hasSize(1);
                 StackEntry entry = gd.stack.get(0);
                 assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DealDamageToBlockedAttackersOnDeathEffect.class);
-                assertThat(entry.getTargetPermanentIds()).containsExactly(attackerId);
+                assertThat(entry.getTargetIds()).containsExactly(attackerId);
             }
 
             @Test
@@ -272,7 +272,7 @@ class DeathTriggerServiceTest {
                 Card card = createCreature("Thorny Blocker", 1, 1);
                 card.addEffect(EffectSlot.ON_DEATH, new DealDamageToBlockedAttackersOnDeathEffect(2));
                 Permanent perm = new Permanent(card);
-                perm.getBlockingTargetPermanentIds().add(UUID.randomUUID());
+                perm.getBlockingTargetIds().add(UUID.randomUUID());
                 gd.currentStep = TurnStep.PRECOMBAT_MAIN;
 
                 svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
@@ -311,7 +311,7 @@ class DeathTriggerServiceTest {
                 Card card = createCreature("Thorny Blocker", 1, 1);
                 card.addEffect(EffectSlot.ON_DEATH, new DealDamageToBlockedAttackersOnDeathEffect(2));
                 Permanent perm = new Permanent(card);
-                perm.getBlockingTargetPermanentIds().add(UUID.randomUUID());
+                perm.getBlockingTargetIds().add(UUID.randomUUID());
                 gd.currentStep = TurnStep.BEGINNING_OF_COMBAT;
 
                 svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);
@@ -325,7 +325,7 @@ class DeathTriggerServiceTest {
                 Card card = createCreature("Thorny Blocker", 1, 1);
                 card.addEffect(EffectSlot.ON_DEATH, new DealDamageToBlockedAttackersOnDeathEffect(2));
                 Permanent perm = new Permanent(card);
-                perm.getBlockingTargetPermanentIds().add(UUID.randomUUID());
+                perm.getBlockingTargetIds().add(UUID.randomUUID());
                 gd.currentStep = TurnStep.END_OF_COMBAT;
 
                 svc.collectDeathTrigger(gd, card, PLAYER1_ID, true, perm);

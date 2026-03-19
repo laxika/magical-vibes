@@ -251,8 +251,8 @@ public class TriggerCollectionService {
                 && spellEntry.getTargetZone() == null) {
             targetIds.add(spellEntry.getTargetId());
         }
-        if (spellEntry.getTargetPermanentIds() != null) {
-            targetIds.addAll(spellEntry.getTargetPermanentIds());
+        if (spellEntry.getTargetIds() != null) {
+            targetIds.addAll(spellEntry.getTargetIds());
         }
 
         for (UUID targetId : targetIds) {
@@ -307,8 +307,8 @@ public class TriggerCollectionService {
                 && !abilityEntry.isNonTargeting()) {
             targetIds.add(abilityEntry.getTargetId());
         }
-        if (abilityEntry.getTargetPermanentIds() != null) {
-            targetIds.addAll(abilityEntry.getTargetPermanentIds());
+        if (abilityEntry.getTargetIds() != null) {
+            targetIds.addAll(abilityEntry.getTargetIds());
         }
 
         for (UUID targetId : targetIds) {

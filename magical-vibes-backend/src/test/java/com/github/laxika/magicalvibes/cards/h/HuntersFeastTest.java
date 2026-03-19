@@ -40,7 +40,7 @@ class HuntersFeastTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Hunters' Feast");
-        assertThat(entry.getTargetPermanentIds()).containsExactly(player1.getId(), player2.getId());
+        assertThat(entry.getTargetIds()).containsExactly(player1.getId(), player2.getId());
     }
 
     @Test

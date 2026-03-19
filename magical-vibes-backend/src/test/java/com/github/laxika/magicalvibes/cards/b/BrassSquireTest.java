@@ -55,7 +55,7 @@ class BrassSquireTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Brass Squire");
-        assertThat(entry.getTargetPermanentIds()).containsExactly(equipment.getId(), creature.getId());
+        assertThat(entry.getTargetIds()).containsExactly(equipment.getId(), creature.getId());
     }
 
     @Test

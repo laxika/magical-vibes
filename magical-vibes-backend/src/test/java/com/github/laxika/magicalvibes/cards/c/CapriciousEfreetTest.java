@@ -64,7 +64,7 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         // No opponent nonland permanents, so ability goes directly to stack
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentIds()).containsExactly(efreet.getId());
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(efreet.getId());
     }
 
     // ===== Trigger: opponent target selection (step 2) =====
@@ -98,7 +98,7 @@ class CapriciousEfreetTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of()); // zero opponents
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentIds())
+        assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId());
     }
 
@@ -114,7 +114,7 @@ class CapriciousEfreetTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(hillGiant.getId()));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentIds())
+        assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId(), hillGiant.getId());
     }
 
@@ -131,7 +131,7 @@ class CapriciousEfreetTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(hillGiant.getId(), bears2.getId()));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentIds())
+        assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId(), hillGiant.getId(), bears2.getId());
     }
 
@@ -229,7 +229,7 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         // Should go directly to stack (no multi-permanent choice)
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetPermanentIds())
+        assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId());
     }
 

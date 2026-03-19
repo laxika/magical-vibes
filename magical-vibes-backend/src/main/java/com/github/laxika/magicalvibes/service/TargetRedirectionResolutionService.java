@@ -106,7 +106,7 @@ public class TargetRedirectionResolutionService {
 
     private boolean hasAnyTarget(StackEntry stackEntry) {
         return stackEntry.getTargetId() != null
-                || !stackEntry.getTargetPermanentIds().isEmpty()
+                || !stackEntry.getTargetIds().isEmpty()
                 || !stackEntry.getTargetCardIds().isEmpty();
     }
 
@@ -196,7 +196,7 @@ public class TargetRedirectionResolutionService {
 
     private boolean isSingleTargetSpell(StackEntry stackEntry) {
         return stackEntry.getTargetId() != null
-                && stackEntry.getTargetPermanentIds().isEmpty()
+                && stackEntry.getTargetIds().isEmpty()
                 && stackEntry.getTargetCardIds().isEmpty();
     }
 }

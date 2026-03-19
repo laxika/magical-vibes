@@ -63,7 +63,7 @@ class ConeOfFlameTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Cone of Flame");
-        assertThat(entry.getTargetPermanentIds()).containsExactly(id1, id2, id3);
+        assertThat(entry.getTargetIds()).containsExactly(id1, id2, id3);
     }
 
     @Test

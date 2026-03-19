@@ -352,31 +352,31 @@ public class GameMessageHandler implements MessageHandler {
         try {
             if (Boolean.TRUE.equals(request.flashback())) {
                 gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
                         request.exileGraveyardCardIndices());
             } else if (request.fromExileCardId() != null) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
             } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
                         request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
                         request.alternateCostSacrificePermanentIds());
             } else if (request.exileGraveyardCardIndices() != null && !request.exileGraveyardCardIndices().isEmpty()) {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
                         request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
                         null, null, request.exileGraveyardCardIndices());
             } else if (request.exileGraveyardCardIndex() != null) {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
                         request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
                         null, request.exileGraveyardCardIndex());
             } else {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetPermanentIds() != null ? request.targetPermanentIds() : java.util.List.of(),
+                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
                         request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount());
             }
@@ -421,7 +421,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.activateAbility(gameData, player, request.permanentIndex(), request.abilityIndex(), request.xValue(), request.targetId(), request.targetZone(), request.targetPermanentIds());
+            gameService.activateAbility(gameData, player, request.permanentIndex(), request.abilityIndex(), request.xValue(), request.targetId(), request.targetZone(), request.targetIds());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

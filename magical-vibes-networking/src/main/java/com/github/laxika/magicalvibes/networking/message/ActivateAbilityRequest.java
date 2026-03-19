@@ -5,5 +5,5 @@ import com.github.laxika.magicalvibes.model.Zone;
 import java.util.List;
 import java.util.UUID;
 
-public record ActivateAbilityRequest(int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetPermanentIds) {
+public record ActivateAbilityRequest(int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds) {
 }

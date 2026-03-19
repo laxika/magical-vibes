@@ -30,7 +30,7 @@ public class StackEntry {
     @Setter private boolean returnToHandAfterResolving;
     @Setter private boolean castWithFlashback;
     @Setter private Card damageSourceCard;
-    private final List<UUID> targetPermanentIds;
+    private final List<UUID> targetIds;
 
     // Creature spell constructor
     public StackEntry(Card card, UUID controllerId) {
@@ -46,7 +46,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = List.of();
+        this.targetIds = List.of();
     }
 
     // Triggered ability constructor
@@ -63,7 +63,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = List.of();
+        this.targetIds = List.of();
     }
 
     // General constructor with xValue (for sorcery spells)
@@ -80,7 +80,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = List.of();
+        this.targetIds = List.of();
     }
 
     // Targeted or damage distribution spell constructor
@@ -97,7 +97,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = List.of();
+        this.targetIds = List.of();
     }
 
     // Triggered ability with source and target permanent constructor
@@ -114,7 +114,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = List.of();
+        this.targetIds = List.of();
     }
 
     // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
@@ -131,14 +131,14 @@ public class StackEntry {
         this.targetZone = targetZone;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = List.of();
+        this.targetIds = List.of();
     }
 
     // Spell copy constructor - preserves all fields from the original stack entry
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
                       List<CardEffect> effectsToResolve, int xValue, UUID targetId,
                       UUID sourcePermanentId, Map<UUID, Integer> damageAssignments,
-                      Zone targetZone, List<UUID> targetCardIds, List<UUID> targetPermanentIds) {
+                      Zone targetZone, List<UUID> targetCardIds, List<UUID> targetIds) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
@@ -151,7 +151,7 @@ public class StackEntry {
         this.targetZone = targetZone;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
+        this.targetIds = targetIds != null ? targetIds : List.of();
     }
 
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
@@ -168,7 +168,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = List.of();
+        this.targetIds = List.of();
     }
 
     /**
@@ -193,11 +193,11 @@ public class StackEntry {
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.damageSourceCard = source.damageSourceCard;
-        this.targetPermanentIds = source.targetPermanentIds.isEmpty() ? List.of() : new ArrayList<>(source.targetPermanentIds);
+        this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }
 
     // Multi-target permanent spell constructor (e.g. "one or two target creatures")
-    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, List<UUID> targetPermanentIds) {
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, List<UUID> targetIds) {
         this.entryType = entryType;
         this.card = card;
         this.controllerId = controllerId;
@@ -210,7 +210,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetPermanentIds = targetPermanentIds != null ? targetPermanentIds : List.of();
+        this.targetIds = targetIds != null ? targetIds : List.of();
     }
 
     /**

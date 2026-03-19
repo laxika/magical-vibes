@@ -92,8 +92,8 @@ public class CombatRestrictionResolutionService {
     @HandlesEffect(TargetCreatureCantBlockThisTurnEffect.class)
     private void resolveCantBlockTargetCreature(GameData gameData, StackEntry entry) {
         // Multi-target: apply to each valid target
-        if (entry.getTargetPermanentIds() != null && !entry.getTargetPermanentIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetPermanentIds()) {
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     continue;
