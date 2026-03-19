@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -815,7 +815,7 @@ public class BattlefieldEntryService {
                                 gameData.id, perm.getCard().getName(), enteringCreature.getName(),
                                 enteringCreature.getPower(), conditional.maxPower());
                     }
-                } else if (effect instanceof EnteringCreatureSubtypeConditionalEffect conditional) {
+                } else if (effect instanceof SubtypeConditionalEffect conditional) {
                     if (!enteringCreature.getSubtypes().contains(conditional.subtype())) {
                         continue;
                     }

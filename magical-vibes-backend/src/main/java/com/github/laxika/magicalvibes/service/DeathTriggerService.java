@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -259,25 +260,34 @@ public class DeathTriggerService {
         });
     }
 
-    public void checkAnyCreatureDeathTriggers(GameData gameData) {
+    public void checkAnyCreatureDeathTriggers(GameData gameData, Card dyingCard) {
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES);
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
+                // Unwrap subtype-filtered effects: skip if the dying creature lacks the required subtype
+                CardEffect resolvedEffect = effect;
+                if (effect instanceof SubtypeConditionalEffect filtered) {
+                    if (!dyingCard.getSubtypes().contains(filtered.subtype())) {
+                        continue;
+                    }
+                    resolvedEffect = filtered.wrapped();
+                }
+
+                if (resolvedEffect.canTargetPermanent() || resolvedEffect.canTargetPlayer()) {
                     gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
-                            perm.getCard(), playerId, new ArrayList<>(List.of(effect))
+                            perm.getCard(), playerId, new ArrayList<>(List.of(resolvedEffect))
                     ));
-                } else if (effect instanceof MayEffect may) {
+                } else if (resolvedEffect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), playerId, may);
-                } else if (effect instanceof PutCountersOnSourceEffect) {
+                } else if (resolvedEffect instanceof PutCountersOnSourceEffect) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             playerId,
                             perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
+                            new ArrayList<>(List.of(resolvedEffect)),
                             null,
                             perm.getId()
                     ));
@@ -287,7 +297,7 @@ public class DeathTriggerService {
                             perm.getCard(),
                             playerId,
                             perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect))
+                            new ArrayList<>(List.of(resolvedEffect))
                     ));
                 }
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";

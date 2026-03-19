@@ -840,7 +840,7 @@ class DeathTriggerServiceTest {
         void noEffects_doesNothing() {
             addToBattlefield(PLAYER1_ID, createCreature("Vanilla", 2, 2));
 
-            svc.checkAnyCreatureDeathTriggers(gd);
+            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingDeathTriggerTargets).isEmpty();
@@ -853,7 +853,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(1));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd);
+            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
@@ -870,7 +870,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutChargeCounterOnTargetPermanentEffect());
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd);
+            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
@@ -887,7 +887,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new MayEffect(new DrawCardEffect(1), "Draw?"));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd);
+            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
 
             // CR 603.5 — "you may" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -901,7 +901,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
             Permanent watcherPerm = addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd);
+            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
@@ -920,7 +920,7 @@ class DeathTriggerServiceTest {
             watcher2.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(2));
             addToBattlefield(PLAYER2_ID, watcher2);
 
-            svc.checkAnyCreatureDeathTriggers(gd);
+            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).hasSize(2);
             assertThat(gd.stack.get(0).getControllerId()).isEqualTo(PLAYER1_ID);
@@ -934,7 +934,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(1));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd);
+            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Morbid Watcher") && msg.contains("triggers")));
         }

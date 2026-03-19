@@ -205,7 +205,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | On block conditional boost | `e/EzurisArchers.java` | ON_BLOCK BoostSelfWhenBlockingKeywordEffect(FLYING, 3, 0) — conditional trigger checked at block time |
 | On damaged creature dies | `s/SengirVampire.java` | ON_DAMAGED_CREATURE_DIES PutPlusOnePlusOneCounterOnSourceEffect |
 | On controller gains life | `a/AjanisPridemate.java` | ON_CONTROLLER_GAINS_LIFE PutCountersOnSourceEffect(1,1,1) — +1/+1 counter whenever controller gains life |
-| On ally creature with subtype enters | `c/ChampionOfTheParish.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD EnteringCreatureSubtypeConditionalEffect(HUMAN, PutCountersOnSourceEffect(1,1,1)) — +1/+1 counter whenever another Human you control enters |
+| On ally creature with subtype enters | `c/ChampionOfTheParish.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD SubtypeConditionalEffect(HUMAN, PutCountersOnSourceEffect(1,1,1)) — +1/+1 counter whenever another Human you control enters |
 | On dealt damage to self | `n/NestedGhoul.java` | ON_DEALT_DAMAGE CreateCreatureTokenEffect — fires per source, both combat and non-combat |
 | On dealt damage: source controller poison | `r/ReaperOfSheoldred.java` | ON_DEALT_DAMAGE DamageSourceControllerGetsPoisonCounterEffect(null) marker — UUID filled at trigger time, gives source's controller 1 poison counter |
 | On dealt damage: source controller sacrifices | `p/PhyrexianObliterator.java` | ON_DEALT_DAMAGE DamageSourceControllerSacrificesPermanentsEffect(0,null) marker — count+playerId filled at trigger time, multi-permanent choice for sacrifice |

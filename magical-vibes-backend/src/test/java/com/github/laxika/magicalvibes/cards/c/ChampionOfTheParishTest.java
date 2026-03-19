@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +26,10 @@ class ChampionOfTheParishTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnteringCreatureSubtypeConditionalEffect.class);
+                .isInstanceOf(SubtypeConditionalEffect.class);
 
-        EnteringCreatureSubtypeConditionalEffect conditional =
-                (EnteringCreatureSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
+        SubtypeConditionalEffect conditional =
+                (SubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
         assertThat(conditional.subtype()).isEqualTo(CardSubtype.HUMAN);
         assertThat(conditional.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
 
