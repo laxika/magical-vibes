@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
@@ -751,8 +752,28 @@ public class GameBroadcastService {
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
         int increase = getOpponentCostIncrease(gameData, playerId, card.getType());
+        increase += getSpellCastTaxIncrease(gameData, playerId);
         int reduction = getOwnCostReduction(gameData, playerId, card);
         return increase - reduction;
+    }
+
+    private int getSpellCastTaxIncrease(GameData gameData, UUID playerId) {
+        int taxAmount = 0;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof IncreaseEachPlayerCastCostPerSpellThisTurnEffect tax) {
+                            taxAmount += tax.amountPerSpell();
+                        }
+                    }
+                }
+            }
+        }
+        if (taxAmount == 0) return 0;
+        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        return taxAmount * spellsCast;
     }
 
     private int getOwnCostReduction(GameData gameData, UUID playerId, Card card) {

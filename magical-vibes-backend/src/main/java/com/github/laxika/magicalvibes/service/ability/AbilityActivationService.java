@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -150,11 +151,27 @@ public class AbilityActivationService {
             // Land type is overridden — produce the new basic land type's mana instead of original
             manaPool.add(overriddenManaColor, 1);
         } else {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof AwardManaEffect awardMana) {
-                    manaPool.add(awardMana.color(), awardMana.amount());
-                    if (isCreatureSource) {
-                        manaPool.addCreatureMana(awardMana.color(), awardMana.amount());
+            // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
+            boolean dampingReplacement = false;
+            if (permanent.getCard().hasType(CardType.LAND) && isDampingManaReplacementActiveOnTap(gameData)) {
+                int totalMana = 0;
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof AwardManaEffect awardMana) {
+                        totalMana += awardMana.amount();
+                    }
+                }
+                if (totalMana >= 2) {
+                    dampingReplacement = true;
+                    manaPool.add(ManaColor.COLORLESS, 1);
+                }
+            }
+            if (!dampingReplacement) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof AwardManaEffect awardMana) {
+                        manaPool.add(awardMana.color(), awardMana.amount());
+                        if (isCreatureSource) {
+                            manaPool.addCreatureMana(awardMana.color(), awardMana.amount());
+                        }
                     }
                 }
             }
@@ -1250,6 +1267,22 @@ public class AbilityActivationService {
      * Returns the mana color that a land should produce if its type has been overridden
      * by an aura (e.g. Evil Presence making it a Swamp), or {@code null} if no override applies.
      */
+    private boolean isDampingManaReplacementActiveOnTap(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof ReplaceLandExcessManaWithColorlessEffect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
         for (UUID pid : gameData.orderedPlayerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {

@@ -927,6 +927,8 @@ Pass `null` as filter to allow any card.
 | `PlayersCannotDrawCardsEffect` | `()` | players can't draw cards (static, Omen Machine) |
 | `LimitSpellsPerTurnEffect` | `(int maxSpells)` | each player can cast at most N spells per turn (static) |
 | `IncreaseOpponentCastCostEffect` | `(Set<CardType> affectedTypes, int amount)` | opponent's spells of types cost N more (static) |
+| `IncreaseEachPlayerCastCostPerSpellThisTurnEffect` | `(int amountPerSpell)` | each spell a player casts costs N more for each other spell that player has already cast this turn; affects all players (static, Damping Sphere) |
+| `ReplaceLandExcessManaWithColorlessEffect` | `()` | if a land is tapped for two or more mana, it produces {C} instead of any other type and amount (static, Damping Sphere) |
 | `RequirePaymentToAttackEffect` | `(int amountPerAttacker)` | must pay N mana per attacking creature (static) |
 | `AlternativeCostForSpellsEffect` | `(int cost, CardPredicate filter)` | controller may pay the alternative cost rather than the mana cost for spells matching the filter (static, from battlefield permanent, e.g. Rooftop Storm with cost=0 and creature+zombie filter) |
 | `ReduceOwnCastCostForCardTypeEffect` | `(Set<CardType> affectedTypes, int amount)` | reduce controller's spells of given types by N (static, from battlefield permanent, e.g. Heartless Summoning) |

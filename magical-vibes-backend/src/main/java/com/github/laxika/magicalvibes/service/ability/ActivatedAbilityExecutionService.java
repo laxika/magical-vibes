@@ -29,10 +29,13 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCount
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -266,7 +269,24 @@ public class ActivatedAbilityExecutionService {
 
     private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects) {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
+
+        // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
+        boolean dampingReplacement = false;
+        if (permanent.getCard().hasType(CardType.LAND) && isDampingManaReplacementActive(gameData)) {
+            int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects);
+            if (totalMana >= 2) {
+                dampingReplacement = true;
+                gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
+                String logEntry = player.getUsername() + " adds {C} from " + permanent.getCard().getName()
+                        + " (Damping Sphere replaces " + totalMana + " mana).";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
+        }
+
         for (CardEffect effect : snapshotEffects) {
+            if (dampingReplacement && effect instanceof ManaProducingEffect) {
+                continue;
+            }
             if (effect instanceof AwardManaEffect award) {
                 gameData.playerManaPools.get(playerId).add(award.color(), award.amount());
                 if (isCreatureSource) {
@@ -362,6 +382,51 @@ public class ActivatedAbilityExecutionService {
             playerInputService.processNextMayAbility(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    private boolean isDampingManaReplacementActive(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof ReplaceLandExcessManaWithColorlessEffect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private int calculateTotalManaProduction(GameData gameData, UUID playerId, Permanent permanent, List<CardEffect> effects) {
+        int total = 0;
+        for (CardEffect effect : effects) {
+            if (effect instanceof AwardManaEffect award) {
+                total += award.amount();
+            } else if (effect instanceof AwardAnyColorManaEffect) {
+                total += 1;
+            } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
+                total += aom.amount();
+            } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
+                total += mom.amount();
+            } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        if (gameQueryService.matchesPermanentPredicate(gameData, p, manaPerPermanent.predicate())) {
+                            total++;
+                        }
+                    }
+                }
+            } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
+                total += permanent.getChargeCounters();
+            } else if (effect instanceof DoubleManaPoolEffect) {
+                total += gameData.playerManaPools.get(playerId).getTotal();
+            }
+        }
+        return total;
     }
 
     private void pushAbilityOnStack(GameData gameData,
