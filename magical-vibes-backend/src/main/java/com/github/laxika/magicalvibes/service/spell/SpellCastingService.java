@@ -534,6 +534,10 @@ public class SpellCastingService {
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
             resolvedXValue = payExileXCardsFromGraveyardCost(gameData, player, card, exileXCardsGraveyardCost, exileGraveyardCardIndices, resolvedXValue);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
+            KickerEffect kickerEffect = findKickerEffect(card);
+            if (kicked && kickerEffect != null) {
+                payKickerCost(gameData, playerId, kickerEffect);
+            }
 
             // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
             ReturnTargetCardsFromGraveyardToHandEffect graveyardToHandEffect =
@@ -706,6 +710,9 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId, null
                 ));
+            }
+            if (kicked && kickerEffect != null && !gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setKicked(true);
             }
             finishSpellCast(gameData, playerId, player, hand, card);
         }

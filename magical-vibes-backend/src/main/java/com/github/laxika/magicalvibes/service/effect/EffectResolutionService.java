@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
@@ -204,6 +205,8 @@ public class EffectResolutionService {
                     isActivationCountConditionMet(gameData, entry, acc);
             case MorbidConditionalEffect ignored ->
                     gameQueryService.isMorbidMet(gameData);
+            case KickedConditionalEffect ignored ->
+                    entry.isKicked();
             case DidntAttackConditionalEffect ignored ->
                     isSourceDidntAttackThisTurn(gameData, entry);
             case NoSpellsCastLastTurnConditionalEffect ignored ->

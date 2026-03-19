@@ -174,6 +174,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB modal (choose one, per-mode targeting) | `d/DeceiverExarch.java` | ChooseOneEffect on ON_ENTER_BATTLEFIELD with per-mode TargetFilter on each ChooseOneOption. Mode 0: UntapTargetPermanentEffect + PermanentControlledBySourceControllerPredicate. Mode 1: TapTargetPermanentEffect + PermanentNotPredicate(PermanentControlledBySourceControllerPredicate). Flash creature |
 | ETB search-exile-imprint + death return to hand | `h/HoardingDragon.java` | MayEffect(SearchLibraryForCardTypeToExileAndImprintEffect(ARTIFACT)) + MayEffect(PutImprintedCardIntoOwnersHandEffect) — ETB searches library for artifact to exile/imprint, death returns exiled card to owner's hand |
 | Kicker creature (ETB counters if kicked) | `a/AcademyDrake.java` | STATIC KickerEffect("{4}") + ON_ENTER_BATTLEFIELD EnterWithPlusOnePlusOneCountersIfKickedEffect(2) — kicker is optional additional mana cost, if paid the creature enters with +1/+1 counters |
+| Kicker instant (conditional spell effect) | `b/BlinkOfAnEye.java` | STATIC KickerEffect("{1}{U}") + SPELL ReturnTargetPermanentToHandEffect() + SPELL KickedConditionalEffect(DrawCardEffect()) — bounce nonland permanent, if kicked also draw a card. Use KickedConditionalEffect to wrap any spell effect that should only resolve when kicked |
 
 ## Triggered creatures
 
