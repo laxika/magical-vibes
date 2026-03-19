@@ -74,6 +74,15 @@
       </div>
     }
 
+    @if (choice.targeting.choosingKicker) {
+      <div class="combat-banner targeting-banner">
+        <span>Cast {{ choice.targeting.kickerCardName }} &mdash; pay kicker {{ choice.targeting.kickerCost }}?</span>
+        <button class="btn-confirm-combat" (click)="choice.targeting.confirmKicker()">Pay Kicker</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.skipKicker()">Skip Kicker</button>
+        <button class="btn-confirm-combat" (click)="choice.targeting.cancelKicker()">Cancel</button>
+      </div>
+    }
+
     @if (choice.library.scrying) {
       <div class="combat-banner reorder-banner">
         <span>{{ choice.library.scryPrompt }}</span>

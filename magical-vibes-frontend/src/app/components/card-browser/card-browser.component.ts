@@ -178,7 +178,8 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
       alternateCostLifePayment: 0,
       alternateCostSacrificeCount: 0,
       graveyardActivatedAbilities: [],
-      transformable: false
+      transformable: false,
+      kickerCost: null
     };
   }
 

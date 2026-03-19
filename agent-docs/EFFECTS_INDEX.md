@@ -663,6 +663,8 @@ Pass `null` as filter to allow any card.
 | `PutPlusOnePlusOneCounterOnTargetCreatureEffect` | `(int count)` | put N +1/+1 counters on target creature |
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
 | `EnterWithXPlusOnePlusOneCountersEffect` | `()` | enters battlefield with X +1/+1 counters (replacement effect, reads X from spell cast). Use for creatures like Protean Hydra |
+| `EnterWithPlusOnePlusOneCountersIfKickedEffect` | `(int count)` | enters battlefield with N +1/+1 counters if the spell was kicked (replacement effect). Use with `KickerEffect` on STATIC slot. E.g. Academy Drake |
+| `KickerEffect` | `(String cost)` | STATIC effect declaring that a spell has kicker with the given mana cost (e.g. "{4}"). SpellCastingService reads this to pay the optional additional cost. Combine with kicker-conditional effects on ON_ENTER_BATTLEFIELD |
 | `EnterWithFixedChargeCountersEffect` | `(int count)` | enters battlefield with N charge counters (replacement effect, fixed count) |
 | `EnterWithFixedWishCountersEffect` | `(int count)` | enters battlefield with N wish counters (replacement effect, fixed count). Used by Djinn of Wishes |
 | `EnterWithPlusOnePlusOneCountersPerSubtypeEffect` | `(CardSubtype subtype, boolean includeGraveyard)` | ETB replacement effect: enters with a +1/+1 counter for each other permanent with the specified subtype you control, plus (if `includeGraveyard=true`) each card with the subtype in your graveyard. Handled in `BattlefieldEntryService.putPermanentOntoBattlefield()` so it works for all entry paths (cast, reanimate, etc.). Checks Changeling on both battlefield permanents and graveyard cards. Used by Unbreathing Horde (ZOMBIE, true) |

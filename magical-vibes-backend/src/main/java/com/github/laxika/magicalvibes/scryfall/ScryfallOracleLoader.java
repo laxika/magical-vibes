@@ -77,6 +77,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
         KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
+        KEYWORD_MAP.put("Kicker", Keyword.KICKER);
     }
 
     public static void loadAll(String cacheDir) {

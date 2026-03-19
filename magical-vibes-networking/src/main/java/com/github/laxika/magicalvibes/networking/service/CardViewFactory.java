@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -73,7 +74,11 @@ public class CardViewFactory {
                 alternateCostLifePayment,
                 alternateCostSacrificeCount,
                 graveyardAbilityViews,
-                card.getBackFaceCard() != null);
+                card.getBackFaceCard() != null,
+                card.getEffects(EffectSlot.STATIC).stream()
+                        .filter(e -> e instanceof KickerEffect)
+                        .map(e -> ((KickerEffect) e).cost())
+                        .findFirst().orElse(null));
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {

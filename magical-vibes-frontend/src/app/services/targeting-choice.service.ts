@@ -74,6 +74,12 @@ export class TargetingChoiceService {
     this.convokeSelectedCreatureIds.set([]);
     this.pendingMultiTargetIds = [];
     this.pendingConvokeCard = null;
+    // Kicker
+    this.choosingKicker = false;
+    this.kickerCardIndex = -1;
+    this.kickerCardName = '';
+    this.kickerCost = '';
+    this.pendingKicked = false;
     // Flashback
     this.pendingFlashback = false;
     // Alternate casting cost
@@ -143,6 +149,13 @@ export class TargetingChoiceService {
   convokeSelectedCreatureIds = signal<string[]>([]);
   private pendingMultiTargetIds: string[] = [];
   private pendingConvokeCard: Card | null = null;
+
+  // --- Kicker state ---
+  choosingKicker = false;
+  kickerCardIndex = -1;
+  kickerCardName = '';
+  kickerCost = '';
+  private pendingKicked = false;
 
   // --- Flashback state ---
   private pendingFlashback = false;
@@ -223,6 +236,15 @@ export class TargetingChoiceService {
         return;
       }
 
+      // Check for kicker — offer choice before continuing
+      if (card.kickerCost) {
+        this.choosingKicker = true;
+        this.kickerCardIndex = index;
+        this.kickerCardName = card.name;
+        this.kickerCost = card.kickerCost;
+        return;
+      }
+
       this.continuePlayCard(index);
     }
   }
@@ -298,6 +320,34 @@ export class TargetingChoiceService {
     this.pendingPhyrexianLifeCount = null;
   }
 
+  confirmKicker(): void {
+    this.pendingKicked = true;
+    const savedIndex = this.kickerCardIndex;
+    this.choosingKicker = false;
+    this.kickerCardIndex = -1;
+    this.kickerCardName = '';
+    this.kickerCost = '';
+    this.continuePlayCard(savedIndex);
+  }
+
+  skipKicker(): void {
+    this.pendingKicked = false;
+    const savedIndex = this.kickerCardIndex;
+    this.choosingKicker = false;
+    this.kickerCardIndex = -1;
+    this.kickerCardName = '';
+    this.kickerCost = '';
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelKicker(): void {
+    this.choosingKicker = false;
+    this.kickerCardIndex = -1;
+    this.kickerCardName = '';
+    this.kickerCost = '';
+    this.pendingKicked = false;
+  }
+
   startFlashbackTargeting(graveyardIndex: number, card: Card): void {
     this.pendingFlashback = true;
     this.targetingCardIndex = graveyardIndex;
@@ -337,6 +387,10 @@ export class TargetingChoiceService {
     if (this.pendingFlashback) {
       msg.flashback = true;
       this.pendingFlashback = false;
+    }
+    if (this.pendingKicked) {
+      msg.kicked = true;
+      this.pendingKicked = false;
     }
     if (extra) {
       Object.assign(msg, extra);
@@ -665,6 +719,7 @@ export class TargetingChoiceService {
     };
     this.addPendingTargetsToMsg(msg);
     this.addPendingPhyrexianToMsg(msg);
+    this.addPendingKickedToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
     this.resetMultiTargetState();
@@ -678,6 +733,7 @@ export class TargetingChoiceService {
     };
     this.addPendingTargetsToMsg(msg);
     this.addPendingPhyrexianToMsg(msg);
+    this.addPendingKickedToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
     this.resetMultiTargetState();
@@ -698,6 +754,13 @@ export class TargetingChoiceService {
     if (this.pendingPhyrexianLifeCount != null) {
       msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
       this.pendingPhyrexianLifeCount = null;
+    }
+  }
+
+  private addPendingKickedToMsg(msg: any): void {
+    if (this.pendingKicked) {
+      msg.kicked = true;
+      this.pendingKicked = false;
     }
   }
 

@@ -33,7 +33,8 @@ public enum Keyword {
     DEATHTOUCH,
     SCRY,
     FLASHBACK,
-    TRANSFORM;
+    TRANSFORM,
+    KICKER;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

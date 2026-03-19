@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCounte
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -127,6 +128,17 @@ public class StackResolutionService {
             perm.setPlusOnePlusOneCounters(entry.getXValue());
         }
 
+        // "If kicked, enters with N +1/+1 counters" — replacement effect (MTG Rule 614.1c)
+        if (entry.isKicked() && !cantHaveCounters) {
+            int kickedCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect)
+                    .map(e -> ((EnterWithPlusOnePlusOneCountersIfKickedEffect) e).count())
+                    .findFirst().orElse(0);
+            if (kickedCounters > 0) {
+                perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + kickedCounters);
+            }
+        }
+
         // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
         int fixedWishCountersCreature = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof EnterWithFixedWishCountersEffect)
@@ -146,7 +158,9 @@ public class StackResolutionService {
         String playerName = gameData.playerIdToName.get(controllerId);
         boolean hasSubtypeCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerSubtypeEffect);
-        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect) && perm.getPlusOnePlusOneCounters() > 0) {
+        boolean hasKickedCounterEffect = entry.isKicked() && enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect);
+        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect || hasKickedCounterEffect) && perm.getPlusOnePlusOneCounters() > 0) {
             String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getPlusOnePlusOneCounters() + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (perm.getWishCounters() > 0) {

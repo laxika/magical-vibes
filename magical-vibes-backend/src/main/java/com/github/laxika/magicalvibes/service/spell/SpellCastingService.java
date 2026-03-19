@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouContr
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -186,6 +187,13 @@ public class SpellCastingService {
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, false);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
+                  List<Integer> exileGraveyardCardIndices, boolean kicked) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -497,12 +505,20 @@ public class SpellCastingService {
             } else {
                 paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount);
             }
+            KickerEffect kickerEffect = findKickerEffect(card);
+            if (kicked && kickerEffect != null) {
+                payKickerCost(gameData, playerId, kickerEffect);
+            }
             payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, 0);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
                     List.of(), stackX, stackTarget, null
-            ));
+            );
+            if (kicked && kickerEffect != null) {
+                entry.setKicked(true);
+            }
+            gameData.stack.add(entry);
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
             // Sorcery/Instant spells: pay mana + sacrifice costs, handle targeting, put on stack
@@ -1164,6 +1180,22 @@ public class SpellCastingService {
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana.");
         }
+    }
+
+    private KickerEffect findKickerEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof KickerEffect)
+                .map(e -> (KickerEffect) e)
+                .findFirst().orElse(null);
+    }
+
+    private void payKickerCost(GameData gameData, UUID playerId, KickerEffect kickerEffect) {
+        ManaCost kickerCost = new ManaCost(kickerEffect.cost());
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (!kickerCost.canPay(pool)) {
+            throw new IllegalStateException("Not enough mana to pay kicker cost");
+        }
+        kickerCost.pay(pool, 0);
     }
 
     private void payAlternateCastingCost(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds) {

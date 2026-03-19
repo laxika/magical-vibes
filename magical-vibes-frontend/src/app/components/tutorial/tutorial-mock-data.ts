@@ -32,6 +32,7 @@ function makeCard(overrides: Partial<Card>): Card {
     alternateCostSacrificeCount: 0,
     graveyardActivatedAbilities: [],
     transformable: false,
+    kickerCost: null,
     ...overrides
   };
 }

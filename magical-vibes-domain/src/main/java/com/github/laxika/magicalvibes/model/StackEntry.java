@@ -29,6 +29,7 @@ public class StackEntry {
     @Setter private boolean nonTargeting;
     @Setter private boolean returnToHandAfterResolving;
     @Setter private boolean castWithFlashback;
+    @Setter private boolean kicked;
     @Setter private Card damageSourceCard;
     private final List<UUID> targetIds;
 
@@ -192,6 +193,7 @@ public class StackEntry {
         this.nonTargeting = source.nonTargeting;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.kicked = source.kicked;
         this.damageSourceCard = source.damageSourceCard;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }

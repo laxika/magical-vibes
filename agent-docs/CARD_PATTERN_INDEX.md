@@ -173,6 +173,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB modal (choose one, no target) | `b/BrutalizerExarch.java` | ChooseOneEffect on ON_ENTER_BATTLEFIELD with one non-targeting mode (library search) and one targeting mode. Card-level setTargetFilter for the targeting mode. Mode chosen at cast time via xValue |
 | ETB modal (choose one, per-mode targeting) | `d/DeceiverExarch.java` | ChooseOneEffect on ON_ENTER_BATTLEFIELD with per-mode TargetFilter on each ChooseOneOption. Mode 0: UntapTargetPermanentEffect + PermanentControlledBySourceControllerPredicate. Mode 1: TapTargetPermanentEffect + PermanentNotPredicate(PermanentControlledBySourceControllerPredicate). Flash creature |
 | ETB search-exile-imprint + death return to hand | `h/HoardingDragon.java` | MayEffect(SearchLibraryForCardTypeToExileAndImprintEffect(ARTIFACT)) + MayEffect(PutImprintedCardIntoOwnersHandEffect) — ETB searches library for artifact to exile/imprint, death returns exiled card to owner's hand |
+| Kicker creature (ETB counters if kicked) | `a/AcademyDrake.java` | STATIC KickerEffect("{4}") + ON_ENTER_BATTLEFIELD EnterWithPlusOnePlusOneCountersIfKickedEffect(2) — kicker is optional additional mana cost, if paid the creature enters with +1/+1 counters |
 
 ## Triggered creatures
 

@@ -119,7 +119,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -144,7 +145,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -167,7 +169,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -190,7 +193,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -213,7 +217,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -238,7 +243,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -263,7 +269,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -328,7 +335,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 
@@ -377,7 +385,8 @@ public class PermanentViewFactory {
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
                 cardView.graveyardActivatedAbilities(),
-                cardView.transformable()
+                cardView.transformable(),
+                cardView.kickerCost()
         );
     }
 }

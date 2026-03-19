@@ -181,6 +181,7 @@ export interface Card {
   alternateCostSacrificeCount: number;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   transformable: boolean;
+  kickerCost: string | null;
 }
 
 export interface Permanent {

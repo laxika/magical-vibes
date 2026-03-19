@@ -134,7 +134,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 final UUID targetId = pc.targetId();
                 final Integer finalXValue = xValue;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the spell was actually cast — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 if (hand.size() >= handSizeBefore) {
@@ -226,7 +226,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {

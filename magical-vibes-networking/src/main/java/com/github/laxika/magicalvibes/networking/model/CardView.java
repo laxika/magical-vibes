@@ -40,6 +40,7 @@ public record CardView(
         int alternateCostLifePayment,
         int alternateCostSacrificeCount,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
-        boolean transformable
+        boolean transformable,
+        String kickerCost
 ) {
 }
