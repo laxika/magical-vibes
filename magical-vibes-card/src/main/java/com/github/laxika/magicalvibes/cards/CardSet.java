@@ -17,7 +17,8 @@ public enum CardSet {
     SCARS_OF_MIRRODIN("SOM"),
     MIRRODIN_BESIEGED("MBS"),
     NEW_PHYREXIA("NPH"),
-    INNISTRAD("ISD");
+    INNISTRAD("ISD"),
+    DOMINARIA("DOM");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
     private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;
