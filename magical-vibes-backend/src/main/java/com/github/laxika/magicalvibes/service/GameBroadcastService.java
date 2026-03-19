@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAtta
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
@@ -791,6 +792,14 @@ public class GameBroadcastService {
                     if (effect instanceof ReduceOwnCastCostForCardTypeEffect cardTypeReduce) {
                         if (cardTypeReduce.affectedTypes().contains(card.getType())) {
                             reduction += cardTypeReduce.amount();
+                        }
+                    }
+                    if (effect instanceof ReduceOwnCastCostForSubtypeEffect subtypeReduce) {
+                        for (CardSubtype subtype : subtypeReduce.affectedSubtypes()) {
+                            if (card.getSubtypes().contains(subtype)) {
+                                reduction += subtypeReduce.amount();
+                                break;
+                            }
                         }
                     }
                 }
