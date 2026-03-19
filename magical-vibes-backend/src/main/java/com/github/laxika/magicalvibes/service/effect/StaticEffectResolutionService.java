@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeCondi
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInControllerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
@@ -259,6 +260,19 @@ public class StaticEffectResolutionService {
 
         accumulator.addPower(count * boost.powerPerSubtype());
         accumulator.addToughness(count * boost.toughnessPerSubtype());
+    }
+
+    @HandlesStaticEffect(BoostCreaturePerControlledCardTypeEffect.class)
+    private void resolveBoostCreaturePerControlledCardType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostCreaturePerControlledCardTypeEffect) effect;
+        if (!matchesCreatureScope(context, boost.scope(), null)) {
+            return;
+        }
+
+        int count = countControlledPermanents(context, p -> p.getCard().hasType(boost.cardType()));
+
+        accumulator.addPower(count * boost.powerPerMatch());
+        accumulator.addToughness(count * boost.toughnessPerMatch());
     }
 
     @HandlesStaticEffect(ProtectionFromColorsEffect.class)
