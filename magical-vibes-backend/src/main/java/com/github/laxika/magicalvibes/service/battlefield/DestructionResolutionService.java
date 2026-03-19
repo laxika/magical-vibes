@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSacrificesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
@@ -774,6 +775,49 @@ public class DestructionResolutionService {
         }
 
         performSacrificeCreatureForPlayer(gameData, targetPlayerId);
+    }
+
+    /**
+     * Resolves a {@link SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect},
+     * forcing the targeted player to sacrifice a creature. The spell's controller gains
+     * life equal to the sacrificed creature's toughness.
+     */
+    @HandlesEffect(SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect.class)
+    void resolveSacrificeCreatureAndControllerGainsLifeEqualToToughness(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetPermanentId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+        String cardName = entry.getCard().getName();
+
+        List<UUID> creatureIds = collectCreatureIds(gameData, targetPlayerId, p -> true);
+
+        if (creatureIds.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " has no creatures to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no creatures to sacrifice", gameData.id, playerName);
+            return;
+        }
+
+        if (creatureIds.size() == 1) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
+            if (creature != null) {
+                int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
+                sacrificeAndLog(gameData, creature, targetPlayerId);
+                lifeResolutionService.applyGainLife(gameData, controllerId, toughness, cardName);
+            }
+            return;
+        }
+
+        // Multiple creatures — prompt player to choose
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness(
+                        targetPlayerId, controllerId, cardName));
+        playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
+                "Choose a creature to sacrifice.");
     }
 
     /**

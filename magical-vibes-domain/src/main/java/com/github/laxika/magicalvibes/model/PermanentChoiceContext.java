@@ -27,6 +27,8 @@ public sealed interface PermanentChoiceContext {
 
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
+    record SacrificeCreatureControllerGainsLifeEqualToToughness(UUID sacrificingPlayerId, UUID controllerId, String sourceCardName) implements PermanentChoiceContext {}
+
     record ActivatedAbilityCostChoice(UUID activatingPlayerId,
                                       UUID sourcePermanentId,
                                       Integer abilityIndex,
