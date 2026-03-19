@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEf
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -239,6 +240,22 @@ public class DamageResolutionService {
 
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         for (UUID playerId : gameData.orderedPlayerIds) {
+            dealDamageToPlayer(gameData, entry, playerId, damage);
+        }
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToEachOpponentEffect} — deals a fixed amount of damage to each opponent (not the controller).
+     */
+    @HandlesEffect(DealDamageToEachOpponentEffect.class)
+    void resolveDealDamageToEachOpponent(GameData gameData, StackEntry entry, DealDamageToEachOpponentEffect effect) {
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+        UUID controllerId = entry.getControllerId();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
             dealDamageToPlayer(gameData, entry, playerId, damage);
         }
         gameOutcomeService.checkWinCondition(gameData);
