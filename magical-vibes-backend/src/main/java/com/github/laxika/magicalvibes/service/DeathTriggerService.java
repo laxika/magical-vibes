@@ -128,7 +128,7 @@ public class DeathTriggerService {
                 if (effect instanceof MayPayManaEffect mayPay) {
                     gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, mayPay, null);
                 } else if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, may);
+                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, may, null, perm.getId());
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
