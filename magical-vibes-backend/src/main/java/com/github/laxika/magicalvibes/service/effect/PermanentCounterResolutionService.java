@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnE
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBoostSelfEffect;
@@ -561,6 +562,30 @@ public class PermanentCounterResolutionService {
         }
 
         applyPlusOnePlusOneCounters(gameData, entry, target, effect.count());
+    }
+
+    @HandlesEffect(PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect.class)
+    private void resolvePutPlusOnePlusOneCounterOnFirstTargetIfSupertype(GameData gameData, StackEntry entry,
+                                                                         PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect effect) {
+        if (entry.getTargetIds() == null || entry.getTargetIds().isEmpty()) {
+            return;
+        }
+
+        UUID firstTargetId = entry.getTargetIds().getFirst();
+        Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
+        if (firstTarget == null) {
+            return;
+        }
+
+        if (!firstTarget.getCard().getSupertypes().contains(effect.supertype())) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, firstTarget)) {
+            return;
+        }
+
+        applyPlusOnePlusOneCounters(gameData, entry, firstTarget, effect.count());
     }
 
     private void applyPlusOnePlusOneCounters(GameData gameData, StackEntry entry, Permanent target, int counters) {
