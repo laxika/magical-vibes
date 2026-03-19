@@ -77,7 +77,7 @@ import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.TurnResolutionService;
+import com.github.laxika.magicalvibes.service.turn.TurnResolutionService;
 import com.github.laxika.magicalvibes.service.turn.AutoPassService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
