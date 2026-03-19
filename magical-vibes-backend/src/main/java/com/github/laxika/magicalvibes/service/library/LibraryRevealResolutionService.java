@@ -21,7 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHand
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
@@ -509,61 +510,64 @@ public class LibraryRevealResolutionService {
 
     /**
      * Looks at the top N cards of the controller's library, then the player may reveal one
-     * (or any number, if the effect allows) matching creature card(s) and put them into their
-     * hand. Remaining cards go to the bottom of the library in any order.
+     * (or any number, if the effect allows) matching card(s) and put them into their hand.
+     * Remaining cards go to the bottom of the library in any order.
      */
-    @HandlesEffect(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class)
-    void resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(
+    @HandlesEffect(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class)
+    void resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(
             GameData gameData,
             StackEntry entry,
-            LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect
+            LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect
     ) {
         TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
-        int count = topCards.size();
 
-        List<Card> creatureCards = topCards.stream()
-                .filter(card -> matchesCardTypes(card, effect.cardTypes()))
+        List<Card> matchingCards = topCards.stream()
+                .filter(card -> gameQueryService.matchesCardPredicate(card, effect.predicate(), null))
                 .toList();
 
-        if (creatureCards.isEmpty()) {
+        if (matchingCards.isEmpty()) {
             reorderRemainingToBottom(gameData, controllerId, topCards);
             return;
         }
 
+        String description = CardPredicateUtils.describeFilter(effect.predicate());
+
         if (effect.anyNumber()) {
             Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
-            for (Card card : creatureCards) {
+            for (Card card : matchingCards) {
                 validCardIds.add(card.getId());
             }
 
             gameData.interaction.beginLibraryRevealChoice(controllerId, topCards, validCardIds,
                     false, true, true);
 
-            List<CardView> cardViews = creatureCards.stream().map(cardViewFactory::create).toList();
-            List<UUID> cardIds = creatureCards.stream().map(Card::getId).toList();
+            List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+            List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
             sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
-                    cardIds, cardViews, creatureCards.size(),
-                    "You may reveal any number of creature cards and put them into your hand."
+                    cardIds, cardViews, matchingCards.size(),
+                    "You may reveal any number of " + description + "s and put them into your hand."
             ));
             return;
         }
 
-        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, creatureCards)
+        String prompt = "You may reveal a " + description + " from among them and put it into your hand.";
+
+        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, matchingCards)
                 .reveals(true)
                 .canFailToFind(true)
                 .sourceCards(topCards)
                 .reorderRemainingToBottom(true)
                 .shuffleAfterSelection(false)
-                .prompt("You may reveal a creature card from among them and put it into your hand.")
+                .prompt(prompt)
                 .build());
 
-        List<CardView> cardViews = creatureCards.stream().map(cardViewFactory::create).toList();
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
                 cardViews,
-                "You may reveal a creature card from among them and put it into your hand.",
+                prompt,
                 true
         ));
     }

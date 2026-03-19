@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,11 +31,11 @@ class LeadTheStampedeTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
+        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
+                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.cardTypes()).containsExactly(CardType.CREATURE);
+        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
         assertThat(effect.anyNumber()).isTrue();
     }
 

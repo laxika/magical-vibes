@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEf
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandRestToGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
@@ -720,22 +721,22 @@ class LibraryRevealResolutionServiceTest {
     }
 
     // =========================================================================
-    // resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom
+    // resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom
     // =========================================================================
 
     @Nested
-    @DisplayName("resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom")
-    class ResolveLookAtTopCardsMayRevealCreature {
+    @DisplayName("resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom")
+    class ResolveLookAtTopCardsMayRevealByPredicate {
 
         @Test
         @DisplayName("Empty library logs")
         void emptyLibraryLogs() {
-            LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect =
-                    new LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect(3, Set.of(CardType.CREATURE));
+            LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
+                    new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE));
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(gd, entry, effect);
+            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -748,12 +749,12 @@ class LibraryRevealResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
             gd.playerDecks.get(player1Id).add(createCard("Giant Growth", CardType.INSTANT));
 
-            LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect =
-                    new LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect(3, Set.of(CardType.CREATURE));
+            LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
+                    new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE));
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(gd, entry, effect);
+            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
 
             // With 2 cards and no creatures, should begin library reorder (to bottom)
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
@@ -764,12 +765,12 @@ class LibraryRevealResolutionServiceTest {
         void singleNonCreaturePutOnBottom() {
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
 
-            LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect =
-                    new LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect(3, Set.of(CardType.CREATURE));
+            LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
+                    new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE));
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(gd, entry, effect);
+            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
 
             // Single card goes back to deck without reorder prompt
             assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
@@ -784,12 +785,14 @@ class LibraryRevealResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
             gd.playerDecks.get(player1Id).add(createCard("Giant Growth", CardType.INSTANT));
 
-            LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect =
-                    new LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect(3, Set.of(CardType.CREATURE));
+            when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+
+            LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
+                    new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE));
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(gd, entry, effect);
+            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -803,12 +806,14 @@ class LibraryRevealResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves", CardType.CREATURE));
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
 
-            LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect =
-                    new LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect(3, Set.of(CardType.CREATURE), true);
+            when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+
+            LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
+                    new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE), true);
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lead the Stampede"),
                     player1Id, "Lead the Stampede", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottom(gd, entry, effect);
+            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());

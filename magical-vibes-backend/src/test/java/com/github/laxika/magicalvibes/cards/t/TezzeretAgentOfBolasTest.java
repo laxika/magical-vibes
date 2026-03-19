@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -42,10 +43,10 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(1);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class);
-        var effect = (LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect) ability.getEffects().getFirst();
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
+        var effect = (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) ability.getEffects().getFirst();
         assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.cardTypes()).isEqualTo(Set.of(CardType.ARTIFACT));
+        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.ARTIFACT));
     }
 
     @Test

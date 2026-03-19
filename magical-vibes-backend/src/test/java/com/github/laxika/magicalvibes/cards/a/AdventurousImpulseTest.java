@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,11 +33,14 @@ class AdventurousImpulseTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
+        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
+                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.count()).isEqualTo(3);
-        assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.CREATURE, CardType.LAND);
+        assertThat(effect.predicate()).isInstanceOf(CardAnyOfPredicate.class);
+        CardAnyOfPredicate anyOf = (CardAnyOfPredicate) effect.predicate();
+        assertThat(anyOf.predicates()).containsExactlyInAnyOrder(
+                new CardTypePredicate(CardType.CREATURE), new CardTypePredicate(CardType.LAND));
     }
 
     @Test

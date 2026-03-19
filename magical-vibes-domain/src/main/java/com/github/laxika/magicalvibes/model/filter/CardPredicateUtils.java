@@ -28,6 +28,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasFlashbackPredicate) {
             return "card with flashback";
         }
+        if (predicate instanceof CardIsHistoricPredicate) {
+            return "historic card";
+        }
         if (predicate instanceof CardSupertypePredicate p) {
             return p.supertype().getDisplayName().toLowerCase();
         }

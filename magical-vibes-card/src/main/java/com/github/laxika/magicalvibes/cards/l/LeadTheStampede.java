@@ -4,14 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect;
-
-import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MBS", collectorNumber = "82")
 public class LeadTheStampede extends Card {
 
     public LeadTheStampede() {
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsMayRevealCreaturePutIntoHandRestOnBottomEffect(5, Set.of(CardType.CREATURE), true));
+        addEffect(EffectSlot.SPELL, new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(5, new CardTypePredicate(CardType.CREATURE), true));
     }
 }
