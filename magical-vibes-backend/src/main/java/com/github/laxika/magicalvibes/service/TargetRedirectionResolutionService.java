@@ -5,16 +5,13 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,12 +33,12 @@ public class TargetRedirectionResolutionService {
 
     @HandlesEffect(ChangeTargetOfTargetSpellWithSingleTargetEffect.class)
     void resolveChangeTargetOfTargetSpellWithSingleTarget(GameData gameData, StackEntry entry) {
-        StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetId());
+        StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
         if (targetSpell == null) {
             return;
         }
 
-        if (!isSingleTargetSpell(targetSpell)) {
+        if (!targetSpell.isSingleTarget()) {
             String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " no longer has a single target).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
@@ -65,12 +62,12 @@ public class TargetRedirectionResolutionService {
 
     @HandlesEffect(ChangeTargetOfTargetSpellToSourceEffect.class)
     void resolveChangeTargetOfTargetSpellToSource(GameData gameData, StackEntry entry) {
-        StackEntry targetSpell = findStackEntryByCardId(gameData, entry.getTargetId());
+        StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
         if (targetSpell == null) {
             return;
         }
 
-        if (!hasAnyTarget(targetSpell)) {
+        if (!targetSpell.hasAnyTarget()) {
             String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " has no targets).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
@@ -84,7 +81,7 @@ public class TargetRedirectionResolutionService {
             return;
         }
 
-        if (isSingleTargetSpell(targetSpell)) {
+        if (targetSpell.isSingleTarget()) {
             if (sourcePermanentId.equals(targetSpell.getTargetId())) {
                 String logEntry = targetSpell.getCard().getName() + " already targets " + entry.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -102,12 +99,6 @@ public class TargetRedirectionResolutionService {
             String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " does not have a single target).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
-    }
-
-    private boolean hasAnyTarget(StackEntry stackEntry) {
-        return stackEntry.getTargetId() != null
-                || !stackEntry.getTargetIds().isEmpty()
-                || !stackEntry.getTargetCardIds().isEmpty();
     }
 
     private List<UUID> collectValidNewTargets(GameData gameData, StackEntry targetSpell) {
@@ -151,23 +142,7 @@ public class TargetRedirectionResolutionService {
             }
 
             if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
-                if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
-                    return false;
-                }
-                ReturnCardFromGraveyardEffect graveyardEffect = (ReturnCardFromGraveyardEffect) spellCard.getEffects(EffectSlot.SPELL)
-                        .stream()
-                        .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
-                        .findFirst().orElse(null);
-                if (graveyardEffect != null && graveyardEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
-                    boolean inControllersGraveyard = gameData.playerGraveyards
-                            .getOrDefault(targetSpell.getControllerId(), List.of())
-                            .stream()
-                            .anyMatch(c -> c.getId().equals(candidateTargetId));
-                    if (!inControllersGraveyard) {
-                        return false;
-                    }
-                }
-                targetLegalityService.validateEffectTargetInZone(gameData, spellCard, candidateTargetId, Zone.GRAVEYARD);
+                targetLegalityService.validateGraveyardRetargetCandidate(gameData, spellCard, candidateTargetId, targetSpell.getControllerId());
                 return true;
             }
 
@@ -183,22 +158,4 @@ public class TargetRedirectionResolutionService {
             return false;
         }
     }
-
-    private StackEntry findStackEntryByCardId(GameData gameData, UUID cardId) {
-        if (cardId == null) return null;
-        for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(cardId)) {
-                return se;
-            }
-        }
-        return null;
-    }
-
-    private boolean isSingleTargetSpell(StackEntry stackEntry) {
-        return stackEntry.getTargetId() != null
-                && stackEntry.getTargetIds().isEmpty()
-                && stackEntry.getTargetCardIds().isEmpty();
-    }
 }
-
-

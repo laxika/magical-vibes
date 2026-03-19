@@ -221,4 +221,12 @@ public class StackEntry {
     public Card getEffectiveDamageSourceCard() {
         return damageSourceCard != null ? damageSourceCard : card;
     }
+
+    public boolean isSingleTarget() {
+        return targetId != null && targetIds.isEmpty() && targetCardIds.isEmpty();
+    }
+
+    public boolean hasAnyTarget() {
+        return targetId != null || !targetIds.isEmpty() || !targetCardIds.isEmpty();
+    }
 }

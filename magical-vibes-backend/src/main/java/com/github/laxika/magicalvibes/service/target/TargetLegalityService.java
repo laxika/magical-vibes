@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -460,16 +462,26 @@ public class TargetLegalityService {
         return false;
     }
 
-    private boolean isSingleTargetSpell(StackEntry stackEntry) {
-        return stackEntry.getTargetId() != null
-                && stackEntry.getTargetIds().isEmpty()
-                && stackEntry.getTargetCardIds().isEmpty();
-    }
-
-    private boolean hasAnyTarget(StackEntry stackEntry) {
-        return stackEntry.getTargetId() != null
-                || !stackEntry.getTargetIds().isEmpty()
-                || !stackEntry.getTargetCardIds().isEmpty();
+    public void validateGraveyardRetargetCandidate(GameData gameData, Card spellCard, UUID candidateTargetId, UUID spellControllerId) {
+        if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
+            throw new IllegalStateException("Target card is not in any graveyard");
+        }
+        ReturnCardFromGraveyardEffect graveyardEffect = spellCard.getEffects(EffectSlot.SPELL)
+                .stream()
+                .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
+                .findFirst()
+                .map(e -> (ReturnCardFromGraveyardEffect) e)
+                .orElse(null);
+        if (graveyardEffect != null && graveyardEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
+            boolean inControllersGraveyard = gameData.playerGraveyards
+                    .getOrDefault(spellControllerId, List.of())
+                    .stream()
+                    .anyMatch(c -> c.getId().equals(candidateTargetId));
+            if (!inControllersGraveyard) {
+                throw new IllegalStateException("Target card is not in controller's graveyard");
+            }
+        }
+        validateEffectTargetInZone(gameData, spellCard, candidateTargetId, Zone.GRAVEYARD);
     }
 
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate, UUID controllerId) {
@@ -480,7 +492,7 @@ public class TargetLegalityService {
             return colorInPredicate.colors().contains(stackEntry.getCard().getColor());
         }
         if (predicate instanceof StackEntryIsSingleTargetPredicate) {
-            return isSingleTargetSpell(stackEntry);
+            return stackEntry.isSingleTarget();
         }
         if (predicate instanceof StackEntryHasTargetPredicate) {
             // Matches any spell or ability — per rules (e.g. Spellskite), activation is legal

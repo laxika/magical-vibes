@@ -278,6 +278,16 @@ public class GameQueryService {
         return findInExile(gameData, cardId, (playerId, c) -> playerId);
     }
 
+    public StackEntry findStackEntryByCardId(GameData gameData, UUID cardId) {
+        if (cardId == null) return null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(cardId)) {
+                return se;
+            }
+        }
+        return null;
+    }
+
     private <T> T findInExile(GameData gameData, UUID id, BiFunction<UUID, Card, T> mapper) {
         if (id == null) return null;
         for (UUID playerId : gameData.orderedPlayerIds) {

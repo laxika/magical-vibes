@@ -118,6 +118,13 @@ class TargetRedirectionResolutionServiceTest {
                 0, targetSpellCardId, null);
     }
 
+    /** Adds a stack entry and stubs gameQueryService to find it by card ID. */
+    private void addToStack(StackEntry stackEntry) {
+        gd.stack.add(stackEntry);
+        lenient().when(gameQueryService.findStackEntryByCardId(gd, stackEntry.getCard().getId()))
+                .thenReturn(stackEntry);
+    }
+
     private String captureLogMessage() {
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(gameBroadcastService).logAndBroadcast(eq(gd), captor.capture());
@@ -152,7 +159,7 @@ class TargetRedirectionResolutionServiceTest {
             Card targetSpellCard = createCard("Arc Trail");
             StackEntry targetSpell = new StackEntry(StackEntryType.INSTANT_SPELL, targetSpellCard,
                     player2Id, "Arc Trail", List.of(), 0, List.of(UUID.randomUUID(), UUID.randomUUID()));
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
@@ -169,7 +176,7 @@ class TargetRedirectionResolutionServiceTest {
             Card targetSpellCard = createCard("Wrath of God");
             StackEntry targetSpell = new StackEntry(StackEntryType.SORCERY_SPELL, targetSpellCard,
                     player2Id, "Wrath of God", List.of(), 0);
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
@@ -188,7 +195,7 @@ class TargetRedirectionResolutionServiceTest {
             gd.playerBattlefields.get(player2Id).add(target);
 
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, target.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
@@ -213,7 +220,7 @@ class TargetRedirectionResolutionServiceTest {
             gd.playerBattlefields.get(player1Id).add(newTarget);
 
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, currentTarget.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
@@ -247,7 +254,7 @@ class TargetRedirectionResolutionServiceTest {
             gd.playerBattlefields.get(player2Id).add(onlyTarget);
 
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, onlyTarget.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
@@ -271,7 +278,7 @@ class TargetRedirectionResolutionServiceTest {
             gd.playerBattlefields.get(player2Id).add(currentTarget);
 
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, currentTarget.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
@@ -309,9 +316,9 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry counterspellEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
                     counterspellCard, player2Id, "Counterspell", counterspellCard.getEffects(EffectSlot.SPELL),
                     targetOnStack.getId(), Zone.STACK);
-            gd.stack.add(giantGrowthEntry);
-            gd.stack.add(anotherEntry);
-            gd.stack.add(counterspellEntry);
+            addToStack(giantGrowthEntry);
+            addToStack(anotherEntry);
+            addToStack(counterspellEntry);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, counterspellCard.getId());
 
@@ -350,12 +357,9 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry graveyardSpell = new StackEntry(StackEntryType.INSTANT_SPELL,
                     graveyardSpellCard, player2Id, "Raise Dead", graveyardSpellCard.getEffects(EffectSlot.SPELL),
                     currentGraveyardTarget.getId(), Zone.GRAVEYARD);
-            gd.stack.add(graveyardSpell);
+            addToStack(graveyardSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, graveyardSpellCard.getId());
-
-            when(gameQueryService.findCardInGraveyardById(gd, anotherGraveyardCard.getId()))
-                    .thenReturn(anotherGraveyardCard);
 
             service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
 
@@ -397,14 +401,14 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry graveyardSpell = new StackEntry(StackEntryType.INSTANT_SPELL,
                     graveyardSpellCard, player2Id, "Disentomb", graveyardSpellCard.getEffects(EffectSlot.SPELL),
                     currentTarget.getId(), Zone.GRAVEYARD);
-            gd.stack.add(graveyardSpell);
+            addToStack(graveyardSpell);
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, graveyardSpellCard.getId());
 
-            when(gameQueryService.findCardInGraveyardById(gd, cardInControllerGraveyard.getId()))
-                    .thenReturn(cardInControllerGraveyard);
-            when(gameQueryService.findCardInGraveyardById(gd, cardInOpponentGraveyard.getId()))
-                    .thenReturn(cardInOpponentGraveyard);
+            // Opponent's graveyard card fails validation (controller scope)
+            doThrow(new IllegalStateException("not in controller's graveyard"))
+                    .when(targetLegalityService).validateGraveyardRetargetCandidate(
+                            eq(gd), eq(graveyardSpellCard), eq(cardInOpponentGraveyard.getId()), eq(player2Id));
 
             service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
 
@@ -448,7 +452,7 @@ class TargetRedirectionResolutionServiceTest {
             Card targetSpellCard = createCard("Wrath of God");
             StackEntry targetSpell = new StackEntry(StackEntryType.SORCERY_SPELL, targetSpellCard,
                     player2Id, "Wrath of God", List.of(), 0);
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             UUID sourcePermanentId = UUID.randomUUID();
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, targetSpellCard.getId(), sourcePermanentId);
@@ -467,7 +471,7 @@ class TargetRedirectionResolutionServiceTest {
             gd.playerBattlefields.get(player2Id).add(target);
 
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, target.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             UUID sourcePermanentId = UUID.randomUUID();
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, targetSpellCard.getId(), sourcePermanentId);
@@ -490,7 +494,7 @@ class TargetRedirectionResolutionServiceTest {
             gd.playerBattlefields.get(player1Id).add(sourcePermanent);
 
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, originalTarget.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, targetSpellCard.getId(), sourcePermanent.getId());
 
@@ -512,7 +516,7 @@ class TargetRedirectionResolutionServiceTest {
 
             // Spell already targets the source permanent
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, sourcePermanent.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, targetSpellCard.getId(), sourcePermanent.getId());
 
@@ -535,7 +539,7 @@ class TargetRedirectionResolutionServiceTest {
             gd.playerBattlefields.get(player1Id).add(sourcePermanent);
 
             StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, originalTarget.getId());
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, targetSpellCard.getId(), sourcePermanent.getId());
 
@@ -560,7 +564,7 @@ class TargetRedirectionResolutionServiceTest {
             UUID target2 = UUID.randomUUID();
             StackEntry targetSpell = new StackEntry(StackEntryType.INSTANT_SPELL, targetSpellCard,
                     player2Id, "Arc Trail", List.of(), 0, List.of(target1, target2));
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             Permanent sourcePermanent = createCreature("Spellskite");
             gd.playerBattlefields.get(player1Id).add(sourcePermanent);
@@ -581,7 +585,7 @@ class TargetRedirectionResolutionServiceTest {
             Card targetSpellCard = createCard("Surgical Extraction");
             StackEntry targetSpell = new StackEntry(StackEntryType.INSTANT_SPELL, targetSpellCard,
                     player2Id, "Surgical Extraction", List.of(), List.of(UUID.randomUUID()));
-            gd.stack.add(targetSpell);
+            addToStack(targetSpell);
 
             Permanent sourcePermanent = createCreature("Spellskite");
             gd.playerBattlefields.get(player1Id).add(sourcePermanent);

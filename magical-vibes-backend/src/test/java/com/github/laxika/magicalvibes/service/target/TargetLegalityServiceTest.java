@@ -14,8 +14,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -1704,6 +1707,97 @@ class TargetLegalityServiceTest {
             card.setType(CardType.SORCERY);
 
             sut.validateEffectTargetInZone(gd, card, UUID.randomUUID(), Zone.GRAVEYARD, 3);
+        }
+    }
+
+    // =========================================================================
+    // validateGraveyardRetargetCandidate
+    // =========================================================================
+
+    @Nested
+    @DisplayName("validateGraveyardRetargetCandidate")
+    class ValidateGraveyardRetargetCandidate {
+
+        @Test
+        @DisplayName("throws when card is not in any graveyard")
+        void throwsWhenCardNotInGraveyard() {
+            Card spellCard = new Card();
+            spellCard.setName("Raise Dead");
+            spellCard.setType(CardType.SORCERY);
+
+            UUID candidateId = UUID.randomUUID();
+            when(gameQueryService.findCardInGraveyardById(gd, candidateId)).thenReturn(null);
+
+            assertThatThrownBy(() -> sut.validateGraveyardRetargetCandidate(gd, spellCard, candidateId, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not in any graveyard");
+        }
+
+        @Test
+        @DisplayName("passes when scope is ALL_GRAVEYARDS and card is in any graveyard")
+        void passesWhenAllGraveyardsScope() {
+            Card spellCard = new Card();
+            spellCard.setName("Raise Dead");
+            spellCard.setType(CardType.SORCERY);
+            spellCard.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                    .targetGraveyard(true)
+                    .build());
+
+            Card graveyardCard = createCreature("Grizzly Bears", CardColor.GREEN);
+            UUID candidateId = graveyardCard.getId();
+            gd.playerGraveyards.get(player2Id).add(graveyardCard);
+
+            when(gameQueryService.findCardInGraveyardById(gd, candidateId)).thenReturn(graveyardCard);
+
+            sut.validateGraveyardRetargetCandidate(gd, spellCard, candidateId, player1Id);
+        }
+
+        @Test
+        @DisplayName("throws when scope is CONTROLLERS_GRAVEYARD and card is in opponent's graveyard")
+        void throwsWhenNotInControllersGraveyard() {
+            Card spellCard = new Card();
+            spellCard.setName("Disentomb");
+            spellCard.setType(CardType.SORCERY);
+            spellCard.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
+                    .targetGraveyard(true)
+                    .build());
+
+            Card opponentCard = createCreature("Serra Angel", CardColor.WHITE);
+            UUID candidateId = opponentCard.getId();
+            // Card is in opponent's graveyard (player2), but controller is player1
+            gd.playerGraveyards.get(player2Id).add(opponentCard);
+
+            when(gameQueryService.findCardInGraveyardById(gd, candidateId)).thenReturn(opponentCard);
+
+            assertThatThrownBy(() -> sut.validateGraveyardRetargetCandidate(gd, spellCard, candidateId, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not in controller's graveyard");
+        }
+
+        @Test
+        @DisplayName("passes when scope is CONTROLLERS_GRAVEYARD and card is in controller's graveyard")
+        void passesWhenInControllersGraveyard() {
+            Card spellCard = new Card();
+            spellCard.setName("Disentomb");
+            spellCard.setType(CardType.SORCERY);
+            spellCard.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
+                    .targetGraveyard(true)
+                    .build());
+
+            Card controllerCard = createCreature("Grizzly Bears", CardColor.GREEN);
+            UUID candidateId = controllerCard.getId();
+            // Card is in controller's graveyard (player1)
+            gd.playerGraveyards.get(player1Id).add(controllerCard);
+
+            when(gameQueryService.findCardInGraveyardById(gd, candidateId)).thenReturn(controllerCard);
+
+            sut.validateGraveyardRetargetCandidate(gd, spellCard, candidateId, player1Id);
         }
     }
 }
