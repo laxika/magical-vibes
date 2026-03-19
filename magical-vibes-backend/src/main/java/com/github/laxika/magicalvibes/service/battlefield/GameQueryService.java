@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -327,6 +329,11 @@ public class GameQueryService {
         }
         if (predicate instanceof CardIsPermanentPredicate) {
             return card.getType().isPermanentType();
+        }
+        if (predicate instanceof CardIsHistoricPredicate) {
+            return hasCardType(card, CardType.ARTIFACT)
+                    || card.getSupertypes().contains(CardSupertype.LEGENDARY)
+                    || card.getSubtypes().contains(CardSubtype.SAGA);
         }
         if (predicate instanceof CardSupertypePredicate p) {
             return card.getSupertypes().contains(p.supertype());
