@@ -265,8 +265,10 @@ public class CombatBlockService {
                 log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
             }
 
-            // Check for aura-based "when enchanted creature blocks" triggers
-            combatTriggerService.checkAuraTriggersForCreature(gameData, defenderBattlefield.get(assignment.blockerIndex()), EffectSlot.ON_BLOCK);
+            // Check for aura/equipment-based "when enchanted/equipped creature blocks" triggers
+            Permanent blockerForAura = defenderBattlefield.get(assignment.blockerIndex());
+            Permanent attackerForAura = attackerBattlefield.get(assignment.attackerIndex());
+            combatTriggerService.checkAuraTriggersForCreature(gameData, blockerForAura, EffectSlot.ON_BLOCK, attackerForAura);
         }
 
         // Check for "when this creature becomes blocked" triggers (active player's / AP's)

@@ -392,6 +392,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Sword cycle (boost + protection + combat trigger) | `s/SwordOfWarAndPeace.java` | STATIC StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE) + ProtectionFromColorsEffect(RED, WHITE) + ON_COMBAT_DAMAGE_TO_PLAYER DealDamageToTargetPlayerByHandSizeEffect + GainLifePerCardsInHandEffect + equip. Also: `SwordOfFeastAndFamine` (discard + untap lands), `SwordOfBodyAndMind` (token + mill) |
 | Evasion + sacrifice-equip-to-deal-damage | `b/BlazingTorch.java` | STATIC CanBeBlockedOnlyByFilterEffect(PermanentNotPredicate(vampires/zombies)) + GrantActivatedAbilityEffect(EQUIPPED_CREATURE) with SacrificeSourceEquipmentCost + DealDamageToAnyTargetEffect + equip |
 | Double combat damage dealt/received equip | `i/InquisitorsFlail.java` | STATIC DoubleEquippedCreatureCombatDamageEffect + equip. Doubles combat damage dealt by and received by equipped creature |
+| Boost + subtype combat destroy equip | `w/WoodenStake.java` | STATIC StaticBoostEffect(1, 0, EQUIPPED_CREATURE) + ON_BLOCK DestroySubtypeCombatOpponentEffect(VAMPIRE, true) + ON_BECOMES_BLOCKED DestroySubtypeCombatOpponentEffect(VAMPIRE, true) PER_BLOCKER + equip. Destroys Vampires that block or are blocked by equipped creature (can't regenerate) |
 
 ## Activated abilities
 
