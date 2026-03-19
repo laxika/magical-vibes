@@ -784,7 +784,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect.class)
     void resolveSacrificeCreatureAndControllerGainsLifeEqualToToughness(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetPermanentId();
+        UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
