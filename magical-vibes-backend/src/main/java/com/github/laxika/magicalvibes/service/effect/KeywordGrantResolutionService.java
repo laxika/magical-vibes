@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreature
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect;
@@ -107,6 +108,25 @@ public class KeywordGrantResolutionService {
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keyword(), grant.scope());
+    }
+
+    @HandlesEffect(GrantKeywordToTargetIfSupertypeEffect.class)
+    private void resolveGrantKeywordToTargetIfSupertype(GameData gameData, StackEntry entry,
+                                                        GrantKeywordToTargetIfSupertypeEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        if (!target.getCard().getSupertypes().contains(effect.supertype())) {
+            return;
+        }
+
+        target.getGrantedKeywords().add(effect.keyword());
+        String keywordName = effect.keyword().name().charAt(0) + effect.keyword().name().substring(1).toLowerCase().replace('_', ' ');
+        String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains {} (legendary conditional)", gameData.id, target.getCard().getName(), effect.keyword());
     }
 
     @HandlesEffect(GrantChosenKeywordToTargetEffect.class)
