@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -9,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
@@ -876,15 +875,15 @@ public class LifeResolutionService {
         log.info("Game {} - {} adds {} {}", gameData.id, playerName, effect.amount(), effect.color());
     }
 
-    @HandlesEffect(AddManaPerControlledSubtypeEffect.class)
-    private void resolveAddManaPerControlledSubtype(GameData gameData, StackEntry entry, AddManaPerControlledSubtypeEffect effect) {
+    @HandlesEffect(AddManaPerControlledPermanentEffect.class)
+    private void resolveAddManaPerControlledPermanent(GameData gameData, StackEntry entry, AddManaPerControlledPermanentEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
 
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getSubtypes().contains(effect.subtype())) {
+            if (gameQueryService.matchesPermanentPredicate(gameData, permanent, effect.predicate())) {
                 count++;
             }
         }
@@ -895,11 +894,10 @@ public class LifeResolutionService {
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        CardSubtype subtype = effect.subtype();
-        String logEntry = playerName + " adds " + count + " " + effect.color().getCode() + " (" + subtype.getDisplayName() + "s controlled).";
+        String logEntry = playerName + " adds " + count + " " + effect.color().getCode() + " (" + effect.description() + " controlled).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} adds {} {} (per {} controlled)", gameData.id, playerName, count, effect.color(), subtype);
+        log.info("Game {} - {} adds {} {} (per {} controlled)", gameData.id, playerName, count, effect.color(), effect.description());
     }
 }
 

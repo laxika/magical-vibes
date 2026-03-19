@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ class ElvishArchdruidTest extends BaseCardTest {
         ActivatedAbility ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.isRequiresTap()).isTrue();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledSubtypeEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
     }
 
     // ===== Static effect: buffs other Elves you control =====

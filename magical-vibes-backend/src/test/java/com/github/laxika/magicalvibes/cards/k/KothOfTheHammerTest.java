@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -62,7 +62,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledSubtypeEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
     }
 
     @Test
