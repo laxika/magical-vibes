@@ -102,6 +102,7 @@ public class GameData {
     public Integer chosenXValue;
     public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public final Set<UUID> pendingTokenExilesAtEndOfCombat = ConcurrentHashMap.newKeySet();
+    public final Set<UUID> creaturesWithEquipmentToDestroyAtEndOfCombat = ConcurrentHashMap.newKeySet();
     public PendingAbilityActivation pendingAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
@@ -454,6 +455,7 @@ public class GameData {
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
         copy.permanentsToSacrificeAtEndOfCombat.addAll(this.permanentsToSacrificeAtEndOfCombat);
         copy.pendingTokenExilesAtEndOfCombat.addAll(this.pendingTokenExilesAtEndOfCombat);
+        copy.creaturesWithEquipmentToDestroyAtEndOfCombat.addAll(this.creaturesWithEquipmentToDestroyAtEndOfCombat);
         copy.untilEndOfTurnStolenCreatures.addAll(this.untilEndOfTurnStolenCreatures);
         copy.enchantmentDependentStolenCreatures.addAll(this.enchantmentDependentStolenCreatures);
         copy.permanentControlStolenCreatures.addAll(this.permanentControlStolenCreatures);

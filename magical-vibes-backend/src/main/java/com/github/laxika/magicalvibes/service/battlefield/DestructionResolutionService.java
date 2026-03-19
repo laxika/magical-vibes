@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrifi
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsAndGainLifePerDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -602,6 +603,26 @@ public class DestructionResolutionService {
 
         for (Permanent equipment : equipmentToDestroy) {
             tryDestroyAndLog(gameData, equipment, entry.getCard().getName());
+        }
+    }
+
+    /**
+     * Resolves a {@link DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect} by recording
+     * the target creature's ID for end-of-combat equipment destruction. At end of combat,
+     * all Equipment currently attached to the recorded creature will be destroyed.
+     */
+    @HandlesEffect(DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect.class)
+    void resolveDestroyEquipmentOnEquippedCombatOpponentAtEndOfCombat(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) {
+            return;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target != null) {
+            gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.add(targetId);
+            String logEntry = "Equipment attached to " + target.getCard().getName()
+                    + " will be destroyed at end of combat.";
+            gameData.gameLog.add(logEntry);
         }
     }
 

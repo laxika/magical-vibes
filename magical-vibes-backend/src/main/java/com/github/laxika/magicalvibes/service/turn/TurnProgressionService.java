@@ -30,12 +30,14 @@ public class TurnProgressionService {
     private final AutoPassService autoPassService;
 
     public void advanceStep(GameData gameData) {
-        // Process end-of-combat sacrifices and exiles when leaving END_OF_COMBAT
+        // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT
                 && (!gameData.permanentsToSacrificeAtEndOfCombat.isEmpty()
-                    || !gameData.pendingTokenExilesAtEndOfCombat.isEmpty())) {
+                    || !gameData.pendingTokenExilesAtEndOfCombat.isEmpty()
+                    || !gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.isEmpty())) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
+            combatService.processEndOfCombatEquipmentDestruction(gameData);
             gameData.priorityPassedBy.clear();
             return;
         }

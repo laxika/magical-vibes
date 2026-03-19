@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesE
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
@@ -236,6 +237,10 @@ public class CombatBlockService {
                         if (gameQueryService.hasKeyword(gameData, attacker, kwEffect.requiredKeyword())) {
                             blockEffects.add(new BoostSelfEffect(kwEffect.powerBoost(), kwEffect.toughnessBoost()));
                         }
+                    } else if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
+                        if (hasEquipmentAttached(gameData, attacker)) {
+                            blockEffects.add(e);
+                        }
                     } else {
                         blockEffects.add(e);
                     }
@@ -247,7 +252,8 @@ public class CombatBlockService {
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
                                 || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect
                                 || e instanceof SkipNextUntapOnTargetEffect
-                                || e instanceof DealDamageToTargetCreatureEffect);
+                                || e instanceof DealDamageToTargetCreatureEffect
+                                || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect);
                 StackEntry blockTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         blocker.getCard(),
@@ -310,12 +316,26 @@ public class CombatBlockService {
                             continue;
                         }
                         Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+
+                        // Filter conditional per-blocker effects (e.g. "becomes blocked by an equipped creature")
+                        List<CardEffect> filteredEffects = new ArrayList<>();
+                        for (CardEffect e : blockerSpecificEffects) {
+                            if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
+                                if (hasEquipmentAttached(gameData, blocker)) {
+                                    filteredEffects.add(e);
+                                }
+                            } else {
+                                filteredEffects.add(e);
+                            }
+                        }
+                        if (filteredEffects.isEmpty()) continue;
+
                         StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 attacker.getCard(),
                                 activeId,
                                 attacker.getCard().getName() + "'s becomes-blocked trigger",
-                                new ArrayList<>(blockerSpecificEffects),
+                                new ArrayList<>(filteredEffects),
                                 blocker.getId(),
                                 attacker.getId()
                         );
@@ -502,6 +522,20 @@ public class CombatBlockService {
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
+    }
+
+    /**
+     * Returns {@code true} if the given creature has at least one Equipment attached to it.
+     */
+    private boolean hasEquipmentAttached(GameData gameData, Permanent creature) {
+        boolean[] found = {false};
+        gameData.forEachPermanent((ownerId, p) -> {
+            if (!found[0] && creature.getId().equals(p.getAttachedTo())
+                    && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
     }
 
 }

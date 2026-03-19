@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,8 +12,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -142,6 +146,36 @@ public class CombatService {
             }
         });
         gameData.pendingTokenExilesAtEndOfCombat.clear();
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Destroys all Equipment attached to creatures marked for end-of-combat equipment destruction
+     * (e.g. by Corrosive Ooze's trigger). Respects indestructible via
+     * {@link PermanentRemovalService#tryDestroyPermanent}.
+     */
+    public void processEndOfCombatEquipmentDestruction(GameData gameData) {
+        Set<UUID> creatureIds = new HashSet<>(gameData.creaturesWithEquipmentToDestroyAtEndOfCombat);
+        gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.clear();
+
+        for (UUID creatureId : creatureIds) {
+            List<Permanent> equipmentToDestroy = new ArrayList<>();
+            gameData.forEachPermanent((playerId, p) -> {
+                if (creatureId.equals(p.getAttachedTo())
+                        && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                    equipmentToDestroy.add(p);
+                }
+            });
+
+            for (Permanent equipment : equipmentToDestroy) {
+                if (permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
+                    String logEntry = equipment.getCard().getName() + " is destroyed.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} destroyed at end of combat (equipment destruction)",
+                            gameData.id, equipment.getCard().getName());
+                }
+            }
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }
