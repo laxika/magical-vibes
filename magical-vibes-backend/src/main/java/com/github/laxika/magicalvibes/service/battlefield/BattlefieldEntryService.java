@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -359,10 +360,14 @@ public class BattlefieldEntryService {
     // ===== ETB pipeline =====
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
-        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0);
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0, false);
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, false);
+    }
+
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked) {
         boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChooseColorEffect);
         if (needsColorChoice) {
@@ -372,14 +377,18 @@ public class BattlefieldEntryService {
             return;
         }
 
-        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode);
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
-        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0);
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0, false);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, false);
+    }
+
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked) {
         // Torpor Orb: "Creatures entering don't cause abilities to trigger."
         if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
             log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
@@ -414,6 +423,11 @@ public class BattlefieldEntryService {
                                 return coe.options().get(etbMode).effect();
                             }
                             return coe.options().getFirst().effect();
+                        }
+                        // Unwrap kicked conditional: if kicked, use inner effect; otherwise filter out
+                        // (intervening-if — MTG Rule 603.4: ability doesn't trigger if condition not met)
+                        if (e instanceof KickedConditionalEffect kce) {
+                            return kicked ? kce.wrapped() : null;
                         }
                         return e;
                     })

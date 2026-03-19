@@ -174,7 +174,7 @@ public class StackResolutionService {
         // happens as part of the entering process before state-based actions are checked.
         handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked());
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 
@@ -364,7 +364,7 @@ public class StackResolutionService {
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
 
         // Process ETB effects for all artifacts (creature and non-creature)
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked());
 
         checkLegendRuleIfIdle(gameData, controllerId);
     }
