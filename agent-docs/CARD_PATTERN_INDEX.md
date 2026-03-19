@@ -371,6 +371,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Multi-target player ability (exchange life) | `s/SoulConduit.java` | Activated {6}+tap ExchangeTargetPlayersLifeTotalsEffect with multi-target PlayerPredicateTargetFilter(ANY) — two target players exchange life totals |
 | Untap own artifacts on opponent's untap | `u/UnwindingClock.java` | STATIC UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(UNTAP, PermanentIsArtifactPredicate) — filtered variant of Seedborn Muse (which uses null filter for all permanents) |
 | Coin flip activated ability | `s/SorcerersStrongbox.java` | Tap+{2} FlipCoinWinEffect(SacrificeSelfAndDrawCardsEffect(3)) — flip a coin, if you win sacrifice self and draw 3 |
+| Token creation + tap-X-subtype destruction | `a/AryelKnightOfWindgrace.java` | Ability 1: tap+{2}{W} CreateCreatureTokenEffect(Knight 2/2 white vigilance). Ability 2: tap+{B}+TapXPermanentsCost(Knight, excludeSource)+DestroyTargetPermanentEffect with PermanentPowerAtMostXPredicate target filter — tap X untapped Knights to destroy creature with power X or less |
 
 ## Equipment
 

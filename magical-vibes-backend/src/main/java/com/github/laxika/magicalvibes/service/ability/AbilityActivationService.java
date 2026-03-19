@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHa
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
 import com.github.laxika.magicalvibes.service.ability.cost.SubtypeSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.TapXPermanentsCostHandler;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
@@ -506,8 +508,9 @@ public class AbilityActivationService {
         }
 
         UUID sourceId = permanent.getId();
+        final int xValueForCost = effectiveXValue;
         List<PermanentChoiceCostHandler> permanentChoiceCosts = abilityEffects.stream()
-                .map(e -> toPermanentChoiceCostHandler(e, sourceId))
+                .map(e -> toPermanentChoiceCostHandler(e, sourceId, xValueForCost))
                 .filter(Objects::nonNull)
                 .toList();
 
@@ -766,7 +769,7 @@ public class AbilityActivationService {
                 effectiveXValue, targetId, targetZone, nonTargeting, effectiveIndex, targetIds);
     }
 
-    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId) {
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c, gameQueryService, sacAction);
@@ -774,14 +777,16 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         return null;
     }
 
     private boolean handlePermanentChoiceCost(GameData gameData, Player player, Permanent source,
                                                int abilityIndex, int xValue, UUID targetId, Zone targetZone,
                                                PermanentChoiceCostHandler handler) {
-        List<UUID> validIds = handler.getValidChoiceIds(gameData, player.getId());
         int required = handler.requiredCount();
+        if (required <= 0) return false;
+        List<UUID> validIds = handler.getValidChoiceIds(gameData, player.getId());
         if (validIds.size() <= required) {
             for (UUID id : validIds) {
                 Permanent chosen = gameQueryService.findPermanentById(gameData, id);
@@ -821,7 +826,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated ability no longer has the required cost");
         }
 
-        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId());
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }

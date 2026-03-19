@@ -123,7 +123,7 @@ public class TargetLegalityService {
             if (target != null) {
                 gameQueryService.validateTargetFilter(ability.getTargetFilter(),
                         target,
-                        filterContext(gameData, sourceCard.getId(), playerId));
+                        filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             } else if (gameData.playerIds.contains(targetId)
                     && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
                 validatePlayerPredicate(playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
@@ -279,7 +279,7 @@ public class TargetLegalityService {
                                 gameQueryService.validateTargetFilter(effectiveTargetFilter, targetPerm,
                                         filterContext(gameData,
                                                 entry.getCard() != null ? entry.getCard().getId() : null,
-                                                entry.getControllerId()));
+                                                entry.getControllerId()).withXValue(entry.getXValue()));
                             } catch (IllegalStateException e) {
                                 targetFizzled = true;
                             }

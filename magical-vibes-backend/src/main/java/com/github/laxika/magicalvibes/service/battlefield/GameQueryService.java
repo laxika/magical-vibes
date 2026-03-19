@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -702,6 +703,13 @@ public class GameQueryService {
                 return permanent.getEffectivePower() <= powerAtMostPredicate.maxPower();
             }
             return getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
+        }
+        if (predicate instanceof PermanentPowerAtMostXPredicate) {
+            int xVal = filterContext != null && filterContext.xValue() != null ? filterContext.xValue() : 0;
+            if (gameData == null) {
+                return permanent.getEffectivePower() <= xVal;
+            }
+            return getEffectivePower(gameData, permanent) <= xVal;
         }
         if (predicate instanceof PermanentPowerAtLeastPredicate powerAtLeastPredicate) {
             if (gameData == null) {

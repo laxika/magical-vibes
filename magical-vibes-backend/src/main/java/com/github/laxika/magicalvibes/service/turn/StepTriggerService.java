@@ -920,7 +920,7 @@ public class StepTriggerService {
         // Collect valid targets, respecting the card's target filter if present
         TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
         FilterContext filterCtx = targetFilter != null
-                ? new FilterContext(gameData, trigger.sourceCard().getId(), trigger.controllerId())
+                ? new FilterContext(gameData, trigger.sourceCard().getId(), trigger.controllerId(), null)
                 : null;
 
         List<UUID> validTargets = new ArrayList<>();

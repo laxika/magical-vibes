@@ -41,7 +41,7 @@ public class TriggeredAbilityQueueService {
             // respecting the card's target filter if present
             TargetFilter targetFilter = pending.dyingCard().getTargetFilter();
             FilterContext filterCtx = targetFilter != null
-                    ? new FilterContext(gameData, pending.dyingCard().getId(), pending.controllerId())
+                    ? new FilterContext(gameData, pending.dyingCard().getId(), pending.controllerId(), null)
                     : null;
 
             List<UUID> validTargets = new ArrayList<>();
@@ -96,7 +96,7 @@ public class TriggeredAbilityQueueService {
             // Collect valid targets, respecting the card's target filter if present
             TargetFilter targetFilter = pending.sourceCard().getTargetFilter();
             FilterContext filterCtx = targetFilter != null
-                    ? new FilterContext(gameData, pending.sourceCard().getId(), pending.controllerId())
+                    ? new FilterContext(gameData, pending.sourceCard().getId(), pending.controllerId(), null)
                     : null;
 
             List<UUID> validTargets = new ArrayList<>();
