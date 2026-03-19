@@ -32,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +40,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,6 +74,14 @@ class TargetRedirectionResolutionServiceTest {
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        // Default: all check methods return valid (empty = no error)
+        lenient().when(targetLegalityService.checkSpellTargeting(any(), any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        lenient().when(targetLegalityService.checkGraveyardRetargetCandidate(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        lenient().when(targetLegalityService.checkSpellTargetOnStack(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
     }
 
     // ===== Helper methods =====
@@ -200,8 +208,8 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
             // All candidates fail validation
-            doThrow(new IllegalStateException("illegal target"))
-                    .when(targetLegalityService).validateSpellTargeting(any(), any(), any(), isNull(), any());
+            when(targetLegalityService.checkSpellTargeting(any(), any(), any(), isNull(), any()))
+                    .thenReturn(Optional.of("illegal target"));
 
             service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
 
@@ -225,10 +233,10 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
             // player IDs fail validation (not legal targets for this spell)
-            lenient().doThrow(new IllegalStateException("illegal"))
-                    .when(targetLegalityService).validateSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id));
-            lenient().doThrow(new IllegalStateException("illegal"))
-                    .when(targetLegalityService).validateSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id));
+            lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id)))
+                    .thenReturn(Optional.of("illegal"));
+            lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
+                    .thenReturn(Optional.of("illegal"));
 
             service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
 
@@ -259,10 +267,10 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
             // Player IDs also fail validation
-            doThrow(new IllegalStateException("illegal"))
-                    .when(targetLegalityService).validateSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id));
-            doThrow(new IllegalStateException("illegal"))
-                    .when(targetLegalityService).validateSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id));
+            when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player1Id), isNull(), eq(player2Id)))
+                    .thenReturn(Optional.of("illegal"));
+            when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
+                    .thenReturn(Optional.of("illegal"));
 
             service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
 
@@ -282,9 +290,9 @@ class TargetRedirectionResolutionServiceTest {
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
-            // player2Id fails, player1Id passes (default: no exception = legal)
-            lenient().doThrow(new IllegalStateException("illegal"))
-                    .when(targetLegalityService).validateSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id));
+            // player2Id fails, player1Id passes (default: Optional.empty() = legal)
+            lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
+                    .thenReturn(Optional.of("illegal"));
 
             service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
 
@@ -406,9 +414,9 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, graveyardSpellCard.getId());
 
             // Opponent's graveyard card fails validation (controller scope)
-            doThrow(new IllegalStateException("not in controller's graveyard"))
-                    .when(targetLegalityService).validateGraveyardRetargetCandidate(
-                            eq(gd), eq(graveyardSpellCard), eq(cardInOpponentGraveyard.getId()), eq(player2Id));
+            when(targetLegalityService.checkGraveyardRetargetCandidate(
+                            eq(gd), eq(graveyardSpellCard), eq(cardInOpponentGraveyard.getId()), eq(player2Id)))
+                    .thenReturn(Optional.of("not in controller's graveyard"));
 
             service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
 
@@ -544,9 +552,9 @@ class TargetRedirectionResolutionServiceTest {
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, targetSpellCard.getId(), sourcePermanent.getId());
 
             when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
-            doThrow(new IllegalStateException("illegal target"))
-                    .when(targetLegalityService).validateSpellTargeting(
-                            eq(gd), eq(targetSpellCard), eq(sourcePermanent.getId()), isNull(), eq(player2Id));
+            when(targetLegalityService.checkSpellTargeting(
+                            eq(gd), eq(targetSpellCard), eq(sourcePermanent.getId()), isNull(), eq(player2Id)))
+                    .thenReturn(Optional.of("illegal target"));
 
             service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
 

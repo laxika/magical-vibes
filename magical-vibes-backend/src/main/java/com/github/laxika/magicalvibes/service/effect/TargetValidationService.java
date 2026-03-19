@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -19,13 +20,23 @@ public class TargetValidationService {
         this.registry = registry;
     }
 
-    public void validateEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
+    public Optional<String> checkEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
         for (CardEffect effect : effects) {
             TargetValidator validator = registry.getValidator(effect);
             if (validator != null) {
-                validator.validate(context, effect);
+                try {
+                    validator.validate(context, effect);
+                } catch (IllegalStateException e) {
+                    return Optional.of(e.getMessage());
+                }
             }
         }
+        return Optional.empty();
+    }
+
+    public void validateEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
+        checkEffectTargets(effects, context)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     public void requireTarget(TargetValidationContext ctx) {

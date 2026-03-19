@@ -1572,8 +1572,21 @@ public class GameQueryService {
      * Validates that the target permanent passes the given filter.
      * Throws {@link IllegalStateException} if it does not.
      */
+    public Optional<String> checkTargetFilter(TargetFilter filter, Permanent target) {
+        return checkTargetFilter(filter, target, FilterContext.empty());
+    }
+
+    public Optional<String> checkTargetFilter(TargetFilter filter,
+                                              Permanent target,
+                                              FilterContext filterContext) {
+        if (!matchesSingleFilter(filter, target, filterContext)) {
+            return Optional.of(getFilterErrorMessage(filter));
+        }
+        return Optional.empty();
+    }
+
     public void validateTargetFilter(TargetFilter filter, Permanent target) {
-        validateTargetFilter(filter, target, FilterContext.empty());
+        checkTargetFilter(filter, target).ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     /**
@@ -1581,7 +1594,8 @@ public class GameQueryService {
      * for source-aware checks. Throws {@link IllegalStateException} if it does not.
      */
     public void validateTargetFilter(GameData gameData, TargetFilter filter, Permanent target) {
-        validateTargetFilter(filter, target, FilterContext.of(gameData));
+        checkTargetFilter(filter, target, FilterContext.of(gameData))
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     /**
@@ -1592,9 +1606,8 @@ public class GameQueryService {
     public void validateTargetFilter(TargetFilter filter,
                                      Permanent target,
                                      FilterContext filterContext) {
-        if (!matchesSingleFilter(filter, target, filterContext)) {
-            throw new IllegalStateException(getFilterErrorMessage(filter));
-        }
+        checkTargetFilter(filter, target, filterContext)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     private boolean matchesSingleFilter(TargetFilter filter, Permanent target, FilterContext filterContext) {

@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -49,9 +50,9 @@ public class TargetLegalityService {
     private final GameQueryService gameQueryService;
     private final TargetValidationService targetValidationService;
 
-    public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
+    public Optional<String> checkSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
         if (targetId == null) {
-            throw new IllegalStateException("Must target a spell on the stack");
+            return Optional.of("Must target a spell on the stack");
         }
 
         boolean includeAbilities = containsHasTargetPredicate(targetFilter);
@@ -59,15 +60,22 @@ public class TargetLegalityService {
                 ? findAnyEntryOnStack(gameData, targetId)
                 : findSpellOnStack(gameData, targetId);
         if (targetSpell == null) {
-            throw new IllegalStateException(includeAbilities
+            return Optional.of(includeAbilities
                     ? "Target must be a spell or ability on the stack"
                     : "Target must be a spell on the stack");
         }
 
         if (targetFilter instanceof StackEntryPredicateTargetFilter filter
                 && !matchesStackEntryPredicate(gameData, targetSpell, filter.predicate(), controllerId)) {
-            throw new IllegalStateException(filter.errorMessage());
+            return Optional.of(filter.errorMessage());
         }
+
+        return Optional.empty();
+    }
+
+    public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
+        checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetIds, Card sourceCard) {
@@ -144,38 +152,56 @@ public class TargetLegalityService {
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
-        validateSpellTargeting(gameData, card, targetId, targetZone, controllerId, card.isNeedsTarget());
+        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, card.isNeedsTarget())
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget) {
+        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
+    public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
+        return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, card.isNeedsTarget());
+    }
+
+    private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && !gameData.playerIds.contains(targetId)) {
-            throw new IllegalStateException("Invalid target");
+            return Optional.of("Invalid target");
         }
 
         if (target != null && needsTarget) {
-            validateSpellProtections(gameData, target, card);
-            validatePermanentTargetable(gameData, target, controllerId);
+            String protectionReason = checkSpellProtection(gameData, target, card);
+            if (protectionReason != null) return Optional.of(protectionReason);
+
+            String untargetable = untargetableReason(gameData, target, controllerId);
+            if (untargetable != null) return Optional.of(untargetable);
         }
 
         if (target == null && needsTarget && gameData.playerIds.contains(targetId)) {
-            validatePlayerTargetable(gameData, targetId, controllerId);
+            String playerReason = checkPlayerUntargetableReason(gameData, targetId, controllerId);
+            if (playerReason != null) return Optional.of(playerReason);
         }
 
         if (target == null
                 && card.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter
                 && !matchesPlayerPredicate(controllerId, targetId, playerFilter.predicate())) {
-            throw new IllegalStateException(playerFilter.errorMessage());
+            return Optional.of(playerFilter.errorMessage());
         }
 
         if (card.getTargetFilter() != null && target != null) {
-            gameQueryService.validateTargetFilter(card.getTargetFilter(),
+            Optional<String> filterReason = gameQueryService.checkTargetFilter(card.getTargetFilter(),
                     target,
                     filterContext(gameData, card.getId(), controllerId));
+            if (filterReason.isPresent()) return filterReason;
         }
 
-        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+        Optional<String> effectReason = targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.SPELL),
                 new TargetValidationContext(gameData, targetId, targetZone, card));
+        if (effectReason.isPresent()) return effectReason;
+
+        return Optional.empty();
     }
 
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone) {
@@ -354,13 +380,21 @@ public class TargetLegalityService {
         }
     }
 
-    private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {
+    private String checkPlayerUntargetableReason(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {
         if (gameQueryService.playerHasShroud(gameData, targetPlayerId)) {
-            throw new IllegalStateException(gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted");
+            return gameData.playerIdToName.get(targetPlayerId) + " has shroud and can't be targeted";
         }
         if (sourcePlayerId != null && !sourcePlayerId.equals(targetPlayerId)
                 && gameQueryService.playerHasHexproof(gameData, targetPlayerId)) {
-            throw new IllegalStateException(gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted");
+            return gameData.playerIdToName.get(targetPlayerId) + " has hexproof and can't be targeted";
+        }
+        return null;
+    }
+
+    private void validatePlayerTargetable(GameData gameData, UUID targetPlayerId, UUID sourcePlayerId) {
+        String reason = checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId);
+        if (reason != null) {
+            throw new IllegalStateException(reason);
         }
     }
 
@@ -376,21 +410,29 @@ public class TargetLegalityService {
         }
     }
 
-    private void validateSpellProtections(GameData gameData, Permanent target, Card card) {
+    private String checkSpellProtection(GameData gameData, Permanent target, Card card) {
         if (gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase());
+            return target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase();
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(target, card)) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s");
+            return target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
         }
         if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from source's subtype");
+            return target.getCard().getName() + " has protection from source's subtype";
         }
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) {
-            throw new IllegalStateException(target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells");
+            return target.getCard().getName() + " can't be the target of " + card.getColor().name().toLowerCase() + " spells";
         }
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card)) {
-            throw new IllegalStateException(nonColorSourceRestrictionMessage(target));
+            return nonColorSourceRestrictionMessage(target);
+        }
+        return null;
+    }
+
+    private void validateSpellProtections(GameData gameData, Permanent target, Card card) {
+        String reason = checkSpellProtection(gameData, target, card);
+        if (reason != null) {
+            throw new IllegalStateException(reason);
         }
     }
 
@@ -462,9 +504,9 @@ public class TargetLegalityService {
         return false;
     }
 
-    public void validateGraveyardRetargetCandidate(GameData gameData, Card spellCard, UUID candidateTargetId, UUID spellControllerId) {
+    public Optional<String> checkGraveyardRetargetCandidate(GameData gameData, Card spellCard, UUID candidateTargetId, UUID spellControllerId) {
         if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
-            throw new IllegalStateException("Target card is not in any graveyard");
+            return Optional.of("Target card is not in any graveyard");
         }
         ReturnCardFromGraveyardEffect graveyardEffect = spellCard.getEffects(EffectSlot.SPELL)
                 .stream()
@@ -478,10 +520,19 @@ public class TargetLegalityService {
                     .stream()
                     .anyMatch(c -> c.getId().equals(candidateTargetId));
             if (!inControllersGraveyard) {
-                throw new IllegalStateException("Target card is not in controller's graveyard");
+                return Optional.of("Target card is not in controller's graveyard");
             }
         }
-        validateEffectTargetInZone(gameData, spellCard, candidateTargetId, Zone.GRAVEYARD);
+        Optional<String> effectReason = targetValidationService.checkEffectTargets(spellCard.getEffects(EffectSlot.SPELL),
+                new TargetValidationContext(gameData, candidateTargetId, Zone.GRAVEYARD, spellCard));
+        if (effectReason.isPresent()) return effectReason;
+
+        return Optional.empty();
+    }
+
+    public void validateGraveyardRetargetCandidate(GameData gameData, Card spellCard, UUID candidateTargetId, UUID spellControllerId) {
+        checkGraveyardRetargetCandidate(gameData, spellCard, candidateTargetId, spellControllerId)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate, UUID controllerId) {

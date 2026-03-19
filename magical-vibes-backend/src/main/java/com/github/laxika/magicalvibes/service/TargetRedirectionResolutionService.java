@@ -135,27 +135,14 @@ public class TargetRedirectionResolutionService {
     private boolean isValidNewTargetForSpell(GameData gameData, StackEntry targetSpell, UUID candidateTargetId) {
         Card spellCard = targetSpell.getCard();
 
-        try {
-            if (spellCard.isNeedsSpellTarget()) {
-                targetLegalityService.validateSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter(), targetSpell.getControllerId());
-                return true;
-            }
-
-            if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
-                targetLegalityService.validateGraveyardRetargetCandidate(gameData, spellCard, candidateTargetId, targetSpell.getControllerId());
-                return true;
-            }
-
-            targetLegalityService.validateSpellTargeting(
-                    gameData,
-                    spellCard,
-                    candidateTargetId,
-                    null,
-                    targetSpell.getControllerId()
-            );
-            return true;
-        } catch (IllegalStateException ignored) {
-            return false;
+        if (spellCard.isNeedsSpellTarget()) {
+            return targetLegalityService.checkSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter(), targetSpell.getControllerId()).isEmpty();
         }
+
+        if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
+            return targetLegalityService.checkGraveyardRetargetCandidate(gameData, spellCard, candidateTargetId, targetSpell.getControllerId()).isEmpty();
+        }
+
+        return targetLegalityService.checkSpellTargeting(gameData, spellCard, candidateTargetId, null, targetSpell.getControllerId()).isEmpty();
     }
 }

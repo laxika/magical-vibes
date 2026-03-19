@@ -52,6 +52,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -107,6 +108,12 @@ class TargetLegalityServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+        // Default: check methods return valid (empty = no error)
+        lenient().when(gameQueryService.checkTargetFilter(any(), any(), any()))
+                .thenReturn(Optional.empty());
+        lenient().when(targetValidationService.checkEffectTargets(any(), any()))
+                .thenReturn(Optional.empty());
     }
 
     // ===== Helpers =====
@@ -432,8 +439,8 @@ class TargetLegalityServiceTest {
             Card spell = createTargetingSpell("Artifact Blast", CardColor.RED);
             spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
-            doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+            when(gameQueryService.checkTargetFilter(any(), eq(target), any()))
+                    .thenReturn(Optional.of("Target must be an artifact"));
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
