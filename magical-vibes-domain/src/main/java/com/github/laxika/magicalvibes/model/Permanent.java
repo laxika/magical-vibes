@@ -110,6 +110,11 @@ public class Permanent {
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  For transient subtype grants from static effects, see {@link #transientSubtypes}. */
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
+    /** When true, the creature's base toughness has been permanently overridden (e.g. by an exchange effect
+     *  like Tree of Redemption). NOT cleared by {@link #resetModifiers()} — survives turn resets.
+     *  Layer 7b: end-of-turn overrides still take priority (later timestamp). */
+    @Setter private boolean baseToughnessOverriddenPermanently;
+    @Setter private int permanentBaseToughnessOverride;
     @Setter private boolean transformed;
 
     public Permanent(Card card) {
@@ -193,6 +198,8 @@ public class Permanent {
         this.markedDamage = source.markedDamage;
         this.grantedColors.addAll(source.grantedColors);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
+        this.baseToughnessOverriddenPermanently = source.baseToughnessOverriddenPermanently;
+        this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
         this.transformed = source.transformed;
     }
 
@@ -287,6 +294,9 @@ public class Permanent {
         if (basePowerToughnessOverriddenUntilEndOfTurn) {
             // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
             baseToughness = baseToughnessOverride;
+        } else if (baseToughnessOverriddenPermanently) {
+            // Layer 7b: permanent toughness override (e.g. Tree of Redemption exchange)
+            baseToughness = permanentBaseToughnessOverride;
         } else if (animatedUntilEndOfTurn) {
             baseToughness = animatedToughness;
         } else if (permanentlyAnimated) {

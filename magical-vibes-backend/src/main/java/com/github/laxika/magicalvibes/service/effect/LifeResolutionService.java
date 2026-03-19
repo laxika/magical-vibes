@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetPlayersLifeTotalsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeAndControllerGainsLifeLostEffect;
@@ -467,6 +468,67 @@ public class LifeResolutionService {
 
         log.info("Game {} - {} and {} exchange life totals ({} -> {}, {} -> {})",
                 gameData.id, nameA, nameB, lifeA, newLifeA, lifeB, newLifeB);
+    }
+
+    @HandlesEffect(ExchangeLifeTotalWithToughnessEffect.class)
+    void resolveExchangeLifeTotalWithToughness(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            gameBroadcastService.logAndBroadcast(gameData, "Source creature is no longer on the battlefield. Exchange doesn't occur.");
+            return;
+        }
+
+        // CR 701.10e: player's new life = creature's current effective toughness
+        int currentToughness = gameQueryService.getEffectiveToughness(gameData, source);
+        int currentLife = gameData.getLife(controllerId);
+
+        // CR 118.7: if the player's life total can't change, the exchange doesn't occur
+        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change. Exchange doesn't occur.");
+            return;
+        }
+
+        if (currentLife == currentToughness) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " exchanges life total with " + source.getCard().getName()
+                            + "'s toughness (both at " + currentLife + ").");
+            return;
+        }
+
+        // Check if the life portion of the exchange is blocked by can't-gain-life
+        boolean lifeWouldIncrease = currentToughness > currentLife;
+        if (lifeWouldIncrease && !gameQueryService.canPlayerGainLife(gameData, controllerId)) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life. Exchange doesn't occur.");
+            return;
+        }
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " exchanges life total with " + source.getCard().getName()
+                        + "'s toughness (" + playerName + ": " + currentLife + " -> " + currentToughness
+                        + ", " + source.getCard().getName() + " toughness: " + currentToughness + " -> " + currentLife + ").");
+
+        // Set player's life total to the creature's toughness
+        gameData.playerLifeTotals.put(controllerId, currentToughness);
+        if (currentToughness > currentLife) {
+            triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, currentToughness - currentLife);
+        } else {
+            triggerCollectionService.checkLifeLossTriggers(gameData, controllerId, currentLife - currentToughness);
+        }
+
+        // Set creature's base toughness to the player's former life total (layer 7b setting effect, CR 613.4b)
+        source.setBaseToughnessOverriddenPermanently(true);
+        source.setPermanentBaseToughnessOverride(currentLife);
+
+        log.info("Game {} - {} exchanges life ({} -> {}) with {}'s toughness ({} -> {})",
+                gameData.id, playerName, currentLife, currentToughness,
+                source.getCard().getName(), currentToughness, currentLife);
     }
 
     @HandlesEffect(EnchantedCreatureControllerLosesLifeEffect.class)

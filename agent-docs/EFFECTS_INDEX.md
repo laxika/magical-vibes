@@ -552,6 +552,7 @@ Pass `null` as filter to allow any card.
 | `EachTargetPlayerGainsLifeEffect` | `(int amount)` | each targeted player gains N life (multi-target, reads from `targetIds`). Pair with `setMinTargets(0)` and `setMaxTargets(99)` for "any number of target players". Used by Hunters' Feast |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |
 | `ExchangeTargetPlayersLifeTotalsEffect` | `()` | two target players exchange life totals (multi-target player ability, reads targets from `targetIds`). CR 118.7: if either player's life can't change, the exchange doesn't occur |
+| `ExchangeLifeTotalWithToughnessEffect` | `()` | exchange controller's life total with source creature's toughness (CR 701.10e). Uses `sourcePermanentId` to find the creature. Player's life becomes creature's effective toughness; creature's base toughness is permanently set to former life total (layer 7b). Handles can't-change-life, can't-gain-life checks |
 | `LoseLifeEffect` | `(int amount)` | lose N life |
 | `EachOpponentLosesLifeEffect` | `(int amount)` | each opponent loses N life |
 | `EachOpponentLosesLifeAndControllerGainsLifeLostEffect` | `(int amount)` | each opponent loses N life, controller gains total life lost |
