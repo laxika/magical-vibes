@@ -64,5 +64,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
-    STATE_TRIGGERED
+    STATE_TRIGGERED,
+    /** Saga chapter I ability (MTG rule 714). Triggers when the first lore counter is placed. */
+    SAGA_CHAPTER_I,
+    /** Saga chapter II ability (MTG rule 714). Triggers when the second lore counter is placed. */
+    SAGA_CHAPTER_II,
+    /** Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. */
+    SAGA_CHAPTER_III
 }

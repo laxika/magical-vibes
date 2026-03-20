@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -253,8 +255,18 @@ public class StackResolutionService {
                 return;
             }
 
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(card));
+            Permanent enchPerm = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, enchPerm);
             logEnterBattlefield(gameData, card, controllerId);
+
+            // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
+            if (card.isSaga()) {
+                enchPerm.setLoreCounters(1);
+                String counterLog = card.getName() + " gets a lore counter (1).";
+                gameBroadcastService.logAndBroadcast(gameData, counterLog);
+                log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
+                triggerSagaChapter(gameData, enchPerm, card, controllerId, 1);
+            }
 
             // Check if enchantment has "as enters" color choice
             boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -504,6 +516,44 @@ public class StackResolutionService {
         String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+    }
+
+    /**
+     * Triggers the appropriate Saga chapter ability for the given lore counter value.
+     * Pushes the chapter's effects onto the stack as a triggered ability.
+     */
+    private void triggerSagaChapter(GameData gameData, Permanent sagaPerm, Card card, UUID controllerId, int loreCount) {
+        EffectSlot chapterSlot = switch (loreCount) {
+            case 1 -> EffectSlot.SAGA_CHAPTER_I;
+            case 2 -> EffectSlot.SAGA_CHAPTER_II;
+            case 3 -> EffectSlot.SAGA_CHAPTER_III;
+            default -> null;
+        };
+        if (chapterSlot == null) return;
+
+        List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
+        if (chapterEffects.isEmpty()) return;
+
+        String chapterName = switch (loreCount) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            default -> String.valueOf(loreCount);
+        };
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s chapter " + chapterName + " ability",
+                new ArrayList<>(chapterEffects),
+                null,
+                sagaPerm.getId()
+        ));
+
+        String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
     }
 
     private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {

@@ -211,6 +211,7 @@ export interface Permanent {
   slimeCounters: number;
   studyCounters: number;
   wishCounters: number;
+  loreCounters: number;
   attackTargetId: string | null;
   markedDamage: number;
   transformed: boolean;

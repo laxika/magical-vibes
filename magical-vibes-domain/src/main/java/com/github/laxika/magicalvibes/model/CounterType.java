@@ -8,5 +8,6 @@ public enum CounterType {
     PLUS_ONE_PLUS_ONE,
     SLIME,
     STUDY,
-    WISH
+    WISH,
+    LORE
 }

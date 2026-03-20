@@ -621,6 +621,7 @@ public class AbilityActivationService {
                 case SLIME -> permanent.getSlimeCounters();
                 case STUDY -> permanent.getStudyCounters();
                 case WISH -> permanent.getWishCounters();
+                case LORE -> permanent.getLoreCounters();
                 case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
             };
             if (available < required) {

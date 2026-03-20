@@ -28,6 +28,7 @@ public record PermanentView(
         int slimeCounters,
         int studyCounters,
         int wishCounters,
+        int loreCounters,
         UUID attackTargetId,
         int markedDamage,
         boolean transformed

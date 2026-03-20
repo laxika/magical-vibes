@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,6 +84,35 @@ public class StateBasedActionService {
                 if (gameData.status == GameStatus.FINISHED) {
                     return;
                 }
+            }
+        }
+
+        // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
+        // (unless it has a chapter ability still on the stack)
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            List<Permanent> sagasToSacrifice = new ArrayList<>();
+            for (Permanent p : battlefield) {
+                if (!p.getCard().isSaga()) continue;
+                int finalChapter = p.getCard().getSagaFinalChapter();
+                if (finalChapter <= 0 || p.getLoreCounters() < finalChapter) continue;
+
+                // Don't sacrifice if a chapter ability from this Saga is still on the stack (CR 714.4)
+                boolean chapterOnStack = gameData.stack.stream()
+                        .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                                && p.getId().equals(e.getSourcePermanentId()));
+                if (!chapterOnStack) {
+                    sagasToSacrifice.add(p);
+                }
+            }
+
+            for (Permanent saga : sagasToSacrifice) {
+                permanentRemovalService.removePermanentToGraveyard(gameData, saga);
+                String logEntry = saga.getCard().getName() + " is sacrificed (final chapter reached).";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
             }
         }
 

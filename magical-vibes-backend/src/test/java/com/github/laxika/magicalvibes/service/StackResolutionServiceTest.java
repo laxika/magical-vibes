@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
@@ -171,6 +173,15 @@ class StackResolutionServiceTest {
         card.setName(name);
         card.setType(CardType.SORCERY);
         card.setManaCost("1B");
+        return card;
+    }
+
+    private Card createSaga(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setSubtypes(List.of(CardSubtype.SAGA));
+        card.setManaCost("3B");
         return card;
     }
 
@@ -519,6 +530,94 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(creatureControlService).stealPermanent(gd, PLAYER1_ID, targetPerm);
+        }
+
+        @Test
+        @DisplayName("Saga enters the battlefield with 1 lore counter")
+        void sagaEntersWithLoreCounter() {
+            Card saga = createSaga("Test Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
+                    PLAYER1_ID, saga.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getLoreCounters()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Saga ETB pushes chapter I ability onto the stack")
+        void sagaEtbTriggersChapterI() {
+            Card saga = createSaga("Test Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToEachOpponentEffect(2));
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
+                    PLAYER1_ID, saga.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            // Chapter I ability should be on the stack after resolution
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getFirst().getDescription()).contains("chapter I");
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("Non-saga enchantment does not get lore counters")
+        void nonSagaDoesNotGetLoreCounters() {
+            Card enchantment = createEnchantment("Regular Enchantment");
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, enchantment,
+                    PLAYER1_ID, enchantment.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            assertThat(permanentCaptor.getValue().getLoreCounters()).isZero();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Saga ETB logs the lore counter addition")
+        void sagaEtbLogsLoreCounter() {
+            Card saga = createSaga("Chainer's Torment");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
+                    PLAYER1_ID, saga.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(gameBroadcastService).logAndBroadcast(gd,
+                    "Chainer's Torment gets a lore counter (1).");
+            verify(gameBroadcastService).logAndBroadcast(gd,
+                    "Chainer's Torment's chapter I ability triggers.");
+        }
+
+        @Test
+        @DisplayName("Saga chapter I ability has correct source permanent ID")
+        void sagaChapterHasSourcePermanentId() {
+            Card saga = createSaga("Test Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
+                    PLAYER1_ID, saga.getName(), List.of());
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+            UUID sagaPermanentId = permanentCaptor.getValue().getId();
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sagaPermanentId);
         }
     }
 

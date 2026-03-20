@@ -234,6 +234,21 @@ public class Card {
         return subtypes.contains(CardSubtype.AURA);
     }
 
+    public boolean isSaga() {
+        return subtypes.contains(CardSubtype.SAGA);
+    }
+
+    /**
+     * Returns the final chapter number for a Saga card (e.g. 3 for a three-chapter Saga).
+     * Returns 0 if the card has no chapter abilities.
+     */
+    public int getSagaFinalChapter() {
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_II).isEmpty()) return 2;
+        if (!getEffects(EffectSlot.SAGA_CHAPTER_I).isEmpty()) return 1;
+        return 0;
+    }
+
     public boolean isEnchantPlayer() {
         return isAura() && subtypes.contains(CardSubtype.CURSE);
     }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControllerLifeTotalEffect;
@@ -417,6 +418,58 @@ public class PermanentControlResolutionService {
         }
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);
+    }
+
+    @HandlesEffect(CreateTokenFromHalfLifeTotalAndDealDamageEffect.class)
+    private void resolveCreateTokenFromHalfLifeTotal(GameData gameData, StackEntry entry,
+                                                      CreateTokenFromHalfLifeTotalAndDealDamageEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        int currentLife = gameData.getLife(controllerId);
+        int x = (currentLife + 1) / 2; // half life total, rounded up
+        if (x < 0) x = 0;
+
+        // Create the X/X token
+        Card tokenCard = new Card();
+        tokenCard.setName(effect.tokenName());
+        tokenCard.setType(CardType.CREATURE);
+        tokenCard.setManaCost("");
+        tokenCard.setToken(true);
+        tokenCard.setColor(effect.color());
+        tokenCard.setPower(x);
+        tokenCard.setToughness(x);
+        tokenCard.setSubtypes(effect.subtypes());
+
+        ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
+                entry.getCard().getSetCode(), effect.tokenName(), x, x, effect.color()
+        );
+        if (imageData != null) {
+            tokenCard.setSetCode(imageData.setCode());
+            tokenCard.setCollectorNumber(imageData.collectorNumber());
+        }
+
+        Permanent tokenPerm = new Permanent(tokenCard);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPerm);
+
+        String tokenLog = "A " + x + "/" + x + " black " + effect.tokenName() + " creature token enters the battlefield.";
+        gameBroadcastService.logAndBroadcast(gameData, tokenLog);
+        log.info("Game {} - {} {}/{} token created for {}", gameData.id, effect.tokenName(), x, x, controllerId);
+
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+
+        // The token deals X damage to the controller (damage source is the token, not the Saga)
+        if (x > 0) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            } else {
+                int life = gameData.getLife(controllerId);
+                gameData.playerLifeTotals.put(controllerId, life - x);
+                String dmgLog = effect.tokenName() + " deals " + x + " damage to " + gameData.playerIdToName.get(controllerId) + ".";
+                gameBroadcastService.logAndBroadcast(gameData, dmgLog);
+                log.info("Game {} - {} deals {} damage to controller {}", gameData.id, effect.tokenName(), x, controllerId);
+                triggerCollectionService.checkLifeLossTriggers(gameData, controllerId, x);
+            }
+        }
     }
 
     @HandlesEffect(CreateTokenPerEquipmentOnSourceEffect.class)

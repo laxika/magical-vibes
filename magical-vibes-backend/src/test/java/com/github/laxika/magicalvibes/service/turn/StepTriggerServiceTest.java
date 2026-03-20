@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
@@ -1012,6 +1013,135 @@ class StepTriggerServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.openingHandManaTriggers).hasSize(1); // Not removed
         }
+
+        @Test
+        @DisplayName("Saga on active player's battlefield gets a lore counter at precombat main")
+        void sagaGetsLoreCounterAtPrecombatMain() {
+            Card saga = createSaga("Test Saga");
+            Permanent perm = new Permanent(saga);
+            perm.setLoreCounters(1); // already has 1 from ETB
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(perm.getLoreCounters()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Saga triggers chapter ability matching new lore counter value")
+        void sagaTriggersCorrectChapter() {
+            Card saga = createSaga("Test Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            Permanent perm = new Permanent(saga);
+            perm.setLoreCounters(1); // chapter II will trigger when counter goes to 2
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getFirst().getDescription()).contains("chapter II");
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Saga chapter ability has correct source permanent ID")
+        void sagaChapterHasSourcePermanentId() {
+            Card saga = createSaga("Test Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            Permanent perm = new Permanent(saga);
+            perm.setLoreCounters(1);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("Non-active player's Saga does not get a lore counter")
+        void opponentSagaNotAffected() {
+            Card saga = createSaga("Opponent Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            Permanent perm = new Permanent(saga);
+            perm.setLoreCounters(1);
+            gd.playerBattlefields.get(player2Id).add(perm);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(perm.getLoreCounters()).isEqualTo(1); // unchanged
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Non-saga permanents are not affected by saga lore counter logic")
+        void nonSagaPermanentNotAffected() {
+            Card creature = createCardWithName("Regular Creature");
+            creature.setType(CardType.CREATURE);
+            Permanent perm = new Permanent(creature);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(perm.getLoreCounters()).isZero();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Multiple Sagas each get a lore counter")
+        void multipleSagasEachGetLoreCounter() {
+            Card saga1 = createSaga("Saga A");
+            saga1.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(1));
+            Permanent perm1 = new Permanent(saga1);
+            perm1.setLoreCounters(1);
+
+            Card saga2 = createSaga("Saga B");
+            saga2.addEffect(EffectSlot.SAGA_CHAPTER_III, new GainLifeEffect(2));
+            Permanent perm2 = new Permanent(saga2);
+            perm2.setLoreCounters(2);
+
+            gd.playerBattlefields.get(player1Id).add(perm1);
+            gd.playerBattlefields.get(player1Id).add(perm2);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(perm1.getLoreCounters()).isEqualTo(2);
+            assertThat(perm2.getLoreCounters()).isEqualTo(3);
+            assertThat(gd.stack).hasSize(2); // both chapters triggered
+        }
+
+        @Test
+        @DisplayName("Saga with no effects for the reached chapter doesn't push to stack")
+        void sagaNoEffectsForChapterDoesNotTrigger() {
+            Card saga = createSaga("Sparse Saga");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(1));
+            // no chapter II effects
+            Permanent perm = new Permanent(saga);
+            perm.setLoreCounters(1); // will go to 2, but chapter II has no effects
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(perm.getLoreCounters()).isEqualTo(2); // counter still incremented
+            assertThat(gd.stack).isEmpty(); // but no ability triggered
+        }
+
+        @Test
+        @DisplayName("Saga lore counter logs are broadcast")
+        void sagaLoreCounterLogsBroadcast() {
+            Card saga = createSaga("Chainer's Torment");
+            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(2));
+            Permanent perm = new Permanent(saga);
+            perm.setLoreCounters(1);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            verify(gameBroadcastService).logAndBroadcast(gd,
+                    "Chainer's Torment gets a lore counter (2).");
+            verify(gameBroadcastService).logAndBroadcast(gd,
+                    "Chainer's Torment's chapter II ability triggers.");
+        }
     }
 
     // ---- Test helpers ----
@@ -1019,6 +1149,14 @@ class StepTriggerServiceTest {
     private static Card createCardWithName(String name) {
         Card card = new Card();
         card.setName(name);
+        return card;
+    }
+
+    private static Card createSaga(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setSubtypes(List.of(CardSubtype.SAGA));
         return card;
     }
 }

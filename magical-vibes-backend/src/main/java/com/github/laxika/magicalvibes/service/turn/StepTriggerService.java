@@ -674,6 +674,9 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handlePrecombatMainTriggers(GameData gameData) {
+        // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
+        handleSagaLoreCounters(gameData);
+
         // Chancellor-style delayed mana triggers: fire at the beginning of the revealing player's first main phase
         if (!gameData.openingHandManaTriggers.isEmpty()) {
             UUID activePlayerId = gameData.activePlayerId;
@@ -699,6 +702,65 @@ public class StepTriggerService {
                             gameData.playerIdToName.get(activePlayerId));
                 }
             }
+        }
+    }
+
+    /**
+     * Adds a lore counter to each Saga the active player controls and triggers
+     * the appropriate chapter ability (MTG Rule 714.3b).
+     * Called at the beginning of the active player's precombat main phase.
+     */
+    private void handleSagaLoreCounters(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return;
+
+        // Collect Sagas first to avoid ConcurrentModificationException
+        List<Permanent> sagas = battlefield.stream()
+                .filter(p -> p.getCard().isSaga())
+                .toList();
+
+        for (Permanent saga : sagas) {
+            Card card = saga.getCard();
+            int newLoreCount = saga.getLoreCounters() + 1;
+            saga.setLoreCounters(newLoreCount);
+
+            String counterLog = card.getName() + " gets a lore counter (" + newLoreCount + ").";
+            gameBroadcastService.logAndBroadcast(gameData, counterLog);
+            log.info("Game {} - {} gets lore counter {}", gameData.id, card.getName(), newLoreCount);
+
+            // Trigger the appropriate chapter ability
+            EffectSlot chapterSlot = switch (newLoreCount) {
+                case 1 -> EffectSlot.SAGA_CHAPTER_I;
+                case 2 -> EffectSlot.SAGA_CHAPTER_II;
+                case 3 -> EffectSlot.SAGA_CHAPTER_III;
+                default -> null;
+            };
+            if (chapterSlot == null) continue;
+
+            List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
+            if (chapterEffects.isEmpty()) continue;
+
+            String chapterName = switch (newLoreCount) {
+                case 1 -> "I";
+                case 2 -> "II";
+                case 3 -> "III";
+                default -> String.valueOf(newLoreCount);
+            };
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    activePlayerId,
+                    card.getName() + "'s chapter " + chapterName + " ability",
+                    new ArrayList<>(chapterEffects),
+                    null,
+                    saga.getId()
+            ));
+
+            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
         }
     }
 

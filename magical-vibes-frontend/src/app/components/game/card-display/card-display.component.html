@@ -87,4 +87,7 @@
 @if (!preview && permanent && permanent.wishCounters > 0) {
   <div class="card-charge-badge">Wish x{{ permanent.wishCounters }}</div>
 }
+@if (!preview && permanent && permanent.loreCounters > 0) {
+  <div class="card-charge-badge">Lore x{{ permanent.loreCounters }}</div>
+}
 <ng-content></ng-content>

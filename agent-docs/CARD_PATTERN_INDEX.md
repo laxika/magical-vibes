@@ -457,3 +457,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Werewolf transform DFC | `d/DaybreakRanger.java` | Innistrad werewolf pattern: front face uses EACH_UPKEEP_TRIGGERED with `NoSpellsCastLastTurnConditionalEffect(TransformSelfEffect())`. Back face (`NightfallPredator`) uses EACH_UPKEEP_TRIGGERED with `TwoOrMoreSpellsCastLastTurnConditionalEffect(TransformSelfEffect())`. Both faces have their own activated abilities |
 | Werewolf lord DFC | `i/InstigatorGang.java` | Werewolf transform + STATIC `StaticBoostEffect(power, 0, OWN_CREATURES, PermanentIsAttackingPredicate())` on both faces (front +1/+0, back +3/+0). Back face (`WildbloodPack`) also has Trample (auto-loaded from Scryfall) |
 | Upkeep reveal transform DFC | `d/DelverOfSecrets.java` | Non-werewolf upkeep transform: front face uses UPKEEP_TRIGGERED with `LookAtTopCardMayRevealTypeTransformEffect(Set.of(INSTANT, SORCERY))`. Looks at top card, if matching type offers may reveal + transform. Back face (`InsectileAberration`) is vanilla (no transform back trigger) |
+
+## Sagas
+
+| Pattern | Reference Card | Key Code |
+|---------|-----------|-------|
+| 3-chapter Saga with damage/life/token | `c/ChainersTorment.java` | SAGA_CHAPTER_I/II: DealDamageToEachOpponentEffect(2) + GainLifeEffect(2). SAGA_CHAPTER_III: CreateTokenFromHalfLifeTotalAndDealDamageEffect. Lore counters auto-managed: ETB adds 1st in StackResolutionService, precombat main adds subsequent in StepTriggerService. Sacrifice SBA in StateBasedActionService when lore >= final chapter and no chapter ability on stack |

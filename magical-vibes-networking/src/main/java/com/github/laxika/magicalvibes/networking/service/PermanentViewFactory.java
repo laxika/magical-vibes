@@ -85,6 +85,7 @@ public class PermanentViewFactory {
                 p.getSlimeCounters(),
                 p.getStudyCounters(),
                 p.getWishCounters(),
+                p.getLoreCounters(),
                 p.getAttackTarget(),
                 p.getMarkedDamage(),
                 p.isTransformed()
