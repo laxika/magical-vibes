@@ -63,6 +63,11 @@ public class AiConnection implements Connection {
                 return;
             }
 
+            if ("GAME_OVER".equals(type)) {
+                close();
+                return;
+            }
+
             executor.schedule(() -> {
                 try {
                     engine.handleMessage(type, message);

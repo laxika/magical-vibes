@@ -1034,6 +1034,10 @@ public class GameMessageHandler implements MessageHandler {
 
     @Override
     public void handleError(Connection connection, String message) throws Exception {
+        if (!connection.isOpen()) {
+            log.debug("Suppressed error for closed connection {}: {}", connection.getId(), message);
+            return;
+        }
         log.warn("Sending error to {}: {}", connection.getId(), message);
         ErrorMessage error = new ErrorMessage(message);
         connection.sendMessage(objectMapper.writeValueAsString(error));

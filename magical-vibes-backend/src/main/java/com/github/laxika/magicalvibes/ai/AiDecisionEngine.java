@@ -335,6 +335,10 @@ public abstract class AiDecisionEngine {
     }
 
     protected void send(MessageHandlerAction action) {
+        GameData gameData = gameRegistry.get(gameId);
+        if (gameData == null || gameData.status == GameStatus.FINISHED) {
+            return;
+        }
         try {
             action.execute();
         } catch (Exception e) {
