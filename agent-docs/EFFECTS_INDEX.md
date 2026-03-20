@@ -497,6 +497,7 @@ Pass `null` as filter to allow any card.
 | `ExileCardsFromGraveyardEffect` | `(int maxTargets, int lifeGain)` | exile up to N cards from graveyard, gain lifeGain per card |
 | `ExileCreaturesFromGraveyardAndCreateTokensEffect` | `()` | exile creature cards from graveyard, create tokens for each |
 | `ExileTopCardsRepeatOnDuplicateEffect` | `(int count)` | exile top N cards, repeat if duplicate names found |
+| `ExileUntilNonlandToHandRepeatIfHighMVEffect` | `(int manaValueThreshold, int damagePerCard)` | exile cards from top of library until nonland found, put nonland into hand, repeat if MV >= threshold, deal damagePerCard damage per card put into hand. Provider: `DamageResolutionService` |
 | `ExileSelfAndReturnAtEndStepEffect` | `()` | exile this permanent, return it at beginning of next end step (Argent Sphinx-style) |
 | `ExileTargetPermanentAndImprintEffect` | `()` | exile target permanent permanently and imprint the exiled card onto the source permanent; the card does NOT return when the source leaves (Exclusion Ritual-style) |
 | `ExileTargetPermanentAndTrackWithSourceEffect` | `()` | exile target permanent and track the exiled card in `permanentExiledCards` with the source permanent's ID. Unlike imprint, used for effects that reference "cards exiled with [source]" (Karn Liberated -3). Resolved by `ExileResolutionService` |

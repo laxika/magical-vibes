@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetC
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUntilNonlandToHandRepeatIfHighMVEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
@@ -1556,6 +1557,89 @@ public class DamageResolutionService {
         }
 
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link ExileUntilNonlandToHandRepeatIfHighMVEffect} — exiles cards from the top of the
+     * controller's library until a nonland card is found, puts that card into the controller's hand,
+     * and repeats if the nonland card's mana value meets the threshold. After all iterations, the source
+     * deals {@code damagePerCard} damage to the controller for each card put into their hand this way.
+     * Used by Demonlord Belzenlok.
+     */
+    @HandlesEffect(ExileUntilNonlandToHandRepeatIfHighMVEffect.class)
+    void resolveExileUntilNonlandToHandRepeatIfHighMV(GameData gameData, StackEntry entry,
+                                                      ExileUntilNonlandToHandRepeatIfHighMVEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        List<Card> exiled = gameData.playerExiledCards.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        int cardsToHand = 0;
+        boolean repeat = true;
+
+        while (repeat) {
+            repeat = false;
+
+            if (deck.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + "'s library is empty (" + sourceName + ").");
+                break;
+            }
+
+            // Exile cards until a nonland card is found
+            boolean foundNonland = false;
+            while (!deck.isEmpty()) {
+                Card card = deck.removeFirst();
+
+                if (card.hasType(CardType.LAND)) {
+                    exiled.add(card);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            playerName + " exiles " + card.getName() + " (land) (" + sourceName + ").");
+                } else {
+                    // Nonland card — put into hand
+                    gameData.addCardToHand(controllerId, card);
+                    cardsToHand++;
+                    int manaValue = card.getManaValue();
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            playerName + " exiles " + card.getName() + " (mana value " + manaValue
+                                    + ") and puts it into their hand (" + sourceName + ").");
+
+                    if (manaValue >= effect.manaValueThreshold()) {
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                card.getName() + " has mana value " + manaValue + " or greater — repeating the process.");
+                        repeat = true;
+                    }
+                    foundNonland = true;
+                    break;
+                }
+            }
+
+            if (!foundNonland && deck.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + "'s library is empty — no nonland card found (" + sourceName + ").");
+            }
+        }
+
+        // Deal damage to controller for each card put into hand (all at once per ruling)
+        if (cardsToHand > 0) {
+            int totalDamage = cardsToHand * effect.damagePerCard();
+            if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        sourceName + "'s damage to " + playerName + " is prevented.");
+            } else {
+                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, totalDamage, entry);
+                dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        sourceName + " deals " + rawDamage + " damage to " + playerName
+                                + " (" + cardsToHand + " card" + (cardsToHand > 1 ? "s" : "") + " put into hand).");
+            }
+
+            gameOutcomeService.checkWinCondition(gameData);
+        }
+
+        log.info("Game {} - {} resolved {} ETB: {} cards to hand, {} lands exiled",
+                gameData.id, playerName, sourceName, cardsToHand, exiled.size());
     }
 
     /**
