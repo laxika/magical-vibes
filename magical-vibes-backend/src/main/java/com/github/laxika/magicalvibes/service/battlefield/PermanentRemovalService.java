@@ -77,6 +77,7 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
 
+        deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, controllerId, ownerId);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -107,6 +108,7 @@ public class PermanentRemovalService {
         boolean wasArtifact = gameQueryService.isArtifact(target);
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
 
+        deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, info.controllerId(), info.ownerId());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -132,6 +134,7 @@ public class PermanentRemovalService {
             return false;
         }
         UUID ownerId = removed.get().ownerId();
+        deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
         gameData.addCardToHand(ownerId, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -155,6 +158,7 @@ public class PermanentRemovalService {
             return false;
         }
         UUID ownerId = removed.get().ownerId();
+        deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
         exileService.exileCard(gameData, ownerId, target.getOriginalCard());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -181,6 +185,7 @@ public class PermanentRemovalService {
             return false;
         }
         UUID ownerId = removed.get().ownerId();
+        deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
         gameData.playerDecks.get(ownerId).add(0, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -206,6 +211,7 @@ public class PermanentRemovalService {
             return false;
         }
         UUID ownerId = removed.get().ownerId();
+        deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
         gameData.playerDecks.get(ownerId).add(target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;

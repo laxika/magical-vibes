@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -203,6 +204,57 @@ public class DeathTriggerService {
                 String triggerLog = perm.getCard().getName() + "'s ability triggers (enchanted permanent put into graveyard).";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
+    /**
+     * Checks for auras with {@code ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD} triggers attached to
+     * the given permanent. For each {@link EnchantedPermanentLeavesConditionalEffect}, the permanent's
+     * card is tested against the filter; if it matches, the resolved effects are put on the stack.
+     *
+     * <p>Must be called after the permanent is removed from the battlefield but before orphaned auras
+     * are cleaned up, so the auras can still be found by their {@code attachedTo} reference.
+     *
+     * @param gameData        the current game state
+     * @param leavingPermanent the permanent that is leaving the battlefield
+     */
+    public void checkEnchantedPermanentLTBTriggers(GameData gameData, Permanent leavingPermanent) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!leavingPermanent.getId().equals(perm.getAttachedTo())) return;
+            if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof EnchantedPermanentLeavesConditionalEffect conditional) {
+                    // Check if the leaving permanent matches the filter
+                    if (conditional.permanentFilter() != null
+                            && !gameQueryService.matchesCardPredicate(leavingPermanent.getCard(), conditional.permanentFilter(), null)) {
+                        continue;
+                    }
+                    // Put all resolved effects on the stack as a single triggered ability
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(conditional.resolvedEffects())
+                    ));
+                } else {
+                    // Non-conditional effects fire unconditionally
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                }
+                String triggerLog = perm.getCard().getName() + "'s ability triggers (enchanted permanent left the battlefield).";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (enchanted permanent left the battlefield)", gameData.id, perm.getCard().getName());
             }
         });
     }
