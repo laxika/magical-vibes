@@ -175,25 +175,44 @@ public class TriggeredAbilityQueueService {
             // Collect valid targets based on whether this is player-only targeting
             List<UUID> validPermanentTargets = new ArrayList<>();
             if (!pending.playerTargetOnly()) {
+                TargetFilter filter = pending.targetFilter();
+                FilterContext filterContext = filter != null
+                        ? FilterContext.of(gameData).withSourceControllerId(pending.controllerId())
+                        : null;
+
                 for (UUID pid : gameData.orderedPlayerIds) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.isCreature(gameData, p)
+                        if (filter != null) {
+                            if (gameQueryService.matchesFilters(p, Set.of(filter), filterContext)) {
+                                validPermanentTargets.add(p.getId());
+                            }
+                        } else if (gameQueryService.isCreature(gameData, p)
                                 || p.getCard().hasType(CardType.PLANESWALKER)) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
                 }
+
+                // If a target filter is present but no valid targets exist, skip this trigger
+                if (filter != null && validPermanentTargets.isEmpty()) {
+                    gameData.pendingSpellTargetTriggers.removeFirst();
+                    log.info("Game {} - {} spell-target trigger skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName());
+                    continue;
+                }
             }
 
-            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+            List<UUID> validPlayerTargets = pending.targetFilter() != null
+                    ? List.of()
+                    : new ArrayList<>(gameData.orderedPlayerIds);
 
             String prompt = pending.playerTargetOnly()
                     ? pending.sourceCard().getName() + "'s ability - Choose target player."
                     : pending.sourceCard().getName() + "'s ability - Choose any target.";
 
-            // There are always valid targets (at least the players)
+            // There are always valid targets (at least the players, or filtered permanents)
             gameData.pendingSpellTargetTriggers.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),

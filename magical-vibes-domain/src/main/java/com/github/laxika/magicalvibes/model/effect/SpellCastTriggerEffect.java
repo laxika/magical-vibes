@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
@@ -12,18 +13,27 @@ import java.util.List;
  * <p>
  * When wrapped in {@link MayEffect}, the player is prompted before the effects resolve.
  * If {@code manaCost} is non-null, a "may pay" prompt is shown and the cost must be paid.
+ * <p>
+ * If {@code targetFilter} is non-null, the resolved effects require targeting and the filter
+ * restricts which permanents can be chosen (e.g. "target creature an opponent controls").
  *
  * @param spellFilter     what spells trigger this (null = any spell)
  * @param resolvedEffects effects to put on the stack when this triggers
  * @param manaCost        optional mana cost string, e.g. "{1}" (null = free)
+ * @param targetFilter    optional target filter for triggered abilities that target (null = no targeting)
  */
 public record SpellCastTriggerEffect(
         CardPredicate spellFilter,
         List<CardEffect> resolvedEffects,
-        String manaCost
+        String manaCost,
+        TargetFilter targetFilter
 ) implements CardEffect {
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        this(spellFilter, resolvedEffects, null);
+        this(spellFilter, resolvedEffects, null, null);
+    }
+
+    public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost) {
+        this(spellFilter, resolvedEffects, manaCost, null);
     }
 }

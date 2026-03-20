@@ -662,10 +662,10 @@ class SpellCastTriggerCollectorServiceTest {
     class ControllerSpellCastTrigger {
 
         @Test
-        @DisplayName("puts triggered ability on stack when spell matches filter")
+        @DisplayName("puts triggered ability on stack when spell matches filter (non-targeting)")
         void putsTriggeredAbilityOnStack() {
-            Permanent perm = createPermanent("Guttersnipe");
-            var innerEffect = new DealDamageToAnyTargetEffect(2);
+            Permanent perm = createPermanent("Cabal Paladin");
+            var innerEffect = new PutCountersOnSourceEffect(1, 1, 1);
             var effect = new SpellCastTriggerEffect(null, List.of(innerEffect));
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
@@ -680,6 +680,26 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("puts targeting triggered ability into pendingSpellTargetTriggers")
+        void putsTargetingTriggeredAbilityIntoPendingQueue() {
+            Permanent perm = createPermanent("Guttersnipe");
+            var innerEffect = new DealDamageToAnyTargetEffect(2);
+            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect));
+            Card spellCard = createInstant("Lightning Bolt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(null), eq(null))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
         }
 
         @Test

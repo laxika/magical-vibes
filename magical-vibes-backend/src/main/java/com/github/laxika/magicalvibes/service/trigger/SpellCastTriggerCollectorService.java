@@ -368,6 +368,7 @@ public class SpellCastTriggerCollectorService {
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
         boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
+        boolean needsTargeting = resolved.stream().anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
 
         if (match.rawEffect() instanceof MayEffect may) {
             match.gameData().pendingMayAbilities.add(new PendingMayAbility(
@@ -377,6 +378,13 @@ public class SpellCastTriggerCollectorService {
                     match.permanent().getCard().getName() + " — " + may.prompt(),
                     null,
                     trigger.manaCost()));
+        } else if (needsTargeting) {
+            match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    match.permanent().getCard(), match.controllerId(), resolved, false, trigger.targetFilter()
+            ));
+            String logEntry = match.permanent().getCard().getName()
+                    + "'s triggered ability triggers — choose a target.";
+            gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
         } else {
             StackEntry entry = selfTarget
                     ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
