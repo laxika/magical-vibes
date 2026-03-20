@@ -170,6 +170,8 @@ public class GameData {
     public boolean pendingDestroyRestMode;
     /** Creature IDs chosen to be kept (protected from destruction) during a destroy-rest flow. */
     public final List<UUID> pendingDestroyRestProtectedIds = Collections.synchronizedList(new ArrayList<>());
+    /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
+    public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     /** Name of the card that initiated the destroy-rest flow (for logging). */
     public String pendingDestroyRestSourceName;
     public boolean pendingAwakeningCounterPlacement;
@@ -441,6 +443,7 @@ public class GameData {
         copy.pendingDestroyRestMode = this.pendingDestroyRestMode;
         copy.pendingDestroyRestProtectedIds.addAll(this.pendingDestroyRestProtectedIds);
         copy.pendingDestroyRestSourceName = this.pendingDestroyRestSourceName;
+        copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
         copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
         copy.pendingPileSeparation = this.pendingPileSeparation;

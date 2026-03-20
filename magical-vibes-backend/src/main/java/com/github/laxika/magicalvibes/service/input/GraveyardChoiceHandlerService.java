@@ -21,7 +21,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,7 @@ public class GraveyardChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final LifeResolutionService lifeResolutionService;
     private final ExileService exileService;
+    private final GraveyardReturnResolutionService graveyardReturnResolutionService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
@@ -80,7 +83,13 @@ public class GraveyardChoiceHandlerService {
             if (destination == GraveyardChoiceDestination.EXILE) {
                 throw new IllegalStateException("Cannot decline forced graveyard exile");
             }
-            // Player declined
+            // Player declined — if this is part of a "each player returns" flow, skip remaining
+            // picks for this player by removing queued entries for the same player from the front
+            UUID decliningPlayerId = playerId;
+            while (!gameData.pendingGraveyardReturnQueue.isEmpty()
+                    && gameData.pendingGraveyardReturnQueue.getFirst().playerId().equals(decliningPlayerId)) {
+                gameData.pendingGraveyardReturnQueue.removeFirst();
+            }
             String logEntry = player.getUsername() + " chooses not to return a card.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to return a card from graveyard", gameData.id, player.getUsername());
@@ -177,6 +186,12 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
             }
+        }
+
+        // Check if there are more "each player returns" graveyard choices queued
+        if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
+            graveyardReturnResolutionService.beginNextGraveyardReturnFromQueue(gameData);
+            return;
         }
 
         turnProgressionService.resolveAutoPass(gameData);

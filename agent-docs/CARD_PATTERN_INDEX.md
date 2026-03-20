@@ -466,3 +466,4 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference Card | Key Code |
 |---------|-----------|-------|
 | 3-chapter Saga with damage/life/token | `c/ChainersTorment.java` | SAGA_CHAPTER_I/II: DealDamageToEachOpponentEffect(2) + GainLifeEffect(2). SAGA_CHAPTER_III: CreateTokenFromHalfLifeTotalAndDealDamageEffect. Lore counters auto-managed: ETB adds 1st in StackResolutionService, precombat main adds subsequent in StepTriggerService. Sacrifice SBA in StateBasedActionService when lore >= final chapter and no chapter ability on stack |
+| 3-chapter Saga with mass destruction + graveyard return | `f/FallOfTheThran.java` | SAGA_CHAPTER_I: DestroyAllPermanentsEffect(PermanentIsLandPredicate). SAGA_CHAPTER_II/III: EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(2, CardTypePredicate(LAND)). Each player returns up to 2 lands; auto-returns when ≤ maxCount, queues graveyard choices when > maxCount |

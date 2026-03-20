@@ -22,7 +22,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
@@ -1415,5 +1417,101 @@ public class GraveyardReturnResolutionService {
         gameData.interaction.setGraveyardChoiceExileRemainingCount(remainingCount);
 
         playerInputService.beginGraveyardChoice(gameData, playerId, validIndices, "Choose a card to exile from your graveyard.");
+    }
+
+    /**
+     * Resolves an {@link EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect}. Each player
+     * returns up to {@code maxCount} matching cards from their graveyard to the battlefield.
+     * If a player has fewer matching cards than {@code maxCount}, all are returned automatically.
+     * If a player has more, they are prompted to choose via the graveyard choice queue.
+     */
+    @HandlesEffect(EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.class)
+    void resolveEachPlayerReturnsCardsFromGraveyardToBattlefield(GameData gameData, StackEntry entry,
+                                                                  EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect effect) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null || graveyard.isEmpty()) {
+                continue;
+            }
+
+            List<Card> matching = new ArrayList<>();
+            for (Card card : graveyard) {
+                if (gameQueryService.matchesCardPredicate(card, effect.filter(), null)) {
+                    matching.add(card);
+                }
+            }
+
+            if (matching.isEmpty()) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " has no " + filterLabel + "s in their graveyard.");
+                continue;
+            }
+
+            if (matching.size() <= effect.maxCount()) {
+                // Auto-return all matching cards — no choice needed
+                List<String> returnedNames = new ArrayList<>();
+                for (Card card : matching) {
+                    graveyard.remove(card);
+                    putCardOntoBattlefield(gameData, playerId, card);
+                    returnedNames.add(card.getName());
+                }
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " returns " + String.join(", ", returnedNames)
+                                + " from graveyard to the battlefield.");
+            } else {
+                // Player must choose — add to queue
+                gameData.pendingGraveyardReturnQueue.add(
+                        new PendingGraveyardReturnChoice(playerId, effect.maxCount(), effect.filter()));
+            }
+        }
+
+        if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
+            beginNextGraveyardReturnFromQueue(gameData);
+        }
+    }
+
+    /**
+     * Pops the next entry from the graveyard return queue and prompts that player to choose
+     * a card to return from their graveyard. Does nothing if the queue is empty.
+     */
+    public void beginNextGraveyardReturnFromQueue(GameData gameData) {
+        if (gameData.pendingGraveyardReturnQueue.isEmpty()) {
+            return;
+        }
+
+        PendingGraveyardReturnChoice next = gameData.pendingGraveyardReturnQueue.removeFirst();
+        List<Card> graveyard = gameData.playerGraveyards.get(next.playerId());
+        if (graveyard == null || graveyard.isEmpty()) {
+            // Player's graveyard is empty — skip to next
+            beginNextGraveyardReturnFromQueue(gameData);
+            return;
+        }
+
+        List<Integer> matchingIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (gameQueryService.matchesCardPredicate(graveyard.get(i), next.filter(), null)) {
+                matchingIndices.add(i);
+            }
+        }
+
+        if (matchingIndices.isEmpty()) {
+            // No matching cards left — skip to next
+            beginNextGraveyardReturnFromQueue(gameData);
+            return;
+        }
+
+        // Re-enqueue with decremented remaining count if the player has more picks after this one
+        if (next.remainingCount() > 1) {
+            gameData.pendingGraveyardReturnQueue.addFirst(
+                    new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter()));
+        }
+
+        String filterLabel = CardPredicateUtils.describeFilter(next.filter());
+        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.BATTLEFIELD, null);
+        playerInputService.beginGraveyardChoice(gameData, next.playerId(), matchingIndices,
+                "Return a " + filterLabel + " from your graveyard to the battlefield.");
     }
 }
