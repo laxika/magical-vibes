@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
@@ -217,6 +218,8 @@ public class EffectResolutionService {
                     isNoSpellsCastLastTurn(gameData);
             case TwoOrMoreSpellsCastLastTurnConditionalEffect ignored ->
                     isTwoOrMoreSpellsCastLastTurn(gameData);
+            case AttacksAloneConditionalEffect ignored ->
+                    isAttackingAlone(gameData, entry);
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;
@@ -326,5 +329,13 @@ public class EffectResolutionService {
 
     private boolean isTwoOrMoreSpellsCastLastTurn(GameData gameData) {
         return gameData.spellsCastLastTurn.values().stream().anyMatch(count -> count >= 2);
+    }
+
+    private boolean isAttackingAlone(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        long attackingCount = battlefield.stream().filter(Permanent::isAttacking).count();
+        return attackingCount == 1;
     }
 }

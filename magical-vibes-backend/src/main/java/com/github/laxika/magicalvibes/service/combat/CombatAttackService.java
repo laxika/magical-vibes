@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
@@ -246,44 +247,51 @@ public class CombatAttackService {
             if (!attacker.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
                 List<CardEffect> allEffects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACK));
 
-                // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
-                // effects that need the normal resolution path (mandatory effects and targeting may effects
-                // like Cyclops Gladiator's may-fight).
-                List<CardEffect> nonTargetingMayEffects = allEffects.stream()
-                        .filter(e -> e instanceof com.github.laxika.magicalvibes.model.effect.MayEffect
-                                && !e.canTargetPermanent() && !e.canTargetPlayer()).toList();
-                List<CardEffect> otherEffects = allEffects.stream()
-                        .filter(e -> !nonTargetingMayEffects.contains(e)).toList();
-
-                // Queue non-targeting may effects as pending may abilities
-                for (CardEffect effect : nonTargetingMayEffects) {
-                    com.github.laxika.magicalvibes.model.effect.MayEffect may =
-                            (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
-                    gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId());
+                // Filter out AttacksAloneConditionalEffect when not attacking alone (CR 506.5)
+                if (attackerIndices.size() != 1) {
+                    allEffects.removeIf(e -> e instanceof AttacksAloneConditionalEffect);
                 }
 
-                if (!otherEffects.isEmpty()) {
-                    boolean needsTarget = otherEffects.stream().anyMatch(CardEffect::canTargetPermanent);
-                    if (needsTarget) {
-                        gameData.pendingAttackTriggerTargets.add(
-                                new PermanentChoiceContext.AttackTriggerTarget(
-                                        attacker.getCard(), playerId, otherEffects, attacker.getId()));
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                attacker.getCard(),
-                                playerId,
-                                attacker.getCard().getName() + "'s attack trigger",
-                                otherEffects,
-                                null,
-                                attacker.getId()
-                        ));
+                if (!allEffects.isEmpty()) {
+                    // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
+                    // effects that need the normal resolution path (mandatory effects and targeting may effects
+                    // like Cyclops Gladiator's may-fight).
+                    List<CardEffect> nonTargetingMayEffects = allEffects.stream()
+                            .filter(e -> e instanceof com.github.laxika.magicalvibes.model.effect.MayEffect
+                                    && !e.canTargetPermanent() && !e.canTargetPlayer()).toList();
+                    List<CardEffect> otherEffects = allEffects.stream()
+                            .filter(e -> !nonTargetingMayEffects.contains(e)).toList();
+
+                    // Queue non-targeting may effects as pending may abilities
+                    for (CardEffect effect : nonTargetingMayEffects) {
+                        com.github.laxika.magicalvibes.model.effect.MayEffect may =
+                                (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
+                        gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId());
                     }
-                }
 
-                String triggerLog = attacker.getCard().getName() + "'s attack ability triggers.";
-                gameData.gameLog.add(triggerLog);
-                log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                    if (!otherEffects.isEmpty()) {
+                        boolean needsTarget = otherEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+                        if (needsTarget) {
+                            gameData.pendingAttackTriggerTargets.add(
+                                    new PermanentChoiceContext.AttackTriggerTarget(
+                                            attacker.getCard(), playerId, otherEffects, attacker.getId()));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    attacker.getCard(),
+                                    playerId,
+                                    attacker.getCard().getName() + "'s attack trigger",
+                                    otherEffects,
+                                    null,
+                                    attacker.getId()
+                            ));
+                        }
+                    }
+
+                    String triggerLog = attacker.getCard().getName() + "'s attack ability triggers.";
+                    gameData.gameLog.add(triggerLog);
+                    log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                }
             }
 
             // Check for aura-based "when enchanted creature attacks" triggers
