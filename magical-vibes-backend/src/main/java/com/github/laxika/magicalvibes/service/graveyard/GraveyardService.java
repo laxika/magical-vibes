@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGr
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -66,11 +67,11 @@ public class GraveyardService {
         int cardsToMill = Math.min(count, deck.size());
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
-        List<Card> creatureCardsEnteredGraveyard = new ArrayList<>();
+        List<Card> cardsEnteredGraveyard = new ArrayList<>();
         for (Card card : milledCards) {
             boolean entered = addCardToGraveyard(gameData, targetPlayerId, card);
-            if (entered && card.hasType(CardType.CREATURE)) {
-                creatureCardsEnteredGraveyard.add(card);
+            if (entered) {
+                cardsEnteredGraveyard.add(card);
             }
         }
         String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -79,8 +80,32 @@ public class GraveyardService {
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
 
         // Fire creature-card-milled triggers (e.g. Undead Alchemist)
-        for (Card creatureCard : creatureCardsEnteredGraveyard) {
-            triggerCollectionService.checkCreatureCardMilledTriggers(gameData, targetPlayerId, creatureCard);
+        for (Card card : cardsEnteredGraveyard) {
+            if (card.hasType(CardType.CREATURE)) {
+                triggerCollectionService.checkCreatureCardMilledTriggers(gameData, targetPlayerId, card);
+            }
+        }
+
+        // Fire self-mill triggers (e.g. Gaea's Blessing — "When ~ is put into your graveyard
+        // from your library, shuffle your graveyard into your library.")
+        for (Card card : cardsEnteredGraveyard) {
+            for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_MILLED)) {
+                if (effect instanceof ShuffleGraveyardIntoLibraryEffect) {
+                    List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+                    int graveyardCount = graveyard.size();
+                    if (graveyardCount > 0) {
+                        deck.addAll(graveyard);
+                        graveyard.clear();
+                        LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+                        String shuffleLog = card.getName() + " was milled — " + playerName
+                                + " shuffles their graveyard (" + graveyardCount
+                                + " card" + (graveyardCount != 1 ? "s" : "") + ") into their library.";
+                        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+                        log.info("Game {} - {} self-mill trigger: {} shuffles graveyard ({} cards) into library",
+                                gameData.id, card.getName(), playerName, graveyardCount);
+                    }
+                }
+            }
         }
     }
 

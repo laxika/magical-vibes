@@ -471,7 +471,7 @@ Pass `null` as filter to allow any card.
 | `EachPlayerNameCardRevealTopEffect` | `()` | each player names a card, then each reveals top card — match goes to hand, mismatch goes to bottom (ON_ATTACK trigger, Conundrum Sphinx) |
 | `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |
-| `ShuffleGraveyardIntoLibraryEffect` | `()` | shuffle graveyard into library |
+| `ShuffleGraveyardIntoLibraryEffect` | `()` | shuffle graveyard into library. As SPELL: targets a player (`canTargetPlayer()=true`), shuffles target player's graveyard. As ON_SELF_MILLED: triggers when this card is milled from library, shuffles owner's graveyard into their library (e.g. Gaea's Blessing) |
 | `ShuffleSelfAndGraveyardIntoLibraryEffect` | `()` | shuffle source permanent and controller's graveyard into library |
 | `ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect` | `(String cardName)` | shuffle source permanent into owner's library, then reveal cards until finding one with the given name — found card goes to battlefield under owner's control, all other revealed cards go to owner's graveyard |
 | `ShuffleLibraryEffect` | `()` | shuffle controller's library (no cards moved) — used with MayEffect for "you may shuffle" |
