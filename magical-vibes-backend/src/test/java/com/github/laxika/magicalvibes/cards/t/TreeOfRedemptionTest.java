@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithCreatureStatEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ class TreeOfRedemptionTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(ExchangeLifeTotalWithToughnessEffect.class);
+                .isInstanceOf(ExchangeLifeTotalWithCreatureStatEffect.class);
     }
 
     // ===== Exchange behavior =====

@@ -112,6 +112,11 @@ public class Permanent {
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  For transient subtype grants from static effects, see {@link #transientSubtypes}. */
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
+    /** When true, the creature's base power has been permanently overridden (e.g. by an exchange effect
+     *  like Evra, Halcyon Witness). NOT cleared by {@link #resetModifiers()} — survives turn resets.
+     *  Layer 7b: end-of-turn overrides still take priority (later timestamp). */
+    @Setter private boolean basePowerOverriddenPermanently;
+    @Setter private int permanentBasePowerOverride;
     /** When true, the creature's base toughness has been permanently overridden (e.g. by an exchange effect
      *  like Tree of Redemption). NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  Layer 7b: end-of-turn overrides still take priority (later timestamp). */
@@ -202,6 +207,8 @@ public class Permanent {
         this.markedDamage = source.markedDamage;
         this.grantedColors.addAll(source.grantedColors);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
+        this.basePowerOverriddenPermanently = source.basePowerOverriddenPermanently;
+        this.permanentBasePowerOverride = source.permanentBasePowerOverride;
         this.baseToughnessOverriddenPermanently = source.baseToughnessOverriddenPermanently;
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
         this.transformed = source.transformed;
@@ -299,6 +306,9 @@ public class Permanent {
         if (basePowerToughnessOverriddenUntilEndOfTurn) {
             // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
             basePower = basePowerOverride;
+        } else if (basePowerOverriddenPermanently) {
+            // Layer 7b: permanent power override (e.g. Evra, Halcyon Witness exchange)
+            basePower = permanentBasePowerOverride;
         } else if (animatedUntilEndOfTurn) {
             basePower = animatedPower;
         } else if (permanentlyAnimated) {

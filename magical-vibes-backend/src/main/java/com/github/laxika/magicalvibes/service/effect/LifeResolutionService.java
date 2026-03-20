@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithCreatureStatEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetPlayersLifeTotalsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeAndControllerGainsLifeLostEffect;
@@ -469,10 +469,12 @@ public class LifeResolutionService {
                 gameData.id, nameA, nameB, lifeA, newLifeA, lifeB, newLifeB);
     }
 
-    @HandlesEffect(ExchangeLifeTotalWithToughnessEffect.class)
-    void resolveExchangeLifeTotalWithToughness(GameData gameData, StackEntry entry) {
+    @HandlesEffect(ExchangeLifeTotalWithCreatureStatEffect.class)
+    void resolveExchangeLifeTotalWithCreatureStat(GameData gameData, StackEntry entry, ExchangeLifeTotalWithCreatureStatEffect effect) {
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
+        boolean usePower = effect.stat() == ExchangeLifeTotalWithCreatureStatEffect.Stat.POWER;
+        String statName = usePower ? "power" : "toughness";
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
@@ -480,8 +482,10 @@ public class LifeResolutionService {
             return;
         }
 
-        // CR 701.10e: player's new life = creature's current effective toughness
-        int currentToughness = gameQueryService.getEffectiveToughness(gameData, source);
+        // CR 701.10e: player's new life = creature's current effective stat
+        int currentStat = usePower
+                ? gameQueryService.getEffectivePower(gameData, source)
+                : gameQueryService.getEffectiveToughness(gameData, source);
         int currentLife = gameData.getLife(controllerId);
 
         // CR 118.7: if the player's life total can't change, the exchange doesn't occur
@@ -491,16 +495,16 @@ public class LifeResolutionService {
             return;
         }
 
-        if (currentLife == currentToughness) {
+        if (currentLife == currentStat) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + " exchanges life total with " + source.getCard().getName()
-                            + "'s toughness (both at " + currentLife + ").");
+                            + "'s " + statName + " (both at " + currentLife + ").");
             return;
         }
 
         // Check if the life portion of the exchange is blocked by can't-gain-life
-        boolean lifeWouldIncrease = currentToughness > currentLife;
+        boolean lifeWouldIncrease = currentStat > currentLife;
         if (lifeWouldIncrease && !gameQueryService.canPlayerGainLife(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life. Exchange doesn't occur.");
@@ -510,24 +514,29 @@ public class LifeResolutionService {
         String playerName = gameData.playerIdToName.get(controllerId);
         gameBroadcastService.logAndBroadcast(gameData,
                 playerName + " exchanges life total with " + source.getCard().getName()
-                        + "'s toughness (" + playerName + ": " + currentLife + " -> " + currentToughness
-                        + ", " + source.getCard().getName() + " toughness: " + currentToughness + " -> " + currentLife + ").");
+                        + "'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat
+                        + ", " + source.getCard().getName() + " " + statName + ": " + currentStat + " -> " + currentLife + ").");
 
-        // Set player's life total to the creature's toughness
-        gameData.playerLifeTotals.put(controllerId, currentToughness);
-        if (currentToughness > currentLife) {
-            triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, currentToughness - currentLife);
+        // Set player's life total to the creature's stat
+        gameData.playerLifeTotals.put(controllerId, currentStat);
+        if (currentStat > currentLife) {
+            triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, currentStat - currentLife);
         } else {
-            triggerCollectionService.checkLifeLossTriggers(gameData, controllerId, currentLife - currentToughness);
+            triggerCollectionService.checkLifeLossTriggers(gameData, controllerId, currentLife - currentStat);
         }
 
-        // Set creature's base toughness to the player's former life total (layer 7b setting effect, CR 613.4b)
-        source.setBaseToughnessOverriddenPermanently(true);
-        source.setPermanentBaseToughnessOverride(currentLife);
+        // Set creature's base stat to the player's former life total (layer 7b setting effect, CR 613.4b)
+        if (usePower) {
+            source.setBasePowerOverriddenPermanently(true);
+            source.setPermanentBasePowerOverride(currentLife);
+        } else {
+            source.setBaseToughnessOverriddenPermanently(true);
+            source.setPermanentBaseToughnessOverride(currentLife);
+        }
 
-        log.info("Game {} - {} exchanges life ({} -> {}) with {}'s toughness ({} -> {})",
-                gameData.id, playerName, currentLife, currentToughness,
-                source.getCard().getName(), currentToughness, currentLife);
+        log.info("Game {} - {} exchanges life ({} -> {}) with {}'s {} ({} -> {})",
+                gameData.id, playerName, currentLife, currentStat,
+                source.getCard().getName(), statName, currentStat, currentLife);
     }
 
     @HandlesEffect(EnchantedCreatureControllerLosesLifeEffect.class)
