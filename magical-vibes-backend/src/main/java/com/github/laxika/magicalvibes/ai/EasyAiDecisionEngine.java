@@ -124,6 +124,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Select sacrifice target if the spell has a sacrifice cost
+        UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
+
         // Calculate X value and tap mana sources
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = null;
@@ -147,8 +150,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
+        final UUID finalSacrificePermanentId = sacrificePermanentId;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {

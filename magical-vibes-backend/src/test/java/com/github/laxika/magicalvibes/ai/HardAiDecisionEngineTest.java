@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -155,6 +158,50 @@ class HardAiDecisionEngineTest {
 
         // AI should not cast — no artifact to sacrifice
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Sacrifice cost spell casting =====
+
+    @Test
+    @DisplayName("Hard AI casts Vivisection by sacrificing weakest creature")
+    void castsVivisectionSacrificingWeakestCreature() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        for (int i = 0; i < 4; i++) {
+            Permanent island = new Permanent(new Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(island);
+        }
+
+        Permanent elves = new Permanent(new LlanowarElves()); // 1/1 — should be sacrificed
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(elves);
+
+        Permanent angel = new Permanent(new SerraAngel()); // 4/4 — should survive
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel);
+
+        harness.setHand(player1, List.of(new Vivisection()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vivisection");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Serra Angel");
     }
 
     // ===== Creature mana restriction =====

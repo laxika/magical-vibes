@@ -125,6 +125,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     }
                 }
 
+                // Select sacrifice target if the spell has a sacrifice cost
+                UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
+
                 ManaCost castCost = new ManaCost(card.getManaCost());
                 Integer xValue = null;
                 var tapAction = tapPermanentAction();
@@ -148,8 +151,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 final UUID targetId = card.isNeedsDamageDistribution() ? null : pc.targetId();
                 final Integer finalXValue = xValue;
                 final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
+                final UUID finalSacrificePermanentId = sacrificePermanentId;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null)));
                 // Verify the spell was actually cast — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 if (hand.size() >= handSizeBefore) {
@@ -223,6 +227,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Select sacrifice target if the spell has a sacrifice cost
+        UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
+
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = null;
         IntConsumer tapAction = tapPermanentAction();
@@ -248,8 +255,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
+        final UUID finalSacrificePermanentId = sacrificePermanentId;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {

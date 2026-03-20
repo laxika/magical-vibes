@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
@@ -161,6 +164,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
+            // Select sacrifice target if the spell has a sacrifice cost
+            UUID sacrificePermanentId = selectRandomSacrificeTarget(gameData, card);
+
             // Calculate X value and tap mana sources
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = null;
@@ -185,8 +191,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;
             final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
+            final UUID finalSacrificePermanentId = sacrificePermanentId;
             send(() -> messageHandler.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, finalExileGraveyardCardIndex, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, null, null)));
 
             if (hand.size() >= handSizeBefore) {
                 log.warn("Random AI: PlayCard failed silently in game {}", gameId);
@@ -225,6 +232,35 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return null;
         }
         return validIndices.get(rng.nextInt(validIndices.size()));
+    }
+
+    // ===== Random Sacrifice Target Selection =====
+
+    /**
+     * Selects a random valid permanent to sacrifice for the card's sacrifice cost.
+     * Returns null if the card has no sacrifice cost.
+     */
+    private UUID selectRandomSacrificeTarget(GameData gameData, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof SacrificeCreatureCost) {
+                List<Permanent> creatures = battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .toList();
+                return creatures.isEmpty() ? null : creatures.get(rng.nextInt(creatures.size())).getId();
+            } else if (effect instanceof SacrificeArtifactCost) {
+                List<Permanent> artifacts = battlefield.stream()
+                        .filter(p -> gameQueryService.isArtifact(gameData, p))
+                        .toList();
+                return artifacts.isEmpty() ? null : artifacts.get(rng.nextInt(artifacts.size())).getId();
+            } else if (effect instanceof SacrificePermanentCost sacCost) {
+                List<Permanent> matching = battlefield.stream()
+                        .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .toList();
+                return matching.isEmpty() ? null : matching.get(rng.nextInt(matching.size())).getId();
+            }
+        }
+        return null;
     }
 
     // ===== Random Target Selection =====

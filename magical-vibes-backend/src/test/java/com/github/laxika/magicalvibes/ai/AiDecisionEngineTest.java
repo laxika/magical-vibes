@@ -13,12 +13,15 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.InfernalPlunge;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.u.UnburialRites;
+import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -166,6 +169,75 @@ class AiDecisionEngineTest {
         // Should skip KuldothaRebirth (no artifact) and cast GrizzlyBears
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    // ===== selectSacrificeTarget =====
+
+    @Test
+    @DisplayName("selectSacrificeTarget picks weakest creature for SacrificeCreatureCost")
+    void selectSacrificeTargetPicksWeakestCreature() {
+        Permanent elves = new Permanent(new LlanowarElves()); // 1/1
+        Permanent bears = new Permanent(new GrizzlyBears()); // 2/2
+        Permanent angel = new Permanent(new SerraAngel()); // 4/4
+        gd.playerBattlefields.get(aiPlayer.getId()).addAll(List.of(elves, bears, angel));
+
+        var result = ai.selectSacrificeTarget(gd, new Vivisection());
+
+        assertThat(result).isEqualTo(elves.getId());
+    }
+
+    @Test
+    @DisplayName("selectSacrificeTarget returns null for card with no sacrifice cost")
+    void selectSacrificeTargetReturnsNullForNoCost() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        var result = ai.selectSacrificeTarget(gd, new GrizzlyBears());
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @DisplayName("selectSacrificeTarget returns null when no creature available")
+    void selectSacrificeTargetReturnsNullWhenNoCreature() {
+        var result = ai.selectSacrificeTarget(gd, new Vivisection());
+
+        assertThat(result).isNull();
+    }
+
+    // ===== AI casts sacrifice-cost spell end-to-end =====
+
+    @Test
+    @DisplayName("AI casts Vivisection by sacrificing weakest creature")
+    void castsVivisectionSacrificingWeakestCreature() {
+        giveAiPriority();
+
+        // Give AI Islands for Vivisection's {3}{U} cost
+        for (int i = 0; i < 4; i++) {
+            Permanent island = new Permanent(new com.github.laxika.magicalvibes.cards.i.Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(island);
+        }
+
+        Permanent elves = new Permanent(new LlanowarElves()); // 1/1 — should be sacrificed
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elves);
+
+        Permanent angel = new Permanent(new SerraAngel()); // 4/4 — should survive
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(angel);
+
+        harness.setHand(aiPlayer, List.of(new Vivisection()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Vivisection should be on the stack
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vivisection");
+        // Llanowar Elves should have been sacrificed (weakest creature)
+        harness.assertNotOnBattlefield(aiPlayer, "Llanowar Elves");
+        // Serra Angel should still be on the battlefield
+        harness.assertOnBattlefield(aiPlayer, "Serra Angel");
     }
 
     // ===== Detrimental aura targeting =====

@@ -3,11 +3,15 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -249,6 +253,37 @@ class MediumAiDecisionEngineTest {
 
         // AI should not cast — no artifact to sacrifice
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Sacrifice cost spell casting =====
+
+    @Test
+    @DisplayName("Medium AI casts Vivisection by sacrificing weakest creature")
+    void castsVivisectionSacrificingWeakestCreature() {
+        giveAiPriority();
+
+        for (int i = 0; i < 4; i++) {
+            Permanent island = new Permanent(new Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(island);
+        }
+
+        Permanent elves = new Permanent(new LlanowarElves()); // 1/1 — should be sacrificed
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elves);
+
+        Permanent angel = new Permanent(new SerraAngel()); // 4/4 — should survive
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(angel);
+
+        harness.setHand(aiPlayer, List.of(new Vivisection()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vivisection");
+        harness.assertNotOnBattlefield(aiPlayer, "Llanowar Elves");
+        harness.assertOnBattlefield(aiPlayer, "Serra Angel");
     }
 
     // ===== Must-attack =====

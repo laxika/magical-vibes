@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
@@ -328,6 +329,39 @@ public abstract class AiDecisionEngine {
             }
         }
         return true;
+    }
+
+    /**
+     * Selects a permanent to sacrifice for the card's sacrifice cost, if any.
+     * Picks the weakest creature (lowest effective power + toughness) for creature
+     * sacrifice costs, or the first matching permanent for other sacrifice types.
+     * Returns null if the card has no sacrifice cost.
+     */
+    protected UUID selectSacrificeTarget(GameData gameData, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof SacrificeCreatureCost) {
+                return battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .min(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
+                                + gameQueryService.getEffectiveToughness(gameData, p)))
+                        .map(Permanent::getId)
+                        .orElse(null);
+            } else if (effect instanceof SacrificeArtifactCost) {
+                return battlefield.stream()
+                        .filter(p -> gameQueryService.isArtifact(gameData, p))
+                        .findFirst()
+                        .map(Permanent::getId)
+                        .orElse(null);
+            } else if (effect instanceof SacrificePermanentCost sacCost) {
+                return battlefield.stream()
+                        .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .findFirst()
+                        .map(Permanent::getId)
+                        .orElse(null);
+            }
+        }
+        return null;
     }
 
     protected IntConsumer tapPermanentAction() {

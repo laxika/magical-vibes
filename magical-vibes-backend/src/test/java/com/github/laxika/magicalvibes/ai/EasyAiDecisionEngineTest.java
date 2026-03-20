@@ -188,6 +188,77 @@ class EasyAiDecisionEngineTest {
         verify(messageHandler).handlePassPriority(any(), any());
     }
 
+    // ===== Sacrifice cost passes sacrificePermanentId =====
+
+    @Test
+    @DisplayName("Easy AI passes sacrificePermanentId in PlayCardRequest for sacrifice-cost spell")
+    void passesSacrificePermanentIdInPlayCardRequest() throws Exception {
+        Card sacrificeSpell = new Card();
+        sacrificeSpell.setName("Test Sac Spell");
+        sacrificeSpell.setType(CardType.SORCERY);
+        sacrificeSpell.setManaCost("{R}");
+        sacrificeSpell.addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        gd.playerHands.get(aiPlayer.getId()).add(sacrificeSpell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+
+        // Add a creature to sacrifice
+        Card creatureCard = new Card();
+        creatureCard.setName("Sacrifice Fodder");
+        creatureCard.setType(CardType.CREATURE);
+        creatureCard.setPower(1);
+        creatureCard.setToughness(1);
+        Permanent creature = new Permanent(creatureCard);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
+
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+        Mockito.lenient().when(gameQueryService.getEffectivePower(gd, creature)).thenReturn(1);
+        Mockito.lenient().when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(1);
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        assertThat(request.sacrificePermanentId()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Easy AI passes null sacrificePermanentId for spells without sacrifice cost")
+    void passesNullSacrificePermanentIdForNormalSpell() throws Exception {
+        Card creature = new Card();
+        creature.setName("Test Bear");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{1}{G}");
+        creature.setPower(2);
+        creature.setToughness(2);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.GREEN, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        assertThat(request.sacrificePermanentId()).isNull();
+    }
+
     // ===== tryCastSpell silent failure recovery =====
 
     @Test
