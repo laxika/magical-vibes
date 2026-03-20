@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedCondit
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
@@ -233,6 +234,8 @@ public class EffectResolutionService {
                 Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 yield target != null && target.getCard().getSubtypes().contains(tsre.subtype());
             }
+            case KickerReplacementEffect ignored ->
+                    entry.isKicked();
             default -> {
                 log.warn("Unknown replacement conditional effect type: {}", replacement.getClass().getSimpleName());
                 yield false;

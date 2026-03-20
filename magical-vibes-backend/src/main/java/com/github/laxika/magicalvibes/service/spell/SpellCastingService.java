@@ -45,6 +45,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -625,6 +627,31 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, null,
                         null, null, null, List.of(), List.of()
                 ));
+            } else if (kicked && damageAssignments != null && !damageAssignments.isEmpty()
+                    && findKickedDividedDamageEffect(filteredSpellEffects) != null) {
+                // Kicked spell with divided damage among any targets (e.g. Fight with Fire)
+                DealDividedDamageAmongAnyTargetsEffect dividedEffect = findKickedDividedDamageEffect(filteredSpellEffects);
+                int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
+                if (totalDamage != dividedEffect.totalDamage()) {
+                    throw new IllegalStateException("Damage assignments must sum to " + dividedEffect.totalDamage());
+                }
+                for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                    UUID target = assignment.getKey();
+                    boolean isPlayer = gameData.playerIds.contains(target);
+                    if (!isPlayer) {
+                        Permanent perm = gameQueryService.findPermanentById(gameData, target);
+                        if (perm == null) {
+                            throw new IllegalStateException("Invalid target");
+                        }
+                    }
+                    if (assignment.getValue() <= 0) {
+                        throw new IllegalStateException("Each damage assignment must be positive");
+                    }
+                }
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, resolvedXValue, null, damageAssignments
+                ));
             } else if (card.isNeedsDamageDistribution()) {
                 // Validate damage assignments for damage distribution spells
                 if (damageAssignments == null || damageAssignments.isEmpty()) {
@@ -1195,6 +1222,16 @@ public class SpellCastingService {
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana.");
         }
+    }
+
+    private DealDividedDamageAmongAnyTargetsEffect findKickedDividedDamageEffect(List<CardEffect> effects) {
+        for (CardEffect e : effects) {
+            if (e instanceof KickerReplacementEffect kre
+                    && kre.kickedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect ddae) {
+                return ddae;
+            }
+        }
+        return null;
     }
 
     private KickerEffect findKickerEffect(Card card) {
