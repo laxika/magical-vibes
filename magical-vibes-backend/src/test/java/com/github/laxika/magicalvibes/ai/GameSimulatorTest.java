@@ -51,6 +51,49 @@ class GameSimulatorTest {
     }
 
     @Test
+    @DisplayName("Legal actions exclude requiresCreatureMana card when only land mana available")
+    void legalActionsExcludeCreatureManaCardWithLandMana() {
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        // Only pass — Myr Superion not castable without creature mana
+        assertThat(actions).noneMatch(a -> a instanceof SimulationAction.PlayCard);
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PassPriority);
+    }
+
+    @Test
+    @DisplayName("Legal actions include requiresCreatureMana card when creature mana dorks available")
+    void legalActionsIncludeCreatureManaCardWithCreatureMana() {
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        // Add two Llanowar Elves as creature mana sources
+        com.github.laxika.magicalvibes.model.Permanent elf1 =
+                new com.github.laxika.magicalvibes.model.Permanent(
+                        new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(elf1);
+
+        com.github.laxika.magicalvibes.model.Permanent elf2 =
+                new com.github.laxika.magicalvibes.model.Permanent(
+                        new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(elf2);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        // Should include PlayCard for Myr Superion
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard);
+    }
+
+    @Test
     @DisplayName("Legal actions in main phase with empty hand only has pass")
     void legalActionsMainPhaseEmptyHandOnlyPass() {
         harness.setHand(player1, List.of());

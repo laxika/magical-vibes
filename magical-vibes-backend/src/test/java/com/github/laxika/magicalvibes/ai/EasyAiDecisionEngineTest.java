@@ -87,6 +87,54 @@ class EasyAiDecisionEngineTest {
         return engine;
     }
 
+    // ===== Creature mana restriction =====
+
+    @Test
+    @DisplayName("Easy AI does not attempt to cast requiresCreatureMana card with only land mana")
+    void doesNotCastCreatureManaCardWithLandMana() throws Exception {
+        Card myrSuperion = new Card();
+        myrSuperion.setName("Myr Superion");
+        myrSuperion.setType(CardType.CREATURE);
+        myrSuperion.setManaCost("{2}");
+        myrSuperion.setPower(5);
+        myrSuperion.setToughness(6);
+        myrSuperion.setRequiresCreatureMana(true);
+        gd.playerHands.get(aiPlayer.getId()).add(myrSuperion);
+
+        // Only land mana available — no creature mana
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.COLORLESS, 2);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // Should NOT attempt to cast — creature mana requirement not met
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI casts requiresCreatureMana card when creature mana is available")
+    void castsCreatureManaCardWithCreatureMana() throws Exception {
+        Card myrSuperion = new Card();
+        myrSuperion.setName("Myr Superion");
+        myrSuperion.setType(CardType.CREATURE);
+        myrSuperion.setManaCost("{2}");
+        myrSuperion.setPower(5);
+        myrSuperion.setToughness(6);
+        myrSuperion.setRequiresCreatureMana(true);
+        gd.playerHands.get(aiPlayer.getId()).add(myrSuperion);
+
+        // Creature mana available
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.COLORLESS, 2);
+        pool.addCreatureMana(ManaColor.COLORLESS, 2);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // Should attempt to cast — creature mana requirement met
+        verify(messageHandler).handlePlayCard(any(), any());
+    }
+
     // ===== tryCastSpell silent failure recovery =====
 
     @Test

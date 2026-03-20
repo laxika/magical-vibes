@@ -35,9 +35,8 @@ class AiManaManager {
         ManaPool current = gameData.playerManaPools.get(aiPlayerId);
         if (current != null) {
             for (ManaColor color : ManaColor.values()) {
-                for (int i = 0; i < current.get(color); i++) {
-                    virtual.add(color);
-                }
+                virtual.add(color, current.get(color));
+                virtual.addCreatureMana(color, current.getCreatureMana(color));
             }
         }
 
@@ -47,15 +46,22 @@ class AiManaManager {
                 if (perm.isTapped()) {
                     continue;
                 }
-                if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
+                boolean isCreature = gameQueryService.isCreature(gameData, perm);
+                if (isCreature && perm.isSummoningSick()
                         && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                     continue;
                 }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect manaEffect) {
                         virtual.add(manaEffect.color(), manaEffect.amount());
+                        if (isCreature) {
+                            virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                        }
                     } else if (effect instanceof AwardAnyColorManaEffect) {
                         virtual.add(ManaColor.COLORLESS);
+                        if (isCreature) {
+                            virtual.addCreatureMana(ManaColor.COLORLESS, 1);
+                        }
                     }
                 }
             }
@@ -97,6 +103,47 @@ class AiManaManager {
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             if (cost.canPay(currentPool)) {
+                return;
+            }
+        }
+    }
+
+    void tapCreaturesForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, IntConsumer tapPermanent) {
+        ManaCost cost = new ManaCost(manaCostStr);
+        ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
+
+        if (cost.canPayCreatureOnly(currentPool)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        for (int i = 0; i < battlefield.size(); i++) {
+            Permanent perm = battlefield.get(i);
+            if (perm.isTapped()) {
+                continue;
+            }
+            if (!gameQueryService.isCreature(gameData, perm)) {
+                continue;
+            }
+            if (perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                continue;
+            }
+
+            boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+            if (!producesMana) {
+                continue;
+            }
+
+            tapPermanent.accept(i);
+
+            currentPool = gameData.playerManaPools.get(aiPlayerId);
+            if (cost.canPayCreatureOnly(currentPool)) {
                 return;
             }
         }

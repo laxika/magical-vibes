@@ -391,6 +391,9 @@ public class GameSimulator {
                         } else {
                             if (!cost.canPay(virtualPool)) continue;
                         }
+                        if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
+                            continue;
+                        }
                         // For targeted spells, try to find a target
                         UUID targetId = null;
                         if (card.isNeedsTarget() || card.isAura()) {
@@ -823,17 +826,24 @@ public class GameSimulator {
         ManaPool current = gd.playerManaPools.get(playerId);
         if (current != null) {
             for (ManaColor color : ManaColor.values()) {
-                for (int i = 0; i < current.get(color); i++) virtual.add(color);
+                virtual.add(color, current.get(color));
+                virtual.addCreatureMana(color, current.getCreatureMana(color));
             }
         }
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
         for (Permanent perm : battlefield) {
             if (perm.isTapped()) continue;
-            if (gameQueryService.isCreature(gd, perm) && perm.isSummoningSick()
+            boolean isCreature = gameQueryService.isCreature(gd, perm);
+            if (isCreature && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof AwardManaEffect me) virtual.add(me.color(), me.amount());
-                else if (effect instanceof AwardAnyColorManaEffect) virtual.add(ManaColor.COLORLESS);
+                if (effect instanceof AwardManaEffect me) {
+                    virtual.add(me.color(), me.amount());
+                    if (isCreature) virtual.addCreatureMana(me.color(), me.amount());
+                } else if (effect instanceof AwardAnyColorManaEffect) {
+                    virtual.add(ManaColor.COLORLESS);
+                    if (isCreature) virtual.addCreatureMana(ManaColor.COLORLESS, 1);
+                }
             }
         }
         return virtual;
@@ -843,6 +853,26 @@ public class GameSimulator {
         if (card.getManaCost() == null) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool currentPool = gd.playerManaPools.get(playerId);
+
+        if (card.isRequiresCreatureMana()) {
+            if (cost.canPayCreatureOnly(currentPool)) return;
+            Player player = new Player(playerId, "sim");
+            List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+            for (int i = 0; i < battlefield.size(); i++) {
+                Permanent perm = battlefield.get(i);
+                if (perm.isTapped()) continue;
+                if (!gameQueryService.isCreature(gd, perm)) continue;
+                if (perm.isSummoningSick()
+                        && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
+                boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                        .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+                if (!producesMana) continue;
+                gameService.tapPermanent(gd, player, i);
+                currentPool = gd.playerManaPools.get(playerId);
+                if (cost.canPayCreatureOnly(currentPool)) return;
+            }
+            return;
+        }
 
         boolean alreadyPaid;
         if (cost.hasX() && card.getXColorRestriction() != null) {

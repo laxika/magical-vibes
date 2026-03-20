@@ -96,6 +96,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             } else {
                 if (!cost.canPay(virtualPool)) continue;
             }
+            if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
+                continue;
+            }
 
             double value = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
             if (value > 0) {
@@ -121,11 +124,13 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        // Calculate X value and tap lands
+        // Calculate X value and tap mana sources
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = null;
         IntConsumer tapAction = tapPermanentAction();
-        if (castCost.hasX()) {
+        if (card.isRequiresCreatureMana()) {
+            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapAction);
+        } else if (castCost.hasX()) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             if (smartX <= 0) {
                 return false;

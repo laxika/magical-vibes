@@ -114,6 +114,75 @@ class HardAiDecisionEngineTest {
         assertThat(engine).isNotNull();
     }
 
+    // ===== Creature mana restriction =====
+
+    @Test
+    @DisplayName("Hard AI does not cast Myr Superion with only land mana")
+    void doesNotCastMyrSuperionWithLandMana() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // Give AI 2 Plains (land mana only)
+        for (int i = 0; i < 2; i++) {
+            Permanent plains = new Permanent(new com.github.laxika.magicalvibes.cards.p.Plains());
+            plains.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(plains);
+        }
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Myr Superion should NOT be on the stack — only land mana is available
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI casts Myr Superion when creature mana dorks are available")
+    void castsMyrSuperionWithCreatureMana() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // Add two Llanowar Elves (creature mana dorks)
+        Permanent elf1 = new Permanent(new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(elf1);
+
+        Permanent elf2 = new Permanent(new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(elf2);
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Myr Superion should be on the stack — creature mana is available from elves
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
+    }
+
     // ===== Must-attack =====
 
     @Test

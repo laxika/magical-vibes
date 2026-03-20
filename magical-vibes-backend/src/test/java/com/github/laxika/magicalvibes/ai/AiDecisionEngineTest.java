@@ -296,6 +296,68 @@ class AiDecisionEngineTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    // ===== Creature mana restriction =====
+
+    @Test
+    @DisplayName("AI does not cast Myr Superion with only land mana")
+    void doesNotCastMyrSuperionWithLandMana() {
+        giveAiPriority();
+        giveAiPlains(2);
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Myr Superion should NOT be on the stack — only land mana is available
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI casts Myr Superion when creature mana dorks are available")
+    void castsMyrSuperionWithCreatureMana() {
+        giveAiPriority();
+
+        // Add two Llanowar Elves (creature mana dorks)
+        Permanent elf1 = new Permanent(new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf1.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elf1);
+
+        Permanent elf2 = new Permanent(new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf2.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elf2);
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Myr Superion should be on the stack — creature mana from elves
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
+    }
+
+    @Test
+    @DisplayName("AI skips Myr Superion but casts normal spell when only land mana available")
+    void skipsMyrSuperionButCastsNormalSpell() {
+        giveAiPriority();
+
+        // Use Forests so GrizzlyBears ({1}{G}) is castable
+        for (int i = 0; i < 2; i++) {
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(forest);
+        }
+
+        harness.setHand(aiPlayer, List.of(
+                new com.github.laxika.magicalvibes.cards.m.MyrSuperion(),
+                new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should skip Myr Superion and cast the GrizzlyBears instead
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
     // ===== Blocker declaration =====
 
     /**

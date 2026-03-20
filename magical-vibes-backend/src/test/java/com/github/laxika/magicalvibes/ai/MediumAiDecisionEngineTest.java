@@ -182,6 +182,45 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    // ===== Creature mana restriction =====
+
+    @Test
+    @DisplayName("Medium AI does not cast Myr Superion with only land mana")
+    void doesNotCastMyrSuperionWithLandMana() {
+        giveAiPriority();
+        giveAiPlains(2);
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Myr Superion should NOT be on the stack — only land mana is available
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Myr Superion when creature mana dorks are available")
+    void castsMyrSuperionWithCreatureMana() {
+        giveAiPriority();
+
+        // Add two Llanowar Elves (creature mana dorks) to battlefield
+        Permanent elf1 = new Permanent(new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf1.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elf1);
+
+        Permanent elf2 = new Permanent(new com.github.laxika.magicalvibes.cards.l.LlanowarElves());
+        elf2.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elf2);
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Myr Superion should be on the stack — creature mana is available from elves
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
+    }
+
     // ===== Must-attack =====
 
     @Test

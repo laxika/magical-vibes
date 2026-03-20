@@ -91,6 +91,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             } else {
                 if (!cost.canPay(virtualPool)) continue;
             }
+            if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
+                continue;
+            }
             int score = scoreCard(gameData, card);
             castableSpells.add(new int[]{i, score});
         }
@@ -113,10 +116,12 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        // Calculate X value and tap lands
+        // Calculate X value and tap mana sources
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = null;
-        if (castCost.hasX()) {
+        if (card.isRequiresCreatureMana()) {
+            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapPermanentAction());
+        } else if (castCost.hasX()) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             if (smartX <= 0) {
                 return false;
