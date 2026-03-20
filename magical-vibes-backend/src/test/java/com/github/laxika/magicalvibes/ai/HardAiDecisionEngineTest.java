@@ -114,7 +114,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine engine = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         assertThat(engine).isNotNull();
     }
 
@@ -128,7 +128,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -160,7 +160,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -193,7 +193,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -231,7 +231,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -263,7 +263,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player2, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -301,6 +301,7 @@ class HardAiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
         private Player mockAiPlayer;
@@ -341,7 +342,8 @@ class HardAiDecisionEngineTest {
             Mockito.when(mockGameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService);
+                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockTargetValidationService);
             engine.setSelfConnection(mockConnection);
             return engine;
         }

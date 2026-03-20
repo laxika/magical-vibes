@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
@@ -26,6 +27,7 @@ public class AiPlayerService {
     private final GameQueryService gameQueryService;
     private final CombatAttackService combatAttackService;
     private final GameBroadcastService gameBroadcastService;
+    private final TargetValidationService targetValidationService;
     private final LobbyService lobbyService;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
@@ -35,6 +37,7 @@ public class AiPlayerService {
                            GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
                            GameBroadcastService gameBroadcastService,
+                           TargetValidationService targetValidationService,
                            LobbyService lobbyService,
                            WebSocketSessionManager sessionManager,
                            ObjectMapper objectMapper) {
@@ -43,6 +46,7 @@ public class AiPlayerService {
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
         this.gameBroadcastService = gameBroadcastService;
+        this.targetValidationService = targetValidationService;
         this.lobbyService = lobbyService;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
@@ -62,9 +66,9 @@ public class AiPlayerService {
 
         MessageHandler handler = messageHandlerProvider.getObject();
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
         };
         String connectionId = "ai-" + gameData.id;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());

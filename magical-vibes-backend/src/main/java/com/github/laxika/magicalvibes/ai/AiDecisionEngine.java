@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,7 +68,8 @@ public abstract class AiDecisionEngine {
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                             MessageHandler messageHandler, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
-                            GameBroadcastService gameBroadcastService) {
+                            GameBroadcastService gameBroadcastService,
+                            TargetValidationService targetValidationService) {
         this.gameId = gameId;
         this.aiPlayer = aiPlayer;
         this.gameRegistry = gameRegistry;
@@ -77,7 +79,7 @@ public abstract class AiDecisionEngine {
         this.gameBroadcastService = gameBroadcastService;
 
         this.manaManager = new AiManaManager(gameQueryService);
-        this.targetSelector = new AiTargetSelector(gameQueryService);
+        this.targetSelector = new AiTargetSelector(gameQueryService, targetValidationService);
         this.choiceHandler = new AiChoiceHandler(gameId, aiPlayer.getId(), gameQueryService, messageHandler);
     }
 

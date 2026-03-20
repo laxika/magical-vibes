@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
@@ -75,7 +76,7 @@ class AiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         ai.setSelfConnection(aiConn);
     }
 
@@ -579,6 +580,44 @@ class AiDecisionEngineTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    // ===== Creature-targeting spell validation =====
+
+    @Test
+    @DisplayName("AI casts Angelic Blessing targeting own creature, not a land")
+    void castsAngelicBlessingTargetingCreatureNotLand() {
+        giveAiPriority();
+        giveAiPlains(3);
+
+        // AI has a creature on the battlefield
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new AngelicBlessing()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast Angelic Blessing targeting the creature, not a Plains
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Angelic Blessing");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("AI does not cast Angelic Blessing when no creatures on battlefield")
+    void doesNotCastAngelicBlessingWithoutCreatures() {
+        giveAiPriority();
+        giveAiPlains(3);
+
+        // Only lands on battlefield, no creatures
+        harness.setHand(aiPlayer, List.of(new AngelicBlessing()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no valid creature targets
+        assertThat(gd.stack).isEmpty();
+    }
+
     // ===== ETB destroy targeting =====
 
     @Test
@@ -706,6 +745,7 @@ class AiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
         private Player mockAiPlayer;
@@ -745,7 +785,8 @@ class AiDecisionEngineTest {
         private EasyAiDecisionEngine createEngine() {
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService);
+                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockTargetValidationService);
             engine.setSelfConnection(mockConnection);
             return engine;
         }

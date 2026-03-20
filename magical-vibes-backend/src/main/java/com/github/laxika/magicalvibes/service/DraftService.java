@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,7 @@ public class DraftService {
     private final SessionManager sessionManager;
     private final WebSocketSessionManager webSocketSessionManager;
     private final CardViewFactory cardViewFactory;
+    private final TargetValidationService targetValidationService;
     private final ObjectMapper objectMapper;
     private final Random random = new Random();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -86,6 +88,7 @@ public class DraftService {
                         SessionManager sessionManager,
                         WebSocketSessionManager webSocketSessionManager,
                         CardViewFactory cardViewFactory,
+                        TargetValidationService targetValidationService,
                         ObjectMapper objectMapper) {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
@@ -96,6 +99,7 @@ public class DraftService {
         this.sessionManager = sessionManager;
         this.webSocketSessionManager = webSocketSessionManager;
         this.cardViewFactory = cardViewFactory;
+        this.targetValidationService = targetValidationService;
         this.objectMapper = objectMapper;
     }
 
@@ -571,9 +575,9 @@ public class DraftService {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         MessageHandler handler = messageHandlerProvider.getObject();
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
         };
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());

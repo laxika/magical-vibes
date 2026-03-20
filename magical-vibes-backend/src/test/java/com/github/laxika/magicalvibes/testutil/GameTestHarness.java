@@ -150,6 +150,7 @@ public class GameTestHarness {
     private final WebSocketSessionManager sessionManager;
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final TargetValidationService targetValidationService;
     private final MessageHandler messageHandler;
     private final LobbyService lobbyService;
     private final GameData gameData;
@@ -232,7 +233,7 @@ public class GameTestHarness {
         CombatService combatService = new CombatService(
                 combatAttackService, combatBlockService, combatDamageService, gameBroadcastService, permanentRemovalService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
-        TargetValidationService targetValidationService = new TargetValidationService(gameQueryService, targetValidatorRegistry);
+        this.targetValidationService = new TargetValidationService(gameQueryService, targetValidatorRegistry);
         List<Object> validatorBeans = List.of(
                 new DamageTargetValidators(targetValidationService, gameQueryService),
                 new CreatureModTargetValidators(targetValidationService),
@@ -884,6 +885,10 @@ public class GameTestHarness {
 
     public GameQueryService getGameQueryService() {
         return gameQueryService;
+    }
+
+    public TargetValidationService getTargetValidationService() {
+        return targetValidationService;
     }
 
     public LegendRuleService getLegendRuleService() {

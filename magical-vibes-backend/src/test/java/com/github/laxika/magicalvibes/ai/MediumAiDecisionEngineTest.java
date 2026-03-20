@@ -66,7 +66,7 @@ class MediumAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new MediumAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
         ai.setSelfConnection(aiConn);
     }
 
@@ -309,6 +309,7 @@ class MediumAiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
         private Player mockAiPlayer;
@@ -349,7 +350,8 @@ class MediumAiDecisionEngineTest {
             Mockito.when(mockGameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
             MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService);
+                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockTargetValidationService);
             engine.setSelfConnection(mockConnection);
             return engine;
         }

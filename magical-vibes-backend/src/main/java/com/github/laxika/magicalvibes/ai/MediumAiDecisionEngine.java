@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,8 +44,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
     public MediumAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                   MessageHandler messageHandler, GameQueryService gameQueryService,
                                   CombatAttackService combatAttackService,
-                                  GameBroadcastService gameBroadcastService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService);
+                                  GameBroadcastService gameBroadcastService,
+                                  TargetValidationService targetValidationService) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);

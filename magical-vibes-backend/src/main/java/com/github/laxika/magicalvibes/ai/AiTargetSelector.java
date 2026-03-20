@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -27,9 +29,11 @@ import java.util.UUID;
 class AiTargetSelector {
 
     private final GameQueryService gameQueryService;
+    private final TargetValidationService targetValidationService;
 
-    AiTargetSelector(GameQueryService gameQueryService) {
+    AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService) {
         this.gameQueryService = gameQueryService;
+        this.targetValidationService = targetValidationService;
     }
 
     UUID chooseTarget(GameData gameData, Card card, UUID aiPlayerId) {
@@ -82,7 +86,7 @@ class AiTargetSelector {
             if (ownBattlefield != null) {
                 UUID target = ownBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .filter(p -> passesTargetFilter(gameData, card, p, aiPlayerId))
+                        .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
                         .max(Comparator.comparingInt(p -> gameQueryService.getEffectiveToughness(gameData, p)))
                         .map(Permanent::getId)
                         .orElse(null);
@@ -98,7 +102,7 @@ class AiTargetSelector {
                         .toList();
                 UUID target = oppBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .filter(p -> passesTargetFilter(gameData, card, p, aiPlayerId))
+                        .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
                         .filter(p -> auraEffectClasses.stream().noneMatch(ec -> gameQueryService.hasAuraWithEffect(gameData, p, ec)))
                         .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
                         .map(Permanent::getId)
@@ -108,28 +112,41 @@ class AiTargetSelector {
             return null; // Aura was handled by specific logic — don't fall through
         }
 
-        // General fallback: find any valid target using the card's target filter
-        if (card.getTargetFilter() != null) {
-            // Search own battlefield first (for beneficial ETB effects like Awakener Druid)
-            List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
-            for (Permanent p : ownBattlefield) {
-                if (passesTargetFilter(gameData, card, p, aiPlayerId)) {
-                    return p.getId();
-                }
+        // General fallback: find any valid target using target filter + effect validators
+        // Search own battlefield first (for beneficial ETB effects like Awakener Druid)
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        for (Permanent p : ownBattlefield) {
+            if (isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
+                return p.getId();
             }
-            // Then search opponent battlefield
-            List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-            for (Permanent p : oppBattlefield) {
-                if (passesTargetFilter(gameData, card, p, aiPlayerId)) {
-                    return p.getId();
-                }
+        }
+        // Then search opponent battlefield
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        for (Permanent p : oppBattlefield) {
+            if (isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
+                return p.getId();
             }
         }
 
         return null;
     }
 
-    boolean passesTargetFilter(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {
+    boolean isValidPermanentTarget(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {
+        if (!passesTargetFilter(gameData, card, target, aiPlayerId)) {
+            return false;
+        }
+        // Run the same @ValidatesTarget validators that spell casting uses
+        TargetValidationContext ctx = new TargetValidationContext(gameData, target.getId(), null, card);
+        if (targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.SPELL), ctx).isPresent()) {
+            return false;
+        }
+        if (targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), ctx).isPresent()) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean passesTargetFilter(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {
         if (card.getTargetFilter() == null) {
             return true;
         }
@@ -209,7 +226,7 @@ class AiTargetSelector {
 
     private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield, UUID aiPlayerId) {
         List<Permanent> candidates = battlefield.stream()
-                .filter(p -> card.getTargetFilter() == null || passesTargetFilter(gameData, card, p, aiPlayerId))
+                .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
                 .toList();
 
         if (candidates.isEmpty()) {

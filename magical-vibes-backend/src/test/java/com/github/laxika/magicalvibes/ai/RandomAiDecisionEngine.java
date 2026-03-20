@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +55,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     RandomAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                            MessageHandler messageHandler, GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
-                           GameBroadcastService gameBroadcastService, Random rng) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService);
+                           GameBroadcastService gameBroadcastService,
+                           TargetValidationService targetValidationService, Random rng) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
         this.rng = rng;
     }
 
@@ -245,7 +247,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> field = gameData.playerBattlefields.getOrDefault(playerId, List.of());
                 for (Permanent p : field) {
-                    if (targetSelector.passesTargetFilter(gameData, card, p, aiPlayer.getId())) {
+                    if (targetSelector.isValidPermanentTarget(gameData, card, p, aiPlayer.getId())) {
                         validTargets.add(p.getId());
                     }
                 }

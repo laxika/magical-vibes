@@ -47,6 +47,7 @@ class EasyAiDecisionEngineTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private CombatAttackService combatAttackService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService targetValidationService;
     @Mock private Connection selfConnection;
 
     private GameData gd;
@@ -88,7 +89,8 @@ class EasyAiDecisionEngineTest {
         Mockito.lenient().when(gameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
-                gameQueryService, combatAttackService, gameBroadcastService);
+                gameQueryService, combatAttackService, gameBroadcastService,
+                targetValidationService);
         engine.setSelfConnection(selfConnection);
         return engine;
     }
@@ -342,7 +344,8 @@ class EasyAiDecisionEngineTest {
 
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
-                gameQueryService, combatAttackService, gameBroadcastService);
+                gameQueryService, combatAttackService, gameBroadcastService,
+                targetValidationService);
         engine.setSelfConnection(selfConnection);
         engine.handleMessage("GAME_STATE", "");
 
