@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCoun
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
@@ -313,6 +314,8 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
             } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
                 gameData.playerManaPools.get(playerId).addMyrOnlyColorless(mom.amount());
+            } else if (effect instanceof AwardKickedOnlyManaEffect kom) {
+                gameData.playerManaPools.get(playerId).addKickedOnlyGreen(kom.amount());
             } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 int count = 0;
@@ -414,6 +417,8 @@ public class ActivatedAbilityExecutionService {
                 total += aom.amount();
             } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
                 total += mom.amount();
+            } else if (effect instanceof AwardKickedOnlyManaEffect kom) {
+                total += kom.amount();
             } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 if (battlefield != null) {

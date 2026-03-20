@@ -860,6 +860,7 @@ Pass `null` as filter to allow any card.
 | `AddColorlessManaPerChargeCounterOnSourceEffect` | `()` | add {C} for each charge counter on the source permanent. Implements `ManaProducingEffect` so the ability is treated as a mana ability. Used by Shrine of Boundless Growth |
 | `AwardArtifactOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast artifact spells or activate abilities of artifacts. Stored in `ManaPool.artifactOnlyColorless`; `ManaCost.canPay/pay` accept `artifactContext=true` to include this mana |
 | `AwardMyrOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast Myr spells or activate abilities of Myr. Stored in `ManaPool.myrOnlyColorless`; `ManaCost.canPay/pay` accept `myrContext=true` to include this mana |
+| `AwardKickedOnlyManaEffect` | `(ManaColor color, int amount)` | add N mana of specified color that can only be spent to cast kicked spells. Stored in `ManaPool.kickedOnlyGreen`; `ManaCost.canPay/pay` accept `kickedOnlyGreenContext=true` to include this mana for both colored and generic costs. Used by Elfhame Druid |
 | `PreventManaDrainEffect` | `()` | players don't lose unspent mana as steps/phases end (static) |
 
 ## Copy / clone

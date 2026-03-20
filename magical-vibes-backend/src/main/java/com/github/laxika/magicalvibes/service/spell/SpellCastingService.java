@@ -81,8 +81,8 @@ public class SpellCastingService {
             SacrificePermanentCost sacrificePermanentCost
     ) {}
 
-    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext) {
-        boolean hasRestricted() { return isArtifact || isMyr || hasRestrictedRedContext; }
+    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen) {
+        boolean hasRestricted() { return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen; }
     }
 
     // --- Helper methods ---
@@ -141,10 +141,14 @@ public class SpellCastingService {
     }
 
     private ManaRestrictionFlags computeManaRestrictionFlags(Card card) {
+        return computeManaRestrictionFlags(card, false);
+    }
+
+    private ManaRestrictionFlags computeManaRestrictionFlags(Card card, boolean kicked) {
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
         boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
-        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext);
+        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked);
     }
 
     private StackEntryType cardTypeToStackEntryType(CardType type) {
@@ -322,13 +326,13 @@ public class SpellCastingService {
                     int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
                     int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
                     additionalCost += perTargetCost;
-                    ManaRestrictionFlags flags = computeManaRestrictionFlags(card);
+                    ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
                     if (card.getXColorRestriction() != null) {
                         if (!cost.canPay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost)) {
                             throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                         }
                     } else if (flags.hasRestricted()) {
-                        if (!cost.canPay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext())) {
+                        if (!cost.canPay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen())) {
                             throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                         }
                     } else if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
@@ -503,7 +507,7 @@ public class SpellCastingService {
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
             } else {
-                paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount);
+                paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked);
             }
             KickerEffect kickerEffect = findKickerEffect(card);
             if (kicked && kickerEffect != null) {
@@ -528,7 +532,7 @@ public class SpellCastingService {
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
             } else {
-                paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount);
+                paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount, kicked);
             }
             resolvedXValue = payAllSacrificeCosts(gameData, player, card, sacrificePermanentId, sacFlags, resolvedXValue);
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
@@ -1143,17 +1147,21 @@ public class SpellCastingService {
     // --- Mana payment ---
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions) {
-        paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, null);
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, null, false);
     }
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount) {
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, phyrexianLifeCount, false);
+    }
+
+    public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked) {
         if (card.getManaCost() == null) return;
         // Alternative zero cost (e.g. Rooftop Storm): skip mana payment entirely
         if (gameBroadcastService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
-        ManaRestrictionFlags flags = computeManaRestrictionFlags(card);
+        ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
 
         // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols
         // before generic costs consume it
@@ -1168,13 +1176,13 @@ public class SpellCastingService {
             cost.pay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost);
         } else if (cost.hasX()) {
             if (flags.hasRestricted()) {
-                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext());
+                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen());
             } else {
                 cost.pay(pool, effectiveXValue + additionalCost);
             }
         } else {
             if (flags.hasRestricted()) {
-                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext());
+                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen());
             } else {
                 cost.pay(pool, additionalCost);
             }
@@ -1199,10 +1207,17 @@ public class SpellCastingService {
     private void payKickerCost(GameData gameData, UUID playerId, KickerEffect kickerEffect) {
         ManaCost kickerCost = new ManaCost(kickerEffect.cost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        if (!kickerCost.canPay(pool)) {
-            throw new IllegalStateException("Not enough mana to pay kicker cost");
+        if (pool.getKickedOnlyGreen() > 0) {
+            if (!kickerCost.canPay(pool, 0, false, false, false, true)) {
+                throw new IllegalStateException("Not enough mana to pay kicker cost");
+            }
+            kickerCost.pay(pool, 0, false, false, false, true);
+        } else {
+            if (!kickerCost.canPay(pool)) {
+                throw new IllegalStateException("Not enough mana to pay kicker cost");
+            }
+            kickerCost.pay(pool, 0);
         }
-        kickerCost.pay(pool, 0);
     }
 
     private void payAlternateCastingCost(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds) {

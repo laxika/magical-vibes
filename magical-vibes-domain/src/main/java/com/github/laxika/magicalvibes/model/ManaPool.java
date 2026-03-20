@@ -11,6 +11,7 @@ public class ManaPool {
     private int artifactOnlyColorless;
     private int myrOnlyColorless;
     private int restrictedRed;
+    private int kickedOnlyGreen;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -28,6 +29,7 @@ public class ManaPool {
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
         this.restrictedRed = source.restrictedRed;
+        this.kickedOnlyGreen = source.kickedOnlyGreen;
     }
 
     public void add(ManaColor color) {
@@ -46,6 +48,7 @@ public class ManaPool {
         artifactOnlyColorless = 0;
         myrOnlyColorless = 0;
         restrictedRed = 0;
+        kickedOnlyGreen = 0;
     }
 
     public int get(ManaColor color) {
@@ -122,6 +125,18 @@ public class ManaPool {
         restrictedRed = Math.max(0, restrictedRed - amount);
     }
 
+    public int getKickedOnlyGreen() {
+        return kickedOnlyGreen;
+    }
+
+    public void addKickedOnlyGreen(int amount) {
+        kickedOnlyGreen += amount;
+    }
+
+    public void removeKickedOnlyGreen(int amount) {
+        kickedOnlyGreen = Math.max(0, kickedOnlyGreen - amount);
+    }
+
     public Map<String, Integer> toMap() {
         Map<String, Integer> map = new LinkedHashMap<>();
         for (ManaColor color : ManaColor.values()) {
@@ -131,6 +146,9 @@ public class ManaPool {
             }
             if (color == ManaColor.RED) {
                 amount += restrictedRed;
+            }
+            if (color == ManaColor.GREEN) {
+                amount += kickedOnlyGreen;
             }
             map.put(color.getCode(), amount);
         }

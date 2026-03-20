@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
@@ -335,8 +336,12 @@ public class GameBroadcastService {
                         boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
                         boolean hasRestrictedRedContext = isArtifact
                                 || card.hasType(CardType.CREATURE);
-                        boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
-                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
+                        boolean hasKicker = card.getEffects(EffectSlot.STATIC).stream()
+                                .anyMatch(e -> e instanceof KickerEffect);
+                        boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
+                        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen;
+                        boolean canAfford = hasRestricted
+                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen)
                                 : cost.canPay(pool, additionalCost);
                         if (canAfford && card.isRequiresCreatureMana()) {
                             canAfford = cost.canPayCreatureOnly(pool, additionalCost);
