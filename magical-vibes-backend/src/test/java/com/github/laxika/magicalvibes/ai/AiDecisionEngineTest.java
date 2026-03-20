@@ -861,6 +861,87 @@ class AiDecisionEngineTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    // ===== Graveyard creature requirement (ExileCreaturesFromGraveyardAndCreateTokensEffect) =====
+
+    @Test
+    @DisplayName("AI does not cast Midnight Ritual when graveyard has no creature cards")
+    void doesNotCastMidnightRitualWithEmptyGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(4); // Midnight Ritual costs {X}{2}{B}, X=1 needs 4 mana
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no creature cards in graveyard for X
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI does not cast Midnight Ritual when graveyard has only non-creature cards")
+    void doesNotCastMidnightRitualWithOnlyNonCreaturesInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(4);
+
+        // Graveyard has a non-creature card
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new com.github.laxika.magicalvibes.cards.h.HolyDay());
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no creature cards in graveyard
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI casts Midnight Ritual when graveyard has creature cards")
+    void castsMidnightRitualWithCreatureInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(4); // Enough for X=1: {1}{2}{B}
+
+        // Put a creature in the graveyard
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI cast the spell — card was removed from hand, game awaits graveyard selection
+        assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        // AI responds to the graveyard choice, putting the spell on the stack
+        ai.handleMessage("CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS", "");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Midnight Ritual");
+    }
+
+    @Test
+    @DisplayName("AI caps Midnight Ritual X at number of creatures in graveyard")
+    void capsMidnightRitualXAtGraveyardCreatureCount() {
+        giveAiPriority();
+        giveAiSwamps(6); // Enough mana for X=3, but only 1 creature in graveyard
+
+        // Put 1 creature in the graveyard
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI cast the spell — card was removed from hand
+        assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
+
+        // AI responds to the graveyard choice
+        ai.handleMessage("CHOOSE_MULTIPLE_CARDS_FROM_GRAVEYARDS", "");
+
+        // AI should cast with X capped at 1 (graveyard creature count), not X=3 (max mana)
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Midnight Ritual");
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+    }
+
     // ===== tryPlayLand silent failure recovery =====
 
     @Nested

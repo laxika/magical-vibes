@@ -175,6 +175,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
             } else if (castCost.hasX()) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
+                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
                 if (maxX <= 0) {
                     continue;
                 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -275,14 +276,19 @@ public abstract class AiDecisionEngine {
 
     /**
      * Returns true if the card can be cast considering mana affordability (with cost
-     * modifiers), non-mana restrictions (spell limit, type restrictions, etc.), and
-     * sacrifice costs.
+     * modifiers), non-mana restrictions (spell limit, type restrictions, etc.),
+     * sacrifice costs, and graveyard requirements.
      */
     protected boolean isSpellCastable(GameData gameData, Card card, ManaPool virtualPool) {
         if (!gameBroadcastService.isSpellCastingAllowed(gameData, aiPlayer.getId(), card)) {
             return false;
         }
         if (!canPaySacrificeCosts(gameData, card)) {
+            return false;
+        }
+        // For X spells that exile creatures from graveyard, ensure at least 1 creature exists
+        ManaCost cost = new ManaCost(card.getManaCost());
+        if (cost.hasX() && getMaxXForGraveyardRequirements(gameData, card) <= 0) {
             return false;
         }
         return canAffordSpell(gameData, card, virtualPool);
@@ -329,6 +335,23 @@ public abstract class AiDecisionEngine {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns the maximum X value allowed by graveyard creature requirements.
+     * For cards with {@link ExileCreaturesFromGraveyardAndCreateTokensEffect},
+     * X cannot exceed the number of creature cards in the caster's graveyard.
+     * Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
+     */
+    protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
+        boolean needsGraveyardCreatures = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance);
+        if (!needsGraveyardCreatures) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of()).stream()
+                .filter(c -> c.hasType(CardType.CREATURE))
+                .count();
     }
 
     /**

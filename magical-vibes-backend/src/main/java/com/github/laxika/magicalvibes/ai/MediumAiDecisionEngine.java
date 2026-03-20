@@ -144,6 +144,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
         } else if (castCost.hasX()) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
+            smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
             if (smartX <= 0) {
                 return false;
             }
