@@ -32,6 +32,10 @@ public class StaticBonusAccumulator {
     private boolean colorOverriding;
     private boolean subtypeOverriding;
     private boolean landSubtypeOverriding;
+    private boolean basePTOverridden;
+    private int basePowerOverride;
+    private int baseToughnessOverride;
+    private boolean losesAllAbilities;
 
     public void addPower(int amount) {
         power += amount;
@@ -159,6 +163,32 @@ public class StaticBonusAccumulator {
         this.landSubtypeOverriding = landSubtypeOverriding;
     }
 
+    public boolean isBasePTOverridden() {
+        return basePTOverridden;
+    }
+
+    public int getBasePowerOverride() {
+        return basePowerOverride;
+    }
+
+    public int getBaseToughnessOverride() {
+        return baseToughnessOverride;
+    }
+
+    public void setBasePTOverride(int power, int toughness) {
+        this.basePTOverridden = true;
+        this.basePowerOverride = power;
+        this.baseToughnessOverride = toughness;
+    }
+
+    public boolean isLosesAllAbilities() {
+        return losesAllAbilities;
+    }
+
+    public void setLosesAllAbilities(boolean losesAllAbilities) {
+        this.losesAllAbilities = losesAllAbilities;
+    }
+
     /**
      * Builds a {@link StaticBonus} from this accumulator's state.
      *
@@ -170,7 +200,8 @@ public class StaticBonusAccumulator {
         return new StaticBonus(
                 finalPower, finalToughness, keywords, protectionColors,
                 animated, grantedActivatedAbilities, grantedEffects,
-                grantedColors, grantedSubtypes, grantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, removedKeywords);
+                grantedColors, grantedSubtypes, grantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, removedKeywords,
+                basePTOverridden, basePowerOverride, baseToughnessOverride, losesAllAbilities);
     }
 }
 

@@ -57,7 +57,7 @@ import static org.mockito.Mockito.when;
 class AbilityActivationServiceTest {
 
     private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
-            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false, false, Set.of());
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false, false, Set.of(), false, 0, 0, false);
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;

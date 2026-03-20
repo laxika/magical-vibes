@@ -607,6 +607,7 @@ Pass `null` as filter to allow any card.
 | `CantHaveMinusOneMinusOneCountersEffect` | `()` | this creature can't have -1/-1 counters put on it (granted via GrantEffectEffect). Checked by `GameQueryService.cantHaveMinusOneMinusOneCounters()` |
 | `PlayerCantGetPoisonCountersEffect` | `()` | controller can't get poison counters (static on source permanent). Checked at all poison counter application points |
 | `RemoveKeywordEffect` | `(Keyword keyword, GrantScope scope)` or `(Keyword keyword, GrantScope scope, PermanentPredicate filter)` | static: creatures in scope lose the specified keyword. Added to `removedKeywords` in static bonus computation. Also works as one-shot in activated abilities with SELF/TARGET scope: adds keyword to `Permanent.removedKeywords` (cleared at end of turn) |
+| `LosesAllAbilitiesEffect` | `(GrantScope scope)` | static: creatures in scope lose all abilities (keywords, activated, triggered, static). The creature's own card keywords and activated abilities are suppressed; only abilities granted by other static effects (e.g. Deep Freeze granting defender) remain. Scope: `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, etc. |
 | `CantLoseGameEffect` | `()` | you can't lose and opponents can't win (static) |
 | `CantLoseGameFromLifeEffect` | `()` | you don't lose the game for having 0 or less life, but can still lose from poison or other effects (static) |
 | `DamageDealtAsInfectBelowZeroLifeEffect` | `()` | as long as you have 0 or less life, all damage dealt to you is dealt as though its source had infect (static) |
@@ -619,6 +620,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `SetBasePowerToughnessUntilEndOfTurnEffect` | `(int power, int toughness)` | set target creature's base power and toughness until end of turn (modifiers still apply on top) |
+| `SetBasePowerToughnessStaticEffect` | `(int power, int toughness, GrantScope scope)` | static: set base P/T of matching permanents continuously (e.g. Deep Freeze, Darksteel Mutation). Modifiers (counters, boosts) apply on top. Scope: `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, etc. |
 | `SwitchPowerToughnessEffect` | `()` | switch target creature's power and toughness until end of turn |
 | `BoostTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | target creature gets +X/+Y until end of turn |
 | `BoostTargetCreaturePerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | target creature gets +N/+N per controlled permanent matching filter until end of turn |

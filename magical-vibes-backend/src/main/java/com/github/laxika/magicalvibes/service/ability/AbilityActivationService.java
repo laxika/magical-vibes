@@ -479,8 +479,15 @@ public class AbilityActivationService {
         }
 
         Permanent permanent = battlefield.get(permanentIndex);
-        List<ActivatedAbility> abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
-        abilities.addAll(gameQueryService.computeStaticBonus(gameData, permanent).grantedActivatedAbilities());
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+        List<ActivatedAbility> abilities;
+        if (staticBonus.losesAllAbilities()) {
+            // Creature has lost all its own abilities; only static-granted abilities remain
+            abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
+        } else {
+            abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
+            abilities.addAll(staticBonus.grantedActivatedAbilities());
+        }
         if (abilities.isEmpty()) {
             throw new IllegalStateException("Permanent has no activated ability");
         }
@@ -905,8 +912,14 @@ public class AbilityActivationService {
     }
 
     private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
-        List<ActivatedAbility> abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
-        abilities.addAll(gameQueryService.computeStaticBonus(gameData, permanent).grantedActivatedAbilities());
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+        List<ActivatedAbility> abilities;
+        if (staticBonus.losesAllAbilities()) {
+            abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
+        } else {
+            abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
+            abilities.addAll(staticBonus.grantedActivatedAbilities());
+        }
         int idx = abilityIndex != null ? abilityIndex : 0;
         if (idx < 0 || idx >= abilities.size()) {
             throw new IllegalStateException("Invalid ability index");

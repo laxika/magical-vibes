@@ -47,10 +47,18 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> staticRemovedKeywords) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, staticRemovedKeywords, false);
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
         Set<Keyword> allRemovedKeywords = new HashSet<>(p.getRemovedKeywords());
         allRemovedKeywords.addAll(staticRemovedKeywords);
+        // When creature loses all abilities, add card's own keywords to removed set
+        if (losesAllAbilities) {
+            allRemovedKeywords.addAll(p.getCard().getKeywords());
+        }
         allKeywords.removeAll(allRemovedKeywords);
         CardView cardView = cardViewFactory.create(p.getCard());
         cardView = applyTextReplacements(cardView, p);
@@ -62,6 +70,10 @@ public class PermanentViewFactory {
         cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
+        // When creature loses all abilities, strip its own activated abilities from the view
+        if (losesAllAbilities) {
+            cardView = stripCardActivatedAbilities(cardView);
+        }
         return new PermanentView(
                 p.getId(), cardView,
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
@@ -329,6 +341,28 @@ public class PermanentViewFactory {
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
                 cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount(),
+                cardView.graveyardActivatedAbilities(),
+                cardView.transformable(),
+                cardView.kickerCost()
+        );
+    }
+
+    private CardView stripCardActivatedAbilities(CardView cardView) {
+        if (cardView.activatedAbilities().isEmpty()) {
+            return cardView;
+        }
+        return new CardView(
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), List.of(), cardView.loyalty(),
                 cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
                 cardView.token(),
                 cardView.watermark(),

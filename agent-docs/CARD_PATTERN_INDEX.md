@@ -329,6 +329,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Subtype-conditional aura | `b/BondsOfFaith.java` | STATIC EnchantedCreatureSubtypeConditionalEffect(HUMAN, StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE), EnchantedCreatureCantAttackOrBlockEffect()) — composes existing effects, +2/+2 if Human, can't attack/block otherwise |
 | Lockdown (can't attack) + self-bounce | `f/ForcedWorship.java` | STATIC EnchantedCreatureCantAttackEffect + activated ReturnSelfToHandEffect |
 | Full lockdown (can't attack/block/activate) | `a/Arrest.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect |
+| P/T override + ability strip aura | `d/DeepFreeze.java` | STATIC SetBasePowerToughnessStaticEffect(0, 4, ENCHANTED_CREATURE) + GrantKeywordEffect(DEFENDER, ENCHANTED_CREATURE) + LosesAllAbilitiesEffect(ENCHANTED_CREATURE) + GrantColorEffect(BLUE, ENCHANTED_CREATURE) + GrantSubtypeEffect(WALL, ENCHANTED_CREATURE) — sets base P/T, grants defender, strips all original abilities, adds color and type |
 | Lockdown + self-destruct on target | `i/IceCage.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect + ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY DestroySourcePermanentEffect |
 | Doesn't untap | `d/Dehydration.java` | STATIC EnchantedCreatureDoesntUntapEffect |
 | Static boost | `h/HolyStrength.java` | STATIC StaticBoostEffect(X, Y, GrantScope.ENCHANTED_CREATURE) |

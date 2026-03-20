@@ -60,6 +60,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -298,6 +300,22 @@ public class StaticEffectResolutionService {
         var remove = (RemoveKeywordEffect) effect;
         if (matchesCreatureScope(context, remove.scope(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());
+        }
+    }
+
+    @HandlesStaticEffect(SetBasePowerToughnessStaticEffect.class)
+    private void resolveSetBasePowerToughnessStatic(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var setPT = (SetBasePowerToughnessStaticEffect) effect;
+        if (matchesCreatureScope(context, setPT.scope(), null)) {
+            accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
+        }
+    }
+
+    @HandlesStaticEffect(LosesAllAbilitiesEffect.class)
+    private void resolveLosesAllAbilities(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var loses = (LosesAllAbilitiesEffect) effect;
+        if (matchesCreatureScope(context, loses.scope(), null)) {
+            accumulator.setLosesAllAbilities(true);
         }
     }
 

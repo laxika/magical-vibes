@@ -262,6 +262,24 @@ public class Permanent {
         this.attackedThisTurn = attackedThisTurn;
     }
 
+    /**
+     * Returns only the modifier portion of power (counters + temporary modifiers),
+     * without the base power. Used by static base P/T override effects (e.g. Deep Freeze)
+     * that replace the base but preserve modifiers on top.
+     */
+    public int getPowerModifiers() {
+        return powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+    }
+
+    /**
+     * Returns only the modifier portion of toughness (counters + temporary modifiers),
+     * without the base toughness. Used by static base P/T override effects (e.g. Deep Freeze)
+     * that replace the base but preserve modifiers on top.
+     */
+    public int getToughnessModifiers() {
+        return toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+    }
+
     public int getEffectivePower() {
         if (powerToughnessSwitched) {
             return getRawToughness();

@@ -161,8 +161,8 @@ public class GameQueryService {
      * @param colorOverriding           whether granted colors replace the permanent's natural color
      * @param subtypeOverriding         whether granted subtypes replace the permanent's natural subtypes
      */
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> removedKeywords) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false, false, Set.of());
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), false, false, false, Set.of(), false, 0, 0, false);
     }
 
     // --- Lookup helpers ---
@@ -557,6 +557,10 @@ public class GameQueryService {
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (bonus.removedKeywords().contains(keyword)) return false;
+        if (bonus.losesAllAbilities()) {
+            // Creature has lost all its own abilities; only keywords granted by static effects apply
+            return bonus.keywords().contains(keyword);
+        }
         return permanent.hasKeyword(keyword) || bonus.keywords().contains(keyword);
     }
 
@@ -834,7 +838,24 @@ public class GameQueryService {
      * plus any static bonuses from other permanents on the battlefield.
      */
     public int getEffectivePower(GameData gameData, Permanent permanent) {
-        return permanent.getEffectivePower() + computeStaticBonus(gameData, permanent).power();
+        return getEffectivePower(permanent, computeStaticBonus(gameData, permanent));
+    }
+
+    /**
+     * Returns the permanent's effective power using a pre-computed static bonus.
+     * Handles Layer 7b base P/T overrides from continuous effects (e.g. Deep Freeze).
+     */
+    public int getEffectivePower(Permanent permanent, StaticBonus bonus) {
+        if (bonus.basePTOverridden() && !permanent.isBasePowerToughnessOverriddenUntilEndOfTurn()) {
+            int power;
+            if (permanent.isPowerToughnessSwitched()) {
+                power = bonus.baseToughnessOverride() + permanent.getToughnessModifiers();
+            } else {
+                power = bonus.basePowerOverride() + permanent.getPowerModifiers();
+            }
+            return power + bonus.power();
+        }
+        return permanent.getEffectivePower() + bonus.power();
     }
 
     /**
@@ -842,7 +863,24 @@ public class GameQueryService {
      * plus any static bonuses from other permanents on the battlefield.
      */
     public int getEffectiveToughness(GameData gameData, Permanent permanent) {
-        return permanent.getEffectiveToughness() + computeStaticBonus(gameData, permanent).toughness();
+        return getEffectiveToughness(permanent, computeStaticBonus(gameData, permanent));
+    }
+
+    /**
+     * Returns the permanent's effective toughness using a pre-computed static bonus.
+     * Handles Layer 7b base P/T overrides from continuous effects (e.g. Deep Freeze).
+     */
+    public int getEffectiveToughness(Permanent permanent, StaticBonus bonus) {
+        if (bonus.basePTOverridden() && !permanent.isBasePowerToughnessOverriddenUntilEndOfTurn()) {
+            int toughness;
+            if (permanent.isPowerToughnessSwitched()) {
+                toughness = bonus.basePowerOverride() + permanent.getPowerModifiers();
+            } else {
+                toughness = bonus.baseToughnessOverride() + permanent.getToughnessModifiers();
+            }
+            return toughness + bonus.toughness();
+        }
+        return permanent.getEffectiveToughness() + bonus.toughness();
     }
 
     /**
