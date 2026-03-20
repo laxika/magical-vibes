@@ -2,10 +2,16 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -256,6 +262,31 @@ public abstract class AiDecisionEngine {
                 log.error("AI: Empty blocker declaration also failed in game {}", gameId, e2);
             }
         }
+    }
+
+    /**
+     * Checks whether the player's battlefield can satisfy all sacrifice costs
+     * in the card's SPELL effects (e.g. SacrificeArtifactCost, SacrificeCreatureCost,
+     * SacrificePermanentCost). Returns false if any sacrifice cost cannot be paid.
+     */
+    protected boolean canPaySacrificeCosts(GameData gameData, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof SacrificeArtifactCost) {
+                boolean hasArtifact = battlefield.stream()
+                        .anyMatch(p -> gameQueryService.isArtifact(gameData, p));
+                if (!hasArtifact) return false;
+            } else if (effect instanceof SacrificeCreatureCost) {
+                boolean hasCreature = battlefield.stream()
+                        .anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                if (!hasCreature) return false;
+            } else if (effect instanceof SacrificePermanentCost sacCost) {
+                boolean hasMatch = battlefield.stream()
+                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
+                if (!hasMatch) return false;
+            }
+        }
+        return true;
     }
 
     protected IntConsumer tapPermanentAction() {

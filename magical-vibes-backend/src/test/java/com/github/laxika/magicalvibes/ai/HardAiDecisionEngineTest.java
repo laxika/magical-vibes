@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -112,6 +114,37 @@ class HardAiDecisionEngineTest {
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
         assertThat(engine).isNotNull();
+    }
+
+    // ===== Sacrifice cost checks =====
+
+    @Test
+    @DisplayName("Hard AI skips spell with SacrificeArtifactCost when no artifact on battlefield")
+    void skipsSpellWithSacrificeArtifactCostWhenNoArtifact() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        Permanent mountain = new Permanent(new Mountain());
+        mountain.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(mountain);
+
+        harness.setHand(player1, List.of(new KuldothaRebirth()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no artifact to sacrifice
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== Creature mana restriction =====

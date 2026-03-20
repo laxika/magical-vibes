@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +10,8 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -133,6 +136,48 @@ class EasyAiDecisionEngineTest {
 
         // Should attempt to cast — creature mana requirement met
         verify(messageHandler).handlePlayCard(any(), any());
+    }
+
+    // ===== Sacrifice cost restriction =====
+
+    @Test
+    @DisplayName("Easy AI does not attempt to cast spell with SacrificeArtifactCost when no artifact available")
+    void doesNotCastSacrificeArtifactCostWithNoArtifact() throws Exception {
+        Card sacrificeSpell = new Card();
+        sacrificeSpell.setName("Test Artifact Sac");
+        sacrificeSpell.setType(CardType.SORCERY);
+        sacrificeSpell.setManaCost("{R}");
+        sacrificeSpell.addEffect(EffectSlot.SPELL, new SacrificeArtifactCost());
+        gd.playerHands.get(aiPlayer.getId()).add(sacrificeSpell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // Should NOT attempt to cast — no artifact to sacrifice
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI does not attempt to cast spell with SacrificeCreatureCost when no creature available")
+    void doesNotCastSacrificeCreatureCostWithNoCreature() throws Exception {
+        Card sacrificeSpell = new Card();
+        sacrificeSpell.setName("Test Creature Sac");
+        sacrificeSpell.setType(CardType.SORCERY);
+        sacrificeSpell.setManaCost("{R}");
+        sacrificeSpell.addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        gd.playerHands.get(aiPlayer.getId()).add(sacrificeSpell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // Should NOT attempt to cast — no creature to sacrifice
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
     }
 
     // ===== tryCastSpell silent failure recovery =====

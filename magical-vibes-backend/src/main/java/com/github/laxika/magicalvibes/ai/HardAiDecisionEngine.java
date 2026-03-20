@@ -95,6 +95,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (Card card : hand) {
             if (card.hasType(CardType.LAND) || card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
+            if (!canPaySacrificeCosts(gameData, card)) continue;
             ManaCost cost = new ManaCost(card.getManaCost());
             if (cost.hasX()) {
                 if (!cost.canPay(virtualPool, 1)) continue;
@@ -180,6 +181,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (card.hasType(CardType.LAND)) continue;
             if (card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
+            if (!canPaySacrificeCosts(gameData, card)) continue;
 
             ManaCost cost = new ManaCost(card.getManaCost());
             if (cost.hasX()) {

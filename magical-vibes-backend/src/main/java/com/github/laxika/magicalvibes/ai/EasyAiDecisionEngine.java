@@ -85,6 +85,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
+            // Skip spells whose sacrifice costs cannot be paid
+            if (!canPaySacrificeCosts(gameData, card)) {
+                continue;
+            }
+
             ManaCost cost = new ManaCost(card.getManaCost());
             if (cost.hasX()) {
                 if (!cost.canPay(virtualPool, 1)) continue;

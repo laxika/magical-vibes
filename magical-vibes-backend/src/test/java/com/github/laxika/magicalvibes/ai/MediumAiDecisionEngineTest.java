@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -219,6 +221,25 @@ class MediumAiDecisionEngineTest {
         // Myr Superion should be on the stack — creature mana is available from elves
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
+    }
+
+    // ===== Sacrifice cost checks =====
+
+    @Test
+    @DisplayName("Medium AI skips spell with SacrificeArtifactCost when no artifact on battlefield")
+    void skipsSpellWithSacrificeArtifactCostWhenNoArtifact() {
+        giveAiPriority();
+
+        Permanent mountain = new Permanent(new Mountain());
+        mountain.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(mountain);
+
+        harness.setHand(aiPlayer, List.of(new KuldothaRebirth()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no artifact to sacrifice
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== Must-attack =====

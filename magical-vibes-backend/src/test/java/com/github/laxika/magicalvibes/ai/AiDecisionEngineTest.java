@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.i.InfernalPlunge;
+import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -93,6 +96,70 @@ class AiDecisionEngineTest {
             plains.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(plains);
         }
+    }
+
+    /**
+     * Adds the given number of untapped Mountains to the AI's battlefield.
+     */
+    private void giveAiMountains(int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(mountain);
+        }
+    }
+
+    // ===== Sacrifice cost checks =====
+
+    @Test
+    @DisplayName("AI skips spell with SacrificeArtifactCost when no artifact on battlefield")
+    void skipsSpellWithSacrificeArtifactCostWhenNoArtifact() {
+        giveAiPriority();
+        giveAiMountains(1);
+
+        harness.setHand(aiPlayer, List.of(new KuldothaRebirth()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no artifact to sacrifice
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI skips spell with SacrificeCreatureCost when no creature on battlefield")
+    void skipsSpellWithSacrificeCreatureCostWhenNoCreature() {
+        giveAiPriority();
+        giveAiMountains(1);
+
+        harness.setHand(aiPlayer, List.of(new InfernalPlunge()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no creature to sacrifice
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI skips sacrifice-cost spell but casts another available spell")
+    void castsOtherSpellWhenSacrificeCostCannotBePaid() {
+        giveAiPriority();
+
+        // Mountain + Forest so both KuldothaRebirth ({R}) and GrizzlyBears ({1}{G}) are affordable
+        Permanent mountain = new Permanent(new Mountain());
+        mountain.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(mountain);
+
+        Permanent forest = new Permanent(new Forest());
+        forest.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(forest);
+
+        harness.setHand(aiPlayer, List.of(new KuldothaRebirth(), new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should skip KuldothaRebirth (no artifact) and cast GrizzlyBears
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
     }
 
     // ===== Detrimental aura targeting =====
