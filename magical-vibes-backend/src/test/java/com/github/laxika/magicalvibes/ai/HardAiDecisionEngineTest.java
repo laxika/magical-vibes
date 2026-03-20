@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -112,7 +113,8 @@ class HardAiDecisionEngineTest {
     void hardEngineConstructorWorks() {
         HardAiDecisionEngine engine = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService());
         assertThat(engine).isNotNull();
     }
 
@@ -125,7 +127,8 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -156,7 +159,8 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -188,7 +192,8 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -225,7 +230,8 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -256,7 +262,8 @@ class HardAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, player2.getId(), "Bob");
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player2, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -293,6 +300,7 @@ class HardAiDecisionEngineTest {
         @Mock private GameQueryService mockGameQueryService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
+        @Mock private GameBroadcastService mockGameBroadcastService;
 
         private GameData mockGd;
         private Player mockAiPlayer;
@@ -330,9 +338,10 @@ class HardAiDecisionEngineTest {
         }
 
         private HardAiDecisionEngine createEngine() {
+            Mockito.when(mockGameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService);
+                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService);
             engine.setSelfConnection(mockConnection);
             return engine;
         }

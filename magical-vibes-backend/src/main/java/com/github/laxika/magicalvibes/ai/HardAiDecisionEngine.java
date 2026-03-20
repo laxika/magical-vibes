@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -47,8 +48,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 MessageHandler messageHandler, GameQueryService gameQueryService,
-                                CombatAttackService combatAttackService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService);
+                                CombatAttackService combatAttackService,
+                                GameBroadcastService gameBroadcastService) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService);
         BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -95,16 +97,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (Card card : hand) {
             if (card.hasType(CardType.LAND) || card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
-            if (!canPaySacrificeCosts(gameData, card)) continue;
-            ManaCost cost = new ManaCost(card.getManaCost());
-            if (cost.hasX()) {
-                if (!cost.canPay(virtualPool, 1)) continue;
-            } else {
-                if (!cost.canPay(virtualPool)) continue;
-            }
-            if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
-                continue;
-            }
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
             castableCount++;
         }
 
@@ -181,17 +174,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (card.hasType(CardType.LAND)) continue;
             if (card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
-            if (!canPaySacrificeCosts(gameData, card)) continue;
-
-            ManaCost cost = new ManaCost(card.getManaCost());
-            if (cost.hasX()) {
-                if (!cost.canPay(virtualPool, 1)) continue;
-            } else {
-                if (!cost.canPay(virtualPool)) continue;
-            }
-            if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
-                continue;
-            }
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
             double value = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
             if (value > 0) {

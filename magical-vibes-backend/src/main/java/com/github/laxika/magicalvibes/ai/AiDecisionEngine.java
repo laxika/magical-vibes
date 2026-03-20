@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -20,6 +22,7 @@ import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -53,6 +56,7 @@ public abstract class AiDecisionEngine {
     protected final MessageHandler messageHandler;
     protected final GameQueryService gameQueryService;
     protected final CombatAttackService combatAttackService;
+    protected final GameBroadcastService gameBroadcastService;
 
     protected final AiManaManager manaManager;
     protected final AiTargetSelector targetSelector;
@@ -62,13 +66,15 @@ public abstract class AiDecisionEngine {
 
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                             MessageHandler messageHandler, GameQueryService gameQueryService,
-                            CombatAttackService combatAttackService) {
+                            CombatAttackService combatAttackService,
+                            GameBroadcastService gameBroadcastService) {
         this.gameId = gameId;
         this.aiPlayer = aiPlayer;
         this.gameRegistry = gameRegistry;
         this.messageHandler = messageHandler;
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
+        this.gameBroadcastService = gameBroadcastService;
 
         this.manaManager = new AiManaManager(gameQueryService);
         this.targetSelector = new AiTargetSelector(gameQueryService);
@@ -262,6 +268,39 @@ public abstract class AiDecisionEngine {
                 log.error("AI: Empty blocker declaration also failed in game {}", gameId, e2);
             }
         }
+    }
+
+    /**
+     * Returns true if the card can be cast considering mana affordability (with cost
+     * modifiers), non-mana restrictions (spell limit, type restrictions, etc.), and
+     * sacrifice costs.
+     */
+    protected boolean isSpellCastable(GameData gameData, Card card, ManaPool virtualPool) {
+        if (!gameBroadcastService.isSpellCastingAllowed(gameData, aiPlayer.getId(), card)) {
+            return false;
+        }
+        if (!canPaySacrificeCosts(gameData, card)) {
+            return false;
+        }
+        return canAffordSpell(gameData, card, virtualPool);
+    }
+
+    /**
+     * Checks if the card's mana cost (including cost modifiers from battlefield effects)
+     * can be paid from the given mana pool.
+     */
+    protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool) {
+        ManaCost cost = new ManaCost(card.getManaCost());
+        int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        if (cost.hasX()) {
+            if (!cost.canPay(virtualPool, Math.max(0, 1 + modifier))) return false;
+        } else {
+            if (!cost.canPay(virtualPool, modifier)) return false;
+        }
+        if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool, modifier)) {
+            return false;
+        }
+        return true;
     }
 
     /**

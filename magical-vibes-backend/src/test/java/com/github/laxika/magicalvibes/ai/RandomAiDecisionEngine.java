@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -52,8 +53,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
     RandomAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                            MessageHandler messageHandler, GameQueryService gameQueryService,
-                           CombatAttackService combatAttackService, Random rng) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService);
+                           CombatAttackService combatAttackService,
+                           GameBroadcastService gameBroadcastService, Random rng) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService);
         this.rng = rng;
     }
 
@@ -122,18 +124,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
-            // Skip spells whose sacrifice costs cannot be paid
-            if (!canPaySacrificeCosts(gameData, card)) {
-                continue;
-            }
-
-            ManaCost cost = new ManaCost(card.getManaCost());
-            if (cost.hasX()) {
-                if (!cost.canPay(virtualPool, 1)) continue;
-            } else {
-                if (!cost.canPay(virtualPool)) continue;
-            }
-            if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
+            if (!isSpellCastable(gameData, card, virtualPool)) {
                 continue;
             }
             castableIndices.add(i);

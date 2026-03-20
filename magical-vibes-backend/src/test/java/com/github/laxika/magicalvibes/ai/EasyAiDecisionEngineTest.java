@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -45,6 +46,7 @@ class EasyAiDecisionEngineTest {
     @Mock private MessageHandler messageHandler;
     @Mock private GameQueryService gameQueryService;
     @Mock private CombatAttackService combatAttackService;
+    @Mock private GameBroadcastService gameBroadcastService;
     @Mock private Connection selfConnection;
 
     private GameData gd;
@@ -83,9 +85,10 @@ class EasyAiDecisionEngineTest {
     }
 
     private EasyAiDecisionEngine createEngine() {
+        Mockito.lenient().when(gameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
-                gameQueryService, combatAttackService);
+                gameQueryService, combatAttackService, gameBroadcastService);
         engine.setSelfConnection(selfConnection);
         return engine;
     }
@@ -264,5 +267,87 @@ class EasyAiDecisionEngineTest {
         ArgumentCaptor<DeclareBlockersRequest> captor = ArgumentCaptor.forClass(DeclareBlockersRequest.class);
         verify(messageHandler).handleDeclareBlockers(eq(selfConnection), captor.capture());
         assertThat(captor.getValue().blockerAssignments()).isEmpty();
+    }
+
+    // ===== Spell casting restrictions (cost modifiers, spell limits) =====
+
+    @Test
+    @DisplayName("Easy AI does not cast spell when cost modifier makes it unaffordable")
+    void doesNotCastWhenCostModifierMakesUnaffordable() throws Exception {
+        Card creature = new Card();
+        creature.setName("Test Bear");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{1}{G}");
+        creature.setPower(2);
+        creature.setToughness(2);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        // Exactly enough mana for base cost {1}{G} = 2 total
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.GREEN, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        // Cost modifier adds 1 (e.g. opponent has Thalia) — now needs 3 total
+        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // Should NOT attempt to cast — can't afford with cost increase
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI casts spell when cost modifier is negative (cost reduction)")
+    void castsSpellWithCostReduction() throws Exception {
+        Card creature = new Card();
+        creature.setName("Expensive Creature");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{3}{G}");
+        creature.setPower(4);
+        creature.setToughness(4);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        // Only 3 mana available — normally can't afford {3}{G} (4 total)
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.GREEN, 1);
+        pool.add(ManaColor.COLORLESS, 2);
+
+        // Cost reduction of 1 — now only needs 3 total
+        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(-1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // Should attempt to cast — affordable with cost reduction
+        verify(messageHandler).handlePlayCard(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI does not cast spell when isSpellCastingAllowed returns false")
+    void doesNotCastWhenSpellCastingNotAllowed() throws Exception {
+        Card creature = new Card();
+        creature.setName("Test Bear");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{1}{G}");
+        creature.setPower(2);
+        creature.setToughness(2);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.GREEN, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        // Spell casting not allowed (e.g. spell limit reached, type restricted, silenced)
+        when(gameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(false);
+
+        EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
+                gd.id, aiPlayer, gameRegistry, messageHandler,
+                gameQueryService, combatAttackService, gameBroadcastService);
+        engine.setSelfConnection(selfConnection);
+        engine.handleMessage("GAME_STATE", "");
+
+        // Should NOT attempt to cast — spell casting restricted
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
     }
 }

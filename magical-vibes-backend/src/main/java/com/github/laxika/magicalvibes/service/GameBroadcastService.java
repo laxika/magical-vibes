@@ -750,6 +750,23 @@ public class GameBroadcastService {
         return totalIncrease;
     }
 
+    /**
+     * Returns true if the player is allowed to cast this spell considering non-mana
+     * restrictions: spell limit, type restrictions, forbidden names, silence, etc.
+     */
+    public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
+        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int maxSpells = getMaxSpellsPerTurn(gameData);
+        if (spellsCast >= maxSpells) return false;
+        if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
+        Set<CardType> restricted = getRestrictedSpellTypes(gameData, playerId);
+        if (restricted.contains(card.getType())
+                || card.getAdditionalTypes().stream().anyMatch(restricted::contains)) return false;
+        Set<String> forbidden = getForbiddenCardNames(gameData);
+        if (forbidden.contains(card.getName())) return false;
+        return true;
+    }
+
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
         int increase = getOpponentCostIncrease(gameData, playerId, card.getType());
         increase += getSpellCastTaxIncrease(gameData, playerId);

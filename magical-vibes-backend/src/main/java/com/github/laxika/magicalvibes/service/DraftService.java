@@ -566,7 +566,7 @@ public class DraftService {
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         MessageHandler handler = messageHandlerProvider.getObject();
-        EasyAiDecisionEngine engine = new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService);
+        EasyAiDecisionEngine engine = new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper);
         engine.setSelfConnection(aiConnection);

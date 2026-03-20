@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -71,7 +72,8 @@ class AiDecisionEngineTest {
         FakeConnection aiConn = new FakeConnection("ai-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService());
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService());
         ai.setSelfConnection(aiConn);
     }
 
@@ -631,6 +633,7 @@ class AiDecisionEngineTest {
         @Mock private GameQueryService mockGameQueryService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
+        @Mock private GameBroadcastService mockGameBroadcastService;
 
         private GameData mockGd;
         private Player mockAiPlayer;
@@ -670,7 +673,7 @@ class AiDecisionEngineTest {
         private EasyAiDecisionEngine createEngine() {
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService);
+                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService);
             engine.setSelfConnection(mockConnection);
             return engine;
         }
