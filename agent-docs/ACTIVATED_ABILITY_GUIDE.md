@@ -439,6 +439,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `END_STEP_TRIGGERED` | End step (any player's turn — "at the beginning of the end step") |
 | `CONTROLLER_END_STEP_TRIGGERED` | Controller's end step only ("at the beginning of your end step") |
 | `ON_ATTACK` | This creature attacks |
+| `ON_ALLY_CREATURES_ATTACK` | One or more creatures the controller controls attack (fires once per combat, not per creature). Scans all controller's permanents after attackers declared |
 | `ON_BLOCK` | This creature blocks |
 | `ON_BECOMES_BLOCKED` | This creature becomes blocked. Register effects with `TriggerMode.PER_BLOCKER` to fire once per blocker |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player |

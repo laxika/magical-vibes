@@ -88,16 +88,26 @@ public class TurnCleanupService {
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+
+        // Clear persistent mana tracking so the next drain empties pools fully
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            ManaPool manaPool = gameData.playerManaPools.get(playerId);
+            if (manaPool != null) {
+                manaPool.clearPersistentMana();
+            }
+        }
     }
 
     /**
      * Empties every player's mana pool, unless a permanent with
      * {@link PreventManaDrainEffect} (e.g. Upwelling) is on any battlefield.
+     * Mana marked as persistent (e.g. from Grand Warlord Radha) survives
+     * the drain; only non-persistent mana is removed.
      *
      * @param gameData the current game state to modify
      */
     public void drainManaPools(GameData gameData) {
-        // Check if any permanent on the battlefield prevents mana drain (e.g. Upwelling)
+        // Check if any permanent on the battlefield prevents mana drain globally (e.g. Upwelling)
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -112,7 +122,7 @@ public class TurnCleanupService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);
             if (manaPool != null) {
-                manaPool.clear();
+                manaPool.drainNonPersistent();
             }
         }
     }

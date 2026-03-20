@@ -8,6 +8,8 @@ public class ManaPool {
 
     private final EnumMap<ManaColor, Integer> pool = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> creatureMana = new EnumMap<>(ManaColor.class);
+    /** Mana that doesn't drain at step/phase transitions until end of turn (e.g. Grand Warlord Radha). */
+    private final EnumMap<ManaColor, Integer> persistentMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
     private int myrOnlyColorless;
     private int restrictedRed;
@@ -17,6 +19,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
             creatureMana.put(color, 0);
+            persistentMana.put(color, 0);
         }
     }
 
@@ -26,6 +29,7 @@ public class ManaPool {
     public ManaPool(ManaPool source) {
         pool.putAll(source.pool);
         creatureMana.putAll(source.creatureMana);
+        persistentMana.putAll(source.persistentMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
         this.restrictedRed = source.restrictedRed;
@@ -135,6 +139,54 @@ public class ManaPool {
 
     public void removeKickedOnlyGreen(int amount) {
         kickedOnlyGreen = Math.max(0, kickedOnlyGreen - amount);
+    }
+
+    /**
+     * Adds mana that persists through step/phase transitions until end of turn.
+     * The mana is added to both the regular pool and the persistent tracker.
+     */
+    public void addPersistentMana(ManaColor color, int amount) {
+        pool.merge(color, amount, Integer::sum);
+        persistentMana.merge(color, amount, Integer::sum);
+    }
+
+    /**
+     * Drains all non-persistent mana. For each color, the pool is reduced to
+     * at most the persistent amount. Persistent mana survives step/phase transitions.
+     */
+    public void drainNonPersistent() {
+        for (ManaColor color : ManaColor.values()) {
+            int persistent = persistentMana.getOrDefault(color, 0);
+            int current = pool.getOrDefault(color, 0);
+            // Keep the lesser of current pool and persistent amount
+            pool.put(color, Math.min(current, persistent));
+            // Clamp persistent to not exceed what's in the pool
+            persistentMana.put(color, Math.min(current, persistent));
+        }
+        // Clamp creature mana to not exceed pool totals
+        for (ManaColor color : ManaColor.values()) {
+            int total = pool.getOrDefault(color, 0);
+            int creature = creatureMana.getOrDefault(color, 0);
+            creatureMana.put(color, Math.min(creature, total));
+        }
+        artifactOnlyColorless = 0;
+        myrOnlyColorless = 0;
+        restrictedRed = 0;
+        kickedOnlyGreen = 0;
+    }
+
+    /**
+     * Clears all persistent mana tracking. Called during end-of-turn cleanup
+     * so subsequent drains will empty the pool normally.
+     */
+    public void clearPersistentMana() {
+        for (ManaColor color : ManaColor.values()) {
+            persistentMana.put(color, 0);
+        }
+    }
+
+    public int getPersistentMana(ManaColor color) {
+        return persistentMana.getOrDefault(color, 0);
     }
 
     public Map<String, Integer> toMap() {

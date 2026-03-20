@@ -66,6 +66,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
      *  Checked per-card inside {@code GraveyardService.resolveMillPlayer}. */
     ON_SELF_MILLED,
+    /** Triggers once when one or more creatures the controller controls are declared as attackers.
+     *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
+    ON_ALLY_CREATURES_ATTACK,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
     STATE_TRIGGERED,

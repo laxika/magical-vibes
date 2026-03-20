@@ -315,6 +315,34 @@ public class CombatAttackService {
             }
         }
 
+        // Check for "whenever one or more creatures you control attack" triggers (ON_ALLY_CREATURES_ATTACK)
+        // These fire once per combat (not per creature) when at least one creature attacks.
+        // The attacker count is locked at trigger time via xValue (per MTG rules: creatures
+        // removed before resolution still count, tokens entering attacking after don't).
+        for (Permanent perm : battlefield) {
+            List<CardEffect> allyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK);
+            if (!allyAttackEffects.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s attack trigger",
+                        new ArrayList<>(allyAttackEffects),
+                        attackerIndices.size(),
+                        null,
+                        perm.getId(),
+                        null,
+                        null,
+                        null,
+                        null
+                ));
+                String triggerLog = perm.getCard().getName() + "'s attack ability triggers.";
+                gameData.gameLog.add(triggerLog);
+                log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
+                        gameData.id, perm.getCard().getName(), attackerIndices.size());
+            }
+        }
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
 

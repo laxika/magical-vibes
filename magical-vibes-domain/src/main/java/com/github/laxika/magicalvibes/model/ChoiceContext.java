@@ -57,4 +57,13 @@ public sealed interface ChoiceContext {
      */
     record PermanentTypeChoice(UUID controllerId, GraveyardChoiceDestination destination,
                                String entryDescription) implements ChoiceContext {}
+
+    /**
+     * Tracks a "choose a mana color, add N of it" choice for effects like Grand Warlord Radha.
+     * Also sets mana drain prevention for the controller until end of turn.
+     *
+     * @param playerId       the player who chooses and receives the mana
+     * @param attackerCount  the number of attacking creatures (amount of mana to add)
+     */
+    record AttackManaSplitChoice(UUID playerId, int attackerCount) implements ChoiceContext {}
 }

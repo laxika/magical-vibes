@@ -71,6 +71,12 @@ public class ChoiceHandlerService {
             return;
         }
 
+        // Attack mana split choice (Grand Warlord Radha, etc.)
+        if (colorChoice.context() instanceof ChoiceContext.AttackManaSplitChoice ctx) {
+            handleAttackManaSplitChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
         // Card name choice (Pithing Needle, etc.)
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx) {
             handleCardNameChosen(gameData, player, colorName, ctx);
@@ -172,6 +178,26 @@ public class ChoiceHandlerService {
             gameBroadcastService.broadcastGameState(gameData);
             return;
         }
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleAttackManaSplitChosen(GameData gameData, Player player, String colorName, ChoiceContext.AttackManaSplitChoice ctx) {
+        ManaColor manaColor = ManaColor.valueOf(colorName);
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        // Add as persistent mana — doesn't drain at step/phase transitions until end of turn
+        manaPool.addPersistentMana(manaColor, ctx.attackerCount());
+
+        String logEntry = player.getUsername() + " adds " + ctx.attackerCount() + " " + colorName.toLowerCase() + " mana.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} adds {} {} mana (attacking creatures, persistent until end of turn)",
+                gameData.id, player.getUsername(), ctx.attackerCount(), colorName.toLowerCase());
+
+        gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
