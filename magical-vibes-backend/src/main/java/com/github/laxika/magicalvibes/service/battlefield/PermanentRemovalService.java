@@ -389,7 +389,7 @@ public class PermanentRemovalService {
             if (wasArtifact) {
                 deathTriggerService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
-            deathTriggerService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId);
+            deathTriggerService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId, target.getCard().getId());
         }
     }
 

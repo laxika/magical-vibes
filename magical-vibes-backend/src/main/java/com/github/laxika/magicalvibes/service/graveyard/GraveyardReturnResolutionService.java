@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHan
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -1276,6 +1277,36 @@ public class GraveyardReturnResolutionService {
             playerInputService.beginPermanentChoice(gameData, enchantedCreatureControllerId, validTargetIds,
                     "Choose a creature to attach " + auraCard.getName() + " to.");
         }
+    }
+
+    @HandlesEffect(ReturnEnchantedCreatureToOwnerHandOnDeathEffect.class)
+    private void resolveReturnEnchantedCreatureToOwnerHandOnDeath(GameData gameData, StackEntry entry,
+                                                                   ReturnEnchantedCreatureToOwnerHandOnDeathEffect effect) {
+        UUID dyingCreatureCardId = effect.dyingCreatureCardId();
+        if (dyingCreatureCardId == null) {
+            log.info("Game {} - {} death trigger fizzles (no dying creature card ID)",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
+        if (creatureCard == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (creature not in graveyard).";
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
+                    gameData.id, entry.getCard().getName(), dyingCreatureCardId);
+            return;
+        }
+
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCreatureCardId);
+        permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCreatureCardId);
+        gameData.playerHands.get(ownerId).add(creatureCard);
+
+        String ownerName = gameData.playerIdToName.get(ownerId);
+        String logEntry = creatureCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} returns {} from graveyard to {}'s hand",
+                gameData.id, entry.getCard().getName(), creatureCard.getName(), ownerName);
     }
 
     /**

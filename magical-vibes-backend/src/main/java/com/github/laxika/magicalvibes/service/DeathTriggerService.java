@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
@@ -176,10 +177,15 @@ public class DeathTriggerService {
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId) {
-        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, null);
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, null, null);
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId, UUID dyingPermanentControllerId) {
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId, null);
+    }
+
+    public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,
+                                                      UUID dyingPermanentControllerId, UUID dyingCreatureCardId) {
         gameData.forEachPermanent((playerId, perm) -> {
             if (!dyingPermanentId.equals(perm.getAttachedTo())) return;
             if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
@@ -188,10 +194,12 @@ public class DeathTriggerService {
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                // Bake the dying creature's controller into effects that need it
+                // Bake trigger-time data into effects that need it
                 CardEffect effectForStack = effect;
                 if (effect instanceof ReturnSourceAuraToOpponentCreatureOnDeathEffect && dyingPermanentControllerId != null) {
                     effectForStack = new ReturnSourceAuraToOpponentCreatureOnDeathEffect(dyingPermanentControllerId);
+                } else if (effect instanceof ReturnEnchantedCreatureToOwnerHandOnDeathEffect && dyingCreatureCardId != null) {
+                    effectForStack = new ReturnEnchantedCreatureToOwnerHandOnDeathEffect(dyingCreatureCardId);
                 }
 
                 gameData.stack.add(new StackEntry(
