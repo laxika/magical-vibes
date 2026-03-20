@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermane
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
@@ -946,6 +947,35 @@ public class StaticEffectResolutionService {
         if (controllerId == null) return;
         int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 20);
         if (lifeTotal >= conditional.lifeThreshold()) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            } else if (wrapped instanceof GrantKeywordEffect grant) {
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addKeyword(grant.keyword());
+                }
+            }
+        }
+    }
+
+    @HandlesStaticEffect(value = ControllerGraveyardCardThresholdConditionalEffect.class, selfOnly = true)
+    private void resolveControllerGraveyardCardThresholdConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControllerGraveyardCardThresholdConditionalEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        List<Card> graveyard = context.gameData().playerGraveyards.get(controllerId);
+        int count = 0;
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                if (gameQueryService.matchesCardPredicate(card, conditional.filter(), null)) {
+                    count++;
+                }
+            }
+        }
+        if (count >= conditional.threshold()) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());

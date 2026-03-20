@@ -321,6 +321,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Morbid ETB counters | `f/FesterhideBoar.java` | ON_ENTER_BATTLEFIELD MorbidConditionalEffect(PutCountersOnSourceEffect(1, 1, 2)) — enters with +1/+1 counters if a creature died this turn |
 | Metalcraft damage + can't block | `c/ConcussiveBolt.java` | SPELL DealDamageToTargetPlayerEffect(4) + MetalcraftConditionalEffect(TargetPlayerCreaturesCantBlockThisTurnEffect) — damage always, metalcraft adds mass can't-block on target player's creatures |
 | Life threshold boost + keyword | `s/SerraAscendant.java` | STATIC ControllerLifeThresholdConditionalEffect(30, StaticBoostEffect(5, 5, [FLYING], SELF)) — +5/+5 and flying as long as controller has 30+ life |
+| Graveyard card threshold boost + keyword | `g/GhituLavarunner.java` | STATIC ControllerGraveyardCardThresholdConditionalEffect(2, instant/sorcery filter, StaticBoostEffect(1, 0, [HASTE], SELF)) — +1/+0 and haste as long as 2+ instant/sorcery cards in controller's graveyard |
 
 ## Auras
 
