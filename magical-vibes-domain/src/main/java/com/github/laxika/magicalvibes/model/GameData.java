@@ -68,6 +68,8 @@ public class GameData {
     /** Delayed trigger: creature card ID → poison counters to give its controller when it dies this turn. */
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> playerExiledCards = new ConcurrentHashMap<>();
+    /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
+    public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
@@ -504,6 +506,7 @@ public class GameData {
         this.playerHands.forEach((k, v) -> copy.playerHands.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.playerExiledCards.forEach((k, v) -> copy.playerExiledCards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) ->

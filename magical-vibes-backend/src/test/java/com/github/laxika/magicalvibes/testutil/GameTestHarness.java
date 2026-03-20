@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.exile.ExileEggCounterResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileReturnResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -270,6 +271,7 @@ public class GameTestHarness {
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService),
                 new ExileReturnResolutionService(gameQueryService, gameBroadcastService),
+                new ExileEggCounterResolutionService(gameQueryService, gameBroadcastService, battlefieldEntryService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService),
                 lifeResolutionService,
                 new AnimationResolutionService(gameQueryService, gameBroadcastService),

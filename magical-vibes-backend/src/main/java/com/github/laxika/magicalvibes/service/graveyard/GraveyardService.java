@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
@@ -94,6 +95,20 @@ public class GraveyardService {
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         // CR 614.7 — self-replacement effects apply first
+
+        // "If [this] would die, instead exile it with N egg counters" (e.g. Darigaaz Reincarnated)
+        // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
+        if (sourceZone == Zone.BATTLEFIELD && hasExileWithEggCountersReplacementEffect(card)) {
+            ExileWithEggCountersInsteadOfDyingEffect eggEffect = getExileWithEggCountersReplacementEffect(card);
+            exileService.exileCard(gameData, ownerId, card);
+            gameData.exiledCardEggCounters.put(card.getId(), eggEffect.count());
+            String exileLog = card.getName() + " is exiled with " + eggEffect.count() + " egg counters instead of dying.";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            log.info("Game {} - {} replacement effect: exiled with {} egg counters instead of dying",
+                    gameData.id, card.getName(), eggEffect.count());
+            return false;
+        }
+
         if (hasShuffleIntoLibraryReplacementEffect(card)) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
@@ -160,6 +175,19 @@ public class GraveyardService {
     }
 
     // ===== Private helpers =====
+
+    private boolean hasExileWithEggCountersReplacementEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof ExileWithEggCountersInsteadOfDyingEffect);
+    }
+
+    private ExileWithEggCountersInsteadOfDyingEffect getExileWithEggCountersReplacementEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof ExileWithEggCountersInsteadOfDyingEffect)
+                .map(e -> (ExileWithEggCountersInsteadOfDyingEffect) e)
+                .findFirst()
+                .orElseThrow();
+    }
 
     private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()

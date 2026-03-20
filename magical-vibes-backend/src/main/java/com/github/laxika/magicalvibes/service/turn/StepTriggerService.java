@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
@@ -380,6 +381,31 @@ public class StepTriggerService {
                 log.info("Game {} - {} enchanted-player upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
         });
+
+        // Check exiled cards with egg counters owned by the active player (e.g. Darigaaz Reincarnated).
+        // "At the beginning of your upkeep, if this card is exiled with an egg counter on it,
+        //  remove an egg counter from it. Then if it has no egg counters, return it to the battlefield."
+        if (!gameData.exiledCardEggCounters.isEmpty()) {
+            List<Card> exiledCards = gameData.playerExiledCards.get(activePlayerId);
+            if (exiledCards != null) {
+                for (Card card : new ArrayList<>(exiledCards)) {
+                    Integer eggCounters = gameData.exiledCardEggCounters.get(card.getId());
+                    if (eggCounters != null && eggCounters > 0) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                activePlayerId,
+                                card.getName() + "'s egg counter ability",
+                                new ArrayList<>(List.of(new RemoveEggCounterFromExileAndReturnEffect(card.getId())))
+                        ));
+
+                        String logEntry = card.getName() + "'s upkeep ability triggers (exiled with egg counters).";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} egg counter upkeep trigger pushed onto stack", gameData.id, card.getName());
+                    }
+                }
+            }
+        }
 
         // Process upkeep player-targeted triggers first (mandatory targeting at trigger time, CR 603.3d)
         if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
