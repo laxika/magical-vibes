@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -286,6 +288,9 @@ public abstract class AiDecisionEngine {
         if (!canPaySacrificeCosts(gameData, card)) {
             return false;
         }
+        if (!canPayGraveyardExileCosts(gameData, card)) {
+            return false;
+        }
         // For X spells that exile creatures from graveyard, ensure at least 1 creature exists
         ManaCost cost = new ManaCost(card.getManaCost());
         if (cost.hasX() && getMaxXForGraveyardRequirements(gameData, card) <= 0) {
@@ -331,6 +336,28 @@ public abstract class AiDecisionEngine {
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 boolean hasMatch = battlefield.stream()
                         .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
+                if (!hasMatch) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Checks whether the player's graveyard can satisfy all graveyard exile costs
+     * in the card's SPELL effects (e.g. ExileNCardsFromGraveyardCost, ExileCardFromGraveyardCost).
+     * Returns false if any graveyard exile cost cannot be paid.
+     */
+    protected boolean canPayGraveyardExileCosts(GameData gameData, Card card) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
+                long matchingCount = graveyard.stream()
+                        .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
+                        .count();
+                if (matchingCount < cost.count()) return false;
+            } else if (effect instanceof ExileCardFromGraveyardCost cost) {
+                boolean hasMatch = graveyard.stream()
+                        .anyMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()));
                 if (!hasMatch) return false;
             }
         }

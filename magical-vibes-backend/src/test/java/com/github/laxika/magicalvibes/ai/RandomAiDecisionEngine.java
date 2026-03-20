@@ -124,12 +124,6 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
-            // Skip spells that require exiling a card from the graveyard if no valid card exists
-            ExileCardFromGraveyardCost exileCost = findExileGraveyardCost(card);
-            if (exileCost != null && findValidGraveyardIndex(graveyard, exileCost) == null) {
-                continue;
-            }
-
             if (!isSpellCastable(gameData, card, virtualPool)) {
                 continue;
             }

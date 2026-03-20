@@ -12,13 +12,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.InfernalPlunge;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MakeshiftMauler;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SkaabRuinator;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.u.UnburialRites;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
@@ -940,6 +943,101 @@ class AiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Midnight Ritual");
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+    }
+
+    // ===== Graveyard exile cost (ExileNCardsFromGraveyardCost / ExileCardFromGraveyardCost) =====
+
+    /**
+     * Adds the given number of untapped Islands to the AI's battlefield.
+     */
+    private void giveAiIslands(int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent island = new Permanent(new Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(island);
+        }
+    }
+
+    @Test
+    @DisplayName("AI does not cast Skaab Ruinator when graveyard has fewer than 3 creatures")
+    void doesNotCastSkaabRuinatorWithTooFewCreaturesInGraveyard() {
+        giveAiPriority();
+        giveAiIslands(3); // Skaab Ruinator costs {1}{U}{U}
+
+        // Put only 2 creatures in graveyard (need 3)
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — not enough creature cards in graveyard
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI does not cast Skaab Ruinator when graveyard has only non-creature cards")
+    void doesNotCastSkaabRuinatorWithOnlyNonCreaturesInGraveyard() {
+        giveAiPriority();
+        giveAiIslands(3);
+
+        // Graveyard has 3 non-creature cards
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+
+        harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no creature cards in graveyard
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI does not cast Skaab Ruinator when graveyard is empty")
+    void doesNotCastSkaabRuinatorWithEmptyGraveyard() {
+        giveAiPriority();
+        giveAiIslands(3);
+
+        harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — empty graveyard
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI does not cast Makeshift Mauler when no creature card in graveyard")
+    void doesNotCastMakeshiftMaulerWithNoCreatureInGraveyard() {
+        giveAiPriority();
+        giveAiIslands(5); // Makeshift Mauler costs {3}{U}
+
+        // Graveyard has only a non-creature card
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+
+        harness.setHand(aiPlayer, List.of(new MakeshiftMauler()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no creature card in graveyard to exile
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI does not cast Makeshift Mauler when graveyard is empty")
+    void doesNotCastMakeshiftMaulerWithEmptyGraveyard() {
+        giveAiPriority();
+        giveAiIslands(5);
+
+        harness.setHand(aiPlayer, List.of(new MakeshiftMauler()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — empty graveyard
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== tryPlayLand silent failure recovery =====
