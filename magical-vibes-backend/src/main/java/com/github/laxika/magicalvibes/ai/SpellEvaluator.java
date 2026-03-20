@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
@@ -228,6 +229,11 @@ public class SpellEvaluator {
         // P/T boost to target creature
         if (effect instanceof BoostTargetCreatureEffect boost) {
             return (boost.powerBoost() * 2.0 + boost.toughnessBoost());
+        }
+
+        // Divided damage among creatures
+        if (effect instanceof DealDividedDamageAmongTargetCreaturesEffect divided) {
+            return evaluateDamageToCreature(gameData, divided.totalDamage(), oppBattlefield, opponentId, aiPlayerId);
         }
 
         // X-damage effects

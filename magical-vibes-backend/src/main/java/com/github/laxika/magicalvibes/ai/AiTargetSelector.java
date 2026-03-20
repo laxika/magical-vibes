@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -19,7 +20,9 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -222,6 +225,72 @@ class AiTargetSelector {
             }
         }
         return candidates;
+    }
+
+    /**
+     * Builds a damage assignment map for divided damage spells (e.g. Ignite Disorder).
+     * Distributes damage to maximize creature kills on the opponent's battlefield.
+     * Returns null if no valid targets exist.
+     */
+    Map<UUID, Integer> buildDamageAssignments(GameData gameData, Card card, UUID aiPlayerId) {
+        DealDividedDamageAmongTargetCreaturesEffect dividedEffect = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e instanceof DealDividedDamageAmongTargetCreaturesEffect)
+                .map(DealDividedDamageAmongTargetCreaturesEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+
+        if (dividedEffect == null) {
+            // X-damage divided among attacking creatures — only relevant during combat
+            return null;
+        }
+
+        int totalDamage = dividedEffect.totalDamage();
+        int maxTargets = Math.max(1, card.getMaxTargets());
+
+        // Find valid creature targets on opponent's battlefield
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
+        List<Permanent> validTargets = new ArrayList<>();
+
+        for (Permanent p : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+            if (gameQueryService.isCreature(gameData, p) && isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
+                validTargets.add(p);
+            }
+        }
+
+        if (validTargets.isEmpty()) {
+            return null;
+        }
+
+        // Sort by lethal damage needed (ascending) to maximize kills
+        validTargets.sort(Comparator.comparingInt(p ->
+                gameQueryService.getEffectiveToughness(gameData, p) - p.getMarkedDamage()));
+
+        if (validTargets.size() > maxTargets) {
+            validTargets = new ArrayList<>(validTargets.subList(0, maxTargets));
+        }
+
+        // Distribute damage greedily: assign lethal damage to weakest targets first
+        Map<UUID, Integer> assignments = new LinkedHashMap<>();
+        int remaining = totalDamage;
+
+        for (Permanent target : validTargets) {
+            if (remaining <= 0) break;
+            int lethal = gameQueryService.getEffectiveToughness(gameData, target) - target.getMarkedDamage();
+            int dmg = Math.min(remaining, Math.max(1, lethal));
+            assignments.put(target.getId(), dmg);
+            remaining -= dmg;
+        }
+
+        // Dump remaining damage on the last assigned target
+        if (remaining > 0 && !assignments.isEmpty()) {
+            UUID lastKey = null;
+            for (UUID key : assignments.keySet()) {
+                lastKey = key;
+            }
+            assignments.merge(lastKey, remaining, Integer::sum);
+        }
+
+        return assignments;
     }
 
     private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield, UUID aiPlayerId) {

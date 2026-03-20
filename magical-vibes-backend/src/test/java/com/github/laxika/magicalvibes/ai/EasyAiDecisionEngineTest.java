@@ -10,11 +10,13 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
+import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -352,5 +355,131 @@ class EasyAiDecisionEngineTest {
         // Should NOT attempt to cast — spell casting restricted
         verify(messageHandler, never()).handlePlayCard(any(), any());
         verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    // ===== Divided damage spells =====
+
+    @Test
+    @DisplayName("Easy AI builds damage assignments for divided damage spell targeting single creature")
+    void buildsDamageAssignmentsForSingleTarget() throws Exception {
+        Card spell = new Card();
+        spell.setName("Test Divided Damage");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{1}{R}");
+        spell.target(null, 1, 3)
+                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+        gd.playerHands.get(aiPlayer.getId()).add(spell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+        Card creatureCard = new Card();
+        creatureCard.setName("Opponent Creature");
+        creatureCard.setType(CardType.CREATURE);
+        creatureCard.setPower(2);
+        creatureCard.setToughness(3);
+        Permanent creature = new Permanent(creatureCard);
+        gd.playerBattlefields.get(opponentId).add(creature);
+
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+        when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(3);
+        when(targetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        assertThat(request.damageAssignments()).isNotNull();
+        assertThat(request.damageAssignments()).containsEntry(creature.getId(), 3);
+    }
+
+    @Test
+    @DisplayName("Easy AI does not cast divided damage spell when no valid targets exist")
+    void doesNotCastDividedDamageSpellWithNoValidTargets() throws Exception {
+        Card spell = new Card();
+        spell.setName("Test Divided Damage");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{1}{R}");
+        spell.target(null, 1, 3)
+                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+        gd.playerHands.get(aiPlayer.getId()).add(spell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        // No creatures on opponent's battlefield
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI distributes divided damage among multiple creatures to maximize kills")
+    void distributesDividedDamageToMaximizeKills() throws Exception {
+        Card spell = new Card();
+        spell.setName("Test Divided Damage");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{1}{R}");
+        spell.target(null, 1, 3)
+                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+        gd.playerHands.get(aiPlayer.getId()).add(spell);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+
+        Card c1 = new Card();
+        c1.setName("Small Creature");
+        c1.setType(CardType.CREATURE);
+        c1.setPower(1);
+        c1.setToughness(1);
+        Permanent creature1 = new Permanent(c1);
+
+        Card c2 = new Card();
+        c2.setName("Medium Creature");
+        c2.setType(CardType.CREATURE);
+        c2.setPower(2);
+        c2.setToughness(2);
+        Permanent creature2 = new Permanent(c2);
+
+        gd.playerBattlefields.get(opponentId).add(creature1);
+        gd.playerBattlefields.get(opponentId).add(creature2);
+
+        when(gameQueryService.isCreature(gd, creature1)).thenReturn(true);
+        when(gameQueryService.isCreature(gd, creature2)).thenReturn(true);
+        when(gameQueryService.getEffectiveToughness(gd, creature1)).thenReturn(1);
+        when(gameQueryService.getEffectiveToughness(gd, creature2)).thenReturn(2);
+        when(targetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        assertThat(request.damageAssignments()).isNotNull();
+        assertThat(request.damageAssignments()).hasSize(2);
+        // Should assign 1 to the 1/1 and 2 to the 2/2 (kills both)
+        assertThat(request.damageAssignments()).containsEntry(creature1.getId(), 1);
+        assertThat(request.damageAssignments()).containsEntry(creature2.getId(), 2);
     }
 }

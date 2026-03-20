@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,8 +19,10 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +34,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -38,12 +42,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class MediumAiDecisionEngineTest {
 
@@ -401,6 +408,49 @@ class MediumAiDecisionEngineTest {
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+        }
+
+        @Test
+        @DisplayName("Medium AI builds damage assignments for divided damage spell")
+        void buildsDamageAssignmentsForDividedDamageSpell() throws Exception {
+            Card spell = new Card();
+            spell.setName("Test Divided Damage");
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost("{1}{R}");
+            spell.target(null, 1, 3)
+                    .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(spell);
+
+            ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
+            pool.add(ManaColor.RED, 1);
+            pool.add(ManaColor.COLORLESS, 1);
+
+            UUID opponentId = mockGd.orderedPlayerIds.get(1);
+            Card creatureCard = new Card();
+            creatureCard.setName("Opponent Creature");
+            creatureCard.setType(CardType.CREATURE);
+            creatureCard.setPower(2);
+            creatureCard.setToughness(2);
+            Permanent creature = new Permanent(creatureCard);
+            mockGd.playerBattlefields.get(opponentId).add(creature);
+
+            when(mockGameQueryService.isCreature(mockGd, creature)).thenReturn(true);
+            when(mockGameQueryService.getEffectiveToughness(mockGd, creature)).thenReturn(2);
+            when(mockTargetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+
+            Mockito.doAnswer(inv -> {
+                mockGd.playerHands.get(mockAiPlayer.getId()).removeFirst();
+                return null;
+            }).when(mockMessageHandler).handlePlayCard(any(), any());
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+            verify(mockMessageHandler).handlePlayCard(eq(mockConnection), captor.capture());
+
+            PlayCardRequest request = captor.getValue();
+            assertThat(request.damageAssignments()).isNotNull();
+            assertThat(request.damageAssignments()).containsEntry(creature.getId(), 3);
         }
     }
 }

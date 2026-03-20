@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.IntConsumer;
@@ -113,9 +114,18 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         CastCandidate best = candidates.getFirst();
         Card card = hand.get(best.index);
 
-        // Determine target if needed
+        // Build damage assignments for divided damage spells
+        Map<UUID, Integer> damageAssignments = null;
+        if (card.isNeedsDamageDistribution()) {
+            damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
+            if (damageAssignments == null) {
+                return false;
+            }
+        }
+
+        // Determine target if needed (skip for damage distribution spells)
         UUID targetId = null;
-        if (card.isNeedsTarget() || card.isAura()) {
+        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -146,8 +156,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final UUID finalTargetId = targetId;
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
+        final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, null, null, null, null, null, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {

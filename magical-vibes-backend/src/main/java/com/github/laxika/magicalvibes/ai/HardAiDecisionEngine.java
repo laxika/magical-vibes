@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.IntConsumer;
@@ -114,6 +115,16 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
             if (bestAction instanceof SimulationAction.PlayCard pc) {
                 Card card = hand.get(pc.handIndex());
+
+                // Build damage assignments for divided damage spells
+                Map<UUID, Integer> damageAssignments = null;
+                if (card.isNeedsDamageDistribution()) {
+                    damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
+                    if (damageAssignments == null) {
+                        return false;
+                    }
+                }
+
                 ManaCost castCost = new ManaCost(card.getManaCost());
                 Integer xValue = null;
                 var tapAction = tapPermanentAction();
@@ -133,10 +144,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         xValue != null ? " (X=" + xValue + ")" : "", gameId);
                 int handSizeBefore = hand.size();
                 final int cardIndex = pc.handIndex();
-                final UUID targetId = pc.targetId();
+                final UUID targetId = card.isNeedsDamageDistribution() ? null : pc.targetId();
                 final Integer finalXValue = xValue;
+                final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, finalXValue, targetId, null, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the spell was actually cast — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 if (hand.size() >= handSizeBefore) {
@@ -192,8 +204,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         CastCandidate best = candidates.getFirst();
         Card card = hand.get(best.index);
 
+        // Build damage assignments for divided damage spells
+        Map<UUID, Integer> damageAssignments = null;
+        if (card.isNeedsDamageDistribution()) {
+            damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
+            if (damageAssignments == null) {
+                return false;
+            }
+        }
+
+        // Determine target if needed (skip for damage distribution spells)
         UUID targetId = null;
-        if (card.isNeedsTarget() || card.isAura()) {
+        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -223,8 +245,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final UUID finalTargetId = targetId;
         final int cardIndex = best.index;
         final Integer finalXValue = xValue;
+        final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, null, null, null, null, null, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {
