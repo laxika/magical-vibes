@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.InfernalPlunge;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.u.UnburialRites;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -619,6 +621,76 @@ class AiDecisionEngineTest {
         ai.handleMessage("GAME_STATE", "");
 
         // AI should not cast — no valid enchantment targets
+        assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Graveyard targeting =====
+
+    /**
+     * Adds the given number of untapped Swamps to the AI's battlefield.
+     */
+    private void giveAiSwamps(int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
+        }
+    }
+
+    @Test
+    @DisplayName("AI casts Unburial Rites targeting highest-MV creature in own graveyard")
+    void castsUnburialRitesTargetingHighestManaValueCreature() {
+        giveAiPriority();
+        giveAiSwamps(3);
+        giveAiPlains(2);
+
+        // Put two creatures in AI's graveyard — Grizzly Bears (MV 2) and Air Elemental (MV 5)
+        Card bears = new GrizzlyBears();
+        Card airElemental = new AirElemental();
+        gd.playerGraveyards.get(aiPlayer.getId()).add(bears);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(airElemental);
+
+        harness.setHand(aiPlayer, List.of(new UnburialRites()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast Unburial Rites targeting Air Elemental (highest MV)
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Unburial Rites");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
+    }
+
+    @Test
+    @DisplayName("AI does not cast Unburial Rites when no creature in graveyard")
+    void doesNotCastUnburialRitesWithoutCreatureInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(3);
+        giveAiPlains(2);
+
+        // Graveyard has only a non-creature card
+        Card holyDay = new HolyDay();
+        gd.playerGraveyards.get(aiPlayer.getId()).add(holyDay);
+
+        harness.setHand(aiPlayer, List.of(new UnburialRites()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no valid creature target
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI does not cast Unburial Rites when graveyard is empty")
+    void doesNotCastUnburialRitesWithEmptyGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(3);
+        giveAiPlains(2);
+
+        harness.setHand(aiPlayer, List.of(new UnburialRites()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — no target in graveyard
         assertThat(gd.stack).isEmpty();
     }
 

@@ -252,6 +252,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Add graveyard cards as targets if allowed
+        if (allowed.contains(TargetType.GRAVEYARD)) {
+            for (Card c : targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId())) {
+                validTargets.add(c.getId());
+            }
+        }
+
         if (validTargets.isEmpty()) {
             return null;
         }

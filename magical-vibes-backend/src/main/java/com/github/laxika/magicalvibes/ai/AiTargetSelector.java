@@ -3,16 +3,19 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +39,17 @@ class AiTargetSelector {
         Set<TargetType> allowedTargets = card.getAllowedTargets();
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
             return opponentId;
+        }
+
+        // Handle graveyard targeting (e.g. Unburial Rites, Gruesome Encore)
+        if (allowedTargets.contains(TargetType.GRAVEYARD)) {
+            List<Card> candidates = findValidGraveyardTargets(gameData, card, aiPlayerId);
+            if (candidates.isEmpty()) return null;
+            // Pick the highest mana value card (best reanimation/value target)
+            return candidates.stream()
+                    .max(Comparator.comparingInt(Card::getManaValue))
+                    .map(Card::getId)
+                    .orElse(null);
         }
 
         // Handle destroy effects (ETB creatures or removal spells)
@@ -142,6 +156,55 @@ class AiTargetSelector {
         // Fall back to own battlefield
         List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         return findDestroyCandidate(gameData, card, ownBattlefield, aiPlayerId);
+    }
+
+    /**
+     * Returns all valid graveyard cards that the given spell can target.
+     * Examines the card's SPELL effects to determine the correct graveyard scope and filter.
+     */
+    List<Card> findValidGraveyardTargets(GameData gameData, Card card, UUID aiPlayerId) {
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (!effect.canTargetGraveyard()) continue;
+
+            List<Card> candidates;
+            if (effect instanceof ReturnCardFromGraveyardEffect rge) {
+                candidates = getGraveyardCandidates(gameData, rge.source(), aiPlayerId, opponentId);
+                if (rge.filter() != null) {
+                    candidates = candidates.stream()
+                            .filter(c -> gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId()))
+                            .toList();
+                }
+            } else {
+                // For non-return effects: canTargetAnyGraveyard → all graveyards, otherwise → opponent's
+                GraveyardSearchScope scope = effect.canTargetAnyGraveyard()
+                        ? GraveyardSearchScope.ALL_GRAVEYARDS
+                        : GraveyardSearchScope.OPPONENT_GRAVEYARD;
+                candidates = getGraveyardCandidates(gameData, scope, aiPlayerId, opponentId);
+            }
+
+            if (!candidates.isEmpty()) {
+                return new ArrayList<>(candidates);
+            }
+        }
+        return List.of();
+    }
+
+    private List<Card> getGraveyardCandidates(GameData gameData, GraveyardSearchScope scope,
+                                               UUID aiPlayerId, UUID opponentId) {
+        List<Card> candidates = new ArrayList<>();
+        switch (scope) {
+            case CONTROLLERS_GRAVEYARD -> candidates.addAll(
+                    gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of()));
+            case OPPONENT_GRAVEYARD -> candidates.addAll(
+                    gameData.playerGraveyards.getOrDefault(opponentId, List.of()));
+            case ALL_GRAVEYARDS -> {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    candidates.addAll(gameData.playerGraveyards.getOrDefault(playerId, List.of()));
+                }
+            }
+        }
+        return candidates;
     }
 
     private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield, UUID aiPlayerId) {

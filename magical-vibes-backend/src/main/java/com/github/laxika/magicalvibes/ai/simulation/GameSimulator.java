@@ -18,9 +18,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -936,6 +938,11 @@ public class GameSimulator {
             return opponentId;
         }
 
+        // Handle graveyard targeting (e.g. Unburial Rites, Gruesome Encore)
+        if (allowedTargets.contains(TargetType.GRAVEYARD)) {
+            return findBestGraveyardTarget(gd, card, playerId, opponentId);
+        }
+
         List<Permanent> oppBattlefield = gd.playerBattlefields.getOrDefault(opponentId, List.of());
 
         // Prefer creatures that pass the target filter
@@ -955,6 +962,52 @@ public class GameSimulator {
                 .findFirst()
                 .map(Permanent::getId)
                 .orElse(null);
+    }
+
+    private UUID findBestGraveyardTarget(GameData gd, Card card, UUID playerId, UUID opponentId) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (!effect.canTargetGraveyard()) continue;
+
+            List<Card> candidates;
+            if (effect instanceof ReturnCardFromGraveyardEffect rge) {
+                candidates = getSimGraveyardCandidates(gd, rge.source(), playerId, opponentId);
+                if (rge.filter() != null) {
+                    candidates = candidates.stream()
+                            .filter(c -> gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId()))
+                            .toList();
+                }
+            } else {
+                GraveyardSearchScope scope = effect.canTargetAnyGraveyard()
+                        ? GraveyardSearchScope.ALL_GRAVEYARDS
+                        : GraveyardSearchScope.OPPONENT_GRAVEYARD;
+                candidates = getSimGraveyardCandidates(gd, scope, playerId, opponentId);
+            }
+
+            if (!candidates.isEmpty()) {
+                return candidates.stream()
+                        .max(Comparator.comparingInt(Card::getManaValue))
+                        .map(Card::getId)
+                        .orElse(null);
+            }
+        }
+        return null;
+    }
+
+    private List<Card> getSimGraveyardCandidates(GameData gd, GraveyardSearchScope scope,
+                                                  UUID playerId, UUID opponentId) {
+        List<Card> candidates = new ArrayList<>();
+        switch (scope) {
+            case CONTROLLERS_GRAVEYARD -> candidates.addAll(
+                    gd.playerGraveyards.getOrDefault(playerId, List.of()));
+            case OPPONENT_GRAVEYARD -> candidates.addAll(
+                    gd.playerGraveyards.getOrDefault(opponentId, List.of()));
+            case ALL_GRAVEYARDS -> {
+                for (UUID pid : gd.orderedPlayerIds) {
+                    candidates.addAll(gd.playerGraveyards.getOrDefault(pid, List.of()));
+                }
+            }
+        }
+        return candidates;
     }
 
     private boolean passesTargetFilter(GameData gd, Card card, Permanent target, UUID controllerId) {
