@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapPermanentsOfTarg
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
@@ -58,6 +59,25 @@ public class TapUntapResolutionService {
         });
 
         log.info("Game {} - {} taps creatures matching filters", gameData.id, entry.getCard().getName());
+    }
+
+    @HandlesEffect(TapSelfEffect.class)
+    private void resolveTapSelf(GameData gameData, StackEntry entry) {
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
+        if (self == null) {
+            return;
+        }
+
+        boolean wasTapped = self.isTapped();
+        self.tap();
+        if (!wasTapped) {
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, self);
+        }
+
+        String logEntry = self.getCard().getName() + " taps itself.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} taps itself", gameData.id, self.getCard().getName());
     }
 
     @HandlesEffect(TapOrUntapTargetPermanentEffect.class)

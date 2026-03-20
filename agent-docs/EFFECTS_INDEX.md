@@ -22,7 +22,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 
 Effects that implicitly target their source permanent (boost-self, animate-self, regenerate-self, etc.) override `isSelfTargeting()` to return `true`. This is used by `ActivatedAbilityExecutionService` to auto-assign the source as the target when no explicit target is provided.
 
-Effects returning `true`: `BoostSelfEffect`, `UntapSelfEffect`, `AnimateSelfEffect`, `AnimateSelfByChargeCountersEffect`, `AnimateSelfWithStatsEffect`, `AnimateLandEffect`, `PutChargeCounterOnSelfEffect`, `PutSlimeCounterAndCreateOozeTokenEffect`.
+Effects returning `true`: `BoostSelfEffect`, `TapSelfEffect`, `UntapSelfEffect`, `AnimateSelfEffect`, `AnimateSelfByChargeCountersEffect`, `AnimateSelfWithStatsEffect`, `AnimateLandEffect`, `PutChargeCounterOnSelfEffect`, `PutSlimeCounterAndCreateOozeTokenEffect`.
 
 Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` → `scope == SELF`.
 
@@ -776,6 +776,7 @@ Pass `null` as filter to allow any card.
 | `TapOrUntapTargetPermanentEffect` | `()` | tap or untap target permanent |
 | `UntapTargetPermanentEffect` | `()` | untap target permanent |
 | `UntapAllTargetPermanentsEffect` | `()` | untap all target permanents (multi-target variant, iterates over `getTargetIds()`) |
+| `TapSelfEffect` | `()` | tap this permanent as an effect (not cost); can be activated even when already tapped |
 | `UntapSelfEffect` | `()` | untap this permanent |
 | `UntapAttackedCreaturesEffect` | `()` | untap creatures that attacked this turn (end of combat) |
 | `TapCreaturesEffect` | `(Set<TargetFilter> filters)` | tap all creatures matching filters |
