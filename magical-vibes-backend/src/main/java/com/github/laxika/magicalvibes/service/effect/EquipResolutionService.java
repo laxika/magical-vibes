@@ -92,7 +92,23 @@ public class EquipResolutionService {
             return;
         }
 
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // Try sourcePermanentId first (ETB path), fall back to card ID lookup (death trigger path)
+        Permanent equipment = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (equipment == null) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (p.getCard().getId().equals(entry.getCard().getId())) {
+                        equipment = p;
+                        break;
+                    }
+                }
+                if (equipment != null) break;
+            }
+        }
         if (equipment == null) {
             String logEntry = entry.getCard().getName() + "'s attach ability fizzles (equipment no longer on the battlefield).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -104,7 +120,7 @@ public class EquipResolutionService {
 
         String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} attached to {} via ETB", gameData.id, entry.getCard().getName(), target.getCard().getName());
+        log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
     @HandlesEffect(AttachTargetEquipmentToTargetCreatureEffect.class)

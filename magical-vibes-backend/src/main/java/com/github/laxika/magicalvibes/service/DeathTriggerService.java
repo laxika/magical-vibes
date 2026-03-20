@@ -162,13 +162,20 @@ public class DeathTriggerService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        dyingCreatureControllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
-                ));
+                if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
+                    // Targeted equipment death trigger — queue for target selection
+                    gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+                            perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(effect))
+                    ));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            dyingCreatureControllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                }
                 String triggerLog = perm.getCard().getName() + "'s ability triggers (equipped creature died).";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers (equipped creature died)", gameData.id, perm.getCard().getName());
