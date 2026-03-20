@@ -130,6 +130,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` | `(int damage)` | deal N damage to each creature and planeswalker each opponent controls. Non-targeting. Used by Goblin Chainwhirler (paired with DealDamageToEachOpponentEffect) |
 | `DealDamageToEachOpponentEffect` | `(int damage)` | deal N damage to each opponent (not the controller). Used by Cabal Paladin |
 | `DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect` | `()` | deal damage to each opponent equal to the number of cards that player has drawn this turn |
+| `DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect` | `()` | deal damage to each opponent equal to the number of +1/+1 counters on the source permanent. Self-targeting. Used by Hallar, the Firefletcher |
 | `DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect` | `(CardType cardType)` | deal damage to target player equal to the number of cards of the specified type in controller's graveyard |
 | `DealOrderedDamageToAnyTargetsEffect` | `(List<Integer> damageAmounts)` | deal different amounts to multiple targets (e.g. 3 then 1) |
 | `DealXDamageToAnyTargetEffect` | `()` or `(boolean exileInsteadOfDie)` | deal X damage to any target (X spell). When `exileInsteadOfDie=true`, if target creature would die this turn, exile it instead (sets `exileInsteadOfDieThisTurn` flag, cleared at end of turn) |

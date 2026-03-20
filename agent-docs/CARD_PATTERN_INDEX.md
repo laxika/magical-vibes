@@ -233,6 +233,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Opponent discards — life loss | `l/LilianasCaress.java` | ON_OPPONENT_DISCARDS LoseLifeEffect |
 | Spell cast trigger | `q/QuirionDryad.java` | ON_ANY_PLAYER_CASTS_SPELL +1/+1 counter |
 | Historic spell cast trigger (damage) | `c/CabalPaladin.java` | ON_CONTROLLER_CASTS_SPELL SpellCastTriggerEffect(CardIsHistoricPredicate, DealDamageToEachOpponentEffect(2)) — deals 2 damage to each opponent when casting historic spells |
+| Kicked spell cast trigger (counter + damage) | `h/HallarTheFirefletcher.java` | ON_CONTROLLER_CASTS_SPELL KickedSpellCastTriggerEffect(PutCountersOnSourceEffect(1,1,1), DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect) — on kicked spell cast, add +1/+1 counter then deal damage equal to total counters to each opponent |
 | Knowledge Pool-style cast intercept | `k/KnowledgePool.java` | ON_ENTER_BATTLEFIELD EachPlayerExilesTopCardsToSourceEffect(3) + ON_ANY_PLAYER_CASTS_SPELL KnowledgePoolCastTriggerEffect — exiles cast-from-hand spells, lets caster pick a nonland card from pool to cast free. Uses per-permanent exile tracking (permanentExiledCards) and KNOWLEDGE_POOL_CAST_CHOICE awaiting input |
 | May gain life on spell cast | `a/AngelsFeather.java` | MayEffect(GainLifeOnSpellCastEffect(CardColorPredicate)) — also `g/GolemsHeart.java` with CardTypePredicate |
 | May pay to deal damage on artifact cast | `e/Embersmith.java` | MayEffect(DealDamageToAnyTargetOnArtifactCastEffect) — pay mana + any-target trigger |

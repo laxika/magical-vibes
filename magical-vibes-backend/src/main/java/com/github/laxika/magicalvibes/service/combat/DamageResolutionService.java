@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureCon
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect;
@@ -1889,6 +1890,39 @@ public class DamageResolutionService {
                 dealDamageToPlayer(gameData, entry, playerId, rawDamage);
             }
         }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect} — deals
+     * damage to each opponent equal to the number of +1/+1 counters on the source permanent.
+     */
+    @HandlesEffect(DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect.class)
+    void resolveDealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSource(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() == null) return;
+
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) return;
+
+        int counters = source.getPlusOnePlusOneCounters();
+        if (counters <= 0) return;
+
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        UUID controllerId = entry.getControllerId();
+        String cardName = entry.getCard().getName();
+
+        int damage = gameQueryService.applyDamageMultiplier(gameData, counters, entry);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            dealDamageToPlayer(gameData, entry, playerId, damage);
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                cardName + " deals " + damage + " damage to each opponent.");
+        log.info("Game {} - {} deals {} damage to each opponent (from +1/+1 counters)",
+                gameData.id, cardName, damage);
 
         gameOutcomeService.checkWinCondition(gameData);
     }
