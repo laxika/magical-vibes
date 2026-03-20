@@ -158,6 +158,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
 | ETB choose name | `p/PithingNeedle.java` | ChooseCardNameOnEnterEffect + static lock |
 | ETB choose nonland name | `p/PhyrexianRevoker.java` | ChooseCardNameOnEnterEffect(List.of(LAND)) + static lock — artifact creature variant |
+| As-enters choose creature + sacrifice grant | `d/DauntlessBodyguard.java` | ChooseAnotherCreatureOnEnterEffect + SacrificeSelfCost + GrantKeywordToChosenCreatureUntilEndOfTurnEffect — choose another creature on entry (replacement effect, not Torpor Orb-able), sacrifice to grant chosen creature indestructible |
 | ETB control handoff | `s/SleeperAgent.java` | TargetPlayerGainsControlOfSourceCreatureEffect |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |

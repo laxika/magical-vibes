@@ -84,4 +84,7 @@ public sealed interface PermanentChoiceContext {
 
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
 
+    record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                                 boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
+
 }

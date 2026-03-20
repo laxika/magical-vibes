@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreature
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
@@ -155,6 +156,28 @@ public class KeywordGrantResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
+    }
+
+    @HandlesEffect(GrantKeywordToChosenCreatureUntilEndOfTurnEffect.class)
+    private void resolveGrantKeywordToChosenCreature(GameData gameData, StackEntry entry,
+                                                      GrantKeywordToChosenCreatureUntilEndOfTurnEffect effect) {
+        if (effect.chosenCreatureId() == null) {
+            log.info("Game {} - {} ability has no chosen creature", gameData.id,
+                    entry.getCard() != null ? entry.getCard().getName() : "Unknown");
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, effect.chosenCreatureId());
+        if (target == null) {
+            log.info("Game {} - Chosen creature no longer on battlefield", gameData.id);
+            return;
+        }
+
+        target.getGrantedKeywords().add(effect.keyword());
+        String keywordName = effect.keyword().name().charAt(0) + effect.keyword().name().substring(1).toLowerCase().replace('_', ' ');
+        String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains {} (chosen creature)", gameData.id, target.getCard().getName(), effect.keyword());
     }
 
     @HandlesEffect(GrantProtectionChoiceUntilEndOfTurnEffect.class)

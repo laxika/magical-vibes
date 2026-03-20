@@ -364,6 +364,33 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleChooseCreatureAsEnter(GameData gameData, UUID chosenCreatureId,
+                                             PermanentChoiceContext.ChooseCreatureAsEnter context) {
+        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+        if (entering == null) {
+            throw new IllegalStateException("Entering permanent no longer exists");
+        }
+
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenCreatureId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        entering.setChosenPermanentId(chosenCreatureId);
+
+        String logEntry = entering.getCard().getName() + " chooses " + chosen.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chooses {} as protected creature", gameData.id,
+                entering.getCard().getName(), chosen.getCard().getName());
+
+        battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
+                context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
     public void handlePendingAuraPlacement(GameData gameData, UUID playerId, UUID permanentId) {
         Card auraCard = gameData.interaction.consumePendingAuraCard();
         UUID auraOwnerId = gameData.interaction.consumePendingAuraOwnerId();

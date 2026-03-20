@@ -105,6 +105,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleCapriciousEfreetOwnTarget(gameData, permanentId, ceo);
         } else if (context instanceof PermanentChoiceContext.EndStepTriggerTarget est) {
             triggerHandler.handleEndStepTrigger(gameData, permanentId, est);
+        } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
+            battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);
         } else {

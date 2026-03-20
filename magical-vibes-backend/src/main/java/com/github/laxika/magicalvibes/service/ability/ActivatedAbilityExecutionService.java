@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounte
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -260,6 +261,8 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
                 snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
+            } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {
+                snapshotEffects.add(new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(gk.keyword(), permanent.getChosenPermanentId()));
             } else {
                 snapshotEffects.add(effect);
             }
