@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEf
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
@@ -262,6 +263,43 @@ public class DamageResolutionService {
             if (playerId.equals(controllerId)) continue;
             dealDamageToPlayer(gameData, entry, playerId, damage);
         }
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect} — deals a fixed amount
+     * of damage to each creature and planeswalker each opponent controls. Non-targeting.
+     */
+    @HandlesEffect(DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect.class)
+    void resolveDealDamageToEachCreatureAndPlaneswalkerOpponentsControl(GameData gameData, StackEntry entry, DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect effect) {
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+        String cardName = entry.getCard().getName();
+        UUID controllerId = entry.getControllerId();
+
+        List<Permanent> destroyed = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent permanent : new ArrayList<>(battlefield)) {
+                boolean isCreature = gameQueryService.isCreature(gameData, permanent);
+                boolean isPlaneswalker = permanent.getCard().hasType(CardType.PLANESWALKER);
+                if (!isCreature && !isPlaneswalker) continue;
+                if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard())) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            cardName + "'s damage to " + permanent.getCard().getName() + " is prevented.");
+                    continue;
+                }
+                if (dealCreatureDamage(gameData, entry, permanent, rawDamage)) {
+                    destroyed.add(permanent);
+                }
+            }
+        }
+        destroyAllLethal(gameData, destroyed);
         gameOutcomeService.checkWinCondition(gameData);
     }
 

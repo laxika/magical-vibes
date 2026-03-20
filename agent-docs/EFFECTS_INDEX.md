@@ -126,6 +126,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect` | `(CardSubtype subtype, boolean gainLife)` | deal damage to any target equal to number of controlled permanents of subtype; when gainLife=true, gain life equal to the damage amount. Used by Corrupt |
 | `DealDamageIfFewCardsInHandEffect` | `(int maxCards, int damage)` | deal N damage to target player if they have maxCards or fewer in hand |
 | `DealDamageOnLandTapEffect` | `(int damage)` | deal N damage to a player whenever they tap a land (Manabarbs-style) |
+| `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` | `(int damage)` | deal N damage to each creature and planeswalker each opponent controls. Non-targeting. Used by Goblin Chainwhirler (paired with DealDamageToEachOpponentEffect) |
 | `DealDamageToEachOpponentEffect` | `(int damage)` | deal N damage to each opponent (not the controller). Used by Cabal Paladin |
 | `DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect` | `()` | deal damage to each opponent equal to the number of cards that player has drawn this turn |
 | `DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect` | `(CardType cardType)` | deal damage to target player equal to the number of cards of the specified type in controller's graveyard |
