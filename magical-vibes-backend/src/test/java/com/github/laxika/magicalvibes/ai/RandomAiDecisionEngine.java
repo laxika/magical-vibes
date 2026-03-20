@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -277,10 +280,17 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         Set<TargetType> allowed = card.getAllowedTargets();
 
-        // Add players as targets if allowed
+        // Add players as targets if allowed, respecting player relation predicates
         if (allowed.contains(TargetType.PLAYER)) {
-            validTargets.add(aiPlayer.getId());
-            if (opponentId != null) {
+            PlayerRelation relation = PlayerRelation.ANY;
+            if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter ptf
+                    && ptf.predicate() instanceof PlayerRelationPredicate prp) {
+                relation = prp.relation();
+            }
+            if (relation != PlayerRelation.OPPONENT) {
+                validTargets.add(aiPlayer.getId());
+            }
+            if (relation != PlayerRelation.SELF && opponentId != null) {
                 validTargets.add(opponentId);
             }
         }
