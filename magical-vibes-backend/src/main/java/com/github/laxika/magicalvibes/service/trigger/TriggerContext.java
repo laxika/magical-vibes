@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 
 import java.util.UUID;
 
@@ -53,8 +54,16 @@ public sealed interface TriggerContext {
 
     /**
      * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
+     * {@code sourceCard} and {@code sourceEntryType} identify what caused the life gain
+     * (e.g. a spell with lifelink). Both may be null for non-spell sources.
      */
-    record LifeGain(UUID gainingPlayerId, int lifeGainedAmount) implements TriggerContext {}
+    record LifeGain(UUID gainingPlayerId, int lifeGainedAmount, Card sourceCard, StackEntryType sourceEntryType) implements TriggerContext {
+
+        /** Backward-compatible constructor for life gain with no source info. */
+        public LifeGain(UUID gainingPlayerId, int lifeGainedAmount) {
+            this(gainingPlayerId, lifeGainedAmount, null, null);
+        }
+    }
 
     /**
      * Context for noncombat-damage-to-opponent triggers (ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).

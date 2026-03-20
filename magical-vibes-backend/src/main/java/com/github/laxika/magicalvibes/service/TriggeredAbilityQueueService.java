@@ -225,6 +225,38 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextLifeGainTriggerTarget(GameData gameData) {
+        while (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
+            PermanentChoiceContext.LifeGainTriggerAnyTarget pending = gameData.pendingLifeGainTriggerTargets.peekFirst();
+
+            // Collect valid targets: all creatures on all battlefields + all players
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)) {
+                        validPermanentTargets.add(p.getId());
+                    }
+                }
+            }
+
+            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+
+            // There are always valid targets (at least the players)
+            gameData.pendingLifeGainTriggerTargets.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets,
+                    pending.sourceCard().getName() + "'s ability - Choose target creature or player.");
+
+            String logEntry = pending.sourceCard().getName() + "'s life gain trigger - choose a target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} life gain trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     public void processNextEmblemTriggerTarget(GameData gameData) {
         while (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
             PermanentChoiceContext.EmblemTriggerTarget pending = gameData.pendingEmblemTriggerTargets.peekFirst();

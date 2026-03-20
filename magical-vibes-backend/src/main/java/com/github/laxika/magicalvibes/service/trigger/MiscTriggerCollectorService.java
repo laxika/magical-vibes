@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -160,6 +163,34 @@ public class MiscTriggerCollectorService {
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
         log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = DealDamageOnSpellLifeGainEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainDealDamageOnSpell(TriggerMatchContext match,
+            DealDamageOnSpellLifeGainEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        // Only triggers when the life gain source is an instant or sorcery spell of the matching color
+        if (lg.sourceEntryType() == null) return false;
+        if (lg.sourceEntryType() != StackEntryType.INSTANT_SPELL
+                && lg.sourceEntryType() != StackEntryType.SORCERY_SPELL) return false;
+        if (lg.sourceCard() == null || !lg.sourceCard().getColors().contains(effect.triggeringColor())) return false;
+
+        // Queue for target selection (creature or player)
+        gameData.pendingLifeGainTriggerTargets.add(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                match.permanent().getCard(),
+                match.controllerId(),
+                List.of(new DealDamageToAnyTargetEffect(effect.damage())),
+                match.permanent().getId()
+        ));
+
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on spell life gain (source: {})",
+                gameData.id, cardName, lg.sourceCard().getName());
         return true;
     }
 

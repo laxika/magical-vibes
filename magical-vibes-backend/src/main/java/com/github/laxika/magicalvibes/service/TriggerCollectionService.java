@@ -477,9 +477,14 @@ public class TriggerCollectionService {
     // ── Life-gain triggers ──────────────────────────────────────────────
 
     public void checkLifeGainTriggers(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount) {
+        checkLifeGainTriggers(gameData, gainingPlayerId, lifeGainedAmount, null, null);
+    }
+
+    public void checkLifeGainTriggers(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount,
+                                       Card sourceCard, StackEntryType sourceEntryType) {
         if (lifeGainedAmount <= 0) return;
 
-        var ctx = new TriggerContext.LifeGain(gainingPlayerId, lifeGainedAmount);
+        var ctx = new TriggerContext.LifeGain(gainingPlayerId, lifeGainedAmount, sourceCard, sourceEntryType);
 
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (!playerId.equals(gainingPlayerId)) return;
@@ -548,6 +553,10 @@ public class TriggerCollectionService {
 
     public void processNextEmblemTriggerTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
+    }
+
+    public void processNextLifeGainTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextLifeGainTriggerTarget(gameData);
     }
 
     // ── Internal dispatch ──────────────────────────────────────────────

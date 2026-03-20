@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -70,7 +71,8 @@ public class LifeResolutionService {
 
     @HandlesEffect(GainLifeEffect.class)
     private void resolveGainLife(GameData gameData, StackEntry entry, GainLifeEffect effect) {
-        applyGainLife(gameData, entry.getControllerId(), effect.amount());
+        applyGainLife(gameData, entry.getControllerId(), effect.amount(), null,
+                entry.getCard(), entry.getEntryType());
     }
 
     @HandlesEffect(PayXManaGainXLifeEffect.class)
@@ -121,6 +123,15 @@ public class LifeResolutionService {
     }
 
     public void applyGainLife(GameData gameData, UUID controllerId, int amount, String source) {
+        applyGainLife(gameData, controllerId, amount, source, null, null);
+    }
+
+    /**
+     * Overload that carries the source card and stack entry type through to life-gain triggers.
+     * Used by spell lifelink to let triggers distinguish spell-caused life gain from other sources.
+     */
+    public void applyGainLife(GameData gameData, UUID controllerId, int amount, String source,
+                              Card sourceCard, StackEntryType sourceEntryType) {
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
@@ -142,7 +153,7 @@ public class LifeResolutionService {
 
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
 
-        triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, amount);
+        triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, amount, sourceCard, sourceEntryType);
     }
 
     @HandlesEffect(GainLifePerCardsInHandEffect.class)

@@ -431,6 +431,38 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleLifeGainTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.LifeGainTriggerAnyTarget lgt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                lgt.sourceCard(),
+                lgt.controllerId(),
+                lgt.sourceCard().getName() + "'s ability",
+                new ArrayList<>(lgt.effects()),
+                null,
+                lgt.sourcePermanentId()
+        );
+        entry.setTargetId(targetId);
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, targetId);
+        String logEntry = lgt.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} life gain trigger targets {}", gameData.id, lgt.sourceCard().getName(), targetName);
+
+        if (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleEndStepTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EndStepTriggerTarget est) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

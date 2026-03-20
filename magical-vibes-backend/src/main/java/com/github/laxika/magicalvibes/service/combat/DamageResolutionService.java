@@ -1137,6 +1137,10 @@ public class DamageResolutionService {
                 sourceName + " deals " + damage + " damage to " + target.getCard().getName() + ".");
         log.info("Game {} - {} deals {} damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
 
+        if (damage > 0) {
+            checkSpellLifelink(gameData, entry, damage);
+        }
+
         boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
         boolean isLethal = gameQueryService.isLethalDamage(target.getMarkedDamage(), gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
         if (isLethal) {
@@ -1172,6 +1176,10 @@ public class DamageResolutionService {
                 sourceName + " deals " + damage + " damage to " + target.getCard().getName() + ". (damage can't be prevented)");
         log.info("Game {} - {} deals {} unpreventable damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
 
+        if (damage > 0) {
+            checkSpellLifelink(gameData, entry, damage);
+        }
+
         boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
         boolean isLethal = gameQueryService.isLethalDamage(damage, gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
         if (isLethal) {
@@ -1183,6 +1191,18 @@ public class DamageResolutionService {
             return !graveyardService.tryRegenerate(gameData, target);
         }
         return false;
+    }
+
+    /**
+     * If the stack entry represents a spell that should have lifelink (via
+     * {@link com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect}),
+     * the controller gains life equal to the effective damage dealt.
+     */
+    private void checkSpellLifelink(GameData gameData, StackEntry entry, int effectiveDamage) {
+        if (effectiveDamage <= 0) return;
+        if (!gameQueryService.shouldControllerSpellHaveLifelink(gameData, entry)) return;
+        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), effectiveDamage,
+                "spell lifelink", entry.getCard(), entry.getEntryType());
     }
 
     private void destroyPermanent(GameData gameData, Permanent target) {
@@ -1347,6 +1367,7 @@ public class DamageResolutionService {
                 gameData.playersDealtDamageThisTurn.add(playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
+                checkSpellLifelink(gameData, entry, effectiveDamage);
             }
         }
     }

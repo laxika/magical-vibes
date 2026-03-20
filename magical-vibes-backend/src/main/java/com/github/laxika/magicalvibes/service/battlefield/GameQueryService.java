@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
@@ -1769,6 +1770,29 @@ public class GameQueryService {
             }
         });
         return multiplier[0];
+    }
+
+    /**
+     * Returns {@code true} if the given stack entry represents an instant or sorcery spell
+     * that should have lifelink due to a {@link GrantLifelinkToControllerSpellsByColorEffect}
+     * on the controller's battlefield. The spell's color must match the effect's required color.
+     */
+    public boolean shouldControllerSpellHaveLifelink(GameData gameData, StackEntry entry) {
+        if (entry == null) return false;
+        StackEntryType type = entry.getEntryType();
+        if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL) return false;
+
+        boolean[] hasLifelink = {false};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!playerId.equals(entry.getControllerId())) return;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GrantLifelinkToControllerSpellsByColorEffect glse
+                        && entry.getCard().getColors().contains(glse.color())) {
+                    hasLifelink[0] = true;
+                }
+            }
+        });
+        return hasLifelink[0];
     }
 
     /**
