@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
@@ -223,6 +224,35 @@ public class CombatSimulator {
             lethalIncoming = totalIncoming >= aiLife;
         }
 
+        // Phase 1b: Enforce "must be blocked if able" (Gaea's Protector style):
+        // at least one blocker must block each such attacker if able.
+        List<CreatureInfo> mustBeBlockedAttackers = attackerInfos.stream()
+                .filter(a -> hasMustBeBlockedIfAbleEffect(gameData, a.perm))
+                .toList();
+        for (CreatureInfo mustBlockAttacker : mustBeBlockedAttackers) {
+            boolean alreadyBlocked = assignments.stream()
+                    .anyMatch(a -> a[1] == mustBlockAttacker.index);
+            if (alreadyBlocked) continue;
+
+            CreatureInfo bestBlocker = null;
+            double bestValue = Double.NEGATIVE_INFINITY;
+            for (CreatureInfo blocker : blockerInfos) {
+                if (blockerUsed[blocker.index]) continue;
+                if (!canBlock(gameData, blocker, mustBlockAttacker)) continue;
+                double value = evaluateBlock(mustBlockAttacker, blocker);
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestBlocker = blocker;
+                }
+            }
+            if (bestBlocker != null) {
+                assignments.add(new int[]{bestBlocker.index, mustBlockAttacker.index});
+                blockerUsed[bestBlocker.index] = true;
+                totalIncoming -= mustBlockAttacker.power;
+                lethalIncoming = totalIncoming >= aiLife;
+            }
+        }
+
         // Phase 2: Evaluate regular blocks for remaining unused blockers
         for (CreatureInfo attacker : attackerInfos) {
             if (attacker.cantBeBlocked) continue;
@@ -290,6 +320,13 @@ public class CombatSimulator {
                 .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance);
         if (hasOnCard) return true;
         return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
+    }
+
+    private boolean hasMustBeBlockedIfAbleEffect(GameData gameData, Permanent attacker) {
+        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
+        if (hasOnCard) return true;
+        return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
     }
 
     /**

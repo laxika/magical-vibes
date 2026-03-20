@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainL
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
@@ -202,6 +203,8 @@ public class CombatBlockService {
         validateMaximumBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
         validatePerCreatureMustBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
+                blockerAssignments);
+        validateMustBeBlockedIfAbleRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
 
         gameData.interaction.clearAwaitingInput();
@@ -499,6 +502,53 @@ public class CombatBlockService {
             int maxSatisfiable = Math.min(getMaxBlocksForCreature(blocker, defenderBattlefield), requiredAttackerIndices.size());
             if (currentMustBlocks < maxSatisfiable) {
                 throw new IllegalStateException(blocker.getCard().getName() + " must block target creature this turn if able");
+            }
+        }
+    }
+
+    private void validateMustBeBlockedIfAbleRequirements(GameData gameData,
+                                                          List<Permanent> attackerBattlefield,
+                                                          List<Permanent> defenderBattlefield,
+                                                          List<Integer> blockable,
+                                                          List<BlockerAssignment> blockerAssignments) {
+        // Find all attacking creatures with "must be blocked if able" (at least one blocker required)
+        Set<Integer> mustBeBlockedAttackerIndices = new HashSet<>();
+        for (int i = 0; i < attackerBattlefield.size(); i++) {
+            Permanent attacker = attackerBattlefield.get(i);
+            if (!attacker.isAttacking()) continue;
+            boolean hasRequirement = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
+                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+            if (hasRequirement) {
+                mustBeBlockedAttackerIndices.add(i);
+            }
+        }
+        if (mustBeBlockedAttackerIndices.isEmpty()) {
+            return;
+        }
+
+        // Collect which blockers are already assigned and which are free
+        Set<Integer> assignedBlockerIndices = new HashSet<>();
+        Set<Integer> blockedAttackerIndices = new HashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            assignedBlockerIndices.add(assignment.blockerIndex());
+            blockedAttackerIndices.add(assignment.attackerIndex());
+        }
+
+        // For each "must be blocked if able" attacker that is NOT currently blocked,
+        // check if there is a free blocker that could have blocked it
+        for (int attackerIdx : mustBeBlockedAttackerIndices) {
+            if (blockedAttackerIndices.contains(attackerIdx)) {
+                continue; // already blocked by at least one creature
+            }
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            for (int blockerIdx : blockable) {
+                if (assignedBlockerIndices.contains(blockerIdx)) continue;
+                Permanent blocker = defenderBattlefield.get(blockerIdx);
+                if (canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " must be blocked if able");
+                }
             }
         }
     }
