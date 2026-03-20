@@ -255,6 +255,9 @@ public class GameData {
     /** When true, a follow-up library search for a basic land to hand is pending (e.g. Cultivate second pick). */
     public boolean pendingBasicLandToHandSearch;
 
+    /** When true, a follow-up unrestricted library search for a card to graveyard is pending (e.g. Final Parting second pick). */
+    public boolean pendingCardToGraveyardSearch;
+
     /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
     public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
 

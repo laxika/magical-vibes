@@ -720,6 +720,7 @@ public class LibraryChoiceHandlerService {
         }
 
         if (startPendingBasicLandToHandSearch(gameData, playerId)) return;
+        if (startPendingCardToGraveyardSearch(gameData, playerId)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
     /**
@@ -800,6 +801,37 @@ public class LibraryChoiceHandlerService {
         gameData.interaction.beginLibrarySearch(params);
         List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, true));
+        return true;
+    }
+
+    /**
+     * If a pending unrestricted card-to-graveyard search is queued (e.g. Final Parting second pick),
+     * starts the follow-up library search and returns true. Otherwise returns false.
+     */
+    private boolean startPendingCardToGraveyardSearch(GameData gameData, UUID playerId) {
+        if (!gameData.pendingCardToGraveyardSearch) return false;
+        gameData.pendingCardToGraveyardSearch = false;
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            String logMsg = playerName + " finds no more cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return false;
+        }
+
+        String prompt = "Search your library for a card to put into your graveyard.";
+        LibrarySearchParams params = LibrarySearchParams.builder(playerId, new ArrayList<>(deck))
+                .reveals(false)
+                .canFailToFind(false)
+                .destination(LibrarySearchDestination.GRAVEYARD)
+                .build();
+
+        gameData.interaction.beginLibrarySearch(params);
+        List<CardView> cardViews = deck.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, false));
         return true;
     }
 

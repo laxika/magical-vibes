@@ -424,6 +424,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `SacrificeCreatureSearchLibraryForCreatureToHandEffect` | `()` | sacrifice a creature (as effect, not cost); if you do, search library for a creature card, reveal it, put it into your hand, then shuffle. With 0 creatures nothing happens; with 1 auto-sacrifices; with 2+ prompts choice via `SacrificeCreatureThenSearchLibrary` context. Used by Garruk, the Veil-Cursed |
 | `SearchLibraryForCardToHandEffect` | `()` | search library for any card to hand |
+| `SearchLibraryForCardToHandAndCardToGraveyardEffect` | `()` | search library for two cards (unrestricted): first to hand, second to graveyard, then shuffle. Uses pending flag for second pick. Used by Final Parting |
 | `SearchLibraryForCardsByNameToHandEffect` | `(String cardName, int maxCount)` | search library for up to N cards with specified name, reveal them, put into hand. Multi-pick via remainingCount. Used by Squadron Hawk |
 | `SearchLibraryAndOrGraveyardForNamedCardToHandEffect` | `(String cardName)` | search library and/or graveyard for a card with specified name, reveal it, put into hand. Checks graveyard first; if not found, searches library (with shuffle). Used by Chandra's Outburst |
 | `SearchLibraryForBasicLandToHandEffect` | `()` | search library for basic land to hand |
