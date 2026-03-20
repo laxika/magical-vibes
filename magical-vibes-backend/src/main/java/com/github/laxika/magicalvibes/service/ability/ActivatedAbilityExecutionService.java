@@ -304,8 +304,8 @@ public class ActivatedAbilityExecutionService {
                         pool.add(color);
                     }
                 }
-            } else if (effect instanceof AwardAnyColorManaEffect) {
-                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+            } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aace.amount());
                 gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
@@ -411,8 +411,8 @@ public class ActivatedAbilityExecutionService {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect award) {
                 total += award.amount();
-            } else if (effect instanceof AwardAnyColorManaEffect) {
-                total += 1;
+            } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                total += aace.amount();
             } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
                 total += aom.amount();
             } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {

@@ -57,10 +57,10 @@ class AiManaManager {
                         if (isCreature) {
                             virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
                         }
-                    } else if (effect instanceof AwardAnyColorManaEffect) {
-                        virtual.add(ManaColor.COLORLESS);
+                    } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                        virtual.add(ManaColor.COLORLESS, aace.amount());
                         if (isCreature) {
-                            virtual.addCreatureMana(ManaColor.COLORLESS, 1);
+                            virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
                         }
                     }
                 }

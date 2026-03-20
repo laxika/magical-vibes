@@ -155,14 +155,16 @@ public class ChoiceHandlerService {
         gameData.interaction.clearColorChoice();
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
-        manaPool.add(manaColor);
+        int amount = ctx.amount();
+        manaPool.add(manaColor, amount);
         if (ctx.fromCreature()) {
-            manaPool.addCreatureMana(manaColor, 1);
+            manaPool.addCreatureMana(manaColor, amount);
         }
 
-        String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
+        String manaWord = amount == 1 ? "one" : String.valueOf(amount);
+        String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} adds one {} mana", gameData.id, player.getUsername(), colorName.toLowerCase());
+        log.info("Game {} - {} adds {} {} mana", gameData.id, player.getUsername(), manaWord, colorName.toLowerCase());
 
         gameData.priorityPassedBy.clear();
         if (!gameData.pendingMayAbilities.isEmpty()) {

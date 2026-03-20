@@ -441,6 +441,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Create token | `d/DragonRoost.java` | CreateCreatureTokenEffect |
 | Mill target | `m/Millstone.java` | `(true, "{2}", MillTargetPlayerEffect, true)` |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |
+| Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
 | Mana dork (ON_TAP) | `l/LlanowarElves.java` | addEffect(ON_TAP, AwardManaEffect) |
 | Animate self | `c/ChimericStaff.java` | AnimateSelfEffect |
 | Sorcery-speed ability | `t/ThrullSurgeon.java` | ActivationTimingRestriction.SORCERY_SPEED |

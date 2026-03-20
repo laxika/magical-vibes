@@ -860,7 +860,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color. Also stack-resolvable via `@HandlesEffect` in LifeResolutionService |
-| `AwardAnyColorManaEffect` | `()` | add one mana of any color |
+| `AwardAnyColorManaEffect` | `(int amount)` or `()` (defaults amount to 1) | add N mana of any one color (player chooses) |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
 | `AddExtraManaOfChosenColorOnLandTapEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when a land you control taps for mana of the source permanent's chosen color, add one additional mana of that color. Checks ON_TAP effects of the tapped land. Used by Caged Sun |
 | `AddOneOfEachManaTypeProducedByLandEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when a land you control taps for mana, add one additional mana of any type that land produced (exactly 1 mana, picks first type if multiple). Used by Vorinclex, Voice of Hunger |

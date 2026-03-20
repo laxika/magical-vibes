@@ -980,8 +980,8 @@ public class PlayerInteractionResolutionService {
     }
 
     @HandlesEffect(AwardAnyColorManaEffect.class)
-    private void resolveAwardAnyColorMana(GameData gameData, StackEntry entry) {
-        ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(entry.getControllerId(), false);
+    private void resolveAwardAnyColorMana(GameData gameData, StackEntry entry, AwardAnyColorManaEffect effect) {
+        ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(entry.getControllerId(), false, effect.amount());
         gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         sessionManager.sendToPlayer(entry.getControllerId(), new ChooseFromListMessage(colors, "Choose a color of mana to add."));
