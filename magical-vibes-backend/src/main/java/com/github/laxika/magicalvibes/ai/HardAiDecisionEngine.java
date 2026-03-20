@@ -128,17 +128,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 ManaCost castCost = new ManaCost(card.getManaCost());
                 Integer xValue = null;
                 var tapAction = tapPermanentAction();
+                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 if (card.isRequiresCreatureMana()) {
-                    manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapAction);
+                    manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
                 } else if (castCost.hasX()) {
                     int smartX = manaManager.calculateSmartX(gameData, card, pc.targetId(), virtualPool);
                     if (smartX <= 0) {
                         return false;
                     }
                     xValue = smartX;
-                    manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, tapAction);
+                    manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapAction);
                 } else {
-                    manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapAction);
+                    manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
                 }
                 log.info("AI (Hard/MCTS): Casting {}{} in game {}", card.getName(),
                         xValue != null ? " (X=" + xValue + ")" : "", gameId);
@@ -225,17 +226,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = null;
         IntConsumer tapAction = tapPermanentAction();
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapAction);
+            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
         } else if (castCost.hasX()) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             if (smartX <= 0) {
                 return false;
             }
             xValue = smartX;
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, tapAction);
+            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapAction);
         } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapAction);
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
         }
 
         log.info("AI (Hard): Casting {}{} (value={}) in game {}", card.getName(),

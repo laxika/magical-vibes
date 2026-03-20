@@ -70,11 +70,11 @@ class AiManaManager {
         return virtual;
     }
 
-    void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, IntConsumer tapPermanent) {
+    void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, IntConsumer tapPermanent) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
-        if (cost.canPay(currentPool)) {
+        if (cost.canPay(currentPool, costModifier)) {
             return;
         }
 
@@ -102,17 +102,17 @@ class AiManaManager {
             tapPermanent.accept(i);
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
-            if (cost.canPay(currentPool)) {
+            if (cost.canPay(currentPool, costModifier)) {
                 return;
             }
         }
     }
 
-    void tapCreaturesForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, IntConsumer tapPermanent) {
+    void tapCreaturesForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, IntConsumer tapPermanent) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
-        if (cost.canPayCreatureOnly(currentPool)) {
+        if (cost.canPayCreatureOnly(currentPool, costModifier)) {
             return;
         }
 
@@ -143,21 +143,21 @@ class AiManaManager {
             tapPermanent.accept(i);
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
-            if (cost.canPayCreatureOnly(currentPool)) {
+            if (cost.canPayCreatureOnly(currentPool, costModifier)) {
                 return;
             }
         }
     }
 
-    void tapLandsForXSpell(GameData gameData, UUID aiPlayerId, Card card, int xValue, IntConsumer tapPermanent) {
+    void tapLandsForXSpell(GameData gameData, UUID aiPlayerId, Card card, int xValue, int costModifier, IntConsumer tapPermanent) {
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
         boolean alreadyPaid;
         if (card.getXColorRestriction() != null) {
-            alreadyPaid = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+            alreadyPaid = cost.canPay(currentPool, xValue, card.getXColorRestriction(), costModifier);
         } else {
-            alreadyPaid = cost.canPay(currentPool, xValue);
+            alreadyPaid = cost.canPay(currentPool, xValue + costModifier);
         }
         if (alreadyPaid) {
             return;
@@ -189,9 +189,9 @@ class AiManaManager {
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             boolean canPayNow;
             if (card.getXColorRestriction() != null) {
-                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestriction(), costModifier);
             } else {
-                canPayNow = cost.canPay(currentPool, xValue);
+                canPayNow = cost.canPay(currentPool, xValue + costModifier);
             }
             if (canPayNow) {
                 return;

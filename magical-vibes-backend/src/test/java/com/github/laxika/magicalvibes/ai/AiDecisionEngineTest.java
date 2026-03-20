@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
@@ -428,6 +429,61 @@ class AiDecisionEngineTest {
         // Should skip Myr Superion and cast the GrizzlyBears instead
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    // ===== Cost modifier (opponent tax effects) =====
+
+    @Test
+    @DisplayName("AI taps enough lands for spell when opponent has cost-increasing effect")
+    void tapsEnoughLandsWithCostIncreasingEffect() {
+        giveAiPriority();
+
+        // Holy Strength is an enchantment aura costing {W}.
+        // AuraOfSilence increases opponent's artifact/enchantment costs by 2,
+        // so the effective cost becomes {2}{W} = 3 mana.
+        giveAiPlains(3);
+
+        // Put AuraOfSilence on human's battlefield to tax AI's enchantment spells
+        Permanent auraOfSilence = new Permanent(new AuraOfSilence());
+        auraOfSilence.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(auraOfSilence);
+
+        // AI needs a creature to target with the aura
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new HolyStrength()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should successfully cast despite the tax — it taps 3 Plains
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Holy Strength");
+    }
+
+    @Test
+    @DisplayName("AI does not cast taxed spell when insufficient lands available")
+    void doesNotCastTaxedSpellWithInsufficientLands() {
+        giveAiPriority();
+
+        // Only 1 Plains — enough for base cost {W} but not for taxed cost {2}{W}
+        giveAiPlains(1);
+
+        Permanent auraOfSilence = new Permanent(new AuraOfSilence());
+        auraOfSilence.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(auraOfSilence);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new HolyStrength()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — can't afford {2}{W} with only 1 Plains
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== Blocker declaration =====

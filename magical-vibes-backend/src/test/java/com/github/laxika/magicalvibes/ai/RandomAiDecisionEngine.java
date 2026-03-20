@@ -164,8 +164,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Calculate X value and tap mana sources
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = null;
+            int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
             if (card.isRequiresCreatureMana()) {
-                manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapPermanentAction());
+                manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
             } else if (castCost.hasX()) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
                 if (maxX <= 0) {
@@ -173,9 +174,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
                 // Pick a random X between 1 and maxX
                 xValue = rng.nextInt(maxX) + 1;
-                manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, xValue, tapPermanentAction());
+                manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, xValue, costModifier, tapPermanentAction());
             } else {
-                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapPermanentAction());
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
             }
 
             log.info("Random AI: Casting {}{} in game {}", card.getName(),

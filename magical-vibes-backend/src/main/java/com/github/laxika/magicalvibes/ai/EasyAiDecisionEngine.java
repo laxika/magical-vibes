@@ -127,17 +127,18 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // Calculate X value and tap mana sources
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = null;
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapPermanentAction());
+            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
         } else if (castCost.hasX()) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             if (smartX <= 0) {
                 return false;
             }
             xValue = smartX;
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, tapPermanentAction());
+            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapPermanentAction());
         } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), tapPermanentAction());
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
         }
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
