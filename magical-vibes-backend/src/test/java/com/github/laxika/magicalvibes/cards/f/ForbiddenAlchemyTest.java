@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseNToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,9 +29,9 @@ class ForbiddenAlchemyTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsChooseOneToHandRestToGraveyardEffect.class);
-        LookAtTopCardsChooseOneToHandRestToGraveyardEffect effect =
-                (LookAtTopCardsChooseOneToHandRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+                .isInstanceOf(LookAtTopCardsChooseNToHandRestToGraveyardEffect.class);
+        LookAtTopCardsChooseNToHandRestToGraveyardEffect effect =
+                (LookAtTopCardsChooseNToHandRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.count()).isEqualTo(4);
     }
 

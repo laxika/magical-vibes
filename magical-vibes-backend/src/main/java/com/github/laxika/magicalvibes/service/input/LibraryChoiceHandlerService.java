@@ -926,7 +926,8 @@ public class LibraryChoiceHandlerService {
         // Log the result
         if (remainingToGraveyard) {
             if (!selectedCards.isEmpty()) {
-                String logEntry = playerName + " puts one card into their hand and the rest into their graveyard.";
+                String countWord = selectedCards.size() == 1 ? "one card" : selectedCards.size() + " cards";
+                String logEntry = playerName + " puts " + countWord + " into their hand and the rest into their graveyard.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             }
         } else if (selectedCards.isEmpty()) {
@@ -943,7 +944,16 @@ public class LibraryChoiceHandlerService {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card);
             }
-            log.info("Game {} - {} puts 1 card to hand, {} to graveyard", gameData.id, playerName, remainingCards.size());
+            log.info("Game {} - {} puts {} card(s) to hand, {} to graveyard", gameData.id, playerName, selectedCards.size(), remainingCards.size());
+
+            // Resume resolving remaining effects on the same spell/ability
+            // (e.g. Dark Bargain: "Look at top 3, put 2 to hand, rest to graveyard. Deals 2 damage to you.")
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
+            }
+
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }

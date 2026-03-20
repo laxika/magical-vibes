@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPaying
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseNToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
@@ -590,22 +590,22 @@ class LibraryRevealResolutionServiceTest {
     }
 
     // =========================================================================
-    // resolveLookAtTopCardsChooseOneToHandRestToGraveyard
+    // resolveLookAtTopCardsChooseNToHandRestToGraveyard
     // =========================================================================
 
     @Nested
-    @DisplayName("resolveLookAtTopCardsChooseOneToHandRestToGraveyard")
+    @DisplayName("resolveLookAtTopCardsChooseNToHandRestToGraveyard")
     class ResolveLookAtTopCardsChooseOneToHandRestToGraveyard {
 
         @Test
         @DisplayName("Empty library logs")
         void emptyLibraryLogs() {
-            LookAtTopCardsChooseOneToHandRestToGraveyardEffect effect =
-                    new LookAtTopCardsChooseOneToHandRestToGraveyardEffect(4);
+            LookAtTopCardsChooseNToHandRestToGraveyardEffect effect =
+                    new LookAtTopCardsChooseNToHandRestToGraveyardEffect(4, 1);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Forbidden Alchemy"),
                     player1Id, "Forbidden Alchemy", List.of(effect));
 
-            service.resolveLookAtTopCardsChooseOneToHandRestToGraveyard(gd, entry, effect);
+            service.resolveLookAtTopCardsChooseNToHandRestToGraveyard(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -617,12 +617,12 @@ class LibraryRevealResolutionServiceTest {
             Card singleCard = createCard("Grizzly Bears");
             gd.playerDecks.get(player1Id).add(singleCard);
 
-            LookAtTopCardsChooseOneToHandRestToGraveyardEffect effect =
-                    new LookAtTopCardsChooseOneToHandRestToGraveyardEffect(4);
+            LookAtTopCardsChooseNToHandRestToGraveyardEffect effect =
+                    new LookAtTopCardsChooseNToHandRestToGraveyardEffect(4, 1);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Forbidden Alchemy"),
                     player1Id, "Forbidden Alchemy", List.of(effect));
 
-            service.resolveLookAtTopCardsChooseOneToHandRestToGraveyard(gd, entry, effect);
+            service.resolveLookAtTopCardsChooseNToHandRestToGraveyard(gd, entry, effect);
 
             assertThat(gd.playerHands.get(player1Id)).contains(singleCard);
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
@@ -637,12 +637,12 @@ class LibraryRevealResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
             gd.playerDecks.get(player1Id).add(createCard("Giant Growth"));
 
-            LookAtTopCardsChooseOneToHandRestToGraveyardEffect effect =
-                    new LookAtTopCardsChooseOneToHandRestToGraveyardEffect(4);
+            LookAtTopCardsChooseNToHandRestToGraveyardEffect effect =
+                    new LookAtTopCardsChooseNToHandRestToGraveyardEffect(4, 1);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Forbidden Alchemy"),
                     player1Id, "Forbidden Alchemy", List.of(effect));
 
-            service.resolveLookAtTopCardsChooseOneToHandRestToGraveyard(gd, entry, effect);
+            service.resolveLookAtTopCardsChooseNToHandRestToGraveyard(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());

@@ -68,7 +68,8 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardCardEffect |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + EachPlayerRandomDiscardEffect |
 | Library selection (hand/top/bottom) | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
-| Library selection (hand, rest to graveyard) | `f/ForbiddenAlchemy.java` | LookAtTopCardsChooseOneToHandRestToGraveyardEffect |
+| Library selection (N to hand, rest to graveyard) | `f/ForbiddenAlchemy.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(count, toHandCount) |
+| Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(3, 2) + DealDamageToControllerEffect(2) |
 | Library reveal (type to hand, rest to graveyard) | `m/Mulch.java` | RevealTopCardsTypeToHandRestToGraveyardEffect(count, cardTypes) — deterministic, no player choice |
 | Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect |
 | Targeted discard | `d/Distress.java` | ChooseCardFromTargetHandToDiscardEffect |

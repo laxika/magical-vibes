@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseNToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
@@ -419,23 +419,29 @@ public class LibraryRevealResolutionService {
     }
 
     /**
-     * Looks at the top N cards of the controller's library, then the player chooses one to put
-     * into their hand and the rest go into the graveyard. If only one card remains, it goes
-     * directly to hand. Used by cards like Forbidden Alchemy.
+     * Looks at the top N cards of the controller's library, then the player chooses some to put
+     * into their hand and the rest go into the graveyard. If the number of cards is at most
+     * toHandCount, they all go directly to hand. Used by Forbidden Alchemy (4, 1),
+     * Dark Bargain (3, 2), etc.
      */
-    @HandlesEffect(LookAtTopCardsChooseOneToHandRestToGraveyardEffect.class)
-    void resolveLookAtTopCardsChooseOneToHandRestToGraveyard(GameData gameData, StackEntry entry, LookAtTopCardsChooseOneToHandRestToGraveyardEffect effect) {
+    @HandlesEffect(LookAtTopCardsChooseNToHandRestToGraveyardEffect.class)
+    void resolveLookAtTopCardsChooseNToHandRestToGraveyard(GameData gameData, StackEntry entry, LookAtTopCardsChooseNToHandRestToGraveyardEffect effect) {
         TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
         if (result == null) return;
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
         int count = topCards.size();
+        int toHandCount = effect.toHandCount();
 
-        if (count == 1) {
-            // Only 1 card: it goes to hand
-            gameData.addCardToHand(controllerId, topCards.getFirst());
-            String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
+        if (count <= toHandCount) {
+            // All cards go to hand (not enough to require a choice)
+            for (Card card : topCards) {
+                gameData.addCardToHand(controllerId, card);
+            }
+            String logMsg = count == 1
+                    ? playerName + " looks at the top card of their library and puts it into their hand."
+                    : playerName + " looks at the top " + pluralCards(count) + " of their library and puts them into their hand.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
@@ -449,11 +455,12 @@ public class LibraryRevealResolutionService {
         gameData.interaction.beginLibraryRevealChoice(controllerId, topCards, validCardIds,
                 true, true, false);
 
+        String handWord = toHandCount == 1 ? "one" : String.valueOf(toHandCount);
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
-                cardIds, cardViews, 1,
-                "Look at the top " + count + " cards of your library. Put one into your hand. The rest are put into your graveyard."
+                cardIds, cardViews, toHandCount,
+                "Look at the top " + count + " cards of your library. Put " + handWord + " into your hand. The rest are put into your graveyard."
         ));
 
         gameBroadcastService.logAndBroadcast(gameData,
