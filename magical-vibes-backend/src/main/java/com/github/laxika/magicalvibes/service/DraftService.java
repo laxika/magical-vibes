@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.ai.AiConnection;
+import com.github.laxika.magicalvibes.ai.AiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.EasyAiDecisionEngine;
+import com.github.laxika.magicalvibes.ai.HardAiDecisionEngine;
+import com.github.laxika.magicalvibes.ai.MediumAiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.AiDraftEngine;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
+import com.github.laxika.magicalvibes.model.AiDifficulty;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -97,9 +101,9 @@ public class DraftService {
 
     // ===== Draft Creation =====
 
-    public DraftData createDraft(String draftName, UUID creatorId, String creatorName, String setCode, int aiCount) {
+    public DraftData createDraft(String draftName, UUID creatorId, String creatorName, String setCode, int aiCount, AiDifficulty aiDifficulty) {
         UUID draftId = UUID.randomUUID();
-        DraftData draftData = new DraftData(draftId, draftName, creatorId, creatorName, setCode);
+        DraftData draftData = new DraftData(draftId, draftName, creatorId, creatorName, setCode, aiDifficulty);
         draftData.playerIds.add(creatorId);
         draftData.playerNames.put(creatorId, creatorName);
         draftData.draftPools.put(creatorId, new ArrayList<>());
@@ -544,10 +548,10 @@ public class DraftService {
         boolean p2IsAi = draftData.aiPlayerIds.contains(player2Id);
 
         if (p1IsAi) {
-            registerAiForTournamentGame(gameData, player1Id, p1Name);
+            registerAiForTournamentGame(gameData, player1Id, p1Name, draftData.aiDifficulty);
         }
         if (p2IsAi) {
-            registerAiForTournamentGame(gameData, player2Id, p2Name);
+            registerAiForTournamentGame(gameData, player2Id, p2Name, draftData.aiDifficulty);
         }
 
         // Send TOURNAMENT_GAME_READY + GAME_JOINED to human players
@@ -563,12 +567,16 @@ public class DraftService {
         }
     }
 
-    private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName) {
+    private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName, AiDifficulty aiDifficulty) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         MessageHandler handler = messageHandlerProvider.getObject();
-        EasyAiDecisionEngine engine = new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+        AiDecisionEngine engine = switch (aiDifficulty) {
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+        };
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
-        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper);
+        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());
         engine.setSelfConnection(aiConnection);
 
         webSocketSessionManager.registerPlayer(aiConnection, aiPlayerId, aiName);

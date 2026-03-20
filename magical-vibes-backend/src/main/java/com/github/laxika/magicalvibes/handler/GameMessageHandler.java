@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.handler;
 
+import com.github.laxika.magicalvibes.model.AiDifficulty;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
@@ -193,7 +194,7 @@ public class GameMessageHandler implements MessageHandler {
             GameData gameData = gameRegistry.getGameForPlayer(player.getId());
             String aiDeck = (request.aiDeckId() != null && !request.aiDeckId().isBlank())
                     ? request.aiDeckId() : request.deckId();
-            String aiDifficulty = request.aiDifficulty() != null ? request.aiDifficulty() : "easy";
+            AiDifficulty aiDifficulty = request.aiDifficulty() != null ? request.aiDifficulty() : AiDifficulty.EASY;
             aiPlayerService.joinAsAi(gameData, aiDeck, aiDifficulty);
 
             // Game is now in MULLIGAN — send full state to the creator
@@ -790,9 +791,10 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
+            AiDifficulty aiDifficulty = request.aiDifficulty() != null ? request.aiDifficulty() : AiDifficulty.EASY;
             DraftData draftData = draftService.createDraft(
                     request.draftName(), player.getId(), player.getUsername(),
-                    request.setCode(), request.aiCount());
+                    request.setCode(), request.aiCount(), aiDifficulty);
 
             sessionManager.setInGame(connection.getId());
 

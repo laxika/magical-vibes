@@ -82,9 +82,9 @@
               <div class="form-group">
                 <label for="aiDifficulty">AI Difficulty</label>
                 <select id="aiDifficulty" [ngModel]="aiDifficulty()" (ngModelChange)="aiDifficulty.set($event)">
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
+                  <option value="EASY">Easy</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HARD">Hard</option>
                 </select>
               </div>
               <div class="form-group">
@@ -119,6 +119,14 @@
                 @for (count of aiCountOptions; track count) {
                   <option [value]="count">{{ count }}</option>
                 }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="draftAiDifficulty">AI Difficulty</label>
+              <select id="draftAiDifficulty" [ngModel]="aiDifficulty()" (ngModelChange)="aiDifficulty.set($event)">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
               </select>
             </div>
             <div class="form-group">

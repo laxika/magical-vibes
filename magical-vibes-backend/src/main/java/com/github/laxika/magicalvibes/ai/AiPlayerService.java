@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.AiDifficulty;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
@@ -48,25 +49,25 @@ public class AiPlayerService {
     }
 
     public void joinAsAi(GameData gameData, String aiDeckId) {
-        joinAsAi(gameData, aiDeckId, "easy");
+        joinAsAi(gameData, aiDeckId, AiDifficulty.EASY);
     }
 
-    public void joinAsAi(GameData gameData, String aiDeckId, String aiDifficulty) {
-        boolean isHard = "hard".equalsIgnoreCase(aiDifficulty);
-        boolean isMedium = "medium".equalsIgnoreCase(aiDifficulty);
-        String aiName = isHard ? "AI Opponent (Hard)" : isMedium ? "AI Opponent (Medium)" : "AI Opponent (Easy)";
+    public void joinAsAi(GameData gameData, String aiDeckId, AiDifficulty aiDifficulty) {
+        if (aiDifficulty == null) {
+            aiDifficulty = AiDifficulty.EASY;
+        }
+        String aiName = "AI Opponent (" + aiDifficulty.getDisplayName() + ")";
         UUID aiPlayerId = UUID.randomUUID();
         Player aiPlayer = new Player(aiPlayerId, aiName);
 
         MessageHandler handler = messageHandlerProvider.getObject();
-        AiDecisionEngine engine = isHard
-                ? new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService)
-                : isMedium
-                ? new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService)
-                : new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+        AiDecisionEngine engine = switch (aiDifficulty) {
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService);
+        };
         String connectionId = "ai-" + gameData.id;
-        long delay = isHard ? 1500L : isMedium ? 1200L : 800L;
-        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, delay);
+        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());
         engine.setSelfConnection(aiConnection);
 
         // Register the AI connection in the session manager so it receives messages

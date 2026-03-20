@@ -17,6 +17,7 @@ public class DraftData {
     public final UUID createdByUserId;
     public final String createdByUsername;
     public final String setCode;
+    public final AiDifficulty aiDifficulty;
     public final LocalDateTime createdAt;
 
     // Status
@@ -47,12 +48,13 @@ public class DraftData {
     public final Set<UUID> tournamentGameIds = ConcurrentHashMap.newKeySet();
     public UUID tournamentWinnerId;
 
-    public DraftData(UUID id, String draftName, UUID createdByUserId, String createdByUsername, String setCode) {
+    public DraftData(UUID id, String draftName, UUID createdByUserId, String createdByUsername, String setCode, AiDifficulty aiDifficulty) {
         this.id = id;
         this.draftName = draftName;
         this.createdByUserId = createdByUserId;
         this.createdByUsername = createdByUsername;
         this.setCode = setCode;
+        this.aiDifficulty = aiDifficulty != null ? aiDifficulty : AiDifficulty.EASY;
         this.createdAt = LocalDateTime.now();
         this.status = DraftStatus.WAITING;
     }
