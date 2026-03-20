@@ -317,9 +317,28 @@ public class TargetLegalityService {
             }
         }
 
+        // Multi-target spell with both targetId and targetIds (e.g., kicked spells with additional targets).
+        // Per MTG CR 608.2b: fizzle only when ALL targets become illegal.
+        if (targetFizzled && entry.getTargetId() != null && !entry.getTargetIds().isEmpty()) {
+            boolean anySecondaryTargetLegal = entry.getTargetIds().stream()
+                    .anyMatch(id -> gameQueryService.findPermanentById(gameData, id) != null
+                            || gameData.playerIds.contains(id));
+            if (anySecondaryTargetLegal) {
+                targetFizzled = false;
+            }
+        }
+
         if (!targetFizzled) {
-            targetFizzled = allTargetsGone(entry.getTargetIds(),
+            boolean allSecondaryGone = allTargetsGone(entry.getTargetIds(),
                     id -> gameQueryService.findPermanentById(gameData, id) != null || gameData.playerIds.contains(id));
+            // If targetId is still valid, don't fizzle just because targetIds are gone
+            if (allSecondaryGone && entry.getTargetId() != null) {
+                Permanent primaryTarget = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+                boolean primaryStillLegal = primaryTarget != null || gameData.playerIds.contains(entry.getTargetId());
+                targetFizzled = !primaryStillLegal;
+            } else {
+                targetFizzled = allSecondaryGone;
+            }
         }
 
         if (!targetFizzled) {

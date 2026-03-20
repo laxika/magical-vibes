@@ -77,7 +77,12 @@ public class CardViewFactory {
                 card.getBackFaceCard() != null,
                 card.getEffects(EffectSlot.STATIC).stream()
                         .filter(e -> e instanceof KickerEffect)
-                        .map(e -> ((KickerEffect) e).cost())
+                        .map(e -> {
+                            KickerEffect ke = (KickerEffect) e;
+                            if (ke.hasManaCost()) return ke.cost();
+                            if (ke.hasSacrificeCost()) return "Sacrifice " + ke.sacrificeDescription();
+                            return null;
+                        })
                         .findFirst().orElse(null));
     }
 

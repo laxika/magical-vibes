@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndRece
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToSecondaryTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDealDamageByHighestManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
@@ -410,6 +411,22 @@ public class DamageResolutionService {
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToSecondaryTargetEffect} — deals damage to a secondary target stored
+     * in {@code targetIds.get(0)}. Handles both player and permanent targets (any-target semantics).
+     * Used by kicked spells that add a second target (e.g. Goblin Barrage).
+     */
+    @HandlesEffect(DealDamageToSecondaryTargetEffect.class)
+    void resolveDealDamageToSecondaryTarget(GameData gameData, StackEntry entry, DealDamageToSecondaryTargetEffect effect) {
+        if (entry.getTargetIds().isEmpty()) return;
+        UUID targetId = entry.getTargetIds().get(0);
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+        resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         gameOutcomeService.checkWinCondition(gameData);
     }

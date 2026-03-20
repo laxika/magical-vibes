@@ -513,7 +513,7 @@ public class SpellCastingService {
             }
             KickerEffect kickerEffect = findKickerEffect(card);
             if (kicked && kickerEffect != null) {
-                payKickerCost(gameData, playerId, kickerEffect);
+                payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId);
             }
             payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, 0);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
@@ -542,7 +542,7 @@ public class SpellCastingService {
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
             KickerEffect kickerEffect = findKickerEffect(card);
             if (kicked && kickerEffect != null) {
-                payKickerCost(gameData, playerId, kickerEffect);
+                payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId);
             }
 
             // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
@@ -718,6 +718,22 @@ public class SpellCastingService {
                             filteredSpellEffects, targetId, Zone.STACK
                     ));
                 }
+            } else if (kicked && targetId != null && !targetIds.isEmpty()) {
+                // Kicked spell with primary target + additional kicked target(s)
+                // (e.g. Goblin Barrage: primary = creature, kicked = player)
+                for (UUID kickerTargetId : targetIds) {
+                    if (!gameData.playerIds.contains(kickerTargetId)) {
+                        Permanent kickerTarget = gameQueryService.findPermanentById(gameData, kickerTargetId);
+                        if (kickerTarget == null) {
+                            throw new IllegalStateException("Invalid kicker target");
+                        }
+                    }
+                }
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, resolvedXValue, targetId,
+                        null, Map.of(), null, List.of(), targetIds
+                ));
             } else if (!targetIds.isEmpty() && !sacFlags.usesSacrificeAllCreaturesCost()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
                 gameData.stack.add(new StackEntry(
@@ -1241,19 +1257,31 @@ public class SpellCastingService {
                 .findFirst().orElse(null);
     }
 
-    private void payKickerCost(GameData gameData, UUID playerId, KickerEffect kickerEffect) {
-        ManaCost kickerCost = new ManaCost(kickerEffect.cost());
-        ManaPool pool = gameData.playerManaPools.get(playerId);
-        if (pool.getKickedOnlyGreen() > 0) {
-            if (!kickerCost.canPay(pool, 0, false, false, false, true)) {
-                throw new IllegalStateException("Not enough mana to pay kicker cost");
+    private void payKickerCost(GameData gameData, Player player, Card card, KickerEffect kickerEffect, UUID sacrificePermanentId) {
+        UUID playerId = player.getId();
+
+        // Pay mana cost if any
+        if (kickerEffect.hasManaCost()) {
+            ManaCost kickerCost = new ManaCost(kickerEffect.cost());
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            if (pool.getKickedOnlyGreen() > 0) {
+                if (!kickerCost.canPay(pool, 0, false, false, false, true)) {
+                    throw new IllegalStateException("Not enough mana to pay kicker cost");
+                }
+                kickerCost.pay(pool, 0, false, false, false, true);
+            } else {
+                if (!kickerCost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to pay kicker cost");
+                }
+                kickerCost.pay(pool, 0);
             }
-            kickerCost.pay(pool, 0, false, false, false, true);
-        } else {
-            if (!kickerCost.canPay(pool)) {
-                throw new IllegalStateException("Not enough mana to pay kicker cost");
-            }
-            kickerCost.pay(pool, 0);
+        }
+
+        // Pay sacrifice cost if any
+        if (kickerEffect.hasSacrificeCost()) {
+            paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
+                    kickerEffect.sacrificeDescription(),
+                    p -> gameQueryService.matchesPermanentPredicate(gameData, p, kickerEffect.sacrificePredicate()));
         }
     }
 

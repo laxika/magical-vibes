@@ -182,6 +182,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Kicker creature (ETB counters if kicked) | `a/AcademyDrake.java` | STATIC KickerEffect("{4}") + ON_ENTER_BATTLEFIELD EnterWithPlusOnePlusOneCountersIfKickedEffect(2) — kicker is optional additional mana cost, if paid the creature enters with +1/+1 counters |
 | Kicker instant (conditional spell effect) | `b/BlinkOfAnEye.java` | STATIC KickerEffect("{1}{U}") + SPELL ReturnTargetPermanentToHandEffect() + SPELL KickedConditionalEffect(DrawCardEffect()) — bounce nonland permanent, if kicked also draw a card. Use KickedConditionalEffect to wrap any spell effect that should only resolve when kicked |
 | Kicker sorcery (replacement effect) | `f/FightWithFire.java` | STATIC KickerEffect("{5}{R}") + SPELL KickerReplacementEffect(DealDamageToTargetCreatureEffect(5), DealDividedDamageAmongAnyTargetsEffect(10)) — deals 5 damage to target creature; if kicked, deals 10 damage divided among any targets instead. Use KickerReplacementEffect when kicked mode *replaces* the base mode ("instead" in oracle text) |
+| Kicker sorcery (sacrifice kicker + additional target) | `g/GoblinBarrage.java` | STATIC KickerEffect(PermanentAnyOfPredicate(...), "an artifact or Goblin") + SPELL DealDamageToTargetCreatureEffect(4) + SPELL KickedConditionalEffect(DealDamageToSecondaryTargetEffect(4)) — sacrifice-based kicker cost with additional player target when kicked. Primary target in targetId, kicked target in targetIds |
 
 ## Triggered creatures
 

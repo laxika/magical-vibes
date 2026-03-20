@@ -460,6 +460,16 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments, List.of(), List.of(), false, null, null, null, null, null, true);
     }
 
+    public void castKickedSorceryWithSacrifice(Player player, int cardIndex, UUID targetId, UUID kickerTargetId, UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(kickerTargetId), List.of(), false, sacrificePermanentId, null, null, null, null, true);
+    }
+
+    public void castKickedSorceryWithSacrificeNoKickerTarget(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId, null, null, null, null, true);
+    }
+
     public void castCreatureWithGraveyardExile(Player player, int cardIndex, int exileGraveyardCardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, null, exileGraveyardCardIndex);
