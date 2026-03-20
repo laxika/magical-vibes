@@ -132,6 +132,7 @@ public class GraveyardService {
 
         gameData.playerGraveyards.get(ownerId).add(card);
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
+        updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         return true;
     }
 
@@ -207,6 +208,14 @@ public class GraveyardService {
             }
         }
         return false;
+    }
+
+    private void updateFromAnywhereThisTurnTracking(GameData gameData, UUID ownerId, Card card) {
+        if (!card.isToken()) {
+            gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                    .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(card.getId());
+        }
     }
 
     private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {

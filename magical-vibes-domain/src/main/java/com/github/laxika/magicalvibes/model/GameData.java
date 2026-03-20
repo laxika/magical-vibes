@@ -62,6 +62,8 @@ public class GameData {
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
+    public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
@@ -534,6 +536,11 @@ public class GameData {
             Set<UUID> s = ConcurrentHashMap.newKeySet();
             s.addAll(v);
             copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, s);
+        });
+        this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) -> {
+            Set<UUID> s = ConcurrentHashMap.newKeySet();
+            s.addAll(v);
+            copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, s);
         });
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) -> {

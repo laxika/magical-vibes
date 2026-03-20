@@ -281,6 +281,7 @@ ReturnCardFromGraveyardEffect.builder()
     .targetGraveyard(boolean)                  // true = player chooses whose graveyard to search at cast time (default: false)
     .returnAll(boolean)                        // true = return all matching cards, false = choose one (default: false)
     .thisTurnOnly(boolean)                     // true = only cards put there from battlefield this turn (default: false)
+    .fromAnywhereThisTurn(boolean)             // true = only cards put there from any zone this turn (default: false)
     .attachmentTarget(PermanentPredicate)      // non-null = aura attaches to matching permanent on ETB (default: null)
     .gainLifeEqualToManaValue(boolean)         // true = controller gains life equal to returned card's mana value (default: false)
     .attachToSource(boolean)                   // true = auto-attach returned equipment to the source permanent (default: false)
@@ -348,6 +349,7 @@ Pass `null` as filter to allow any card.
 | `ReturnArtifactOrCreatureFromAnyGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardAnyOfPredicate(List.of(new CardTypePredicate(ARTIFACT), new CardTypePredicate(CREATURE)))).source(ALL_GRAVEYARDS).build()` |
 | `ReturnAuraFromGraveyardToBattlefieldEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardIsAuraPredicate()).attachmentTarget(attachmentTarget).build()` |
 | `ReturnCreatureCardsPutIntoYourGraveyardFromBattlefieldThisTurnToHandEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).returnAll(true).thisTurnOnly(true).build()` |
+| `ReturnCreatureCardsPutIntoYourGraveyardFromAnywhereThisTurnToHandEffect()` | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).returnAll(true).fromAnywhereThisTurn(true).build()` |
 
 **Common usage examples:**
 
@@ -363,6 +365,7 @@ Pass `null` as filter to allow any card.
 | Auriok Survivors | `MayEffect(ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardSubtypePredicate(EQUIPMENT)).attachToSource(true).build())` — equipment to battlefield attached to source |
 | Squee, Goblin Nabob | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).returnAll(true).build()` — self-return |
 | No Rest for the Wicked | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).returnAll(true).thisTurnOnly(true).build()` — all creatures that died this turn |
+| Garna, the Bloodflame | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(CREATURE)).returnAll(true).fromAnywhereThisTurn(true).build()` — all creature cards put into graveyard from anywhere this turn |
 | Razor Hippogriff | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(ARTIFACT)).gainLifeEqualToManaValue(true).build()` — artifact to hand + gain life equal to mana value |
 | Noxious Revival | `ReturnCardFromGraveyardEffect.builder().destination(TOP_OF_OWNERS_LIBRARY).source(ALL_GRAVEYARDS).targetGraveyard(true).build()` — any card from any graveyard on top of owner's library |
 | Postmortem Lunge | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).targetGraveyard(true).grantHaste(true).exileAtEndStep(true).requiresManaValueEqualsX(true).build()` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |

@@ -197,26 +197,29 @@ public class GraveyardReturnResolutionService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
-        if (effect.thisTurnOnly()) {
-            Set<UUID> trackedIds = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
-                    .getOrDefault(controllerId, Set.of());
+        if (effect.thisTurnOnly() || effect.fromAnywhereThisTurn()) {
+            Set<UUID> trackedIds = effect.fromAnywhereThisTurn()
+                    ? gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.getOrDefault(controllerId, Set.of())
+                    : gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of());
+            String sourceLabel = effect.fromAnywhereThisTurn() ? "from anywhere" : "from the battlefield";
 
             if (graveyard == null || graveyard.isEmpty() || trackedIds.isEmpty()) {
-                String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard from the battlefield this turn.";
+                String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard " + sourceLabel + " this turn.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 return;
             }
 
             List<Card> toReturn = new ArrayList<>();
             for (Card card : graveyard) {
-                boolean isCreatureCard = card.hasType(CardType.CREATURE);
-                if (!card.isToken() && isCreatureCard && trackedIds.contains(card.getId())) {
+                if (!card.isToken()
+                        && trackedIds.contains(card.getId())
+                        && gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
                     toReturn.add(card);
                 }
             }
 
             if (toReturn.isEmpty()) {
-                String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard from the battlefield this turn.";
+                String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard " + sourceLabel + " this turn.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 return;
             }

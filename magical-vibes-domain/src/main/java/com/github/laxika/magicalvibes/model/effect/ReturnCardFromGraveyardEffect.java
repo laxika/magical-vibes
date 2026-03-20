@@ -47,6 +47,10 @@ import lombok.Builder;
  * @param thisTurnOnly         {@code true} to restrict returned cards to those put into the graveyard
  *                             from the battlefield this turn (e.g. Faith's Reward, No Rest for the Wicked);
  *                             only meaningful when {@link #returnAll} is {@code true}
+ * @param fromAnywhereThisTurn {@code true} to restrict returned cards to those put into the graveyard
+ *                             from any zone this turn (e.g. Garna, the Bloodflame); uses the
+ *                             {@code cardsPutIntoGraveyardFromAnywhereThisTurn} tracking in GameData;
+ *                             only meaningful when {@link #returnAll} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
  *                             permanent matching this predicate after entering the battlefield; the
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
@@ -91,6 +95,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetGraveyard,
         boolean returnAll,
         boolean thisTurnOnly,
+        boolean fromAnywhereThisTurn,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,
         boolean attachToSource,
