@@ -31,3 +31,6 @@ An experimental online Magic game engine. The goal is to show that modern agents
 - Open `http://localhost:4200/` and log in (there are 3 users for now, credentials are under the login screen).
 
 If you get stuck then ask Gemini. :) Or feel free to create an issue on GitHub.
+
+**How to run fizz tests from the command line:**
+- Card fuzzing: `.\gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.ai.RandomAiFuzzTest" -DrunCardFuzz=true -DfuzzGames=5 --info --rerun  > fuzz.log 2>&1`
