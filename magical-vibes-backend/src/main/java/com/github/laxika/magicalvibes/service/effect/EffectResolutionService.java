@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
@@ -200,6 +201,8 @@ public class EffectResolutionService {
                     isPermanentEnteredThisTurnConditionMet(gameData, entry.getControllerId(), petc);
             case DefendingPlayerPoisonedConditionalEffect ignored ->
                     isDefendingPlayerPoisoned(gameData, entry.getControllerId());
+            case ControlsAnotherSubtypeConditionalEffect cas ->
+                    isControlsAnotherSubtypeConditionMet(gameData, entry, cas);
             case NoOtherSubtypeConditionalEffect noOther ->
                     isNoOtherSubtypeConditionMet(gameData, entry, noOther);
             case ActivationCountConditionalEffect acc ->
@@ -262,6 +265,18 @@ public class EffectResolutionService {
     private boolean isDefendingPlayerPoisoned(GameData gameData, UUID attackingPlayerId) {
         UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         return gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0) > 0;
+    }
+
+    private boolean isControlsAnotherSubtypeConditionMet(GameData gameData, StackEntry entry,
+                                                           ControlsAnotherSubtypeConditionalEffect cas) {
+        UUID controllerId = entry.getControllerId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        PermanentHasSubtypePredicate predicate = new PermanentHasSubtypePredicate(cas.subtype());
+        return battlefield.stream()
+                .anyMatch(p -> !p.getId().equals(sourcePermanentId)
+                        && gameQueryService.matchesPermanentPredicate(gameData, p, predicate));
     }
 
     private boolean isNoOtherSubtypeConditionMet(GameData gameData, StackEntry entry,

@@ -167,6 +167,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB -1/-1 counters + mass -1/-1 ability | `c/CarnifexDemon.java` | PutCountersOnSourceEffect(-1,-1,2) + RemoveCounterFromSourceCost + PutMinusOneMinusOneCounterOnEachOtherCreatureEffect |
 | ETB -1/-1 counters + multi-counter removal + player draw | `e/EtchedMonstrosity.java` | PutCountersOnSourceEffect(-1,-1,5) + RemoveCounterFromSourceCost(5) + DrawCardForTargetPlayerEffect(3, false, true) with PlayerPredicateTargetFilter |
 | ETB -1/-1 counters on target | `s/Skinrender.java` | PutMinusOneMinusOneCounterOnTargetCreatureEffect(3) + PermanentIsCreaturePredicate filter |
+| ETB controls-another-subtype conditional damage | `g/GhituJourneymage.java` | ControlsAnotherSubtypeConditionalEffect(WIZARD, DealDamageToEachOpponentEffect(2)) — intervening-if another Wizard |
 | ETB metalcraft conditional drain | `b/BleakCovenVampires.java` | MetalcraftConditionalEffect(TargetPlayerLosesLifeAndControllerGainsLifeEffect) — intervening-if 3+ artifacts |
 | ETB metalcraft conditional boost + haste | `b/BladeTribeBerserkers.java` | Two MetalcraftConditionalEffect wrappers: BoostSelfEffect(3,3) + GrantKeywordEffect(HASTE, SELF) — multiple wrapped effects on same slot |
 | ETB +1/+1 counters per subtype | `u/UnbreathingHorde.java` | ON_ENTER_BATTLEFIELD EnterWithPlusOnePlusOneCountersPerSubtypeEffect(ZOMBIE, true) + STATIC PreventDamageAndRemovePlusOnePlusOneCountersEffect(true) — enters with counters per Zombie on battlefield + graveyard, damage prevents and removes one counter |
