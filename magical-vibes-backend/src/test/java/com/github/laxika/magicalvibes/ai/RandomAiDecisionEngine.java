@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -145,9 +146,18 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         for (int cardIndex : castableIndices) {
             Card card = hand.get(cardIndex);
 
-            // Determine target if needed
+            // Build damage assignments for divided damage spells
+            Map<UUID, Integer> damageAssignments = null;
+            if (card.isNeedsDamageDistribution()) {
+                damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
+                if (damageAssignments == null) {
+                    continue; // No valid targets for damage distribution
+                }
+            }
+
+            // Determine target if needed (skip for damage distribution spells)
             UUID targetId = null;
-            if (card.isNeedsTarget() || card.isAura()) {
+            if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
                 targetId = pickRandomTarget(gameData, card);
                 if (targetId == null) {
                     continue; // No valid target, try next spell
@@ -193,8 +203,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final Integer finalXValue = xValue;
             final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
             final UUID finalSacrificePermanentId = sacrificePermanentId;
+            final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             send(() -> messageHandler.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, null, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, null, null)));
 
             if (hand.size() >= handSizeBefore) {
                 log.warn("Random AI: PlayCard failed silently in game {}", gameId);
