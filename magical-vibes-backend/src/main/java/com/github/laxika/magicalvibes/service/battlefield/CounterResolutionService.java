@@ -103,15 +103,16 @@ public class CounterResolutionService {
     }
 
     /**
-     * Resolves a conditional "counter unless pays" effect (e.g. Spiketail Hatchling, Mana Leak).
+     * Resolves a conditional "counter unless pays" effect (e.g. Mana Leak, Syncopate).
      *
      * <p>If the targeted spell's controller cannot pay the required mana, the spell is countered
      * immediately. Otherwise, a {@link PendingMayAbility} is queued to ask the controller whether
-     * they want to pay.
+     * they want to pay. Supports X-value spells ({@code useXValue}) and exile-on-counter
+     * ({@code exileIfCountered}).
      *
      * @param gameData the current game state
      * @param entry    the stack entry of the counter ability/spell being resolved
-     * @param effect   the effect carrying the mana amount that must be paid
+     * @param effect   the effect carrying the mana amount (or X-value flag) and exile flag
      */
     @HandlesEffect(CounterUnlessPaysEffect.class)
     void resolveCounterUnlessPays(GameData gameData, StackEntry entry, CounterUnlessPaysEffect effect) {
@@ -121,19 +122,26 @@ public class CounterResolutionService {
         StackEntry targetEntry = findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
+        int payAmount = effect.useXValue() ? entry.getXValue() : effect.amount();
         UUID targetControllerId = targetEntry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
-        ManaCost cost = new ManaCost("{" + effect.amount() + "}");
+        ManaCost cost = new ManaCost("{" + payAmount + "}");
 
         if (!cost.canPay(pool)) {
-            counterSpell(gameData, entry, targetEntry);
+            if (effect.exileIfCountered()) {
+                counterSpellAndExile(gameData, entry, targetEntry);
+            } else {
+                counterSpell(gameData, entry, targetEntry);
+            }
         } else {
             // Can pay — ask the opponent via the may ability system
-            String prompt = "Pay {" + effect.amount() + "} to prevent " + targetEntry.getCard().getName() + " from being countered?";
+            // Carry the resolved amount (concrete value, useXValue=false) and preserve exileIfCountered
+            String prompt = "Pay {" + payAmount + "} to prevent " + targetEntry.getCard().getName() + " from being countered?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    entry.getCard(), targetControllerId, List.of(effect), prompt, targetCardId
+                    entry.getCard(), targetControllerId,
+                    List.of(new CounterUnlessPaysEffect(payAmount, false, effect.exileIfCountered())),
+                    prompt, targetCardId
             ));
-            // processNextMayAbility (called by resolveTopOfStack) will set interaction.awaitingInputType() and send the message
         }
     }
 

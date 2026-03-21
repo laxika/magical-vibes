@@ -333,7 +333,7 @@ public class GameSimulator {
         MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(
                 inputCompletionService, gameQueryService, cloneService, stateBasedActionService, gameBroadcastService, playerInputService, turnProgressionService, targetLegalityService, triggerCollectionService);
         MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService = new MayPenaltyChoiceHandlerService(
-                inputCompletionService, gameQueryService, graveyardService, drawService, gameBroadcastService, playerInputService, turnProgressionService, stateBasedActionService, permanentRemovalService);
+                inputCompletionService, gameQueryService, graveyardService, exileService, stateTriggerService, drawService, gameBroadcastService, playerInputService, turnProgressionService, stateBasedActionService, permanentRemovalService);
         MulliganService mulliganService = new MulliganService(
                 noOpSession, gameBroadcastService, turnProgressionService, battlefieldEntryService, playerInputService);
         MayMiscHandlerService mayMiscHandlerService = new MayMiscHandlerService(

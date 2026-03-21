@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTyp
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.StateTriggerService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -39,6 +41,8 @@ public class MayPenaltyChoiceHandlerService {
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
+    private final ExileService exileService;
+    private final StateTriggerService stateTriggerService;
     private final DrawService drawService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -47,10 +51,12 @@ public class MayPenaltyChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        int amount = ability.effects().stream()
+        CounterUnlessPaysEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof CounterUnlessPaysEffect)
-                .map(e -> ((CounterUnlessPaysEffect) e).amount())
-                .findFirst().orElse(0);
+                .map(e -> (CounterUnlessPaysEffect) e)
+                .findFirst().orElseThrow();
+        int amount = effect.amount();
+        boolean exileIfCountered = effect.exileIfCountered();
         UUID targetCardId = ability.targetCardId();
 
         StackEntry targetEntry = null;
@@ -90,21 +96,34 @@ public class MayPenaltyChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
             } else {
-                gameData.stack.remove(targetEntry);
-                graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
-                String logEntry = player.getUsername() + " can't pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} can't pay {} — spell countered", gameData.id, player.getUsername(), amount);
+                counterSpell(gameData, player, targetEntry, amount, exileIfCountered);
             }
         } else {
-            gameData.stack.remove(targetEntry);
-            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
-            String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + " is countered.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} declines to pay {} — spell countered", gameData.id, player.getUsername(), amount);
+            counterSpell(gameData, player, targetEntry, amount, exileIfCountered);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void counterSpell(GameData gameData, Player player, StackEntry targetEntry, int amount, boolean exileIfCountered) {
+        gameData.stack.remove(targetEntry);
+
+        // CR 603.8 — clean up state-trigger tracking when countered
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
+
+        // Copies cease to exist per rule 707.10a
+        if (!targetEntry.isCopy()) {
+            if (exileIfCountered) {
+                exileService.exileCard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+            } else {
+                graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+            }
+        }
+
+        String suffix = exileIfCountered ? " is countered and exiled." : " is countered.";
+        String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + suffix;
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
     }
 
     public void handleSacrificeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

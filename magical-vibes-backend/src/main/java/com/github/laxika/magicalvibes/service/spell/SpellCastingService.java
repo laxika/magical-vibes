@@ -729,7 +729,8 @@ public class SpellCastingService {
                 } else {
                     gameData.stack.add(new StackEntry(
                             entryType, card, playerId, card.getName(),
-                            filteredSpellEffects, targetId, Zone.STACK
+                            filteredSpellEffects, resolvedXValue, targetId,
+                            null, Map.of(), Zone.STACK, List.of(), List.of()
                     ));
                 }
             } else if (kicked && targetId != null && !targetIds.isEmpty()) {
