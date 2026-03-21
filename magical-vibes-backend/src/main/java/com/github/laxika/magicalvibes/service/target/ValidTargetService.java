@@ -178,6 +178,11 @@ public class ValidTargetService {
             return false;
         }
 
+        // Hexproof from color (blocks opponent's spells of the specified color)
+        if (isBlockedByHexproofFromColor(gameData, perm, sourceColor, castingPlayerId)) {
+            return false;
+        }
+
         // Can't be targeted by spell color
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, perm, sourceColor)) {
             return false;
@@ -269,6 +274,11 @@ public class ValidTargetService {
         }
 
         if (isBlockedByHexproofOrGrantedEffect(gameData, perm, controllerId)) {
+            return false;
+        }
+
+        // Hexproof from color (blocks opponent's abilities of the specified color)
+        if (isBlockedByHexproofFromColor(gameData, perm, sourceCard != null ? sourceCard.getColor() : null, controllerId)) {
             return false;
         }
 
@@ -424,6 +434,23 @@ public class ValidTargetService {
             }
         }
 
+        return false;
+    }
+
+    /**
+     * Checks "hexproof from [color]" on a permanent.
+     * Returns true if the permanent has hexproof from the source's color and is controlled by an opponent.
+     */
+    private boolean isBlockedByHexproofFromColor(GameData gameData, Permanent perm, CardColor sourceColor, UUID controllerId) {
+        if (sourceColor == null) {
+            return false;
+        }
+        if (gameQueryService.hasHexproofFromColor(gameData, perm, sourceColor)) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
+            if (targetController != null && !targetController.equals(controllerId)) {
+                return true;
+            }
+        }
         return false;
     }
 

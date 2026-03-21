@@ -197,6 +197,14 @@ public class Card {
         return effectRegistrations.getOrDefault(slot, List.of());
     }
 
+    public void removeKeyword(Keyword keyword) {
+        if (keywords.contains(keyword)) {
+            var mutable = EnumSet.copyOf(keywords);
+            mutable.remove(keyword);
+            this.keywords = mutable;
+        }
+    }
+
     public void addEffect(EffectSlot slot, CardEffect effect) {
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect));
     }

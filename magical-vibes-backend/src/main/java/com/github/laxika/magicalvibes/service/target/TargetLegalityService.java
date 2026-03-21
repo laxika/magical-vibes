@@ -103,6 +103,7 @@ public class TargetLegalityService {
             }
 
             validatePermanentTargetable(gameData, target, playerId);
+            validateHexproofFromColor(gameData, target, sourceCard, playerId);
 
             // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
             if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, sourceCard)) {
@@ -142,6 +143,14 @@ public class TargetLegalityService {
 
         validateTargetable(gameData, targetId, playerId);
 
+        // Hexproof from color (blocks opponent's abilities of the specified color)
+        if (targetId != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null) {
+                validateHexproofFromColor(gameData, target, sourceCard, playerId);
+            }
+        }
+
         // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
         if (targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -172,7 +181,7 @@ public class TargetLegalityService {
         }
 
         if (target != null && needsTarget) {
-            String protectionReason = checkSpellProtection(gameData, target, card);
+            String protectionReason = checkSpellProtection(gameData, target, card, controllerId);
             if (protectionReason != null) return Optional.of(protectionReason);
 
             String untargetable = untargetableReason(gameData, target, controllerId);
@@ -255,6 +264,7 @@ public class TargetLegalityService {
 
             if (card.isNeedsTarget()) {
                 validateSpellProtections(gameData, target, card);
+                validateHexproofFromColor(gameData, target, card, controllerId);
                 validatePermanentTargetable(gameData, target, controllerId);
             }
         }
@@ -293,6 +303,9 @@ public class TargetLegalityService {
                     targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
                     if (!targetFizzled) {
                         targetFizzled = isSpellProtected(gameData, targetPerm, entry);
+                    }
+                    if (!targetFizzled) {
+                        targetFizzled = isHexproofFromColorBlocked(gameData, targetPerm, entry);
                     }
                     if (!targetFizzled) {
                         targetFizzled = isNonColorSourceRestricted(gameData, targetPerm, entry);
@@ -378,6 +391,41 @@ public class TargetLegalityService {
         return target.getCard().getName() + " can't be targeted by this source";
     }
 
+    private boolean isHexproofFromColorBlocked(GameData gameData, Permanent targetPerm, StackEntry entry) {
+        if (entry.getCard() == null) return false;
+        var sourceColor = entry.getCard().getColor();
+        if (sourceColor == null) return false;
+        if (!gameQueryService.hasHexproofFromColor(gameData, targetPerm, sourceColor)) return false;
+        UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
+        return targetController != null && !targetController.equals(entry.getControllerId());
+    }
+
+    private void validateHexproofFromColor(GameData gameData, Permanent target, Card sourceCard, UUID sourcePlayerId) {
+        if (sourceCard == null) return;
+        var sourceColor = sourceCard.getColor();
+        if (sourceColor == null) return;
+        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+            if (targetController != null && !targetController.equals(sourcePlayerId)) {
+                throw new IllegalStateException(target.getCard().getName()
+                        + " has hexproof from " + sourceColor.name().toLowerCase());
+            }
+        }
+    }
+
+    private String hexproofFromColorReason(GameData gameData, Permanent target, Card sourceCard, UUID sourcePlayerId) {
+        if (sourceCard == null) return null;
+        var sourceColor = sourceCard.getColor();
+        if (sourceColor == null) return null;
+        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+            if (targetController != null && !targetController.equals(sourcePlayerId)) {
+                return target.getCard().getName() + " has hexproof from " + sourceColor.name().toLowerCase();
+            }
+        }
+        return null;
+    }
+
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
         if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
             return target.getCard().getName() + " has shroud and can't be targeted";
@@ -430,6 +478,10 @@ public class TargetLegalityService {
     }
 
     private String checkSpellProtection(GameData gameData, Permanent target, Card card) {
+        return checkSpellProtection(gameData, target, card, null);
+    }
+
+    private String checkSpellProtection(GameData gameData, Permanent target, Card card, UUID sourcePlayerId) {
         if (gameQueryService.hasProtectionFrom(gameData, target, card.getColor())) {
             return target.getCard().getName() + " has protection from " + card.getColor().name().toLowerCase();
         }
@@ -444,6 +496,10 @@ public class TargetLegalityService {
         }
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card)) {
             return nonColorSourceRestrictionMessage(target);
+        }
+        if (sourcePlayerId != null) {
+            String hexReason = hexproofFromColorReason(gameData, target, card, sourcePlayerId);
+            if (hexReason != null) return hexReason;
         }
         return null;
     }

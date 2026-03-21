@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.HexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
@@ -1275,6 +1276,30 @@ public class GameQueryService {
             }
         }
 
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if the target permanent has "hexproof from [color]" that matches
+     * the given source color. Unlike full hexproof, this only blocks targeting from sources
+     * of the specified color(s). Only blocks opponent-controlled sources.
+     */
+    public boolean hasHexproofFromColor(GameData gameData, Permanent target, CardColor sourceColor) {
+        if (sourceColor == null) {
+            return false;
+        }
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof HexproofFromColorsEffect hexFrom
+                    && hexFrom.colors().contains(sourceColor)) {
+                return true;
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (effect instanceof HexproofFromColorsEffect hexFrom
+                    && hexFrom.colors().contains(sourceColor)) {
+                return true;
+            }
+        }
         return false;
     }
 

@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsColorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
@@ -1103,6 +1104,38 @@ public class StaticEffectResolutionService {
             }
         }
         if (opponentHasSubtype) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof GrantKeywordEffect grant) {
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addKeyword(grant.keyword());
+                }
+            } else if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
+                accumulator.addProtectionColors(protection.colors());
+            }
+        }
+    }
+
+    @HandlesStaticEffect(value = AnyPlayerControlsColorConditionalEffect.class, selfOnly = true)
+    private void resolveAnyPlayerControlsColorConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (AnyPlayerControlsColorConditionalEffect) effect;
+        boolean anyPlayerHasColor = false;
+        for (UUID playerId : context.gameData().orderedPlayerIds) {
+            List<Permanent> battlefield = context.gameData().playerBattlefields.get(playerId);
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (p.getCard().getColor() == conditional.color()) {
+                        anyPlayerHasColor = true;
+                        break;
+                    }
+                }
+            }
+            if (anyPlayerHasColor) break;
+        }
+        if (anyPlayerHasColor) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
