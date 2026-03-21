@@ -165,6 +165,15 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.WHITE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Unequipped Sword itself does NOT have protection from red or white")
+    void swordItselfHasNoProtection() {
+        Permanent sword = addSwordReady(player1);
+
+        assertThat(gqs.hasProtectionFrom(gd, sword, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, sword, CardColor.WHITE)).isFalse();
+    }
+
     // ===== Combat damage trigger: damage to player by their hand size =====
 
     @Test

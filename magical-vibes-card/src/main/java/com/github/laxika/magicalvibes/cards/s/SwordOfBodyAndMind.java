@@ -23,7 +23,7 @@ public class SwordOfBodyAndMind extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
 
         // Static: equipped creature has protection from green and from blue
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.GREEN, CardColor.BLUE)));
+        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.GREEN, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // you create a 2/2 green Wolf creature token

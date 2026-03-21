@@ -1036,6 +1036,44 @@ class GameQueryServiceTest {
             assertThat(gqs.hasProtectionFrom(gd, perm, CardColor.RED)).isTrue();
             assertThat(gqs.hasProtectionFrom(gd, perm, CardColor.BLUE)).isFalse();
         }
+
+        @Test
+        @DisplayName("equipment with EQUIPPED_CREATURE scope does not give itself protection")
+        void equipmentWithEquippedCreatureScopeDoesNotProtectItself() {
+            Card swordCard = createArtifact("Sword of War and Peace");
+            swordCard.addEffect(EffectSlot.STATIC,
+                    new ProtectionFromColorsEffect(EnumSet.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE));
+            Permanent sword = addPermanent(player1Id, swordCard);
+
+            assertThat(gqs.hasProtectionFrom(gd, sword, CardColor.RED)).isFalse();
+            assertThat(gqs.hasProtectionFrom(gd, sword, CardColor.WHITE)).isFalse();
+        }
+
+        @Test
+        @DisplayName("equipment with EQUIPPED_CREATURE scope grants protection to attached creature")
+        void equipmentWithEquippedCreatureScopeProtectsAttachedCreature() {
+            ProtectionFromColorsEffect protEffect =
+                    new ProtectionFromColorsEffect(EnumSet.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE);
+            Card swordCard = createArtifact("Sword of War and Peace");
+            swordCard.addEffect(EffectSlot.STATIC, protEffect);
+            // Stub the static handler to mimic real StaticEffectResolutionService behavior
+            when(staticEffectRegistry.getHandler(protEffect)).thenReturn((ctx, eff, acc) -> {
+                var prot = (ProtectionFromColorsEffect) eff;
+                if (ctx.source().isAttached()
+                        && ctx.source().getAttachedTo().equals(ctx.target().getId())) {
+                    acc.addProtectionColors(prot.colors());
+                }
+            });
+            Permanent sword = addPermanent(player1Id, swordCard);
+
+            Permanent creature = addPermanent(player1Id,
+                    createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            sword.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.RED)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.WHITE)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.BLUE)).isFalse();
+        }
     }
 
     // ===== hasProtectionFromSourceCardTypes =====

@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetType;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,10 +33,12 @@ class AiTargetSelector {
 
     private final GameQueryService gameQueryService;
     private final TargetValidationService targetValidationService;
+    private final ValidTargetService validTargetService;
 
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService) {
         this.gameQueryService = gameQueryService;
         this.targetValidationService = targetValidationService;
+        this.validTargetService = new ValidTargetService(gameQueryService);
     }
 
     UUID chooseTarget(GameData gameData, Card card, UUID aiPlayerId) {
@@ -135,7 +137,8 @@ class AiTargetSelector {
     }
 
     boolean isValidPermanentTarget(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {
-        if (!passesTargetFilter(gameData, card, target, aiPlayerId)) {
+        // Use the same protection/hexproof/shroud/target-filter checks as the UI
+        if (!validTargetService.canPermanentBeTargetedBySpell(gameData, target, card, aiPlayerId)) {
             return false;
         }
         // Run the same @ValidatesTarget validators that spell casting uses
@@ -147,22 +150,6 @@ class AiTargetSelector {
             return false;
         }
         return true;
-    }
-
-    private boolean passesTargetFilter(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {
-        if (card.getTargetFilter() == null) {
-            return true;
-        }
-        try {
-            gameQueryService.validateTargetFilter(card.getTargetFilter(),
-                    target,
-                    FilterContext.of(gameData)
-                            .withSourceCardId(card.getId())
-                            .withSourceControllerId(aiPlayerId));
-            return true;
-        } catch (IllegalStateException e) {
-            return false;
-        }
     }
 
     private UUID chooseDestroyTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {

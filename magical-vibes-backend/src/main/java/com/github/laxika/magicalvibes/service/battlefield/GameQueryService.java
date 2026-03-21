@@ -1106,7 +1106,9 @@ public class GameQueryService {
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
         if (sourceColor == null) return false;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromColorsEffect protection && protection.colors().contains(sourceColor)) {
+            if (effect instanceof ProtectionFromColorsEffect protection
+                    && protection.scope() == null
+                    && protection.colors().contains(sourceColor)) {
                 return true;
             }
         }
