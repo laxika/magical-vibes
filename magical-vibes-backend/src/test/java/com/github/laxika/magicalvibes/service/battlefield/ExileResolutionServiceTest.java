@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
@@ -166,6 +168,88 @@ class ExileResolutionServiceTest {
             gameData.addToExile(ownerId, card, sourcePermanentId);
             return null;
         }).when(exileService).exileCard(any(), any(), any(), any());
+    }
+
+    // =========================================================================
+    // ExileAllPermanentsEffect
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveExileAllPermanents")
+    class ResolveExileAllPermanents {
+
+        @Test
+        @DisplayName("Exiles all permanents matching the predicate across both battlefields")
+        void exilesMatchingPermanents() {
+            Card creature1Card = createCreatureCard("Bear");
+            Permanent creature1 = addPermanent(player1Id, creature1Card);
+            Card creature2Card = createCreatureCard("Elk");
+            Permanent creature2 = addPermanent(player2Id, creature2Card);
+
+            Card sourceCard = createSorceryCard("Blast");
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, (UUID) null, null
+            );
+
+            when(gameQueryService.matchesPermanentPredicate(any(Permanent.class), eq(filter), any()))
+                    .thenReturn(true);
+
+            exileResolutionService.resolveExileAllPermanents(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, creature1);
+            verify(permanentRemovalService).removePermanentToExile(gd, creature2);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Bear is exiled."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Elk is exiled."));
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+        }
+
+        @Test
+        @DisplayName("Skips permanents that do not match the predicate")
+        void skipsNonMatchingPermanents() {
+            Card creatureCard = createCreatureCard("Bear");
+            Permanent creature = addPermanent(player1Id, creatureCard);
+            Card landCard = createLandCard("Plains");
+            Permanent land = addPermanent(player1Id, landCard);
+
+            Card sourceCard = createSorceryCard("Blast");
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, (UUID) null, null
+            );
+
+            when(gameQueryService.matchesPermanentPredicate(eq(creature), eq(filter), any()))
+                    .thenReturn(true);
+            when(gameQueryService.matchesPermanentPredicate(eq(land), eq(filter), any()))
+                    .thenReturn(false);
+
+            exileResolutionService.resolveExileAllPermanents(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToExile(gd, creature);
+            verify(permanentRemovalService, never()).removePermanentToExile(gd, land);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+        }
+
+        @Test
+        @DisplayName("Does nothing when no permanents match")
+        void nothingToExile() {
+            Card sourceCard = createSorceryCard("Blast");
+            PermanentPredicate filter = new PermanentIsCreaturePredicate();
+            ExileAllPermanentsEffect effect = new ExileAllPermanentsEffect(filter);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, (UUID) null, null
+            );
+
+            exileResolutionService.resolveExileAllPermanents(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+        }
     }
 
     // =========================================================================

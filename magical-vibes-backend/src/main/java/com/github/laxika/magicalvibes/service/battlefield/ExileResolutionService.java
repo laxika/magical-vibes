@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
@@ -89,6 +91,35 @@ public class ExileResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Exiles all permanents matching the effect's predicate filter across all battlefields.
+     */
+    @HandlesEffect(ExileAllPermanentsEffect.class)
+    void resolveExileAllPermanents(GameData gameData, StackEntry entry, ExileAllPermanentsEffect effect) {
+        List<Permanent> toExile = new ArrayList<>();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.matchesPermanentPredicate(perm, effect.filter(), filterContext)) {
+                    toExile.add(perm);
+                }
+            }
+        });
+
+        for (Permanent perm : toExile) {
+            permanentRemovalService.removePermanentToExile(gameData, perm);
+            String logEntry = perm.getCard().getName() + " is exiled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is exiled by {}",
+                    gameData.id, perm.getCard().getName(), entry.getCard().getName());
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

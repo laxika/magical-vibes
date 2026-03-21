@@ -533,6 +533,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `ExileAllPermanentsEffect` | `(PermanentPredicate filter)` | exile all permanents matching the predicate filter across all battlefields. Use with `PermanentAllOfPredicate` for compound conditions (e.g. nonland + nonlegendary). Used by Urza's Ruinous Blast |
 | `ExileTargetCreatureAndAllWithSameNameEffect` | `()` | exile target creature and all other creatures on the battlefield with the same name. Fizzles if target leaves. Used by Sever the Bloodline |
 | `ExileTargetPermanentEffect` | `()` | exile target permanent (also handles multi-target via targetIds) |
 | `ExilePermanentDamagedPlayerControlsEffect` | `(PermanentPredicate predicate)` | exile target permanent controlled by the damaged player (combat damage trigger); use inside MayEffect with ON_COMBAT_DAMAGE_TO_PLAYER |
