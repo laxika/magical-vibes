@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZon
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
@@ -368,6 +369,20 @@ public class PlayerInteractionResolutionService {
         String prompt = "Discard up to " + effect.maxDiscard() + " cards for " + cardName
                 + ". You will draw that many cards.";
         playerInputService.beginXValueChoice(gameData, controllerId, maxDiscard, prompt, cardName);
+    }
+
+    @HandlesEffect(DiscardAndDrawCardEffect.class)
+    private void resolveDiscardAndDraw(GameData gameData, StackEntry entry, DiscardAndDrawCardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = gameData.playerIdToName.get(controllerId) + " has no cards to discard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+        gameData.pendingRummageDrawCount = effect.drawAmount();
+        gameData.discardCausedByOpponent = false;
+        resolveDiscardCards(gameData, controllerId, effect.discardAmount());
     }
 
     @HandlesEffect(EachPlayerDiscardsEffect.class)

@@ -411,6 +411,7 @@ Pass `null` as filter to allow any card.
 | `DrawCardsEqualToChargeCountersOnSourceEffect` | `()` | draw cards equal to charge counters on source (reads snapshotted count from xValue) |
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
 | `DrawAndDiscardCardEffect` | `(int drawAmount, int discardAmount)` | draw N then discard N cards (loot). Convenience ctor: `()` defaults to `(1, 1)`. Commonly wrapped in MayEffect for "you may draw a card. If you do, discard a card." |
+| `DiscardAndDrawCardEffect` | `(int discardAmount, int drawAmount)` | discard N cards then draw N cards (rummage). Convenience ctor: `()` defaults to `(1, 1)`. Commonly wrapped in MayEffect for "you may discard a card. If you do, draw a card." Uses `pendingDrawAfterDiscard` on GameData to draw after the interactive discard completes. |
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
 | `DiscardUpToThenDrawThatManyEffect` | `(int maxDiscard)` | discard up to N cards, then draw that many cards (rummage with "up to" choice). Uses X value choice for count selection, then sequential discard interaction, then draws. Used by Jaya Ballard. |
 | `EachPlayerDiscardsEffect` | `(int amount)` | each player discards N cards in APNAP order (active player first). Uses queued sequential discard interaction. Controller's discard has `discardCausedByOpponent=false`; others have `true`. |
