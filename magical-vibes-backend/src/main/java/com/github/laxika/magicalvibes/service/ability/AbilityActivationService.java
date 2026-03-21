@@ -10,8 +10,10 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.ability.cost.ArtifactSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
 import com.github.laxika.magicalvibes.service.ability.cost.SubtypeSacrificeCostHandler;
@@ -59,6 +61,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
@@ -335,11 +338,118 @@ public class AbilityActivationService {
             }
         }
 
+        // Identify permanent-choice costs (e.g. return lands to hand)
+        List<PermanentChoiceCostHandler> permanentChoiceCosts = ability.getEffects().stream()
+                .map(e -> toPermanentChoiceCostHandler(e, null, 0))
+                .filter(Objects::nonNull)
+                .toList();
+
+        // Validate permanent-choice costs can be paid before paying mana
+        for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+            handler.validateCanPay(gameData, playerId);
+        }
+
         // Pay mana cost
         String abilityCost = ability.getManaCost();
         if (abilityCost != null) {
             payManaCost(gameData, playerId, abilityCost, 0, false, false);
         }
+
+        // Pay permanent-choice costs (auto-pay or enter interactive mode)
+        for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
+            if (handleGraveyardPermanentChoiceCost(gameData, player, card, graveyardCardIndex, idx, handler)) {
+                return; // Entering interactive choice mode; activation will complete later
+            }
+        }
+
+        completeGraveyardAbilityActivation(gameData, player, card, ability);
+    }
+
+    private boolean handleGraveyardPermanentChoiceCost(GameData gameData, Player player, Card card,
+                                                        int graveyardCardIndex, int abilityIndex,
+                                                        PermanentChoiceCostHandler handler) {
+        int required = handler.requiredCount();
+        if (required <= 0) return false;
+        UUID playerId = player.getId();
+        List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
+        if (validIds.size() <= required) {
+            // Auto-pay: exactly enough permanents
+            for (UUID id : validIds) {
+                Permanent chosen = gameQueryService.findPermanentById(gameData, id);
+                if (chosen != null) {
+                    handler.validateAndPay(gameData, player, chosen);
+                }
+            }
+            return false;
+        }
+        // Interactive choice: more valid permanents than required
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.GraveyardAbilityCostChoice(
+                playerId, card, graveyardCardIndex, abilityIndex, handler.costEffect(), required));
+        playerInputService.beginPermanentChoice(gameData, playerId, validIds,
+                handler.getPromptMessage(required));
+        gameBroadcastService.broadcastGameState(gameData);
+        return true;
+    }
+
+    /**
+     * Callback for when a player has chosen a permanent for a graveyard ability's permanent-choice cost.
+     * Validates the choice, pays the cost, and either re-prompts or completes the ability activation.
+     */
+    public void completeGraveyardAbilityCostChoice(GameData gameData, Player player,
+                                                    PermanentChoiceContext.GraveyardAbilityCostChoice context,
+                                                    UUID chosenPermanentId) {
+        UUID playerId = player.getId();
+        Card card = context.graveyardCard();
+        int idx = context.abilityIndex() != null ? context.abilityIndex() : 0;
+        ActivatedAbility ability = card.getGraveyardActivatedAbilities().get(idx);
+
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), null, 0);
+        if (handler == null) {
+            throw new IllegalStateException("Unknown cost effect type");
+        }
+
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Invalid target permanent");
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || !battlefield.contains(chosen)) {
+            throw new IllegalStateException("Must choose a permanent you control");
+        }
+
+        handler.validateAndPay(gameData, player, chosen);
+
+        int remaining = context.remaining() - 1;
+        if (remaining > 0) {
+            List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
+            if (validIds.size() < remaining) {
+                throw new IllegalStateException("Not enough permanents remaining");
+            }
+            if (validIds.size() == remaining) {
+                // Auto-pay remaining
+                for (UUID id : validIds) {
+                    Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
+                    if (autoPay != null) {
+                        handler.validateAndPay(gameData, player, autoPay);
+                    }
+                }
+            } else {
+                // Re-prompt for next choice
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.GraveyardAbilityCostChoice(
+                        playerId, card, context.graveyardCardIndex(), context.abilityIndex(),
+                        context.costEffect(), remaining));
+                playerInputService.beginPermanentChoice(gameData, playerId, validIds,
+                        handler.getPromptMessage(remaining));
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+        }
+
+        completeGraveyardAbilityActivation(gameData, player, card, ability);
+    }
+
+    private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card, ActivatedAbility ability) {
+        UUID playerId = player.getId();
 
         // Filter out cost effects for the snapshot
         List<CardEffect> snapshotEffects = new ArrayList<>();
@@ -799,10 +909,12 @@ public class AbilityActivationService {
 
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
+        PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);
+        if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, gameQueryService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
@@ -961,6 +1073,17 @@ public class AbilityActivationService {
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
+    }
+
+    private void returnPermanentToHandAsCost(GameData gameData, Player player, Permanent target) {
+        UUID playerId = player.getId();
+        List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
+        if (playerBf == null || !playerBf.contains(target)) {
+            throw new IllegalStateException("Must return a permanent you control");
+        }
+        permanentRemovalService.removePermanentToHand(gameData, target);
+        String bounceLog = player.getUsername() + " returns " + target.getCard().getName() + " to hand.";
+        gameBroadcastService.logAndBroadcast(gameData, bounceLog);
     }
 
     private void validateTimingRestrictions(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {

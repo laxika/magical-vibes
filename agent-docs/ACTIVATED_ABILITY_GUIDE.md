@@ -309,6 +309,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificeSubtypeCreatureCost` | `(CardSubtype)` | "Sacrifice a Goblin: ..." |
 | `SacrificeArtifactCost` | `()` | "Sacrifice an artifact: ..." |
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
+| `ReturnMultiplePermanentsToHandCost` | `(int count, PermanentPredicate filter)` | "Return two lands you control to their owner's hand: ..." (bounces N matching permanents as cost). Works with both battlefield and graveyard activated abilities |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardType)` | "Discard a [type] card: ..." (null = any card, e.g. "Discard a card: ...") |
 | `ExileCardFromGraveyardCost` | `(CardType)` or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |

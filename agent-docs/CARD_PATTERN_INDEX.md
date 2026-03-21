@@ -309,6 +309,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | P/T = subtype | `n/Nightmare.java` | STATIC PowerToughnessEqualToControlledSubtypeCountEffect |
 | P/T = GY creatures | `m/Mortivore.java` | STATIC PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect |
 | P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC PowerToughnessEqualToCardsInHandEffect + ON_CONTROLLER_DRAWS EachOpponentLosesLifeEffect |
+| Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfPerControlledPermanentEffect(1, 1, PermanentIsLandPredicate) + BoostSelfPerCardsInControllerGraveyardEffect(CardTypePredicate(LAND), 1, 1) — +1/+1 per land you control and per land card in your graveyard |
 | Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
 | +1/+1 per same name | `r/RelentlessRats.java` | STATIC BoostByOtherCreaturesWithSameNameEffect |
 | +1/+0 per other subtype you control | `r/RatColony.java` | STATIC BoostSelfPerOtherControlledSubtypeEffect(RAT, 1, 0) |

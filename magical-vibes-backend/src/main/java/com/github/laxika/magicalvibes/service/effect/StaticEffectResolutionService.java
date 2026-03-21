@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBatt
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanentEffect;
@@ -735,6 +736,25 @@ public class StaticEffectResolutionService {
         }
         accumulator.addPower(count * boost.powerPerPermanent());
         accumulator.addToughness(count * boost.toughnessPerPermanent());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfPerCardsInControllerGraveyardEffect.class, selfOnly = true)
+    private void resolveBoostSelfPerCardsInControllerGraveyard(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfPerCardsInControllerGraveyardEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        List<Card> graveyard = context.gameData().playerGraveyards.get(controllerId);
+        int count = 0;
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                if (gameQueryService.matchesCardPredicate(card, boost.filter(), null)) {
+                    count++;
+                }
+            }
+        }
+        accumulator.addPower(count * boost.powerPerCard());
+        accumulator.addToughness(count * boost.toughnessPerCard());
     }
 
     @HandlesStaticEffect(value = BoostSelfPerOpponentPermanentEffect.class, selfOnly = true)

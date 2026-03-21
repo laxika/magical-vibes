@@ -100,4 +100,11 @@ public sealed interface PermanentChoiceContext {
     record SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                              UUID sourcePermanentId, String chapterName) implements PermanentChoiceContext {}
 
+    record GraveyardAbilityCostChoice(UUID activatingPlayerId,
+                                      Card graveyardCard,
+                                      int graveyardCardIndex,
+                                      Integer abilityIndex,
+                                      CardEffect costEffect,
+                                      int remaining) implements PermanentChoiceContext {}
+
 }

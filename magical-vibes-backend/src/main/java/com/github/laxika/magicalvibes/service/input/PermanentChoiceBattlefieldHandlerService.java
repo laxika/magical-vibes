@@ -251,6 +251,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         abilityActivationService.completeActivatedAbilityCostChoice(gameData, player, costChoice, permanentId);
     }
 
+    public void handleGraveyardAbilityCostChoice(GameData gameData, Player player, UUID permanentId, PermanentChoiceContext.GraveyardAbilityCostChoice graveyardCostChoice) {
+        abilityActivationService.completeGraveyardAbilityCostChoice(gameData, player, graveyardCostChoice, permanentId);
+    }
+
     public void handleBounceCreature(GameData gameData, UUID permanentId) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {
