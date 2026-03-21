@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToC
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedEvenlyAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
@@ -350,6 +351,53 @@ public class DamageResolutionService {
         int x = entry.getXValue();
         int damagePerTarget = x / targets.size();
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damagePerTarget, entry);
+        String cardName = entry.getCard().getName();
+
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        List<Permanent> destroyed = new ArrayList<>();
+
+        for (UUID targetId : targets) {
+            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+            Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
+
+            if (!targetIsPlayer && targetPermanent == null) continue;
+
+            if (targetIsPlayer) {
+                dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+            } else {
+                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard()))) {
+                    if (dealCreatureDamage(gameData, entry, targetPermanent, rawDamage)) {
+                        destroyed.add(targetPermanent);
+                    }
+                } else {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented.");
+                }
+            }
+        }
+
+        destroyAllLethal(gameData, destroyed);
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealXDamageToEachTargetEffect} — deals X damage to each of multiple targets
+     * (creatures and/or players). Each target receives the full X damage (not divided).
+     */
+    @HandlesEffect(DealXDamageToEachTargetEffect.class)
+    void resolveDealXDamageToEachTarget(GameData gameData, StackEntry entry) {
+        List<UUID> targets = entry.getTargetIds();
+        if (targets.isEmpty()) {
+            if (entry.getTargetId() != null) {
+                targets = List.of(entry.getTargetId());
+            } else {
+                return;
+            }
+        }
+
+        int x = entry.getXValue();
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, x, entry);
         String cardName = entry.getCard().getName();
 
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;

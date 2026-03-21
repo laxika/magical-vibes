@@ -11,6 +11,6 @@ public class Fireball extends Card {
 
     public Fireball() {
         setAdditionalCostPerExtraTarget(1);
-        target(null, 1, 99).addEffect(EffectSlot.SPELL, new DealXDamageDividedEvenlyAmongTargetsEffect());
+        target(1, 99).addEffect(EffectSlot.SPELL, new DealXDamageDividedEvenlyAmongTargetsEffect());
     }
 }

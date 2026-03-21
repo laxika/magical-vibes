@@ -11,7 +11,7 @@ import java.util.List;
 public class ArcTrail extends Card {
 
     public ArcTrail() {
-        target(null, 2, 2)
+        target(2, 2)
                 .addEffect(EffectSlot.SPELL, new DealOrderedDamageToAnyTargetsEffect(List.of(2, 1)));
     }
 }

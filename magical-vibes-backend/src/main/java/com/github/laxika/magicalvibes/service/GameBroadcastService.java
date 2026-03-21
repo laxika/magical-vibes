@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -393,6 +394,18 @@ public class GameBroadcastService {
                     .filter(c -> exileCost.requiredType() == null || c.hasType(exileCost.requiredType()))
                     .count();
             return matchingCount < exileCost.count();
+        });
+
+        // MTG rule 205.4e: can't cast a legendary sorcery/instant unless you control a legendary creature or planeswalker
+        playable.removeIf(i -> {
+            Card card = hand.get(i);
+            if (!card.getSupertypes().contains(CardSupertype.LEGENDARY)) return false;
+            if (!card.hasType(CardType.SORCERY) && !card.hasType(CardType.INSTANT)) return false;
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) return true;
+            return bf.stream().noneMatch(p ->
+                    p.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
+                            && (gameQueryService.isCreature(gameData, p) || p.getCard().hasType(CardType.PLANESWALKER)));
         });
 
         return playable;

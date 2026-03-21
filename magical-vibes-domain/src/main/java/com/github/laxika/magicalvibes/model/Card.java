@@ -104,6 +104,13 @@ public class Card {
     }
 
     /**
+     * Declares an unfiltered target with custom min/max counts.
+     */
+    public SpellTarget target(int minTargets, int maxTargets) {
+        return target(null, minTargets, maxTargets);
+    }
+
+    /**
      * Declares a target with custom min/max counts and returns a builder
      * whose {@code addEffect()} associates effects with this target.
      */
