@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttached
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanentEffect;
@@ -858,6 +859,31 @@ public class StaticEffectResolutionService {
 
         int count = 0;
         for (Permanent permanent : battlefield) {
+            if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
+                count++;
+            }
+        }
+
+        accumulator.addPower(count * boost.powerPerPermanent());
+        accumulator.addToughness(count * boost.toughnessPerPermanent());
+    }
+
+    @HandlesStaticEffect(value = BoostSelfPerOtherControlledSubtypeEffect.class, selfOnly = true)
+    private void resolveBoostSelfPerOtherControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostSelfPerOtherControlledSubtypeEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getId().equals(context.source().getId())) continue;
             if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
                 count++;
             }

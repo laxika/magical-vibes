@@ -311,6 +311,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC PowerToughnessEqualToCardsInHandEffect + ON_CONTROLLER_DRAWS EachOpponentLosesLifeEffect |
 | Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
 | +1/+1 per same name | `r/RelentlessRats.java` | STATIC BoostByOtherCreaturesWithSameNameEffect |
+| +1/+0 per other subtype you control | `r/RatColony.java` | STATIC BoostSelfPerOtherControlledSubtypeEffect(RAT, 1, 0) |
 | Cost reduction | `a/AvatarOfMight.java` | STATIC ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect |
 | Subtype cost reduction | `d/DanithaCapashenParagon.java` | STATIC ReduceOwnCastCostForSubtypeEffect(Set.of(AURA, EQUIPMENT), 1) — from battlefield permanent |
 | Creature mana only | `m/MyrSuperion.java` | setRequiresCreatureMana(true) — can only be cast with mana produced by creatures |

@@ -684,6 +684,7 @@ Pass `null` as filter to allow any card.
 | `BoostSelfPerBlockingCreatureEffect` | `(int powerPerBlockingCreature, int toughnessPerBlockingCreature)` | +X/+Y for each creature blocking this (combat trigger) |
 | `BoostSelfPerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | +X/+Y for each permanent you control matching the filter (activated ability) |
 | `BoostSelfPerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerPermanent, int toughnessPerPermanent)` | +X/+Y for each permanent with subtype you control (static, selfOnly). Used by Earth Servant |
+| `BoostSelfPerOtherControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerPermanent, int toughnessPerPermanent)` | +X/+Y for each *other* permanent with subtype you control, excludes self (static, selfOnly). Used by Rat Colony |
 | `BoostSelfWhenBlockingKeywordEffect` | `(Keyword requiredKeyword, int powerBoost, int toughnessBoost)` | +X/+Y when blocking a creature with the required keyword (e.g. flying). Place in `ON_BLOCK` slot. CombatService converts to BoostSelfEffect at trigger time |
 | `TapSubtypeBoostSelfAndDamageDefenderEffect` | `(CardSubtype subtype)` | when this creature attacks, you may tap any number of untapped creatures of subtype you control → gets +X/+0 until end of turn and deals X damage to defending player. Place in `ON_ATTACK` slot. Prompts multi-permanent choice for eligible untapped creatures |
 
