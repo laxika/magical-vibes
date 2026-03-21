@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 public enum CounterType {
+    AIM,
     ANY,
     CHARGE,
     HATCHLING,

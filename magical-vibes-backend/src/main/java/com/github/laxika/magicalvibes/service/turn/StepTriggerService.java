@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -942,6 +943,41 @@ public class StepTriggerService {
                 for (CardEffect effect : controllerEndStepEffects) {
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                    } else if (effect instanceof DestroyRandomOpponentPermanentWithCounterEffect destroyRandom) {
+                        // Intervening-if: only trigger if enough opponent permanents have the counter
+                        int count = 0;
+                        for (UUID pid : gameData.orderedPlayerIds) {
+                            if (pid.equals(activePlayerId)) continue;
+                            List<Permanent> opponentBf = gameData.playerBattlefields.get(pid);
+                            if (opponentBf == null) continue;
+                            for (Permanent p : opponentBf) {
+                                int counterCount = switch (destroyRandom.counterType()) {
+                                    case AIM -> p.getAimCounters();
+                                    case CHARGE -> p.getChargeCounters();
+                                    default -> 0;
+                                };
+                                if (counterCount > 0) count++;
+                            }
+                        }
+                        if (count < destroyRandom.minRequired()) {
+                            log.info("Game {} - {} end-step trigger skipped (only {} permanents with {} counters, need {})",
+                                    gameData.id, perm.getCard().getName(), count,
+                                    destroyRandom.counterType().name().toLowerCase(), destroyRandom.minRequired());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof DidntAttackConditionalEffect didntAttack) {
                         // Intervening-if: only trigger if the creature didn't attack this turn
                         if (perm.isAttackedThisTurn()) {

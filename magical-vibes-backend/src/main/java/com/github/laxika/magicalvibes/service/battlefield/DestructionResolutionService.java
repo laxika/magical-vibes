@@ -37,7 +37,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEf
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureDestroyRestEffect;
@@ -580,6 +582,49 @@ public class DestructionResolutionService {
         if (chosen != null) {
             tryDestroyAndLog(gameData, chosen, entry.getCard().getName(), false);
         }
+    }
+
+    /**
+     * Resolves a {@link DestroyRandomOpponentPermanentWithCounterEffect}. Re-checks the
+     * intervening-if condition (at least {@code minRequired} opponent permanents have the
+     * specified counter type), then destroys one of those permanents at random.
+     */
+    @HandlesEffect(DestroyRandomOpponentPermanentWithCounterEffect.class)
+    void resolveDestroyRandomOpponentPermanentWithCounter(GameData gameData, StackEntry entry,
+                                                           DestroyRandomOpponentPermanentWithCounterEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        CounterType counterType = effect.counterType();
+
+        // Find all permanents opponents control with the specified counter
+        List<Permanent> candidates = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                int counterCount = switch (counterType) {
+                    case AIM -> perm.getAimCounters();
+                    case CHARGE -> perm.getChargeCounters();
+                    default -> 0;
+                };
+                if (counterCount > 0) {
+                    candidates.add(perm);
+                }
+            }
+        }
+
+        // Re-check intervening-if: need at least minRequired permanents with counters
+        if (candidates.size() < effect.minRequired()) {
+            log.info("Game {} - {} end step trigger fizzles — only {} permanents with {} counters (need {})",
+                    gameData.id, entry.getCard().getName(), candidates.size(),
+                    counterType.name().toLowerCase(), effect.minRequired());
+            return;
+        }
+
+        // Destroy one at random
+        int randomIndex = ThreadLocalRandom.current().nextInt(candidates.size());
+        Permanent chosen = candidates.get(randomIndex);
+        tryDestroyAndLog(gameData, chosen, entry.getCard().getName(), false);
     }
 
     /**

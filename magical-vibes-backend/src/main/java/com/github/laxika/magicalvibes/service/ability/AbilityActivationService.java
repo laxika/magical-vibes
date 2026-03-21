@@ -621,6 +621,7 @@ public class AbilityActivationService {
             int required = removeCounterCost.get().count();
             CounterType ct = removeCounterCost.get().counterType();
             int available = switch (ct) {
+                case AIM -> permanent.getAimCounters();
                 case CHARGE -> permanent.getChargeCounters();
                 case HATCHLING -> permanent.getHatchlingCounters();
                 case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentsAndPutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
@@ -597,6 +599,69 @@ public class PermanentCounterResolutionService {
         log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, target.getCard().getName(), counters);
     }
 
+    @HandlesEffect(ChooseOpponentPermanentsAndPutCountersEffect.class)
+    private void resolveChooseOpponentPermanentsAndPutCounters(GameData gameData, StackEntry entry,
+                                                                ChooseOpponentPermanentsAndPutCountersEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(controllerId);
+
+        // Find all eligible permanents opponents control matching the filter
+        List<UUID> eligibleIds = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.matchesPermanentPredicate(perm, effect.filter(), filterContext)) {
+                    eligibleIds.add(perm.getId());
+                }
+            }
+        }
+
+        if (eligibleIds.isEmpty()) {
+            String logEntry = entry.getCard().getName() + "'s ability finds no eligible permanents.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} ETB: no eligible permanents for counter placement", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        if (eligibleIds.size() <= effect.maxCount()) {
+            // Auto-place counters on all eligible permanents
+            placeCountersOnPermanents(gameData, entry, eligibleIds, effect.counterType());
+        } else {
+            // Player must choose exactly maxCount
+            gameData.pendingAimCounterPlacement = true;
+            playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds,
+                    effect.maxCount(), "Choose " + effect.maxCount() + " nonenchantment permanents to put aim counters on.");
+        }
+    }
+
+    public void placeCountersOnPermanents(GameData gameData, StackEntry entry, List<UUID> permanentIds, CounterType counterType) {
+        List<String> names = new ArrayList<>();
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null && !gameQueryService.cantHaveCounters(gameData, perm)) {
+                switch (counterType) {
+                    case AIM -> perm.setAimCounters(perm.getAimCounters() + 1);
+                    case CHARGE -> perm.setChargeCounters(perm.getChargeCounters() + 1);
+                    default -> throw new IllegalArgumentException("Unsupported counter type for placement: " + counterType);
+                }
+                names.add(perm.getCard().getName());
+            }
+        }
+
+        if (!names.isEmpty()) {
+            String counterName = counterType.name().toLowerCase();
+            String logEntry = entry.getCard().getName() + " puts an " + counterName + " counter on "
+                    + String.join(", ", names) + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} places {} counters on {} permanents", gameData.id,
+                    entry.getCard().getName(), counterName, names.size());
+        }
+    }
+
     @HandlesEffect(ProliferateEffect.class)
     private void resolveProliferate(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -608,7 +673,8 @@ public class PermanentCounterResolutionService {
                     || p.getMinusOneMinusOneCounters() > 0
                     || p.getLoyaltyCounters() > 0
                     || p.getSlimeCounters() > 0
-                    || p.getHatchlingCounters() > 0) {
+                    || p.getHatchlingCounters() > 0
+                    || p.getAimCounters() > 0) {
                 eligiblePermanentIds.add(p.getId());
             }
         });

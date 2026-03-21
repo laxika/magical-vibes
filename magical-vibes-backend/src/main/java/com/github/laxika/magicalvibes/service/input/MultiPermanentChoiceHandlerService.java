@@ -23,7 +23,9 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.PermanentCounterResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,6 +59,7 @@ public class MultiPermanentChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final DestructionResolutionService destructionResolutionService;
+    private final PermanentCounterResolutionService permanentCounterResolutionService;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_PERMANENT_CHOICE)) {
@@ -105,6 +108,8 @@ public class MultiPermanentChoiceHandlerService {
             handleForcedSacrifice(gameData, permanentIds);
         } else if (gameData.pendingCombatDamageBounceTargetPlayerId != null) {
             handleCombatDamageBounce(gameData, playerId, permanentIds);
+        } else if (gameData.pendingAimCounterPlacement) {
+            handleAimCounterPlacement(gameData, permanentIds);
         } else if (gameData.pendingAwakeningCounterPlacement) {
             handleAwakeningCounterPlacement(gameData, playerId, permanentIds);
         } else if (gameData.pendingProliferateCount > 0) {
@@ -387,6 +392,25 @@ public class MultiPermanentChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    private void handleAimCounterPlacement(GameData gameData, List<UUID> permanentIds) {
+        gameData.pendingAimCounterPlacement = false;
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            permanentCounterResolutionService.placeCountersOnPermanents(gameData,
+                    gameData.pendingEffectResolutionEntry, permanentIds, CounterType.AIM);
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     private void handleProliferate(GameData gameData, UUID playerId, List<UUID> permanentIds) {
         gameData.pendingProliferateCount--;
 
@@ -415,6 +439,9 @@ public class MultiPermanentChoiceHandlerService {
                         if (perm.getAwakeningCounters() > 0) {
                             perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
                         }
+                        if (perm.getAimCounters() > 0) {
+                            perm.setAimCounters(perm.getAimCounters() + 1);
+                        }
                     }
                     proliferatedNames.add(perm.getCard().getName());
                 }
@@ -437,7 +464,8 @@ public class MultiPermanentChoiceHandlerService {
                         || p.getMinusOneMinusOneCounters() > 0
                         || p.getLoyaltyCounters() > 0
                         || p.getSlimeCounters() > 0
-                        || p.getAwakeningCounters() > 0) {
+                        || p.getAwakeningCounters() > 0
+                        || p.getAimCounters() > 0) {
                     eligiblePermanentIds.add(p.getId());
                 }
             });

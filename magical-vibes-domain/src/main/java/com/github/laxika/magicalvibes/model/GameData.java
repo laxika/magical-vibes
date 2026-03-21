@@ -178,6 +178,7 @@ public class GameData {
     /** Name of the card that initiated the destroy-rest flow (for logging). */
     public String pendingDestroyRestSourceName;
     public boolean pendingAwakeningCounterPlacement;
+    public boolean pendingAimCounterPlacement;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
     /** Pile separation state (Liliana of the Veil ultimate): controller divides, target player chooses pile to sacrifice. */
     public boolean pendingPileSeparation;
@@ -451,6 +452,7 @@ public class GameData {
         copy.pendingDestroyRestSourceName = this.pendingDestroyRestSourceName;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
+        copy.pendingAimCounterPlacement = this.pendingAimCounterPlacement;
         copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
         copy.pendingPileSeparation = this.pendingPileSeparation;
         copy.pendingPileSeparationControllerId = this.pendingPileSeparationControllerId;

@@ -718,6 +718,8 @@ Pass `null` as filter to allow any card.
 | `PutXMinusOneMinusOneCountersOnEachCreatureEffect` | `()` | put X -1/-1 counters on each creature (all players' creatures), where X comes from the spell's X value |
 | `ProliferateEffect` | `()` | proliferate: choose any number of permanents with counters, add one of each counter type already there |
 | `PutAwakeningCountersOnTargetLandsEffect` | `()` | combat damage trigger: choose any number of lands you control, put an awakening counter on each. Lands with awakening counters are 8/8 green Elemental creatures (permanent). Place in `ON_COMBAT_DAMAGE_TO_PLAYER` slot. Handled inline in CombatService via multi-permanent choice |
+| `ChooseOpponentPermanentsAndPutCountersEffect` | `(CounterType counterType, int maxCount, PermanentPredicate filter)` | ETB: choose up to N permanents opponents control matching filter, put a counter of the specified type on each. Auto-selects all if ≤maxCount eligible; prompts multi-permanent choice if more. Place in `ON_ENTER_BATTLEFIELD`. Resolved by `PermanentCounterResolutionService`. Used by Haphazard Bombardment (AIM, 4, nonenchantment) |
+| `DestroyRandomOpponentPermanentWithCounterEffect` | `(CounterType counterType, int minRequired)` | end step trigger with intervening-if: if at least minRequired opponent permanents have the specified counter, destroy one at random. Place in `CONTROLLER_END_STEP_TRIGGERED`. Intervening-if checked in `StepTriggerService`; resolved by `DestructionResolutionService`. Used by Haphazard Bombardment (AIM, 2) |
 
 ## Keywords / abilities
 
