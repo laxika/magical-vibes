@@ -1076,6 +1076,10 @@ public class GameBroadcastService {
                 || card.getAdditionalTypes().stream().anyMatch(restricted::contains)) return false;
         Set<String> forbidden = getForbiddenCardNames(gameData);
         if (forbidden.contains(card.getName())) return false;
+        // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
+        if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
+                && card.hasType(CardType.SORCERY)
+                && !controlsLegendaryCreatureOrPlaneswalker(gameData, playerId)) return false;
         return true;
     }
 
