@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanent
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
@@ -853,6 +854,27 @@ public class StaticEffectResolutionService {
             accumulator.addKeywords(boost.grantedKeywords());
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
+        }
+    }
+
+    @HandlesStaticEffect(ControllerTurnConditionalEffect.class)
+    private void resolveControllerTurnConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControllerTurnConditionalEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        if (!controllerId.equals(context.gameData().activePlayerId)) return;
+
+        CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof GrantKeywordEffect grant) {
+            if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
+                accumulator.addKeyword(grant.keyword());
+            }
+        } else if (wrapped instanceof StaticBoostEffect boost) {
+            if (matchesCreatureScope(context, boost.scope(), null)) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            }
         }
     }
 

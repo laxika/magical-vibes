@@ -397,6 +397,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 |---------|-----------|-------|
 | Simple boost equip | `l/LeoninScimitar.java` | STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + EquipActivatedAbility |
 | Boost + keywords equip | `l/LoxodonWarhammer.java` | Boost + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
+| Boost + conditional keyword equip | `j/JoustingLance.java` | STATIC StaticBoostEffect(2, 0, EQUIPPED_CREATURE) + ControllerTurnConditionalEffect(GrantKeywordEffect(FIRST_STRIKE, EQUIPPED_CREATURE)) + equip — keyword only applies during controller's turn |
 | Boost + can't block equip | `c/CopperCarapace.java` | STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + CantBlockEffect + equip |
 | ETB attach + sacrifice equip | `p/PistonSledge.java` | ON_ENTER_BATTLEFIELD AttachSourceEquipmentToTargetCreatureEffect + STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + equip with SacrificeArtifactCost (no mana). Uses ControlledPermanentPredicateTargetFilter on card for ETB targeting |
 | Living weapon equip | `s/Strandwalker.java` | ON_ENTER_BATTLEFIELD LivingWeaponEffect + STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + GrantKeywordEffect(EQUIPPED_CREATURE) + equip |
