@@ -933,7 +933,8 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `ExtraTurnEffect` | `(int count)` | take N extra turns |
+| `ControllerExtraTurnEffect` | `(int count)` | controller takes N extra turns (no targeting) |
+| `ExtraTurnEffect` | `(int count)` | target player takes N extra turns |
 | `AdditionalCombatMainPhaseEffect` | `(int count)` | get N additional combat + main phases |
 | `EndTurnEffect` | `()` | end the turn |
 | `ControlTargetPlayerNextTurnEffect` | `()` | control target player during their next turn (Mindslaver) |

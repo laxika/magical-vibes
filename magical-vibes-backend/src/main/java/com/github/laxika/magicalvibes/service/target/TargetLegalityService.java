@@ -127,6 +127,11 @@ public class TargetLegalityService {
                                                   Zone targetZone,
                                                   Card sourceCard,
                                                   int xValue) {
+        // "Up to N" abilities (minTargets=0) allow choosing zero targets (CR 115.1d)
+        if (ability.getMinTargets() == 0 && targetId == null) {
+            return;
+        }
+
         targetValidationService.validateEffectTargets(abilityEffects,
                 new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue));
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -34,6 +35,20 @@ public class TurnResolutionService {
     private final AuraAttachmentService auraAttachmentService;
     private final TurnCleanupService turnCleanupService;
     private final ExileService exileService;
+
+    @HandlesEffect(ControllerExtraTurnEffect.class)
+    void resolveControllerExtraTurn(GameData gameData, StackEntry entry, ControllerExtraTurnEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        for (int i = 0; i < effect.count(); i++) {
+            gameData.extraTurns.addFirst(controllerId);
+        }
+
+        String logEntry = playerName + " takes " + effect.count() + " extra "
+                + pluralize("turn", effect.count()) + " after this one.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} granted {} extra turn(s)", gameData.id, playerName, effect.count());
+    }
 
     @HandlesEffect(ExtraTurnEffect.class)
     void resolveExtraTurn(GameData gameData, StackEntry entry, ExtraTurnEffect effect) {
