@@ -74,7 +74,8 @@ public class LibraryShuffleResolutionService {
      */
     @HandlesEffect(ShuffleGraveyardIntoLibraryEffect.class)
     void resolveShuffleGraveyardIntoLibrary(GameData gameData, StackEntry entry) {
-        UUID targetPlayerId = entry.getTargetId();
+        // Fall back to controller when no explicit target (e.g. saga chapters, triggered abilities)
+        UUID targetPlayerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);

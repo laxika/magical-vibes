@@ -164,5 +164,26 @@ class LibraryShuffleResolutionServiceTest {
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("graveyard is empty")));
         }
+
+        @Test
+        @DisplayName("Falls back to controller when targetId is null (saga chapters / triggered abilities)")
+        void fallsBackToControllerWhenNoTarget() {
+            Card bear1 = createCard("Grizzly Bears");
+            Card bear2 = createCard("Grizzly Bears");
+            gd.playerGraveyards.get(player1Id).addAll(List.of(bear1, bear2));
+            int deckSizeBefore = gd.playerDecks.get(player1Id).size();
+
+            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect();
+            // Saga chapter / triggered ability: no targetId
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("The Mending of Dominaria"),
+                    player1Id, "The Mending of Dominaria's chapter III ability", List.of(effect));
+
+            service.resolveShuffleGraveyardIntoLibrary(gd, entry);
+
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
+            assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("shuffles their graveyard")));
+        }
     }
 }
