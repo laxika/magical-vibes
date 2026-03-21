@@ -198,7 +198,7 @@ public class GameTestHarness {
         DamagePreventionService damagePreventionService = new DamagePreventionService(gameQueryService);
         GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, sessionManager, gameRegistry, draftRegistry, null);
         DeathTriggerService deathTriggerService = new DeathTriggerService(gameQueryService, gameBroadcastService);
-        drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService);
+        drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService, triggeredAbilityQueueService);
         battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, null, null);
         CloneService cloneService = new CloneService(gameQueryService, gameBroadcastService, playerInputService, legendRuleService, battlefieldEntryService);
         battlefieldEntryService.setCloneService(cloneService);

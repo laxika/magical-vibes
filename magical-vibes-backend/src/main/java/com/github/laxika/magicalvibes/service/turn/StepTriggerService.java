@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
@@ -883,6 +884,25 @@ public class StepTriggerService {
                 String logEntry = perm.getCard().getName() + "'s delayed trigger — " + triggerCount + " trigger(s), adding " + totalCountersToAdd + " +1/+1 counter(s).";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} delayed +1/+1 counter regrowth: {} trigger(s) pushed onto stack", gameData.id, perm.getCard().getName(), triggerCount);
+            }
+        }
+
+        // Process delayed untap permanents triggers (e.g. Teferi, Hero of Dominaria +1)
+        if (!gameData.pendingDelayedUntapPermanents.isEmpty()) {
+            List<GameData.DelayedUntapPermanents> pendingUntaps = new ArrayList<>(gameData.pendingDelayedUntapPermanents);
+            gameData.pendingDelayedUntapPermanents.clear();
+            for (GameData.DelayedUntapPermanents pending : pendingUntaps) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — untap up to " + pending.count() + " permanent(s)",
+                        new ArrayList<>(List.of(new UntapUpToControlledPermanentsEffect(pending.count(), pending.filter())))
+                ));
+                String logEntry = pending.sourceCard().getName() + "'s delayed trigger — untap up to " + pending.count() + " permanent(s).";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} delayed untap {} permanent(s) trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName(), pending.count());
             }
         }
 

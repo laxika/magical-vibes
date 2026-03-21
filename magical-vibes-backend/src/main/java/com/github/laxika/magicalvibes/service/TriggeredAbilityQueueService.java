@@ -278,9 +278,10 @@ public class TriggeredAbilityQueueService {
         while (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
             PermanentChoiceContext.EmblemTriggerTarget pending = gameData.pendingEmblemTriggerTargets.peekFirst();
 
-            // Collect valid targets: all permanents on all battlefields
+            // Collect valid targets: all permanents (or only opponent permanents if opponentControlledOnly)
             List<UUID> validTargets = new ArrayList<>();
             for (UUID pid : gameData.orderedPlayerIds) {
+                if (pending.opponentControlledOnly() && pid.equals(pending.controllerId())) continue;
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
@@ -299,10 +300,13 @@ public class TriggeredAbilityQueueService {
 
             gameData.pendingEmblemTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
+            String targetDesc = pending.opponentControlledOnly()
+                    ? "target permanent an opponent controls to exile"
+                    : "target permanent to exile";
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
-                    pending.emblemDescription() + "'s ability - Choose target permanent to exile.");
+                    pending.emblemDescription() + "'s ability - Choose " + targetDesc + ".");
 
-            String logEntry = pending.emblemDescription() + "'s triggered ability - choose target permanent.";
+            String logEntry = pending.emblemDescription() + "'s triggered ability - choose " + targetDesc + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} emblem trigger awaiting target selection", gameData.id, pending.emblemDescription());
             return;

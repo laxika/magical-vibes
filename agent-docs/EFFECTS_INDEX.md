@@ -280,6 +280,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DamageSourceControllerGainsControlOfThisPermanentEffect` | `(boolean combatOnly, boolean creatureOnly)` | whenever a permanent deals damage to controller, the damage source's controller gains control of this permanent (Contested War Zone-style). Use with `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` slot. `combatOnly=true` restricts to combat damage only; `creatureOnly=true` restricts to creature damage sources only |
 | `PutTargetOnBottomOfLibraryEffect` | `()` | put target permanent on bottom of owner's library |
 | `PutTargetOnTopOfLibraryEffect` | `()` | put target permanent on top of owner's library |
+| `PutTargetPermanentIntoLibraryNFromTopEffect` | `(int position)` | put target permanent into its owner's library at position N from the top (0-indexed: 0=top, 1=second, 2=third). Used by Teferi, Hero of Dominaria -3 (position=2 for "third from top") |
 
 ## Graveyard return
 
@@ -834,6 +835,8 @@ Pass `null` as filter to allow any card.
 | `AttachedCreatureDoesntUntapEffect` | `()` | attached creature (aura or equipment) doesn't untap during untap step (static) |
 | `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect` | `(TurnStep step)` or `(TurnStep step, PermanentPredicate filter)` | untap permanents you control during each other player's step. `filter=null` (1-arg form) untaps all; provide a predicate (e.g. `PermanentIsArtifactPredicate`) to untap only matching permanents |
 | `UntapAllControlledPermanentsEffect` | `(PermanentPredicate filter)` | untap all permanents you control matching filter (e.g. `PermanentIsLandPredicate` for "untap all lands you control") |
+| `UntapUpToControlledPermanentsEffect` | `(int count, PermanentPredicate filter)` | untap up to N tapped permanents the controller controls matching filter; if filter is null, any tapped permanent qualifies |
+| `RegisterDelayedUntapPermanentsEffect` | `(int count, PermanentPredicate filter)` | registers a delayed trigger that fires at the beginning of the next end step, putting an `UntapUpToControlledPermanentsEffect(count, filter)` on the stack. Used by Teferi, Hero of Dominaria +1 with `PermanentIsLandPredicate` |
 | `UntapEachOtherCreatureYouControlEffect` | `(PermanentPredicate filter)` | untap each other creature you control matching filter; `()` no-arg overload untaps all (ON_ATTACK trigger or activated ability) |
 | `UnattachEquipmentFromTargetPermanentsEffect` | `()` | unattach all equipment from target permanents (multi-target) |
 
@@ -1055,7 +1058,9 @@ Pass `null` as filter to allow any card.
 | `KothEmblemEffect` | `()` | Koth's emblem: Mountains you control have '{T}: This land deals 1 damage to any target.' |
 | `VenserEmblemEffect` | `()` | Venser's emblem: "Whenever you cast a spell, exile target permanent." Creates emblem with ExileTargetOnControllerSpellCastEffect |
 | `JayaBallardEmblemEffect` | `()` | Jaya Ballard's emblem: "You may cast instant and sorcery spells from your graveyard. If a spell cast this way would be put into your graveyard, exile it instead." Creates emblem with EmblemGrantsFlashbackEffect |
+| `TeferiHeroEmblemEffect` | `()` | Teferi, Hero of Dominaria's emblem: "Whenever you draw a card, exile target permanent an opponent controls." Creates emblem with ExileTargetOpponentPermanentOnDrawEffect |
 | `ExileTargetOnControllerSpellCastEffect` | `()` | Marker effect stored in Emblem.staticEffects. Triggers when controller casts a spell, prompting target permanent choice then exiling it |
+| `ExileTargetOpponentPermanentOnDrawEffect` | `()` | Marker effect stored in Emblem.staticEffects. Triggers when controller draws a card, prompting controller to choose target permanent an opponent controls to exile |
 | `EmblemGrantsFlashbackEffect` | `(Set<CardType> cardTypes)` | Static effect stored in Emblem.staticEffects. Permanently grants flashback (at card's mana cost) to cards of matching types in controller's graveyard. Cast spells are exiled after resolution (flashback disposition). |
 | `KarnRestartGameEffect` | `()` | Karn's ultimate: restart the game per CR 727, leaving non-Aura permanent cards exiled with Karn in exile, then put them onto battlefield under controller's control. Resets life totals, hands, libraries, graveyards, exile zones, battlefields, and all game state. Controller goes first, no mulligans |
 | `KarnScionRevealTwoOpponentChoosesEffect` | `()` | Karn Scion +1: reveal top 2 cards, opponent chooses one for controller's hand, the other is exiled with a silver counter. Uses LIBRARY_REVEAL_CHOICE with pendingKarnScionControllerId |

@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEf
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedUntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEachOtherCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllTargetPermanentsEffect;
@@ -344,5 +346,42 @@ public class TapUntapResolutionService {
         String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s) you control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(RegisterDelayedUntapPermanentsEffect.class)
+    private void resolveRegisterDelayedUntapPermanents(GameData gameData, StackEntry entry, RegisterDelayedUntapPermanentsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        gameData.pendingDelayedUntapPermanents.add(
+                new GameData.DelayedUntapPermanents(controllerId, effect.count(), effect.filter(), entry.getCard()));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - {} registers delayed untap up to {} permanents at next end step",
+                gameData.id, playerName, effect.count());
+    }
+
+    @HandlesEffect(UntapUpToControlledPermanentsEffect.class)
+    private void resolveUntapUpToControlledPermanents(GameData gameData, StackEntry entry, UntapUpToControlledPermanentsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        int remaining = effect.count();
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (remaining <= 0) break;
+            if (!p.isTapped()) continue;
+            if (effect.filter() != null
+                    && !gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter())) continue;
+
+            p.untap();
+            count++;
+            remaining--;
+        }
+
+        if (count > 0) {
+            String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+        log.info("Game {} - {} untaps {} permanent(s) via delayed trigger", gameData.id, entry.getCard().getName(), count);
     }
 }

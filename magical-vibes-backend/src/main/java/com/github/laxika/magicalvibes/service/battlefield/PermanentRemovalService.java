@@ -228,6 +228,39 @@ public class PermanentRemovalService {
     }
 
     /**
+     * Removes a permanent from the battlefield and puts its card at the specified position
+     * from the top of the owner's library (0-indexed: 0 = top, 1 = second, 2 = third, etc.).
+     * If the library has fewer cards than the position, the card is placed on the bottom.
+     * Applies exile replacement effects (CR 614.6) and handles exile-return-on-leave.
+     *
+     * @param gameData the current game state
+     * @param target   the permanent to tuck
+     * @param position 0-indexed position from the top of the library
+     * @return {@code true} if the permanent was found on a battlefield and removed,
+     *         {@code false} if it was not on any battlefield
+     */
+    public boolean removePermanentToLibraryPosition(GameData gameData, Permanent target, int position) {
+        // Replacement effect: exile instead of going to library (CR 614.6)
+        if (tryApplyExileReplacementEffect(gameData, target, false, "going to the library")) {
+            return true;
+        }
+
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        if (removed.isEmpty()) {
+            return false;
+        }
+        UUID controllerId = removed.get().controllerId();
+        UUID ownerId = removed.get().ownerId();
+        deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        deathTriggerService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        List<Card> library = gameData.playerDecks.get(ownerId);
+        int insertIndex = Math.min(position, library.size());
+        library.add(insertIndex, target.getOriginalCard());
+        handleExileReturnOnLeave(gameData, target);
+        return true;
+    }
+
+    /**
      * Removes all auras whose enchanted permanent is no longer on the battlefield.
      *
      * @param gameData the current game state

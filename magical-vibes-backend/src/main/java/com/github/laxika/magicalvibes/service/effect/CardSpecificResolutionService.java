@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.TeferiHeroEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
@@ -360,6 +362,23 @@ public class CardSpecificResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets Jaya Ballard emblem", gameData.id, playerName);
+    }
+
+    @HandlesEffect(TeferiHeroEmblemEffect.class)
+    void resolveTeferiHeroEmblem(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        Emblem emblem = new Emblem(controllerId, List.of(
+                new ExileTargetOpponentPermanentOnDrawEffect()
+        ), entry.getCard());
+
+        gameData.emblems.add(emblem);
+
+        String logEntry = playerName + " gets an emblem with \"Whenever you draw a card, exile target permanent an opponent controls.\".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets Teferi Hero emblem", gameData.id, playerName);
     }
 
     @HandlesEffect(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)

@@ -207,6 +207,10 @@ public class GameData {
     public final List<UUID> pendingPileSeparationPile1Ids = Collections.synchronizedList(new ArrayList<>());
     public final List<UUID> pendingPileSeparationPile2Ids = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
+    /** Delayed triggers that untap up to N permanents matching a filter at the beginning of the next end step. */
+    public final List<DelayedUntapPermanents> pendingDelayedUntapPermanents = Collections.synchronizedList(new ArrayList<>());
+
+    public record DelayedUntapPermanents(UUID controllerId, int count, PermanentPredicate filter, Card sourceCard) {}
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
@@ -712,6 +716,9 @@ public class GameData {
 
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
+
+        // --- Delayed untap permanents (records are immutable) ---
+        copy.pendingDelayedUntapPermanents.addAll(this.pendingDelayedUntapPermanents);
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);

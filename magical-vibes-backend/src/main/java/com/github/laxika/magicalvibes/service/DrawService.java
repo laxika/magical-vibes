@@ -3,13 +3,17 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -31,6 +35,7 @@ public class DrawService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GameOutcomeService gameOutcomeService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
         if (isDrawPrevented(gameData)) {
@@ -201,6 +206,30 @@ public class DrawService {
                             gameData.id, perm.getCard().getName());
                 }
             }
+        }
+
+        // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
+        checkEmblemDrawTriggers(gameData, drawingPlayerId);
+    }
+
+    private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        for (Emblem emblem : gameData.emblems) {
+            if (!emblem.controllerId().equals(drawingPlayerId)) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
+                    gameData.pendingEmblemTriggerTargets.add(new PermanentChoiceContext.EmblemTriggerTarget(
+                            "Teferi's emblem",
+                            emblem.controllerId(),
+                            List.of(new ExileTargetPermanentEffect()),
+                            emblem.sourceCard(),
+                            true
+                    ));
+                }
+            }
+        }
+
+        if (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+            triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
         }
     }
 

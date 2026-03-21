@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect
 import com.github.laxika.magicalvibes.model.effect.PutSlimeCounterAndCreateOozeTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -704,6 +705,27 @@ public class PermanentControlResolutionService {
             String logEntry = target.getCard().getName() + " is put on top of its owner's library.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} put on top of library", gameData.id, target.getCard().getName());
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    @HandlesEffect(PutTargetPermanentIntoLibraryNFromTopEffect.class)
+    private void resolvePutTargetPermanentIntoLibraryNFromTop(GameData gameData, StackEntry entry, PutTargetPermanentIntoLibraryNFromTopEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) return;
+
+        int position = effect.position();
+        if (permanentRemovalService.removePermanentToLibraryPosition(gameData, target, position)) {
+            String ordinal = switch (position) {
+                case 0 -> "on top of";
+                case 1 -> "second from the top of";
+                case 2 -> "third from the top of";
+                default -> (position + 1) + "th from the top of";
+            };
+            String logEntry = target.getCard().getName() + " is put " + ordinal + " its owner's library.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} put {} library (position {})", gameData.id, target.getCard().getName(), ordinal, position);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
