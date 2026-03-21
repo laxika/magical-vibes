@@ -365,6 +365,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsBlockingPredicate` | `()` | blocking creatures |
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself |
+| `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
 | `PermanentIsTokenPredicate` | `()` | token permanents |
 | `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors |
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |

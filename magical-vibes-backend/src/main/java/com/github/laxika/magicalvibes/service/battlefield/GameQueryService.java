@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -718,6 +719,13 @@ public class GameQueryService {
                 return isArtifact(permanent);
             }
             return isArtifact(gameData, permanent);
+        }
+        if (predicate instanceof PermanentIsHistoricPredicate) {
+            boolean artifact = gameData == null ? isArtifact(permanent) : isArtifact(gameData, permanent);
+            return artifact
+                    || permanent.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
+                    || permanent.getCard().getSubtypes().contains(CardSubtype.SAGA)
+                    || permanent.getTransientSubtypes().contains(CardSubtype.SAGA);
         }
         if (predicate instanceof PermanentIsEnchantmentPredicate) {
             return hasCardType(permanent, CardType.ENCHANTMENT);

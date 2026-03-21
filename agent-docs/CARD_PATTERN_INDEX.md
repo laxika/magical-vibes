@@ -145,6 +145,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |
 | ETB destroy all (predicate) + static hexproof | `w/WitchbaneOrb.java` | DestroyAllPermanentsEffect(AllOf(HasSubtype(CURSE), AttachedToSourceController)) + GrantControllerHexproofEffect STATIC |
 | ETB may exile until leaves (O-ring) | `l/LeoninRelicWarder.java` | MayEffect(ExileTargetPermanentUntilSourceLeavesEffect) + PermanentPredicateTargetFilter(AnyOf(artifact, enchantment)). Exiled card returns when source leaves battlefield |
+| ETB may exile + return at end step (flicker) | `s/SentinelOfThePearlTrident.java` | MayEffect(ExileTargetPermanentAndReturnAtEndStepEffect) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, PermanentIsHistoricPredicate)). Flash creature that flickers own historic permanent |
 | ETB may rummage (discard then draw) | `k/KeldonRaider.java` | MayEffect(DiscardAndDrawCardEffect()) — may discard a card, if you do draw a card |
 | ETB discard (targeted) | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB discard (each opponent) | `l/LilianasSpecter.java` | EachOpponentDiscardsEffect — no targeting, all opponents discard |

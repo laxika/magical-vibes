@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -1347,6 +1349,11 @@ public class StaticEffectResolutionService {
             return target.getCard().hasType(CardType.PLANESWALKER);
         if (filter instanceof PermanentIsTokenPredicate)
             return target.getCard().isToken();
+        if (filter instanceof PermanentIsHistoricPredicate)
+            return gameQueryService.isArtifact(target)
+                    || target.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
+                    || target.getCard().getSubtypes().contains(CardSubtype.SAGA)
+                    || target.getTransientSubtypes().contains(CardSubtype.SAGA);
         if (filter instanceof PermanentNotPredicate p)
             return !matchesStaticFilter(target, p.predicate());
         if (filter instanceof PermanentAllOfPredicate p)
