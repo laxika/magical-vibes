@@ -809,7 +809,7 @@ public class PlayerInteractionResolutionService {
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
                 Card handCard = hand.get(i);
-                if (handCard.hasType(effect.cardType())) {
+                if (gameQueryService.matchesCardPredicate(handCard, effect.predicate(), handCard.getId())) {
                     validIndices.add(i);
                 }
             }
@@ -817,15 +817,13 @@ public class PlayerInteractionResolutionService {
 
         if (validIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            String typeName = effect.cardType().name().toLowerCase();
-            String logEntry = playerName + " has no " + typeName + " cards in hand.";
+            String logEntry = playerName + " has no " + effect.label() + " cards in hand.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} has no {} cards in hand for hand-to-battlefield effect", gameData.id, playerName, typeName);
+            log.info("Game {} - {} has no {} cards in hand for hand-to-battlefield effect", gameData.id, playerName, effect.label());
             return;
         }
 
-        String typeName = effect.cardType().name().toLowerCase();
-        String prompt = "Choose a " + typeName + " card from your hand to put onto the battlefield.";
+        String prompt = "Choose a " + effect.label() + " card from your hand to put onto the battlefield.";
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
     }
 

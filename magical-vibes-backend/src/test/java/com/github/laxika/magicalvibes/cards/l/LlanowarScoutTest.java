@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -38,7 +37,7 @@ class LlanowarScoutTest extends BaseCardTest {
         MayEffect may = (MayEffect) ability.getEffects().getFirst();
         assertThat(may.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
         PutCardToBattlefieldEffect wrapped = (PutCardToBattlefieldEffect) may.wrapped();
-        assertThat(wrapped.cardType()).isEqualTo(CardType.LAND);
+        assertThat(wrapped.label()).isEqualTo("land");
     }
 
     @Test

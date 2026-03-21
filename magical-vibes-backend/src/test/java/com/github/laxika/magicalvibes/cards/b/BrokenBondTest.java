@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -39,7 +38,7 @@ class BrokenBondTest extends BaseCardTest {
         MayEffect may = (MayEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(may.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
         PutCardToBattlefieldEffect put = (PutCardToBattlefieldEffect) may.wrapped();
-        assertThat(put.cardType()).isEqualTo(CardType.LAND);
+        assertThat(put.label()).isEqualTo("land");
     }
 
     @Test

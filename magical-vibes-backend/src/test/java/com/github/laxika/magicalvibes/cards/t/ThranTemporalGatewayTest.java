@@ -1,7 +1,8 @@
-package com.github.laxika.magicalvibes.cards.e;
+package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.s.SparringConstruct;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,48 +20,48 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class ElvishPiperTest extends BaseCardTest {
-
+class ThranTemporalGatewayTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Elvish Piper has correct card properties and activated ability")
+    @DisplayName("Has correct activated ability structure")
     void hasCorrectProperties() {
-        ElvishPiper card = new ElvishPiper();
+        ThranTemporalGateway card = new ThranTemporalGateway();
 
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
+        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{4}");
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).singleElement()
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
         assertThat(mayEffect.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
         PutCardToBattlefieldEffect wrapped = (PutCardToBattlefieldEffect) mayEffect.wrapped();
-        assertThat(wrapped.label()).isEqualTo("creature");
+        assertThat(wrapped.predicate()).isNotNull();
+        assertThat(wrapped.label()).isEqualTo("historic permanent");
     }
 
     @Test
-    @DisplayName("Activated ability taps Piper, spends mana, and goes on stack")
+    @DisplayName("Activating ability taps Gateway, spends mana, and goes on stack")
     void activatingAbilityUsesTapAndMana() {
-        Permanent piper = addReadyPiper();
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        Permanent gateway = addReadyGateway();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(piper.isTapped()).isTrue();
+        assertThat(gateway.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Elvish Piper");
+        assertThat(entry.getCard().getName()).isEqualTo("Thran Temporal Gateway");
     }
 
     @Test
     @DisplayName("Resolving ability prompts may choice first")
     void resolvingPromptsMayChoiceFirst() {
-        addReadyPiper();
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        addReadyGateway();
+        harness.setHand(player1, List.of(new SparringConstruct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -71,11 +72,14 @@ class ElvishPiperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting may then resolving prompts card choice with only creature indices")
-    void resolvingPromptsOnlyCreatureChoices() {
-        addReadyPiper();
-        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears(), new Forest()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+    @DisplayName("Accepting may then resolving prompts card choice with only historic permanent indices")
+    void resolvingPromptsOnlyHistoricPermanentChoices() {
+        addReadyGateway();
+        // SparringConstruct is an artifact creature (historic permanent) — index 0
+        // GrizzlyBears is a regular creature (not historic) — index 1
+        // LightningBolt is an instant (not a permanent) — index 2
+        harness.setHand(player1, List.of(new SparringConstruct(), new GrizzlyBears(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -85,15 +89,15 @@ class ElvishPiperTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
         assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
     }
 
     @Test
-    @DisplayName("Choosing a creature puts it onto the battlefield")
-    void choosingCreaturePutsItOntoBattlefield() {
-        addReadyPiper();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+    @DisplayName("Choosing a historic permanent puts it onto the battlefield")
+    void choosingHistoricPermanentPutsItOntoBattlefield() {
+        addReadyGateway();
+        harness.setHand(player1, List.of(new SparringConstruct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -103,16 +107,16 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+                .anyMatch(p -> p.getCard().getName().equals("Sparring Construct"));
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Declining may leaves hand unchanged")
     void decliningMayLeavesHandUnchanged() {
-        addReadyPiper();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        addReadyGateway();
+        harness.setHand(player1, List.of(new SparringConstruct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -127,11 +131,12 @@ class ElvishPiperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability does not prompt when controller has no creature cards in hand")
-    void noCreaturesInHandSkipsChoice() {
-        addReadyPiper();
-        harness.setHand(player1, List.of(new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+    @DisplayName("No historic permanent cards in hand skips choice")
+    void noHistoricPermanentsInHandSkipsChoice() {
+        addReadyGateway();
+        // GrizzlyBears is not historic, LightningBolt is not a permanent
+        harness.setHand(player1, List.of(new GrizzlyBears(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -140,27 +145,29 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.CARD_CHOICE);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("has no creature cards in hand"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("has no historic permanent cards in hand"));
     }
 
     @Test
-    @DisplayName("Cannot activate ability with summoning sickness")
-    void cannotActivateWithSummoningSickness() {
-        Permanent piper = new Permanent(new ElvishPiper());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(piper);
-        harness.addMana(player1, ManaColor.GREEN, 1);
+    @DisplayName("Non-creature artifact can activate tap ability the turn it enters")
+    void canActivateWithoutSummoningSickness() {
+        Permanent gateway = new Permanent(new ThranTemporalGateway());
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(gateway);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("summoning sickness");
+        harness.activateAbility(player1, 0, null, null);
+
+        GameData gd = harness.getGameData();
+        assertThat(gateway.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
-    @DisplayName("Cannot activate ability while tapped")
+    @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
-        Permanent piper = addReadyPiper();
-        piper.tap();
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        Permanent gateway = addReadyGateway();
+        gateway.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -168,19 +175,19 @@ class ElvishPiperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate ability without green mana")
+    @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyPiper();
+        addReadyGateway();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addReadyPiper() {
-        Permanent piper = new Permanent(new ElvishPiper());
-        piper.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(piper);
-        return piper;
+    private Permanent addReadyGateway() {
+        Permanent gateway = new Permanent(new ThranTemporalGateway());
+        gateway.setSummoningSick(false);
+        harness.getGameData().playerBattlefields.get(player1.getId()).add(gateway);
+        return gateway;
     }
 }

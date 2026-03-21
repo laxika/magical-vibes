@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ElvishPiper extends Card {
                 true,
                 "{G}",
                 List.of(new MayEffect(
-                        new PutCardToBattlefieldEffect(CardType.CREATURE),
+                        new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"),
                         "Put a creature card from your hand onto the battlefield?"
                 )),
                 "{G}, {T}: You may put a creature card from your hand onto the battlefield."

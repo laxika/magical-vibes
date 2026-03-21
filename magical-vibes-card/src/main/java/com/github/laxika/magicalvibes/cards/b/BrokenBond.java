@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
@@ -28,7 +29,7 @@ public class BrokenBond extends Card {
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
 
         addEffect(EffectSlot.SPELL, new MayEffect(
-                new PutCardToBattlefieldEffect(CardType.LAND),
+                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), "land"),
                 "Put a land card from your hand onto the battlefield?"
         ));
     }

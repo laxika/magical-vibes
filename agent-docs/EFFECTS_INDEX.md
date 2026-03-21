@@ -1050,7 +1050,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `PutCardToBattlefieldEffect` | `(CardType cardType)` | you may put a card of type from hand onto battlefield (wrap in MayEffect) |
+| `PutCardToBattlefieldEffect` | `(CardPredicate predicate, String label)` | you may put a card matching predicate from hand onto battlefield (wrap in MayEffect). `label` is used in prompt text. E.g. `new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")`, `new PutCardToBattlefieldEffect(new CardAllOfPredicate(List.of(new CardIsHistoricPredicate(), new CardIsPermanentPredicate())), "historic permanent")` |
 | `OpponentMayPlayCreatureEffect` | `()` | opponent may put a creature card from hand onto battlefield |
 | `OpponentMayReturnExiledCardOrDrawEffect` | `(int drawCount)` | opponent may let controller have an exiled card; if declined, controller draws N cards. Used as may-ability marker after library-search-to-exile |
 
