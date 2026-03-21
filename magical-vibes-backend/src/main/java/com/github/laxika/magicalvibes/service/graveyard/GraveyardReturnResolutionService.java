@@ -111,6 +111,13 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
+        // Case 1b: Pre-targeted via targetCardIds (from triggered ability graveyard targeting, e.g. Teshar)
+        if (effect.targetGraveyard() && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
+            UUID targetCardId = entry.getTargetCardIds().getFirst();
+            resolvePreTargetedById(gameData, entry, effect, controllerId, sourceCardId, targetCardId);
+            return;
+        }
+
         // Case 2: Return all matching cards (no choice)
         if (effect.returnAll()) {
             resolveReturnAll(gameData, entry, effect, controllerId, sourceCardId);
@@ -133,7 +140,12 @@ public class GraveyardReturnResolutionService {
 
     private void resolvePreTargeted(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                     UUID controllerId, UUID sourceCardId) {
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        resolvePreTargetedById(gameData, entry, effect, controllerId, sourceCardId, entry.getTargetId());
+    }
+
+    private void resolvePreTargetedById(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
+                                        UUID controllerId, UUID sourceCardId, UUID targetCardId) {
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         if (targetCard == null || (effect.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {

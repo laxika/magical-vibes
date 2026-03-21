@@ -291,24 +291,30 @@ public class GraveyardChoiceHandlerService {
                     !pendingFlashback);
             gameBroadcastService.broadcastGameState(gameData);
         } else {
-            // ETB ability — put triggered ability on stack with targets
+            // Triggered ability (ETB or spell-cast trigger) — put on stack with targets
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     pendingCard,
                     controllerId,
-                    pendingCard.getName() + "'s ETB ability",
+                    pendingCard.getName() + "'s ability",
                     new ArrayList<>(pendingEffects),
                     new ArrayList<>(cardIds)
             ));
 
             if (cardIds.isEmpty()) {
-                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting no cards.";
-                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                String triggerLog = pendingCard.getName() + "'s ability triggers targeting no cards.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
             } else {
-                String etbLog = pendingCard.getName() + "'s enter-the-battlefield ability triggers targeting " + String.join(", ", targetNames) + ".";
-                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                String triggerLog = pendingCard.getName() + "'s ability triggers targeting " + String.join(", ", targetNames) + ".";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
             }
-            log.info("Game {} - {} ETB ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
+            log.info("Game {} - {} triggered ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
+        }
+
+        // Process any remaining pending graveyard-target triggers before auto-pass
+        if (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            return;
         }
 
         turnProgressionService.resolveAutoPass(gameData);

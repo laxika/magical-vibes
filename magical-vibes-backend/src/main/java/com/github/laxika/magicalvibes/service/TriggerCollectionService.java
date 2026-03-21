@@ -640,6 +640,10 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
     }
 
+    public void processNextSpellGraveyardTargetTrigger(GameData gameData) {
+        triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+    }
+
     public void processNextEmblemTriggerTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
     }

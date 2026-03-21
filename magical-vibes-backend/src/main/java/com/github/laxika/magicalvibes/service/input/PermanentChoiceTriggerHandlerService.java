@@ -67,6 +67,11 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        if (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            return;
+        }
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;

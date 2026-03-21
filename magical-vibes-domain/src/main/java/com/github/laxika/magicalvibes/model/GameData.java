@@ -140,6 +140,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.EndStepTriggerTarget> pendingEndStepTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.LifeGainTriggerAnyTarget> pendingLifeGainTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SagaChapterTarget> pendingSagaChapterTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.SpellGraveyardTargetTrigger> pendingSpellGraveyardTargetTriggers = new ArrayDeque<>();
     public PendingCapriciousEfreetState pendingCapriciousEfreetState;
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
@@ -700,6 +701,7 @@ public class GameData {
         copy.pendingEndStepTriggerTargets.addAll(this.pendingEndStepTriggerTargets);
         copy.pendingLifeGainTriggerTargets.addAll(this.pendingLifeGainTriggerTargets);
         copy.pendingSagaChapterTargets.addAll(this.pendingSagaChapterTargets);
+        copy.pendingSpellGraveyardTargetTriggers.addAll(this.pendingSpellGraveyardTargetTriggers);
         copy.pendingCapriciousEfreetState = this.pendingCapriciousEfreetState;
         copy.extraTurns.addAll(this.extraTurns);
         copy.pendingEachPlayerDiscardQueue.addAll(this.pendingEachPlayerDiscardQueue);

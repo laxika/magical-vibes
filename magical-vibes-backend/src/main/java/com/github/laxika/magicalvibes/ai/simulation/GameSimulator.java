@@ -191,7 +191,7 @@ public class GameSimulator {
 
         LegendRuleService legendRuleService = new LegendRuleService(playerInputService, gameQueryService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
-                gameQueryService, gameBroadcastService, playerInputService);
+                gameQueryService, gameBroadcastService, playerInputService, cardViewFactory);
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(gameQueryService);
         GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, noOpSession, gameRegistry, draftRegistry, null);

@@ -70,6 +70,11 @@ public class AutoPassService {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
         }
 
+        // Process any pending spell-cast graveyard-target triggers (e.g. Teshar, Ancestor's Apostle)
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+        }
+
         // Process any pending discard self-triggers before death triggers
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDiscardSelfTriggers.isEmpty()) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);

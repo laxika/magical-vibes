@@ -370,6 +370,7 @@ public class SpellCastTriggerCollectorService {
         boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
         boolean needsPlayerTarget = resolved.stream().anyMatch(CardEffect::canTargetPlayer);
         boolean needsPermanentTarget = resolved.stream().anyMatch(CardEffect::canTargetPermanent);
+        boolean needsGraveyardTarget = resolved.stream().anyMatch(CardEffect::canTargetGraveyard);
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
 
@@ -382,6 +383,12 @@ public class SpellCastTriggerCollectorService {
                     null,
                     trigger.manaCost(),
                     match.permanent().getId()));
+        } else if (needsGraveyardTarget) {
+            match.gameData().pendingSpellGraveyardTargetTriggers.add(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    match.permanent().getCard(), match.controllerId(), resolved
+            ));
+            log.info("Game {} - {} spell-cast graveyard-target trigger queued",
+                    match.gameData().id, match.permanent().getCard().getName());
         } else if (needsTargeting) {
             match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter()

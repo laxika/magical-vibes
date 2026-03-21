@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -10,10 +11,15 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +37,7 @@ public class TriggeredAbilityQueueService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final CardViewFactory cardViewFactory;
 
     public void processNextDeathTriggerTarget(GameData gameData) {
         while (!gameData.pendingDeathTriggerTargets.isEmpty()) {
@@ -361,6 +368,59 @@ public class TriggeredAbilityQueueService {
             String logEntry = pending.sourceCard().getName() + "'s chapter " + pending.chapterName() + " - choose target creature.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chapter {} awaiting target selection", gameData.id, pending.sourceCard().getName(), pending.chapterName());
+            return;
+        }
+    }
+
+    public void processNextSpellGraveyardTargetTrigger(GameData gameData) {
+        while (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+            PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
+                    gameData.pendingSpellGraveyardTargetTriggers.peekFirst();
+
+            // Find the graveyard-targeting effect to extract its filter
+            CardPredicate filter = null;
+            for (CardEffect effect : pending.effects()) {
+                if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+                    filter = returnEffect.filter();
+                    break;
+                }
+            }
+
+            // Collect valid graveyard targets from the controller's graveyard
+            List<UUID> validCardIds = new ArrayList<>();
+            List<CardView> cardViews = new ArrayList<>();
+            List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
+            if (graveyard != null) {
+                for (Card graveyardCard : graveyard) {
+                    if (gameQueryService.matchesCardPredicate(graveyardCard, filter, null)) {
+                        validCardIds.add(graveyardCard.getId());
+                        cardViews.add(cardViewFactory.create(graveyardCard));
+                    }
+                }
+            }
+
+            gameData.pendingSpellGraveyardTargetTriggers.removeFirst();
+
+            if (validCardIds.isEmpty()) {
+                log.info("Game {} - {} spell-cast graveyard-target trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            // Set up graveyard target operation (entryType = null → triggered ability path)
+            gameData.graveyardTargetOperation.card = pending.sourceCard();
+            gameData.graveyardTargetOperation.controllerId = pending.controllerId();
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+
+            String filterLabel = CardPredicateUtils.describeFilter(filter);
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), validCardIds, cardViews, 1,
+                    pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from your graveyard.");
+
+            String logEntry = pending.sourceCard().getName()
+                    + "'s triggered ability triggers — choose a graveyard target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} spell-cast graveyard-target trigger awaiting target selection",
+                    gameData.id, pending.sourceCard().getName());
             return;
         }
     }
