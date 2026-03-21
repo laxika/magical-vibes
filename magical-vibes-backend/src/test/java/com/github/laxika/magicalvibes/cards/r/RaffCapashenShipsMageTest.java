@@ -1,12 +1,11 @@
-package com.github.laxika.magicalvibes.cards.s;
+package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,29 +17,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class ShimmerMyrTest extends BaseCardTest {
+class RaffCapashenShipsMageTest extends BaseCardTest {
 
     // ===== Static effect registration =====
 
     @Test
-    @DisplayName("Shimmer Myr has GrantFlashToCardTypeEffect for ARTIFACT")
+    @DisplayName("Raff Capashen has GrantFlashToCardTypeEffect with CardIsHistoricPredicate")
     void hasGrantFlashStaticEffect() {
-        ShimmerMyr card = new ShimmerMyr();
+        RaffCapashenShipsMage card = new RaffCapashenShipsMage();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(GrantFlashToCardTypeEffect.class);
         GrantFlashToCardTypeEffect effect = (GrantFlashToCardTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.ARTIFACT);
+        assertThat(effect.filter()).isInstanceOf(CardIsHistoricPredicate.class);
     }
 
-    // ===== Grant flash to artifact spells =====
+    // ===== Grant flash to artifact spells (historic) =====
 
     @Test
-    @DisplayName("Can cast artifact spell during opponent's turn with Shimmer Myr on battlefield")
+    @DisplayName("Can cast artifact spell during opponent's turn with Raff on battlefield")
     void canCastArtifactDuringOpponentsTurn() {
-        harness.addToBattlefield(player1, new ShimmerMyr());
+        harness.addToBattlefield(player1, new RaffCapashenShipsMage());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -60,28 +58,32 @@ class ShimmerMyrTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Leonin Scimitar");
     }
 
+    // ===== Grant flash to legendary creature spells (historic) =====
+
     @Test
-    @DisplayName("Can cast artifact spell during combat with Shimmer Myr on battlefield")
-    void canCastArtifactDuringCombat() {
-        harness.addToBattlefield(player1, new ShimmerMyr());
+    @DisplayName("Can cast legendary creature during combat with Raff on battlefield")
+    void canCastLegendaryCreatureDuringCombat() {
+        harness.addToBattlefield(player1, new RaffCapashenShipsMage());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new LeoninScimitar()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new ReyaDawnbringer()));
+        harness.addMana(player1, ManaColor.WHITE, 9);
 
-        harness.castArtifact(player1, 0);
+        harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Leonin Scimitar");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reya Dawnbringer");
     }
 
+    // ===== Does NOT grant flash to non-historic spells =====
+
     @Test
-    @DisplayName("Cannot cast non-artifact creature at instant speed with Shimmer Myr")
-    void cannotCastNonArtifactAtInstantSpeed() {
-        harness.addToBattlefield(player1, new ShimmerMyr());
+    @DisplayName("Cannot cast non-historic creature at instant speed with Raff on battlefield")
+    void cannotCastNonHistoricCreatureAtInstantSpeed() {
+        harness.addToBattlefield(player1, new RaffCapashenShipsMage());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -94,47 +96,14 @@ class ShimmerMyrTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    @Test
-    @DisplayName("Artifact spells cannot be cast at instant speed without Shimmer Myr")
-    void cannotCastArtifactAtInstantSpeedWithoutShimmerMyr() {
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-
-        harness.setHand(player1, List.of(new LeoninScimitar()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
-    }
+    // ===== Effect goes away when Raff leaves =====
 
     @Test
-    @DisplayName("Can cast artifact creature at instant speed with Shimmer Myr")
-    void canCastArtifactCreatureAtInstantSpeed() {
-        harness.addToBattlefield(player1, new ShimmerMyr());
+    @DisplayName("Artifact spells lose flash timing when Raff leaves the battlefield")
+    void artifactLosesFlashWhenRaffLeaves() {
+        harness.addToBattlefield(player1, new RaffCapashenShipsMage());
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-
-        // Shimmer Myr itself is an artifact creature — cast a second one at instant speed
-        harness.setHand(player1, List.of(new ShimmerMyr()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
-
-        GameData gd = harness.getGameData();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shimmer Myr");
-    }
-
-    // ===== Effect goes away when Shimmer Myr leaves =====
-
-    @Test
-    @DisplayName("Artifact spells lose flash timing when Shimmer Myr leaves the battlefield")
-    void artifactLosesFlashWhenShimmerMyrLeaves() {
-        harness.addToBattlefield(player1, new ShimmerMyr());
-
-        // Remove Shimmer Myr from battlefield
+        // Remove Raff from battlefield
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -151,11 +120,27 @@ class ShimmerMyrTest extends BaseCardTest {
     // ===== Only affects controller =====
 
     @Test
-    @DisplayName("Shimmer Myr only grants flash to its controller's artifact spells")
+    @DisplayName("Raff only grants flash to its controller's historic spells")
     void onlyAffectsController() {
-        // Player2 controls Shimmer Myr, player1 should not benefit
-        harness.addToBattlefield(player2, new ShimmerMyr());
+        // Player2 controls Raff, player1 should not benefit
+        harness.addToBattlefield(player2, new RaffCapashenShipsMage());
 
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new LeoninScimitar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    // ===== Cannot cast historic without Raff =====
+
+    @Test
+    @DisplayName("Artifact spells cannot be cast at instant speed without Raff")
+    void cannotCastArtifactAtInstantSpeedWithoutRaff() {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 

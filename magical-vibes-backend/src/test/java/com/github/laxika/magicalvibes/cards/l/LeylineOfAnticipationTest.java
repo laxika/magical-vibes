@@ -52,7 +52,7 @@ class LeylineOfAnticipationTest {
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(GrantFlashToCardTypeEffect.class);
         GrantFlashToCardTypeEffect effect = (GrantFlashToCardTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.cardType()).isNull();
+        assertThat(effect.filter()).isNull();
     }
 
     @Test
