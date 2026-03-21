@@ -309,6 +309,10 @@ public class InteractionState {
         ensureGraveyardChoice().setGainLifeIfCreaturePlayerId(playerId);
     }
 
+    public void setGraveyardChoiceTrackWithSourcePermanentId(UUID permanentId) {
+        ensureGraveyardChoice().setTrackWithSourcePermanentId(permanentId);
+    }
+
     public InteractionContext.GraveyardChoice graveyardChoiceContext() {
         if (context instanceof InteractionContext.GraveyardChoice gc) return gc;
         if (graveyardChoice == null || graveyardChoice.playerId() == null) return null;

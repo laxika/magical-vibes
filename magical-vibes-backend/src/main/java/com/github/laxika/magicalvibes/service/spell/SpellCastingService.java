@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
@@ -1180,7 +1181,8 @@ public class SpellCastingService {
         }
 
         UUID permittedPlayer = gameData.exilePlayPermissions.get(exileCardId);
-        boolean hasPermission = permittedPlayer != null && permittedPlayer.equals(playerId);
+        boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
+                || hasCastFromExiledWithSourcePermission(gameData, playerId, exileCardId);
         // Permission check is deferred until after we find the card — ExileCast cards bypass it
 
         Card card = null;
@@ -1217,6 +1219,11 @@ public class SpellCastingService {
         // Remove from exile and clean up permission
         exiledCards.remove(cardIndex);
         gameData.exilePlayPermissions.remove(exileCardId);
+
+        // Also remove from permanentExiledCards if tracked there
+        for (var exiledList : gameData.permanentExiledCards.values()) {
+            exiledList.removeIf(c -> c.getId().equals(exileCardId));
+        }
 
         if (card.hasType(CardType.LAND)) {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
@@ -1265,6 +1272,24 @@ public class SpellCastingService {
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
+            if (hasEffect) {
+                List<Card> exiledWithPerm = gameData.permanentExiledCards.get(perm.getId());
+                if (exiledWithPerm != null) {
+                    for (Card c : exiledWithPerm) {
+                        if (c.getId().equals(cardId)) return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {

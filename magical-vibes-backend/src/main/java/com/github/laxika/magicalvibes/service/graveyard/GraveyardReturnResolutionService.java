@@ -789,10 +789,10 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        if (effect.requiredType() != null && !targetCard.hasType(effect.requiredType())) {
+        if (effect.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, effect.filter(), null)) {
+            String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
             gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " fizzles (target is no longer a valid "
-                            + effect.requiredType().name().toLowerCase() + " card).");
+                    entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ").");
             return;
         }
 

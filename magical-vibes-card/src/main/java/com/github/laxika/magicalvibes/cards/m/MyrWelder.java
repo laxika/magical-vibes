@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class MyrWelder extends Card {
         // Imprint — {T}: Exile target artifact card from a graveyard.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(CardType.ARTIFACT)),
+                List.of(new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(new CardTypePredicate(CardType.ARTIFACT))),
                 "{T}: Exile target artifact card from a graveyard."
         ));
 

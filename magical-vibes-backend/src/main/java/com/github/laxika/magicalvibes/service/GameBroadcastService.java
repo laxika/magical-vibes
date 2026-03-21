@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsE
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
@@ -596,6 +597,9 @@ public class GameBroadcastService {
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
 
+        // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
+        Set<UUID> castableFromExileWithSource = getCastableExiledCardIds(gameData, playerId);
+
         List<Card> exiledCards = gameData.playerExiledCards.get(playerId);
         if (exiledCards == null) {
             return playable;
@@ -605,7 +609,8 @@ public class GameBroadcastService {
 
         for (Card card : exiledCards) {
             UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
-            boolean hasPermission = permittedPlayer != null && permittedPlayer.equals(playerId);
+            boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
+                    || castableFromExileWithSource.contains(card.getId());
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
             if (!hasPermission && !hasExileCast) {
                 continue;
@@ -754,6 +759,29 @@ public class GameBroadcastService {
             }
         }
         return castableTypes;
+    }
+
+    /**
+     * Returns the set of exiled card IDs that the player can cast via
+     * {@link AllowCastFromCardsExiledWithSourceEffect} on their permanents.
+     */
+    private Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
+        Set<UUID> castableIds = new HashSet<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return castableIds;
+        for (Permanent perm : battlefield) {
+            boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
+            if (hasEffect) {
+                List<Card> exiledWithPerm = gameData.permanentExiledCards.get(perm.getId());
+                if (exiledWithPerm != null) {
+                    for (Card c : exiledWithPerm) {
+                        castableIds.add(c.getId());
+                    }
+                }
+            }
+        }
+        return castableIds;
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {

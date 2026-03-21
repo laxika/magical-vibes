@@ -21,7 +21,7 @@ public class PrecognitionField extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new ExileTopCardOfOwnLibraryEffect()),
+                List.of(new ExileTopCardOfOwnLibraryEffect(false)),
                 "{3}: Exile the top card of your library."
         ));
     }

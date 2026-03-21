@@ -923,9 +923,12 @@ public class ExileResolutionService {
     /**
      * Exiles the top card of the controller's library.
      * Used by Precognition Field's "{3}: Exile the top card of your library."
+     * When {@code trackWithSource} is true, also tracks the exiled card in
+     * {@code permanentExiledCards} under the source permanent (e.g. Rona, Disciple of Gix).
      */
     @HandlesEffect(ExileTopCardOfOwnLibraryEffect.class)
-    void resolveExileTopCardOfOwnLibrary(GameData gameData, StackEntry entry) {
+    void resolveExileTopCardOfOwnLibrary(GameData gameData, StackEntry entry,
+                                         ExileTopCardOfOwnLibraryEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -938,6 +941,15 @@ public class ExileResolutionService {
 
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard);
+
+        if (effect.trackWithSource()) {
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (sourcePermanentId != null) {
+                gameData.permanentExiledCards
+                        .computeIfAbsent(sourcePermanentId, k -> Collections.synchronizedList(new ArrayList<>()))
+                        .add(topCard);
+            }
+        }
 
         String logEntry = controllerName + " exiles " + topCard.getName() + " from the top of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

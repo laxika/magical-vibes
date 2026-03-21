@@ -54,6 +54,8 @@ public class GraveyardChoiceHandlerService {
     private final LifeResolutionService lifeResolutionService;
     private final ExileService exileService;
     private final GraveyardReturnResolutionService graveyardReturnResolutionService;
+    private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
@@ -77,11 +79,18 @@ public class GraveyardChoiceHandlerService {
         int exileRemainingCount = gameData.interaction.graveyardChoice().exileRemainingCount();
         int gainLifeIfCreatureAmount = gameData.interaction.graveyardChoice().gainLifeIfCreatureAmount();
         UUID gainLifeIfCreaturePlayerId = gameData.interaction.graveyardChoice().gainLifeIfCreaturePlayerId();
+        UUID trackWithSourcePermanentId = gameData.interaction.graveyardChoice().trackWithSourcePermanentId();
+        // May ability graveyard targeting context (read before clearing)
+        Card mayAbilitySourceCard = gameData.interaction.graveyardChoice().mayAbilitySourceCard();
+        UUID mayAbilityControllerId = gameData.interaction.graveyardChoice().mayAbilityControllerId();
+        java.util.List<CardEffect> mayAbilityEffects = gameData.interaction.graveyardChoice().mayAbilityEffects();
+        UUID mayAbilitySourcePermanentId = gameData.interaction.graveyardChoice().mayAbilitySourcePermanentId();
         gameData.interaction.clearGraveyardChoice();
 
         if (cardIndex == -1) {
-            if (destination == GraveyardChoiceDestination.EXILE) {
-                throw new IllegalStateException("Cannot decline forced graveyard exile");
+            if (destination == GraveyardChoiceDestination.EXILE
+                    || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET) {
+                throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
             // Player declined — if this is part of a "each player returns" flow, skip remaining
             // picks for this player by removing queued entries for the same player from the front
@@ -161,6 +170,13 @@ public class GraveyardChoiceHandlerService {
                 case EXILE -> {
                     exileService.exileCard(gameData, playerId, card);
 
+                    // Track with source permanent if specified (e.g. Rona, Disciple of Gix)
+                    if (trackWithSourcePermanentId != null) {
+                        gameData.permanentExiledCards
+                                .computeIfAbsent(trackWithSourcePermanentId, k -> java.util.Collections.synchronizedList(new ArrayList<>()))
+                                .add(card);
+                    }
+
                     String logEntry = player.getUsername() + " exiles " + card.getName() + " from their graveyard.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} exiles {} from graveyard", gameData.id, player.getUsername(), card.getName());
@@ -184,6 +200,37 @@ public class GraveyardChoiceHandlerService {
                             return;
                         }
                     }
+                }
+                case MAY_ABILITY_TARGET -> {
+                    String logEntry = player.getUsername() + " targets " + card.getName() + " in graveyard with "
+                            + mayAbilitySourceCard.getName() + "'s ability.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
+                            player.getUsername(), card.getName());
+
+                    // Resolution-time flow: set target on pending entry and resume resolution
+                    if (gameData.resolvedMayTargetingEntry != null) {
+                        StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
+                        gameData.resolvedMayTargetingEntry = null;
+                        pendingEntry.setTargetId(card.getId());
+                        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
+                        if (!gameData.interaction.isAwaitingInput()) {
+                            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                        }
+                        return;
+                    }
+
+                    // Non-stack flow: create a new stack entry
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            mayAbilitySourceCard,
+                            mayAbilityControllerId,
+                            mayAbilitySourceCard.getName() + "'s ability",
+                            new ArrayList<>(mayAbilityEffects),
+                            card.getId(),
+                            mayAbilitySourcePermanentId
+                    );
+                    gameData.stack.add(entry);
                 }
             }
         }

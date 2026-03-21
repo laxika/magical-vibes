@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,6 +25,12 @@ public class GraveyardChoiceState {
     private int exileRemainingCount;
     private int gainLifeIfCreatureAmount;
     private UUID gainLifeIfCreaturePlayerId;
+    private UUID trackWithSourcePermanentId;
+    // May ability graveyard targeting context
+    private Card mayAbilitySourceCard;
+    private UUID mayAbilityControllerId;
+    private List<CardEffect> mayAbilityEffects;
+    private UUID mayAbilitySourcePermanentId;
 
     public GraveyardChoiceState() {
     }
@@ -116,6 +123,37 @@ public class GraveyardChoiceState {
         this.gainLifeIfCreaturePlayerId = gainLifeIfCreaturePlayerId;
     }
 
+    public UUID trackWithSourcePermanentId() {
+        return trackWithSourcePermanentId;
+    }
+
+    public void setTrackWithSourcePermanentId(UUID trackWithSourcePermanentId) {
+        this.trackWithSourcePermanentId = trackWithSourcePermanentId;
+    }
+
+    public Card mayAbilitySourceCard() {
+        return mayAbilitySourceCard;
+    }
+
+    public UUID mayAbilityControllerId() {
+        return mayAbilityControllerId;
+    }
+
+    public List<CardEffect> mayAbilityEffects() {
+        return mayAbilityEffects;
+    }
+
+    public UUID mayAbilitySourcePermanentId() {
+        return mayAbilitySourcePermanentId;
+    }
+
+    public void setMayAbilityContext(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
+        this.mayAbilitySourceCard = sourceCard;
+        this.mayAbilityControllerId = controllerId;
+        this.mayAbilityEffects = effects;
+        this.mayAbilitySourcePermanentId = sourcePermanentId;
+    }
+
     public GraveyardChoiceState deepCopy() {
         GraveyardChoiceState copy = new GraveyardChoiceState(
                 playerId,
@@ -130,6 +168,11 @@ public class GraveyardChoiceState {
         copy.exileRemainingCount = this.exileRemainingCount;
         copy.gainLifeIfCreatureAmount = this.gainLifeIfCreatureAmount;
         copy.gainLifeIfCreaturePlayerId = this.gainLifeIfCreaturePlayerId;
+        copy.trackWithSourcePermanentId = this.trackWithSourcePermanentId;
+        copy.mayAbilitySourceCard = this.mayAbilitySourceCard;
+        copy.mayAbilityControllerId = this.mayAbilityControllerId;
+        copy.mayAbilityEffects = this.mayAbilityEffects != null ? new ArrayList<>(this.mayAbilityEffects) : null;
+        copy.mayAbilitySourcePermanentId = this.mayAbilitySourcePermanentId;
         return copy;
     }
 }

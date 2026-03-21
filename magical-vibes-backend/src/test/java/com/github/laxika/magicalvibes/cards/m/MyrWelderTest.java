@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,8 @@ class MyrWelderTest extends BaseCardTest {
 
         ExileTargetCardFromGraveyardAndImprintOnSourceEffect effect =
                 (ExileTargetCardFromGraveyardAndImprintOnSourceEffect) ability.getEffects().getFirst();
-        assertThat(effect.requiredType()).isEqualTo(CardType.ARTIFACT);
+        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
+        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.ARTIFACT);
     }
 
     @Test

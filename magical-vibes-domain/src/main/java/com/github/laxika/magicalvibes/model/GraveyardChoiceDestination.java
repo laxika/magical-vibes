@@ -5,5 +5,6 @@ public enum GraveyardChoiceDestination {
     BATTLEFIELD,
     HAND,
     TOP_OF_OWNERS_LIBRARY,
-    EXILE
+    EXILE,
+    MAY_ABILITY_TARGET
 }

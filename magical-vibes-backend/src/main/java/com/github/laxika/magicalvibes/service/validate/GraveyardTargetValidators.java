@@ -81,8 +81,9 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.requiredType() != null && !graveyardCard.hasType(effect.requiredType())) {
-            throw new IllegalStateException("Target must be a " + effect.requiredType().name().toLowerCase() + " card");
+        if (effect.filter() != null && !gameQueryService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+            String label = CardPredicateUtils.describeFilter(effect.filter());
+            throw new IllegalStateException("Target must be a " + label);
         }
     }
 
