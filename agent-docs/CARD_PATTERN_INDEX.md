@@ -28,6 +28,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Burn + drain by land count | `c/Corrupt.java` | DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect — damage and life gain equal to controlled Swamps |
 | X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |
 | Multi-target damage | `c/ConeOfFlame.java` | DealOrderedDamageToAnyTargetsEffect |
+| Mixed target groups (mandatory + optional) | `s/SeismicShift.java` | Two separate `target()` calls with different filters and counts: `target(LandFilter)` (1,1) + `target(CreatureFilter, 0, 2)`. Destroy land + up to 2 creatures can't block. Also see `i/IntoTheMawOfHell.java` for two mandatory groups |
 | Any number of target players life gain | `h/HuntersFeast.java` | EachTargetPlayerGainsLifeEffect(6) + setMinTargets(0) + setMaxTargets(99) — any number of target players each gain N life |
 | X burn divided evenly | `f/Fireball.java` | DealXDamageDividedEvenlyAmongTargetsEffect + setMinTargets(1) + setMaxTargets(99) + setAdditionalCostPerExtraTarget(1) — X divided evenly (rounded down) among any number of targets, costs {1} extra per target beyond first |
 | Divided damage to filtered creatures | `i/IgniteDisorder.java` | DealDividedDamageAmongTargetCreaturesEffect(3) + setMinTargets(1) + setMaxTargets(3) + PermanentPredicateTargetFilter(PermanentAllOfPredicate(IsCreature + ColorIn)) — N damage divided as you choose among up to M target creatures matching a color/type filter |

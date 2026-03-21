@@ -141,9 +141,18 @@ public class Card {
 
     /**
      * Returns per-position target filters for multi-target spells.
+     * Each target group's filter is repeated for its maxTargets count,
+     * so that position-based validation matches the correct filter
+     * when a group allows multiple targets (e.g. "up to 2 target creatures").
      */
     public List<TargetFilter> getMultiTargetFilters() {
-        return spellTargets.stream().map(SpellTarget::getFilter).toList();
+        List<TargetFilter> expanded = new ArrayList<>();
+        for (SpellTarget st : spellTargets) {
+            for (int i = 0; i < st.getMaxTargets(); i++) {
+                expanded.add(st.getFilter());
+            }
+        }
+        return expanded;
     }
 
     /**
