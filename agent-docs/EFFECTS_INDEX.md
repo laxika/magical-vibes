@@ -837,7 +837,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `TapTargetPermanentEffect` | `()` | tap target permanent |
 | `TapOrUntapTargetPermanentEffect` | `()` | tap or untap target permanent |
-| `UntapTargetPermanentEffect` | `()` | untap target permanent |
+| `UntapTargetPermanentEffect` | `(PermanentPredicate targetPredicate)` | untap target permanent; optional predicate restricts valid targets (e.g. `PermanentIsArtifactPredicate`). No-arg ctor defaults to null (any permanent). |
 | `UntapAllTargetPermanentsEffect` | `()` | untap all target permanents (multi-target variant, iterates over `getTargetIds()`) |
 | `TapSelfEffect` | `()` | tap this permanent as an effect (not cost); can be activated even when already tapped |
 | `UntapSelfEffect` | `()` | untap this permanent |

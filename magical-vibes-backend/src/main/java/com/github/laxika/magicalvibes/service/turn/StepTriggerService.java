@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyard
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -1092,6 +1093,10 @@ public class StepTriggerService {
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
+                        // Targeting triggered ability — queue for target selection
+                        gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                                perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -1111,7 +1116,7 @@ public class StepTriggerService {
             }
         }
 
-        // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid)
+        // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid, Voltaic Servant)
         if (!gameData.pendingEndStepTriggerTargets.isEmpty()) {
             processNextEndStepTriggerTarget(gameData);
             return;
@@ -1155,13 +1160,25 @@ public class StepTriggerService {
             validTargets.addAll(gameData.orderedPlayerIds);
         }
         if (canTargetPermanents) {
+            // Extract target predicate from effects (e.g. UntapTargetPermanentEffect with artifact restriction)
+            PermanentPredicate effectPredicate = trigger.effects().stream()
+                    .map(e -> e instanceof ConditionalEffect ce ? ce.wrapped() : e)
+                    .filter(e -> e.canTargetPermanent() && e.targetPredicate() != null)
+                    .map(CardEffect::targetPredicate)
+                    .findFirst().orElse(null);
+            FilterContext effectFilterCtx = effectPredicate != null
+                    ? new FilterContext(gameData, trigger.sourceCard().getId(), trigger.controllerId(), null)
+                    : null;
+
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (!gameQueryService.isCreature(gameData, p)) continue;
                     if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
                         if (!gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
+                    }
+                    if (effectPredicate != null) {
+                        if (!gameQueryService.matchesPermanentPredicate(p, effectPredicate, effectFilterCtx)) continue;
                     }
                     validTargets.add(p.getId());
                 }
@@ -1188,7 +1205,7 @@ public class StepTriggerService {
         } else if (canTargetPlayers) {
             targetDescription = "target player";
         } else {
-            targetDescription = "target creature";
+            targetDescription = "target permanent";
         }
 
         playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
