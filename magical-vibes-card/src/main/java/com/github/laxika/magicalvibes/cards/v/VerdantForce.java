@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "307")
+@CardRegistration(set = "DOM", collectorNumber = "187")
 public class VerdantForce extends Card {
 
     public VerdantForce() {
