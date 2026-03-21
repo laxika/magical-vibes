@@ -59,6 +59,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -965,16 +966,22 @@ public class SpellCastingService {
     // --- Play with flashback from graveyard ---
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId) {
-        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, List.of(), null);
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, List.of(), null, null);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetIds) {
-        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds, null);
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds, null, null);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds, exileGraveyardCardIndices, null);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
@@ -999,10 +1006,12 @@ public class SpellCastingService {
 
         // Check if this card is castable via a Muldrotha-style static graveyard permanent cast effect
         boolean isGrantedGraveyardCast = false;
+        Optional<UUID> graveyardCastSourceId = Optional.empty();
         if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast) {
-            if (gameBroadcastService.canCastPermanentSpellsFromGraveyard(gameData, playerId)) {
+            graveyardCastSourceId = gameBroadcastService.findGraveyardCastSourcePermanentId(gameData, playerId);
+            if (graveyardCastSourceId.isPresent()) {
                 Set<CardType> typesCastFromGraveyard = gameData.permanentTypesCastFromGraveyardThisTurn
-                        .getOrDefault(playerId, Set.of());
+                        .getOrDefault(graveyardCastSourceId.get(), Set.of());
                 isGrantedGraveyardCast = GameBroadcastService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
         }
@@ -1046,19 +1055,28 @@ public class SpellCastingService {
 
         if (isGraveyardCast || isGrantedGraveyardCast) {
             // GraveyardCast / granted graveyard cast: permanent spell — enters battlefield on resolution, no exile
-            if (isGrantedGraveyardCast) {
-                // Track which permanent type slot was used (pick the first available type)
+            if (isGrantedGraveyardCast && graveyardCastSourceId.isPresent()) {
+                // Track which permanent type slot was used, keyed by the granting permanent's UUID
                 Set<CardType> typesCastFromGraveyard = gameData.permanentTypesCastFromGraveyardThisTurn
-                        .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
-                // Check primary type first, then additional types
-                CardType primary = card.getType();
-                if (primary.isPermanentType() && primary != CardType.LAND && !typesCastFromGraveyard.contains(primary)) {
-                    typesCastFromGraveyard.add(primary);
+                        .computeIfAbsent(graveyardCastSourceId.get(), k -> ConcurrentHashMap.newKeySet());
+                if (chosenGraveyardType != null) {
+                    // Player chose which type slot to use (for multi-type cards)
+                    if (!card.hasType(chosenGraveyardType) || !chosenGraveyardType.isPermanentType()
+                            || chosenGraveyardType == CardType.LAND || typesCastFromGraveyard.contains(chosenGraveyardType)) {
+                        throw new IllegalStateException("Invalid chosen graveyard type: " + chosenGraveyardType);
+                    }
+                    typesCastFromGraveyard.add(chosenGraveyardType);
                 } else {
-                    card.getAdditionalTypes().stream()
-                            .filter(t -> t.isPermanentType() && t != CardType.LAND && !typesCastFromGraveyard.contains(t))
-                            .findFirst()
-                            .ifPresent(typesCastFromGraveyard::add);
+                    // Auto-pick the first available type (for single-type cards or when no choice provided)
+                    CardType primary = card.getType();
+                    if (primary.isPermanentType() && primary != CardType.LAND && !typesCastFromGraveyard.contains(primary)) {
+                        typesCastFromGraveyard.add(primary);
+                    } else {
+                        card.getAdditionalTypes().stream()
+                                .filter(t -> t.isPermanentType() && t != CardType.LAND && !typesCastFromGraveyard.contains(t))
+                                .findFirst()
+                                .ifPresent(typesCastFromGraveyard::add);
+                    }
                 }
             }
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());

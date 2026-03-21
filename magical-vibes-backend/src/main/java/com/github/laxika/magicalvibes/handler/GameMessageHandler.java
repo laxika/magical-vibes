@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.handler;
 
 import com.github.laxika.magicalvibes.model.AiDifficulty;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
@@ -354,9 +355,11 @@ public class GameMessageHandler implements MessageHandler {
             if (Boolean.TRUE.equals(request.fromLibraryTop())) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
             } else if (Boolean.TRUE.equals(request.flashback())) {
+                CardType chosenGraveyardType = request.chosenGraveyardType() != null
+                        ? CardType.valueOf(request.chosenGraveyardType()) : null;
                 gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                         request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.exileGraveyardCardIndices());
+                        request.exileGraveyardCardIndices(), chosenGraveyardType);
             } else if (request.fromExileCardId() != null) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
             } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {

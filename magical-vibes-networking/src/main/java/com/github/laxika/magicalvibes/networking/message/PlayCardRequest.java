@@ -9,5 +9,5 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                               UUID sacrificePermanentId, Integer phyrexianLifeCount, UUID fromExileCardId,
                               List<UUID> alternateCostSacrificePermanentIds, Boolean flashback,
                               Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
-                              Boolean kicked, Boolean fromLibraryTop) {
+                              Boolean kicked, Boolean fromLibraryTop, String chosenGraveyardType) {
 }

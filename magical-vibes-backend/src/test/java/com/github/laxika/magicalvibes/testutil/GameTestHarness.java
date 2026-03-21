@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.handler.GameMessageHandler;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -496,6 +497,11 @@ public class GameTestHarness {
     public void castFromGraveyard(Player player, int graveyardCardIndex) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null);
+    }
+
+    public void castFromGraveyard(Player player, int graveyardCardIndex, CardType chosenGraveyardType) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), null, chosenGraveyardType);
     }
 
     public void castFromGraveyard(Player player, int graveyardCardIndex, List<Integer> exileGraveyardCardIndices) {

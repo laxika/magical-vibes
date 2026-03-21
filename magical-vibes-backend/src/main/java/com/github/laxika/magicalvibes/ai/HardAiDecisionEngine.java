@@ -154,7 +154,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
                 final UUID finalSacrificePermanentId = sacrificePermanentId;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null, null, null)));
                 // Verify the spell was actually cast — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 if (hand.size() >= handSizeBefore) {
@@ -259,7 +259,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
         final UUID finalSacrificePermanentId = sacrificePermanentId;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {

@@ -497,9 +497,10 @@ public class GameBroadcastService {
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
-        boolean hasGraveyardPermanentCast = canCastPermanentSpellsFromGraveyard(gameData, playerId);
-        Set<CardType> typesCastFromGraveyard = gameData.permanentTypesCastFromGraveyardThisTurn
-                .getOrDefault(playerId, Set.of());
+        Optional<UUID> graveyardCastSourceId = findGraveyardCastSourcePermanentId(gameData, playerId);
+        Set<CardType> typesCastFromGraveyard = graveyardCastSourceId
+                .map(id -> gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(id, Set.of()))
+                .orElse(Set.of());
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
@@ -517,7 +518,7 @@ public class GameBroadcastService {
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
             if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && graveyardCast.isEmpty()
-                    && hasGraveyardPermanentCast) {
+                    && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
                 isGrantedGraveyardCast = hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
@@ -847,17 +848,22 @@ public class GameBroadcastService {
         return false;
     }
 
-    public boolean canCastPermanentSpellsFromGraveyard(GameData gameData, UUID playerId) {
+    /**
+     * Returns the permanent ID of the first permanent the player controls that has
+     * CastPermanentSpellsFromGraveyardEffect, or empty if none.
+     * The returned UUID is used to key per-instance graveyard cast tracking.
+     */
+    public Optional<UUID> findGraveyardCastSourcePermanentId(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
+        if (battlefield == null) return Optional.empty();
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CastPermanentSpellsFromGraveyardEffect) {
-                    return true;
+                    return Optional.of(perm.getId());
                 }
             }
         }
-        return false;
+        return Optional.empty();
     }
 
     /**

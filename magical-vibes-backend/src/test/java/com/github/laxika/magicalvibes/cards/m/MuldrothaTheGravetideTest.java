@@ -237,14 +237,39 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Multi-type cards (artifact creature) =====
+    // ===== Multi-type cards with type choice =====
 
     @Test
-    @DisplayName("Artifact creature uses one type slot — the other type remains available")
-    void artifactCreatureUsesOneSlot() {
+    @DisplayName("Player can choose CREATURE type for artifact creature, leaving ARTIFACT slot open")
+    void chooseCreatureTypeForArtifactCreature() {
         harness.addToBattlefield(player1, new MuldrothaTheGravetide());
-        // StoneGolem is an Artifact Creature — type parser assigns ARTIFACT as primary, CREATURE as additional.
-        // Casting it consumes the ARTIFACT slot, leaving the CREATURE slot available.
+        // StoneGolem is an Artifact Creature — player chooses CREATURE, so ARTIFACT slot stays open
+        harness.setGraveyard(player1, List.of(new StoneGolem(), new DarksteelRelic()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        // Cast Stone Golem choosing CREATURE slot
+        harness.castFromGraveyard(player1, 0, CardType.CREATURE);
+        harness.passBothPriorities();
+
+        // DarksteelRelic is a pure artifact — ARTIFACT slot is still available
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Stone Golem"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Darksteel Relic"));
+    }
+
+    @Test
+    @DisplayName("Player can choose ARTIFACT type for artifact creature, leaving CREATURE slot open")
+    void chooseArtifactTypeForArtifactCreature() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
         harness.setGraveyard(player1, List.of(new StoneGolem(), new GrizzlyBears()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 7);
@@ -253,11 +278,11 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        // Cast Stone Golem (artifact creature) — uses ARTIFACT slot (primary type)
-        harness.castFromGraveyard(player1, 0);
+        // Cast Stone Golem choosing ARTIFACT slot
+        harness.castFromGraveyard(player1, 0, CardType.ARTIFACT);
         harness.passBothPriorities();
 
-        // GrizzlyBears is a pure creature — CREATURE slot should still be available
+        // GrizzlyBears is a pure creature — CREATURE slot is still available
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
@@ -268,10 +293,9 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Artifact creature consumes artifact slot — cannot cast another artifact")
-    void artifactCreatureConsumesArtifactSlot() {
+    @DisplayName("Choosing ARTIFACT for artifact creature blocks casting another artifact")
+    void chooseArtifactBlocksArtifactSlot() {
         harness.addToBattlefield(player1, new MuldrothaTheGravetide());
-        // StoneGolem consumes ARTIFACT slot, so DarksteelRelic should not be castable
         harness.setGraveyard(player1, List.of(new StoneGolem(), new DarksteelRelic()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.WHITE, 5);
@@ -280,12 +304,67 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
+        // Cast Stone Golem choosing ARTIFACT slot
+        harness.castFromGraveyard(player1, 0, CardType.ARTIFACT);
+        harness.passBothPriorities();
+
+        // DarksteelRelic (pure artifact) — ARTIFACT slot is used
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose an invalid type for the card")
+    void cannotChooseInvalidType() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        // GrizzlyBears is only a creature — choosing ARTIFACT should fail
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, CardType.ARTIFACT))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    // ===== New Muldrotha instance resets tracking =====
+
+    @Test
+    @DisplayName("New Muldrotha entering resets graveyard cast type tracking")
+    void newMuldrothaResetsTracking() {
+        MuldrothaTheGravetide muldrothaA = new MuldrothaTheGravetide();
+        harness.addToBattlefield(player1, muldrothaA);
+        GrizzlyBears bears1 = new GrizzlyBears();
+        GrizzlyBears bears2 = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears1, bears2));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        // Cast first creature using Muldrotha A
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        // DarksteelRelic is a pure artifact — ARTIFACT slot is already used
-        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
-                .isInstanceOf(IllegalStateException.class);
+        // Remove Muldrotha A (it dies)
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(p -> p.getCard().getName().equals("Muldrotha, the Gravetide"));
+
+        // New Muldrotha B enters — fresh tracking
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        // Second creature should now be castable (new Muldrotha, fresh slots)
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     // ===== Cannot cast non-permanents from graveyard =====

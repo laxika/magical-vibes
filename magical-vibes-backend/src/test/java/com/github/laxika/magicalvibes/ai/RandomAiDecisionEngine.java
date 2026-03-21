@@ -216,7 +216,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final UUID finalSacrificePermanentId = sacrificePermanentId;
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             send(() -> messageHandler.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, null, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, null, null, null, null)));
 
             if (hand.size() >= handSizeBefore) {
                 log.warn("Random AI: PlayCard failed silently in game {}", gameId);
