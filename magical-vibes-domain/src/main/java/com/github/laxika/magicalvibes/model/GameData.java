@@ -72,6 +72,12 @@ public class GameData {
     public final Map<UUID, List<Card>> playerExiledCards = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
+    /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
+    public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks the controller ID during a pending Karn Scion +1 opponent reveal choice. */
+    public UUID pendingKarnScionControllerId;
+    /** Tracks whether a LIBRARY_REVEAL_CHOICE is for Karn Scion -1 (return from exile). */
+    public boolean pendingKarnScionReturnFromExile;
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
@@ -523,6 +529,9 @@ public class GameData {
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.playerExiledCards.forEach((k, v) -> copy.playerExiledCards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
+        copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
+        copy.pendingKarnScionControllerId = this.pendingKarnScionControllerId;
+        copy.pendingKarnScionReturnFromExile = this.pendingKarnScionReturnFromExile;
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) ->

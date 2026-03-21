@@ -630,6 +630,7 @@ public class AbilityActivationService {
                 case STUDY -> permanent.getStudyCounters();
                 case WISH -> permanent.getWishCounters();
                 case LORE -> permanent.getLoreCounters();
+                case SILVER -> 0; // Silver counters are on exiled cards, not permanents
                 case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
             };
             if (available < required) {

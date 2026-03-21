@@ -865,6 +865,18 @@ public class LibraryChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearLibraryRevealChoice();
 
+        // Karn, Scion of Urza +1: opponent chose which card goes to controller's hand
+        if (gameData.pendingKarnScionControllerId != null) {
+            handleKarnScionRevealChoice(gameData, allRevealedCards, cardIds);
+            return;
+        }
+
+        // Karn, Scion of Urza -1: controller chose which silver-counter card to return
+        if (gameData.pendingKarnScionReturnFromExile) {
+            handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
+            return;
+        }
+
         // Separate selected cards from the rest
         Set<UUID> selectedIds = new HashSet<>(cardIds);
         List<Card> selectedCards = new ArrayList<>();
@@ -1008,6 +1020,75 @@ public class LibraryChoiceHandlerService {
         }
 
         log.info("Game {} - {} reveals {} creature cards to hand", gameData.id, playerName, selectedCards.size());
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleKarnScionRevealChoice(GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds) {
+        UUID controllerId = gameData.pendingKarnScionControllerId;
+        gameData.pendingKarnScionControllerId = null;
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // The opponent selected one card — that card goes to the controller's hand,
+        // the other is exiled with a silver counter. Only use the first selection.
+        UUID chosenId = selectedCardIds.isEmpty() ? null : selectedCardIds.getFirst();
+        Card toHand = null;
+        Card toExile = null;
+        for (Card card : allRevealedCards) {
+            if (toHand == null && card.getId().equals(chosenId)) {
+                toHand = card;
+            } else {
+                toExile = card;
+            }
+        }
+
+        if (toHand != null) {
+            gameData.addCardToHand(controllerId, toHand);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " puts " + toHand.getName() + " into their hand.");
+        }
+
+        if (toExile != null) {
+            exileService.exileCard(gameData, controllerId, toExile);
+            gameData.exiledCardsWithSilverCounters.add(toExile.getId());
+            gameBroadcastService.logAndBroadcast(gameData,
+                    toExile.getName() + " is exiled with a silver counter.");
+        }
+
+        log.info("Game {} - Karn Scion +1 resolved: {} to hand, {} exiled with silver counter",
+                gameData.id,
+                toHand != null ? toHand.getName() : "none",
+                toExile != null ? toExile.getName() : "none");
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleKarnScionReturnFromExile(GameData gameData, List<Card> allRevealedCards,
+                                                 List<UUID> selectedCardIds, UUID controllerId) {
+        gameData.pendingKarnScionReturnFromExile = false;
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // Find the selected card and return it to hand
+        Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
+        for (Card card : allRevealedCards) {
+            if (selectedIds.contains(card.getId())) {
+                // Remove from exile zone
+                List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
+                if (exiledCards != null) {
+                    exiledCards.removeIf(c -> c.getId().equals(card.getId()));
+                }
+                gameData.exiledCardsWithSilverCounters.remove(card.getId());
+                gameData.addCardToHand(controllerId, card);
+
+                gameBroadcastService.logAndBroadcast(gameData,
+                        controllerName + " returns " + card.getName() + " from exile to their hand.");
+                log.info("Game {} - {} returns {} from exile (silver counter) to hand",
+                        gameData.id, controllerName, card.getName());
+                break;
+            }
+        }
+
         turnProgressionService.resolveAutoPass(gameData);
     }
 

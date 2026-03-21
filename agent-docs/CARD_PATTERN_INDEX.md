@@ -467,6 +467,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Planeswalker with discard/sacrifice/pile separation | `l/LilianaOfTheVeil.java` | +1 EachPlayerDiscardsEffect, -2 SacrificeCreatureEffect (targets player), -6 SeparatePermanentsIntoPilesAndSacrificeEffect |
+| Planeswalker with opponent reveal choice + silver counter exile + artifact-scaling token | `k/KarnScionOfUrza.java` | +1 KarnScionRevealTwoOpponentChoosesEffect, -1 KarnScionReturnSilverCounterCardEffect, -2 CreateCreatureTokenEffect with STATIC BoostSelfPerControlledPermanentEffect(1,1,PermanentIsArtifactPredicate) via tokenEffects map |
 | Variable loyalty (-X) | `c/ChandraNalaar.java` | `ActivatedAbility.variableLoyaltyAbility(effects, desc, filter)` — loyalty cost is -X chosen by player, X stored in xValue |
 | Loyalty + mana + player damage | `c/ChandraBoldPyromancer.java` | +1 with AwardManaEffect + DealDamageToTargetPlayerEffect, -3 DealDamageToTargetCreatureOrPlaneswalkerEffect, -7 DealDamageToTargetPlayerEffect + DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect |
 | Multi-target tap ability (equip mover) | `b/BrassSquire.java` | `ActivatedAbility(true, null, effects, desc, multiTargetFilters, 2, 2)` — tap to attach Equipment to creature, instant speed, uses `AttachTargetEquipmentToTargetCreatureEffect` |

@@ -284,7 +284,7 @@ public class GameSimulator {
                 permanentControlResolutionService,
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
-                new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, permanentRemovalService, legendRuleService),
+                new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, permanentRemovalService, legendRuleService, exileService),
                 new WinConditionResolutionService(gameOutcomeService, gameBroadcastService, gameQueryService)
         );
         for (Object service : effectServices) {

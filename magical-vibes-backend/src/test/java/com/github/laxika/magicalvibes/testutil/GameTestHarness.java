@@ -287,7 +287,7 @@ public class GameTestHarness {
                 permanentControlResolutionService,
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
-                new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, permanentRemovalService, legendRuleService),
+                new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, permanentRemovalService, legendRuleService, exileService),
                 new WinConditionResolutionService(gameOutcomeService, gameBroadcastService, gameQueryService)
         );
         for (Object service : effectServices) {

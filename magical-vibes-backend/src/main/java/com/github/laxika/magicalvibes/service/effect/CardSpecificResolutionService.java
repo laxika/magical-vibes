@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
+import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
+import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
 import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
@@ -42,6 +44,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -72,6 +75,7 @@ public class CardSpecificResolutionService {
     private final CardViewFactory cardViewFactory;
     private final PermanentRemovalService permanentRemovalService;
     private final LegendRuleService legendRuleService;
+    private final ExileService exileService;
 
     @HandlesEffect(WarpWorldEffect.class)
     void resolveWarpWorld(GameData gameData, StackEntry entry) {
@@ -1021,6 +1025,101 @@ public class CardSpecificResolutionService {
 
         gameBroadcastService.logAndBroadcast(gameData, "Mulligan phase — decide to keep or mulligan.");
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    @HandlesEffect(KarnScionRevealTwoOpponentChoosesEffect.class)
+    void resolveKarnScionRevealTwo(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (deck.size() < 2) {
+            // If fewer than 2 cards, reveal what's available
+            if (deck.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        controllerName + "'s library is empty — nothing to reveal.");
+                log.info("Game {} - {} has no cards to reveal for Karn Scion +1", gameData.id, controllerName);
+                return;
+            }
+            // Only 1 card: it goes to hand (no opponent choice needed), nothing to exile
+            Card onlyCard = deck.removeFirst();
+            gameData.addCardToHand(controllerId, onlyCard);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " reveals " + onlyCard.getName() + " and puts it into their hand.");
+            log.info("Game {} - {} reveals single card {} for Karn Scion +1", gameData.id, controllerName, onlyCard.getName());
+            return;
+        }
+
+        Card card1 = deck.removeFirst();
+        Card card2 = deck.removeFirst();
+        List<Card> revealedCards = List.of(card1, card2);
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                controllerName + " reveals " + card1.getName() + " and " + card2.getName() + ".");
+
+        // Determine opponent (in 2-player, the other player)
+        UUID opponentId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst()
+                .orElseThrow();
+
+        // Store the controller ID so the library reveal choice handler knows
+        // to redirect the selected card to the controller's hand
+        gameData.pendingKarnScionControllerId = controllerId;
+
+        // Present both cards to the opponent for selection
+        Set<UUID> validIds = Set.of(card1.getId(), card2.getId());
+        gameData.interaction.beginLibraryRevealChoice(opponentId, new ArrayList<>(revealedCards), validIds,
+                false, true, false);
+
+        gameBroadcastService.broadcastGameState(gameData);
+
+        log.info("Game {} - {} reveals {} and {} for Karn Scion +1, opponent must choose",
+                gameData.id, controllerName, card1.getName(), card2.getName());
+    }
+
+    @HandlesEffect(KarnScionReturnSilverCounterCardEffect.class)
+    void resolveKarnScionReturnSilverCounter(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // Find all exiled cards owned by the controller with silver counters
+        List<Card> exiledCards = gameData.playerExiledCards.getOrDefault(controllerId, List.of());
+        List<Card> silverCards = exiledCards.stream()
+                .filter(c -> gameData.exiledCardsWithSilverCounters.contains(c.getId()))
+                .toList();
+
+        if (silverCards.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " has no exiled cards with silver counters.");
+            log.info("Game {} - {} has no silver counter cards for Karn Scion -1", gameData.id, controllerName);
+            return;
+        }
+
+        if (silverCards.size() == 1) {
+            // Only one card — put it directly in hand
+            Card card = silverCards.getFirst();
+            exiledCards.remove(card);
+            gameData.exiledCardsWithSilverCounters.remove(card.getId());
+            gameData.addCardToHand(controllerId, card);
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " returns " + card.getName() + " from exile to their hand.");
+            log.info("Game {} - {} returns {} from exile (silver counter) to hand",
+                    gameData.id, controllerName, card.getName());
+            return;
+        }
+
+        // Multiple cards — let the controller choose
+        gameData.pendingKarnScionReturnFromExile = true;
+        Set<UUID> validIds = silverCards.stream().map(Card::getId).collect(Collectors.toSet());
+        gameData.interaction.beginLibraryRevealChoice(controllerId, new ArrayList<>(silverCards), validIds,
+                false, true, false);
+
+        gameBroadcastService.broadcastGameState(gameData);
+
+        log.info("Game {} - {} must choose from {} silver counter cards for Karn Scion -1",
+                gameData.id, controllerName, silverCards.size());
     }
 
     private List<UUID> getApnapOrder(GameData gameData) {
