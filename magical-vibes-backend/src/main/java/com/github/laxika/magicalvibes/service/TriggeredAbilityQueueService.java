@@ -114,7 +114,11 @@ public class TriggeredAbilityQueueService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+                    if (targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {
+                        if (gameQueryService.matchesFilters(p, Set.of(cpf), filterCtx)) {
+                            validTargets.add(p.getId());
+                        }
+                    } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
                         if (gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) {
                             validTargets.add(p.getId());
                         }

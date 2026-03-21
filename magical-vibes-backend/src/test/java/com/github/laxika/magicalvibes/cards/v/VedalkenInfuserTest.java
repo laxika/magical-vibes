@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -28,7 +29,8 @@ class VedalkenInfuserTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutChargeCounterOnTargetPermanentEffect.class);
+        assertThat(mayEffect.wrapped()).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
+        assertThat(((PutCounterOnTargetPermanentEffect) mayEffect.wrapped()).counterType()).isEqualTo(CounterType.CHARGE);
 
         assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
         PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) card.getTargetFilter();

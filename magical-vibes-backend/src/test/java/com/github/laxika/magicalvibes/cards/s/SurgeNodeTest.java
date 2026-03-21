@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +43,7 @@ class SurgeNodeTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().getEffects())
                 .hasSize(2)
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof PutChargeCounterOnTargetPermanentEffect);
+                .anyMatch(e -> e instanceof PutCounterOnTargetPermanentEffect pct && pct.counterType() == CounterType.CHARGE);
         assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isNotNull();
     }
 

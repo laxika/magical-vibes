@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentsAndPutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
@@ -303,7 +306,13 @@ public class PermanentCounterResolutionService {
     }
 
     @HandlesEffect(PutChargeCounterOnTargetPermanentEffect.class)
-    private void resolvePutChargeCounterOnTargetPermanent(GameData gameData, StackEntry entry) {
+    private void resolvePutChargeCounterOnTargetPermanentLegacy(GameData gameData, StackEntry entry) {
+        resolvePutCounterOnTargetPermanent(gameData, entry, new PutCounterOnTargetPermanentEffect(CounterType.CHARGE));
+    }
+
+    @HandlesEffect(PutCounterOnTargetPermanentEffect.class)
+    private void resolvePutCounterOnTargetPermanent(GameData gameData, StackEntry entry,
+                                                     PutCounterOnTargetPermanentEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
@@ -313,11 +322,70 @@ public class PermanentCounterResolutionService {
             return;
         }
 
-        target.setChargeCounters(target.getChargeCounters() + 1);
+        Card card = target.getCard();
+        String counterName = switch (effect.counterType()) {
+            case CHARGE -> { target.setChargeCounters(target.getChargeCounters() + 1); yield "charge"; }
+            case LORE -> { target.setLoreCounters(target.getLoreCounters() + 1); yield "lore"; }
+            case PLUS_ONE_PLUS_ONE -> { target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() + 1); yield "+1/+1"; }
+            case MINUS_ONE_MINUS_ONE -> {
+                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
+                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + 1);
+                yield "-1/-1";
+            }
+            case HATCHLING -> { target.setHatchlingCounters(target.getHatchlingCounters() + 1); yield "hatchling"; }
+            case STUDY -> { target.setStudyCounters(target.getStudyCounters() + 1); yield "study"; }
+            case WISH -> { target.setWishCounters(target.getWishCounters() + 1); yield "wish"; }
+            case SLIME -> { target.setSlimeCounters(target.getSlimeCounters() + 1); yield "slime"; }
+            case AIM -> { target.setAimCounters(target.getAimCounters() + 1); yield "aim"; }
+            default -> throw new IllegalStateException("Unsupported counter type: " + effect.counterType());
+        };
+        if (counterName == null) return;
 
-        String logEntry = target.getCard().getName() + " gets a charge counter (" + target.getChargeCounters() + " total).";
+        String logEntry = card.getName() + " gets a " + counterName + " counter.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, target.getCard().getName(), target.getChargeCounters());
+        log.info("Game {} - {} gets a {} counter", gameData.id, card.getName(), counterName);
+
+        // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
+        if (effect.counterType() == CounterType.LORE && card.isSaga()) {
+            triggerSagaChapter(gameData, entry, target);
+        }
+    }
+
+    private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga) {
+        Card card = saga.getCard();
+        int loreCount = saga.getLoreCounters();
+
+        EffectSlot chapterSlot = switch (loreCount) {
+            case 1 -> EffectSlot.SAGA_CHAPTER_I;
+            case 2 -> EffectSlot.SAGA_CHAPTER_II;
+            case 3 -> EffectSlot.SAGA_CHAPTER_III;
+            default -> null;
+        };
+        if (chapterSlot == null) return;
+
+        List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
+        if (chapterEffects.isEmpty()) return;
+
+        String chapterName = switch (loreCount) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            default -> String.valueOf(loreCount);
+        };
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                entry.getControllerId(),
+                card.getName() + "'s chapter " + chapterName + " ability",
+                new ArrayList<>(chapterEffects),
+                null,
+                saga.getId()
+        ));
+
+        String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
     }
 
     @HandlesEffect(PutPhylacteryCounterOnTargetPermanentEffect.class)
@@ -782,4 +850,5 @@ public class PermanentCounterResolutionService {
             }
         }
     }
+
 }
