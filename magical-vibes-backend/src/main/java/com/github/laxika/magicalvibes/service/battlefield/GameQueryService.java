@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
@@ -1414,6 +1415,27 @@ public class GameQueryService {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class);
+    }
+
+    /**
+     * Returns the number of extra times a triggered ability should fire when a creature
+     * controlled by {@code controllerId} enters the battlefield — one per
+     * {@link ETBDoubleTriggerEffect} whose predicate matches the entering creature
+     * (e.g. Naban, Dean of Iteration with {@code CardSubtypePredicate(WIZARD)}).
+     */
+    public int countETBExtraTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        if (bf == null) return 0;
+        int count = 0;
+        for (Permanent perm : bf) {
+            for (CardEffect e : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (e instanceof ETBDoubleTriggerEffect etb
+                        && matchesCardPredicate(enteringCreature, etb.predicate(), null)) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     // --- Aura & enchantment ---

@@ -433,6 +433,9 @@ public class BattlefieldEntryService {
             return;
         }
 
+        // Naban, Dean of Iteration: extra triggers when a Wizard enters
+        int extraWizardTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, card);
+
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof ReplacementEffect))
@@ -490,6 +493,10 @@ public class BattlefieldEntryService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
                 gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
+                // Naban: extra triggers for Wizard ETB
+                for (int i = 0; i < extraWizardTriggers; i++) {
+                    gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
+                }
             }
 
             if (!mandatoryEffects.isEmpty()) {
@@ -538,23 +545,52 @@ public class BattlefieldEntryService {
                         String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, etbLog);
                         log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+                        // Naban: extra triggers for Wizard ETB
+                        for (int i = 0; i < extraWizardTriggers; i++) {
+                            StackEntry extraEtbEntry = new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    card,
+                                    controllerId,
+                                    card.getName() + "'s ETB ability",
+                                    new ArrayList<>(otherEffects),
+                                    0,
+                                    targetId,
+                                    sourcePermanentId,
+                                    Map.of(),
+                                    null,
+                                    List.of(),
+                                    List.of()
+                            );
+                            if (modeTargetFilter != null) {
+                                extraEtbEntry.setTargetFilter(modeTargetFilter);
+                            }
+                            gameData.stack.add(extraEtbEntry);
+                            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                            log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
+                        }
                     }
                 }
 
                 // Handle graveyard exile effects: targets must be chosen at trigger time
                 for (CardEffect effect : graveyardExileEffects) {
                     ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
-                    handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+                    for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                        handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+                    }
                 }
 
                 // Handle graveyard cast effects: target instant/sorcery in opponent's graveyard
                 for (CardEffect effect : graveyardCastEffects) {
-                    handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
+                    for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                        handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
+                    }
                 }
 
                 // Handle graveyard flashback-grant effects: target instant/sorcery in controller's graveyard
                 for (CardEffect effect : graveyardFlashbackEffects) {
-                    handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
+                    for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                        handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
+                    }
                 }
 
                 // Handle spell-targeting ETB effects: target must be chosen from spells on the stack
@@ -573,7 +609,7 @@ public class BattlefieldEntryService {
             }
         }
 
-        checkAllyCreatureEntersTriggers(gameData, controllerId, card);
+        checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
         checkAllyArtifactEntersTriggers(gameData, controllerId, card);
         checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
         checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
@@ -864,8 +900,10 @@ public class BattlefieldEntryService {
 
     // ===== Enter triggers =====
 
-    void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
+    void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
         if (enteringCreature.getToughness() == null) return;
+
+        int stackSizeBefore = gameData.stack.size();
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         for (Permanent perm : battlefield) {
@@ -973,6 +1011,16 @@ public class BattlefieldEntryService {
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} triggers for {} entering (may effect)",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName());
+                }
+            }
+        }
+
+        // Naban: duplicate all triggers that were just added for Wizard ETB
+        if (extraWizardTriggers > 0) {
+            List<StackEntry> newEntries = new ArrayList<>(gameData.stack.subList(stackSizeBefore, gameData.stack.size()));
+            for (int i = 0; i < extraWizardTriggers; i++) {
+                for (StackEntry entry : newEntries) {
+                    gameData.stack.add(new StackEntry(entry));
                 }
             }
         }
@@ -1182,21 +1230,28 @@ public class BattlefieldEntryService {
         // Non-creature permanents (e.g. artifacts) should not trigger "creature enters" triggers
         if (enteringCreature.getToughness() == null) return;
 
+        int extraWizardTriggers = gameQueryService.countETBExtraTriggers(gameData, enteringCreatureControllerId, enteringCreature);
+
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) return;
 
             if (perm.getCard() == enteringCreature) return;
 
+            // Naban: only doubles triggers on permanents controlled by the Wizard's controller
+            int extraTriggers = playerId.equals(enteringCreatureControllerId) ? extraWizardTriggers : 0;
+
             for (CardEffect effect : effects) {
                 if (effect instanceof GainLifeEffect gainLife) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s ability",
-                            List.of(new GainLifeEffect(gainLife.amount()))
-                    ));
+                    for (int t = 0; t < 1 + extraTriggers; t++) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                List.of(new GainLifeEffect(gainLife.amount()))
+                        ));
+                    }
                     String triggerLog = perm.getCard().getName() + " triggers — " +
                             gameData.playerIdToName.get(playerId) + " will gain " + gainLife.amount() + " life.";
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);

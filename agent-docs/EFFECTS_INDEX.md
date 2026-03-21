@@ -252,6 +252,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `CantBeCounteredEffect` | `()` | this spell can't be countered (static). Replaces `setCantBeCountered(true)` |
 | `CreatureSpellsCantBeCounteredEffect` | `()` | creature spells can't be countered (static) |
 | `CreatureEnteringDontCauseTriggersEffect` | `()` | creatures entering don't cause abilities to trigger (static, e.g. Torpor Orb) |
+| `ETBDoubleTriggerEffect` | `(CardPredicate predicate)` | if a creature matching the predicate you control entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time (static, e.g. Naban with `CardSubtypePredicate(WIZARD)`). Each copy adds one extra trigger. |
 | `CreaturesEnterAsCopyOfSourceEffect` | `()` | creatures you control enter as a copy of this creature (static replacement effect, e.g. Essence of the Wild). Handled in BattlefieldEntryService.putPermanentOntoBattlefield() |
 
 ## Bounce / return to hand
