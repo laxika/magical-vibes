@@ -126,7 +126,8 @@ public enum CardSubtype {
     CURSE("Curse"),
     CHANDRA("Chandra"),
     DEVIL("Devil"),
-    SAGA("Saga");
+    SAGA("Saga"),
+    UNICORN("Unicorn");
 
     @Getter
     private final String displayName;
