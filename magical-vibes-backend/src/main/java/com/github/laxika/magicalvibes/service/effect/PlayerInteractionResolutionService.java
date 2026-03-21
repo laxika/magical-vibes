@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffe
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipTwoCoinsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawXCardsForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
@@ -177,6 +178,43 @@ public class PlayerInteractionResolutionService {
         } else {
             log.warn("No handler for wrapped effect in FlipCoinWinEffect: {}",
                     effect.wrapped().getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Flips two coins for the source permanent's controller. If both come up heads, the bothHeads
+     * effect is dispatched. If both come up tails, the bothTails effect is dispatched. On a split
+     * result, nothing happens.
+     */
+    @HandlesEffect(FlipTwoCoinsEffect.class)
+    private void resolveFlipTwoCoinsEffect(GameData gameData, StackEntry entry, FlipTwoCoinsEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String sourceName = entry.getCard().getName();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        boolean firstFlip = ThreadLocalRandom.current().nextBoolean();
+        boolean secondFlip = ThreadLocalRandom.current().nextBoolean();
+
+        String firstResult = firstFlip ? "heads" : "tails";
+        String secondResult = secondFlip ? "heads" : "tails";
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " flips two coins for " + sourceName + ": " + firstResult + " and " + secondResult + ".");
+
+        CardEffect chosen;
+        if (firstFlip && secondFlip) {
+            chosen = effect.bothHeads();
+        } else if (!firstFlip && !secondFlip) {
+            chosen = effect.bothTails();
+        } else {
+            return;
+        }
+
+        EffectHandler handler = effectHandlerRegistry.getHandler(chosen);
+        if (handler != null) {
+            handler.resolve(gameData, entry, chosen);
+        } else {
+            log.warn("No handler for wrapped effect in FlipTwoCoinsEffect: {}",
+                    chosen.getClass().getSimpleName());
         }
     }
 
