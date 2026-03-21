@@ -361,6 +361,10 @@ public class GameBroadcastService {
                                 playable.add(i);
                             }
                         }
+                        // Check non-zero alternative cost from battlefield (e.g. Jodah)
+                        if (!playable.contains(i) && canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
+                            playable.add(i);
+                        }
                         if (!playable.contains(i) && canAlternateCast(gameData, playerId, card, battlefield)) {
                             playable.add(i);
                         }
@@ -607,6 +611,10 @@ public class GameBroadcastService {
                     boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
                             ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
                             : cost.canPay(pool, additionalCost);
+                    // Check non-zero alternative cost from battlefield (e.g. Jodah)
+                    if (!canAfford) {
+                        canAfford = canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                    }
                     if (canAfford) {
                         playable.add(cardViewFactory.create(card));
                     }
@@ -639,13 +647,42 @@ public class GameBroadcastService {
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
-                        && altCost.cost() == 0
+                        && new ManaCost(altCost.manaCost()).getManaValue() == 0
                         && gameQueryService.matchesCardPredicate(card, altCost.filter(), null)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * Returns true if any permanent the player controls provides a non-zero alternative mana cost
+     * for the given card AND the player's mana pool can pay that alternative cost (plus any modifiers).
+     */
+    public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
+        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost) != null;
+    }
+
+    /**
+     * Returns the mana cost string of an affordable non-zero alternative cost from the battlefield,
+     * or null if none exists or none is affordable.
+     */
+    public String findAffordableAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return null;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AlternativeCostForSpellsEffect altCost
+                        && gameQueryService.matchesCardPredicate(card, altCost.filter(), null)) {
+                    ManaCost alternativeManaCost = new ManaCost(altCost.manaCost());
+                    if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
+                        return altCost.manaCost();
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private boolean canAlternateCast(GameData gameData, UUID playerId, Card card, List<Permanent> battlefield) {

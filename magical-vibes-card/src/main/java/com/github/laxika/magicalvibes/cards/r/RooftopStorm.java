@@ -16,7 +16,7 @@ import java.util.List;
 public class RooftopStorm extends Card {
 
     public RooftopStorm() {
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect(0, new CardAllOfPredicate(List.of(
+        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect("{0}", new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
                 new CardSubtypePredicate(CardSubtype.ZOMBIE)
         ))));

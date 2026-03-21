@@ -30,7 +30,7 @@ class RooftopStormTest extends BaseCardTest {
                 .isInstanceOf(AlternativeCostForSpellsEffect.class);
         AlternativeCostForSpellsEffect effect =
                 (AlternativeCostForSpellsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.cost()).isZero();
+        assertThat(effect.manaCost()).isEqualTo("{0}");
     }
 
     // ===== Casting and resolving =====

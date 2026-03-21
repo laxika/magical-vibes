@@ -317,39 +317,50 @@ public class SpellCastingService {
         }
 
         if (!usingAlternateCost && !gameBroadcastService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
-            // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
+            // Check if a non-zero alternative cost from the battlefield is affordable (e.g. Jodah)
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+            boolean usingBattlefieldAlternativeCost = false;
             if (card.getManaCost() != null) {
-                ManaCost cost = new ManaCost(card.getManaCost());
-                if (cost.hasX()) {
-                    if (effectiveXValue < 0) {
-                        throw new IllegalStateException("X value cannot be negative");
-                    }
-                    ManaPool pool = gameData.playerManaPools.get(playerId);
-                    int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
-                    int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
-                    additionalCost += perTargetCost;
-                    ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
-                    if (card.getXColorRestriction() != null) {
-                        if (!cost.canPay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost)) {
-                            throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
-                        }
-                    } else if (flags.hasRestricted()) {
-                        if (!cost.canPay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen())) {
-                            throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
-                        }
-                    } else if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
-                        throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
-                    }
+                ManaCost normalCost = new ManaCost(card.getManaCost());
+                if (!normalCost.canPay(pool, additionalCost)) {
+                    usingBattlefieldAlternativeCost = gameBroadcastService.canAffordAlternativeCostFromBattlefield(
+                            gameData, playerId, card, pool, additionalCost);
                 }
             }
 
-            // Validate creature-only mana restriction (e.g. Myr Superion)
-            if (card.isRequiresCreatureMana()) {
-                ManaCost creatureCost = new ManaCost(card.getManaCost());
-                ManaPool creaturePool = gameData.playerManaPools.get(playerId);
-                int additionalCostForCreature = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
-                if (!creatureCost.canPayCreatureOnly(creaturePool, additionalCostForCreature)) {
-                    throw new IllegalStateException("Can only spend mana produced by creatures to cast this spell");
+            if (!usingBattlefieldAlternativeCost) {
+                // For X-cost spells, validate that player can pay colored + generic + xValue + any cost increases
+                if (card.getManaCost() != null) {
+                    ManaCost cost = new ManaCost(card.getManaCost());
+                    if (cost.hasX()) {
+                        if (effectiveXValue < 0) {
+                            throw new IllegalStateException("X value cannot be negative");
+                        }
+                        int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
+                        int totalAdditionalCost = additionalCost + perTargetCost;
+                        ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
+                        if (card.getXColorRestriction() != null) {
+                            if (!cost.canPay(pool, effectiveXValue, card.getXColorRestriction(), totalAdditionalCost)) {
+                                throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
+                            }
+                        } else if (flags.hasRestricted()) {
+                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen())) {
+                                throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
+                            }
+                        } else if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost)) {
+                            throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
+                        }
+                    }
+                }
+
+                // Validate creature-only mana restriction (e.g. Myr Superion)
+                if (card.isRequiresCreatureMana()) {
+                    ManaCost creatureCost = new ManaCost(card.getManaCost());
+                    int additionalCostForCreature = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+                    if (!creatureCost.canPayCreatureOnly(pool, additionalCostForCreature)) {
+                        throw new IllegalStateException("Can only spend mana produced by creatures to cast this spell");
+                    }
                 }
             }
         }
@@ -1208,6 +1219,18 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
         ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
+
+        // Check if we should use a non-zero alternative cost from the battlefield (e.g. Jodah)
+        // Use the alternative cost if the normal cost can't be paid but the alternative can
+        if (!cost.canPay(pool, additionalCost)) {
+            String altCostStr = gameBroadcastService.findAffordableAlternativeCostFromBattlefield(
+                    gameData, playerId, card, pool, additionalCost);
+            if (altCostStr != null) {
+                ManaCost altCost = new ManaCost(altCostStr);
+                altCost.pay(pool, additionalCost);
+                return;
+            }
+        }
 
         // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols
         // before generic costs consume it
