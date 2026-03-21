@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsColorConditi
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockedByMinCreaturesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInControllerGraveyardEffect;
@@ -881,6 +882,30 @@ public class StaticEffectResolutionService {
             accumulator.addKeywords(boost.grantedKeywords());
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
+        }
+    }
+
+    @HandlesStaticEffect(value = BlockedByMinCreaturesConditionalEffect.class, selfOnly = true)
+    private void resolveBlockedByMinCreaturesConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (BlockedByMinCreaturesConditionalEffect) effect;
+        UUID sourceId = context.source().getId();
+
+        final int[] blockerCount = {0};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(sourceId)) {
+                blockerCount[0]++;
+            }
+        });
+
+        if (blockerCount[0] < conditional.minBlockers()) return;
+
+        CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof StaticBoostEffect boost) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
+            accumulator.addKeywords(boost.grantedKeywords());
+        } else if (wrapped instanceof GrantKeywordEffect grant) {
+            accumulator.addKeyword(grant.keyword());
         }
     }
 

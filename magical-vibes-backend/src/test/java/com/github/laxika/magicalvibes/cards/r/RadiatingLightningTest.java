@@ -65,7 +65,7 @@ class RadiatingLightningTest extends BaseCardTest {
         // Both Grizzly Bears should survive with 1 damage
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
         assertThat(battlefield).hasSize(2);
-        assertThat(battlefield).allMatch(p -> p.getDamage() == 1);
+        assertThat(battlefield).allMatch(p -> p.getMarkedDamage() == 1);
     }
 
     @Test
@@ -102,7 +102,7 @@ class RadiatingLightningTest extends BaseCardTest {
 
         List<Permanent> casterBattlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(casterBattlefield).hasSize(1);
-        assertThat(casterBattlefield.getFirst().getDamage()).isZero();
+        assertThat(casterBattlefield.getFirst().getMarkedDamage()).isZero();
     }
 
     // ===== Combined effect =====
@@ -125,7 +125,7 @@ class RadiatingLightningTest extends BaseCardTest {
         // Both creatures survive with 1 damage each
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
         assertThat(battlefield).hasSize(2);
-        assertThat(battlefield).allMatch(p -> p.getDamage() == 1);
+        assertThat(battlefield).allMatch(p -> p.getMarkedDamage() == 1);
     }
 
     // ===== No creatures =====
