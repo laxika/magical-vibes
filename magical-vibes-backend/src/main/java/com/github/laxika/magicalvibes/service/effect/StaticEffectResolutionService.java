@@ -698,8 +698,8 @@ public class StaticEffectResolutionService {
 
     @HandlesStaticEffect(value = GainActivatedAbilitiesOfExiledCardsEffect.class, selfOnly = true)
     private void resolveGainActivatedAbilitiesOfExiledCards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        List<Card> exiledCards = context.gameData().permanentExiledCards.get(context.source().getId());
-        if (exiledCards == null) return;
+        List<Card> exiledCards = context.gameData().getCardsExiledByPermanent(context.source().getId());
+        if (exiledCards.isEmpty()) return;
         for (Card card : exiledCards) {
             for (var ability : card.getActivatedAbilities()) {
                 accumulator.addActivatedAbility(ability);

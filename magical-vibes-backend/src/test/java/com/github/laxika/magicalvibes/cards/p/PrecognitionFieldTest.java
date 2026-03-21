@@ -96,7 +96,7 @@ class PrecognitionFieldTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerExiledCards.get(player1.getId())).contains(topCard);
+            assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
             assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
         }
 
@@ -128,13 +128,13 @@ class PrecognitionFieldTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerExiledCards.get(player1.getId())).contains(card1);
+            assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card1);
 
             // Second activation
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerExiledCards.get(player1.getId())).contains(card1, card2);
+            assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card1, card2);
         }
 
         @Test

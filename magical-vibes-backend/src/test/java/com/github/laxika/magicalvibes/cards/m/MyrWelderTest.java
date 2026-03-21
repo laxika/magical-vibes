@@ -91,12 +91,12 @@ class MyrWelderTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Should be tracked in permanentExiledCards for the welder
-        List<Card> exiledWithWelder = gd.permanentExiledCards.get(welder.getId());
+        List<Card> exiledWithWelder = gd.getCardsExiledByPermanent(welder.getId());
         assertThat(exiledWithWelder).isNotNull().hasSize(1);
         assertThat(exiledWithWelder.getFirst().getName()).isEqualTo("Rod of Ruin");
 
         // Should also be in player exiled cards
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
     }
 
@@ -116,12 +116,12 @@ class MyrWelderTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Should be tracked in permanentExiledCards for the welder
-        List<Card> exiledWithWelder = gd.permanentExiledCards.get(welder.getId());
+        List<Card> exiledWithWelder = gd.getCardsExiledByPermanent(welder.getId());
         assertThat(exiledWithWelder).isNotNull().hasSize(1);
         assertThat(exiledWithWelder.getFirst().getName()).isEqualTo("Rod of Ruin");
 
         // Should be in opponent's exiled cards (cards are owned by their graveyard owner)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
     }
 
@@ -165,7 +165,7 @@ class MyrWelderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Ability should have fizzled — no card tracked for the welder
-        assertThat(gd.permanentExiledCards.get(welder.getId())).isNull();
+        assertThat(gd.getCardsExiledByPermanent(welder.getId())).isEmpty();
     }
 
     // ===== Gaining activated abilities from exiled cards =====
@@ -177,7 +177,7 @@ class MyrWelderTest extends BaseCardTest {
 
         // Directly set up exiled card tracking (simulating after imprint)
         Card rod = new RodOfRuin();
-        gd.permanentExiledCards.put(welder.getId(), Collections.synchronizedList(new ArrayList<>(List.of(rod))));
+        gd.addToExile(player1.getId(), rod, welder.getId());
 
         List<ActivatedAbility> granted = gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities();
 
@@ -194,13 +194,13 @@ class MyrWelderTest extends BaseCardTest {
         // Simulate two exiled artifacts (two copies of Rod of Ruin)
         Card rod1 = new RodOfRuin();
         Card rod2 = new RodOfRuin();
-        gd.permanentExiledCards.put(welder.getId(), Collections.synchronizedList(new ArrayList<>(List.of(rod1))));
+        gd.addToExile(player1.getId(), rod1, welder.getId());
 
         List<ActivatedAbility> granted = gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities();
         assertThat(granted).hasSize(1);
 
         // Add a second Rod of Ruin
-        gd.permanentExiledCards.get(welder.getId()).add(rod2);
+        gd.addToExile(player1.getId(), rod2, welder.getId());
 
         granted = gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities();
         assertThat(granted).hasSize(2);
@@ -225,7 +225,7 @@ class MyrWelderTest extends BaseCardTest {
 
         // Set up exiled Rod of Ruin (has {3}, {T}: deal 1 damage to any target)
         Card rod = new RodOfRuin();
-        gd.permanentExiledCards.put(welder.getId(), Collections.synchronizedList(new ArrayList<>(List.of(rod))));
+        gd.addToExile(player1.getId(), rod, welder.getId());
 
         // Rod's ability needs {3} mana and tap
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -246,7 +246,7 @@ class MyrWelderTest extends BaseCardTest {
 
         // Set up exiled Rod of Ruin
         Card rod = new RodOfRuin();
-        gd.permanentExiledCards.put(welder.getId(), Collections.synchronizedList(new ArrayList<>(List.of(rod))));
+        gd.addToExile(player1.getId(), rod, welder.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -271,8 +271,8 @@ class MyrWelderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod should be exiled with the welder
-        assertThat(gd.permanentExiledCards.get(welder.getId())).hasSize(1);
-        assertThat(gd.permanentExiledCards.get(welder.getId()).getFirst().getName()).isEqualTo("Rod of Ruin");
+        assertThat(gd.getCardsExiledByPermanent(welder.getId())).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(welder.getId()).getFirst().getName()).isEqualTo("Rod of Ruin");
 
         // Step 2: Untap the welder (it was tapped for the imprint)
         welder.untap();

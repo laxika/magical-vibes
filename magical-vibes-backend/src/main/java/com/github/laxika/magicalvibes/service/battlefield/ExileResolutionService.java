@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -200,9 +199,12 @@ public class ExileResolutionService {
         }
 
         if (sourcePermanentId != null) {
-            List<Card> pool = gameData.permanentExiledCards.computeIfAbsent(sourcePermanentId,
-                    k -> Collections.synchronizedList(new ArrayList<>()));
-            pool.add(exiledCard);
+            // removePermanentToExile already added to exile without source tracking;
+            // remove that entry and re-add with source tracking
+            var exiledEntry = gameData.findExiledCard(exiledCard.getId());
+            UUID ownerId = exiledEntry != null ? exiledEntry.ownerId() : entry.getControllerId();
+            gameData.removeFromExile(exiledCard.getId());
+            gameData.addToExile(ownerId, exiledCard, sourcePermanentId);
         }
 
         String logEntry = exiledCard.getName() + " is exiled by " + entry.getCard().getName() + ".";
@@ -390,15 +392,10 @@ public class ExileResolutionService {
         // Return previously imprinted card to its owner's graveyard
         Card previouslyImprinted = sourcePermanent.getCard().getImprintedCard();
         if (previouslyImprinted != null) {
-            // Find and remove from whichever exile zone it's in, tracking the owner
-            UUID previousOwnerId = null;
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Card> exile = gameData.playerExiledCards.get(playerId);
-                if (exile != null && exile.remove(previouslyImprinted)) {
-                    previousOwnerId = playerId;
-                    break;
-                }
-            }
+            // Find and remove from exile, tracking the owner
+            var previousExiledEntry = gameData.findExiledCard(previouslyImprinted.getId());
+            UUID previousOwnerId = previousExiledEntry != null ? previousExiledEntry.ownerId() : null;
+            gameData.removeFromExile(previouslyImprinted.getId());
             // Return to owner's graveyard (the player whose exile zone it was in)
             UUID returnToId = previousOwnerId != null ? previousOwnerId : entry.getControllerId();
             graveyardService.addCardToGraveyard(gameData, returnToId, previouslyImprinted);
@@ -484,10 +481,6 @@ public class ExileResolutionService {
             return;
         }
 
-        // Initialize the per-permanent exile list if needed
-        List<Card> pool = gameData.permanentExiledCards.computeIfAbsent(sourcePermanentId,
-                k -> Collections.synchronizedList(new ArrayList<>()));
-
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> deck = gameData.playerDecks.get(playerId);
             if (deck == null) continue;
@@ -497,8 +490,7 @@ public class ExileResolutionService {
 
             for (int i = 0; i < toExile; i++) {
                 Card card = deck.removeFirst();
-                pool.add(card);
-                exileService.exileCard(gameData, playerId, card);
+                exileService.exileCardTrackedWithSource(gameData, playerId, card, sourcePermanentId);
                 exiledNames.add(card.getName());
             }
 
@@ -548,10 +540,7 @@ public class ExileResolutionService {
         Card originalCard = originalSpell.getCard();
         gameData.stack.remove(originalSpell);
 
-        List<Card> pool = gameData.permanentExiledCards.computeIfAbsent(kpPermanentId,
-                k -> Collections.synchronizedList(new ArrayList<>()));
-        pool.add(originalCard);
-        exileService.exileCard(gameData, castingPlayerId, originalCard);
+        exileService.exileCardTrackedWithSource(gameData, castingPlayerId, originalCard, kpPermanentId);
 
         String playerName = gameData.playerIdToName.get(castingPlayerId);
         String exileLog = playerName + " exiles " + originalCard.getName() + " (Knowledge Pool).";
@@ -559,7 +548,7 @@ public class ExileResolutionService {
         log.info("Game {} - {} exiles {} to Knowledge Pool", gameData.id, playerName, originalCard.getName());
 
         // Step 4: Collect eligible cards — nonland, not the just-exiled card, from KP's pool
-        List<Card> eligible = pool.stream()
+        List<Card> eligible = gameData.getCardsExiledByPermanent(kpPermanentId).stream()
                 .filter(c -> !c.getId().equals(originalCard.getId()))
                 .filter(c -> !c.hasType(CardType.LAND))
                 .collect(Collectors.toList());
@@ -607,8 +596,8 @@ public class ExileResolutionService {
         UUID chosenCardId = cardIds.getFirst();
 
         // Find the chosen card in the KP pool
-        List<Card> pool = gameData.permanentExiledCards.get(kpPermanentId);
-        if (pool == null) {
+        List<Card> pool = gameData.getCardsExiledByPermanent(kpPermanentId);
+        if (pool.isEmpty()) {
             log.warn("Game {} - Knowledge Pool pool not found for permanent {}", gameData.id, kpPermanentId);
             gameBroadcastService.broadcastGameState(gameData);
             return;
@@ -628,9 +617,8 @@ public class ExileResolutionService {
             return;
         }
 
-        // Remove from KP pool and player exile
-        pool.remove(chosenCard);
-        gameData.playerExiledCards.get(playerId).remove(chosenCard);
+        // Remove from exile (unified list covers both KP-source tracking and player ownership)
+        gameData.removeFromExile(chosenCard.getId());
 
         // Determine spell type
         StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
@@ -726,7 +714,7 @@ public class ExileResolutionService {
 
         if (topCard.hasType(CardType.LAND)) {
             // Land — put onto the battlefield
-            gameData.playerExiledCards.get(targetPlayerId).remove(topCard);
+            gameData.removeFromExile(topCard.getId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(topCard));
 
             String landLog = playerName + " puts " + topCard.getName() + " onto the battlefield.";
@@ -736,7 +724,7 @@ public class ExileResolutionService {
             battlefieldEntryService.processCreatureETBEffects(gameData, targetPlayerId, topCard, null, false);
         } else {
             // Non-land — cast without paying mana cost if able
-            gameData.playerExiledCards.get(targetPlayerId).remove(topCard);
+            gameData.removeFromExile(topCard.getId());
 
             StackEntryType spellType = mapCardTypeToSpellType(topCard);
             List<CardEffect> spellEffects = new ArrayList<>(topCard.getEffects(EffectSlot.SPELL));
@@ -808,8 +796,8 @@ public class ExileResolutionService {
         UUID controllerId = entry.getControllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
-        List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
-        if (exiledCards == null || exiledCards.isEmpty()) {
+        List<Card> exiledCards = gameData.getPlayerExiledCards(controllerId);
+        if (exiledCards.isEmpty()) {
             // No exiled cards to choose — just exile the entire library
             exileLibraryAndPutChosenOnTop(gameData, controllerId, List.of());
             return;
@@ -861,10 +849,10 @@ public class ExileResolutionService {
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         // Collect the chosen cards from the exile zone before exiling the library
-        List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
+        List<Card> playerExiled = gameData.getPlayerExiledCards(controllerId);
         List<Card> chosenCards = new ArrayList<>();
         for (UUID cardId : chosenCardIds) {
-            for (Card c : exiledCards) {
+            for (Card c : playerExiled) {
                 if (c.getId().equals(cardId)) {
                     chosenCards.add(c);
                     break;
@@ -876,7 +864,9 @@ public class ExileResolutionService {
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (library != null && !library.isEmpty()) {
             int exiledCount = library.size();
-            exiledCards.addAll(library);
+            for (Card card : library) {
+                gameData.addToExile(controllerId, card);
+            }
             library.clear();
             String exileLog = controllerName + " exiles " + exiledCount + " card"
                     + (exiledCount != 1 ? "s" : "") + " from their library (Mirror of Fate).";
@@ -885,12 +875,9 @@ public class ExileResolutionService {
                     gameData.id, controllerName, exiledCount);
         }
 
-        // Remove the chosen cards from exile and also from permanentExiledCards if tracked there
+        // Remove the chosen cards from exile
         for (Card card : chosenCards) {
-            exiledCards.remove(card);
-            for (List<Card> pool : gameData.permanentExiledCards.values()) {
-                pool.remove(card);
-            }
+            gameData.removeFromExile(card.getId());
         }
 
         if (chosenCards.isEmpty()) {
@@ -940,15 +927,16 @@ public class ExileResolutionService {
         }
 
         Card topCard = deck.removeFirst();
-        exileService.exileCard(gameData, controllerId, topCard);
 
         if (effect.trackWithSource()) {
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
-                gameData.permanentExiledCards
-                        .computeIfAbsent(sourcePermanentId, k -> Collections.synchronizedList(new ArrayList<>()))
-                        .add(topCard);
+                exileService.exileCardTrackedWithSource(gameData, controllerId, topCard, sourcePermanentId);
+            } else {
+                exileService.exileCard(gameData, controllerId, topCard);
             }
+        } else {
+            exileService.exileCard(gameData, controllerId, topCard);
         }
 
         String logEntry = controllerName + " exiles " + topCard.getName() + " from the top of their library.";

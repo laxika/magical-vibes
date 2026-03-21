@@ -111,7 +111,7 @@ class RedSunsZenithTest extends BaseCardTest {
         // Grizzly Bears should be exiled, NOT in graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
@@ -129,7 +129,7 @@ class RedSunsZenithTest extends BaseCardTest {
         // Serra Angel should still be on the battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Serra Angel"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Serra Angel"));
     }
 

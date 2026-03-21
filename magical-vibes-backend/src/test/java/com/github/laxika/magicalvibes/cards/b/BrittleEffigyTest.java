@@ -53,7 +53,7 @@ class BrittleEffigyTest extends BaseCardTest {
         // Effigy is exiled as cost
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Brittle Effigy"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Brittle Effigy"));
         // Ability is on the stack
         assertThat(gd.stack).hasSize(1);
@@ -75,7 +75,7 @@ class BrittleEffigyTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -95,7 +95,7 @@ class BrittleEffigyTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Brittle Effigy"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Brittle Effigy"));
     }
 
@@ -171,9 +171,9 @@ class BrittleEffigyTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         // Effigy is still exiled (cost was already paid)
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Brittle Effigy"));
     }
 

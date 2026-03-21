@@ -391,8 +391,8 @@ public class StepTriggerService {
         // "At the beginning of your upkeep, if this card is exiled with an egg counter on it,
         //  remove an egg counter from it. Then if it has no egg counters, return it to the battlefield."
         if (!gameData.exiledCardEggCounters.isEmpty()) {
-            List<Card> exiledCards = gameData.playerExiledCards.get(activePlayerId);
-            if (exiledCards != null) {
+            List<Card> exiledCards = gameData.getPlayerExiledCards(activePlayerId);
+            if (!exiledCards.isEmpty()) {
                 for (Card card : new ArrayList<>(exiledCards)) {
                     Integer eggCounters = gameData.exiledCardEggCounters.get(card.getId());
                     if (eggCounters != null && eggCounters > 0) {
@@ -833,10 +833,7 @@ public class StepTriggerService {
                 Card card = pending.card();
                 UUID controllerId = pending.controllerId();
                 // Remove card from exile zone
-                List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
-                if (exiledCards != null) {
-                    exiledCards.remove(card);
-                }
+                gameData.removeFromExile(card.getId());
                 // Return as a new permanent
                 Permanent perm = new Permanent(card);
                 if (pending.returnTapped()) {

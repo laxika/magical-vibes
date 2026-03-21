@@ -174,7 +174,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         // Creature card should be exiled from graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Resolve the ability
@@ -270,7 +270,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 1);
 
         // Llanowar Elves should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
         // Shock should remain in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))

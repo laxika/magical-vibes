@@ -427,7 +427,9 @@ public class GameTestHarness {
     }
 
     public void setExile(Player player, List<Card> cards) {
-        gameData.playerExiledCards.put(player.getId(), new ArrayList<>(cards));
+        for (Card card : cards) {
+            gameData.addToExile(player.getId(), card);
+        }
     }
 
     public void setLife(Player player, int life) {

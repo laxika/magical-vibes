@@ -281,7 +281,7 @@ class MemorysJourneyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibSizeBefore + 2);
 
         // Memory's Journey is exiled (flashback disposition)
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Memory's Journey"));
     }
 
@@ -310,7 +310,7 @@ class MemorysJourneyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libSizeBefore + 2);
 
         // Memory's Journey exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Memory's Journey"));
     }
 
@@ -330,7 +330,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Memory's Journey is exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Memory's Journey"));
     }
 

@@ -86,7 +86,7 @@ class FiendHunterTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Goblin Piker"));
     }
 
@@ -121,7 +121,7 @@ class FiendHunterTest extends BaseCardTest {
         castAndExileTarget(creatureId);
 
         // Verify creature is exiled
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Goblin Piker"));
 
         // Reset for follow-up spell
@@ -142,7 +142,7 @@ class FiendHunterTest extends BaseCardTest {
         // Exiled card returns to battlefield under owner's control
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
 
@@ -171,7 +171,7 @@ class FiendHunterTest extends BaseCardTest {
         // Exiled card returns to battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
 

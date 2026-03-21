@@ -1074,10 +1074,7 @@ public class LibraryChoiceHandlerService {
         for (Card card : allRevealedCards) {
             if (selectedIds.contains(card.getId())) {
                 // Remove from exile zone
-                List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
-                if (exiledCards != null) {
-                    exiledCards.removeIf(c -> c.getId().equals(card.getId()));
-                }
+                gameData.removeFromExile(card.getId());
                 gameData.exiledCardsWithSilverCounters.remove(card.getId());
                 gameData.addCardToHand(controllerId, card);
 

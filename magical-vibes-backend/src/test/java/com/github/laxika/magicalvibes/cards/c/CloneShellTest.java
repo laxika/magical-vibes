@@ -83,7 +83,7 @@ class CloneShellTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Card should be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Clone Shell should have it imprinted
@@ -148,7 +148,7 @@ class CloneShellTest extends BaseCardTest {
         // Manually imprint a creature card
         GrizzlyBears bears = new GrizzlyBears();
         cloneShell.getCard().setImprintedCard(bears);
-        gd.playerExiledCards.get(player1.getId()).add(bears);
+        gd.addToExile(player1.getId(), bears);
 
         // Kill Clone Shell with Shock (2 damage to a 2/2)
         UUID cloneShellId = harness.getPermanentId(player1, "Clone Shell");
@@ -164,7 +164,7 @@ class CloneShellTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
         // Grizzly Bears should be removed from exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Clone Shell should be in graveyard
@@ -188,7 +188,7 @@ class CloneShellTest extends BaseCardTest {
         // Manually imprint a non-creature card
         Spellbook spellbook = new Spellbook();
         cloneShell.getCard().setImprintedCard(spellbook);
-        gd.playerExiledCards.get(player1.getId()).add(spellbook);
+        gd.addToExile(player1.getId(), spellbook);
 
         int battlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -205,7 +205,7 @@ class CloneShellTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldSizeBefore - 1);
 
         // Spellbook should remain in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Spellbook"));
     }
 

@@ -101,8 +101,6 @@ class SpellCastingServiceTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
         gd.playerLifeTotals.put(player1Id, 20);
@@ -725,7 +723,7 @@ class SpellCastingServiceTest {
         @Test
         @DisplayName("Throws when no exiled cards exist")
         void throwsWhenNoExiledCards() {
-            gd.playerExiledCards.remove(player1Id);
+            gd.exiledCards.clear();
 
             assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, UUID.randomUUID(), 0, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -736,7 +734,7 @@ class SpellCastingServiceTest {
         @DisplayName("Throws when player has no permission to play exiled card")
         void throwsWhenNoPermission() {
             Card exiledCard = createCreature("Exiled Creature", "{1}{G}");
-            gd.playerExiledCards.put(player1Id, new java.util.ArrayList<>(List.of(exiledCard)));
+            gd.addToExile(player1Id, exiledCard);
 
             assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, exiledCard.getId(), 0, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -747,8 +745,9 @@ class SpellCastingServiceTest {
         @DisplayName("Throws when card not found in exile")
         void throwsWhenCardNotInExile() {
             UUID fakeId = UUID.randomUUID();
-            gd.playerExiledCards.put(player1Id, new java.util.ArrayList<>());
             gd.exilePlayPermissions.put(fakeId, player1Id);
+            // Add a dummy card to exile so the "no exiled cards" check passes
+            gd.addToExile(player1Id, createCreature("Dummy Card", "{G}"));
 
             assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, fakeId, 0, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -759,13 +758,13 @@ class SpellCastingServiceTest {
         @DisplayName("Land from exile goes directly onto battlefield")
         void landFromExileBypassesStack() {
             Card land = createLand("Exiled Plains");
-            gd.playerExiledCards.put(player1Id, new java.util.ArrayList<>(List.of(land)));
+            gd.addToExile(player1Id, land);
             gd.exilePlayPermissions.put(land.getId(), player1Id);
 
             svc.playCardFromExile(gd, player1, land.getId(), 0, null);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerExiledCards.get(player1Id)).isEmpty();
+            assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
             assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
             verify(battlefieldEntryService).processCreatureETBEffects(eq(gd), eq(player1Id), eq(land), any(), anyBoolean());
@@ -779,7 +778,7 @@ class SpellCastingServiceTest {
         @DisplayName("Creature from exile goes on stack and pays mana")
         void creatureFromExileGoesOnStack() {
             Card creature = createCreature("Exiled Bear", "{1}{G}");
-            gd.playerExiledCards.put(player1Id, new java.util.ArrayList<>(List.of(creature)));
+            gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
             addMana(player1Id, ManaColor.GREEN, 2);
 
@@ -788,7 +787,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Exiled Bear");
-            assertThat(gd.playerExiledCards.get(player1Id)).isEmpty();
+            assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
             assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
@@ -802,7 +801,7 @@ class SpellCastingServiceTest {
         @DisplayName("Playing from exile increments spellsCastThisTurn")
         void exilePlayIncrementsSpellCount() {
             Card creature = createCreature("Exiled Bear", "{G}");
-            gd.playerExiledCards.put(player1Id, new java.util.ArrayList<>(List.of(creature)));
+            gd.addToExile(player1Id, creature);
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
             addMana(player1Id, ManaColor.GREEN, 1);
             int before = gd.getSpellsCastThisTurnCount(player1Id);

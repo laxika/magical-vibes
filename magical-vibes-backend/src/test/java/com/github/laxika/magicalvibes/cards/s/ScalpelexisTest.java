@@ -72,7 +72,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(4);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
     }
@@ -99,7 +99,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(8);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(8);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("repeating the process"));
     }
@@ -131,7 +131,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(12);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(12);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
@@ -154,7 +154,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerExiledCards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
     }
 
@@ -172,7 +172,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
@@ -187,7 +187,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerExiledCards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
 
@@ -211,7 +211,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(6);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(6);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
@@ -252,7 +252,7 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        List<Card> exiledCards = gd.playerExiledCards.get(player2.getId());
+        List<Card> exiledCards = gd.getPlayerExiledCards(player2.getId());
         assertThat(exiledCards).extracting(Card::getName)
                 .containsExactly("Grizzly Bears", "Serra Angel", "Suntail Hawk", "Samite Healer");
     }

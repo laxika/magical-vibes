@@ -28,7 +28,7 @@ class GraveyardShovelTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId()).getFirst().getName()).isEqualTo("Shock");
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         harness.assertLife(player1, 22);
     }
@@ -49,7 +49,7 @@ class GraveyardShovelTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
         harness.assertLife(player1, 20);
     }
@@ -67,7 +67,7 @@ class GraveyardShovelTest extends BaseCardTest {
 
         // Only one card — auto-exiled, no choice needed
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         harness.assertLife(player1, 22);
     }
@@ -84,7 +84,7 @@ class GraveyardShovelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
         harness.assertLife(player1, 20);
     }
@@ -117,7 +117,7 @@ class GraveyardShovelTest extends BaseCardTest {
 
         // Auto-exile the single creature
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         harness.assertLife(player1, 22);
     }

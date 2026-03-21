@@ -85,7 +85,7 @@ class PrototypePortalTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Golem's Heart should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Golem's Heart"));
 
         // Golem's Heart should no longer be in hand

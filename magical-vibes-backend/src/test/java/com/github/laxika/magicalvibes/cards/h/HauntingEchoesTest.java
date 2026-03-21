@@ -66,7 +66,7 @@ class HauntingEchoesTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
     }
@@ -85,13 +85,13 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears exiled
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Plains stays in graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Plains"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Plains"));
     }
 
@@ -113,7 +113,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both should be exiled
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
 
@@ -159,7 +159,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No cards exiled
-        assertThat(gd.playerExiledCards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
 
         // Library size unchanged
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
@@ -187,7 +187,7 @@ class HauntingEchoesTest extends BaseCardTest {
                 .hasSize(2);
 
         // No cards exiled
-        assertThat(gd.playerExiledCards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     // ===== Multiple unique names =====
@@ -212,7 +212,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // All Grizzly Bears exiled (1 from graveyard + 1 from library)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
                 .hasSize(2);
 
@@ -252,7 +252,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));

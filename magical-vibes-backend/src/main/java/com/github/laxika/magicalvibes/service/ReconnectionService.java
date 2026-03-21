@@ -478,12 +478,10 @@ public class ReconnectionService {
                 // Collect CardViews from the KP pool
                 UUID kpPermanentId = gameData.knowledgePoolSourcePermanentId;
                 if (kpPermanentId != null) {
-                    List<Card> pool = gameData.permanentExiledCards.get(kpPermanentId);
-                    if (pool != null) {
-                        for (Card card : pool) {
-                            if (kpc.validCardIds().contains(card.getId())) {
-                                cardViews.add(cardViewFactory.create(card));
-                            }
+                    List<Card> pool = gameData.getCardsExiledByPermanent(kpPermanentId);
+                    for (Card card : pool) {
+                        if (kpc.validCardIds().contains(card.getId())) {
+                            cardViews.add(cardViewFactory.create(card));
                         }
                     }
                 }
@@ -495,7 +493,7 @@ public class ReconnectionService {
                 if (!playerId.equals(mfc.playerId())) {
                     return;
                 }
-                List<Card> exiledCards = gameData.playerExiledCards.getOrDefault(playerId, List.of());
+                List<Card> exiledCards = gameData.getPlayerExiledCards(playerId);
                 List<UUID> validCardIds = new ArrayList<>(mfc.validCardIds());
                 List<CardView> cardViews = exiledCards.stream()
                         .filter(c -> mfc.validCardIds().contains(c.getId()))
@@ -519,7 +517,7 @@ public class ReconnectionService {
                     .forEach(c -> names.add(c.getName()));
             gameData.playerDecks.getOrDefault(pid, List.of())
                     .forEach(c -> names.add(c.getName()));
-            gameData.playerExiledCards.getOrDefault(pid, List.of())
+            gameData.getPlayerExiledCards(pid)
                     .forEach(c -> names.add(c.getName()));
         }
         gameData.stack.forEach(se -> names.add(se.getCard().getName()));
@@ -541,7 +539,7 @@ public class ReconnectionService {
             gameData.playerDecks.getOrDefault(pid, List.of()).stream()
                     .filter(c -> !hasExcludedType(c, excludedTypes))
                     .forEach(c -> names.add(c.getName()));
-            gameData.playerExiledCards.getOrDefault(pid, List.of()).stream()
+            gameData.getPlayerExiledCards(pid).stream()
                     .filter(c -> !hasExcludedType(c, excludedTypes))
                     .forEach(c -> names.add(c.getName()));
         }

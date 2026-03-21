@@ -86,7 +86,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
 
@@ -101,7 +101,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Pacifism"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Pacifism"));
     }
 
@@ -136,7 +136,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         castAndExileTarget(artifactId);
 
         // Verify artifact is exiled
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Leonin Scimitar"));
 
         // Reset for follow-up spell
@@ -157,7 +157,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         // Exiled card returns to battlefield under owner's control
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
 
@@ -186,7 +186,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         // Exiled card returns to battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
 
@@ -276,7 +276,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         // No exile-return tracking should exist since target was gone
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
         // Nothing was exiled
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Leonin Scimitar"));
     }
 

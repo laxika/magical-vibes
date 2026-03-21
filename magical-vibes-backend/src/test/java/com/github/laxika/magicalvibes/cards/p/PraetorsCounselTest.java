@@ -81,7 +81,7 @@ class PraetorsCounselTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be in exile, not graveyard
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(counsel);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(counsel);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(counsel);
     }
 

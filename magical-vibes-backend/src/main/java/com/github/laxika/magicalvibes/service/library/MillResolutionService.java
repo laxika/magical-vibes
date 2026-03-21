@@ -102,7 +102,6 @@ public class MillResolutionService {
     void resolveExileTopCardsRepeatOnDuplicate(GameData gameData, StackEntry entry, ExileTopCardsRepeatOnDuplicateEffect effect) {
         UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String creatureName = entry.getCard().getName();
 
@@ -123,7 +122,7 @@ public class MillResolutionService {
             List<Card> exiledThisRound = new ArrayList<>();
             for (int i = 0; i < cardsToExile; i++) {
                 Card card = deck.removeFirst();
-                exiled.add(card);
+                gameData.addToExile(targetPlayerId, card);
                 exiledThisRound.add(card);
             }
 

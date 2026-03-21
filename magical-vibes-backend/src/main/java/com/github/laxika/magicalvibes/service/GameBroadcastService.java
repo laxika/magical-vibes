@@ -600,8 +600,8 @@ public class GameBroadcastService {
         // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
         Set<UUID> castableFromExileWithSource = getCastableExiledCardIds(gameData, playerId);
 
-        List<Card> exiledCards = gameData.playerExiledCards.get(playerId);
-        if (exiledCards == null) {
+        List<Card> exiledCards = gameData.getPlayerExiledCards(playerId);
+        if (exiledCards.isEmpty()) {
             return playable;
         }
 
@@ -773,11 +773,9 @@ public class GameBroadcastService {
             boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
             if (hasEffect) {
-                List<Card> exiledWithPerm = gameData.permanentExiledCards.get(perm.getId());
-                if (exiledWithPerm != null) {
-                    for (Card c : exiledWithPerm) {
-                        castableIds.add(c.getId());
-                    }
+                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
+                for (Card c : exiledWithPerm) {
+                    castableIds.add(c.getId());
                 }
             }
         }

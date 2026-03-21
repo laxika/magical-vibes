@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -800,17 +801,14 @@ public class GraveyardReturnResolutionService {
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
 
-        // Add to graveyard owner's exiled cards
+        // Add to graveyard owner's exiled cards, tracked with source permanent if available
         if (graveyardOwnerId != null) {
-            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
-        }
-
-        // Track as imprinted on source permanent
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId != null) {
-            gameData.permanentExiledCards
-                    .computeIfAbsent(sourcePermanentId, k -> Collections.synchronizedList(new ArrayList<>()))
-                    .add(targetCard);
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (sourcePermanentId != null) {
+                exileService.exileCardTrackedWithSource(gameData, graveyardOwnerId, targetCard, sourcePermanentId);
+            } else {
+                exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+            }
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
@@ -931,8 +929,9 @@ public class GraveyardReturnResolutionService {
         }
 
         int count = graveyard.size();
-        List<Card> exiledCards = gameData.playerExiledCards.get(targetPlayerId);
-        exiledCards.addAll(graveyard);
+        for (Card card : graveyard) {
+            gameData.addToExile(targetPlayerId, card);
+        }
         graveyard.clear();
 
         String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
@@ -993,7 +992,6 @@ public class GraveyardReturnResolutionService {
 
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
-        List<Card> exiledCards = gameData.playerExiledCards.get(targetPlayerId);
 
         // Separate basic land cards from non-basic-land cards in the graveyard
         List<Card> toExile = new ArrayList<>();
@@ -1017,7 +1015,9 @@ public class GraveyardReturnResolutionService {
 
         // Exile all non-basic-land cards from graveyard
         graveyard.removeAll(toExile);
-        exiledCards.addAll(toExile);
+        for (Card card : toExile) {
+            gameData.addToExile(targetPlayerId, card);
+        }
 
         // Collect unique card names from the exiled graveyard cards
         Set<String> exiledNames = new java.util.LinkedHashSet<>();
@@ -1033,7 +1033,9 @@ public class GraveyardReturnResolutionService {
             }
         }
         library.removeAll(libraryExiles);
-        exiledCards.addAll(libraryExiles);
+        for (Card card : libraryExiles) {
+            gameData.addToExile(targetPlayerId, card);
+        }
 
         // Shuffle library
         java.util.Collections.shuffle(library);
@@ -1082,10 +1084,7 @@ public class GraveyardReturnResolutionService {
         }
 
         // Remove from exile zone
-        List<Card> exiledCards = gameData.playerExiledCards.get(controllerId);
-        if (exiledCards != null) {
-            exiledCards.removeIf(c -> c.getId().equals(imprintedCard.getId()));
-        }
+        gameData.removeFromExile(imprintedCard.getId());
 
         // Put onto the battlefield
         Permanent perm = new Permanent(imprintedCard);
@@ -1120,22 +1119,18 @@ public class GraveyardReturnResolutionService {
         }
 
         // Find the owner by checking which player's exile zone has the card
-        UUID ownerId = null;
-        for (Map.Entry<UUID, List<Card>> exileEntry : gameData.playerExiledCards.entrySet()) {
-            if (exileEntry.getValue().stream().anyMatch(c -> c.getId().equals(imprintedCard.getId()))) {
-                ownerId = exileEntry.getKey();
-                break;
-            }
-        }
+        ExiledCardEntry exileEntry = gameData.findExiledCard(imprintedCard.getId());
 
-        if (ownerId == null) {
+        if (exileEntry == null) {
             String logMsg = cardName + "'s ability resolves but the exiled card is no longer in exile.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
+        UUID ownerId = exileEntry.ownerId();
+
         // Remove from exile zone
-        gameData.playerExiledCards.get(ownerId).removeIf(c -> c.getId().equals(imprintedCard.getId()));
+        gameData.removeFromExile(imprintedCard.getId());
 
         // Put into owner's hand
         gameData.addCardToHand(ownerId, imprintedCard);

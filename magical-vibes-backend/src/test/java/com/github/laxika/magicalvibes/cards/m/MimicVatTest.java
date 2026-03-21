@@ -85,7 +85,7 @@ class MimicVatTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Grizzly Bears should be exiled (in its owner's exile zone)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Mimic Vat should have Grizzly Bears imprinted

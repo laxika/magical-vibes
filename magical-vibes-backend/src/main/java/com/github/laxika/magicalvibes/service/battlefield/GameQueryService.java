@@ -307,8 +307,7 @@ public class GameQueryService {
     private <T> T findInExile(GameData gameData, UUID id, BiFunction<UUID, Card, T> mapper) {
         if (id == null) return null;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> exile = gameData.playerExiledCards.get(playerId);
-            if (exile == null) continue;
+            List<Card> exile = gameData.getPlayerExiledCards(playerId);
             for (Card c : exile) {
                 if (c.getId().equals(id)) return mapper.apply(playerId, c);
             }

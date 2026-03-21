@@ -309,7 +309,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Forbidden Alchemy"));
         // Should be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Forbidden Alchemy"));
     }
 

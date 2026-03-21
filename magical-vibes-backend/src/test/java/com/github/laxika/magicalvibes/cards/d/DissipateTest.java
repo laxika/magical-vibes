@@ -74,7 +74,7 @@ class DissipateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Countered creature is exiled, not in graveyard
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -102,7 +102,7 @@ class DissipateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Countered spell is exiled, not in graveyard
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Might of Oaks"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Might of Oaks"));

@@ -1794,7 +1794,6 @@ public class DamageResolutionService {
                                                       ExileUntilNonlandToHandRepeatIfHighMVEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
-        List<Card> exiled = gameData.playerExiledCards.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
 
@@ -1816,7 +1815,7 @@ public class DamageResolutionService {
                 Card card = deck.removeFirst();
 
                 if (card.hasType(CardType.LAND)) {
-                    exiled.add(card);
+                    gameData.addToExile(controllerId, card);
                     gameBroadcastService.logAndBroadcast(gameData,
                             playerName + " exiles " + card.getName() + " (land) (" + sourceName + ").");
                 } else {
@@ -1861,8 +1860,8 @@ public class DamageResolutionService {
             gameOutcomeService.checkWinCondition(gameData);
         }
 
-        log.info("Game {} - {} resolved {} ETB: {} cards to hand, {} lands exiled",
-                gameData.id, playerName, sourceName, cardsToHand, exiled.size());
+        log.info("Game {} - {} resolved {} ETB: {} cards to hand",
+                gameData.id, playerName, sourceName, cardsToHand);
     }
 
     /**

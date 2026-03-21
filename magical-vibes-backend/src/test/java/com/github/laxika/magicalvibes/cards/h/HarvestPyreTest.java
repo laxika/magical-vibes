@@ -61,7 +61,7 @@ class HarvestPyreTest extends BaseCardTest {
 
         // Two cards should be exiled from graveyard, one remains
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -161,7 +161,7 @@ class HarvestPyreTest extends BaseCardTest {
 
         // 1 damage kills a 1/1
         harness.assertNotOnBattlefield(player2, "Raging Goblin");
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
     }
 
@@ -183,7 +183,7 @@ class HarvestPyreTest extends BaseCardTest {
 
         // Exile cost already paid
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
 
         // Remove target before resolution
         gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(target.getId()));
@@ -191,6 +191,6 @@ class HarvestPyreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cards are still exiled (cost is not refunded)
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
 }

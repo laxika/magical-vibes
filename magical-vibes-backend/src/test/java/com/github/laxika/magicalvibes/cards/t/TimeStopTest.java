@@ -68,7 +68,7 @@ class TimeStopTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Time Stop is exiled, not in graveyard
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Time Stop"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Time Stop"));
@@ -118,7 +118,7 @@ class TimeStopTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears is exiled (not on battlefield, not in graveyard)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
@@ -126,7 +126,7 @@ class TimeStopTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Time Stop itself is exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Time Stop"));
     }
 
@@ -163,7 +163,7 @@ class TimeStopTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Serra Angel is exiled from the stack
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Serra Angel"));
 
         // Serra Angel is NOT on the battlefield

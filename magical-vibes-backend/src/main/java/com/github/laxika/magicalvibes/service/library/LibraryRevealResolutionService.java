@@ -819,7 +819,7 @@ public class LibraryRevealResolutionService {
                     .forEach(c -> names.add(c.getName()));
             gameData.playerDecks.getOrDefault(pid, List.of())
                     .forEach(c -> names.add(c.getName()));
-            gameData.playerExiledCards.getOrDefault(pid, List.of())
+            gameData.getPlayerExiledCards(pid)
                     .forEach(c -> names.add(c.getName()));
         }
         gameData.stack.forEach(se -> names.add(se.getCard().getName()));

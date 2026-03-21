@@ -67,8 +67,6 @@ class TurnResolutionServiceTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
     }

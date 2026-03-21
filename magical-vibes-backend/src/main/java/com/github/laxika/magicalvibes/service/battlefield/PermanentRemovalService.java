@@ -509,8 +509,7 @@ public class PermanentRemovalService {
         UUID ownerId = pending.controllerId();
 
         // Remove card from exile zone
-        List<Card> exiledCards = gameData.playerExiledCards.get(ownerId);
-        if (exiledCards != null && exiledCards.remove(exiledCard)) {
+        if (gameData.removeFromExile(exiledCard.getId())) {
             // Return as a new permanent
             Permanent perm = new Permanent(exiledCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);

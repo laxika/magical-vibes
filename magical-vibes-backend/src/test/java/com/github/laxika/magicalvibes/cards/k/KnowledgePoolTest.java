@@ -79,12 +79,12 @@ class KnowledgePoolTest extends BaseCardTest {
 
         // Cards should be in the KP's permanentExiledCards pool
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
-        List<Card> pool = gd.permanentExiledCards.get(kpPermId);
+        List<Card> pool = gd.getCardsExiledByPermanent(kpPermId);
         assertThat(pool).hasSize(6); // 3 from each player
 
         // Cards should also be in each player's exile zone
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
     }
 
     @Test
@@ -101,11 +101,11 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
-        assertThat(gd.permanentExiledCards.get(kpPermId)).hasSize(3); // 2 + 1
+        assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(3); // 2 + 1
     }
 
     // ===== Cast trigger — spell from hand =====
@@ -154,7 +154,7 @@ class KnowledgePoolTest extends BaseCardTest {
         // Put a non-targeted creature in the pool
         Card bears = new GrizzlyBears();
         setupKnowledgePoolManually(List.of(bears));
-        gd.playerExiledCards.get(player1.getId()).add(bears);
+        gd.getPlayerExiledCards(player1.getId()).add(bears);
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
 
@@ -170,7 +170,7 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(se -> se.getCard().getId().equals(bears.getId()));
 
         // The chosen card should no longer be in the KP pool
-        List<Card> pool = gd.permanentExiledCards.get(kpPermId);
+        List<Card> pool = gd.getCardsExiledByPermanent(kpPermId);
         assertThat(pool).noneMatch(c -> c.getId().equals(bears.getId()));
     }
 
@@ -182,7 +182,7 @@ class KnowledgePoolTest extends BaseCardTest {
         setupKnowledgePoolWithPool();
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
-        int poolSizeBefore = gd.permanentExiledCards.get(kpPermId).size();
+        int poolSizeBefore = gd.getCardsExiledByPermanent(kpPermId).size();
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -193,7 +193,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.handleMultipleGraveyardCardsChosen(player1, List.of());
 
         // Pool should have grown by 1 (the exiled original spell)
-        assertThat(gd.permanentExiledCards.get(kpPermId)).hasSize(poolSizeBefore + 1);
+        assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore + 1);
 
         // Interaction should be cleared
         assertThat(gd.interaction.awaitingInputType()).isNull();
@@ -207,7 +207,7 @@ class KnowledgePoolTest extends BaseCardTest {
         setupKnowledgePoolWithPool();
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
-        List<Card> pool = gd.permanentExiledCards.get(kpPermId);
+        List<Card> pool = gd.getCardsExiledByPermanent(kpPermId);
 
         Card nonlandCard = pool.stream()
                 .filter(c -> !c.hasType(CardType.LAND))
@@ -239,7 +239,7 @@ class KnowledgePoolTest extends BaseCardTest {
         setupKnowledgePoolWithPool();
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
-        int poolSizeBefore = gd.permanentExiledCards.get(kpPermId).size();
+        int poolSizeBefore = gd.getCardsExiledByPermanent(kpPermId).size();
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -255,7 +255,7 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isNull();
 
         // Pool should be unchanged
-        assertThat(gd.permanentExiledCards.get(kpPermId)).hasSize(poolSizeBefore);
+        assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore);
     }
 
     // ===== Nonland filter =====
@@ -298,7 +298,7 @@ class KnowledgePoolTest extends BaseCardTest {
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
         // The just-exiled Counsel should NOT be in the valid choices
-        Card exiledCounsel = gd.permanentExiledCards.get(kpPermId).stream()
+        Card exiledCounsel = gd.getCardsExiledByPermanent(kpPermId).stream()
                 .filter(c -> c.getName().equals("Counsel of the Soratami"))
                 .findFirst().orElse(null);
         if (exiledCounsel != null) {
@@ -338,7 +338,7 @@ class KnowledgePoolTest extends BaseCardTest {
     void creatureFromPool() {
         Card bears = new GrizzlyBears();
         setupKnowledgePoolManually(List.of(bears));
-        gd.playerExiledCards.get(player1.getId()).add(bears);
+        gd.getPlayerExiledCards(player1.getId()).add(bears);
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -367,7 +367,7 @@ class KnowledgePoolTest extends BaseCardTest {
     void targetedSpellFromPool() {
         Card shock = new Shock();
         setupKnowledgePoolManually(List.of(shock));
-        gd.playerExiledCards.get(player1.getId()).add(shock);
+        gd.getPlayerExiledCards(player1.getId()).add(shock);
 
         // Give player2 a creature to target
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -434,6 +434,8 @@ class KnowledgePoolTest extends BaseCardTest {
     private void setupKnowledgePoolManually(List<Card> poolCards) {
         harness.addToBattlefield(player1, new KnowledgePool());
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
-        gd.permanentExiledCards.put(kpPermId, Collections.synchronizedList(new ArrayList<>(poolCards)));
+        for (Card card : poolCards) {
+            gd.addToExile(player1.getId(), card, kpPermId);
+        }
     }
 }

@@ -48,7 +48,7 @@ class PsychicSurgeryTest extends BaseCardTest {
     void decliningMayAbilityDoesNothing() {
         harness.addToBattlefield(player1, new PsychicSurgery());
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
-        int exileSizeBefore = gd.playerExiledCards.get(player1.getId()).size();
+        int exileSizeBefore = gd.getPlayerExiledCards(player1.getId()).size();
 
         LibraryShuffleHelper.shuffleLibrary(gd, player2.getId());
 
@@ -59,7 +59,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(exileSizeBefore);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(exileSizeBefore);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -98,7 +98,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Island should be exiled in player2's exile zone (card owner's zone)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(topCard.getId()));
 
         // Forest should be on top of player2's library, GrizzlyBears after it
@@ -127,7 +127,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         deck.clear();
         deck.addAll(List.of(topCard, secondCard, thirdCard));
 
-        int exileSizeBefore = gd.playerExiledCards.get(player1.getId()).size();
+        int exileSizeBefore = gd.getPlayerExiledCards(player1.getId()).size();
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
@@ -143,7 +143,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, -1);
 
         // Nothing should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(exileSizeBefore);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(exileSizeBefore);
 
         // Should be in LIBRARY_REORDER state to reorder the 2 cards on top
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
@@ -217,7 +217,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Card should be exiled in player2's exile zone (card owner's zone)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(onlyCard.getId()));
 
         // Library should be empty

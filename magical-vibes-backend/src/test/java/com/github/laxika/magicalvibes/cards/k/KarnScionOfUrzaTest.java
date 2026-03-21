@@ -124,7 +124,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
             // Forest should be exiled with a silver counter
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Forest"));
             assertThat(gd.exiledCardsWithSilverCounters).contains(forest.getId());
         }
@@ -149,7 +149,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Forest"));
 
             // Grizzly Bears exiled with silver counter
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.exiledCardsWithSilverCounters).contains(bears.getId());
         }
@@ -198,8 +198,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             Card exiledCard = new GrizzlyBears();
 
             // Set up exiled card with silver counter
-            gd.playerExiledCards.computeIfAbsent(player1.getId(), k -> java.util.Collections.synchronizedList(new ArrayList<>()))
-                    .add(exiledCard);
+            gd.addToExile(player1.getId(), exiledCard);
             gd.exiledCardsWithSilverCounters.add(exiledCard.getId());
 
             harness.activateAbility(player1, 0, 1, null, null);
@@ -210,7 +209,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
             // Card should no longer be in exile
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             // Silver counter tracking should be removed
             assertThat(gd.exiledCardsWithSilverCounters).doesNotContain(exiledCard.getId());
@@ -223,8 +222,8 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             Card card1 = new GrizzlyBears();
             Card card2 = new Forest();
 
-            gd.playerExiledCards.computeIfAbsent(player1.getId(), k -> java.util.Collections.synchronizedList(new ArrayList<>()))
-                    .addAll(List.of(card1, card2));
+            gd.addToExile(player1.getId(), card1);
+            gd.addToExile(player1.getId(), card2);
             gd.exiledCardsWithSilverCounters.add(card1.getId());
             gd.exiledCardsWithSilverCounters.add(card2.getId());
 
@@ -241,7 +240,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
             // Forest still in exile with silver counter
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Forest"));
             assertThat(gd.exiledCardsWithSilverCounters).contains(card2.getId());
             assertThat(gd.exiledCardsWithSilverCounters).doesNotContain(card1.getId());
@@ -267,8 +266,8 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             Card withSilver = new Forest();
 
             // noSilver is exiled but has no silver counter
-            gd.playerExiledCards.computeIfAbsent(player1.getId(), k -> java.util.Collections.synchronizedList(new ArrayList<>()))
-                    .addAll(List.of(noSilver, withSilver));
+            gd.addToExile(player1.getId(), noSilver);
+            gd.addToExile(player1.getId(), withSilver);
             gd.exiledCardsWithSilverCounters.add(withSilver.getId());
 
             harness.activateAbility(player1, 0, 1, null, null);
@@ -278,7 +277,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Forest"));
             // Grizzly Bears stays in exile
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
     }

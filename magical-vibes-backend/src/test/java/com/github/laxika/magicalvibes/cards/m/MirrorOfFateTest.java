@@ -55,8 +55,7 @@ class MirrorOfFateTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).add(elves);
         harness.setHand(player1, List.of());
 
-        // Ensure no exiled cards
-        gd.playerExiledCards.get(player1.getId()).clear();
+        // Ensure no exiled cards (already empty by default)
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -65,7 +64,7 @@ class MirrorOfFateTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
 
         // Exiled cards should include the library cards
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
@@ -86,7 +85,7 @@ class MirrorOfFateTest extends BaseCardTest {
 
         // Put a card in exile
         Card exiledBears = new GrizzlyBears();
-        gd.playerExiledCards.get(player1.getId()).add(exiledBears);
+        gd.addToExile(player1.getId(), exiledBears);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -110,7 +109,7 @@ class MirrorOfFateTest extends BaseCardTest {
 
         // Put one card in exile
         Card exiledBears = new GrizzlyBears();
-        gd.playerExiledCards.get(player1.getId()).add(exiledBears);
+        gd.addToExile(player1.getId(), exiledBears);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -124,11 +123,11 @@ class MirrorOfFateTest extends BaseCardTest {
         assertThat(library.getFirst().getName()).isEqualTo("Grizzly Bears");
 
         // The original library card should be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
 
         // Chosen card should no longer be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getId().equals(exiledBears.getId()));
     }
 
@@ -148,8 +147,8 @@ class MirrorOfFateTest extends BaseCardTest {
         // Put cards in exile
         Card exiledBears = new GrizzlyBears();
         Card exiledElves = new LlanowarElves();
-        gd.playerExiledCards.get(player1.getId()).add(exiledBears);
-        gd.playerExiledCards.get(player1.getId()).add(exiledElves);
+        gd.addToExile(player1.getId(), exiledBears);
+        gd.addToExile(player1.getId(), exiledElves);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -162,12 +161,12 @@ class MirrorOfFateTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
 
         // Cards should be removed from exile already
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getId().equals(exiledBears.getId()))
                 .noneMatch(c -> c.getId().equals(exiledElves.getId()));
 
         // The original library card should be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
 
         // Complete reorder: put Elves on top, Bears second (order: [1, 0])
@@ -193,7 +192,7 @@ class MirrorOfFateTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).add(libraryCard);
 
         Card exiledCard = new Shock();
-        gd.playerExiledCards.get(player1.getId()).add(exiledCard);
+        gd.addToExile(player1.getId(), exiledCard);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -205,7 +204,7 @@ class MirrorOfFateTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
 
         // All cards should be in exile (original library card + original exiled card)
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
                 .anyMatch(c -> c.getName().equals("Shock"));
     }
@@ -220,7 +219,7 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MirrorOfFate());
         harness.setHand(player1, List.of());
 
-        gd.playerExiledCards.get(player1.getId()).clear();
+        // Exile zone is already empty by default
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -244,7 +243,7 @@ class MirrorOfFateTest extends BaseCardTest {
         List<Card> exiledCards = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             Card c = new GrizzlyBears();
-            gd.playerExiledCards.get(player1.getId()).add(c);
+            gd.addToExile(player1.getId(), c);
             exiledCards.add(c);
         }
 
@@ -267,7 +266,7 @@ class MirrorOfFateTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(7);
 
         // Remaining 3 should still be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }
 
     // ===== Does not affect opponent's exile or library =====
@@ -286,10 +285,9 @@ class MirrorOfFateTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).add(opponentLibraryCard);
 
         Card opponentExiledCard = new Shock();
-        gd.playerExiledCards.get(player2.getId()).add(opponentExiledCard);
+        gd.addToExile(player2.getId(), opponentExiledCard);
 
-        // Player1 has no exiled cards
-        gd.playerExiledCards.get(player1.getId()).clear();
+        // Player1 has no exiled cards (already empty by default)
         gd.playerDecks.get(player1.getId()).clear();
 
         harness.activateAbility(player1, 0, null, null);
@@ -298,7 +296,7 @@ class MirrorOfFateTest extends BaseCardTest {
         // Opponent's library and exile should be unchanged
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId()).get(0).getName()).isEqualTo("Grizzly Bears");
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
     }
 }

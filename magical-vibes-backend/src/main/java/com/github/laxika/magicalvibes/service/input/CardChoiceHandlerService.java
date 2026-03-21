@@ -240,14 +240,11 @@ public class CardChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
 
-        // Add to player's exile zone
-        exileService.exileCard(gameData, playerId, card);
-
-        // Track with source permanent (e.g. Karn Liberated)
+        // Add to player's exile zone, tracked with source permanent if available (e.g. Karn Liberated)
         if (sourcePermanentId != null) {
-            List<Card> pool = gameData.permanentExiledCards.computeIfAbsent(sourcePermanentId,
-                    k -> java.util.Collections.synchronizedList(new ArrayList<>()));
-            pool.add(card);
+            exileService.exileCardTrackedWithSource(gameData, playerId, card, sourcePermanentId);
+        } else {
+            exileService.exileCard(gameData, playerId, card);
         }
 
         String logEntry = player.getUsername() + " exiles " + card.getName() + " from hand.";

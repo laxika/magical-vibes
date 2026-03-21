@@ -115,12 +115,12 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Card should be tracked in permanentExiledCards
-        List<Card> exiledWithRona = gd.permanentExiledCards.get(rona.getId());
+        List<Card> exiledWithRona = gd.getCardsExiledByPermanent(rona.getId());
         assertThat(exiledWithRona).isNotNull().hasSize(1);
         assertThat(exiledWithRona.getFirst().getName()).isEqualTo("Rod of Ruin");
 
         // Card should also be in player exiled cards
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
     }
 
@@ -185,11 +185,11 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Top card should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Should be tracked with Rona
-        List<Card> exiledWithRona = gd.permanentExiledCards.get(rona.getId());
+        List<Card> exiledWithRona = gd.getCardsExiledByPermanent(rona.getId());
         assertThat(exiledWithRona).isNotNull().hasSize(1);
         assertThat(exiledWithRona.getFirst().getName()).isEqualTo("Grizzly Bears");
     }
@@ -216,9 +216,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
         // Directly set up an exiled card tracked with Rona
         Card bears = new GrizzlyBears();
-        gd.playerExiledCards.computeIfAbsent(player1.getId(), k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(bears);
-        gd.permanentExiledCards.put(rona.getId(), Collections.synchronizedList(new ArrayList<>(List.of(bears))));
+        gd.addToExile(player1.getId(), bears, rona.getId());
 
         // Add mana to cast it
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -233,7 +231,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
         // Should be removed from permanentExiledCards
-        List<Card> exiledWithRona = gd.permanentExiledCards.get(rona.getId());
+        List<Card> exiledWithRona = gd.getCardsExiledByPermanent(rona.getId());
         assertThat(exiledWithRona).noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
@@ -244,9 +242,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
         // Set up exiled card tracked with Rona
         Card bears = new GrizzlyBears();
-        gd.playerExiledCards.computeIfAbsent(player1.getId(), k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(bears);
-        gd.permanentExiledCards.put(rona.getId(), Collections.synchronizedList(new ArrayList<>(List.of(bears))));
+        gd.addToExile(player1.getId(), bears, rona.getId());
 
         // Remove Rona from battlefield
         gd.playerBattlefields.get(player1.getId()).clear();
@@ -281,8 +277,8 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Verify artifact is exiled with Rona
-        assertThat(gd.permanentExiledCards.get(rona.getId())).hasSize(1);
-        assertThat(gd.permanentExiledCards.get(rona.getId()).getFirst().getName()).isEqualTo("Rod of Ruin");
+        assertThat(gd.getCardsExiledByPermanent(rona.getId())).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(rona.getId()).getFirst().getName()).isEqualTo("Rod of Ruin");
 
         // Cast the exiled artifact
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -294,7 +290,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Rod of Ruin"));
 
         // Should no longer be tracked with Rona
-        assertThat(gd.permanentExiledCards.get(rona.getId()))
+        assertThat(gd.getCardsExiledByPermanent(rona.getId()))
                 .noneMatch(c -> c.getName().equals("Rod of Ruin"));
     }
 

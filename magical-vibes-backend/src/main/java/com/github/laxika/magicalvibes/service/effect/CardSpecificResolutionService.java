@@ -819,15 +819,13 @@ public class CardSpecificResolutionService {
         // Step 1: Collect non-Aura permanent cards exiled with Karn
         List<Card> karnExiledCards = new ArrayList<>();
         if (sourcePermanentId != null) {
-            List<Card> pool = gameData.permanentExiledCards.get(sourcePermanentId);
-            if (pool != null) {
-                for (Card card : pool) {
-                    boolean isAura = card.getSubtypes().contains(CardSubtype.AURA);
-                    boolean isPermanent = !card.hasType(CardType.INSTANT)
-                            && !card.hasType(CardType.SORCERY);
-                    if (isPermanent && !isAura) {
-                        karnExiledCards.add(card);
-                    }
+            List<Card> pool = gameData.getCardsExiledByPermanent(sourcePermanentId);
+            for (Card card : pool) {
+                boolean isAura = card.getSubtypes().contains(CardSubtype.AURA);
+                boolean isPermanent = !card.hasType(CardType.INSTANT)
+                        && !card.hasType(CardType.SORCERY);
+                if (isPermanent && !isAura) {
+                    karnExiledCards.add(card);
                 }
             }
         }
@@ -889,12 +887,14 @@ public class CardSpecificResolutionService {
             }
 
             // From exile
-            List<Card> exile = gameData.playerExiledCards.get(playerId);
-            if (exile != null) {
-                // Remove cards that Karn is keeping
-                exile.removeAll(karnExiledCards);
-                allCards.addAll(exile);
-                exile.clear();
+            List<Card> exile = gameData.getPlayerExiledCards(playerId);
+            // Remove cards that Karn is keeping — they stay in exile
+            List<Card> exileToReturn = new ArrayList<>(exile);
+            exileToReturn.removeAll(karnExiledCards);
+            allCards.addAll(exileToReturn);
+            // Remove the non-Karn cards from the unified exile list
+            for (Card c : exileToReturn) {
+                gameData.removeFromExile(c.getId());
             }
 
             // From battlefield (already collected above)
@@ -915,7 +915,7 @@ public class CardSpecificResolutionService {
 
         // Step 3: Clear all game state
         gameData.stack.clear();
-        gameData.permanentExiledCards.clear();
+        gameData.clearAllSourceTracking();
         gameData.stolenCreatures.clear();
         gameData.untilEndOfTurnStolenCreatures.clear();
         gameData.enchantmentDependentStolenCreatures.clear();
@@ -1102,7 +1102,7 @@ public class CardSpecificResolutionService {
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         // Find all exiled cards owned by the controller with silver counters
-        List<Card> exiledCards = gameData.playerExiledCards.getOrDefault(controllerId, List.of());
+        List<Card> exiledCards = gameData.getPlayerExiledCards(controllerId);
         List<Card> silverCards = exiledCards.stream()
                 .filter(c -> gameData.exiledCardsWithSilverCounters.contains(c.getId()))
                 .toList();
@@ -1117,7 +1117,7 @@ public class CardSpecificResolutionService {
         if (silverCards.size() == 1) {
             // Only one card — put it directly in hand
             Card card = silverCards.getFirst();
-            exiledCards.remove(card);
+            gameData.removeFromExile(card.getId());
             gameData.exiledCardsWithSilverCounters.remove(card.getId());
             gameData.addCardToHand(controllerId, card);
 

@@ -59,7 +59,7 @@ class SkaabGoliathTest extends BaseCardTest {
 
         // Two creature cards exiled, one creature remains in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -146,7 +146,7 @@ class SkaabGoliathTest extends BaseCardTest {
 
         // Exile cost already paid
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -164,6 +164,6 @@ class SkaabGoliathTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
 }

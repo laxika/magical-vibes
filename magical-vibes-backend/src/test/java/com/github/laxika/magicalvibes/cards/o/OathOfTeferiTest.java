@@ -45,7 +45,7 @@ class OathOfTeferiTest extends BaseCardTest {
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
 
@@ -73,7 +73,7 @@ class OathOfTeferiTest extends BaseCardTest {
             // Bears should be back on battlefield
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         }
 

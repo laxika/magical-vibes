@@ -85,7 +85,7 @@ class CurseOfOblivionTest extends BaseCardTest {
 
         // Both exiled, one remains in graveyard
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
     }
 
     // ===== Upkeep trigger with graveyard <= 2 cards =====
@@ -102,7 +102,7 @@ class CurseOfOblivionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger — auto-exiles both
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
     }
 
     @Test
@@ -116,7 +116,7 @@ class CurseOfOblivionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
     }
 
     // ===== Empty graveyard =====
@@ -131,7 +131,7 @@ class CurseOfOblivionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     // ===== Trigger timing =====
@@ -148,7 +148,7 @@ class CurseOfOblivionTest extends BaseCardTest {
 
         // Player1's graveyard should be untouched
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     // ===== Removal =====
@@ -167,7 +167,7 @@ class CurseOfOblivionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerExiledCards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     // ===== Helpers =====

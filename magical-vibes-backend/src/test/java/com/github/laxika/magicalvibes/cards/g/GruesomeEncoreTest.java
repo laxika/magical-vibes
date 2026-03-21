@@ -109,7 +109,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
         // Creature should be in exile (original owner's)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
@@ -144,7 +144,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         // Creature should be in exile (original owner's)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
@@ -179,7 +179,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
         // Creature should be in exile (original owner's)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 

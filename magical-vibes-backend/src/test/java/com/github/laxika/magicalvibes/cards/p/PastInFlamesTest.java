@@ -99,7 +99,7 @@ class PastInFlamesTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Shock"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
     }
 
@@ -172,7 +172,7 @@ class PastInFlamesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Past in Flames should be exiled (flashback exile)
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Past in Flames"));
 
         // Shock should have gained flashback

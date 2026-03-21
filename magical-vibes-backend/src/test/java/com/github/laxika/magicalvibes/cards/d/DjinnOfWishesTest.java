@@ -139,7 +139,7 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         // Card is exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
         // Card removed from library
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(shock);
@@ -191,7 +191,7 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ability
 
         // No may prompt — land is exiled directly
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
         // Removed from library
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(forest);

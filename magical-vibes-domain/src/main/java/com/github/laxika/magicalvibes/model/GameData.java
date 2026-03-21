@@ -73,7 +73,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → poison counters to give its controller when it dies this turn. */
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
-    public final Map<UUID, List<Card>> playerExiledCards = new ConcurrentHashMap<>();
+    /** Unified exile zone: every exiled card with its owner and optional source permanent. */
+    public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
@@ -244,8 +245,6 @@ public class GameData {
     /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
     public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
 
-    /** Maps permanent ID → cards exiled with that permanent (e.g. Knowledge Pool). */
-    public final Map<UUID, List<Card>> permanentExiledCards = new ConcurrentHashMap<>();
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
     /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
@@ -407,6 +406,67 @@ public class GameData {
             }
         }
         return false;
+    }
+
+    // ===== Exile zone helpers =====
+
+    /** Returns cards in a player's exile zone (by owner). Never null. */
+    public List<Card> getPlayerExiledCards(UUID ownerId) {
+        return exiledCards.stream()
+                .filter(e -> e.ownerId().equals(ownerId))
+                .map(ExiledCardEntry::card)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+    }
+
+    /** Returns cards exiled by a specific permanent (by source permanent ID). Never null. */
+    public List<Card> getCardsExiledByPermanent(UUID sourcePermanentId) {
+        if (sourcePermanentId == null) return new ArrayList<>();
+        return exiledCards.stream()
+                .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                .map(ExiledCardEntry::card)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+    }
+
+    /** Adds a card to exile without source tracking. */
+    public void addToExile(UUID ownerId, Card card) {
+        exiledCards.add(new ExiledCardEntry(card, ownerId, null));
+    }
+
+    /** Adds a card to exile with source permanent tracking. */
+    public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId) {
+        exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId));
+    }
+
+    /** Removes an exiled card by card ID. Returns true if found and removed. */
+    public boolean removeFromExile(UUID cardId) {
+        return exiledCards.removeIf(e -> e.card().getId().equals(cardId));
+    }
+
+    /** Finds an exiled card entry by card ID, or null if not found. */
+    public ExiledCardEntry findExiledCard(UUID cardId) {
+        return exiledCards.stream()
+                .filter(e -> e.card().getId().equals(cardId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /** Removes all exile entries tracked with the given source permanent. */
+    public void clearExiledByPermanent(UUID sourcePermanentId) {
+        exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
+    }
+
+    /** Removes source tracking from exile entries (sets sourcePermanentId to null). Used by Karn restart. */
+    public void clearAllSourceTracking() {
+        List<ExiledCardEntry> updated = new ArrayList<>();
+        var it = exiledCards.iterator();
+        while (it.hasNext()) {
+            ExiledCardEntry e = it.next();
+            if (e.sourcePermanentId() != null) {
+                it.remove();
+                updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null));
+            }
+        }
+        exiledCards.addAll(updated);
     }
 
     /**
@@ -582,7 +642,7 @@ public class GameData {
         this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.playerHands.forEach((k, v) -> copy.playerHands.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
-        this.playerExiledCards.forEach((k, v) -> copy.playerExiledCards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        copy.exiledCards.addAll(this.exiledCards);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.pendingKarnScionControllerId = this.pendingKarnScionControllerId;
@@ -743,9 +803,6 @@ public class GameData {
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
 
-        // --- Per-permanent exile tracking (Knowledge Pool, etc.) ---
-        this.permanentExiledCards.forEach((k, v) ->
-                copy.permanentExiledCards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
 

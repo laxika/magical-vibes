@@ -80,8 +80,6 @@ class MillResolutionServiceTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
     }
 
@@ -308,7 +306,7 @@ class MillResolutionServiceTest {
 
             service.resolveExileTopCardsRepeatOnDuplicate(gd, entry, effect);
 
-            assertThat(gd.playerExiledCards.get(player2Id)).hasSize(2);
+            assertThat(gd.getPlayerExiledCards(player2Id)).hasSize(2);
             assertThat(gd.playerDecks.get(player2Id)).hasSize(1);
         }
 
@@ -327,7 +325,7 @@ class MillResolutionServiceTest {
 
             // First round exiles "Same", "Same" (duplicate → repeat)
             // Second round exiles "Unique1", "Unique2" (no duplicate → stop)
-            assertThat(gd.playerExiledCards.get(player2Id)).hasSize(4);
+            assertThat(gd.getPlayerExiledCards(player2Id)).hasSize(4);
             assertThat(gd.playerDecks.get(player2Id)).isEmpty();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("share the same name")));
@@ -342,7 +340,7 @@ class MillResolutionServiceTest {
 
             service.resolveExileTopCardsRepeatOnDuplicate(gd, entry, effect);
 
-            assertThat(gd.playerExiledCards.get(player2Id)).isEmpty();
+            assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
         }

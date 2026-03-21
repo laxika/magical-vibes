@@ -103,8 +103,6 @@ class StepTriggerServiceTest {
         gd.playerHands.put(player2Id, new ArrayList<>());
         gd.playerGraveyards.put(player1Id, new ArrayList<>());
         gd.playerGraveyards.put(player2Id, new ArrayList<>());
-        gd.playerExiledCards.put(player1Id, new ArrayList<>());
-        gd.playerExiledCards.put(player2Id, new ArrayList<>());
     }
 
     @Nested
@@ -965,14 +963,14 @@ class StepTriggerServiceTest {
         @DisplayName("Pending exile returns return cards from exile to battlefield")
         void pendingExileReturnsProcessed() {
             Card card = createCardWithName("Exiled Card");
-            gd.playerExiledCards.get(player1Id).add(card);
+            gd.getPlayerExiledCards(player1Id).add(card);
             gd.pendingExileReturns.add(new PendingExileReturn(card, player1Id, false));
 
             sut.handleEndStepTriggers(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
             verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player1Id), eq(card), any(), eq(false));
-            assertThat(gd.playerExiledCards.get(player1Id)).doesNotContain(card);
+            assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(card);
             assertThat(gd.pendingExileReturns).isEmpty();
         }
 
@@ -980,7 +978,7 @@ class StepTriggerServiceTest {
         @DisplayName("Pending exile returns with returnTapped taps the permanent")
         void pendingExileReturnsTapped() {
             Card card = createCardWithName("Exiled Card");
-            gd.playerExiledCards.get(player1Id).add(card);
+            gd.getPlayerExiledCards(player1Id).add(card);
             gd.pendingExileReturns.add(new PendingExileReturn(card, player1Id, true));
 
             sut.handleEndStepTriggers(gd);

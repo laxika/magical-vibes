@@ -229,7 +229,7 @@ class KarnsTemporalSunderingTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
     }
 
@@ -265,7 +265,7 @@ class KarnsTemporalSunderingTest extends BaseCardTest {
         // Spell exiled
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Karn's Temporal Sundering"));
     }
 }

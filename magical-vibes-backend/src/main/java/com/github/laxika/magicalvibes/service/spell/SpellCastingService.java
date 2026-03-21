@@ -395,8 +395,7 @@ public class SpellCastingService {
         if (targetId != null && !unwrappedNeedsSpellTarget) {
             if (needsExileTargeting) {
                 if (exileReturnEffect.ownedOnly()) {
-                    boolean inControllersExile = gameData.playerExiledCards
-                            .getOrDefault(playerId, List.of())
+                    boolean inControllersExile = gameData.getPlayerExiledCards(playerId)
                             .stream()
                             .anyMatch(c -> c.getId().equals(targetId));
                     if (!inControllersExile) {
@@ -883,7 +882,7 @@ public class SpellCastingService {
         }
         int exiledPower = exiledCard.getPower() != null ? exiledCard.getPower() : 0;
         graveyard.remove((int) exileGraveyardCardIndex);
-        gameData.playerExiledCards.computeIfAbsent(playerId, k -> java.util.Collections.synchronizedList(new ArrayList<>())).add(exiledCard);
+        gameData.addToExile(playerId, exiledCard);
         gameBroadcastService.logAndBroadcast(gameData,
                 player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
         if (cost.trackExiledPower()) {
@@ -915,9 +914,8 @@ public class SpellCastingService {
             Card exiledCard = graveyard.remove(idx);
             exiledCards.add(exiledCard);
         }
-        List<Card> exileZone = gameData.playerExiledCards.computeIfAbsent(playerId, k -> java.util.Collections.synchronizedList(new ArrayList<>()));
-        exileZone.addAll(exiledCards);
         for (Card exiledCard : exiledCards) {
+            gameData.addToExile(playerId, exiledCard);
             gameBroadcastService.logAndBroadcast(gameData,
                     player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
         }
@@ -956,9 +954,8 @@ public class SpellCastingService {
             Card exiledCard = graveyard.remove(idx);
             exiledCards.add(exiledCard);
         }
-        List<Card> exileZone = gameData.playerExiledCards.computeIfAbsent(playerId, k -> java.util.Collections.synchronizedList(new ArrayList<>()));
-        exileZone.addAll(exiledCards);
         for (Card exiledCard : exiledCards) {
+            gameData.addToExile(playerId, exiledCard);
             gameBroadcastService.logAndBroadcast(gameData,
                     player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
         }
@@ -1175,8 +1172,8 @@ public class SpellCastingService {
         UUID playerId = player.getId();
 
         // Find the card in exile
-        List<Card> exiledCards = gameData.playerExiledCards.get(playerId);
-        if (exiledCards == null) {
+        List<Card> exiledCards = gameData.getPlayerExiledCards(playerId);
+        if (exiledCards.isEmpty()) {
             throw new IllegalStateException("No exiled cards");
         }
 
@@ -1185,15 +1182,10 @@ public class SpellCastingService {
                 || hasCastFromExiledWithSourcePermission(gameData, playerId, exileCardId);
         // Permission check is deferred until after we find the card — ExileCast cards bypass it
 
-        Card card = null;
-        int cardIndex = -1;
-        for (int i = 0; i < exiledCards.size(); i++) {
-            if (exiledCards.get(i).getId().equals(exileCardId)) {
-                card = exiledCards.get(i);
-                cardIndex = i;
-                break;
-            }
-        }
+        Card card = exiledCards.stream()
+                .filter(c -> c.getId().equals(exileCardId))
+                .findFirst()
+                .orElse(null);
         if (card == null) {
             throw new IllegalStateException("Card not found in exile");
         }
@@ -1217,13 +1209,8 @@ public class SpellCastingService {
         }
 
         // Remove from exile and clean up permission
-        exiledCards.remove(cardIndex);
+        gameData.removeFromExile(exileCardId);
         gameData.exilePlayPermissions.remove(exileCardId);
-
-        // Also remove from permanentExiledCards if tracked there
-        for (var exiledList : gameData.permanentExiledCards.values()) {
-            exiledList.removeIf(c -> c.getId().equals(exileCardId));
-        }
 
         if (card.hasType(CardType.LAND)) {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
@@ -1281,11 +1268,9 @@ public class SpellCastingService {
             boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
             if (hasEffect) {
-                List<Card> exiledWithPerm = gameData.permanentExiledCards.get(perm.getId());
-                if (exiledWithPerm != null) {
-                    for (Card c : exiledWithPerm) {
-                        if (c.getId().equals(cardId)) return true;
-                    }
+                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
+                for (Card c : exiledWithPerm) {
+                    if (c.getId().equals(cardId)) return true;
                 }
             }
         }

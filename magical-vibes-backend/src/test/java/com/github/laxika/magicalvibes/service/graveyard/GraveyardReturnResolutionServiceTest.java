@@ -108,8 +108,6 @@ class GraveyardReturnResolutionServiceTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
     }
 
     // =========================================================================
@@ -441,7 +439,7 @@ class GraveyardReturnResolutionServiceTest {
             service.resolveExileTargetPlayerGraveyard(gd, entry);
 
             assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
-            assertThat(gd.playerExiledCards.get(player2Id))
+            assertThat(gd.getPlayerExiledCards(player2Id))
                     .extracting(Card::getName)
                     .containsExactlyInAnyOrder("Grizzly Bears", "Leonin Scimitar");
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -458,7 +456,7 @@ class GraveyardReturnResolutionServiceTest {
 
             service.resolveExileTargetPlayerGraveyard(gd, entry);
 
-            assertThat(gd.playerExiledCards.get(player2Id)).isEmpty();
+            assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("already empty")));
         }

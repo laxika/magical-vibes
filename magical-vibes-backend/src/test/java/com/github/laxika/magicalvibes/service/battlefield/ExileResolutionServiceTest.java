@@ -55,6 +55,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -98,8 +99,6 @@ class ExileResolutionServiceTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
-        gd.playerExiledCards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
     }
@@ -155,6 +154,18 @@ class ExileResolutionServiceTest {
                 StackEntryType.INSTANT_SPELL, sourceCard, controllerId, sourceCard.getName(),
                 List.of(new ExileTargetPermanentEffect()), 0, targetIds
         );
+    }
+
+    /** Makes the mocked exileService actually add cards to exile so assertions on GameData work. */
+    private void stubExileCardTrackedWithSource() {
+        doAnswer(inv -> {
+            GameData gameData = inv.getArgument(0);
+            UUID ownerId = inv.getArgument(1);
+            Card card = inv.getArgument(2);
+            UUID sourcePermanentId = inv.getArgument(3);
+            gameData.addToExile(ownerId, card, sourcePermanentId);
+            return null;
+        }).when(exileService).exileCardTrackedWithSource(any(), any(), any(), any());
     }
 
     // =========================================================================
@@ -374,7 +385,7 @@ class ExileResolutionServiceTest {
             exileResolutionService.resolveExileTargetPermanentAndTrackWithSource(gd, entry);
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
-            assertThat(gd.permanentExiledCards.get(source.getId()))
+            assertThat(gd.getCardsExiledByPermanent(source.getId()))
                     .containsExactly(targetCard);
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Grizzly Bears is exiled by Karn Liberated."));
@@ -401,7 +412,7 @@ class ExileResolutionServiceTest {
             exileResolutionService.resolveExileTargetPermanentAndTrackWithSource(gd, entry);
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
-            assertThat(gd.permanentExiledCards.get(source.getId()))
+            assertThat(gd.getCardsExiledByPermanent(source.getId()))
                     .containsExactly(targetCard);
         }
 
@@ -824,7 +835,7 @@ class ExileResolutionServiceTest {
             // Set up previously imprinted card
             Card previousCard = createCreatureCard("Giant Spider");
             vatPerm.getCard().setImprintedCard(previousCard);
-            gd.playerExiledCards.get(player1Id).add(previousCard);
+            gd.getPlayerExiledCards(player1Id).add(previousCard);
 
             // New dying creature
             Card dyingCard = createCreatureCard("Grizzly Bears");
@@ -845,7 +856,7 @@ class ExileResolutionServiceTest {
             // Previous card returned to owner's graveyard
             verify(graveyardService).addCardToGraveyard(gd, player1Id, previousCard);
             // Previous card removed from exile
-            assertThat(gd.playerExiledCards.get(player1Id))
+            assertThat(gd.getPlayerExiledCards(player1Id))
                     .noneMatch(c -> c.getName().equals("Giant Spider"));
         }
 
@@ -1049,11 +1060,12 @@ class ExileResolutionServiceTest {
             );
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            stubExileCardTrackedWithSource();
 
             exileResolutionService.resolveEachPlayerExilesTopCardsToSource(gd, entry, effect);
 
             // Player1 exiles 3, player2 exiles 2 (only has 2)
-            assertThat(gd.permanentExiledCards.get(source.getId())).hasSize(5);
+            assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(5);
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
             assertThat(gd.playerDecks.get(player2Id)).isEmpty();
             verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), anyString());
@@ -1075,7 +1087,7 @@ class ExileResolutionServiceTest {
 
             exileResolutionService.resolveEachPlayerExilesTopCardsToSource(gd, entry, effect);
 
-            assertThat(gd.permanentExiledCards).isEmpty();
+            assertThat(gd.exiledCards.stream().anyMatch(e -> e.sourcePermanentId() != null)).isFalse();
         }
 
         @Test
@@ -1095,10 +1107,11 @@ class ExileResolutionServiceTest {
             );
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            stubExileCardTrackedWithSource();
 
             exileResolutionService.resolveEachPlayerExilesTopCardsToSource(gd, entry, effect);
 
-            assertThat(gd.permanentExiledCards.get(source.getId())).hasSize(1);
+            assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
             // Only one log message (player1 only)
             verify(gameBroadcastService, times(1)).logAndBroadcast(eq(gd), anyString());
         }
@@ -1174,14 +1187,15 @@ class ExileResolutionServiceTest {
             );
 
             when(gameQueryService.findPermanentById(gd, kp.getId())).thenReturn(kp);
+            stubExileCardTrackedWithSource();
 
             exileResolutionService.resolveKnowledgePoolExileAndCast(gd, entry, effect);
 
             // Original spell removed from stack
             assertThat(gd.stack).doesNotContain(originalSpell);
             // Original card added to pool and exile
-            assertThat(gd.permanentExiledCards.get(kp.getId())).contains(originalCard);
-            verify(exileService).exileCard(gd, player1Id, originalCard);
+            assertThat(gd.getCardsExiledByPermanent(kp.getId())).contains(originalCard);
+            verify(exileService).exileCardTrackedWithSource(gd, player1Id, originalCard, kp.getId());
             // No eligible cards → log message
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell."));
@@ -1195,8 +1209,7 @@ class ExileResolutionServiceTest {
 
             // Pre-seed pool with an eligible card
             Card poolCard = createSorceryCard("Doom Blade");
-            gd.permanentExiledCards.put(kp.getId(),
-                    Collections.synchronizedList(new ArrayList<>(List.of(poolCard))));
+            gd.addToExile(player1Id, poolCard, kp.getId());
 
             Card originalCard = createSorceryCard("Lightning Bolt");
             StackEntry originalSpell = new StackEntry(
@@ -1256,17 +1269,15 @@ class ExileResolutionServiceTest {
             UUID kpId = UUID.randomUUID();
 
             gd.knowledgePoolSourcePermanentId = kpId;
-            gd.permanentExiledCards.put(kpId,
-                    Collections.synchronizedList(new ArrayList<>(List.of(chosenCard))));
-            gd.playerExiledCards.get(player1Id).add(chosenCard);
+            gd.addToExile(player1Id, chosenCard, kpId);
             gd.interaction.beginKnowledgePoolCastChoice(player1Id,
                     java.util.Set.of(chosenCard.getId()), 1);
 
             exileResolutionService.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
 
             // Card removed from pool and exile
-            assertThat(gd.permanentExiledCards.get(kpId)).doesNotContain(chosenCard);
-            assertThat(gd.playerExiledCards.get(player1Id)).doesNotContain(chosenCard);
+            assertThat(gd.getCardsExiledByPermanent(kpId)).doesNotContain(chosenCard);
+            assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(chosenCard);
             // Spell on stack
             assertThat(gd.stack).anyMatch(se -> se.getCard() == chosenCard);
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
@@ -1283,9 +1294,7 @@ class ExileResolutionServiceTest {
             UUID kpId = UUID.randomUUID();
 
             gd.knowledgePoolSourcePermanentId = kpId;
-            gd.permanentExiledCards.put(kpId,
-                    Collections.synchronizedList(new ArrayList<>(List.of(chosenCard))));
-            gd.playerExiledCards.get(player1Id).add(chosenCard);
+            gd.addToExile(player1Id, chosenCard, kpId);
             gd.interaction.beginKnowledgePoolCastChoice(player1Id,
                     java.util.Set.of(chosenCard.getId()), 1);
 
@@ -1425,7 +1434,7 @@ class ExileResolutionServiceTest {
 
             // Library exiled
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
-            assertThat(gd.playerExiledCards.get(player1Id)).contains(libraryCard);
+            assertThat(gd.getPlayerExiledCards(player1Id)).contains(libraryCard);
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Player1 exiles 1 card from their library (Mirror of Fate)."));
         }
@@ -1436,7 +1445,7 @@ class ExileResolutionServiceTest {
             Card sourceCard = createCard("Mirror of Fate");
 
             Card exiledCard = createSorceryCard("Lightning Bolt");
-            gd.playerExiledCards.get(player1Id).add(exiledCard);
+            gd.addToExile(player1Id, exiledCard);
 
             StackEntry entry = new StackEntry(
                     StackEntryType.ACTIVATED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
@@ -1467,7 +1476,7 @@ class ExileResolutionServiceTest {
         void putsSingleCardOnTop() {
             Player player = new Player(player1Id, "Player1");
             Card exiledCard = createSorceryCard("Lightning Bolt");
-            gd.playerExiledCards.get(player1Id).add(exiledCard);
+            gd.addToExile(player1Id, exiledCard);
 
             Card libraryCard = createSorceryCard("Doom Blade");
             gd.playerDecks.get(player1Id).add(libraryCard);
@@ -1479,8 +1488,8 @@ class ExileResolutionServiceTest {
 
             // Library card exiled, chosen card on top
             assertThat(gd.playerDecks.get(player1Id)).containsExactly(exiledCard);
-            assertThat(gd.playerExiledCards.get(player1Id)).contains(libraryCard);
-            assertThat(gd.playerExiledCards.get(player1Id)).doesNotContain(exiledCard);
+            assertThat(gd.getPlayerExiledCards(player1Id)).contains(libraryCard);
+            assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(exiledCard);
             verify(gameBroadcastService).broadcastGameState(gd);
         }
 
@@ -1500,7 +1509,8 @@ class ExileResolutionServiceTest {
             Player player = new Player(player1Id, "Player1");
             Card card1 = createSorceryCard("Card A");
             Card card2 = createSorceryCard("Card B");
-            gd.playerExiledCards.get(player1Id).addAll(List.of(card1, card2));
+            gd.addToExile(player1Id, card1);
+            gd.addToExile(player1Id, card2);
 
             gd.interaction.beginMirrorOfFateChoice(player1Id,
                     java.util.Set.of(card1.getId(), card2.getId()), 1);
@@ -1518,7 +1528,8 @@ class ExileResolutionServiceTest {
             Player player = new Player(player1Id, "Player1");
             Card card1 = createSorceryCard("Card A");
             Card card2 = createSorceryCard("Card B");
-            gd.playerExiledCards.get(player1Id).addAll(List.of(card1, card2));
+            gd.addToExile(player1Id, card1);
+            gd.addToExile(player1Id, card2);
 
             gd.interaction.beginMirrorOfFateChoice(player1Id,
                     java.util.Set.of(card1.getId(), card2.getId()), 7);

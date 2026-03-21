@@ -52,12 +52,7 @@ public class ExileReturnResolutionService {
 
         // Remove card from exile
         UUID ownerId = gameQueryService.findExileOwnerById(gameData, entry.getTargetId());
-        if (ownerId != null) {
-            List<Card> exile = gameData.playerExiledCards.get(ownerId);
-            if (exile != null) {
-                exile.removeIf(c -> c.getId().equals(targetCard.getId()));
-            }
-        }
+        gameData.removeFromExile(targetCard.getId());
 
         // Put into owner's hand
         UUID controllerId = entry.getControllerId();

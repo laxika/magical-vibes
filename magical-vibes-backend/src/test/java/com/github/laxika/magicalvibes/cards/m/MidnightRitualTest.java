@@ -131,8 +131,8 @@ class MidnightRitualTest extends BaseCardTest {
         // Both creatures exiled from graveyard; only Midnight Ritual remains (sorcery goes to graveyard)
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName()).isEqualTo("Midnight Ritual");
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getName)
                 .containsOnly("Grizzly Bears");
 
@@ -205,7 +205,7 @@ class MidnightRitualTest extends BaseCardTest {
 
         // No creatures exiled, no tokens created; graveyard has bears + Midnight Ritual
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
@@ -284,7 +284,7 @@ class MidnightRitualTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName()).isEqualTo("Midnight Ritual");
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
 
         long zombieCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Zombie"))
@@ -312,7 +312,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only one creature was actually exiled
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
 
         // Only one Zombie token created
         long zombieCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -339,7 +339,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No creatures exiled, no tokens
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 

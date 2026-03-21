@@ -44,7 +44,7 @@ class DispatchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
-        assertThat(gd.playerExiledCards.getOrDefault(player2.getId(), List.of())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     // ===== With metalcraft =====
@@ -62,7 +62,7 @@ class DispatchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
-        assertThat(gd.playerExiledCards.getOrDefault(player2.getId(), List.of())).isNotEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isNotEmpty();
     }
 
     // ===== Metalcraft lost before resolution =====
@@ -86,7 +86,7 @@ class DispatchTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
-        assertThat(gd.playerExiledCards.getOrDefault(player2.getId(), List.of())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     // ===== Helpers =====

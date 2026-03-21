@@ -123,7 +123,7 @@ class LichsMasteryTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()).size()).isEqualTo(graveyardSizeBefore - 2);
 
         // Exiled cards should be in exile zone
-        List<Card> exiled = gd.playerExiledCards.get(player1.getId());
+        List<Card> exiled = gd.getPlayerExiledCards(player1.getId());
         assertThat(exiled).isNotNull().hasSize(2);
     }
 

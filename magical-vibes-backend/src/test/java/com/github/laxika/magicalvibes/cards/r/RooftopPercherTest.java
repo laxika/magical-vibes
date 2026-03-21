@@ -114,8 +114,8 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(totalGraveyardAfter).isEqualTo(totalGraveyardBefore - 2);
 
         // Total exiled cards increased by 2
-        int totalExiled = gd.playerExiledCards.get(player1.getId()).size()
-                + gd.playerExiledCards.get(player2.getId()).size();
+        int totalExiled = gd.getPlayerExiledCards(player1.getId()).size()
+                + gd.getPlayerExiledCards(player2.getId()).size();
         assertThat(totalExiled).isEqualTo(2);
 
         // Life was gained on resolution
@@ -151,7 +151,7 @@ class RooftopPercherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB → exile + life gain
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
 
@@ -171,8 +171,8 @@ class RooftopPercherTest extends BaseCardTest {
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(validIds.getFirst()));
         harness.passBothPriorities(); // resolve ETB → exile + life gain
 
-        int totalExiled = gd.playerExiledCards.get(player1.getId()).size()
-                + gd.playerExiledCards.get(player2.getId()).size();
+        int totalExiled = gd.getPlayerExiledCards(player1.getId()).size()
+                + gd.getPlayerExiledCards(player2.getId()).size();
         assertThat(totalExiled).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.interaction.awaitingInputType()).isNull();
@@ -195,8 +195,8 @@ class RooftopPercherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB → life gain only
 
         // No cards exiled
-        int totalExiled = gd.playerExiledCards.get(player1.getId()).size()
-                + gd.playerExiledCards.get(player2.getId()).size();
+        int totalExiled = gd.getPlayerExiledCards(player1.getId()).size()
+                + gd.getPlayerExiledCards(player2.getId()).size();
         assertThat(totalExiled).isEqualTo(0);
 
         // Life was still gained (ability resolves normally with 0 targets)

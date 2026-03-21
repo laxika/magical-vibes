@@ -65,12 +65,7 @@ public class ExileEggCounterResolutionService {
 
             // Remove card from exile zone
             UUID ownerId = gameQueryService.findExileOwnerById(gameData, cardId);
-            if (ownerId != null) {
-                List<Card> exile = gameData.playerExiledCards.get(ownerId);
-                if (exile != null) {
-                    exile.removeIf(c -> c.getId().equals(cardId));
-                }
-            }
+            gameData.removeFromExile(cardId);
 
             // Return to the battlefield under its owner's control
             UUID returnControllerId = ownerId != null ? ownerId : controllerId;

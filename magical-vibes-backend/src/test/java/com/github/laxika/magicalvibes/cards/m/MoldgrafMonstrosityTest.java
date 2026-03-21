@@ -70,7 +70,7 @@ class MoldgrafMonstrosityTest extends BaseCardTest {
 
             // Moldgraf Monstrosity should be exiled, not in graveyard
             harness.assertNotInGraveyard(player1, "Moldgraf Monstrosity");
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Moldgraf Monstrosity"));
 
             // Both creatures should be on the battlefield
@@ -100,7 +100,7 @@ class MoldgrafMonstrosityTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve death trigger
 
             // Moldgraf Monstrosity should be exiled
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Moldgraf Monstrosity"));
 
             // No creatures on battlefield (it was exiled, so it can't return itself)
@@ -121,7 +121,7 @@ class MoldgrafMonstrosityTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve death trigger
 
             // Moldgraf Monstrosity should be exiled
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Moldgraf Monstrosity"));
 
             // Grizzly Bears should be on the battlefield
@@ -193,7 +193,7 @@ class MoldgrafMonstrosityTest extends BaseCardTest {
             harness.passBothPriorities(); // Resolve death trigger
 
             // Moldgraf Monstrosity should be exiled
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Moldgraf Monstrosity"));
 
             // No creatures on battlefield

@@ -119,7 +119,7 @@ class TimeReversalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Time Reversal should be exiled, not in graveyard
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Time Reversal"));
         harness.assertNotInGraveyard(player1, "Time Reversal");
     }

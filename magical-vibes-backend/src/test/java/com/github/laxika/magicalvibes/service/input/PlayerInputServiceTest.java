@@ -80,8 +80,6 @@ class PlayerInputServiceTest {
         gd.playerBattlefields.put(PLAYER2_ID, new ArrayList<>());
         gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>());
         gd.playerGraveyards.put(PLAYER2_ID, new ArrayList<>());
-        gd.playerExiledCards.put(PLAYER1_ID, new ArrayList<>());
-        gd.playerExiledCards.put(PLAYER2_ID, new ArrayList<>());
         gd.playerDecks.put(PLAYER1_ID, new ArrayList<>());
         gd.playerDecks.put(PLAYER2_ID, new ArrayList<>());
         gd.playerHands.put(PLAYER1_ID, new ArrayList<>());
@@ -630,7 +628,7 @@ class PlayerInputServiceTest {
             gd.playerBattlefields.get(PLAYER1_ID).add(new Permanent(bfCard));
             gd.playerGraveyards.get(PLAYER1_ID).add(gyCard);
             gd.playerDecks.get(PLAYER1_ID).add(deckCard);
-            gd.playerExiledCards.get(PLAYER1_ID).add(exiledCard);
+            gd.addToExile(PLAYER1_ID, exiledCard);
 
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of());
 

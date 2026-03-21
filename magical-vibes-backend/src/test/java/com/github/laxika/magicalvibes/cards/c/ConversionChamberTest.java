@@ -80,7 +80,7 @@ class ConversionChamberTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Rod is in player's exiled cards
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Charge counter added
@@ -105,7 +105,7 @@ class ConversionChamberTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Rod is in opponent's exiled cards (cards owned by graveyard owner)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Charge counter still added to chamber
@@ -125,7 +125,7 @@ class ConversionChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should NOT be tracked in permanentExiledCards
-        assertThat(gd.permanentExiledCards.get(chamber.getId())).isNull();
+        assertThat(gd.getCardsExiledByPermanent(chamber.getId())).isEmpty();
     }
 
     @Test

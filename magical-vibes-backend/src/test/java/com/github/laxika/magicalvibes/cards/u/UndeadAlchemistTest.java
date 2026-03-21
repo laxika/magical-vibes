@@ -150,7 +150,7 @@ class UndeadAlchemistTest extends BaseCardTest {
             // 4 cards milled, all creatures → all exiled, 4 Zombie tokens created
             assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
             assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-            assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(4);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(4);
             // 4 new Zombie tokens created for player1
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .hasSize(p1BattlefieldSizeBefore + 4);
@@ -220,7 +220,7 @@ class UndeadAlchemistTest extends BaseCardTest {
             // 4 cards milled: 2 creatures exiled + 2 tokens, 2 instants in graveyard
             assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
             assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
-            assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .hasSize(p1BattlefieldSizeBefore + 2);
         }

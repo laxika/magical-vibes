@@ -143,7 +143,7 @@ class IntoTheCoreTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Hexplate Golem"));
 
         // Both should be in exile
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Gold Myr"))
                 .anyMatch(c -> c.getName().equals("Hexplate Golem"));
     }
@@ -167,9 +167,9 @@ class IntoTheCoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Hexplate Golem"));
 
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Gold Myr"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Hexplate Golem"));
     }
 
@@ -217,7 +217,7 @@ class IntoTheCoreTest extends BaseCardTest {
         // Hexplate Golem should be exiled
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Hexplate Golem"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Hexplate Golem"));
     }
 

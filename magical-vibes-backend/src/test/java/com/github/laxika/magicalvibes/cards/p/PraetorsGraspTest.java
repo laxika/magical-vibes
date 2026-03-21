@@ -72,7 +72,7 @@ class PraetorsGraspTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Card should be in caster's exile zone
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(bears.getId()));
 
         // Play permission should be granted to caster
@@ -167,7 +167,7 @@ class PraetorsGraspTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
 
         // Card should no longer be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getId().equals(bears.getId()));
     }
 

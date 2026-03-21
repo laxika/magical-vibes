@@ -99,7 +99,7 @@ class OmenMachineTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard() == plains);
 
         // Not in exile
-        assertThat(gd.playerExiledCards.get(player1.getId())).doesNotContain(plains);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(plains);
 
         // Not in library
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(plains);

@@ -468,7 +468,7 @@ public class StackResolutionService {
         // putting it anywhere else any time it would leave the stack." This overrides
         // return-to-hand, shuffle-into-library, and all other disposition effects.
         if (entry.isCastWithFlashback()) {
-            gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+            gameData.addToExile(entry.getControllerId(), entry.getCard());
             String exileLog = entry.getCard().getName() + " is exiled (flashback).";
             gameBroadcastService.logAndBroadcast(gameData, exileLog);
         } else if (entry.isReturnToHandAfterResolving()) {
@@ -481,7 +481,7 @@ public class StackResolutionService {
             // otherwise to graveyard).
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
-            gameData.playerExiledCards.get(entry.getControllerId()).add(entry.getCard());
+            gameData.addToExile(entry.getControllerId(), entry.getCard());
             String exileLog = entry.getCard().getName() + " is exiled.";
             gameBroadcastService.logAndBroadcast(gameData, exileLog);
         } else if (entry.getEffectsToResolve().stream()

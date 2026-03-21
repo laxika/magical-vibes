@@ -93,7 +93,7 @@ class DistantMemoriesTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals(chosenName));
 
         // Card should no longer be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals(chosenName));
     }
 
@@ -129,7 +129,7 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
 
         // The exiled card should still be in exile (not returned)
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals(chosenName));
     }
 
@@ -150,7 +150,7 @@ class DistantMemoriesTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Card should be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals(chosenName));
 
         // Library should have lost one card

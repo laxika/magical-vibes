@@ -61,7 +61,7 @@ class InvaderParasiteTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Forest");
 
         // Verify the forest is exiled (in player2's exile zone)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
     }
 

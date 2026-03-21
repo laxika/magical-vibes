@@ -266,7 +266,7 @@ public class PlayerInputService {
             gameData.playerDecks.getOrDefault(pid, List.of()).stream()
                     .filter(c -> !hasExcludedType(c, excludedTypes))
                     .forEach(c -> names.add(c.getName()));
-            gameData.playerExiledCards.getOrDefault(pid, List.of()).stream()
+            gameData.getPlayerExiledCards(pid).stream()
                     .filter(c -> !hasExcludedType(c, excludedTypes))
                     .forEach(c -> names.add(c.getName()));
         }

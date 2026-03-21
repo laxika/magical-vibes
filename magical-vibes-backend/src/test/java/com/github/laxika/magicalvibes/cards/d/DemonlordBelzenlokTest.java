@@ -53,7 +53,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (puts ETB on stack)
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -80,7 +80,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Serra Angel"));
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
@@ -102,8 +102,8 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .allMatch(c -> c.getName().equals("Forest"));
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Serra Angel"));
@@ -130,7 +130,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
@@ -150,7 +150,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
@@ -167,7 +167,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
@@ -251,8 +251,8 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .allMatch(c -> c.getName().equals("Forest"));
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }

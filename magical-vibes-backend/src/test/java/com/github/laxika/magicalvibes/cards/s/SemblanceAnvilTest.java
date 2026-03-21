@@ -79,7 +79,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Grizzly Bears should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Grizzly Bears should no longer be in hand

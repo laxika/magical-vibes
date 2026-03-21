@@ -168,13 +168,10 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 case EXILE -> {
-                    exileService.exileCard(gameData, playerId, card);
-
-                    // Track with source permanent if specified (e.g. Rona, Disciple of Gix)
                     if (trackWithSourcePermanentId != null) {
-                        gameData.permanentExiledCards
-                                .computeIfAbsent(trackWithSourcePermanentId, k -> java.util.Collections.synchronizedList(new ArrayList<>()))
-                                .add(card);
+                        exileService.exileCardTrackedWithSource(gameData, playerId, card, trackWithSourcePermanentId);
+                    } else {
+                        exileService.exileCard(gameData, playerId, card);
                     }
 
                     String logEntry = player.getUsername() + " exiles " + card.getName() + " from their graveyard.";

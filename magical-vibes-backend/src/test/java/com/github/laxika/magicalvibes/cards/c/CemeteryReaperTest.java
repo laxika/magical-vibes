@@ -166,7 +166,7 @@ class CemeteryReaperTest extends BaseCardTest {
         // Creature card exiled from graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // 2/2 black Zombie token created
@@ -193,7 +193,7 @@ class CemeteryReaperTest extends BaseCardTest {
         // Card exiled from opponent's graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Token created for controller (player1)

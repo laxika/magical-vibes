@@ -63,7 +63,7 @@ class SkaabRuinatorTest extends BaseCardTest {
 
         // All 3 creature cards exiled
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }
 
     @Test
@@ -194,7 +194,7 @@ class SkaabRuinatorTest extends BaseCardTest {
 
         // Should be on the battlefield, not exiled
         harness.assertOnBattlefield(player1, "Skaab Ruinator");
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Skaab Ruinator"));
     }
 

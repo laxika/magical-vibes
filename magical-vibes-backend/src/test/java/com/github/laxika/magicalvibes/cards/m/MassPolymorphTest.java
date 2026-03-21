@@ -71,7 +71,7 @@ class MassPolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Original creature should be exiled (not in graveyard)
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -107,7 +107,7 @@ class MassPolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Both original creatures should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
@@ -162,7 +162,7 @@ class MassPolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Original creature should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // No creatures on battlefield
@@ -188,7 +188,7 @@ class MassPolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Creature should still be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Library should still be empty
@@ -218,7 +218,7 @@ class MassPolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Both original creatures should be exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
@@ -250,7 +250,7 @@ class MassPolymorphTest extends BaseCardTest {
         gd = harness.getGameData();
 
         // Player 1's creature exiled
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Player 2's creature should still be on the battlefield

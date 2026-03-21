@@ -54,7 +54,7 @@ class StitchedDrakeTest extends BaseCardTest {
 
         // Creature card should be exiled from graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
@@ -121,7 +121,7 @@ class StitchedDrakeTest extends BaseCardTest {
 
         // Exile cost already paid
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 

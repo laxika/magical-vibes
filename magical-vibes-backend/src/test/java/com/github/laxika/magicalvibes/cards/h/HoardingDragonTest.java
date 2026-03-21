@@ -106,7 +106,7 @@ class HoardingDragonTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Spellbook should be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Spellbook"));
 
         // Hoarding Dragon should have Spellbook imprinted
@@ -129,7 +129,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player1, "Hoarding Dragon");
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     // ===== Death trigger =====
@@ -144,7 +144,7 @@ class HoardingDragonTest extends BaseCardTest {
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
         dragon.getCard().setImprintedCard(spellbook);
-        gd.playerExiledCards.get(player1.getId()).add(spellbook);
+        gd.addToExile(player1.getId(), spellbook);
 
         // Kill Hoarding Dragon with Doom Blade
         UUID dragonId = harness.getPermanentId(player1, "Hoarding Dragon");
@@ -168,7 +168,7 @@ class HoardingDragonTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Spellbook"));
 
         // Spellbook should no longer be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Spellbook"));
 
         // Dragon should be in graveyard
@@ -185,7 +185,7 @@ class HoardingDragonTest extends BaseCardTest {
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
         dragon.getCard().setImprintedCard(spellbook);
-        gd.playerExiledCards.get(player1.getId()).add(spellbook);
+        gd.addToExile(player1.getId(), spellbook);
 
         // Kill Hoarding Dragon with Doom Blade
         UUID dragonId = harness.getPermanentId(player1, "Hoarding Dragon");
@@ -201,7 +201,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Spellbook should remain in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Spellbook"));
 
         // Spellbook should NOT be in hand

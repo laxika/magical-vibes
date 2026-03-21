@@ -115,7 +115,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId()));
 
         // Grizzly Bears should be exiled
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Grizzly Bears should not be in hand
@@ -143,7 +143,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
 
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -166,7 +166,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
 
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -195,7 +195,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId(), bears3.getId()));
 
         // All 3 copies should be exiled
-        long exiledCount = gd.playerExiledCards.get(player2.getId()).stream()
+        long exiledCount = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears"))
                 .count();
         assertThat(exiledCount).isEqualTo(3);
@@ -233,7 +233,7 @@ class MemoricideTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_ZONE_EXILE_CHOICE);
 
         // No cards exiled (no Grizzly Bears in any zone)
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Hand unchanged
@@ -305,7 +305,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId()));
 
         // Only 1 card exiled
-        long exiledCount = gd.playerExiledCards.get(player2.getId()).stream()
+        long exiledCount = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Grizzly Bears"))
                 .count();
         assertThat(exiledCount).isEqualTo(1);
@@ -349,7 +349,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleMultipleGraveyardCardsChosen(player1, List.of());
 
         // No cards exiled
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Both copies remain in their zones
@@ -381,7 +381,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
 
         // Grizzly Bears exiled from player1's hand
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));

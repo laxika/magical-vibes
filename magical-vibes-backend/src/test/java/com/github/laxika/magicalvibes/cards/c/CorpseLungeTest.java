@@ -63,7 +63,7 @@ class CorpseLungeTest extends BaseCardTest {
 
         // Creature card should be exiled from graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
     @Test
@@ -158,7 +158,7 @@ class CorpseLungeTest extends BaseCardTest {
 
         // Exile cost already paid
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Remove target before resolution
         gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(target.getId()));
@@ -166,7 +166,7 @@ class CorpseLungeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature was still exiled (cost is not refunded)
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
     @Test
@@ -193,6 +193,6 @@ class CorpseLungeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Raging Goblin");
         harness.assertInGraveyard(player1, "Corpse Lunge");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 }

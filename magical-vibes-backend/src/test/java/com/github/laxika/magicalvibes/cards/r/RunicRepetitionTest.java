@@ -43,7 +43,7 @@ class RunicRepetitionTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(flashbackCard.getId()));
-        assertThat(gd.playerExiledCards.getOrDefault(player1.getId(), List.of())).noneMatch(c -> c.getId().equals(flashbackCard.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(c -> c.getId().equals(flashbackCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Runic Repetition"));
     }
 
@@ -81,7 +81,7 @@ class RunicRepetitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, flashbackCard.getId());
-        harness.getGameData().playerExiledCards.get(player1.getId()).clear();
+        harness.getGameData().removeFromExile(flashbackCard.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

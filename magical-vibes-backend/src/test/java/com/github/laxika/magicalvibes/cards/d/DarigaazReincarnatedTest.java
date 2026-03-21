@@ -68,10 +68,10 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         // NOT in graveyard — replacement effect
         harness.assertNotInGraveyard(player1, "Darigaaz Reincarnated");
         // In exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Darigaaz Reincarnated"));
         // Has 3 egg counters tracked
-        Card exiledCard = gd.playerExiledCards.get(player1.getId()).stream()
+        Card exiledCard = gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Darigaaz Reincarnated"))
                 .findFirst().orElseThrow();
         assertThat(gd.exiledCardEggCounters.get(exiledCard.getId())).isEqualTo(3);
@@ -99,7 +99,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         // Counter decremented to 2
         assertThat(gd.exiledCardEggCounters.get(card.getId())).isEqualTo(2);
         // Still in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Darigaaz Reincarnated"));
         // NOT on battlefield yet
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
@@ -121,7 +121,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         // Back on battlefield
         harness.assertOnBattlefield(player1, "Darigaaz Reincarnated");
         // Not in exile anymore
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Darigaaz Reincarnated"));
         // Counter tracking removed
         assertThat(gd.exiledCardEggCounters).doesNotContainKey(card.getId());
@@ -146,7 +146,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
 
         // Verify exiled with 3 counters
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
-        Card exiledCard = gd.playerExiledCards.get(player1.getId()).stream()
+        Card exiledCard = gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Darigaaz Reincarnated"))
                 .findFirst().orElseThrow();
         assertThat(gd.exiledCardEggCounters.get(exiledCard.getId())).isEqualTo(3);
@@ -205,9 +205,9 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         // Exiled again with 3 counters
         harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
         harness.assertNotInGraveyard(player1, "Darigaaz Reincarnated");
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Darigaaz Reincarnated"));
-        Card reExiledCard = gd.playerExiledCards.get(player1.getId()).stream()
+        Card reExiledCard = gd.getPlayerExiledCards(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Darigaaz Reincarnated"))
                 .findFirst().orElseThrow();
         assertThat(gd.exiledCardEggCounters.get(reExiledCard.getId())).isEqualTo(3);
@@ -216,9 +216,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void exileWithEggCounters(UUID playerId, Card card, int counters) {
-        gd.playerExiledCards
-                .computeIfAbsent(playerId, k -> java.util.Collections.synchronizedList(new java.util.ArrayList<>()))
-                .add(card);
+        gd.addToExile(playerId, card);
         gd.exiledCardEggCounters.put(card.getId(), counters);
     }
 

@@ -107,7 +107,7 @@ class MoanOfTheUnhallowedTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Moan of the Unhallowed"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Moan of the Unhallowed"));
     }
 }

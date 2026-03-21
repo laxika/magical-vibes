@@ -113,7 +113,7 @@ class StrataScytheTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Plains should be in exile
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Plains"));
 
         // Strata Scythe should have Plains imprinted
@@ -142,7 +142,7 @@ class StrataScytheTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, -1);
 
         // No card exiled
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
 
         // No imprint
         Permanent scythe = findPermanent(player1, "Strata Scythe");

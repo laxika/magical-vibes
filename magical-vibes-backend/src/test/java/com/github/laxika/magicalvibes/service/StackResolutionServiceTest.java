@@ -99,8 +99,6 @@ class StackResolutionServiceTest {
         gd.playerBattlefields.put(PLAYER2_ID, new ArrayList<>());
         gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>());
         gd.playerGraveyards.put(PLAYER2_ID, new ArrayList<>());
-        gd.playerExiledCards.put(PLAYER1_ID, new ArrayList<>());
-        gd.playerExiledCards.put(PLAYER2_ID, new ArrayList<>());
         gd.playerDecks.put(PLAYER1_ID, new ArrayList<>());
         gd.playerDecks.put(PLAYER2_ID, new ArrayList<>());
         gd.playerHands.put(PLAYER1_ID, new ArrayList<>());
@@ -962,7 +960,7 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+            assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Flashback Sorcery"));
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
@@ -980,7 +978,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             // Flashback exile overrides return-to-hand per CR 702.33a
-            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+            assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Flashback Buyback"));
             assertThat(gd.playerHands.get(PLAYER1_ID))
                     .noneMatch(c -> c.getName().equals("Flashback Buyback"));
@@ -996,7 +994,7 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+            assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .anyMatch(c -> c.getName().equals("Exile Instant"));
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
@@ -1030,7 +1028,7 @@ class StackResolutionServiceTest {
 
             // Spell disposition is deferred — card stays in limbo
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+            assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .noneMatch(c -> c.getName().equals("Deferred Sorcery"));
             assertThat(gd.playerHands.get(PLAYER1_ID))
                     .noneMatch(c -> c.getName().equals("Deferred Sorcery"));
@@ -1063,7 +1061,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-            assertThat(gd.playerExiledCards.get(PLAYER1_ID))
+            assertThat(gd.getPlayerExiledCards(PLAYER1_ID))
                     .noneMatch(c -> c.getName().equals("Copied Spell"));
         }
 

@@ -37,7 +37,7 @@ class NihilSpellbombTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
         // Cards should be in exile
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
     }
 
     @Test
@@ -71,9 +71,9 @@ class NihilSpellbombTest extends BaseCardTest {
 
         // Entire graveyard is exiled (including the spellbomb which was sacrificed as cost)
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Nihil Spellbomb"));
     }
 
@@ -197,6 +197,6 @@ class NihilSpellbombTest extends BaseCardTest {
 
         // Graveyard exiled
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
     }
 }

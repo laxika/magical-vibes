@@ -667,7 +667,7 @@ public class ChoiceHandlerService {
                     .forEach(c -> names.add(c.getName()));
             gameData.playerDecks.getOrDefault(pid, List.of())
                     .forEach(c -> names.add(c.getName()));
-            gameData.playerExiledCards.getOrDefault(pid, List.of())
+            gameData.getPlayerExiledCards(pid)
                     .forEach(c -> names.add(c.getName()));
         }
         gameData.stack.forEach(se -> names.add(se.getCard().getName()));
@@ -804,7 +804,6 @@ public class ChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         Set<UUID> selectedIds = new java.util.HashSet<>(cardIds);
-        List<Card> exiled = gameData.playerExiledCards.get(targetPlayerId);
         int exiledCount = 0;
 
         // Remove selected cards from hand
@@ -812,7 +811,9 @@ public class ChoiceHandlerService {
         if (hand != null) {
             List<Card> toExile = hand.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             hand.removeAll(toExile);
-            exiled.addAll(toExile);
+            for (Card card : toExile) {
+                gameData.addToExile(targetPlayerId, card);
+            }
             exiledCount += toExile.size();
         }
 
@@ -821,7 +822,9 @@ public class ChoiceHandlerService {
         if (graveyard != null) {
             List<Card> toExile = graveyard.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             graveyard.removeAll(toExile);
-            exiled.addAll(toExile);
+            for (Card card : toExile) {
+                gameData.addToExile(targetPlayerId, card);
+            }
             exiledCount += toExile.size();
         }
 
@@ -830,7 +833,9 @@ public class ChoiceHandlerService {
         if (library != null) {
             List<Card> toExile = library.stream().filter(c -> selectedIds.contains(c.getId())).toList();
             library.removeAll(toExile);
-            exiled.addAll(toExile);
+            for (Card card : toExile) {
+                gameData.addToExile(targetPlayerId, card);
+            }
             exiledCount += toExile.size();
         }
 

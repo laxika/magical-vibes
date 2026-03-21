@@ -122,7 +122,7 @@ class KarnLiberatedTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Forest");
 
             // Card should be in exile, not graveyard
-            assertThat(gd.playerExiledCards.get(player2.getId()))
+            assertThat(gd.getPlayerExiledCards(player2.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
             assertThat(gd.playerGraveyards.get(player2.getId()))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -139,7 +139,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.handleCardChosen(player2, 0);
 
             // Card should be tracked in permanentExiledCards with Karn's permanent ID
-            List<com.github.laxika.magicalvibes.model.Card> karnExiled = gd.permanentExiledCards.get(karn.getId());
+            List<com.github.laxika.magicalvibes.model.Card> karnExiled = gd.getCardsExiledByPermanent(karn.getId());
             assertThat(karnExiled).isNotNull();
             assertThat(karnExiled).anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -159,7 +159,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.handleCardChosen(player1, 1); // exile Forest
 
             assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-            assertThat(gd.playerExiledCards.get(player1.getId()))
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Forest"));
         }
 
@@ -211,7 +211,7 @@ class KarnLiberatedTest extends BaseCardTest {
             assertThat(karn.getLoyaltyCounters()).isEqualTo(3); // 6 - 3
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-            assertThat(gd.playerExiledCards.get(player2.getId()))
+            assertThat(gd.getPlayerExiledCards(player2.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
 
@@ -225,7 +225,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 1, null, bears.getId());
             harness.passBothPriorities();
 
-            List<com.github.laxika.magicalvibes.model.Card> karnExiled = gd.permanentExiledCards.get(karn.getId());
+            List<com.github.laxika.magicalvibes.model.Card> karnExiled = gd.getCardsExiledByPermanent(karn.getId());
             assertThat(karnExiled).isNotNull();
             assertThat(karnExiled).anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -278,7 +278,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Verify bear is tracked with Karn
-            assertThat(gd.permanentExiledCards.get(karn.getId()))
+            assertThat(gd.getCardsExiledByPermanent(karn.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
             // Reset loyalty ability flag and set loyalty to 14
@@ -406,7 +406,7 @@ class KarnLiberatedTest extends BaseCardTest {
         // Bears should still be exiled even though Karn died
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 

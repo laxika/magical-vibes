@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -306,14 +307,10 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             // Opponent lets the controller have the exiled card — move from exile to hand
             Card exiledCard = null;
-            List<Card> exileZone = gameData.playerExiledCards.get(controllerId);
-            if (exileZone != null) {
-                for (int i = 0; i < exileZone.size(); i++) {
-                    if (exileZone.get(i).getId().equals(exiledCardId)) {
-                        exiledCard = exileZone.remove(i);
-                        break;
-                    }
-                }
+            ExiledCardEntry exileEntry = gameData.findExiledCard(exiledCardId);
+            if (exileEntry != null) {
+                exiledCard = exileEntry.card();
+                gameData.removeFromExile(exiledCardId);
             }
 
             if (exiledCard != null) {
