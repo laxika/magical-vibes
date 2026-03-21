@@ -128,7 +128,8 @@ public enum CardSubtype {
     DEVIL("Devil"),
     SAGA("Saga"),
     UNICORN("Unicorn"),
-    ASSEMBLY_WORKER("Assembly-Worker");
+    ASSEMBLY_WORKER("Assembly-Worker"),
+    PEGASUS("Pegasus");
 
     @Getter
     private final String displayName;
