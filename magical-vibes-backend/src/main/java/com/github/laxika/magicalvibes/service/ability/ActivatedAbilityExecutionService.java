@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEqualToSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
@@ -343,6 +344,18 @@ public class ActivatedAbilityExecutionService {
                     String logEntry = player.getUsername() + " adds " + count + " {C} from " + permanent.getCard().getName() + ".";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
+            } else if (effect instanceof AwardManaEqualToSourcePowerEffect powerMana) {
+                int power = gameQueryService.getEffectivePower(gameData, permanent);
+                if (power > 0) {
+                    ManaPool pool = gameData.playerManaPools.get(playerId);
+                    pool.add(powerMana.color(), power);
+                    if (isCreatureSource) {
+                        pool.addCreatureMana(powerMana.color(), power);
+                    }
+                    String logEntry = player.getUsername() + " adds " + power + " " + powerMana.color().getCode()
+                            + " from " + permanent.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
             } else if (effect instanceof GainLifeEffect gain) {
                 lifeResolutionService.applyGainLife(gameData, playerId, gain.amount());
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
@@ -430,6 +443,8 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
                 total += permanent.getChargeCounters();
+            } else if (effect instanceof AwardManaEqualToSourcePowerEffect) {
+                total += gameQueryService.getEffectivePower(gameData, permanent);
             } else if (effect instanceof DoubleManaPoolEffect) {
                 total += gameData.playerManaPools.get(playerId).getTotal();
             }

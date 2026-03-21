@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEqualToSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
@@ -268,6 +269,47 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             verify(lifeResolutionService).applyGainLife(gameData, player1Id, 1);
+        }
+
+        @Test
+        @DisplayName("AwardManaEqualToSourcePowerEffect adds mana equal to effective power")
+        void awardManaEqualToSourcePowerAddsCorrectAmount() {
+            Card card = createCreature("Marwyn, the Nurturer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            // Simulate +1/+1 counters (power goes from 2 → 4)
+            perm.setPlusOnePlusOneCounters(2);
+            List<CardEffect> effects = List.of(new AwardManaEqualToSourcePowerEffect(ManaColor.GREEN));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Add an amount of {G} equal to Marwyn's power.");
+
+            stubIsCreature(perm, true);
+            when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(4);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(4);
+            assertThat(pool.getCreatureMana(ManaColor.GREEN)).isEqualTo(4);
+            assertThat(gameData.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("AwardManaEqualToSourcePowerEffect produces no mana when power is 0 or less")
+        void awardManaEqualToSourcePowerNoManaWhenZeroPower() {
+            Card card = createCreature("Marwyn, the Nurturer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEqualToSourcePowerEffect(ManaColor.GREEN));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Add an amount of {G} equal to Marwyn's power.");
+
+            stubIsCreature(perm, true);
+            when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(0);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(0);
+            assertThat(gameData.stack).isEmpty();
         }
 
         @Test
