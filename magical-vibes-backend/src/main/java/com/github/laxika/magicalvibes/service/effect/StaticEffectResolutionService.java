@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBatt
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -749,6 +750,31 @@ public class StaticEffectResolutionService {
         });
         accumulator.addPower(count[0] * boost.powerPerPermanent());
         accumulator.addToughness(count[0] * boost.toughnessPerPermanent());
+    }
+
+    @HandlesStaticEffect(value = AnyPlayerControlsPermanentConditionalEffect.class, selfOnly = true)
+    private void resolveAnyPlayerControlsPermanentConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (AnyPlayerControlsPermanentConditionalEffect) effect;
+        final boolean[] found = {false};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (!found[0] && gameQueryService.matchesPermanentPredicate(context.gameData(), permanent, conditional.filter())) {
+                found[0] = true;
+            }
+        });
+        if (found[0]) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            } else if (wrapped instanceof GrantKeywordEffect grant) {
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addKeyword(grant.keyword());
+                }
+            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
+                accumulator.addProtectionColors(protection.colors());
+            }
+        }
     }
 
     @HandlesStaticEffect(value = BoostSelfPerEquipmentAttachedEffect.class, selfOnly = true)
