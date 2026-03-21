@@ -35,7 +35,7 @@ class ShivanFireTest extends BaseCardTest {
         Permanent survivingGiant = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(giant.getId()))
                 .findFirst().orElseThrow();
-        assertThat(survivingGiant.getDamage()).isEqualTo(2);
+        assertThat(survivingGiant.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
