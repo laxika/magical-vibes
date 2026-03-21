@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsSu
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -379,6 +380,27 @@ public class GameBroadcastService {
                             int totalAvailable = pool.getTotal() + convokeCreatures;
                             if (totalAvailable >= cost.getManaValue() + additionalCost) {
                                 playable.add(i);
+                            }
+                        }
+                        if (!playable.contains(i)) {
+                            // Check if castable with sacrifice-for-cost-reduction (e.g. Torgaar)
+                            SacrificeCreaturesForCostReductionEffect sacReduce =
+                                    (SacrificeCreaturesForCostReductionEffect) card.getEffects(EffectSlot.STATIC).stream()
+                                            .filter(SacrificeCreaturesForCostReductionEffect.class::isInstance)
+                                            .findFirst().orElse(null);
+                            if (sacReduce != null) {
+                                int creatureCount = 0;
+                                if (battlefield != null) {
+                                    for (Permanent perm : battlefield) {
+                                        if (gameQueryService.isCreature(gameData, perm)) {
+                                            creatureCount++;
+                                        }
+                                    }
+                                }
+                                int maxReduction = creatureCount * sacReduce.reductionPerCreature();
+                                if (cost.canPay(pool, additionalCost - maxReduction)) {
+                                    playable.add(i);
+                                }
                             }
                         }
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)

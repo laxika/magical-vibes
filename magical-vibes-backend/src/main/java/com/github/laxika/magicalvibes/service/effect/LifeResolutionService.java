@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureCardInGrav
 import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerMatchingPermanentOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetPlayerLifeToHalfStartingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
@@ -395,6 +396,21 @@ public class LifeResolutionService {
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + "'s life total is doubled from " + currentLife + " to " + newLife + ".");
             log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
+        }
+    }
+
+    @HandlesEffect(SetTargetPlayerLifeToHalfStartingEffect.class)
+    private void resolveSetTargetPlayerLifeToHalfStarting(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null) return; // "up to one target" — player chose no target
+        int currentLife = gameData.getLife(targetPlayerId);
+        int newLife = GameData.STARTING_LIFE_TOTAL / 2;
+
+        if (applySetLifeTotal(gameData, targetPlayerId, newLife)) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + "'s life total becomes " + newLife + " (was " + currentLife + ").");
+            log.info("Game {} - {}'s life set to {} (was {})", gameData.id, playerName, newLife, currentLife);
         }
     }
 

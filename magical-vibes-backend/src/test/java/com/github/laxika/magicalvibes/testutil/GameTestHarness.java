@@ -418,6 +418,12 @@ public class GameTestHarness {
         gameData.playerBattlefields.get(player.getId()).add(new Permanent(card));
     }
 
+    public Permanent addToBattlefieldAndReturn(Player player, Card card) {
+        Permanent perm = new Permanent(card);
+        gameData.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
     public void runStateBasedActions() {
         stateBasedActionService.performStateBasedActions(gameData);
     }
@@ -519,6 +525,11 @@ public class GameTestHarness {
     public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
+    }
+
+    public void castCreatureWithSacrificeForReduction(Player player, int cardIndex, UUID targetId, List<UUID> sacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
     public void castEnchantment(Player player, int cardIndex) {

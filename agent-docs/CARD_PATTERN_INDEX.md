@@ -145,6 +145,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
 | ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |
 | ETB destroy all (predicate) + static hexproof | `w/WitchbaneOrb.java` | DestroyAllPermanentsEffect(AllOf(HasSubtype(CURSE), AttachedToSourceController)) + GrantControllerHexproofEffect STATIC |
+| ETB set target player life total | `t/TorgaarFamineIncarnate.java` | STATIC SacrificeCreaturesForCostReductionEffect(2) + ON_ENTER_BATTLEFIELD SetTargetPlayerLifeToHalfStartingEffect() with `target(PlayerPredicateTargetFilter(ANY), 0, 1)` for "up to one target player". Sacrifice creatures as additional cost to reduce mana by 2 per creature |
 | ETB may exile until leaves (O-ring) | `l/LeoninRelicWarder.java` | MayEffect(ExileTargetPermanentUntilSourceLeavesEffect) + PermanentPredicateTargetFilter(AnyOf(artifact, enchantment)). Exiled card returns when source leaves battlefield |
 | ETB may exile + return at end step (flicker) | `s/SentinelOfThePearlTrident.java` | MayEffect(ExileTargetPermanentAndReturnAtEndStepEffect) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, PermanentIsHistoricPredicate)). Flash creature that flickers own historic permanent |
 | ETB may rummage (discard then draw) | `k/KeldonRaider.java` | MayEffect(DiscardAndDrawCardEffect()) — may discard a card, if you do draw a card |

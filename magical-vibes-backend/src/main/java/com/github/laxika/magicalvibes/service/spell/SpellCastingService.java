@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -214,12 +215,16 @@ public class SpellCastingService {
         }
 
         UUID playerId = player.getId();
-        boolean usingAlternateCost = !alternateCostSacrificePermanentIds.isEmpty();
 
         List<Card> handEarly = gameData.playerHands.get(playerId);
         if (!fromGraveyard && (cardIndex < 0 || cardIndex >= handEarly.size())) {
             throw new IllegalArgumentException("Invalid card index");
         }
+
+        boolean hasSacrificeForCostReduction = !alternateCostSacrificePermanentIds.isEmpty() && !fromGraveyard
+                && handEarly.get(cardIndex).getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance);
+        boolean usingAlternateCost = !alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction;
 
         // Handle playing a land from graveyard (e.g. via Crucible of Worlds)
         if (fromGraveyard) {
@@ -261,6 +266,8 @@ public class SpellCastingService {
                 if (!convokePlayable.contains(cardIndex)) {
                     throw new IllegalStateException("Card is not playable even with convoke");
                 }
+            } else if (hasSacrificeForCostReduction) {
+                // Allow — sacrifice cost reduction will be validated during casting
             } else {
                 throw new IllegalStateException("Card is not playable");
             }
@@ -521,10 +528,15 @@ public class SpellCastingService {
                     ? effectiveXValue : 0;
             UUID stackTarget = (card.hasType(CardType.PLANESWALKER)) ? null : targetId;
 
+            int sacrificeCostReduction = 0;
+            if (hasSacrificeForCostReduction) {
+                sacrificeCostReduction = paySacrificeCreaturesForCostReduction(gameData, player, card, alternateCostSacrificePermanentIds);
+            }
+
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
             } else {
-                paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked);
+                paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked, sacrificeCostReduction);
             }
             KickerEffect kickerEffect = findKickerEffect(card);
             if (kicked && kickerEffect != null) {
@@ -862,6 +874,41 @@ public class SpellCastingService {
             }
         }
         return Math.max(0, totalPower);
+    }
+
+    private int paySacrificeCreaturesForCostReduction(GameData gameData, Player player, Card card, List<UUID> sacrificeIds) {
+        SacrificeCreaturesForCostReductionEffect effect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(SacrificeCreaturesForCostReductionEffect.class::isInstance)
+                .map(SacrificeCreaturesForCostReductionEffect.class::cast)
+                .findFirst().orElseThrow();
+
+        UUID playerId = player.getId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        int sacrificedCount = 0;
+
+        for (UUID sacId : sacrificeIds) {
+            Permanent toSacrifice = battlefield.stream()
+                    .filter(p -> p.getId().equals(sacId))
+                    .findFirst().orElse(null);
+            if (toSacrifice == null) {
+                throw new IllegalStateException("Sacrifice target not found on battlefield");
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, sacId);
+            if (!playerId.equals(controllerId)) {
+                throw new IllegalStateException("Can only sacrifice permanents you control");
+            }
+            if (!gameQueryService.isCreature(gameData, toSacrifice)) {
+                throw new IllegalStateException("Can only sacrifice creatures for cost reduction");
+            }
+            if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                                + " to reduce the cost of " + card.getName() + ".");
+                sacrificedCount++;
+            }
+        }
+
+        return sacrificedCount * effect.reductionPerCreature();
     }
 
     private int payExileGraveyardCost(GameData gameData, Player player, Card card,
@@ -1351,12 +1398,16 @@ public class SpellCastingService {
     }
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked) {
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, phyrexianLifeCount, kicked, 0);
+    }
+
+    public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked, int extraCostReduction) {
         if (card.getManaCost() == null) return;
         // Alternative zero cost (e.g. Rooftop Storm): skip mana payment entirely
         if (gameBroadcastService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+        int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card) - extraCostReduction;
         ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
 
         // Check if we should use a non-zero alternative cost from the battlefield (e.g. Jodah)

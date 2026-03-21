@@ -353,11 +353,13 @@ public class GameData {
         spellsCastThisTurn.clear();
     }
 
+    public static final int STARTING_LIFE_TOTAL = 20;
+
     /**
      * Returns the current life total for the given player, defaulting to 20 if not yet set.
      */
     public int getLife(UUID playerId) {
-        return playerLifeTotals.getOrDefault(playerId, 20);
+        return playerLifeTotals.getOrDefault(playerId, STARTING_LIFE_TOTAL);
     }
 
     /**
