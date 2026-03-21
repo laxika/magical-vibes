@@ -50,6 +50,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureO
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -94,7 +96,6 @@ public class GameBroadcastService {
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
         List<Integer> poisonCounters = getPoisonCounters(gameData);
-        List<List<CardView>> revealedLibraryTopCards = getRevealedLibraryTopCards(gameData);
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -110,6 +111,8 @@ public class GameBroadcastService {
             List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
             List<CardView> playableExileCards = getPlayableExileCards(gameData, playerId);
             List<Integer> playableFlashbackIndices = getPlayableFlashbackIndices(gameData, playerId);
+            List<List<CardView>> revealedLibraryTopCards = getRevealedLibraryTopCards(gameData, playerId);
+            List<CardView> playableLibraryTopCards = getPlayableLibraryTopCards(gameData, playerId);
             int searchTaxCost = getSearchTaxCost(gameData, playerId);
 
             // Mindslaver: controller sees the controlled player's hand and playable indices
@@ -122,6 +125,7 @@ public class GameBroadcastService {
                     playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, controlledId);
                     playableExileCards = getPlayableExileCards(gameData, controlledId);
                     playableFlashbackIndices = getPlayableFlashbackIndices(gameData, controlledId);
+                    playableLibraryTopCards = getPlayableLibraryTopCards(gameData, controlledId);
                 }
             }
 
@@ -131,7 +135,8 @@ public class GameBroadcastService {
                     battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
-                    gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices
+                    gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
+                    playableLibraryTopCards
             ));
         }
     }
@@ -207,8 +212,11 @@ public class GameBroadcastService {
         return List.of();
     }
 
-    List<List<CardView>> getRevealedLibraryTopCards(GameData data) {
-        // Determine which players have their top card revealed (e.g. Vampire Nocturnus)
+    List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
+        // Determine which players have their top card visible to the viewer.
+        // PlayWithTopCardRevealedEffect = publicly revealed to all players.
+        // LookAtTopCardOfOwnLibraryEffect / AllowCastFromTopOfLibraryEffect = private,
+        //   only visible to the controller.
         Set<UUID> revealedPlayerIds = new HashSet<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Permanent> bf = data.playerBattlefields.get(pid);
@@ -216,8 +224,13 @@ public class GameBroadcastService {
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PlayWithTopCardRevealedEffect) {
+                        // Public: visible to all
                         revealedPlayerIds.add(pid);
-                        break;
+                    } else if (pid.equals(viewerId) &&
+                            (effect instanceof LookAtTopCardOfOwnLibraryEffect
+                                    || effect instanceof AllowCastFromTopOfLibraryEffect)) {
+                        // Private: only visible to the controller
+                        revealedPlayerIds.add(pid);
                     }
                 }
                 if (revealedPlayerIds.contains(pid)) break;
@@ -622,6 +635,107 @@ public class GameBroadcastService {
         }
 
         return playable;
+    }
+
+    /**
+     * Returns the top card of the player's library as a playable CardView if:
+     * - the player has a permanent with AllowCastFromTopOfLibraryEffect
+     * - the top card matches one of the castable types
+     * - the player can afford and is allowed to cast it
+     */
+    List<CardView> getPlayableLibraryTopCards(GameData gameData, UUID playerId) {
+        List<CardView> playable = new ArrayList<>();
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
+            return playable;
+        }
+
+        UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
+        if (!playerId.equals(priorityHolder)) {
+            return playable;
+        }
+
+        // Collect castable types from all AllowCastFromTopOfLibraryEffect on the player's battlefield
+        Set<CardType> castableTypes = getCastableTypesFromTopOfLibrary(gameData, playerId);
+        if (castableTypes.isEmpty()) {
+            return playable;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null || deck.isEmpty()) {
+            return playable;
+        }
+
+        Card topCard = deck.getFirst();
+
+        // Check if the top card matches any castable type
+        boolean matchesType = castableTypes.contains(topCard.getType())
+                || topCard.getAdditionalTypes().stream().anyMatch(castableTypes::contains);
+        if (!matchesType || topCard.getManaCost() == null) {
+            return playable;
+        }
+
+        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+        boolean stackEmpty = gameData.stack.isEmpty();
+        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int maxSpells = getMaxSpellsPerTurn(gameData);
+        boolean spellLimitReached = spellsCast >= maxSpells;
+        boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
+        Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
+        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
+
+        if (spellLimitReached || cantCastDueToAttack) return playable;
+        if (restrictedSpellTypes.contains(topCard.getType())
+                || topCard.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) return playable;
+        if (forbiddenCardNames.contains(topCard.getName())) return playable;
+
+        boolean isInstantSpeed = topCard.hasType(CardType.INSTANT)
+                || topCard.getKeywords().contains(Keyword.FLASH)
+                || hasFlashGrantForCard(gameData, playerId, topCard);
+        boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+
+        if (!canCastTiming) return playable;
+
+        // Check if spell requires a legal target (MTG rule 601.2c)
+        if (topCard.isNeedsSpellCastTarget() && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
+            return playable;
+        }
+
+        if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard)) {
+            playable.add(cardViewFactory.create(topCard));
+        } else {
+            ManaCost cost = new ManaCost(topCard.getManaCost());
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int additionalCost = getCastCostModifier(gameData, playerId, topCard);
+            boolean canAfford = cost.canPay(pool, additionalCost);
+            if (!canAfford) {
+                canAfford = canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);
+            }
+            if (canAfford) {
+                playable.add(cardViewFactory.create(topCard));
+            }
+        }
+
+        return playable;
+    }
+
+    /**
+     * Returns the set of card types that the player can cast from the top of their library,
+     * based on AllowCastFromTopOfLibraryEffect on their permanents.
+     */
+    public Set<CardType> getCastableTypesFromTopOfLibrary(GameData gameData, UUID playerId) {
+        Set<CardType> castableTypes = new HashSet<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return castableTypes;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AllowCastFromTopOfLibraryEffect allow) {
+                    castableTypes.addAll(allow.castableTypes());
+                }
+            }
+        }
+        return castableTypes;
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {

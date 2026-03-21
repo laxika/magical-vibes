@@ -348,6 +348,14 @@ public class GameService {
         }
     }
 
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId);
+        }
+    }
+
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);

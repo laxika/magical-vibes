@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackW
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAllWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
@@ -917,6 +918,30 @@ public class ExileResolutionService {
             playerInputService.beginLibraryReorderFromExile(gameData, controllerId, chosenCards);
             gameBroadcastService.broadcastGameState(gameData);
         }
+    }
+
+    /**
+     * Exiles the top card of the controller's library.
+     * Used by Precognition Field's "{3}: Exile the top card of your library."
+     */
+    @HandlesEffect(ExileTopCardOfOwnLibraryEffect.class)
+    void resolveExileTopCardOfOwnLibrary(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logEntry = controllerName + "'s library is empty — nothing to exile.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.removeFirst();
+        exileService.exileCard(gameData, controllerId, topCard);
+
+        String logEntry = controllerName + " exiles " + topCard.getName() + " from the top of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles {} from library top", gameData.id, controllerName, topCard.getName());
     }
 
     private StackEntryType mapCardTypeToSpellType(Card card) {

@@ -78,6 +78,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playableGraveyardLandIndices.set(new Set());
     this.playableFlashbackIndices.set(new Set());
     this.playableExileCards.set([]);
+    this.playableLibraryTopCards.set([]);
     this.searchTaxCost.set(0);
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
@@ -431,6 +432,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
     this.playableFlashbackIndices.set(new Set(state.playableFlashbackIndices ?? []));
     this.playableExileCards.set(state.playableExileCards ?? []);
+    this.playableLibraryTopCards.set(state.playableLibraryTopCards ?? []);
     this.autoStopSteps.set(new Set(state.autoStopSteps));
 
     if (this.choice.awaitingXValueChoice) {
@@ -480,6 +482,7 @@ export class GameComponent implements OnInit, OnDestroy {
   playableGraveyardLandIndices = signal(new Set<number>());
   playableFlashbackIndices = signal(new Set<number>());
   playableExileCards = signal<Card[]>([]);
+  playableLibraryTopCards = signal<Card[]>([]);
   autoStopSteps = signal(new Set<string>());
   searchTaxCost = signal(0);
 
@@ -532,6 +535,10 @@ export class GameComponent implements OnInit, OnDestroy {
     if (card.id) {
       this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: null, fromExileCardId: card.id });
     }
+  }
+
+  playLibraryTopCard(): void {
+    this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: null, fromLibraryTop: true });
   }
 
   passPriority(): void {

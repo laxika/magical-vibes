@@ -481,6 +481,9 @@ Pass `null` as filter to allow any card.
 | `RevealTopCardsTypeToHandRestToGraveyardEffect` | `(int count, Set<CardType> cardTypes)` | reveal top N cards of controller's library; all cards matching the specified types go to hand, the rest go to graveyard. No player choice — deterministic sorting. Used by Mulch (count=4, LAND) |
 | `RevealTopCardOfLibraryEffect` | `()` | reveal top card of target player's library (one-shot activated ability, e.g. Aven Windreader) |
 | `PlayWithTopCardRevealedEffect` | `()` | static marker: "Play with the top card of your library revealed." While on battlefield, controller's library top card is visible to all players in UI. Used by Vampire Nocturnus |
+| `LookAtTopCardOfOwnLibraryEffect` | `()` | static marker: "You may look at the top card of your library any time." Private look — only visible to the controller, not opponents. Used by Precognition Field |
+| `AllowCastFromTopOfLibraryEffect` | `(Set<CardType> castableTypes)` | static marker: "You may cast [types] from the top of your library." Controller can cast spells of specified types from library top, paying mana cost normally. Used by Precognition Field (INSTANT, SORCERY) |
+| `ExileTopCardOfOwnLibraryEffect` | `()` | one-shot: exile the top card of controller's library. Used as part of activated abilities (e.g. Precognition Field's "{3}: Exile the top card of your library.") |
 | `RevealTopCardCreatureToBattlefieldOrMayBottomEffect` | `()` | reveal top card of controller's library; if creature, put onto battlefield; otherwise, may put on bottom of library. Used by Lurking Predators (ON_OPPONENT_CASTS_SPELL trigger) |
 | `EachPlayerNameCardRevealTopEffect` | `()` | each player names a card, then each reveals top card — match goes to hand, mismatch goes to bottom (ON_ATTACK trigger, Conundrum Sphinx) |
 | `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |

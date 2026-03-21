@@ -618,6 +618,26 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, convokeCreatureIds);
     }
 
+    public void castFromLibraryTop(Player player) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, null);
+    }
+
+    public void castFromLibraryTop(Player player, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, targetId);
+    }
+
+    public void castAndResolveFromLibraryTop(Player player) {
+        castFromLibraryTop(player);
+        passBothPriorities();
+    }
+
+    public void castAndResolveFromLibraryTop(Player player, UUID targetId) {
+        castFromLibraryTop(player, targetId);
+        passBothPriorities();
+    }
+
     public void castFlashback(Player player, int graveyardCardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId);

@@ -37,7 +37,8 @@ public record GameStateMessage(
         int searchTaxCost,
         UUID mindControlledPlayerId,
         List<List<CardView>> revealedLibraryTopCards,
-        List<Integer> playableFlashbackIndices
+        List<Integer> playableFlashbackIndices,
+        List<CardView> playableLibraryTopCards
 ) {
     public GameStateMessage(
             GameStatus status,
@@ -64,12 +65,14 @@ public record GameStateMessage(
             int searchTaxCost,
             UUID mindControlledPlayerId,
             List<List<CardView>> revealedLibraryTopCards,
-            List<Integer> playableFlashbackIndices
+            List<Integer> playableFlashbackIndices,
+            List<CardView> playableLibraryTopCards
     ) {
         this(MessageType.GAME_STATE, status, activePlayerId, turnNumber, currentStep, priorityPlayerId,
                 battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                 hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                 playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
-                mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices);
+                mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
+                playableLibraryTopCards);
     }
 }

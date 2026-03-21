@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -1194,6 +1195,69 @@ public class SpellCastingService {
         String logEntry = player.getUsername() + " casts " + card.getName() + " from exile.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} casts {} from exile", gameData.id, player.getUsername(), card.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {
+        int effectiveXValue = xValue != null ? xValue : 0;
+        if (gameData.status != GameStatus.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+
+        UUID playerId = player.getId();
+
+        // Verify the player can cast from top of library
+        Set<CardType> castableTypes = gameBroadcastService.getCastableTypesFromTopOfLibrary(gameData, playerId);
+        if (castableTypes.isEmpty()) {
+            throw new IllegalStateException("No effect allowing cast from library top");
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null || deck.isEmpty()) {
+            throw new IllegalStateException("Library is empty");
+        }
+
+        Card card = deck.getFirst();
+
+        // Validate card type matches
+        boolean matchesType = castableTypes.contains(card.getType())
+                || card.getAdditionalTypes().stream().anyMatch(castableTypes::contains);
+        if (!matchesType) {
+            throw new IllegalStateException("Top card type is not castable from library");
+        }
+
+        // Remove from library
+        deck.removeFirst();
+
+        // Pay mana cost
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+
+        StackEntryType entryType = cardTypeToStackEntryType(card.getType());
+
+        List<CardEffect> effectsToResolve;
+        if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
+            effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            extractAndRemoveSacrificeCosts(effectsToResolve);
+            effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
+        } else {
+            effectsToResolve = List.of();
+        }
+
+        gameData.stack.add(new StackEntry(
+                entryType, card, playerId, card.getName(),
+                effectsToResolve, effectiveXValue, targetId, null
+        ));
+
+        gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
+        gameData.priorityPassedBy.clear();
+
+        String logEntry = player.getUsername() + " casts " + card.getName() + " from the top of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} casts {} from library top", gameData.id, player.getUsername(), card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);

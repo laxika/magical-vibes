@@ -351,7 +351,9 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            if (Boolean.TRUE.equals(request.flashback())) {
+            if (Boolean.TRUE.equals(request.fromLibraryTop())) {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
+            } else if (Boolean.TRUE.equals(request.flashback())) {
                 gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                         request.targetIds() != null ? request.targetIds() : java.util.List.of(),
                         request.exileGraveyardCardIndices());

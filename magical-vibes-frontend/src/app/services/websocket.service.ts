@@ -324,6 +324,7 @@ export interface GameStateNotification {
   playableGraveyardLandIndices: number[];
   playableFlashbackIndices: number[];
   playableExileCards: Card[];
+  playableLibraryTopCards: Card[];
   newLogEntries: string[];
   searchTaxCost: number;
   mindControlledPlayerId?: string | null;
