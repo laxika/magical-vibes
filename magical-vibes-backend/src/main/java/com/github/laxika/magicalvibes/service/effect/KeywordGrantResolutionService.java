@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LoseAllAbilitiesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -230,9 +230,18 @@ public class KeywordGrantResolutionService {
         log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(), remove.scope());
     }
 
-    @HandlesEffect(LoseAllAbilitiesUntilEndOfTurnEffect.class)
-    private void resolveLoseAllAbilitiesUntilEndOfTurn(GameData gameData, StackEntry entry) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+    @HandlesEffect(LosesAllAbilitiesEffect.class)
+    private void resolveLosesAllAbilities(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect effect) {
+        UUID targetId = switch (effect.scope()) {
+            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            case TARGET -> entry.getTargetId();
+            default -> null;
+        };
+        if (targetId == null) {
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }
