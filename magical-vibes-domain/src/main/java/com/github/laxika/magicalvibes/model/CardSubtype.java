@@ -127,7 +127,8 @@ public enum CardSubtype {
     CHANDRA("Chandra"),
     DEVIL("Devil"),
     SAGA("Saga"),
-    UNICORN("Unicorn");
+    UNICORN("Unicorn"),
+    ASSEMBLY_WORKER("Assembly-Worker");
 
     @Getter
     private final String displayName;

@@ -380,7 +380,8 @@ public class SpellCastTriggerCollectorService {
                     resolved,
                     match.permanent().getCard().getName() + " — " + may.prompt(),
                     null,
-                    trigger.manaCost()));
+                    trigger.manaCost(),
+                    match.permanent().getId()));
         } else if (needsTargeting) {
             match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter()

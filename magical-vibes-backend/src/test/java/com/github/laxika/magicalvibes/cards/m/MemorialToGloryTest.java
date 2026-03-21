@@ -118,9 +118,9 @@ class MemorialToGloryTest extends BaseCardTest {
         for (Permanent soldier : soldiers) {
             assertThat(soldier.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(soldier.getCard().getSubtypes()).contains(CardSubtype.SOLDIER);
-            assertThat(soldier.getPower()).isEqualTo(1);
-            assertThat(soldier.getToughness()).isEqualTo(1);
-            assertThat(soldier.isToken()).isTrue();
+            assertThat(soldier.getCard().getPower()).isEqualTo(1);
+            assertThat(soldier.getCard().getToughness()).isEqualTo(1);
+            assertThat(soldier.getCard().isToken()).isTrue();
         }
     }
 
