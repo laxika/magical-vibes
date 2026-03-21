@@ -22,4 +22,6 @@ public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Perman
     @Override public boolean canTargetPermanent() { return scope == GrantScope.TARGET; }
 
     @Override public boolean isSelfTargeting() { return scope == GrantScope.SELF; }
+
+    @Override public PermanentPredicate targetPredicate() { return scope == GrantScope.TARGET ? filter : null; }
 }

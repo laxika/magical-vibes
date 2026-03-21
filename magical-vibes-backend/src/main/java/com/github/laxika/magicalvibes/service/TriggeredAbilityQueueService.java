@@ -10,13 +10,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -324,17 +325,8 @@ public class TriggeredAbilityQueueService {
         while (!gameData.pendingSagaChapterTargets.isEmpty()) {
             PermanentChoiceContext.SagaChapterTarget pending = gameData.pendingSagaChapterTargets.peekFirst();
 
-            // Collect valid creature targets across all battlefields
-            List<UUID> validCreatureTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isCreature(gameData, p)) {
-                        validCreatureTargets.add(p.getId());
-                    }
-                }
-            }
+            // Collect valid creature targets, applying any saga target filter
+            List<UUID> validCreatureTargets = collectSagaChapterTargets(gameData, pending);
 
             gameData.pendingSagaChapterTargets.removeFirst();
 
@@ -423,5 +415,37 @@ public class TriggeredAbilityQueueService {
                     gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    /**
+     * Collects valid creature targets for a saga chapter, applying any target predicate
+     * declared by the chapter's effects.
+     */
+    private List<UUID> collectSagaChapterTargets(GameData gameData,
+                                                  PermanentChoiceContext.SagaChapterTarget pending) {
+        // Extract target predicate from the first targeting effect that declares one
+        PermanentPredicate targetPredicate = pending.effects().stream()
+                .filter(e -> e.canTargetPermanent() && e.targetPredicate() != null)
+                .map(CardEffect::targetPredicate)
+                .findFirst().orElse(null);
+
+        FilterContext filterContext = targetPredicate != null
+                ? FilterContext.of(gameData).withSourceControllerId(pending.controllerId())
+                : null;
+
+        List<UUID> validCreatureTargets = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (!gameQueryService.isCreature(gameData, p)) continue;
+                if (targetPredicate != null
+                        && !gameQueryService.matchesPermanentPredicate(p, targetPredicate, filterContext)) {
+                    continue;
+                }
+                validCreatureTargets.add(p.getId());
+            }
+        }
+        return validCreatureTargets;
     }
 }

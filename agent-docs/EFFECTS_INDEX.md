@@ -18,6 +18,12 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 | `CostEffect` | `CardEffect` | Marks effects that represent additional costs (sacrifice, discard, exile, counter removal, tap creature). Cost effects are filtered out during effect snapshotting and excluded from mana ability detection. Implement this instead of `CardEffect` for new cost effects. |
 | `ManaProducingEffect` | `CardEffect` | Marks effects that produce mana. Used to identify mana abilities (CR 605.1a) without listing individual effect types. Implement this instead of `CardEffect` for new mana-producing effects. |
 
+### `targetPredicate()` default method on `CardEffect`
+
+Effects that target permanents can optionally restrict valid targets by overriding `targetPredicate()` to return a `PermanentPredicate`. Used by saga chapter targeting in `TriggeredAbilityQueueService.collectSagaChapterTargets()` to filter valid choices. Returns `null` by default (no restriction).
+
+Effects supporting it: `PutPlusOnePlusOneCounterOnTargetCreatureEffect(int count, PermanentPredicate targetPredicate)`, `GrantKeywordEffect` (returns `filter` when `scope == TARGET`).
+
 ### `isSelfTargeting()` default method on `CardEffect`
 
 Effects that implicitly target their source permanent (boost-self, animate-self, regenerate-self, etc.) override `isSelfTargeting()` to return `true`. This is used by `ActivatedAbilityExecutionService` to auto-assign the source as the target when no explicit target is provided.
@@ -724,7 +730,7 @@ Pass `null` as filter to allow any card.
 | `PutMinusOneMinusOneCounterOnEachOtherCreatureEffect` | `()` | put a -1/-1 counter on each other creature (all players' creatures except the source permanent) |
 | `PutMinusOneMinusOneCounterOnEnchantedCreatureEffect` | `(int count)` / `()` | put N -1/-1 counters on enchanted creature (default 1). Use with UPKEEP_TRIGGERED for auras like Glistening Oil |
 | `PutPlusOnePlusOneCounterOnEnchantedCreatureEffect` | `(int count)` / `()` | put N +1/+1 counters on enchanted creature (default 1). Use with UPKEEP_TRIGGERED for auras like Primal Cocoon |
-| `PutPlusOnePlusOneCounterOnTargetCreatureEffect` | `(int count)` | put N +1/+1 counters on target creature |
+| `PutPlusOnePlusOneCounterOnTargetCreatureEffect` | `(int count)` / `(int count, PermanentPredicate targetPredicate)` | put N +1/+1 counters on target creature. Optional targetPredicate restricts valid targets (e.g. PermanentHasGreatestPowerAmongControlledCreaturesPredicate for saga chapters) |
 | `PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect` | `(CardSupertype supertype, int count)` | put N +1/+1 counters on the first target only if it has the specified supertype (e.g. LEGENDARY). For multi-target spells like Ancient Animus |
 | `EnterWithXChargeCountersEffect` | `()` | enters battlefield with X charge counters (replacement effect, reads X from spell cast) |
 | `EnterWithXPlusOnePlusOneCountersEffect` | `()` | enters battlefield with X +1/+1 counters (replacement effect, reads X from spell cast). Use for creatures like Protean Hydra |

@@ -109,6 +109,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -885,6 +886,17 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentTruePredicate) {
             return true;
+        }
+        if (predicate instanceof PermanentHasGreatestPowerAmongControlledCreaturesPredicate) {
+            if (gameData == null || sourceControllerId == null) return false;
+            List<Permanent> controllerBf = gameData.playerBattlefields.get(sourceControllerId);
+            if (controllerBf == null || !controllerBf.contains(permanent)) return false;
+            if (!isCreature(gameData, permanent)) return false;
+            int maxPower = controllerBf.stream()
+                    .filter(p -> isCreature(gameData, p))
+                    .mapToInt(p -> getEffectivePower(gameData, p))
+                    .max().orElse(0);
+            return getEffectivePower(gameData, permanent) == maxPower;
         }
         return false;
     }

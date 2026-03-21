@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 public interface CardEffect {
     default boolean canTargetPlayer() { return false; }
     default boolean canTargetPermanent() { return false; }
@@ -7,6 +9,13 @@ public interface CardEffect {
     default boolean canTargetGraveyard() { return false; }
     default boolean canTargetAnyGraveyard() { return false; }
     default boolean canTargetExile() { return false; }
+
+    /**
+     * Returns an optional predicate that restricts which permanents can be targeted
+     * by this effect. Used by saga chapter targeting to filter valid choices.
+     * Returns {@code null} when no restriction applies (any valid permanent can be targeted).
+     */
+    default PermanentPredicate targetPredicate() { return null; }
 
     /**
      * Returns {@code true} if this effect implicitly targets its source permanent

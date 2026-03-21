@@ -378,6 +378,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power |
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with the same name as the source permanent (uses current card name, works with clones) |
+| `PermanentHasGreatestPowerAmongControlledCreaturesPredicate` | `()` | creatures controlled by source's controller with the greatest power (ties allowed). Requires FilterContext with gameData + sourceControllerId |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by the source's controller |
 | `PermanentAttachedToSourceControllerPredicate` | `()` | permanents attached to (enchanting/cursing) the source's controller |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |
