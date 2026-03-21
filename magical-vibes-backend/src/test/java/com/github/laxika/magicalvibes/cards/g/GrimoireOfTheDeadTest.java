@@ -40,7 +40,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         assertThat(ability0.getManaCost()).isEqualTo("{1}");
         assertThat(ability0.getEffects()).hasSize(2);
         assertThat(ability0.getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(((DiscardCardTypeCost) ability0.getEffects().get(0)).requiredType()).isNull();
+        assertThat(((DiscardCardTypeCost) ability0.getEffects().get(0)).predicate()).isNull();
         assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCounterOnSelfEffect.class);
         assertThat(((PutCounterOnSelfEffect) ability0.getEffects().get(1)).counterType()).isEqualTo(CounterType.STUDY);
 

@@ -499,10 +499,11 @@ public class AbilityActivationService {
             // Invalid index — re-prompt the discard cost choice
             log.warn("Game {} - {} sent invalid discard cost card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             PendingAbilityActivation pending = gameData.pendingAbilityActivation;
-            CardType requiredType = pending.discardCostType();
+            String costLabel = pending.discardCostLabel();
+            String labelText = costLabel != null ? costLabel + " " : "";
             sessionManager.sendToPlayer(player.getId(), new ChooseCardFromHandMessage(
                     new ArrayList<>(cardChoice.validIndices()),
-                    "Choose a " + requiredType.name().toLowerCase() + " card to discard as an activation cost."
+                    "Choose a " + labelText + "card to discard as an activation cost."
             ));
             return;
         }
@@ -711,14 +712,14 @@ public class AbilityActivationService {
                 .orElse(null);
         if (discardCardTypeCost != null) {
             List<Card> hand = gameData.playerHands.get(playerId);
-            List<Integer> validDiscardIndices = collectDiscardIndicesForType(hand, discardCardTypeCost.requiredType());
+            List<Integer> validDiscardIndices = collectDiscardIndices(hand, discardCardTypeCost);
             if (validDiscardIndices.isEmpty()) {
-                String typeLabel = discardCardTypeCost.requiredType() != null ? discardCardTypeCost.requiredType().name().toLowerCase() + " " : "";
-                throw new IllegalStateException("Must discard a " + typeLabel + "card to activate ability");
+                String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
+                throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
             }
             if (discardCardIndex == null) {
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
-                        discardCardTypeCost.requiredType(), validDiscardIndices);
+                        discardCardTypeCost.label(), validDiscardIndices);
                 return;
             }
         }
@@ -800,7 +801,7 @@ public class AbilityActivationService {
         }
 
         if (discardCardTypeCost != null) {
-            payDiscardCost(gameData, player, discardCardTypeCost.requiredType(), discardCardIndex);
+            payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex);
         }
 
         if (exileGraveyardCost != null) {
@@ -1235,13 +1236,13 @@ public class AbilityActivationService {
         }
     }
 
-    private List<Integer> collectDiscardIndicesForType(List<Card> hand, CardType requiredType) {
+    private List<Integer> collectDiscardIndices(List<Card> hand, DiscardCardTypeCost cost) {
         List<Integer> validIndices = new ArrayList<>();
         if (hand == null) {
             return validIndices;
         }
         for (int i = 0; i < hand.size(); i++) {
-            if (requiredType == null || hand.get(i).getType() == requiredType) {
+            if (cost.predicate() == null || gameQueryService.matchesCardPredicate(hand.get(i), cost.predicate(), null)) {
                 validIndices.add(i);
             }
         }
@@ -1249,34 +1250,34 @@ public class AbilityActivationService {
     }
 
     private void beginDiscardCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                        UUID targetId, Zone targetZone, CardType requiredType, List<Integer> validDiscardIndices) {
+                                        UUID targetId, Zone targetZone, String costLabel, List<Integer> validDiscardIndices) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
                 abilityIndex,
                 xValue,
                 targetId,
                 targetZone,
-                requiredType
+                costLabel
         );
         gameData.interaction.beginCardChoice(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE, playerId, new HashSet<>(validDiscardIndices), null);
-        String typeLabel = requiredType != null ? requiredType.name().toLowerCase() + " " : "";
+        String labelText = costLabel != null ? costLabel + " " : "";
         sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
                 validDiscardIndices,
-                "Choose a " + typeLabel + "card to discard as an activation cost."
+                "Choose a " + labelText + "card to discard as an activation cost."
         ));
     }
 
-    private void payDiscardCost(GameData gameData, Player player, CardType requiredType, Integer discardCardIndex) {
+    private void payDiscardCost(GameData gameData, Player player, DiscardCardTypeCost cost, Integer discardCardIndex) {
         if (discardCardIndex == null) {
             throw new IllegalStateException("Must choose a card to discard");
         }
 
         List<Card> hand = gameData.playerHands.get(player.getId());
-        List<Integer> validDiscardIndices = collectDiscardIndicesForType(hand, requiredType);
+        List<Integer> validDiscardIndices = collectDiscardIndices(hand, cost);
         Set<Integer> validSet = new HashSet<>(validDiscardIndices);
         if (!validSet.contains(discardCardIndex)) {
-            String typeLabel = requiredType != null ? requiredType.name().toLowerCase() + " " : "";
-            throw new IllegalStateException("Must discard a " + typeLabel + "card");
+            String costLabel = cost.label() != null ? cost.label() + " " : "";
+            throw new IllegalStateException("Must discard a " + costLabel + "card");
         }
 
         Card discarded = hand.remove((int) discardCardIndex);

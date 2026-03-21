@@ -231,8 +231,9 @@ public class ReconnectionService {
                 String prompt = switch (cc.type()) {
                     case DISCARD_CHOICE -> "Choose a card to discard.";
                     case ACTIVATED_ABILITY_DISCARD_COST_CHOICE -> gameData.pendingAbilityActivation != null
-                            ? "Choose a " + gameData.pendingAbilityActivation.discardCostType().name().toLowerCase()
-                            + " card to discard as an activation cost."
+                            ? "Choose a " + (gameData.pendingAbilityActivation.discardCostLabel() != null
+                                    ? gameData.pendingAbilityActivation.discardCostLabel() + " " : "")
+                            + "card to discard as an activation cost."
                             : "Choose a card from your hand.";
                     default -> "Choose a card from your hand.";
                 };

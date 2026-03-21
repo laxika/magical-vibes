@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.CardType;
-
 import java.util.UUID;
 
 public record PendingAbilityActivation(UUID sourcePermanentId, int abilityIndex, int xValue,
                                        UUID targetId, Zone targetZone,
-                                       CardType discardCostType) {
+                                       String discardCostLabel) {
 }

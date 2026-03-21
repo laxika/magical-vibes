@@ -18,7 +18,7 @@ public class FaunaShaman extends Card {
                 true,
                 "{G}",
                 List.of(
-                        new DiscardCardTypeCost(CardType.CREATURE),
+                        new DiscardCardTypeCost(new CardTypePredicate(CardType.CREATURE), "creature"),
                         new SearchLibraryForCardTypesToHandEffect(
                                 new CardTypePredicate(CardType.CREATURE))
                 ),
