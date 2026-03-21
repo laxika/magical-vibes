@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -99,7 +100,16 @@ public class TriggeredAbilityQueueService {
                     ? new FilterContext(gameData, pending.sourceCard().getId(), pending.controllerId(), null)
                     : null;
 
+            // Check if effects can target players (any-target effects like DealDamageToAnyTargetEffect)
+            boolean canTargetPlayers = pending.effects().stream().anyMatch(CardEffect::canTargetPlayer);
+
             List<UUID> validTargets = new ArrayList<>();
+
+            // Add player IDs for any-target effects
+            if (canTargetPlayers) {
+                validTargets.addAll(gameData.orderedPlayerIds);
+            }
+
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
@@ -118,17 +128,18 @@ public class TriggeredAbilityQueueService {
                 gameData.pendingAttackTriggerTargets.removeFirst();
                 String logEntry = pending.sourceCard().getName() + "'s attack trigger has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} attack trigger skipped (no valid permanent targets)",
+                log.info("Game {} - {} attack trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
                 continue;
             }
 
+            String targetDescription = canTargetPlayers ? "any target" : "target permanent";
             gameData.pendingAttackTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
-                    pending.sourceCard().getName() + "'s ability - Choose target permanent.");
+                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
-            String logEntry = pending.sourceCard().getName() + "'s attack trigger - choose a target permanent.";
+            String logEntry = pending.sourceCard().getName() + "'s attack trigger - choose " + targetDescription + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} attack trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;

@@ -124,6 +124,7 @@ public enum CardSubtype {
     KARN("Karn"),
     JACE("Jace"),
     CURSE("Curse"),
+    CHANDRA("Chandra"),
     DEVIL("Devil"),
     SAGA("Saga");
 

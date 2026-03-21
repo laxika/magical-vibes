@@ -209,7 +209,8 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target != null) {
+        boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
+        if (target != null || isPlayerTarget) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     att.sourceCard(),
@@ -222,9 +223,10 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setTargetId(permanentId);
             gameData.stack.add(entry);
 
-            String logEntry = att.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            String logEntry = att.sourceCard().getName() + "'s ability targets " + targetName + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} attack trigger targets {}", gameData.id, att.sourceCard().getName(), target.getCard().getName());
+            log.info("Game {} - {} attack trigger targets {}", gameData.id, att.sourceCard().getName(), targetName);
         } else {
             String logEntry = att.sourceCard().getName() + "'s ability has no valid target.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

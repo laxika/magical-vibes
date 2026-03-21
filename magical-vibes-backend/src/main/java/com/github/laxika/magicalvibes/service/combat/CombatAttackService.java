@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
@@ -251,6 +252,16 @@ public class CombatAttackService {
                 if (attackerIndices.size() != 1) {
                     allEffects.removeIf(e -> e instanceof AttacksAloneConditionalEffect);
                 }
+
+                // Filter out ControlsSubtypeConditionalEffect when condition not met (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> {
+                    if (e instanceof ControlsSubtypeConditionalEffect csc) {
+                        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+                        return bf == null || bf.stream().noneMatch(
+                                p -> p.getCard().getSubtypes().contains(csc.subtype()));
+                    }
+                    return false;
+                });
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
