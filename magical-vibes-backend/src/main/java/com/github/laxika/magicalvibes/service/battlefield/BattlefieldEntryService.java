@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEff
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -47,10 +48,13 @@ import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetP
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -71,6 +75,7 @@ public class BattlefieldEntryService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final CardViewFactory cardViewFactory;
+    private TargetLegalityService targetLegalityService;
     // @Lazy to break circular dependency:
     // BattlefieldEntryService → CloneService → BattlefieldEntryService
     private CloneService cloneService;
@@ -79,11 +84,13 @@ public class BattlefieldEntryService {
                                     GameBroadcastService gameBroadcastService,
                                     PlayerInputService playerInputService,
                                     CardViewFactory cardViewFactory,
+                                    TargetLegalityService targetLegalityService,
                                     @Lazy CloneService cloneService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.playerInputService = playerInputService;
         this.cardViewFactory = cardViewFactory;
+        this.targetLegalityService = targetLegalityService;
         this.cloneService = cloneService;
     }
 
@@ -93,6 +100,14 @@ public class BattlefieldEntryService {
      */
     public void setCloneService(CloneService cloneService) {
         this.cloneService = cloneService;
+    }
+
+    /**
+     * Sets the TargetLegalityService for manual (non-Spring) construction
+     * where initialization order prevents passing it in the constructor.
+     */
+    public void setTargetLegalityService(TargetLegalityService targetLegalityService) {
+        this.targetLegalityService = targetLegalityService;
     }
 
     // ===== Permanent entry =====
@@ -490,9 +505,13 @@ public class BattlefieldEntryService {
                 List<CardEffect> otherEffects = mandatoryEffects.stream()
                         .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
                         .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
-                        .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect)).toList();
+                        .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
+                        .filter(e -> !e.canTargetSpell()).toList();
+                // Separate spell-targeting effects (need stack-target selection at trigger time)
+                List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
+                        .filter(CardEffect::canTargetSpell).toList();
 
-                // Put non-graveyard-exile effects on the stack as before
+                // Put non-special effects on the stack as before
                 if (!otherEffects.isEmpty()) {
                     if (!card.isNeedsTarget() || targetId != null) {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -537,6 +556,20 @@ public class BattlefieldEntryService {
                 for (CardEffect effect : graveyardFlashbackEffects) {
                     handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
                 }
+
+                // Handle spell-targeting ETB effects: target must be chosen from spells on the stack
+                for (CardEffect effect : spellTargetEffects) {
+                    StackEntryPredicate spellFilter = null;
+                    if (effect instanceof CopySpellEffect cse) {
+                        spellFilter = cse.spellFilter();
+                    }
+                    gameData.pendingETBSpellTargetTriggers.add(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                            card, controllerId, List.of(effect), spellFilter));
+                }
+                if (!gameData.pendingETBSpellTargetTriggers.isEmpty()
+                        && !gameData.interaction.isAwaitingInput()) {
+                    processNextETBSpellTargetTrigger(gameData);
+                }
             }
         }
 
@@ -548,6 +581,52 @@ public class BattlefieldEntryService {
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
             checkOpponentLandEntersTriggers(gameData, controllerId, card);
+        }
+    }
+
+    /**
+     * Processes the next pending ETB trigger that targets a spell on the stack.
+     * Collects valid spells matching the trigger's filter and presents a choice
+     * to the controller. If no valid targets exist, the trigger is skipped.
+     */
+    public void processNextETBSpellTargetTrigger(GameData gameData) {
+        while (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
+            PermanentChoiceContext.ETBSpellTargetTrigger pending = gameData.pendingETBSpellTargetTriggers.peekFirst();
+
+            // Collect valid spells from the stack
+            List<UUID> validSpellCardIds = new ArrayList<>();
+            for (StackEntry se : gameData.stack) {
+                StackEntryType type = se.getEntryType();
+                if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL
+                        && type != StackEntryType.CREATURE_SPELL && type != StackEntryType.ENCHANTMENT_SPELL
+                        && type != StackEntryType.ARTIFACT_SPELL && type != StackEntryType.PLANESWALKER_SPELL) {
+                    continue; // skip triggered/activated abilities
+                }
+                if (pending.spellFilter() != null
+                        && !targetLegalityService.matchesStackEntryPredicate(gameData, se, pending.spellFilter(), pending.controllerId())) {
+                    continue;
+                }
+                validSpellCardIds.add(se.getCard().getId());
+            }
+
+            if (validSpellCardIds.isEmpty()) {
+                gameData.pendingETBSpellTargetTriggers.removeFirst();
+                String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid spell targets.";
+                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                log.info("Game {} - {} ETB spell-target trigger skipped (no valid targets)", gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pendingETBSpellTargetTriggers.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validSpellCardIds, List.of(),
+                    pending.sourceCard().getName() + "'s ability — Choose target spell.");
+
+            String logEntry = pending.sourceCard().getName() + "'s ETB ability triggers — choose a target spell.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} ETB spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
         }
     }
 

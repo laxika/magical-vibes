@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.List;
 import java.util.Map;
@@ -90,5 +91,9 @@ public sealed interface PermanentChoiceContext {
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
 
     record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** ETB trigger that needs to target a spell on the stack (e.g. Naru Meha's copy ability). */
+    record ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                 StackEntryPredicate spellFilter) implements PermanentChoiceContext {}
 
 }

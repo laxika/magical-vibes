@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         StackEntry entry = new StackEntry(
@@ -453,6 +456,45 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleETBSpellTargetTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
+        // Find the target spell name on the stack
+        String targetName = "";
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(cardId)) {
+                targetName = se.getCard().getName();
+                break;
+            }
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                etbStt.sourceCard(),
+                etbStt.controllerId(),
+                etbStt.sourceCard().getName() + "'s ETB ability",
+                new ArrayList<>(etbStt.effects()),
+                cardId,
+                Zone.STACK
+        );
+        gameData.stack.add(entry);
+
+        String logEntry = etbStt.sourceCard().getName() + "'s ETB ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} ETB spell-target trigger targets {}", gameData.id, etbStt.sourceCard().getName(), targetName);
+
+        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
+            battlefieldEntryService.processNextETBSpellTargetTrigger(gameData);
             return;
         }
 

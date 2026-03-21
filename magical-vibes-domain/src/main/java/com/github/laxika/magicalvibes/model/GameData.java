@@ -128,6 +128,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.ETBSpellTargetTrigger> pendingETBSpellTargetTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepPlayerTargetTrigger> pendingUpkeepPlayerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
@@ -638,6 +639,7 @@ public class GameData {
         copy.pendingDiscardSelfTriggers.addAll(this.pendingDiscardSelfTriggers);
         copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
         copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
+        copy.pendingETBSpellTargetTriggers.addAll(this.pendingETBSpellTargetTriggers);
         copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
         copy.pendingUpkeepPlayerTargets.addAll(this.pendingUpkeepPlayerTargets);
         copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);

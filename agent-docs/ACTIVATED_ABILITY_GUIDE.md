@@ -393,6 +393,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to `validateSpellTargetOnStack` to include triggered/activated abilities in the search, not just spells. Used by cards like Spellskite that target "target spell or ability." |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
 | `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
+| `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player ("you control") |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
 | `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |
 
