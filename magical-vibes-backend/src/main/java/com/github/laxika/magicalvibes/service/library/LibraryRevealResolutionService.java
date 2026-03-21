@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEf
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseNToHandRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryMayExileOneEffect;
@@ -932,6 +933,79 @@ public class LibraryRevealResolutionService {
 
         log.info("Game {} - {} resolving {} — {} to hand, {} to graveyard",
                 gameData.id, playerName, cardName, toHand.size(), toGraveyard.size());
+    }
+
+    /**
+     * Looks at the top X cards of the controller's library (X from the spell's X value),
+     * filters eligible permanent cards, and lets the controller choose any number to put
+     * onto the battlefield. The rest are put into the graveyard.
+     *
+     * <p>Used by Kamahl's Druidic Vow (land or legendary permanent with MV &le; X).
+     */
+    @HandlesEffect(LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.class)
+    void resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(
+            GameData gameData,
+            StackEntry entry,
+            LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect effect
+    ) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        int xValue = entry.getXValue();
+
+        int count = Math.min(xValue, deck.size());
+        if (count <= 0) {
+            String logMsg = entry.getCard().getName() + ": " + playerName
+                    + (deck.isEmpty() ? "'s library is empty." : " looks at 0 cards (X is 0).");
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> revealedCards = takeTopCards(deck, count);
+
+        String logMsg = playerName + " looks at the top " + pluralCards(count) + " of their library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+
+        // Filter eligible cards using predicates
+        List<Card> eligibleCards = new ArrayList<>();
+        for (Card card : revealedCards) {
+            if (effect.alwaysEligiblePredicate() != null
+                    && gameQueryService.matchesCardPredicate(card, effect.alwaysEligiblePredicate(), null)) {
+                eligibleCards.add(card);
+            } else if (effect.mvCappedEligiblePredicate() != null
+                    && card.getManaValue() <= xValue
+                    && gameQueryService.matchesCardPredicate(card, effect.mvCappedEligiblePredicate(), null)) {
+                eligibleCards.add(card);
+            }
+        }
+
+        if (eligibleCards.isEmpty()) {
+            // No eligible cards — put all into graveyard
+            for (Card card : revealedCards) {
+                gameData.playerGraveyards.get(controllerId).add(card);
+            }
+            String noEligibleLog = playerName + " finds no eligible cards. All cards are put into their graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, noEligibleLog);
+            return;
+        }
+
+        // Set up player choice for selecting cards to put onto battlefield
+        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
+        for (Card card : eligibleCards) {
+            validCardIds.add(card.getId());
+        }
+
+        gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds, true);
+
+        List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
+        List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                cardIds, cardViews, eligibleCards.size(),
+                "Choose any number of eligible cards to put onto the battlefield. The rest go to your graveyard."
+        ));
+
+        log.info("Game {} - {} resolving {} with X={}, {} revealed, {} eligible",
+                gameData.id, playerName, entry.getCard().getName(), xValue, count, eligibleCards.size());
     }
 
     // =========================================================================

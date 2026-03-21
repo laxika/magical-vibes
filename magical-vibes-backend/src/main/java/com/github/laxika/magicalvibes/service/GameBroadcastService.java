@@ -404,16 +404,12 @@ public class GameBroadcastService {
             return matchingCount < exileCost.count();
         });
 
-        // MTG rule 205.4e: can't cast a legendary sorcery/instant unless you control a legendary creature or planeswalker
+        // MTG rule 714.1: can't cast a legendary sorcery unless you control a legendary creature or planeswalker
         playable.removeIf(i -> {
             Card card = hand.get(i);
             if (!card.getSupertypes().contains(CardSupertype.LEGENDARY)) return false;
-            if (!card.hasType(CardType.SORCERY) && !card.hasType(CardType.INSTANT)) return false;
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) return true;
-            return bf.stream().noneMatch(p ->
-                    p.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
-                            && (gameQueryService.isCreature(gameData, p) || p.getCard().hasType(CardType.PLANESWALKER)));
+            if (!card.hasType(CardType.SORCERY)) return false;
+            return !controlsLegendaryCreatureOrPlaneswalker(gameData, playerId);
         });
 
         return playable;
@@ -810,6 +806,23 @@ public class GameBroadcastService {
             }
         }
         return forbidden;
+    }
+
+    boolean controlsLegendaryCreatureOrPlaneswalker(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, perm);
+            boolean isLegendary = perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
+                    || bonus.grantedSupertypes().contains(CardSupertype.LEGENDARY);
+            if (isLegendary) {
+                if (gameQueryService.isCreature(gameData, perm)
+                        || perm.getCard().hasType(CardType.PLANESWALKER)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
