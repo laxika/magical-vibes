@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
@@ -859,6 +861,28 @@ public class GameBroadcastService {
                                 reduction += subtypeReduce.amount();
                                 break;
                             }
+                        }
+                    }
+                    if (effect instanceof ReduceCastCostForMatchingSpellsEffect matchReduce
+                            && matchReduce.scope() == CostModificationScope.SELF
+                            && gameQueryService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
+                        reduction += matchReduce.amount();
+                    }
+                }
+            }
+        }
+
+        // Cost reduction from opponent's battlefield permanents (OPPONENT-scoped)
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (opponentId.equals(playerId)) continue;
+            List<Permanent> opponentBf = gameData.playerBattlefields.get(opponentId);
+            if (opponentBf != null) {
+                for (Permanent perm : opponentBf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof ReduceCastCostForMatchingSpellsEffect matchReduce
+                                && matchReduce.scope() == CostModificationScope.OPPONENT
+                                && gameQueryService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
+                            reduction += matchReduce.amount();
                         }
                     }
                 }
