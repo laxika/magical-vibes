@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceSubtypeReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSubtypeReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -245,6 +246,17 @@ public class EffectResolutionService {
             case TargetSubtypeReplacementEffect tsre -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 yield target != null && target.getCard().getSubtypes().contains(tsre.subtype());
+            }
+            case SourceSubtypeReplacementEffect ssre -> {
+                // Check if the source permanent has the required subtype.
+                // Try the battlefield first; fall back to the card on the stack (last-known information).
+                Permanent source = entry.getSourcePermanentId() != null
+                        ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                        : null;
+                if (source != null) {
+                    yield source.getCard().getSubtypes().contains(ssre.subtype());
+                }
+                yield entry.getCard().getSubtypes().contains(ssre.subtype());
             }
             case KickerReplacementEffect ignored ->
                     entry.isKicked();
