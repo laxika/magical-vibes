@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomHandCardAndPlayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
@@ -764,6 +765,42 @@ public class PlayerInteractionResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} choosing artifact to sacrifice for divided damage",
                 gameData.id, playerName);
+    }
+
+    @HandlesEffect(SacrificePermanentThenEffect.class)
+    private void resolveSacrificePermanentThen(GameData gameData, StackEntry entry,
+                                                SacrificePermanentThenEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        List<UUID> validIds = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter())) {
+                    validIds.add(p.getId());
+                }
+            }
+        }
+
+        if (validIds.isEmpty()) {
+            String logEntry = playerName + " has no " + effect.permanentDescription() + " to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no {} to sacrifice for {}",
+                    gameData.id, playerName, effect.permanentDescription(), entry.getCard().getName());
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SacrificePermanentThen(
+                        controllerId, entry.getCard(), effect.thenEffect()));
+        playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                entry.getCard().getName() + " — Choose " + effect.permanentDescription() + " to sacrifice.");
+
+        String logEntry = playerName + " is choosing " + effect.permanentDescription() + " to sacrifice.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} choosing {} to sacrifice for {}",
+                gameData.id, playerName, effect.permanentDescription(), entry.getCard().getName());
     }
 
     private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {

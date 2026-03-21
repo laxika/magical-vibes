@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
@@ -385,6 +387,48 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData, sadd.sourceCard(), sadd.controllerId(), sadd.damageAssignments());
 
         gameData.pendingETBDamageAssignments = Map.of();
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleSacrificePermanentThen(GameData gameData, UUID permanentId,
+                                              PermanentChoiceContext.SacrificePermanentThen ctx) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        String logEntry = playerName + " sacrifices " + toSacrifice.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                toSacrifice.getCard().getName(), ctx.sourceCard().getName());
+
+        // Execute the "if you do" effect by pushing it onto the stack as a triggered ability
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ctx.sourceCard(),
+                ctx.controllerId(),
+                ctx.sourceCard().getName() + "'s effect",
+                new ArrayList<>(List.of(ctx.thenEffect()))
+        ));
 
         stateBasedActionService.performStateBasedActions(gameData);
 

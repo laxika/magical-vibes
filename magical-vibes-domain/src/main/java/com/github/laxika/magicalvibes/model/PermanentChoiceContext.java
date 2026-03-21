@@ -115,4 +115,7 @@ public sealed interface PermanentChoiceContext {
     /** Spell-cast trigger that needs to target a card in a graveyard (e.g. Teshar, Ancestor's Apostle). */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
+    /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
+    record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) implements PermanentChoiceContext {}
+
 }
