@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -18,7 +22,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffe
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -43,20 +49,26 @@ public class MiscTriggerCollectorService {
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final ExileService exileService;
+    private final DrawService drawService;
     // @Lazy to break indirect circular dependency:
     // MiscTriggerCollectorService → PermanentControlResolutionService → TriggerCollectionService → MiscTriggerCollectorService
     private PermanentControlResolutionService permanentControlResolutionService;
+    private PermanentRemovalService permanentRemovalService;
 
     public MiscTriggerCollectorService(GameBroadcastService gameBroadcastService,
                                        @Lazy GraveyardService graveyardService,
                                        GameQueryService gameQueryService,
                                        ExileService exileService,
-                                       @Lazy PermanentControlResolutionService permanentControlResolutionService) {
+                                       @Lazy DrawService drawService,
+                                       @Lazy PermanentControlResolutionService permanentControlResolutionService,
+                                       @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameBroadcastService = gameBroadcastService;
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
+        this.drawService = drawService;
         this.permanentControlResolutionService = permanentControlResolutionService;
+        this.permanentRemovalService = permanentRemovalService;
     }
 
     /**
@@ -276,5 +288,124 @@ public class MiscTriggerCollectorService {
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
         log.info("Game {} - {} triggers on noncombat damage to opponent", gameData.id, cardName);
         return true;
+    }
+
+    // ── ON_CONTROLLER_GAINS_LIFE (draw cards equal to life gained) ────
+
+    @CollectsTrigger(value = DrawCardsEqualToLifeGainedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleDrawCardsEqualToLifeGained(TriggerMatchContext match,
+            DrawCardsEqualToLifeGainedEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        UUID controllerId = match.controllerId();
+        int amount = lg.lifeGainedAmount();
+
+        String triggerLog = cardName + " triggers — " + gameData.playerIdToName.get(controllerId)
+                + " draws " + amount + " card" + (amount != 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on life gain, drawing {} cards",
+                gameData.id, cardName, amount);
+
+        for (int i = 0; i < amount; i++) {
+            drawService.resolveDrawCard(gameData, controllerId);
+        }
+        return true;
+    }
+
+    // ── ON_CONTROLLER_LOSES_LIFE (exile for each life lost) ──────────
+
+    @CollectsTrigger(value = ExileForEachLifeLostEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleExileForEachLifeLost(TriggerMatchContext match,
+            ExileForEachLifeLostEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        UUID controllerId = match.controllerId();
+        int amount = ll.lifeLostAmount();
+
+        String triggerLog = cardName + " triggers — " + gameData.playerIdToName.get(controllerId)
+                + " must exile " + amount + " card" + (amount != 1 ? "s" : "") + "/permanent" + (amount != 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on life loss, exiling {} cards/permanents",
+                gameData.id, cardName, amount);
+
+        performLichExile(gameData, controllerId, amount, match.permanent());
+        return true;
+    }
+
+    /**
+     * Exiles cards/permanents for Lich's Mastery. Priority: graveyard cards first,
+     * then hand cards, then other battlefield permanents (avoiding the source enchantment
+     * unless it's the last resort).
+     */
+    private void performLichExile(GameData gameData, UUID controllerId, int count, Permanent source) {
+        int remaining = count;
+
+        // 1. Exile from graveyard first
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            while (remaining > 0 && !graveyard.isEmpty()) {
+                Card card = graveyard.removeLast();
+                exileService.exileCard(gameData, controllerId, card);
+                String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
+                        + card.getName() + " from their graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                remaining--;
+            }
+        }
+
+        // 2. Exile from hand
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand != null) {
+            while (remaining > 0 && !hand.isEmpty()) {
+                Card card = hand.removeLast();
+                exileService.exileCard(gameData, controllerId, card);
+                String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
+                        + card.getName() + " from their hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                remaining--;
+            }
+        }
+
+        // 3. Exile permanents (skip the source enchantment unless it's the only option)
+        if (remaining > 0) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                // Exile non-source permanents first
+                while (remaining > 0) {
+                    Permanent toExile = null;
+                    for (Permanent perm : battlefield) {
+                        if (!perm.getId().equals(source.getId())) {
+                            toExile = perm;
+                            break;
+                        }
+                    }
+                    if (toExile == null) {
+                        // Only the source enchantment remains — exile it as last resort
+                        if (!battlefield.isEmpty()) {
+                            toExile = battlefield.getFirst();
+                        }
+                    }
+                    if (toExile == null) break;
+
+                    String permName = toExile.getCard().getName();
+                    permanentRemovalService.removePermanentToExile(gameData, toExile);
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                    String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
+                            + permName + " from the battlefield.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    remaining--;
+                }
+            }
+        }
+
+        if (remaining > 0) {
+            String logEntry = gameData.playerIdToName.get(controllerId)
+                    + " has nothing left to exile (" + remaining + " remaining).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} ran out of things to exile ({} remaining)",
+                    gameData.id, gameData.playerIdToName.get(controllerId), remaining);
+        }
     }
 }

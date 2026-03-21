@@ -543,6 +543,21 @@ public class TriggerCollectionService {
             }
         });
 
+        // Controller-loses-life triggers (e.g. Lich's Mastery)
+        // Snapshot: handlers may modify the battlefield (exile permanents)
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (!playerId.equals(losingPlayerId)) return;
+
+            for (Permanent perm : List.copyOf(battlefield)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_LOSES_LIFE)) {
+                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
+                    if (registry.dispatch(match, EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx)) {
+                        anyTriggered[0] = true;
+                    }
+                }
+            }
+        });
+
         if (anyTriggered[0]) {
             gameOutcomeService.checkWinCondition(gameData);
         }

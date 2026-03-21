@@ -207,7 +207,7 @@ public class GameSimulator {
         PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
                 graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
         TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
-        MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService, exileService, null);
+        MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService, exileService, drawService, null, permanentRemovalService);
         List<Object> triggerCollectorBeans = List.of(
                 new SpellCastTriggerCollectorService(gameQueryService, gameBroadcastService),
                 new DiscardTriggerCollectorService(gameBroadcastService, gameQueryService, damagePreventionService, permanentRemovalService),

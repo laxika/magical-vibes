@@ -169,6 +169,7 @@ public class GameTestHarness {
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
     private final StateBasedActionService stateBasedActionService;
+    private final LifeResolutionService lifeResolutionService;
 
     public GameTestHarness() {
         if (!oracleLoaded) {
@@ -208,7 +209,7 @@ public class GameTestHarness {
         permanentRemovalService = new PermanentRemovalService(
                 graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
         TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
-        MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService, exileService, null);
+        MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService, exileService, drawService, null, permanentRemovalService);
         List<Object> triggerCollectorBeans = List.of(
                 new SpellCastTriggerCollectorService(gameQueryService, gameBroadcastService),
                 new DiscardTriggerCollectorService(gameBroadcastService, gameQueryService, damagePreventionService, permanentRemovalService),
@@ -225,7 +226,7 @@ public class GameTestHarness {
         StateTriggerService stateTriggerService = new StateTriggerService(gameBroadcastService);
         stateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
-        LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
+        lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, sessionManager, triggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, sessionManager, combatAttackService, combatTriggerService);
@@ -935,6 +936,10 @@ public class GameTestHarness {
 
     public DrawService getDrawService() {
         return drawService;
+    }
+
+    public LifeResolutionService getLifeResolutionService() {
+        return lifeResolutionService;
     }
 
     public PlayerInputService getPlayerInputService() {

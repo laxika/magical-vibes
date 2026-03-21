@@ -78,6 +78,7 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
 
         deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        deathTriggerService.checkSelfLeavesTriggered(gameData, target, controllerId);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, controllerId, ownerId);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -109,6 +110,7 @@ public class PermanentRemovalService {
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
 
         deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        deathTriggerService.checkSelfLeavesTriggered(gameData, target, info.controllerId());
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, info.controllerId(), info.ownerId());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -133,8 +135,10 @@ public class PermanentRemovalService {
         if (removed.isEmpty()) {
             return false;
         }
+        UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        deathTriggerService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.addCardToHand(ownerId, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -157,8 +161,10 @@ public class PermanentRemovalService {
         if (removed.isEmpty()) {
             return false;
         }
+        UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        deathTriggerService.checkSelfLeavesTriggered(gameData, target, controllerId);
         exileService.exileCard(gameData, ownerId, target.getOriginalCard());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -184,8 +190,10 @@ public class PermanentRemovalService {
         if (removed.isEmpty()) {
             return false;
         }
+        UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        deathTriggerService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.playerDecks.get(ownerId).add(0, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -210,8 +218,10 @@ public class PermanentRemovalService {
         if (removed.isEmpty()) {
             return false;
         }
+        UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         deathTriggerService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        deathTriggerService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.playerDecks.get(ownerId).add(target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
         return true;

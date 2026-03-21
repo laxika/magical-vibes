@@ -88,5 +88,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
-    GRAVEYARD_ON_CONTROLLER_CASTS_SPELL
+    GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers whenever the controller of this permanent loses life (damage or direct life loss).
+     *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
+     *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
+    ON_CONTROLLER_LOSES_LIFE,
+    /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
+     *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
+    ON_SELF_LEAVES_BATTLEFIELD
 }

@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefi
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -475,5 +477,41 @@ public class DeathTriggerService {
                 log.info("Game {} - {} triggers (opponent creature died)", gameData.id, perm.getCard().getName());
             }
         });
+    }
+
+    /**
+     * Checks if the removed permanent has any ON_SELF_LEAVES_BATTLEFIELD effects and fires them.
+     * Must be called after the permanent is removed from the battlefield.
+     *
+     * @param gameData     the current game state
+     * @param target       the permanent that left the battlefield
+     * @param controllerId the player who controlled the permanent
+     */
+    public void checkSelfLeavesTriggered(GameData gameData, Permanent target, UUID controllerId) {
+        List<CardEffect> effects = target.getCard().getEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD);
+        if (effects == null || effects.isEmpty()) return;
+
+        for (CardEffect effect : effects) {
+            if (effect instanceof ControllerLosesGameOnLeavesEffect) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        target.getCard(),
+                        controllerId,
+                        target.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(new TargetPlayerLosesGameEffect(controllerId)))
+                ));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        target.getCard(),
+                        controllerId,
+                        target.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+            }
+            String triggerLog = target.getCard().getName() + "'s ability triggers (left the battlefield).";
+            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+            log.info("Game {} - {} triggers (left the battlefield)", gameData.id, target.getCard().getName());
+        }
     }
 }

@@ -296,6 +296,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Prevent all damage to self | `c/ChoMannoRevolutionary.java` | STATIC PreventAllDamageEffect |
 | Can't lose game | `p/PlatinumAngel.java` | STATIC CantLoseGameEffect |
 | Can't lose from life + damage as infect | `p/PhyrexianUnlife.java` | STATIC CantLoseGameFromLifeEffect + DamageDealtAsInfectBelowZeroLifeEffect |
+| Can't lose + life gain draw + life loss exile + LTB lose | `l/LichsMastery.java` | STATIC CantLoseGameEffect + GrantKeywordEffect(HEXPROOF, SELF), ON_CONTROLLER_GAINS_LIFE DrawCardsEqualToLifeGainedEffect, ON_CONTROLLER_LOSES_LIFE ExileForEachLifeLostEffect, ON_SELF_LEAVES_BATTLEFIELD ControllerLosesGameOnLeavesEffect |
 | Controller shroud | `t/TrueBeliever.java` | STATIC GrantControllerShroudEffect |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
 | Limit spells | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
