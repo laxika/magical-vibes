@@ -463,6 +463,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, null, null, null, true);
     }
 
+    public void castKickedSorcery(Player player, int cardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, null, null, null, true);
+    }
+
     public void castKickedSorcery(Player player, int cardIndex, Map<UUID, Integer> damageAssignments) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, damageAssignments, List.of(), List.of(), false, null, null, null, null, null, true);
