@@ -298,7 +298,12 @@ public class StaticEffectResolutionService {
     @HandlesStaticEffect(GrantKeywordEffect.class)
     private void resolveGrantKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
-        if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
+        boolean scopeMatch = switch (grant.scope()) {
+            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
+                    && matchesStaticFilter(context.target(), grant.filter());
+            default -> matchesCreatureScope(context, grant.scope(), grant.filter());
+        };
+        if (scopeMatch) {
             accumulator.addKeywords(grant.keywords());
         }
     }
