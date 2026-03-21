@@ -429,6 +429,7 @@ Pass `null` as filter to allow any card.
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
 | `DrawAndDiscardCardEffect` | `(int drawAmount, int discardAmount)` | draw N then discard N cards (loot). Convenience ctor: `()` defaults to `(1, 1)`. Commonly wrapped in MayEffect for "you may draw a card. If you do, discard a card." |
 | `DiscardAndDrawCardEffect` | `(int discardAmount, int drawAmount)` | discard N cards then draw N cards (rummage). Convenience ctor: `()` defaults to `(1, 1)`. Commonly wrapped in MayEffect for "you may discard a card. If you do, draw a card." Uses `pendingDrawAfterDiscard` on GameData to draw after the interactive discard completes. |
+| `DiscardUnlessExileCardFromGraveyardEffect` | `(CardPredicate predicate)` | discard a card unless you exile a card matching predicate from your graveyard. If no matching cards exist, discard is mandatory. Uses may-ability prompt to let controller choose. |
 | `DrawCardsEqualToLifeGainedEffect` | `()` | triggered: draw cards equal to life gained. Slot: `ON_CONTROLLER_GAINS_LIFE`. Amount from trigger context |
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
 | `DiscardOwnHandEffect` | `()` | discard controller's entire hand. All cards go directly to graveyard without player choice. Fires discard triggers for each card. Used by The Flame of Keld (Chapter I) |

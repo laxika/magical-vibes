@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEff
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
@@ -264,6 +265,13 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (opponentExileChoice != null) {
             mayPenaltyChoiceHandlerService.handleOpponentExileChoice(gameData, player, accepted, ability, opponentExileChoice);
+            return;
+        }
+
+        // Discard-unless-exile-from-graveyard — handled via the may ability system
+        boolean isDiscardUnlessExile = ability.effects().stream().anyMatch(e -> e instanceof DiscardUnlessExileCardFromGraveyardEffect);
+        if (isDiscardUnlessExile) {
+            mayPenaltyChoiceHandlerService.handleDiscardUnlessExileChoice(gameData, player, accepted, ability);
             return;
         }
 

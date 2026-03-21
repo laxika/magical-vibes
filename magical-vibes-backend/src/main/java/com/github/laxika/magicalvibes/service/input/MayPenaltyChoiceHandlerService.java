@@ -11,8 +11,11 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
@@ -394,6 +397,70 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDiscardUnlessExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        DiscardUnlessExileCardFromGraveyardEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof DiscardUnlessExileCardFromGraveyardEffect)
+                .map(e -> (DiscardUnlessExileCardFromGraveyardEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID controllerId = ability.controllerId();
+
+        if (accepted) {
+            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+            List<Integer> matchingIndices = new ArrayList<>();
+            if (graveyard != null) {
+                for (int i = 0; i < graveyard.size(); i++) {
+                    if (gameQueryService.matchesCardPredicate(graveyard.get(i), effect.predicate(), null)) {
+                        matchingIndices.add(i);
+                    }
+                }
+            }
+
+            if (!matchingIndices.isEmpty()) {
+                // Clear pending effect resolution state — the exile graveyard choice
+                // handler calls resolveAutoPass rather than sbaProcessMayAbilitiesThenAutoPass,
+                // but there are no remaining effects to resume anyway.
+                gameData.pendingEffectResolutionEntry = null;
+                gameData.pendingEffectResolutionIndex = 0;
+
+                String filterLabel = CardPredicateUtils.describeFilter(effect.predicate());
+                gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
+                gameData.interaction.setGraveyardChoiceExileRemainingCount(1);
+                playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
+                        "Choose a " + filterLabel + " to exile from your graveyard.");
+
+                String logEntry = player.getUsername() + " chooses to exile a " + filterLabel
+                        + " from their graveyard. (" + ability.sourceCard().getName() + ")";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} accepts exile-from-graveyard for {}", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+            // Fall through — no matching cards anymore
+        }
+
+        // Declined or no matching cards — discard
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand != null && !hand.isEmpty()) {
+            gameData.discardCausedByOpponent = false;
+            gameData.interaction.setDiscardRemainingCount(1);
+            playerInputService.beginDiscardChoice(gameData, controllerId);
+
+            String logEntry = player.getUsername() + " must discard a card. (" + ability.sourceCard().getName() + ")";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines exile, must discard for {}", gameData.id,
+                    player.getUsername(), ability.sourceCard().getName());
+            return;
+        }
+
+        // No cards in hand either — nothing happens
+        String logEntry = player.getUsername() + " has no cards to discard. (" + ability.sourceCard().getName() + ")";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} has no cards to discard for {}", gameData.id,
+                player.getUsername(), ability.sourceCard().getName());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

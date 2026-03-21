@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
@@ -399,6 +401,32 @@ public class PlayerInteractionResolutionService {
         applyDrawCards(gameData, controllerId, effect.drawAmount());
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, controllerId, effect.discardAmount());
+    }
+
+    @HandlesEffect(DiscardUnlessExileCardFromGraveyardEffect.class)
+    private void resolveDiscardUnlessExileFromGraveyard(GameData gameData, StackEntry entry,
+                                                        DiscardUnlessExileCardFromGraveyardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        boolean hasMatchingCards = graveyard != null && graveyard.stream()
+                .anyMatch(card -> gameQueryService.matchesCardPredicate(card, effect.predicate(), null));
+
+        if (!hasMatchingCards) {
+            // No matching cards in graveyard — must discard
+            gameData.discardCausedByOpponent = false;
+            resolveDiscardCards(gameData, controllerId, 1);
+            return;
+        }
+
+        // Has matching cards — ask via may ability
+        String filterLabel = CardPredicateUtils.describeFilter(effect.predicate());
+        String prompt = "Exile a " + filterLabel + " from your graveyard to avoid discarding? ("
+                + entry.getCard().getName() + ")";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(), controllerId, List.of(effect), prompt
+        ));
     }
 
     @HandlesEffect(DiscardUpToThenDrawThatManyEffect.class)
