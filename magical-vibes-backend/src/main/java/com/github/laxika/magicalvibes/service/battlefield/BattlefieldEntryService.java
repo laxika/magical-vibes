@@ -624,6 +624,7 @@ public class BattlefieldEntryService {
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
             checkOpponentLandEntersTriggers(gameData, controllerId, card);
+            checkAllyLandEntersTriggers(gameData, controllerId, card);
         }
     }
 
@@ -1194,6 +1195,30 @@ public class BattlefieldEntryService {
                 }
             }
         });
+    }
+
+    void checkAllyLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(landControllerId);
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringLand) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    landControllerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    perm.getId()
+            ));
+
+            String logEntry = perm.getCard().getName() + "'s ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
+        }
     }
 
     void checkOpponentCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {

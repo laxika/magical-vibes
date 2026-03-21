@@ -48,6 +48,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_EQUIPPED_CREATURE_DIES,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
+    /** Triggers whenever a land the controller controls enters the battlefield.
+     *  Checked in {@code BattlefieldEntryService.checkAllyLandEntersTriggers}. */
+    ON_ALLY_LAND_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_DIES,
     ON_DEALT_DAMAGE,
     ON_OPENING_HAND_REVEAL,
