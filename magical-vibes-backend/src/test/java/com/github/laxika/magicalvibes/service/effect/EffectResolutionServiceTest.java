@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -29,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -378,6 +383,60 @@ class EffectResolutionServiceTest {
             verify(damageHandler).resolve(gd, entry, damageEffect);
             // Second effect (metalcraft conditional) is skipped
             verify(registry, never()).getHandler(cantBlockEffect);
+        }
+    }
+
+    // =========================================================================
+    // ControlsPermanentConditionalEffect
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveControlsPermanentConditionalEffect")
+    class ResolveControlsPermanentConditionalEffect {
+
+        @Test
+        @DisplayName("Skips wrapped effect when controller has no matching permanent")
+        void skipsWrappedEffectWhenNoMatchingPermanent() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsPermanentConditionalEffect(new PermanentIsArtifactPredicate(), wrapped);
+            StackEntry entry = createEntry(createCard("Temporal Machinations"), player1Id, List.of(conditional));
+
+            // No permanents on battlefield — condition not met
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(registry, never()).getHandler(wrapped);
+        }
+
+        @Test
+        @DisplayName("Resolves wrapped effect when controller has a matching permanent")
+        void resolvesWrappedEffectWhenMatchingPermanent() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsPermanentConditionalEffect(new PermanentIsArtifactPredicate(), wrapped);
+            StackEntry entry = createEntry(createCard("Temporal Machinations"), player1Id, List.of(conditional));
+
+            // Add an artifact to controller's battlefield
+            Permanent artifact = mock(Permanent.class);
+            gd.playerBattlefields.get(player1Id).add(artifact);
+            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(artifact), any(PermanentIsArtifactPredicate.class)))
+                    .thenReturn(true);
+            EffectHandler handler = stubHandler(wrapped);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, wrapped);
+        }
+
+        @Test
+        @DisplayName("Logs skip message when condition not met")
+        void logsSkipMessageWhenConditionNotMet() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsPermanentConditionalEffect(new PermanentIsArtifactPredicate(), wrapped);
+            StackEntry entry = createEntry(createCard("Temporal Machinations"), player1Id, List.of(conditional));
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Temporal Machinations") && msg.contains("does nothing")));
         }
     }
 
