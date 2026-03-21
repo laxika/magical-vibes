@@ -295,6 +295,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Block limit | `s/StalkingTiger.java` | STATIC CanBeBlockedByAtMostNCreaturesEffect |
 | Unblockable | `p/PhantomWarrior.java` | STATIC CantBeBlockedEffect |
 | Conditional unblockable | `s/ScrapdiverSerpent.java` | STATIC CantBeBlockedIfDefenderControlsMatchingPermanentEffect |
+| Grant unblockable to own creatures | `t/TetsukoUmezawaFugitive.java` | STATIC GrantEffectEffect(CantBeBlockedEffect, ALL_OWN_CREATURES, PermanentAnyOfPredicate(power/toughness filter)) |
 | Attack restriction (defender) | `s/SeaMonster.java` | STATIC CantAttackUnlessDefenderControlsMatchingPermanentEffect |
 | Attack restriction (battlefield count) | `h/HarborSerpent.java` | STATIC CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect(predicate, 5, desc) — can't attack unless N+ matching permanents across all battlefields |
 | Attack restriction (opponent damage) | `b/BloodcrazedGoblin.java` | STATIC CantAttackUnlessOpponentDealtDamageThisTurnEffect — can't attack unless an opponent was dealt damage this turn |

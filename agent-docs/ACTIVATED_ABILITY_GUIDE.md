@@ -375,6 +375,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentPowerAtLeastPredicate` | `(int minPower)` | creatures with power >= N |
 | `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
 | `PermanentPowerAtMostXPredicate` | `()` | creatures with power <= X, where X is the xValue from FilterContext (used with abilities that have variable X, e.g. Aryel) |
+| `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power |
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with the same name as the source permanent (uses current card name, works with clones) |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by the source's controller |

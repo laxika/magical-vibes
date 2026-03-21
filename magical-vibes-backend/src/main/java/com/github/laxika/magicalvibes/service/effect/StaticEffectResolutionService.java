@@ -26,7 +26,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -414,6 +417,15 @@ public class StaticEffectResolutionService {
     private void resolveGrantEffectEffect(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantEffectEffect) effect;
         if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
+            accumulator.addGrantedEffect(grant.effect());
+        }
+    }
+
+    @HandlesStaticEffect(value = GrantEffectEffect.class, selfOnly = true)
+    private void resolveGrantEffectEffectSelf(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantEffectEffect) effect;
+        if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.ALL_OWN_CREATURES)
+                && matchesStaticFilter(context.target(), grant.filter())) {
             accumulator.addGrantedEffect(grant.effect());
         }
     }
@@ -1367,6 +1379,12 @@ public class StaticEffectResolutionService {
         if (filter instanceof PermanentIsAttackingPredicate)
             return target.isAttacking();
         if (filter instanceof PermanentTruePredicate) return true;
+        if (filter instanceof PermanentPowerAtMostPredicate p)
+            return target.getEffectivePower() <= p.maxPower();
+        if (filter instanceof PermanentToughnessAtMostPredicate p)
+            return target.getEffectiveToughness() <= p.maxToughness();
+        if (filter instanceof PermanentPowerAtLeastPredicate p)
+            return target.getEffectivePower() >= p.minPower();
         throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());
     }
 
