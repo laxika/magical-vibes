@@ -759,7 +759,8 @@ public class StepTriggerService {
             if (needsPermanentTarget) {
                 gameData.pendingSagaChapterTargets.add(
                         new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
-                                new ArrayList<>(chapterEffects), saga.getId(), chapterName));
+                                new ArrayList<>(chapterEffects), saga.getId(), chapterName,
+                                card.getSagaChapterTargetFilters(chapterSlot)));
                 String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);

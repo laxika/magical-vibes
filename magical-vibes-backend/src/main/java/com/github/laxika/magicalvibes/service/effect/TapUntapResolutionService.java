@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapPermanentsOfTargetPlayerEffect;
@@ -172,6 +173,24 @@ public class TapUntapResolutionService {
         String logEntry = target.getCard().getName() + " won't untap as long as " + entry.getCard().getName() + " remains tapped.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(PreventTargetUntapWhileSourceOnBattlefieldEffect.class)
+    private void resolvePreventTargetUntapWhileSourceOnBattlefield(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            return;
+        }
+
+        target.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourcePermanentId);
+
+        String logEntry = target.getCard().getName() + " won't untap as long as you control " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} untap prevented while {} on battlefield", gameData.id, target.getCard().getName(), entry.getCard().getName());
     }
 
     @HandlesEffect(UntapAllTargetPermanentsEffect.class)

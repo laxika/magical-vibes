@@ -70,6 +70,9 @@ public class Card {
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
+    /** Per-chapter target filters for Saga cards (e.g. "target creature an opponent controls"). */
+    @Getter(AccessLevel.NONE)
+    private Map<EffectSlot, Set<TargetFilter>> sagaChapterTargetFilters = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
 
@@ -231,6 +234,14 @@ public class Card {
                 .filter(type::isInstance)
                 .map(type::cast)
                 .findFirst();
+    }
+
+    public void setSagaChapterTargetFilter(EffectSlot slot, Set<TargetFilter> filters) {
+        sagaChapterTargetFilters.put(slot, filters);
+    }
+
+    public Set<TargetFilter> getSagaChapterTargetFilters(EffectSlot slot) {
+        return sagaChapterTargetFilters.getOrDefault(slot, Set.of());
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {

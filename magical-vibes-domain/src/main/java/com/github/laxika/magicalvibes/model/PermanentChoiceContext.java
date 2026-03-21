@@ -101,9 +101,11 @@ public sealed interface PermanentChoiceContext {
     record ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                  StackEntryPredicate spellFilter) implements PermanentChoiceContext {}
 
-    /** Saga chapter ability that targets a permanent (e.g. Phyrexian Scriptures chapter I). */
+    /** Saga chapter ability that targets a permanent (e.g. Phyrexian Scriptures chapter I).
+     *  {@code targetFilters} restricts valid targets (e.g. "creature an opponent controls"); null/empty = any creature. */
     record SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                             UUID sourcePermanentId, String chapterName) implements PermanentChoiceContext {}
+                             UUID sourcePermanentId, String chapterName,
+                             Set<TargetFilter> targetFilters) implements PermanentChoiceContext {}
 
     /** Saga chapter ability that targets a card in a graveyard (e.g. The Mirari Conjecture chapters I/II). */
     record SagaChapterGraveyardTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

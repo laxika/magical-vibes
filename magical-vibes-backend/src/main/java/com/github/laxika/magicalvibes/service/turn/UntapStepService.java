@@ -63,11 +63,19 @@ public class UntapStepService {
         // Clean up stale untap-prevention locks on ALL battlefields before untapping.
         // A lock is stale if the source permanent is no longer on the battlefield or is no longer tapped.
         gameData.forEachPermanent((pid, p) -> {
-            if (p.getUntapPreventedByPermanentIds().isEmpty()) return;
-            p.getUntapPreventedByPermanentIds().removeIf(sourceId -> {
-                Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-                return source == null || !source.isTapped();
-            });
+            if (!p.getUntapPreventedByPermanentIds().isEmpty()) {
+                p.getUntapPreventedByPermanentIds().removeIf(sourceId -> {
+                    Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+                    return source == null || !source.isTapped();
+                });
+            }
+            // Clean up "while source on battlefield" locks — only removed when source leaves battlefield.
+            if (!p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty()) {
+                p.getUntapPreventedWhileSourceOnBattlefieldIds().removeIf(sourceId -> {
+                    Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+                    return source == null;
+                });
+            }
         });
 
         // Untap all permanents for the new active player (skip those with "doesn't untap" effects)
@@ -80,7 +88,8 @@ public class UntapStepService {
                         .anyMatch(e -> e instanceof DoesntUntapDuringUntapStepEffect);
                 boolean hasMayNotUntap = p.isTapped() && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
-                boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty();
+                boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
+                        || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
                 boolean skipsNextUntap = p.getSkipUntapCount() > 0;
 
                 if (skipsNextUntap) {

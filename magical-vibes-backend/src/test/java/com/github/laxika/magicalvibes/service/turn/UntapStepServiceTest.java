@@ -193,6 +193,41 @@ class UntapStepServiceTest {
         }
 
         @Test
+        @DisplayName("Permanent with active on-battlefield untap lock stays tapped")
+        void staysTappedWithActiveOnBattlefieldLock() {
+            Permanent lockedPerm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            lockedPerm.tap();
+            UUID sourceId = UUID.randomUUID();
+            lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourceId);
+
+            // Source permanent exists on the battlefield (not tapped — doesn't matter)
+            Permanent sourcePerm = new Permanent(createCardWithName("Time of Ice"));
+            when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(sourcePerm);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(lockedPerm.isTapped()).isTrue();
+            assertThat(lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds()).containsExactly(sourceId);
+        }
+
+        @Test
+        @DisplayName("On-battlefield untap lock is removed when source leaves battlefield")
+        void onBattlefieldLockRemovedWhenSourceGone() {
+            Permanent lockedPerm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            lockedPerm.tap();
+            UUID sourceId = UUID.randomUUID();
+            lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourceId);
+
+            // Source permanent is gone
+            when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(lockedPerm.isTapped()).isFalse();
+            assertThat(lockedPerm.getUntapPreventedWhileSourceOnBattlefieldIds()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Permanent with DoesntUntapDuringUntapStepEffect still clears summoning sickness")
         void clearsSummoningSicknessEvenWhenDoesntUntap() {
             Card card = createCardWithName("Colossus of Sardia");

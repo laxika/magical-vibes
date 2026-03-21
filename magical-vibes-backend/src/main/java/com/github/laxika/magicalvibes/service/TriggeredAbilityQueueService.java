@@ -475,7 +475,7 @@ public class TriggeredAbilityQueueService {
 
     /**
      * Collects valid creature targets for a saga chapter, applying any target predicate
-     * declared by the chapter's effects.
+     * declared by the chapter's effects and any chapter-level target filters.
      */
     private List<UUID> collectSagaChapterTargets(GameData gameData,
                                                   PermanentChoiceContext.SagaChapterTarget pending) {
@@ -485,8 +485,14 @@ public class TriggeredAbilityQueueService {
                 .map(CardEffect::targetPredicate)
                 .findFirst().orElse(null);
 
-        FilterContext filterContext = targetPredicate != null
-                ? FilterContext.of(gameData).withSourceControllerId(pending.controllerId())
+        // Also check for chapter-level target filters (e.g. "creature an opponent controls")
+        Set<TargetFilter> chapterFilters = pending.targetFilters();
+        boolean hasChapterFilters = chapterFilters != null && !chapterFilters.isEmpty();
+
+        FilterContext filterContext = (targetPredicate != null || hasChapterFilters)
+                ? FilterContext.of(gameData)
+                        .withSourceCardId(pending.sourceCard().getId())
+                        .withSourceControllerId(pending.controllerId())
                 : null;
 
         List<UUID> validCreatureTargets = new ArrayList<>();
@@ -497,6 +503,10 @@ public class TriggeredAbilityQueueService {
                 if (!gameQueryService.isCreature(gameData, p)) continue;
                 if (targetPredicate != null
                         && !gameQueryService.matchesPermanentPredicate(p, targetPredicate, filterContext)) {
+                    continue;
+                }
+                if (hasChapterFilters
+                        && !gameQueryService.matchesFilters(p, chapterFilters, filterContext)) {
                     continue;
                 }
                 validCreatureTargets.add(p.getId());

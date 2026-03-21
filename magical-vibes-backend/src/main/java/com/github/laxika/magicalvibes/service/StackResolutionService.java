@@ -562,7 +562,8 @@ public class StackResolutionService {
         if (needsPermanentTarget) {
             gameData.pendingSagaChapterTargets.add(
                     new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
+                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
+                            card.getSagaChapterTargetFilters(chapterSlot)));
             String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);

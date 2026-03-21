@@ -848,6 +848,7 @@ Pass `null` as filter to allow any card.
 | `DoesntUntapDuringUntapStepEffect` | `()` | this permanent doesn't untap during untap step (static) |
 | `MayNotUntapDuringUntapStepEffect` | `()` | controller may choose not to untap this permanent during untap step (static); prompts player via may-ability system |
 | `PreventTargetUntapWhileSourceTappedEffect` | `()` | target permanent doesn't untap during its controller's untap step for as long as the source permanent remains tapped; piggybacks on companion targeting effect (e.g. `TapTargetPermanentEffect`) |
+| `PreventTargetUntapWhileSourceOnBattlefieldEffect` | `()` | target permanent doesn't untap during its controller's untap step for as long as the source permanent is on the battlefield (tapped state irrelevant); piggybacks on companion targeting effect. Uses `untapPreventedWhileSourceOnBattlefieldIds` set on Permanent. Used by Time of Ice |
 | `SkipNextUntapOnTargetEffect` | `()` | target permanent doesn't untap during its controller's next untap step; increments `skipUntapCount` which is decremented each untap step; piggybacks on companion targeting effect (e.g. `TapTargetPermanentEffect`) |
 | `TapPermanentsOfTargetPlayerEffect` | `(PermanentPredicate filter)` | tap all permanents matching filter that target player controls; targets a player |
 | `SkipNextUntapPermanentsOfTargetPlayerEffect` | `(PermanentPredicate filter)` | all permanents matching filter that target player controls don't untap during that player's next untap step; increments `skipUntapCount`; targets a player |
