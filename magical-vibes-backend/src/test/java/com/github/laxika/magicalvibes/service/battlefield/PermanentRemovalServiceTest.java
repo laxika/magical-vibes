@@ -269,7 +269,7 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, bears);
 
             verify(deathTriggerService).collectDeathTrigger(eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears));
-            verify(deathTriggerService).checkAllyCreatureDeathTriggers(gd, player1Id);
+            verify(deathTriggerService).checkAllyCreatureDeathTriggers(gd, player1Id, bears.getCard());
             verify(deathTriggerService).checkOpponentCreatureDeathTriggers(gd, player1Id);
             verify(deathTriggerService).checkEquippedCreatureDeathTriggers(gd, bears.getId(), player1Id);
         }

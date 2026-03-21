@@ -121,7 +121,7 @@ public class DeathTriggerService {
                 gameData.id, playerName, poisonAmount);
     }
 
-    public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId) {
+    public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Card dyingCard) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
@@ -129,22 +129,44 @@ public class DeathTriggerService {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES);
             if (effects == null || effects.isEmpty()) continue;
 
+            boolean anyEffectFired = false;
+            List<CardEffect> stackEffects = new ArrayList<>();
+
             for (CardEffect effect : effects) {
-                if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, mayPay, null);
-                } else if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, may, null, perm.getId());
-                } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            dyingCreatureControllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
-                            null,
-                            perm.getId()
-                    ));
+                // Unwrap subtype-filtered effects: skip if the dying creature lacks the required subtype
+                CardEffect resolvedEffect = effect;
+                if (effect instanceof SubtypeConditionalEffect filtered) {
+                    if (!dyingCard.getSubtypes().contains(filtered.subtype())) {
+                        continue;
+                    }
+                    resolvedEffect = filtered.wrapped();
                 }
+
+                if (resolvedEffect instanceof MayPayManaEffect mayPay) {
+                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, mayPay, null);
+                    anyEffectFired = true;
+                } else if (resolvedEffect instanceof MayEffect may) {
+                    gameData.queueMayAbility(perm.getCard(), dyingCreatureControllerId, may, null, perm.getId());
+                    anyEffectFired = true;
+                } else {
+                    stackEffects.add(resolvedEffect);
+                }
+            }
+
+            if (!stackEffects.isEmpty()) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        dyingCreatureControllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(stackEffects),
+                        null,
+                        perm.getId()
+                ));
+                anyEffectFired = true;
+            }
+
+            if (anyEffectFired) {
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());

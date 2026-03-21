@@ -229,6 +229,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Other creature enters | `s/SoulWarden.java` | ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD GainLifeEffect |
 | Ally creature enters (may gain life) + opponent creature enters (may lose life) | `s/SuturePriest.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD MayEffect(GainLifeEffect(1)) + ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD MayEffect(TargetPlayerLosesLifeEffect(1)) |
 | Ally creature dies | `g/GravePact.java` | ON_ALLY_CREATURE_DIES EachOpponentSacrificesCreatureEffect |
+| Ally creature dies (subtype-filtered, multi-effect) | `s/Slimefoot.java` | ON_ALLY_CREATURE_DIES SubtypeConditionalEffect(SAPROLING, DealDamageToEachOpponentEffect(1)) + SubtypeConditionalEffect(SAPROLING, GainLifeEffect(1)) — only fires when dying creature has the specified subtype; multiple effects grouped into single stack entry |
 | Any creature dies (may loot) | `m/MurderOfCrows.java` | ON_ANY_CREATURE_DIES MayEffect(DrawAndDiscardCardEffect()) — may draw+discard on any creature death |
 | Opponent creature dies | `g/GlissaTheTraitor.java` | ON_OPPONENT_CREATURE_DIES MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(ARTIFACT)).build()) — includes tokens |
 | Any artifact goes to graveyard from battlefield | `m/MolderBeast.java` | ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD BoostSelfEffect |

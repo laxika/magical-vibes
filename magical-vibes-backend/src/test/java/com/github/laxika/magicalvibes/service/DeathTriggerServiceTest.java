@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPerma
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -441,12 +444,14 @@ class DeathTriggerServiceTest {
     @DisplayName("checkAllyCreatureDeathTriggers")
     class AllyCreatureDeathTriggers {
 
+        private final Card dyingCreature = createCreature("Dying Creature", 2, 2);
+
         @Test
         @DisplayName("Does nothing when battlefield is null")
         void nullBattlefield_doesNothing() {
             gd.playerBattlefields.remove(PLAYER1_ID);
 
-            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingCreature);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -456,7 +461,7 @@ class DeathTriggerServiceTest {
         void noEffects_doesNothing() {
             addToBattlefield(PLAYER1_ID, createCreature("Vanilla", 2, 2));
 
-            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingCreature);
 
             assertThat(gd.stack).isEmpty();
         }
@@ -468,7 +473,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new DrawCardEffect(1));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingCreature);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
@@ -484,7 +489,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new MayEffect(new DrawCardEffect(1), "Draw?"));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingCreature);
 
             // CR 603.5 — "you may" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -498,7 +503,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay to draw?"));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingCreature);
 
             // CR 603.5 — "you may pay" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -512,7 +517,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new DrawCardEffect(1));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingCreature);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Blood Artist") && msg.contains("triggers")));
         }
@@ -524,9 +529,64 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new DrawCardEffect(1));
             addToBattlefield(PLAYER2_ID, watcher);
 
-            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID);
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingCreature);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("SubtypeConditionalEffect fires when dying creature has matching subtype")
+        void subtypeConditional_matchingSubtype_fires() {
+            Card watcher = createCreature("Slimefoot", 2, 3);
+            watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+                    new SubtypeConditionalEffect(CardSubtype.SAPROLING, new DrawCardEffect(1)));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            Card dyingSaproling = createCreature("Saproling", 1, 1);
+            dyingSaproling.setSubtypes(List.of(CardSubtype.SAPROLING));
+
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingSaproling);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+        }
+
+        @Test
+        @DisplayName("SubtypeConditionalEffect does NOT fire when dying creature lacks subtype")
+        void subtypeConditional_nonMatchingSubtype_doesNotFire() {
+            Card watcher = createCreature("Slimefoot", 2, 3);
+            watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+                    new SubtypeConditionalEffect(CardSubtype.SAPROLING, new DrawCardEffect(1)));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            Card dyingBear = createCreature("Grizzly Bears", 2, 2);
+            dyingBear.setSubtypes(List.of(CardSubtype.BEAR));
+
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingBear);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Multiple effects grouped into single stack entry for same permanent")
+        void multipleEffects_groupedInSingleStackEntry() {
+            Card watcher = createCreature("Multi Watcher", 1, 1);
+            watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+                    new SubtypeConditionalEffect(CardSubtype.SAPROLING, new DealDamageToEachOpponentEffect(1)));
+            watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+                    new SubtypeConditionalEffect(CardSubtype.SAPROLING, new GainLifeEffect(1)));
+            addToBattlefield(PLAYER1_ID, watcher);
+
+            Card dyingSaproling = createCreature("Saproling", 1, 1);
+            dyingSaproling.setSubtypes(List.of(CardSubtype.SAPROLING));
+
+            svc.checkAllyCreatureDeathTriggers(gd, PLAYER1_ID, dyingSaproling);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getEffectsToResolve()).hasSize(2);
+            assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DealDamageToEachOpponentEffect.class);
+            assertThat(entry.getEffectsToResolve().get(1)).isInstanceOf(GainLifeEffect.class);
         }
     }
 
