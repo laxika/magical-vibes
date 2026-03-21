@@ -651,6 +651,7 @@ public class TriggerCollectionService {
     // ── Internal dispatch ──────────────────────────────────────────────
 
     private void dispatchSlot(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot, TriggerContext ctx) {
+        if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
         for (CardEffect effect : perm.getCard().getEffects(slot)) {
             var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
             registry.dispatch(match, slot, effect, ctx);

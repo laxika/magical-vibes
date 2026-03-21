@@ -124,6 +124,10 @@ public class Permanent {
     @Setter private boolean baseToughnessOverriddenPermanently;
     @Setter private int permanentBaseToughnessOverride;
     @Setter private boolean transformed;
+    /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
+     *  Keywords, activated abilities, and triggered abilities are suppressed.
+     *  Cleared by {@link #resetModifiers()}. */
+    @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -214,6 +218,7 @@ public class Permanent {
         this.baseToughnessOverriddenPermanently = source.baseToughnessOverriddenPermanently;
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
         this.transformed = source.transformed;
+        this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
     }
 
     public Card getOriginalCard() {
@@ -357,6 +362,7 @@ public class Permanent {
     }
 
     public boolean hasKeyword(Keyword keyword) {
+        if (losesAllAbilitiesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword);
     }
@@ -390,5 +396,6 @@ public class Permanent {
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
+        this.losesAllAbilitiesUntilEndOfTurn = false;
     }
 }

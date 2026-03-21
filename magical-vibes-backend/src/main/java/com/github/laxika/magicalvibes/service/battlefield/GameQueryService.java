@@ -570,7 +570,7 @@ public class GameQueryService {
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (bonus.removedKeywords().contains(keyword)) return false;
-        if (bonus.losesAllAbilities()) {
+        if (bonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             // Creature has lost all its own abilities; only keywords granted by static effects apply
             return bonus.keywords().contains(keyword);
         }

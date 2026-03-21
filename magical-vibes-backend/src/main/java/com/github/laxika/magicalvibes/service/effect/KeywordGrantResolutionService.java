@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEnd
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LoseAllAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -227,6 +228,20 @@ public class KeywordGrantResolutionService {
         String logEntry = target.getCard().getName() + " loses " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(), remove.scope());
+    }
+
+    @HandlesEffect(LoseAllAbilitiesUntilEndOfTurnEffect.class)
+    private void resolveLoseAllAbilitiesUntilEndOfTurn(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        target.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        String logEntry = target.getCard().getName() + " loses all abilities until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
     }
 
     @HandlesEffect(GrantFlashbackToGraveyardCardsEffect.class)

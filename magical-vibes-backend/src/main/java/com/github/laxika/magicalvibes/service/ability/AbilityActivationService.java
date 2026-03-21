@@ -481,7 +481,7 @@ public class AbilityActivationService {
         Permanent permanent = battlefield.get(permanentIndex);
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities;
-        if (staticBonus.losesAllAbilities()) {
+        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             // Creature has lost all its own abilities; only static-granted abilities remain
             abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
         } else {
@@ -916,7 +916,7 @@ public class AbilityActivationService {
     private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities;
-        if (staticBonus.losesAllAbilities()) {
+        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
         } else {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
