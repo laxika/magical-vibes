@@ -27,6 +27,7 @@ import java.util.UUID;
 public class LegendRuleService {
 
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
 
     /**
      * Checks whether the given player controls two or more legendary permanents with the same name.
@@ -44,7 +45,7 @@ public class LegendRuleService {
 
         Map<String, List<UUID>> legendaryByName = new HashMap<>();
         for (Permanent perm : battlefield) {
-            if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
+            if (isLegendary(gameData, perm)) {
                 legendaryByName.computeIfAbsent(perm.getCard().getName(), k -> new ArrayList<>()).add(perm.getId());
             }
         }
@@ -59,5 +60,16 @@ public class LegendRuleService {
         }
         return false;
     }
-}
 
+    /**
+     * Checks whether a permanent is legendary, considering both its natural supertypes
+     * and any supertypes granted by static effects (e.g. In Bolas's Clutches).
+     */
+    private boolean isLegendary(GameData gameData, Permanent perm) {
+        if (perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)) {
+            return true;
+        }
+        return gameQueryService.computeStaticBonus(gameData, perm)
+                .grantedSupertypes().contains(CardSupertype.LEGENDARY);
+    }
+}

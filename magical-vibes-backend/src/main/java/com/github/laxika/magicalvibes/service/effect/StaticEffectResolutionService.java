@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
@@ -384,6 +385,15 @@ public class StaticEffectResolutionService {
         var grant = (GrantCardTypeEffect) effect;
         if (matchesCreatureScope(context, grant.scope(), null)) {
             accumulator.addGrantedCardType(grant.cardType());
+        }
+    }
+
+    @HandlesStaticEffect(GrantSupertypeToEnchantedPermanentEffect.class)
+    private void resolveGrantSupertypeToEnchantedPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantSupertypeToEnchantedPermanentEffect) effect;
+        if (context.source().isAttached()
+                && context.source().getAttachedTo().equals(context.target().getId())) {
+            accumulator.addGrantedSupertype(grant.supertype());
         }
     }
 

@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -36,12 +37,18 @@ class LegendRuleServiceTest {
     @Mock
     private PlayerInputService playerInputService;
 
+    @Mock
+    private GameQueryService gameQueryService;
+
     @InjectMocks
     private LegendRuleService svc;
 
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
+
+    private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
+            0, 0, java.util.Set.of(), java.util.Set.of(), false, List.of(), List.of(), java.util.Set.of(), List.of(), java.util.Set.of(), java.util.Set.of(), false, false, false, java.util.Set.of(), false, 0, 0, false);
 
     @BeforeEach
     void setUp() {
@@ -58,6 +65,9 @@ class LegendRuleServiceTest {
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        // Default: computeStaticBonus returns EMPTY_BONUS (no granted supertypes)
+        lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(EMPTY_BONUS);
     }
 
     // ===== Helper methods =====

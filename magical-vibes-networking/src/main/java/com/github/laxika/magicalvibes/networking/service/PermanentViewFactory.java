@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.networking.service;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,6 +52,10 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, staticRemovedKeywords, losesAllAbilities, Set.of());
+    }
+
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(bonusKeywords);
         Set<Keyword> allRemovedKeywords = new HashSet<>(p.getRemovedKeywords());
@@ -68,6 +73,7 @@ public class PermanentViewFactory {
         cardView = applyGrantedCardTypes(cardView, p);
         cardView = applyPermanentAnimation(cardView, p);
         cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes);
+        cardView = applyStaticGrantedSupertypes(cardView, staticGrantedSupertypes);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
         // When creature loses all abilities, strip its own activated abilities from the view
@@ -220,6 +226,33 @@ public class PermanentViewFactory {
         mergedTypes.addAll(staticGrantedCardTypes);
         return new CardView(
                 cardView.id(), cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount(),
+                cardView.graveyardActivatedAbilities(),
+                cardView.transformable(),
+                cardView.kickerCost()
+        );
+    }
+
+    private CardView applyStaticGrantedSupertypes(CardView cardView, Set<CardSupertype> staticGrantedSupertypes) {
+        if (staticGrantedSupertypes.isEmpty()) {
+            return cardView;
+        }
+        Set<CardSupertype> mergedSupertypes = EnumSet.copyOf(cardView.supertypes().isEmpty() ? EnumSet.noneOf(CardSupertype.class) : cardView.supertypes());
+        mergedSupertypes.addAll(staticGrantedSupertypes);
+        if (mergedSupertypes.equals(cardView.supertypes())) {
+            return cardView;
+        }
+        return new CardView(
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), mergedSupertypes, cardView.subtypes(),
                 cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
                 cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
                 cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),

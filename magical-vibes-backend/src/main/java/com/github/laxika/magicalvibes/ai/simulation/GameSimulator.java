@@ -189,7 +189,7 @@ public class GameSimulator {
         DraftRegistry draftRegistry = new DraftRegistry();
         this.gameRegistry = new GameRegistry();
 
-        LegendRuleService legendRuleService = new LegendRuleService(playerInputService);
+        LegendRuleService legendRuleService = new LegendRuleService(playerInputService, gameQueryService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
                 gameQueryService, gameBroadcastService, playerInputService);
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);

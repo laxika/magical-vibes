@@ -190,7 +190,7 @@ public class GameTestHarness {
         gameBroadcastService = new GameBroadcastService(
                 sessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService, validTargetService);
         DraftRegistry draftRegistry = new DraftRegistry();
-        legendRuleService = new LegendRuleService(playerInputService);
+        legendRuleService = new LegendRuleService(playerInputService, gameQueryService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
                 gameQueryService, gameBroadcastService, playerInputService);
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
