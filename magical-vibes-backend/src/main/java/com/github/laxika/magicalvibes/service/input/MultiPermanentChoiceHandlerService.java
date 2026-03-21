@@ -110,6 +110,8 @@ public class MultiPermanentChoiceHandlerService {
             handleCombatDamageBounce(gameData, playerId, permanentIds);
         } else if (gameData.pendingAimCounterPlacement) {
             handleAimCounterPlacement(gameData, permanentIds);
+        } else if (gameData.pendingOwnPermanentCounterPlacement) {
+            handleOwnPermanentCounterPlacement(gameData, permanentIds);
         } else if (gameData.pendingAwakeningCounterPlacement) {
             handleAwakeningCounterPlacement(gameData, playerId, permanentIds);
         } else if (gameData.pendingProliferateCount > 0) {
@@ -398,6 +400,32 @@ public class MultiPermanentChoiceHandlerService {
         if (gameData.pendingEffectResolutionEntry != null) {
             permanentCounterResolutionService.placeCountersOnPermanents(gameData,
                     gameData.pendingEffectResolutionEntry, permanentIds, CounterType.AIM);
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleOwnPermanentCounterPlacement(GameData gameData, List<UUID> permanentIds) {
+        gameData.pendingOwnPermanentCounterPlacement = false;
+        CounterType counterType = gameData.pendingOwnPermanentCounterType;
+        int count = gameData.pendingOwnPermanentCounterCount;
+        gameData.pendingOwnPermanentCounterType = null;
+        gameData.pendingOwnPermanentCounterCount = 0;
+
+        if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                permanentCounterResolutionService.placeCounterOnPermanent(gameData,
+                        gameData.pendingEffectResolutionEntry, target, counterType, count);
+            }
         }
 
         // Resume resolving remaining effects on the same spell/ability

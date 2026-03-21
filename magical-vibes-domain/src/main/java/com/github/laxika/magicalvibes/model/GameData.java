@@ -192,6 +192,9 @@ public class GameData {
     public String pendingDestroyRestSourceName;
     public boolean pendingAwakeningCounterPlacement;
     public boolean pendingAimCounterPlacement;
+    public boolean pendingOwnPermanentCounterPlacement;
+    public CounterType pendingOwnPermanentCounterType;
+    public int pendingOwnPermanentCounterCount;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
     /** Pile separation state (Liliana of the Veil ultimate): controller divides, target player chooses pile to sacrifice. */
     public boolean pendingPileSeparation;
@@ -503,6 +506,9 @@ public class GameData {
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
         copy.pendingAimCounterPlacement = this.pendingAimCounterPlacement;
+        copy.pendingOwnPermanentCounterPlacement = this.pendingOwnPermanentCounterPlacement;
+        copy.pendingOwnPermanentCounterType = this.pendingOwnPermanentCounterType;
+        copy.pendingOwnPermanentCounterCount = this.pendingOwnPermanentCounterCount;
         copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
         copy.pendingPileSeparation = this.pendingPileSeparation;
         copy.pendingPileSeparationControllerId = this.pendingPileSeparationControllerId;

@@ -313,6 +313,12 @@ public class PermanentCounterResolutionService {
     @HandlesEffect(PutCounterOnTargetPermanentEffect.class)
     private void resolvePutCounterOnTargetPermanent(GameData gameData, StackEntry entry,
                                                      PutCounterOnTargetPermanentEffect effect) {
+        // Predicate-based resolution: choose from controller's battlefield (non-targeting)
+        if (effect.predicate() != null) {
+            resolveCounterOnOwnPermanent(gameData, entry, effect);
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
@@ -322,33 +328,7 @@ public class PermanentCounterResolutionService {
             return;
         }
 
-        Card card = target.getCard();
-        String counterName = switch (effect.counterType()) {
-            case CHARGE -> { target.setChargeCounters(target.getChargeCounters() + 1); yield "charge"; }
-            case LORE -> { target.setLoreCounters(target.getLoreCounters() + 1); yield "lore"; }
-            case PLUS_ONE_PLUS_ONE -> { target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() + 1); yield "+1/+1"; }
-            case MINUS_ONE_MINUS_ONE -> {
-                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
-                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + 1);
-                yield "-1/-1";
-            }
-            case HATCHLING -> { target.setHatchlingCounters(target.getHatchlingCounters() + 1); yield "hatchling"; }
-            case STUDY -> { target.setStudyCounters(target.getStudyCounters() + 1); yield "study"; }
-            case WISH -> { target.setWishCounters(target.getWishCounters() + 1); yield "wish"; }
-            case SLIME -> { target.setSlimeCounters(target.getSlimeCounters() + 1); yield "slime"; }
-            case AIM -> { target.setAimCounters(target.getAimCounters() + 1); yield "aim"; }
-            default -> throw new IllegalStateException("Unsupported counter type: " + effect.counterType());
-        };
-        if (counterName == null) return;
-
-        String logEntry = card.getName() + " gets a " + counterName + " counter.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gets a {} counter", gameData.id, card.getName(), counterName);
-
-        // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
-        if (effect.counterType() == CounterType.LORE && card.isSaga()) {
-            triggerSagaChapter(gameData, entry, target);
-        }
+        placeCounterOnPermanent(gameData, entry, target, effect.counterType(), effect.count());
     }
 
     private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga) {
@@ -849,6 +829,98 @@ public class PermanentCounterResolutionService {
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
+    }
+
+    private void resolveCounterOnOwnPermanent(GameData gameData, StackEntry entry,
+                                               PutCounterOnTargetPermanentEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(controllerId);
+
+        List<UUID> eligibleIds = new ArrayList<>();
+        for (Permanent p : battlefield) {
+            if (gameQueryService.matchesPermanentPredicate(p, effect.predicate(), filterContext)) {
+                eligibleIds.add(p.getId());
+            }
+        }
+
+        if (eligibleIds.isEmpty()) {
+            String logEntry = entry.getCard().getName() + ": no eligible permanent to put counters on.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} no eligible permanent for counter placement", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        if (eligibleIds.size() == 1) {
+            Permanent target = gameQueryService.findPermanentById(gameData, eligibleIds.getFirst());
+            if (target != null && !gameQueryService.cantHaveCounters(gameData, target)) {
+                placeCounterOnPermanent(gameData, entry, target, effect.counterType(), effect.count());
+            }
+        } else {
+            // Multiple eligible — controller must choose one
+            gameData.pendingOwnPermanentCounterPlacement = true;
+            gameData.pendingOwnPermanentCounterType = effect.counterType();
+            gameData.pendingOwnPermanentCounterCount = effect.count();
+            String counterName = counterTypeName(effect.counterType());
+            playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds,
+                    1, "Choose a permanent to put " + effect.count() + " " + counterName + " counter(s) on.");
+        }
+    }
+
+    public void placeCounterOnPermanent(GameData gameData, StackEntry entry, Permanent target,
+                                         CounterType counterType, int count) {
+        if (gameQueryService.cantHaveCounters(gameData, target)) return;
+
+        String counterName = switch (counterType) {
+            case CHARGE -> { for (int i = 0; i < count; i++) target.setChargeCounters(target.getChargeCounters() + 1); yield "charge"; }
+            case LORE -> { for (int i = 0; i < count; i++) target.setLoreCounters(target.getLoreCounters() + 1); yield "lore"; }
+            case LOYALTY -> { target.setLoyaltyCounters(target.getLoyaltyCounters() + count); yield "loyalty"; }
+            case PLUS_ONE_PLUS_ONE -> { target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() + count); yield "+1/+1"; }
+            case MINUS_ONE_MINUS_ONE -> {
+                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
+                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + count);
+                yield "-1/-1";
+            }
+            case HATCHLING -> { target.setHatchlingCounters(target.getHatchlingCounters() + count); yield "hatchling"; }
+            case STUDY -> { target.setStudyCounters(target.getStudyCounters() + count); yield "study"; }
+            case WISH -> { target.setWishCounters(target.getWishCounters() + count); yield "wish"; }
+            case SLIME -> { target.setSlimeCounters(target.getSlimeCounters() + count); yield "slime"; }
+            case AIM -> { target.setAimCounters(target.getAimCounters() + count); yield "aim"; }
+            default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
+        };
+        if (counterName == null) return;
+
+        Card card = target.getCard();
+        String counterText = count == 1 ? "a " + counterName + " counter" : count + " " + counterName + " counters";
+        String logEntry = entry.getCard().getName() + " puts " + counterText + " on " + card.getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
+                entry.getCard().getName(), count, counterName, card.getName());
+
+        // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
+        if (counterType == CounterType.LORE && card.isSaga()) {
+            triggerSagaChapter(gameData, entry, target);
+        }
+    }
+
+    private String counterTypeName(CounterType counterType) {
+        return switch (counterType) {
+            case CHARGE -> "charge";
+            case LORE -> "lore";
+            case LOYALTY -> "loyalty";
+            case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            case HATCHLING -> "hatchling";
+            case STUDY -> "study";
+            case WISH -> "wish";
+            case SLIME -> "slime";
+            case AIM -> "aim";
+            default -> counterType.name().toLowerCase();
+        };
     }
 
 }

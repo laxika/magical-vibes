@@ -5,6 +5,7 @@ public enum CounterType {
     ANY,
     CHARGE,
     HATCHLING,
+    LOYALTY,
     MINUS_ONE_MINUS_ONE,
     PLUS_ONE_PLUS_ONE,
     SLIME,
