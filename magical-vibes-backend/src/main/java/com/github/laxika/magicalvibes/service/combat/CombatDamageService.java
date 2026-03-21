@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatur
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
@@ -652,6 +653,7 @@ public class CombatDamageService {
                             desc, List.of(effect), null, creature.getId());
                 } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect
                         || effect instanceof TargetPlayerRandomDiscardEffect
+                        || effect instanceof TargetPlayerRandomDiscardOrControllerDrawsEffect
                         || effect instanceof RevealRandomCardFromTargetPlayerHandEffect
                         || effect instanceof SphinxAmbassadorEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,

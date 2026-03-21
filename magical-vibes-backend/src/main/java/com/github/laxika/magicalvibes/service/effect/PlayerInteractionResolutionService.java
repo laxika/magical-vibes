@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEf
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardXEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
@@ -663,6 +664,23 @@ public class PlayerInteractionResolutionService {
         gameData.discardCausedByOpponent = effect.causedByOpponent();
         UUID playerId = effect.causedByOpponent() ? entry.getTargetId() : entry.getControllerId();
         resolveRandomDiscardCards(gameData, playerId, entry.getCard().getName(), effect.amount());
+    }
+
+    @HandlesEffect(TargetPlayerRandomDiscardOrControllerDrawsEffect.class)
+    private void resolveTargetPlayerRandomDiscardOrControllerDraws(GameData gameData, StackEntry entry) {
+        UUID targetPlayerId = entry.getTargetId();
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = targetName + " has no cards to discard. " + gameData.playerIdToName.get(controllerId) + " draws a card.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            drawService.resolveDrawCard(gameData, controllerId);
+        } else {
+            gameData.discardCausedByOpponent = true;
+            resolveRandomDiscardCards(gameData, targetPlayerId, entry.getCard().getName(), 1);
+        }
     }
 
     @HandlesEffect(TargetPlayerRandomDiscardXEffect.class)
