@@ -211,7 +211,8 @@ public class TapUntapResolutionService {
 
     @HandlesEffect(UntapSelfEffect.class)
     private void resolveUntapSelf(GameData gameData, StackEntry entry) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID selfId = entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
             return;
         }
