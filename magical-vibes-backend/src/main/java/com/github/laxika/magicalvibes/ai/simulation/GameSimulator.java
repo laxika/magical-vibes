@@ -274,7 +274,7 @@ public class GameSimulator {
                 graveyardReturnResolutionService,
                 new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService),
                 lifeResolutionService,
-                new AnimationResolutionService(gameQueryService, gameBroadcastService),
+                new AnimationResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new KeywordGrantResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),

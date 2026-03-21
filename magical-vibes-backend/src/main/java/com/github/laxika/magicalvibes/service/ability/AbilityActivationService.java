@@ -488,6 +488,7 @@ public class AbilityActivationService {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
+        abilities.addAll(permanent.getTemporaryActivatedAbilities());
         if (abilities.isEmpty()) {
             throw new IllegalStateException("Permanent has no activated ability");
         }
@@ -922,6 +923,7 @@ public class AbilityActivationService {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
+        abilities.addAll(permanent.getTemporaryActivatedAbilities());
         int idx = abilityIndex != null ? abilityIndex : 0;
         if (idx < 0 || idx >= abilities.size()) {
             throw new IllegalStateException("Invalid ability index");

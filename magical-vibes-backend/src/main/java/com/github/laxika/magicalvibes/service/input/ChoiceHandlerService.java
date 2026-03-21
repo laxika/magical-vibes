@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,6 +17,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
@@ -115,6 +119,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice ctx) {
             handleBasicLandTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice ctx) {
+            handleAddBasicLandTypeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.PermanentTypeChoice ctx) {
@@ -475,6 +483,45 @@ public class ChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + " for " + perm.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chooses basic land type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleAddBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.AddBasicLandTypeChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        Permanent targetLand = gameQueryService.findPermanentById(gameData, ctx.targetLandId());
+        if (targetLand != null) {
+            ManaColor manaColor = EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype);
+            ActivatedAbility manaAbility = new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(manaColor)),
+                    "{T}: Add {" + manaColor.getCode() + "}.");
+
+            if (ctx.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+                // Transient: cleared at end of turn by resetModifiers()
+                if (!targetLand.getTransientSubtypes().contains(subtype)) {
+                    targetLand.getTransientSubtypes().add(subtype);
+                }
+                targetLand.getTemporaryActivatedAbilities().add(manaAbility);
+            } else {
+                // Permanent: survives turn resets
+                if (!targetLand.getGrantedSubtypes().contains(subtype)) {
+                    targetLand.getGrantedSubtypes().add(subtype);
+                }
+                targetLand.getCard().addActivatedAbility(manaAbility);
+            }
+
+            String durationText = ctx.duration() == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
+            String logEntry = targetLand.getCard().getName() + " becomes a " + subtype.getDisplayName()
+                    + " in addition to its other types" + durationText + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} becomes a {}{}", gameData.id, targetLand.getCard().getName(), subtype, durationText);
         }
 
         gameData.priorityPassedBy.clear();

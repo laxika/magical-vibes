@@ -941,6 +941,7 @@ Pass `null` as filter to allow any card.
 | `TapAndTransformSelfEffect` | `()` | Taps the source permanent and then transforms it. Used with `DidntAttackConditionalEffect` for back-face triggers (e.g. Homicidal Brute) |
 | `DrawDiscardTransformIfCreatureDiscardedEffect` | `()` | Draw 1, discard 1; if creature discarded, untap + transform source. Loot with conditional transform (e.g. Civilized Scholar) |
 | `AddCardTypeToTargetPermanentEffect` | `(CardType cardType)` | target permanent becomes the given card type in addition to its other types until end of turn (e.g. Liquimetal Coating makes target an artifact) |
+| `GrantBasicLandTypeToTargetEffect` | `(EffectDuration duration)` | prompts controller to choose a basic land type, then adds it to target land "in addition to its other types" + grants mana ability for chosen type. UNTIL_END_OF_TURN uses transient subtypes + temporary abilities; CONTINUOUS uses granted subtypes + permanent abilities. canTargetPermanent=true. Uses AddBasicLandTypeChoice. Used by Navigator's Compass |
 | `GrantEquipByManaValueEffect` | `(PermanentPredicate filter)` | grants matching permanents an equip ability with cost {X} and boosts equipped creatures +X/+0, where X = permanent's mana value (static) |
 
 ## Enchantment-specific

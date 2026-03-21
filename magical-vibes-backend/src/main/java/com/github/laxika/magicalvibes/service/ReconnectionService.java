@@ -302,6 +302,9 @@ public class ReconnectionService {
                 } else if (cc.context() instanceof ChoiceContext.BasicLandTypeChoice) {
                     options = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
                     prompt = "Choose a basic land type.";
+                } else if (cc.context() instanceof ChoiceContext.AddBasicLandTypeChoice) {
+                    options = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+                    prompt = "Choose a basic land type.";
                 } else if (cc.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice) {
                     options = collectAllCardNamesInGame(gameData);
                     prompt = "Choose a card name.";

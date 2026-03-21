@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 
 public sealed interface ChoiceContext {
@@ -32,6 +33,15 @@ public sealed interface ChoiceContext {
     record SubtypeChoice(UUID permanentId) implements ChoiceContext {}
 
     record BasicLandTypeChoice(UUID permanentId) implements ChoiceContext {}
+
+    /**
+     * Choosing a basic land type to add to a target land "in addition to its other types"
+     * (e.g. Navigator's Compass activated ability).
+     *
+     * @param targetLandId the target land that gains the chosen basic land type
+     * @param duration     how long the granted type lasts
+     */
+    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration) implements ChoiceContext {}
 
     /**
      * Tracks the sequential "each player names a card" flow for Conundrum Sphinx etc.

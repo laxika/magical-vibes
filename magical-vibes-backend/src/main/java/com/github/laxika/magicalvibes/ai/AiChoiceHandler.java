@@ -244,6 +244,14 @@ class AiChoiceHandler {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice) {
+            String chosenType = "ISLAND";
+            log.info("AI: Choosing basic land type to add {} in game {}", chosenType, gameId);
+            final String landType = chosenType;
+            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
             // AI names the best creature card from its own library to try to guess what was picked
             List<Card> ownDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());

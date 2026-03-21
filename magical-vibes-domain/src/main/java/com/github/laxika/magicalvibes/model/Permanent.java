@@ -128,6 +128,10 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** Activated abilities temporarily granted by one-shot effects until end of turn
+     *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
+     *  Cleared every turn by {@link #resetModifiers()}. */
+    private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -219,6 +223,7 @@ public class Permanent {
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
     }
 
     public Card getOriginalCard() {
@@ -397,5 +402,6 @@ public class Permanent {
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
+        this.temporaryActivatedAbilities.clear();
     }
 }
