@@ -386,6 +386,13 @@ public class BattlefieldEntryService {
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked) {
+        // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
+        if (kicked) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEnteredPerm = bf.get(bf.size() - 1);
+            justEnteredPerm.setKicked(true);
+        }
+
         // "As enters, choose another creature you control" — replacement effect (CR 614.1c),
         // not suppressed by Torpor Orb. Must happen before ETB triggers.
         boolean needsCreatureChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()

@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -887,6 +889,37 @@ class StepTriggerServiceTest {
                     new DidntAttackConditionalEffect(new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             perm.setAttackedThisTurn(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("NotKickedConditionalEffect triggers when permanent was not kicked")
+        void notKickedTriggersWhenNotKicked() {
+            Card card = createCardWithName("Unkicked Elemental");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+                    new NotKickedConditionalEffect(new SacrificeSelfEffect()));
+            Permanent perm = new Permanent(card);
+            // Not kicked (default)
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getDescription()).contains("Unkicked Elemental");
+        }
+
+        @Test
+        @DisplayName("NotKickedConditionalEffect skips when permanent was kicked")
+        void notKickedSkipsWhenKicked() {
+            Card card = createCardWithName("Kicked Elemental");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+                    new NotKickedConditionalEffect(new SacrificeSelfEffect()));
+            Permanent perm = new Permanent(card);
+            perm.setKicked(true);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.handleEndStepTriggers(gd);

@@ -132,6 +132,8 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** Whether this permanent was kicked when cast (tracked for "if wasn't kicked" triggers). */
+    @Setter private boolean kicked;
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -228,6 +230,7 @@ public class Permanent {
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.kicked = source.kicked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
     }
 
