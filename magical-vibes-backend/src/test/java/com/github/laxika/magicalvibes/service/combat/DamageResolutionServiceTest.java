@@ -148,48 +148,97 @@ class DamageResolutionServiceTest {
         return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), List.of(), 0, targetIds);
     }
 
-    private void stubDamageNotPrevented() {
-        lenient().when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
-        lenient().when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+    /**
+     * Stubs the damage prevention system as active (isDamagePreventable = true).
+     * Used by resolveAnyTargetDamage, isDamagePreventedForCreature, isDamageSourcePreventedWithLog, etc.
+     */
+    private void stubDamagePreventable() {
+        when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
     }
 
+    /**
+     * Stubs that no global source-color prevention is active.
+     * Used by isDamageSourcePreventedWithLog and isDamagePreventedForCreature.
+     */
+    private void stubDamageFromSourceNotPrevented() {
+        when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
+    }
+
+    /**
+     * Stubs the damage multiplier to pass through unchanged.
+     */
     private void stubNoDamageMultiplier() {
-        lenient().when(gameQueryService.applyDamageMultiplier(eq(gd), anyInt(), any(StackEntry.class))).thenAnswer(inv -> inv.getArgument(1));
+        when(gameQueryService.applyDamageMultiplier(eq(gd), anyInt(), any(StackEntry.class))).thenAnswer(inv -> inv.getArgument(1));
     }
 
-    private void stubCreatureDamageDefaults(Permanent target, int toughness) {
-        lenient().when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-        lenient().when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
-        lenient().when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
-        lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+    /**
+     * Core stubs for dealCreatureDamage when sourcePermanentId is null (spell entries).
+     * Stubs findPermanentController, applyCreaturePreventionShield (passthrough), and getEffectiveToughness.
+     * Does NOT stub applySourceRedirectShields or applyTargetSourcePreventionShield (gated by null sourcePermId).
+     */
+    private void stubCreatureDamageCore(Permanent target, int toughness) {
+        when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
+        when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+        when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
     }
 
+    /**
+     * Stubs source-specific redirect and target-source prevention shields for creature damage.
+     * Only needed when sourcePermanentId is non-null (bite/fight, activated abilities from permanents).
+     */
+    private void stubCreatureSourceRedirects() {
+        when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+    }
+
+    /**
+     * Stubs isLethalDamage to return the given value for any inputs.
+     */
     private void stubLethalDamage(boolean isLethal) {
-        lenient().when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean())).thenReturn(isLethal);
+        when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean())).thenReturn(isLethal);
     }
 
+    /**
+     * Stubs that the source has neither infect nor deathtouch (null damageSource variant).
+     * Used for creature damage paths where both keywords are checked.
+     */
     private void stubNoKeywordsOnSource(StackEntry entry) {
-        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.INFECT))).thenReturn(false);
-        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.DEATHTOUCH))).thenReturn(false);
+        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.INFECT))).thenReturn(false);
+        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.DEATHTOUCH))).thenReturn(false);
     }
 
+    /**
+     * Stubs that the damage source permanent has neither infect nor deathtouch.
+     * Used for bite/fight paths where the damage source is a specific permanent.
+     */
     private void stubNoKeywordsOnSourceWithDamageSource(StackEntry entry, Permanent damageSource) {
-        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.INFECT))).thenReturn(false);
-        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.DEATHTOUCH))).thenReturn(false);
+        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.INFECT))).thenReturn(false);
+        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.DEATHTOUCH))).thenReturn(false);
     }
 
-    private void stubPlayerDamageDefaults(UUID playerId) {
-        lenient().when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
-        lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        lenient().when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
-        lenient().when(damagePreventionService.applyOpponentSourceDamageReduction(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
-        lenient().when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-        lenient().when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(playerId), anyInt(), anyString())).thenAnswer(inv -> inv.getArgument(2));
-        lenient().when(gameQueryService.canPlayerLifeChange(gd, playerId)).thenReturn(true);
-        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), any(StackEntry.class), isNull(), eq(Keyword.INFECT))).thenReturn(false);
-        lenient().when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
+    /**
+     * Stubs that the source has no infect (null damageSource).
+     * Used for player-only damage paths where only infect is checked (deathtouch is not).
+     */
+    private void stubNoInfectOnSource(StackEntry entry) {
+        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.INFECT))).thenReturn(false);
+    }
+
+    /**
+     * Core stubs for dealDamageToPlayer when sourcePermanentId is null.
+     * Stubs all prevention/reduction services as passthrough, canPlayerLifeChange = true,
+     * shouldDamageBeDealtAsInfect = false.
+     * Does NOT include sourceHasKeyword(INFECT) — use stubNoInfectOnSource or stubNoKeywordsOnSource separately.
+     */
+    private void stubPlayerDamageCore(UUID playerId) {
+        when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
+        when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
+        when(damagePreventionService.applyOpponentSourceDamageReduction(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(playerId), anyInt(), anyString())).thenAnswer(inv -> inv.getArgument(2));
+        when(gameQueryService.canPlayerLifeChange(gd, playerId)).thenReturn(true);
+        when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
     }
 
     // =========================================================================
@@ -208,9 +257,10 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(shockCard, player1Id, bears.getId());
             DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
@@ -221,6 +271,7 @@ class DamageResolutionServiceTest {
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(gd.pendingLethalDamageDestructions).contains(bears);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
         }
 
         @Test
@@ -231,9 +282,10 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(shockCard, player1Id, angel.getId());
             DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(angel, 4);
+            stubCreatureDamageCore(angel, 4);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(false);
             when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
@@ -242,6 +294,7 @@ class DamageResolutionServiceTest {
 
             assertThat(angel.getMarkedDamage()).isEqualTo(2);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
         }
 
         @Test
@@ -251,13 +304,18 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(shockCard, player1Id, player2Id);
             DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealDamageToAnyTarget(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 2);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
 
         @Test
@@ -270,6 +328,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealDamageToAnyTarget(gd, entry, effect);
 
             verify(gameQueryService, never()).applyDamageMultiplier(any(), anyInt(), any());
+            verifyNoInteractions(triggerCollectionService);
         }
 
         @Test
@@ -280,9 +339,10 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(shockCard, player1Id, bears.getId());
             DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
@@ -312,9 +372,10 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(burnCard, player1Id, bears.getId());
             DealDamageToTargetCreatureEffect effect = new DealDamageToTargetCreatureEffect(3, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
@@ -324,6 +385,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealDamageToTargetCreature(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(3);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
         }
     }
 
@@ -345,15 +407,19 @@ class DamageResolutionServiceTest {
                     new DealDamageToTargetControllerIfTargetHasKeywordEffect(3, Keyword.INFECT);
 
             stubNoDamageMultiplier();
+            stubDamageFromSourceNotPrevented();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
             when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
             when(gameQueryService.hasKeyword(gd, creature, Keyword.INFECT)).thenReturn(true);
             when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
-            stubPlayerDamageDefaults(player2Id);
 
             drs.resolveDealDamageToTargetControllerIfTargetHasKeyword(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
 
         @Test
@@ -371,6 +437,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealDamageToTargetControllerIfTargetHasKeyword(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+            verifyNoInteractions(triggerCollectionService);
         }
     }
 
@@ -389,13 +456,18 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(lavaAxeCard, player1Id, player2Id);
             DealDamageToTargetPlayerEffect effect = new DealDamageToTargetPlayerEffect(5);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealDamageToTargetPlayer(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
 
         @Test
@@ -409,6 +481,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealDamageToTargetPlayer(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+            verifyNoInteractions(triggerCollectionService);
         }
     }
 
@@ -428,12 +501,16 @@ class DamageResolutionServiceTest {
             DealDamageToControllerEffect effect = new DealDamageToControllerEffect(3);
 
             stubNoDamageMultiplier();
-            when(gameQueryService.isDamageFromSourcePrevented(eq(gd), any())).thenReturn(false);
-            stubPlayerDamageDefaults(player1Id);
+            stubDamageFromSourceNotPrevented();
+            stubPlayerDamageCore(player1Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealDamageToController(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(17);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 3);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player1Id);
         }
     }
 
@@ -454,12 +531,17 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(pyroCard, player1Id, null);
             MassDamageEffect effect = new MassDamageEffect(2);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
-            stubCreatureDamageDefaults(bears, 2);
-            stubCreatureDamageDefaults(elves, 1);
+            // Inline creature stubs — controllers differ from the default player2Id
             when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+            when(gameQueryService.findPermanentController(eq(gd), eq(elves.getId()))).thenReturn(player2Id);
+            when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(bears), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+            when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(elves), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+            when(gameQueryService.getEffectiveToughness(gd, bears)).thenReturn(2);
+            when(gameQueryService.getEffectiveToughness(gd, elves)).thenReturn(1);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
@@ -471,6 +553,8 @@ class DamageResolutionServiceTest {
             assertThat(elves.getMarkedDamage()).isEqualTo(2);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, elves, 2, player1Id);
         }
 
         @Test
@@ -481,11 +565,14 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(pyroCard, player1Id, null);
             MassDamageEffect effect = new MassDamageEffect(2);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
-            stubCreatureDamageDefaults(angel, 4);
+            // Inline creature stubs — controller is player1Id, not the default player2Id
             when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player1Id);
+            when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(angel), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+            when(gameQueryService.getEffectiveToughness(gd, angel)).thenReturn(4);
             stubNoKeywordsOnSource(entry);
             when(gameQueryService.isLethalDamage(2, 4, false)).thenReturn(false);
 
@@ -493,6 +580,7 @@ class DamageResolutionServiceTest {
 
             assertThat(angel.getMarkedDamage()).isEqualTo(2);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
         }
 
         @Test
@@ -505,26 +593,38 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntryWithXValue(hurricaneCard, player1Id, 4, null);
             MassDamageEffect effect = new MassDamageEffect(0, true, true, null);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
-            stubCreatureDamageDefaults(angel, 4);
-            stubCreatureDamageDefaults(bears, 2);
+            // Inline creature stubs — controllers differ from the default player2Id
             when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player2Id);
             when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+            when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(angel), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+            when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(bears), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+            when(gameQueryService.getEffectiveToughness(gd, angel)).thenReturn(4);
+            when(gameQueryService.getEffectiveToughness(gd, bears)).thenReturn(2);
             stubNoKeywordsOnSource(entry);
             when(gameQueryService.isLethalDamage(4, 4, false)).thenReturn(true);
             when(gameQueryService.isLethalDamage(4, 2, false)).thenReturn(true);
             when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
             when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
-            stubPlayerDamageDefaults(player1Id);
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player1Id);
+            stubPlayerDamageCore(player2Id);
 
             drs.resolveMassDamage(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(16);
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
             verify(gameOutcomeService).checkWinCondition(gd);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 4, player1Id);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 4, player1Id);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 4);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 4);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
     }
 
@@ -544,9 +644,10 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntryWithXValue(blazeCard, player1Id, 3, bears.getId());
             DealXDamageToAnyTargetEffect effect = new DealXDamageToAnyTargetEffect(false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
@@ -557,6 +658,7 @@ class DamageResolutionServiceTest {
 
             assertThat(bears.getMarkedDamage()).isEqualTo(3);
             assertThat(gd.pendingLethalDamageDestructions).contains(bears);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
         }
 
         @Test
@@ -566,13 +668,18 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntryWithXValue(blazeCard, player1Id, 5, player2Id);
             DealXDamageToAnyTargetEffect effect = new DealXDamageToAnyTargetEffect(false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealXDamageToAnyTarget(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
     }
 
@@ -592,14 +699,19 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(drainCard, player1Id, player2Id);
             DealDamageToAnyTargetAndGainLifeEffect effect = new DealDamageToAnyTargetAndGainLifeEffect(3, 3);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealDamageToAnyTargetAndGainLife(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
 
         @Test
@@ -611,9 +723,10 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(drainCard, player1Id, bears.getId());
             DealDamageToAnyTargetAndGainLifeEffect effect = new DealDamageToAnyTargetAndGainLifeEffect(3, 3);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
@@ -624,6 +737,7 @@ class DamageResolutionServiceTest {
 
             assertThat(gd.pendingLethalDamageDestructions).contains(bears);
             verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
         }
     }
 
@@ -642,14 +756,19 @@ class DamageResolutionServiceTest {
             consumeCard.setColor(CardColor.BLACK);
             StackEntry entry = createEntryWithXValue(consumeCard, player1Id, 3, player2Id);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealXDamageToAnyTargetAndGainXLife(gd, entry);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
     }
 
@@ -672,13 +791,18 @@ class DamageResolutionServiceTest {
                 gd.playerHands.get(player2Id).add(createCreature("Bear " + i, 2, 2));
             }
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealDamageToTargetPlayerByHandSize(gd, entry);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
 
         @Test
@@ -687,13 +811,17 @@ class DamageResolutionServiceTest {
             Card impactCard = createCard("Sudden Impact");
             StackEntry entry = createEntry(impactCard, player1Id, player2Id);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            // dealDamageToPlayer is called with rawDamage=0, early-returns after applySourceRedirectShields
+            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gd), eq(player2Id), any())).thenReturn(false);
+            when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(player2Id), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
 
             drs.resolveDealDamageToTargetPlayerByHandSize(gd, entry);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+            verifyNoInteractions(triggerCollectionService);
         }
     }
 
@@ -716,13 +844,18 @@ class DamageResolutionServiceTest {
             gd.playerHands.get(player2Id).add(createCreature("Bear1", 2, 2));
             gd.playerHands.get(player2Id).add(createCreature("Bear2", 2, 2));
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
 
         @Test
@@ -732,13 +865,18 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(museCard, player1Id, player2Id);
             DealDamageIfFewCardsInHandEffect effect = new DealDamageIfFewCardsInHandEffect(2, 3);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
 
             drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
 
         @Test
@@ -758,6 +896,7 @@ class DamageResolutionServiceTest {
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("does nothing")));
+            verifyNoInteractions(triggerCollectionService);
         }
     }
 
@@ -778,9 +917,10 @@ class DamageResolutionServiceTest {
             DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect =
                     new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype.MOUNTAIN, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(angel, 4);
+            stubCreatureDamageCore(angel, 4);
             stubNoKeywordsOnSource(entry);
             when(gameQueryService.countControlledSubtypePermanents(gd, player1Id, CardSubtype.MOUNTAIN)).thenReturn(3);
             when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
@@ -790,6 +930,7 @@ class DamageResolutionServiceTest {
 
             assertThat(angel.getMarkedDamage()).isEqualTo(3);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 3, player1Id);
         }
 
         @Test
@@ -801,9 +942,10 @@ class DamageResolutionServiceTest {
             DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect =
                     new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype.MOUNTAIN, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.countControlledSubtypePermanents(gd, player1Id, CardSubtype.MOUNTAIN)).thenReturn(2);
@@ -814,6 +956,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
         }
 
         @Test
@@ -825,9 +968,10 @@ class DamageResolutionServiceTest {
             DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect =
                     new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype.MOUNTAIN, false);
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             stubNoKeywordsOnSource(entry);
             when(gameQueryService.countControlledSubtypePermanents(gd, player1Id, CardSubtype.MOUNTAIN)).thenReturn(0);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
@@ -837,6 +981,7 @@ class DamageResolutionServiceTest {
 
             assertThat(bears.getMarkedDamage()).isEqualTo(0);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            verifyNoInteractions(triggerCollectionService);
         }
     }
 
@@ -857,10 +1002,11 @@ class DamageResolutionServiceTest {
             StackEntry entry = createMultiTargetEntry(arcCard, player1Id, List.of(bears.getId(), elves.getId()));
             DealOrderedDamageToAnyTargetsEffect effect = new DealOrderedDamageToAnyTargetsEffect(List.of(2, 1));
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
-            stubCreatureDamageDefaults(elves, 1);
+            stubCreatureDamageCore(bears, 2);
+            stubCreatureDamageCore(elves, 1);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
             stubNoKeywordsOnSource(entry);
@@ -874,6 +1020,8 @@ class DamageResolutionServiceTest {
             assertThat(elves.getMarkedDamage()).isEqualTo(1);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, elves, 1, player1Id);
         }
 
         @Test
@@ -884,20 +1032,25 @@ class DamageResolutionServiceTest {
             StackEntry entry = createMultiTargetEntry(arcCard, player1Id, List.of(bears.getId(), player2Id));
             DealOrderedDamageToAnyTargetsEffect effect = new DealOrderedDamageToAnyTargetsEffect(List.of(2, 1));
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(bears, 2);
+            stubCreatureDamageCore(bears, 2);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             stubNoKeywordsOnSource(entry);
             stubLethalDamage(true);
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
-            stubPlayerDamageDefaults(player2Id);
+            stubPlayerDamageCore(player2Id);
 
             drs.resolveDealOrderedDamageToAnyTargets(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
+            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
+            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
     }
 
@@ -918,14 +1071,17 @@ class DamageResolutionServiceTest {
             Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
             StackEntry entry = createMultiTargetEntry(wingCard, player1Id, List.of(bears.getId(), angel.getId()));
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(angel, 4);
+            stubCreatureDamageCore(angel, 4);
+            stubCreatureSourceRedirects();
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
             when(gameQueryService.getEffectivePower(gd, bears)).thenReturn(2);
             when(gameQueryService.isPreventedFromDealingDamage(gd, bears)).thenReturn(false);
             when(gameQueryService.hasProtectionFromSource(eq(gd), eq(angel), any(Permanent.class))).thenReturn(false);
+            // Stub controller for the biting creature (used for trigger sourceControllerId)
+            when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
             stubNoKeywordsOnSourceWithDamageSource(entry, bears);
             when(gameQueryService.isLethalDamage(2, 4, false)).thenReturn(false);
 
@@ -933,6 +1089,7 @@ class DamageResolutionServiceTest {
 
             assertThat(angel.getMarkedDamage()).isEqualTo(2);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
         }
 
         @Test
@@ -944,14 +1101,17 @@ class DamageResolutionServiceTest {
             Permanent theirAngel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
             StackEntry entry = createMultiTargetEntry(wingCard, player1Id, List.of(myAngel.getId(), theirAngel.getId()));
 
-            stubDamageNotPrevented();
+            stubDamagePreventable();
             stubNoDamageMultiplier();
-            stubCreatureDamageDefaults(theirAngel, 4);
+            stubCreatureDamageCore(theirAngel, 4);
+            stubCreatureSourceRedirects();
             when(gameQueryService.findPermanentById(gd, myAngel.getId())).thenReturn(myAngel);
             when(gameQueryService.findPermanentById(gd, theirAngel.getId())).thenReturn(theirAngel);
             when(gameQueryService.getEffectivePower(gd, myAngel)).thenReturn(4);
             when(gameQueryService.isPreventedFromDealingDamage(gd, myAngel)).thenReturn(false);
             when(gameQueryService.hasProtectionFromSource(eq(gd), eq(theirAngel), any(Permanent.class))).thenReturn(false);
+            // Stub controller for the biting creature (used for trigger sourceControllerId)
+            when(gameQueryService.findPermanentController(eq(gd), eq(myAngel.getId()))).thenReturn(player1Id);
             stubNoKeywordsOnSourceWithDamageSource(entry, myAngel);
             when(gameQueryService.isLethalDamage(4, 4, false)).thenReturn(true);
             when(gameQueryService.hasKeyword(gd, theirAngel, Keyword.INDESTRUCTIBLE)).thenReturn(false);
@@ -960,6 +1120,7 @@ class DamageResolutionServiceTest {
             drs.resolveBite(gd, entry);
 
             assertThat(theirAngel.getMarkedDamage()).isEqualTo(4);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, theirAngel, 4, player1Id);
         }
     }
 }
