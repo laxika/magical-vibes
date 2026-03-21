@@ -37,7 +37,7 @@ class SaberclawGolemTest extends BaseCardTest {
         assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect effect = (GrantKeywordEffect) ability.getEffects().getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.FIRST_STRIKE);
+        assertThat(effect.keywords()).containsExactly(Keyword.FIRST_STRIKE);
         assertThat(effect.scope()).isEqualTo(GrantScope.SELF);
     }
 

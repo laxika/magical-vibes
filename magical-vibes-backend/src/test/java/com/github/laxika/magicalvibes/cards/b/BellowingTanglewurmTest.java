@@ -25,7 +25,7 @@ class BellowingTanglewurmTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.INTIMIDATE);
+        assertThat(effect.keywords()).containsExactly(Keyword.INTIMIDATE);
         assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
         assertThat(effect.filter()).isNotNull();
     }

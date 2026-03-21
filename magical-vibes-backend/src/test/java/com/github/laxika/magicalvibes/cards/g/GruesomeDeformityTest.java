@@ -30,7 +30,7 @@ class GruesomeDeformityTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.keyword()).isEqualTo(Keyword.INTIMIDATE);
+        assertThat(effect.keywords()).containsExactly(Keyword.INTIMIDATE);
         assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
     }
 

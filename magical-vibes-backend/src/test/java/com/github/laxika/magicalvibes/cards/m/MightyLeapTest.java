@@ -36,7 +36,7 @@ class MightyLeapTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(2);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(grant.keywords()).containsExactly(Keyword.FLYING);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

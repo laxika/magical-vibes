@@ -37,7 +37,7 @@ class SpideryGraspTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(4);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(grant.keyword()).isEqualTo(Keyword.REACH);
+        assertThat(grant.keywords()).containsExactly(Keyword.REACH);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

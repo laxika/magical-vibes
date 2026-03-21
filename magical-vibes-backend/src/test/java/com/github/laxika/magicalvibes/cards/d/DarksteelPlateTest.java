@@ -30,7 +30,7 @@ class DarksteelPlateTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(grant.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
+        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
         assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
     }
 

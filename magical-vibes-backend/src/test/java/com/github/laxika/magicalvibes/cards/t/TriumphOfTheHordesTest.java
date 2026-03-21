@@ -37,11 +37,11 @@ class TriumphOfTheHordesTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect trampleGrant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(trampleGrant.keyword()).isEqualTo(Keyword.TRAMPLE);
+        assertThat(trampleGrant.keywords()).containsExactly(Keyword.TRAMPLE);
         assertThat(trampleGrant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
 
         GrantKeywordEffect infectGrant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(infectGrant.keyword()).isEqualTo(Keyword.INFECT);
+        assertThat(infectGrant.keywords()).containsExactly(Keyword.INFECT);
         assertThat(infectGrant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
     }
 

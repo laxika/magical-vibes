@@ -36,7 +36,7 @@ class ThunderStrikeTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(0);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.FIRST_STRIKE);
+        assertThat(grant.keywords()).containsExactly(Keyword.FIRST_STRIKE);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

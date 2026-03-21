@@ -35,7 +35,7 @@ class BladedSentinelTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect vigilance = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(vigilance.keyword()).isEqualTo(Keyword.VIGILANCE);
+        assertThat(vigilance.keywords()).containsExactly(Keyword.VIGILANCE);
         assertThat(vigilance.scope()).isEqualTo(GrantScope.SELF);
     }
 

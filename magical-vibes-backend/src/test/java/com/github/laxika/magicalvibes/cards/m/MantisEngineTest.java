@@ -39,8 +39,8 @@ class MantisEngineTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect flying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(flying.keyword())
-                .isEqualTo(Keyword.FLYING);
+        assertThat(flying.keywords())
+                .containsExactly(Keyword.FLYING);
         assertThat(flying.scope()).isEqualTo(GrantScope.SELF);
 
         // Second ability: {2} grants first strike
@@ -51,8 +51,8 @@ class MantisEngineTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect firstStrike = (GrantKeywordEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(firstStrike.keyword())
-                .isEqualTo(Keyword.FIRST_STRIKE);
+        assertThat(firstStrike.keywords())
+                .containsExactly(Keyword.FIRST_STRIKE);
         assertThat(firstStrike.scope()).isEqualTo(GrantScope.SELF);
     }
 

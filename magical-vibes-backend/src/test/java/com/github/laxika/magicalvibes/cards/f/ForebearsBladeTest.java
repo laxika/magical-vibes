@@ -52,7 +52,7 @@ class ForebearsBladeTest extends BaseCardTest {
                 .map(e -> (GrantKeywordEffect) e)
                 .toList();
         assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).extracting(GrantKeywordEffect::keyword)
+        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
                 .containsExactlyInAnyOrder(Keyword.VIGILANCE, Keyword.TRAMPLE);
     }
 

@@ -36,7 +36,7 @@ class MomentOfHeroismTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(2);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.LIFELINK);
+        assertThat(grant.keywords()).containsExactly(Keyword.LIFELINK);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -56,14 +58,14 @@ public class KeywordGrantResolutionService {
                         && !gameQueryService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
-                permanent.getGrantedKeywords().add(grant.keyword());
+                permanent.getGrantedKeywords().addAll(grant.keywords());
                 count++;
             }
 
-            String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-            String logEntry = entry.getCard().getName() + " gives " + keywordName + " to " + count + " creature(s) until end of turn.";
+            String keywordNames = formatKeywords(grant.keywords());
+            String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count + " creature(s) until end of turn.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} grants {} to {} own creature(s)", gameData.id, entry.getCard().getName(), grant.keyword(), count);
+            log.info("Game {} - {} grants {} to {} own creature(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count);
             return;
         }
 
@@ -80,14 +82,14 @@ public class KeywordGrantResolutionService {
                         && !gameQueryService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     return;
                 }
-                permanent.getGrantedKeywords().add(grant.keyword());
+                permanent.getGrantedKeywords().addAll(grant.keywords());
                 count[0]++;
             });
 
-            String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-            String logEntry = entry.getCard().getName() + " gives " + keywordName + " to " + count[0] + " creature(s) until end of turn.";
+            String keywordNames = formatKeywords(grant.keywords());
+            String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count[0] + " creature(s) until end of turn.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} grants {} to {} creature(s)", gameData.id, entry.getCard().getName(), grant.keyword(), count[0]);
+            log.info("Game {} - {} grants {} to {} creature(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count[0]);
             return;
         }
 
@@ -105,11 +107,18 @@ public class KeywordGrantResolutionService {
             return;
         }
 
-        target.getGrantedKeywords().add(grant.keyword());
-        String keywordName = grant.keyword().name().charAt(0) + grant.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-        String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
+        target.getGrantedKeywords().addAll(grant.keywords());
+        String keywordNames = formatKeywords(grant.keywords());
+        String logEntry = target.getCard().getName() + " gains " + keywordNames + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keyword(), grant.scope());
+        log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
+    }
+
+    private String formatKeywords(Set<Keyword> keywords) {
+        return keywords.stream()
+                .map(k -> k.name().charAt(0) + k.name().substring(1).toLowerCase().replace('_', ' '))
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
     }
 
     @HandlesEffect(GrantKeywordToTargetIfSupertypeEffect.class)

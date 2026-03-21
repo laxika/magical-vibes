@@ -34,7 +34,7 @@ class FrenziedRageTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keyword()).isEqualTo(Keyword.MENACE);
+        assertThat(keywordEffect.keywords()).containsExactly(Keyword.MENACE);
         assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
     }
 

@@ -31,7 +31,7 @@ class StoneGiantTest extends BaseCardTest {
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grantEffect = (GrantKeywordEffect) ability.getEffects().get(0);
-        assertThat(grantEffect.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(grantEffect.keywords()).containsExactly(Keyword.FLYING);
         assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
         assertThat(ability.getEffects().get(1)).isInstanceOf(DestroyTargetPermanentAtEndStepEffect.class);
         assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);

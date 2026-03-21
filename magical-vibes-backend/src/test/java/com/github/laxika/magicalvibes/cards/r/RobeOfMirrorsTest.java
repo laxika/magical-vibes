@@ -36,7 +36,7 @@ class RobeOfMirrorsTest extends BaseCardTest {
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect =
                 (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.SHROUD);
+        assertThat(effect.keywords()).containsExactly(Keyword.SHROUD);
         assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
     }
 

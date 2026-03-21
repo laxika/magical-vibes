@@ -36,7 +36,7 @@ class UnnaturalPredationTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(1);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.TRAMPLE);
+        assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

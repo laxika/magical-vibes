@@ -33,7 +33,7 @@ class TrueConvictionTest extends BaseCardTest {
                 .map(e -> (GrantKeywordEffect) e)
                 .toList();
         assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).extracting(GrantKeywordEffect::keyword)
+        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
                 .containsExactlyInAnyOrder(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK);
         assertThat(keywordEffects).allMatch(e -> e.scope() == GrantScope.OWN_CREATURES);
     }

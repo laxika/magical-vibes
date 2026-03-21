@@ -38,7 +38,7 @@ class ActOfAggressionTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(UntapTargetPermanentEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(effect.keyword()).isEqualTo(Keyword.HASTE);
+        assertThat(effect.keywords()).containsExactly(Keyword.HASTE);
         assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
     }
 

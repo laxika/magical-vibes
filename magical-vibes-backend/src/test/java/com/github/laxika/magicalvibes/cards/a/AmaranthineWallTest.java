@@ -35,7 +35,7 @@ class AmaranthineWallTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
+        assertThat(effect.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
         assertThat(effect.scope()).isEqualTo(GrantScope.SELF);
     }
 

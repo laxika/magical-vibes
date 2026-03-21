@@ -31,7 +31,7 @@ class DrudgeSentinelTest extends BaseCardTest {
         assertThat(ability.getEffects().get(0)).isInstanceOf(TapSelfEffect.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
+        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
         assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
     }
 

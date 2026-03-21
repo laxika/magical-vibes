@@ -47,7 +47,7 @@ class SkyWeaverTest extends BaseCardTest {
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) ability.getEffects().getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
         assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
         assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

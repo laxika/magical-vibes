@@ -27,7 +27,7 @@ class SunspearShikariTest extends BaseCardTest {
                 .allSatisfy(e -> assertThat(e).isInstanceOf(EquippedConditionalEffect.class));
 
         var keywords = card.getEffects(EffectSlot.STATIC).stream()
-                .map(e -> ((GrantKeywordEffect) ((EquippedConditionalEffect) e).wrapped()).keyword())
+                .flatMap(e -> ((GrantKeywordEffect) ((EquippedConditionalEffect) e).wrapped()).keywords().stream())
                 .toList();
         assertThat(keywords).containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.LIFELINK);
     }

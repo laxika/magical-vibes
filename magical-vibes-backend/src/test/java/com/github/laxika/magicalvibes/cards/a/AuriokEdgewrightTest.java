@@ -31,7 +31,7 @@ class AuriokEdgewrightTest extends BaseCardTest {
         assertThat(metalcraft.wrapped()).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) metalcraft.wrapped();
-        assertThat(grant.keyword()).isEqualTo(Keyword.DOUBLE_STRIKE);
+        assertThat(grant.keywords()).containsExactly(Keyword.DOUBLE_STRIKE);
         assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
     }
 

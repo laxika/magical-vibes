@@ -35,7 +35,7 @@ class WallOfTanglecordTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect reach = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(reach.keyword()).isEqualTo(Keyword.REACH);
+        assertThat(reach.keywords()).containsExactly(Keyword.REACH);
         assertThat(reach.scope()).isEqualTo(GrantScope.SELF);
     }
 

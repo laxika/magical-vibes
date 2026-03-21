@@ -34,7 +34,7 @@ class InsatiableSouleaterTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect trample = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(trample.keyword()).isEqualTo(Keyword.TRAMPLE);
+        assertThat(trample.keywords()).containsExactly(Keyword.TRAMPLE);
         assertThat(trample.scope()).isEqualTo(GrantScope.SELF);
     }
 

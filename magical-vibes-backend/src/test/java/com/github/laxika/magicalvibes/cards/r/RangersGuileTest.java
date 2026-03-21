@@ -36,7 +36,7 @@ class RangersGuileTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(1);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.HEXPROOF);
+        assertThat(grant.keywords()).containsExactly(Keyword.HEXPROOF);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

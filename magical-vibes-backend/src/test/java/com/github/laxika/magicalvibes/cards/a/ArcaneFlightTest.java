@@ -34,7 +34,7 @@ class ArcaneFlightTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(keywordEffect.keywords()).containsExactly(Keyword.FLYING);
         assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
     }
 

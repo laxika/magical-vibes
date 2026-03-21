@@ -31,7 +31,7 @@ class AssaultStrobeTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.DOUBLE_STRIKE);
+        assertThat(effect.keywords()).containsExactly(Keyword.DOUBLE_STRIKE);
         assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
     }
 

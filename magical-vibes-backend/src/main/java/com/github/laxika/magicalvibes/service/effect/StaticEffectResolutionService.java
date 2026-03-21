@@ -298,7 +298,7 @@ public class StaticEffectResolutionService {
     private void resolveGrantKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
         if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
-            accumulator.addKeyword(grant.keyword());
+            accumulator.addKeywords(grant.keywords());
         }
     }
 
@@ -509,7 +509,7 @@ public class StaticEffectResolutionService {
             if (wrapped instanceof GrantKeywordEffect grant) {
                 // For SELF scope, always apply; for broader scopes, only apply if self matches filter
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             } else if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());
@@ -543,7 +543,7 @@ public class StaticEffectResolutionService {
                     default -> matchesCreatureScope(context, grant.scope(), grant.filter());
                 };
                 if (scopeMatch) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             }
         } else if (wrapped instanceof StaticBoostEffect boost && boost.scope() != GrantScope.SELF) {
@@ -900,7 +900,7 @@ public class StaticEffectResolutionService {
         CardEffect wrapped = equipped.wrapped();
         if (wrapped instanceof GrantKeywordEffect grant) {
             if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                accumulator.addKeyword(grant.keyword());
+                accumulator.addKeywords(grant.keywords());
             }
         } else if (wrapped instanceof StaticBoostEffect boost) {
             accumulator.addPower(boost.powerBoost());
@@ -945,7 +945,7 @@ public class StaticEffectResolutionService {
         CardEffect wrapped = conditional.wrapped();
         if (wrapped instanceof GrantKeywordEffect grant) {
             if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
-                accumulator.addKeyword(grant.keyword());
+                accumulator.addKeywords(grant.keywords());
             }
         } else if (wrapped instanceof StaticBoostEffect boost) {
             if (matchesCreatureScope(context, boost.scope(), null)) {
@@ -987,7 +987,7 @@ public class StaticEffectResolutionService {
         if (opponentPoisoned) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
-                accumulator.addKeyword(grant.keyword());
+                accumulator.addKeywords(grant.keywords());
             } else if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());
                 accumulator.addToughness(boost.toughnessBoost());
@@ -1064,7 +1064,7 @@ public class StaticEffectResolutionService {
                 accumulator.addKeywords(boost.grantedKeywords());
             } else if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             }
         }
@@ -1093,7 +1093,7 @@ public class StaticEffectResolutionService {
                 accumulator.addKeywords(boost.grantedKeywords());
             } else if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             }
         }
@@ -1111,7 +1111,7 @@ public class StaticEffectResolutionService {
             accumulator.addToughness(boost.toughnessBoost());
             accumulator.addKeywords(boost.grantedKeywords());
         } else if (wrapped instanceof GrantKeywordEffect grant) {
-            accumulator.addKeyword(grant.keyword());
+            accumulator.addKeywords(grant.keywords());
         }
     }
 
@@ -1135,7 +1135,7 @@ public class StaticEffectResolutionService {
         } else if (wrapped instanceof GrantKeywordEffect grant && grant.scope() != GrantScope.SELF) {
             if (!isTopCardOfLibraryColor(context, conditional.color())) return;
             if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
-                accumulator.addKeyword(grant.keyword());
+                accumulator.addKeywords(grant.keywords());
             }
         }
     }
@@ -1148,7 +1148,7 @@ public class StaticEffectResolutionService {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             } else if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());
@@ -1184,7 +1184,7 @@ public class StaticEffectResolutionService {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             } else if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());
@@ -1216,7 +1216,7 @@ public class StaticEffectResolutionService {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             } else if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());
@@ -1234,7 +1234,7 @@ public class StaticEffectResolutionService {
         if (context.source().hasKeyword(conditional.keyword())) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
-                accumulator.addKeyword(grant.keyword());
+                accumulator.addKeywords(grant.keywords());
             } else if (wrapped instanceof StaticBoostEffect boost) {
                 accumulator.addPower(boost.powerBoost());
                 accumulator.addToughness(boost.toughnessBoost());

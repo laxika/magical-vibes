@@ -47,7 +47,7 @@ class ButchersCleaverTest extends BaseCardTest {
                 .filter(e -> e instanceof GrantKeywordEffect)
                 .map(e -> (GrantKeywordEffect) e)
                 .findFirst().orElseThrow();
-        assertThat(grant.keyword()).isEqualTo(Keyword.LIFELINK);
+        assertThat(grant.keywords()).containsExactly(Keyword.LIFELINK);
         assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
         assertThat(grant.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
         assertThat(((PermanentHasSubtypePredicate) grant.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);

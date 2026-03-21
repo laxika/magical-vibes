@@ -38,11 +38,11 @@ class TraitorousBloodTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect trampleEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(trampleEffect.keyword()).isEqualTo(Keyword.TRAMPLE);
+        assertThat(trampleEffect.keywords()).containsExactly(Keyword.TRAMPLE);
         assertThat(trampleEffect.scope()).isEqualTo(GrantScope.TARGET);
         assertThat(card.getEffects(EffectSlot.SPELL).get(3)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(3);
-        assertThat(hasteEffect.keyword()).isEqualTo(Keyword.HASTE);
+        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
         assertThat(hasteEffect.scope()).isEqualTo(GrantScope.TARGET);
     }
 

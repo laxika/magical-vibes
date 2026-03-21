@@ -36,7 +36,7 @@ class FearTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.FEAR);
+        assertThat(effect.keywords()).containsExactly(Keyword.FEAR);
         assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
     }
 

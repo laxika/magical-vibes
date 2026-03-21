@@ -44,7 +44,7 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof GrantKeywordEffect)
                 .findFirst().orElseThrow();
-        assertThat(hasteEffect.keyword()).isEqualTo(Keyword.HASTE);
+        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
         assertThat(hasteEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
     }
 

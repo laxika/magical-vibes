@@ -31,7 +31,7 @@ class WithstandDeathTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(grant.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
+        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

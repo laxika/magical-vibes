@@ -39,8 +39,9 @@ class SerrasEmbraceTest extends BaseCardTest {
         GrantKeywordEffect secondKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(2);
         assertThat(firstKeyword.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
         assertThat(secondKeyword.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(List.of(firstKeyword.keyword(), secondKeyword.keyword()))
-                .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(firstKeyword.keywords()).isSubsetOf(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(secondKeyword.keywords()).isSubsetOf(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(firstKeyword.keywords()).isNotEqualTo(secondKeyword.keywords());
     }
 
     // ===== Casting and resolving =====

@@ -37,7 +37,7 @@ class WhispersilkCloakTest extends BaseCardTest {
                 .hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC))
                 .filteredOn(e -> e instanceof GrantKeywordEffect gke
-                        && gke.keyword() == Keyword.SHROUD
+                        && gke.keywords().contains(Keyword.SHROUD)
                         && gke.scope() == GrantScope.EQUIPPED_CREATURE)
                 .hasSize(1);
     }

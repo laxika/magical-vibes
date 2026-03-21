@@ -36,11 +36,11 @@ class FerventStrikeTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(0);
 
         GrantKeywordEffect firstStrike = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(firstStrike.keyword()).isEqualTo(Keyword.FIRST_STRIKE);
+        assertThat(firstStrike.keywords()).containsExactly(Keyword.FIRST_STRIKE);
         assertThat(firstStrike.scope()).isEqualTo(GrantScope.TARGET);
 
         GrantKeywordEffect haste = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(haste.keyword()).isEqualTo(Keyword.HASTE);
+        assertThat(haste.keywords()).containsExactly(Keyword.HASTE);
         assertThat(haste.scope()).isEqualTo(GrantScope.TARGET);
     }
 

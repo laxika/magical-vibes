@@ -37,7 +37,7 @@ class ArborArmamentTest extends BaseCardTest {
         assertThat(counter.count()).isEqualTo(1);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.REACH);
+        assertThat(grant.keywords()).containsExactly(Keyword.REACH);
         assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
     }
 

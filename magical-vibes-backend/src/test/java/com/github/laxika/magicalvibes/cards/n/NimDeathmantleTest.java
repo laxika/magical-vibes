@@ -38,7 +38,7 @@ class NimDeathmantleTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keyword()).isEqualTo(Keyword.INTIMIDATE);
+        assertThat(keywordEffect.keywords()).containsExactly(Keyword.INTIMIDATE);
         assertThat(keywordEffect.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
         assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantColorEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(3)).isInstanceOf(GrantSubtypeEffect.class);

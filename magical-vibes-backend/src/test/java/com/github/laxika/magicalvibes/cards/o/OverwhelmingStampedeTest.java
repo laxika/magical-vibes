@@ -32,7 +32,7 @@ class OverwhelmingStampedeTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesByGreatestPowerEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.TRAMPLE);
+        assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);
         assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
     }
 

@@ -32,7 +32,7 @@ class PestilentSouleaterTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect infect = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(infect.keyword()).isEqualTo(Keyword.INFECT);
+        assertThat(infect.keywords()).containsExactly(Keyword.INFECT);
         assertThat(infect.scope()).isEqualTo(GrantScope.SELF);
     }
 

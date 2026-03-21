@@ -31,7 +31,7 @@ class BurstOfSpeedTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(grant.keyword()).isEqualTo(Keyword.HASTE);
+        assertThat(grant.keywords()).containsExactly(Keyword.HASTE);
         assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
     }
 

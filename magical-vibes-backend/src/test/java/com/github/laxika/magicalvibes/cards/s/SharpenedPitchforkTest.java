@@ -31,7 +31,7 @@ class SharpenedPitchforkTest extends BaseCardTest {
         GrantKeywordEffect grant = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof GrantKeywordEffect)
                 .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.keyword() == Keyword.FIRST_STRIKE)
+                .filter(e -> e.keywords().contains(Keyword.FIRST_STRIKE))
                 .findFirst().orElseThrow();
         assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
         assertThat(grant.filter()).isNull();

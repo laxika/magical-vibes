@@ -33,7 +33,7 @@ class DryadsFavorTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keyword()).isEqualTo(Keyword.FORESTWALK);
+        assertThat(effect.keywords()).containsExactly(Keyword.FORESTWALK);
         assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
         assertThat(card.getActivatedAbilities()).isEmpty();
     }

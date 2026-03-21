@@ -57,7 +57,7 @@ class BatterskullTest extends BaseCardTest {
                 .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
                 .toList();
         assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).extracting(GrantKeywordEffect::keyword)
+        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
                 .containsExactlyInAnyOrder(Keyword.VIGILANCE, Keyword.LIFELINK);
     }
 

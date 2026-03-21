@@ -31,7 +31,7 @@ class VaultSkywardTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(grantEffect.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(grantEffect.keywords()).containsExactly(Keyword.FLYING);
         assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(UntapTargetPermanentEffect.class);
     }

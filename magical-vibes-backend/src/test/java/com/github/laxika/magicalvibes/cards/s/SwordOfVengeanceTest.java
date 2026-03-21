@@ -54,7 +54,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
                 .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
                 .toList();
         assertThat(keywordEffects).hasSize(4);
-        assertThat(keywordEffects).extracting(GrantKeywordEffect::keyword)
+        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
                 .containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.HASTE);
     }
 

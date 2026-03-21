@@ -37,7 +37,7 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect reach = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(reach.keyword()).isEqualTo(Keyword.REACH);
+        assertThat(reach.keywords()).containsExactly(Keyword.REACH);
         assertThat(reach.scope()).isEqualTo(GrantScope.SELF);
 
         // Second ability: deathtouch
@@ -48,7 +48,7 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect deathtouch = (GrantKeywordEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(deathtouch.keyword()).isEqualTo(Keyword.DEATHTOUCH);
+        assertThat(deathtouch.keywords()).containsExactly(Keyword.DEATHTOUCH);
         assertThat(deathtouch.scope()).isEqualTo(GrantScope.SELF);
     }
 

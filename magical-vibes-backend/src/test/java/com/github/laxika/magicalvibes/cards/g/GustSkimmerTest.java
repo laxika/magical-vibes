@@ -35,7 +35,7 @@ class GustSkimmerTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect flying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(flying.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(flying.keywords()).containsExactly(Keyword.FLYING);
         assertThat(flying.scope()).isEqualTo(GrantScope.SELF);
     }
 

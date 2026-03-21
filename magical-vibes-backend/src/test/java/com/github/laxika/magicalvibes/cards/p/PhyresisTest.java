@@ -40,7 +40,7 @@ class PhyresisTest extends BaseCardTest {
                 .map(e -> (GrantKeywordEffect) e)
                 .toList();
         assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keyword()).isEqualTo(Keyword.INFECT);
+        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.INFECT);
         assertThat(keywordEffects.getFirst().scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
     }
 

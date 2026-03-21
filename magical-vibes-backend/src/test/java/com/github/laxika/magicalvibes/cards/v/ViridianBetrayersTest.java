@@ -28,7 +28,7 @@ class ViridianBetrayersTest extends BaseCardTest {
                 (OpponentPoisonedConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(grant.keyword()).isEqualTo(Keyword.INFECT);
+        assertThat(grant.keywords()).containsExactly(Keyword.INFECT);
         assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
     }
 

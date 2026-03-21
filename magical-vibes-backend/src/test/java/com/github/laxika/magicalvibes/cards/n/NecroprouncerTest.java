@@ -55,7 +55,7 @@ class NecroprouncerTest extends BaseCardTest {
                 .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
                 .toList();
         assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keyword()).isEqualTo(Keyword.HASTE);
+        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.HASTE);
     }
 
     @Test

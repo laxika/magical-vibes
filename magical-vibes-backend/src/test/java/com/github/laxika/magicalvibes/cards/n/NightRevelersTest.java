@@ -31,7 +31,7 @@ class NightRevelersTest extends BaseCardTest {
         assertThat(effect.subtype()).isEqualTo(CardSubtype.HUMAN);
         assertThat(effect.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect haste = (GrantKeywordEffect) effect.wrapped();
-        assertThat(haste.keyword()).isEqualTo(Keyword.HASTE);
+        assertThat(haste.keywords()).containsExactly(Keyword.HASTE);
         assertThat(haste.scope()).isEqualTo(GrantScope.SELF);
     }
 

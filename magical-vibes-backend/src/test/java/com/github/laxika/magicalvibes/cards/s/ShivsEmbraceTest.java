@@ -36,7 +36,7 @@ class ShivsEmbraceTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect flyingEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(flyingEffect.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(flyingEffect.keywords()).containsExactly(Keyword.FLYING);
         assertThat(flyingEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
         assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantActivatedAbilityEffect.class);
     }

@@ -39,7 +39,7 @@ class DubTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantSubtypeEffect.class);
 
         GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keyword()).isEqualTo(Keyword.FIRST_STRIKE);
+        assertThat(keywordEffect.keywords()).containsExactly(Keyword.FIRST_STRIKE);
         assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
 
         GrantSubtypeEffect subtypeEffect = (GrantSubtypeEffect) card.getEffects(EffectSlot.STATIC).get(2);

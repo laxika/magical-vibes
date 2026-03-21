@@ -60,7 +60,7 @@ class StrandwalkerTest extends BaseCardTest {
                 .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
                 .toList();
         assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keyword()).isEqualTo(Keyword.REACH);
+        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.REACH);
     }
 
     @Test

@@ -75,7 +75,7 @@ class AccordersShieldTest {
                 .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
                 .toList();
         assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keyword()).isEqualTo(Keyword.VIGILANCE);
+        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.VIGILANCE);
     }
 
     @Test

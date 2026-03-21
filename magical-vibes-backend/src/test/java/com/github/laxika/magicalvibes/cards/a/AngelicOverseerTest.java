@@ -38,14 +38,14 @@ class AngelicOverseerTest extends BaseCardTest {
         assertThat(effect0.subtype()).isEqualTo(CardSubtype.HUMAN);
         assertThat(effect0.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect hexproof = (GrantKeywordEffect) effect0.wrapped();
-        assertThat(hexproof.keyword()).isEqualTo(Keyword.HEXPROOF);
+        assertThat(hexproof.keywords()).containsExactly(Keyword.HEXPROOF);
         assertThat(hexproof.scope()).isEqualTo(GrantScope.SELF);
 
         var effect1 = (ControlsSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
         assertThat(effect1.subtype()).isEqualTo(CardSubtype.HUMAN);
         assertThat(effect1.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect indestructible = (GrantKeywordEffect) effect1.wrapped();
-        assertThat(indestructible.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
+        assertThat(indestructible.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
         assertThat(indestructible.scope()).isEqualTo(GrantScope.SELF);
     }
 

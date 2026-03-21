@@ -2194,7 +2194,7 @@ class GameQueryServiceTest {
                     default -> false;
                 };
                 if (matches) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             });
 

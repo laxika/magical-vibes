@@ -42,7 +42,7 @@ class GargoyleSentinelTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
                 .isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grantFlying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().get(1);
-        assertThat(grantFlying.keyword()).isEqualTo(Keyword.FLYING);
+        assertThat(grantFlying.keywords()).containsExactly(Keyword.FLYING);
         assertThat(grantFlying.scope()).isEqualTo(GrantScope.SELF);
     }
 

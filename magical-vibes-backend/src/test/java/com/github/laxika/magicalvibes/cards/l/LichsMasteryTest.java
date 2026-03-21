@@ -34,7 +34,7 @@ class LichsMasteryTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof GrantKeywordEffect gke && gke.keyword() == Keyword.HEXPROOF)
+                .anyMatch(e -> e instanceof GrantKeywordEffect gke && gke.keywords().contains(Keyword.HEXPROOF))
                 .anyMatch(e -> e instanceof CantLoseGameEffect);
 
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);

@@ -37,7 +37,7 @@ class RallyTheForcesTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.FIRST_STRIKE);
+        assertThat(grant.keywords()).containsExactly(Keyword.FIRST_STRIKE);
         assertThat(grant.scope()).isEqualTo(GrantScope.ALL_CREATURES);
         assertThat(grant.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
     }
