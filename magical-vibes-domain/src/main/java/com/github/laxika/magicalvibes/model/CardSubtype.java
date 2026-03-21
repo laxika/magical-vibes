@@ -131,7 +131,8 @@ public enum CardSubtype {
     ASSEMBLY_WORKER("Assembly-Worker"),
     PEGASUS("Pegasus"),
     KRAKEN("Kraken"),
-    LEVIATHAN("Leviathan");
+    LEVIATHAN("Leviathan"),
+    TEFERI("Teferi");
 
     @Getter
     private final String displayName;

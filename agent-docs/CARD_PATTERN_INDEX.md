@@ -340,6 +340,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Metalcraft damage + can't block | `c/ConcussiveBolt.java` | SPELL DealDamageToTargetPlayerEffect(4) + MetalcraftConditionalEffect(TargetPlayerCreaturesCantBlockThisTurnEffect) — damage always, metalcraft adds mass can't-block on target player's creatures |
 | Life threshold boost + keyword | `s/SerraAscendant.java` | STATIC ControllerLifeThresholdConditionalEffect(30, StaticBoostEffect(5, 5, [FLYING], SELF)) — +5/+5 and flying as long as controller has 30+ life |
 | Graveyard card threshold boost + keyword | `g/GhituLavarunner.java` | STATIC ControllerGraveyardCardThresholdConditionalEffect(2, instant/sorcery filter, StaticBoostEffect(1, 0, [HASTE], SELF)) — +1/+0 and haste as long as 2+ instant/sorcery cards in controller's graveyard |
+| Controls-subtype self-boost | `t/TeferisSentinel.java` | STATIC ControlsSubtypeConditionalEffect(TEFERI, StaticBoostEffect(4, 0, SELF)) — +4/+0 as long as you control a Teferi planeswalker |
 
 ## Auras
 
