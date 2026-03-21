@@ -142,8 +142,23 @@ public class Permanent {
      *  (e.g. Song of Freyalise "{T}: Add one mana of any color.").
      *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
      *  Cleared at the beginning of the controller's next turn by
-     *  {@link com.github.laxika.magicalvibes.model.Permanent#clearUntilNextTurnAbilities()}. */
+     *  {@link com.github.laxika.magicalvibes.model.Permanent#clearUntilNextTurnEffects()}. */
     private final List<ActivatedAbility> untilNextTurnActivatedAbilities = new ArrayList<>();
+    /** When true, this land permanent is animated as a creature until the controller's next turn.
+     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
+     *  Cleared at the beginning of the controller's next turn by
+     *  {@link #clearUntilNextTurnEffects()}. */
+    @Setter private boolean animatedUntilNextTurn;
+    @Setter private int untilNextTurnAnimatedPower;
+    @Setter private int untilNextTurnAnimatedToughness;
+    /** Subtypes granted by "until your next turn" animation effects (e.g. Elemental from Sylvan Awakening).
+     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
+     *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
+    private final List<CardSubtype> untilNextTurnSubtypes = new ArrayList<>();
+    /** Keywords granted by "until your next turn" animation effects (e.g. reach, indestructible, haste from Sylvan Awakening).
+     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
+     *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
+    private final Set<Keyword> untilNextTurnKeywords = new HashSet<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -239,6 +254,11 @@ public class Permanent {
         this.kicked = source.kicked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
+        this.animatedUntilNextTurn = source.animatedUntilNextTurn;
+        this.untilNextTurnAnimatedPower = source.untilNextTurnAnimatedPower;
+        this.untilNextTurnAnimatedToughness = source.untilNextTurnAnimatedToughness;
+        this.untilNextTurnSubtypes.addAll(source.untilNextTurnSubtypes);
+        this.untilNextTurnKeywords.addAll(source.untilNextTurnKeywords);
     }
 
     public Card getOriginalCard() {
@@ -338,6 +358,8 @@ public class Permanent {
             basePower = permanentBasePowerOverride;
         } else if (animatedUntilEndOfTurn) {
             basePower = animatedPower;
+        } else if (animatedUntilNextTurn) {
+            basePower = untilNextTurnAnimatedPower;
         } else if (permanentlyAnimated) {
             basePower = permanentAnimatedPower;
         } else if (awakeningCounters > 0 && !card.hasType(CardType.CREATURE)) {
@@ -358,6 +380,8 @@ public class Permanent {
             baseToughness = permanentBaseToughnessOverride;
         } else if (animatedUntilEndOfTurn) {
             baseToughness = animatedToughness;
+        } else if (animatedUntilNextTurn) {
+            baseToughness = untilNextTurnAnimatedToughness;
         } else if (permanentlyAnimated) {
             baseToughness = permanentAnimatedToughness;
         } else if (awakeningCounters > 0 && !card.hasType(CardType.CREATURE)) {
@@ -384,7 +408,8 @@ public class Permanent {
     public boolean hasKeyword(Keyword keyword) {
         if (losesAllAbilitiesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
-        return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword);
+        return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword)
+                || untilNextTurnKeywords.contains(keyword);
     }
 
     public void resetModifiers() {
@@ -421,11 +446,16 @@ public class Permanent {
     }
 
     /**
-     * Clears activated abilities that were granted "until your next turn"
-     * (e.g. Song of Freyalise). Called at the beginning of the controller's
+     * Clears all "until your next turn" effects: activated abilities (e.g. Song of Freyalise)
+     * and land animation (e.g. Sylvan Awakening). Called at the beginning of the controller's
      * next turn, not at end of turn.
      */
-    public void clearUntilNextTurnAbilities() {
+    public void clearUntilNextTurnEffects() {
         this.untilNextTurnActivatedAbilities.clear();
+        this.animatedUntilNextTurn = false;
+        this.untilNextTurnAnimatedPower = 0;
+        this.untilNextTurnAnimatedToughness = 0;
+        this.untilNextTurnSubtypes.clear();
+        this.untilNextTurnKeywords.clear();
     }
 }

@@ -167,7 +167,7 @@ public class TurnProgressionService {
         // Clear "until your next turn" activated abilities for the active player's permanents
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
         if (activePlayerBf != null) {
-            activePlayerBf.forEach(Permanent::clearUntilNextTurnAbilities);
+            activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
         }
 
         untapStepService.untapPermanents(gameData, nextActive);

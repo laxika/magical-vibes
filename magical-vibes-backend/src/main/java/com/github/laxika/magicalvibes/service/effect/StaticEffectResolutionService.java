@@ -627,6 +627,7 @@ public class StaticEffectResolutionService {
     private boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
         if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
+        if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.getAwakeningCounters() > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
@@ -1340,6 +1341,7 @@ public class StaticEffectResolutionService {
         if (filter instanceof PermanentIsCreaturePredicate)
             return target.getCard().hasType(CardType.CREATURE)
                     || target.isAnimatedUntilEndOfTurn()
+                    || target.isAnimatedUntilNextTurn()
                     || target.getAwakeningCounters() > 0;
         if (filter instanceof PermanentIsArtifactPredicate)
             return gameQueryService.isArtifact(target);

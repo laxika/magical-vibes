@@ -948,7 +948,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `AnimateLandEffect` | `(int power, int toughness, List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords, CardColor animatedColor)` or `(int power, int toughness, List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords, CardColor animatedColor, Set<CardType> grantedCardTypes)` | land becomes creature until end of turn (manlands); use 6-arg form to also grant card types (e.g. Artifact for Inkmoth Nexus) |
+| `AnimateLandEffect` | `(int power, int toughness, List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords, CardColor animatedColor)` or `(…, Set<CardType> grantedCardTypes)` or `(…, Set<CardType> grantedCardTypes, GrantScope scope, EffectDuration duration)` | Land animation. Defaults: scope=SELF, duration=UNTIL_END_OF_TURN (manlands). Use 5/6-arg for self-targeting manlands (e.g. Treetop Village, Inkmoth Nexus). Use 8-arg with `GrantScope.OWN_LANDS` + `EffectDuration.UNTIL_YOUR_NEXT_TURN` for mass land animation (e.g. Sylvan Awakening). `animatedColor` may be null for scope=OWN_LANDS. |
 | `AnimateSelfEffect` | `(List<CardSubtype> grantedSubtypes)` | this permanent becomes a creature (e.g. Mutavault-style) |
 | `AnimateSelfWithStatsEffect` | `(int power, int toughness, List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords)` | this permanent becomes a creature with fixed P/T and keywords until end of turn (e.g. Glint Hawk Idol) |
 | `AnimateSelfByChargeCountersEffect` | `(List<CardSubtype> grantedSubtypes)` | becomes creature with P/T equal to charge counters until end of turn |

@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
@@ -23,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -36,6 +40,14 @@ public class AnimationResolutionService {
 
     @HandlesEffect(AnimateLandEffect.class)
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
+        if (effect.scope() == GrantScope.OWN_LANDS) {
+            resolveAnimateOwnLands(gameData, entry, effect);
+        } else {
+            resolveAnimateSingleLand(gameData, entry, effect);
+        }
+    }
+
+    private void resolveAnimateSingleLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (self == null) {
             return;
@@ -54,6 +66,48 @@ public class AnimationResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), effect.power(), effect.toughness());
+    }
+
+    private void resolveAnimateOwnLands(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        boolean untilNextTurn = effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN;
+
+        for (Permanent perm : battlefield) {
+            if (!perm.getCard().hasType(CardType.LAND)) {
+                continue;
+            }
+
+            if (untilNextTurn) {
+                perm.setAnimatedUntilNextTurn(true);
+                perm.setUntilNextTurnAnimatedPower(effect.power());
+                perm.setUntilNextTurnAnimatedToughness(effect.toughness());
+                perm.getUntilNextTurnSubtypes().clear();
+                perm.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
+                perm.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
+            } else {
+                perm.setAnimatedUntilEndOfTurn(true);
+                perm.setAnimatedPower(effect.power());
+                perm.setAnimatedToughness(effect.toughness());
+                perm.setAnimatedColor(effect.animatedColor());
+                perm.getTransientSubtypes().clear();
+                perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
+                perm.getGrantedKeywords().addAll(effect.grantedKeywords());
+                perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+            }
+
+            log.info("Game {} - {} animated{}", gameData.id, perm.getCard().getName(),
+                    untilNextTurn ? " until next turn" : " until end of turn");
+        }
+
+        String durationText = untilNextTurn ? "until your next turn" : "until end of turn";
+        gameBroadcastService.logAndBroadcast(gameData,
+                "All lands you control become " + effect.power() + "/" + effect.toughness()
+                        + " Elemental creatures with reach, indestructible, and haste " + durationText + ". They're still lands.");
     }
 
     @HandlesEffect(AnimateSelfEffect.class)
@@ -315,4 +369,5 @@ public class AnimationResolutionService {
                 gameData.id, target.getCard().getName(), effect.power(), effect.toughness(),
                 entry.getCard().getName());
     }
+
 }

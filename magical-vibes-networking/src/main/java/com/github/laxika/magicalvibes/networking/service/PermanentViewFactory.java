@@ -57,6 +57,7 @@ public class PermanentViewFactory {
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
+        allKeywords.addAll(p.getUntilNextTurnKeywords());
         allKeywords.addAll(bonusKeywords);
         Set<Keyword> allRemovedKeywords = new HashSet<>(p.getRemovedKeywords());
         allRemovedKeywords.addAll(staticRemovedKeywords);
@@ -95,7 +96,7 @@ public class PermanentViewFactory {
                 p.getChosenName(),
                 p.getRegenerationShield(),
                 p.isCantBeBlocked(),
-                animatedCreature || p.isPermanentlyAnimated(),
+                animatedCreature || p.isAnimatedUntilNextTurn() || p.isPermanentlyAnimated(),
                 p.getLoyaltyCounters(),
                 p.getChargeCounters(),
                 p.getHatchlingCounters(),
@@ -112,7 +113,8 @@ public class PermanentViewFactory {
     }
 
     private CardView applyGrantedSubtypes(CardView cardView, Permanent p) {
-        if (p.getTransientSubtypes().isEmpty() && p.getGrantedSubtypes().isEmpty()) {
+        if (p.getTransientSubtypes().isEmpty() && p.getGrantedSubtypes().isEmpty()
+                && p.getUntilNextTurnSubtypes().isEmpty()) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());
@@ -122,6 +124,11 @@ public class PermanentViewFactory {
             }
         }
         for (CardSubtype subtype : p.getGrantedSubtypes()) {
+            if (!mergedSubtypes.contains(subtype)) {
+                mergedSubtypes.add(subtype);
+            }
+        }
+        for (CardSubtype subtype : p.getUntilNextTurnSubtypes()) {
             if (!mergedSubtypes.contains(subtype)) {
                 mergedSubtypes.add(subtype);
             }
