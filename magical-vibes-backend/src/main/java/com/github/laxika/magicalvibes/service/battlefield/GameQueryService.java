@@ -1864,7 +1864,10 @@ public class GameQueryService {
      * @return the damage after applying all multipliers
      */
     public int applyDamageMultiplier(GameData gameData, int damage, StackEntry entry) {
-        return damage * getDamageMultiplier(gameData) * getControllerSpellDamageMultiplier(gameData, entry);
+        int bonus = (damage > 0 && entry != null)
+                ? getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
+                : 0;
+        return (damage + bonus) * getDamageMultiplier(gameData) * getControllerSpellDamageMultiplier(gameData, entry);
     }
 
     /**
@@ -1942,12 +1945,39 @@ public class GameQueryService {
      * @return the damage after applying all multipliers
      */
     public int applyCombatDamageMultiplier(GameData gameData, int damage, Permanent source, Permanent target) {
-        int result = damage * getDamageMultiplier(gameData);
+        int bonus = 0;
+        if (damage > 0) {
+            UUID controllerId = findPermanentController(gameData, source.getId());
+            if (controllerId != null) {
+                bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors());
+            }
+        }
+        int result = (damage + bonus) * getDamageMultiplier(gameData);
         result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);
         }
         return result;
+    }
+
+    /**
+     * Returns the additive damage bonus for sources of matching color controlled by the given
+     * player this turn (e.g. The Flame of Keld Chapter III). Returns the sum of all matching
+     * color bonuses. Returns 0 if no bonus applies.
+     */
+    int getColorSourceDamageBonus(GameData gameData, UUID controllerId, List<CardColor> sourceColors) {
+        if (controllerId == null || sourceColors == null || sourceColors.isEmpty()) {
+            return 0;
+        }
+        Map<CardColor, Integer> colorMap = gameData.colorSourceDamageBonusThisTurn.get(controllerId);
+        if (colorMap == null || colorMap.isEmpty()) {
+            return 0;
+        }
+        int bonus = 0;
+        for (CardColor color : sourceColors) {
+            bonus += colorMap.getOrDefault(color, 0);
+        }
+        return bonus;
     }
 
     /**

@@ -1300,6 +1300,120 @@ class GameQueryServiceTest {
         }
     }
 
+    // ===== getColorSourceDamageBonus =====
+
+    @Nested
+    @DisplayName("getColorSourceDamageBonus")
+    class ColorSourceDamageBonus {
+
+        private void setBonus(UUID playerId, CardColor color, int bonus) {
+            gd.colorSourceDamageBonusThisTurn
+                    .computeIfAbsent(playerId, k -> new java.util.concurrent.ConcurrentHashMap<>())
+                    .put(color, bonus);
+        }
+
+        @Test
+        @DisplayName("returns 0 when no bonus set")
+        void returnsZeroByDefault() {
+            assertThat(gqs.getColorSourceDamageBonus(gd, player1Id, List.of(CardColor.RED))).isZero();
+        }
+
+        @Test
+        @DisplayName("returns bonus for matching color source")
+        void returnsBonusForMatchingColor() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            assertThat(gqs.getColorSourceDamageBonus(gd, player1Id, List.of(CardColor.RED))).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 0 for non-matching color source")
+        void returnsZeroForNonMatchingColor() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            assertThat(gqs.getColorSourceDamageBonus(gd, player1Id, List.of(CardColor.GREEN))).isZero();
+        }
+
+        @Test
+        @DisplayName("returns bonus for multicolored source including matching color")
+        void returnsBonusForMulticolorWithMatch() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            assertThat(gqs.getColorSourceDamageBonus(gd, player1Id, List.of(CardColor.RED, CardColor.GREEN))).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 0 for different controller")
+        void returnsZeroForDifferentController() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            assertThat(gqs.getColorSourceDamageBonus(gd, player2Id, List.of(CardColor.RED))).isZero();
+        }
+
+        @Test
+        @DisplayName("returns 0 for null colors")
+        void returnsZeroForNullColors() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            assertThat(gqs.getColorSourceDamageBonus(gd, player1Id, null)).isZero();
+        }
+
+        @Test
+        @DisplayName("applyDamageMultiplier includes color bonus for matching spell")
+        void applyDamageMultiplierIncludesBonus() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            Card redSpell = new Card();
+            redSpell.setName("Red Spell");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player1Id,
+                    "Red Spell", new ArrayList<>(), null);
+
+            // 3 base + 2 bonus = 5
+            assertThat(gqs.applyDamageMultiplier(gd, 3, entry)).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("applyDamageMultiplier does not add bonus for non-matching spell")
+        void applyDamageMultiplierNoBonusForNonMatching() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            Card greenSpell = new Card();
+            greenSpell.setName("Green Spell");
+            greenSpell.setColors(List.of(CardColor.GREEN));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, greenSpell, player1Id,
+                    "Green Spell", new ArrayList<>(), null);
+
+            assertThat(gqs.applyDamageMultiplier(gd, 3, entry)).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("applyCombatDamageMultiplier includes color bonus for matching creature")
+        void applyCombatDamageMultiplierIncludesBonus() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            Card redCreature = createCreature("Red Goblin", 2, 1, CardColor.RED);
+            redCreature.setColors(List.of(CardColor.RED));
+            Permanent perm = addPermanent(player1Id, redCreature);
+
+            // 2 base + 2 bonus = 4
+            assertThat(gqs.applyCombatDamageMultiplier(gd, 2, perm, null)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("applyCombatDamageMultiplier does not add bonus for zero damage")
+        void applyCombatDamageMultiplierNoBonusForZeroDamage() {
+            setBonus(player1Id, CardColor.RED, 2);
+
+            Card redCreature = createCreature("Red Goblin", 2, 1, CardColor.RED);
+            redCreature.setColors(List.of(CardColor.RED));
+            Permanent perm = addPermanent(player1Id, redCreature);
+
+            // 0 damage -> no bonus applied
+            assertThat(gqs.applyCombatDamageMultiplier(gd, 0, perm, null)).isZero();
+        }
+    }
+
     // ===== isPreventedFromDealingDamage =====
 
     @Nested

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetFightsSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
@@ -74,6 +75,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -2144,6 +2146,25 @@ public class DamageResolutionService {
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         dealDamageToPlayer(gameData, entry, defenderId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link BoostColorSourceDamageThisTurnEffect} — sets an additive damage bonus
+     * for all sources of the specified color controlled by the caster for the rest of the turn.
+     */
+    @HandlesEffect(BoostColorSourceDamageThisTurnEffect.class)
+    void resolveBoostColorSourceDamageThisTurn(GameData gameData, StackEntry entry, BoostColorSourceDamageThisTurnEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        gameData.colorSourceDamageBonusThisTurn
+                .computeIfAbsent(controllerId, k -> new ConcurrentHashMap<>())
+                .merge(effect.color(), effect.bonus(), Integer::sum);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String colorName = effect.color().name().toLowerCase();
+        String logEntry = playerName + "'s " + colorName + " sources deal +" + effect.bonus()
+                + " damage this turn (" + entry.getCard().getName() + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains +{} {} source damage bonus this turn ({})",
+                gameData.id, playerName, effect.bonus(), colorName, entry.getCard().getName());
     }
 }
 

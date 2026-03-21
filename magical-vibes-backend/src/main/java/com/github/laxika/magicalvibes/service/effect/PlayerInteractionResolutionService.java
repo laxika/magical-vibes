@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
@@ -306,6 +307,35 @@ public class PlayerInteractionResolutionService {
     private void resolveDiscardCard(GameData gameData, StackEntry entry, DiscardCardEffect effect) {
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(DiscardOwnHandEffect.class)
+    private void resolveDiscardOwnHand(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String cardName = entry.getCard().getName();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = playerName + " has no cards to discard (" + cardName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
+            return;
+        }
+
+        List<Card> discarded = new ArrayList<>(hand);
+        hand.clear();
+        gameData.discardCausedByOpponent = false;
+
+        for (Card card : discarded) {
+            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            triggerCollectionService.checkDiscardTriggers(gameData, controllerId, card);
+        }
+
+        String logEntry = playerName + " discards their hand (" + discarded.size()
+                + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discarded.size(), cardName);
     }
 
     @HandlesEffect(DrawDiscardTransformIfCreatureDiscardedEffect.class)

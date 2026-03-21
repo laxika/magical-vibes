@@ -86,6 +86,7 @@ public class TurnCleanupService {
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
         gameData.drawReplacementTargetToController.clear();
+        gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();

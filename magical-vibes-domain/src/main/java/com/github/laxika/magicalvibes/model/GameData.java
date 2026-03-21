@@ -89,6 +89,8 @@ public class GameData {
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public boolean allPermanentsEnterTappedThisTurn;
+    /** Per-controller, per-color additive damage bonus this turn (e.g. The Flame of Keld Chapter III). */
+    public final Map<UUID, Map<CardColor, Integer>> colorSourceDamageBonusThisTurn = new ConcurrentHashMap<>();
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
@@ -543,6 +545,8 @@ public class GameData {
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
+        this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
+                copy.colorSourceDamageBonusThisTurn.put(pid, new ConcurrentHashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
         copy.pendingSacrificeSelfToDestroySourceId = this.pendingSacrificeSelfToDestroySourceId;
