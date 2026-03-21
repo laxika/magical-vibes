@@ -364,6 +364,62 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextSagaChapterGraveyardTarget(GameData gameData) {
+        while (!gameData.pendingSagaChapterGraveyardTargets.isEmpty()) {
+            PermanentChoiceContext.SagaChapterGraveyardTarget pending =
+                    gameData.pendingSagaChapterGraveyardTargets.peekFirst();
+
+            // Find the graveyard-targeting effect to extract its filter
+            CardPredicate filter = null;
+            for (CardEffect effect : pending.effects()) {
+                if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+                    filter = returnEffect.filter();
+                    break;
+                }
+            }
+
+            // Collect valid graveyard targets from the controller's graveyard
+            List<UUID> validCardIds = new ArrayList<>();
+            List<CardView> cardViews = new ArrayList<>();
+            List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
+            if (graveyard != null) {
+                for (Card graveyardCard : graveyard) {
+                    if (gameQueryService.matchesCardPredicate(graveyardCard, filter, null)) {
+                        validCardIds.add(graveyardCard.getId());
+                        cardViews.add(cardViewFactory.create(graveyardCard));
+                    }
+                }
+            }
+
+            gameData.pendingSagaChapterGraveyardTargets.removeFirst();
+
+            if (validCardIds.isEmpty()) {
+                log.info("Game {} - {} chapter {} graveyard-target skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                continue;
+            }
+
+            // Set up graveyard target operation (entryType = null → triggered ability path)
+            gameData.graveyardTargetOperation.card = pending.sourceCard();
+            gameData.graveyardTargetOperation.controllerId = pending.controllerId();
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+            gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
+            gameData.graveyardTargetOperation.chapterName = pending.chapterName();
+
+            String filterLabel = CardPredicateUtils.describeFilter(filter);
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), validCardIds, cardViews, 1,
+                    pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
+                            + " — Choose target " + filterLabel + " from your graveyard.");
+
+            String logEntry = pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
+                    + " ability triggers — choose a graveyard target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chapter {} graveyard-target trigger awaiting target selection",
+                    gameData.id, pending.sourceCard().getName(), pending.chapterName());
+            return;
+        }
+    }
+
     public void processNextSpellGraveyardTargetTrigger(GameData gameData) {
         while (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =

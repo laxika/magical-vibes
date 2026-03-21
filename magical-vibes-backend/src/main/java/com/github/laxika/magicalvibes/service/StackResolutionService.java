@@ -557,8 +557,9 @@ public class StackResolutionService {
             default -> String.valueOf(loreCount);
         };
 
-        boolean needsTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
-        if (needsTarget) {
+        boolean needsPermanentTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+        boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
+        if (needsPermanentTarget) {
             gameData.pendingSagaChapterTargets.add(
                     new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
@@ -566,6 +567,14 @@ public class StackResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterTarget(gameData);
+        } else if (needsGraveyardTarget) {
+            gameData.pendingSagaChapterGraveyardTargets.add(
+                    new PermanentChoiceContext.SagaChapterGraveyardTarget(card, controllerId,
+                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
+            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
+            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
         } else {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

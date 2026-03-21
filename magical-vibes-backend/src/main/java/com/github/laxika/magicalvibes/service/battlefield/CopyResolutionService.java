@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantInstantSorceryCopyUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
@@ -145,6 +147,48 @@ public class CopyResolutionService {
 
         log.info("Game {} - {} triggers, copying {} for each other player",
                 gameData.id, entry.getCard().getName(), spellCard.getName());
+    }
+
+    @HandlesEffect(GrantInstantSorceryCopyUntilEndOfTurnEffect.class)
+    void resolveGrantInstantSorceryCopy(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        gameData.playersWithSpellCopyUntilEndOfTurn.add(controllerId);
+
+        String logMsg = gameData.playerIdToName.get(controllerId)
+                + "'s instant and sorcery spells will be copied for the rest of the turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} granted spell copy until end of turn", gameData.id, controllerId);
+    }
+
+    @HandlesEffect(CopyControllerCastSpellEffect.class)
+    void resolveCopyControllerCastSpell(GameData gameData, StackEntry entry,
+                                        CopyControllerCastSpellEffect effect) {
+        if (effect.spellSnapshot() == null) return;
+
+        StackEntry spellSnapshot = effect.spellSnapshot();
+        UUID castingPlayerId = effect.castingPlayerId();
+        Card spellCard = spellSnapshot.getCard();
+
+        Card copyCard = createCopyCard(spellCard);
+        StackEntry copyEntry = createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
+
+        gameData.stack.add(copyEntry);
+
+        String logMsg = "A copy of " + spellCard.getName() + " is created.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
+
+        // If the copy has a target, offer the controller a chance to choose new targets
+        if (copyEntry.getTargetId() != null) {
+            PendingMayAbility retargetAbility = new PendingMayAbility(
+                    entry.getCard(),
+                    castingPlayerId,
+                    List.of(new CopySpellEffect()),
+                    "Choose new targets for the copy of " + spellCard.getName() + "?",
+                    copyCard.getId()
+            );
+            gameData.pendingMayAbilities.addFirst(retargetAbility);
+        }
     }
 
     @HandlesEffect(BecomeCopyOfTargetCreatureEffect.class)

@@ -105,6 +105,10 @@ public sealed interface PermanentChoiceContext {
     record SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                              UUID sourcePermanentId, String chapterName) implements PermanentChoiceContext {}
 
+    /** Saga chapter ability that targets a card in a graveyard (e.g. The Mirari Conjecture chapters I/II). */
+    record SagaChapterGraveyardTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                      UUID sourcePermanentId, String chapterName) implements PermanentChoiceContext {}
+
     record GraveyardAbilityCostChoice(UUID activatingPlayerId,
                                       Card graveyardCard,
                                       int graveyardCardIndex,

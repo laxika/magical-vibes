@@ -753,14 +753,22 @@ public class StepTriggerService {
                 default -> String.valueOf(newLoreCount);
             };
 
-            boolean needsTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
-            if (needsTarget) {
+            boolean needsPermanentTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+            boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
+            if (needsPermanentTarget) {
                 gameData.pendingSagaChapterTargets.add(
                         new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName));
                 String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
+            } else if (needsGraveyardTarget) {
+                gameData.pendingSagaChapterGraveyardTargets.add(
+                        new PermanentChoiceContext.SagaChapterGraveyardTarget(card, activePlayerId,
+                                new ArrayList<>(chapterEffects), saga.getId(), chapterName));
+                String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
             } else {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -781,6 +789,9 @@ public class StepTriggerService {
         // Process any queued saga chapter target selections
         if (!gameData.pendingSagaChapterTargets.isEmpty()) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
+        }
+        if (!gameData.pendingSagaChapterGraveyardTargets.isEmpty()) {
+            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
         }
     }
 

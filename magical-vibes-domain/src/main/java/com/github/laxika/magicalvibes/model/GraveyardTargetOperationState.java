@@ -17,4 +17,8 @@ public class GraveyardTargetOperationState {
     public UUID targetPlayerId;
     /** Whether the spell is being cast with flashback */
     public boolean flashback;
+    /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
+    public UUID sourcePermanentId;
+    /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
+    public String chapterName;
 }

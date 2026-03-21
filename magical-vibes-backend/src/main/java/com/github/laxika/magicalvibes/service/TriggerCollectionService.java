@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
@@ -152,6 +154,36 @@ public class TriggerCollectionService {
             triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
+            }
+        }
+
+        // "Until end of turn, whenever you cast an instant or sorcery spell, copy it"
+        // (e.g. The Mirari Conjecture chapter III)
+        if (gameData.playersWithSpellCopyUntilEndOfTurn.contains(castingPlayerId)
+                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
+            // Find the spell on the stack to create a snapshot
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                StackEntry snapshot = new StackEntry(spellEntry);
+                CopyControllerCastSpellEffect copyEffect =
+                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        "Copy " + spellCard.getName(),
+                        new ArrayList<>(List.of(copyEffect))
+                ));
+                String logMsg = spellCard.getName() + " is copied (The Mirari Conjecture).";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                log.info("Game {} - {} spell-copy trigger queued for {}",
+                        gameData.id, spellCard.getName(), castingPlayerId);
             }
         }
 
@@ -654,6 +686,10 @@ public class TriggerCollectionService {
 
     public void processNextSagaChapterTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
+    }
+
+    public void processNextSagaChapterGraveyardTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextSagaChapterGraveyardTarget(gameData);
     }
 
     // ── Internal dispatch ──────────────────────────────────────────────

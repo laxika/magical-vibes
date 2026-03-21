@@ -289,6 +289,8 @@ public class GraveyardChoiceHandlerService {
         int pendingXValue = gameData.graveyardTargetOperation.xValue;
         UUID pendingTargetPlayerId = gameData.graveyardTargetOperation.targetPlayerId;
         boolean pendingFlashback = gameData.graveyardTargetOperation.flashback;
+        UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
+        String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
@@ -301,6 +303,8 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.anyNumber = false;
         gameData.graveyardTargetOperation.targetPlayerId = null;
         gameData.graveyardTargetOperation.flashback = false;
+        gameData.graveyardTargetOperation.sourcePermanentId = null;
+        gameData.graveyardTargetOperation.chapterName = null;
 
         List<String> targetNames = new ArrayList<>();
         for (UUID cardId : cardIds) {
@@ -335,24 +339,57 @@ public class GraveyardChoiceHandlerService {
                     !pendingFlashback);
             gameBroadcastService.broadcastGameState(gameData);
         } else {
-            // Triggered ability (ETB or spell-cast trigger) — put on stack with targets
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    pendingCard,
-                    controllerId,
-                    pendingCard.getName() + "'s ability",
-                    new ArrayList<>(pendingEffects),
-                    new ArrayList<>(cardIds)
-            ));
+            // Triggered ability (ETB, spell-cast trigger, or saga chapter) — put on stack with targets
+            String description;
+            if (pendingChapterName != null) {
+                description = pendingCard.getName() + "'s chapter " + pendingChapterName + " ability";
+            } else {
+                description = pendingCard.getName() + "'s ability";
+            }
+
+            StackEntry triggeredEntry;
+            if (pendingSourcePermanentId != null) {
+                // Saga chapter: include sourcePermanentId for SBA check (CR 714.4)
+                triggeredEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pendingCard,
+                        controllerId,
+                        description,
+                        new ArrayList<>(pendingEffects),
+                        0,
+                        null,
+                        pendingSourcePermanentId,
+                        Map.of(),
+                        null,
+                        new ArrayList<>(cardIds),
+                        List.of()
+                );
+            } else {
+                triggeredEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pendingCard,
+                        controllerId,
+                        description,
+                        new ArrayList<>(pendingEffects),
+                        new ArrayList<>(cardIds)
+                );
+            }
+            gameData.stack.add(triggeredEntry);
 
             if (cardIds.isEmpty()) {
-                String triggerLog = pendingCard.getName() + "'s ability triggers targeting no cards.";
+                String triggerLog = description + " triggers targeting no cards.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
             } else {
-                String triggerLog = pendingCard.getName() + "'s ability triggers targeting " + String.join(", ", targetNames) + ".";
+                String triggerLog = description + " triggers targeting " + String.join(", ", targetNames) + ".";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
             }
             log.info("Game {} - {} triggered ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
+        }
+
+        // Process any remaining pending saga chapter graveyard targets before auto-pass
+        if (!gameData.pendingSagaChapterGraveyardTargets.isEmpty()) {
+            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
+            return;
         }
 
         // Process any remaining pending graveyard-target triggers before auto-pass

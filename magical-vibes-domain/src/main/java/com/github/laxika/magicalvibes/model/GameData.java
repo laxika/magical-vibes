@@ -143,6 +143,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.EndStepTriggerTarget> pendingEndStepTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.LifeGainTriggerAnyTarget> pendingLifeGainTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SagaChapterTarget> pendingSagaChapterTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.SagaChapterGraveyardTarget> pendingSagaChapterGraveyardTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellGraveyardTargetTrigger> pendingSpellGraveyardTargetTriggers = new ArrayDeque<>();
     public PendingCapriciousEfreetState pendingCapriciousEfreetState;
     public boolean discardCausedByOpponent;
@@ -241,6 +242,10 @@ public class GameData {
     /** Card IDs that have been granted flashback until end of turn (e.g. Past in Flames).
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players whose instant/sorcery spells are automatically copied until end of turn
+     *  (e.g. The Mirari Conjecture chapter III). Cleared at end of turn. */
+    public final Set<UUID> playersWithSpellCopyUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
@@ -773,6 +778,7 @@ public class GameData {
         copy.pendingEndStepTriggerTargets.addAll(this.pendingEndStepTriggerTargets);
         copy.pendingLifeGainTriggerTargets.addAll(this.pendingLifeGainTriggerTargets);
         copy.pendingSagaChapterTargets.addAll(this.pendingSagaChapterTargets);
+        copy.pendingSagaChapterGraveyardTargets.addAll(this.pendingSagaChapterGraveyardTargets);
         copy.pendingSpellGraveyardTargetTriggers.addAll(this.pendingSpellGraveyardTargetTriggers);
         copy.pendingCapriciousEfreetState = this.pendingCapriciousEfreetState;
         copy.extraTurns.addAll(this.extraTurns);
@@ -817,6 +823,9 @@ public class GameData {
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
+
+        // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
+        copy.playersWithSpellCopyUntilEndOfTurn.addAll(this.playersWithSpellCopyUntilEndOfTurn);
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
