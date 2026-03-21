@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAt
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -114,6 +115,9 @@ public class DamagePreventionService {
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (!isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllNoncombatDamageToAttachedCreatureEffect.class)) return 0;
+            // Shield of the Realm: "If a source would deal damage to equipped creature, prevent N of that damage."
+            damage = applyAttachedPerSourceDamageReduction(gameData, permanent, damage);
+            if (damage <= 0) return 0;
             if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
                 if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
@@ -273,6 +277,34 @@ public class DamagePreventionService {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PreventDamageFromOpponentSourcesEffect e) {
                     totalReduction += e.amount();
+                }
+            }
+        }
+
+        if (totalReduction <= 0) return damage;
+        return Math.max(0, damage - totalReduction);
+    }
+
+    /**
+     * Applies per-source damage reduction from attached permanents with
+     * {@link PreventXDamageFromEachSourceToAttachedCreatureEffect}
+     * (e.g. Shield of the Realm: "If a source would deal damage to equipped creature, prevent 2 of that damage.").
+     * Sums the reduction from all such attached permanents and reduces the damage accordingly (min 0).
+     */
+    private int applyAttachedPerSourceDamageReduction(GameData gameData, Permanent creature, int damage) {
+        if (damage <= 0) return damage;
+
+        int totalReduction = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.isAttached() && p.getAttachedTo().equals(creature.getId())) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof PreventXDamageFromEachSourceToAttachedCreatureEffect e) {
+                            totalReduction += e.amount();
+                        }
+                    }
                 }
             }
         }

@@ -1252,7 +1252,7 @@ public class SpellCastingService {
                 effectsToResolve, effectiveXValue, targetId, null
         ));
 
-        gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
+        gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
         String logEntry = player.getUsername() + " casts " + card.getName() + " from the top of their library.";

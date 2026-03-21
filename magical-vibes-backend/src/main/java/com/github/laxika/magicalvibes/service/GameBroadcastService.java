@@ -678,7 +678,7 @@ public class GameBroadcastService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);

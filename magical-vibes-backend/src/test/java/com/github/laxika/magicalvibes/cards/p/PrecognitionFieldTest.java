@@ -196,12 +196,10 @@ class PrecognitionFieldTest extends BaseCardTest {
             Card shock = new Shock();
             gd.playerDecks.get(player1.getId()).addFirst(shock);
             harness.addMana(player1, ManaColor.RED, 1);
-            gd.spellsCastThisTurn.put(player1.getId(), 0);
-
             UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
             harness.castFromLibraryTop(player1, bearsId);
 
-            assertThat(gd.spellsCastThisTurn.get(player1.getId())).isEqualTo(1);
+            assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
         }
 
         @Test
