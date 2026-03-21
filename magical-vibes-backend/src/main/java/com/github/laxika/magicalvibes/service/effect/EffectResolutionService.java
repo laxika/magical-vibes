@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
@@ -230,6 +231,8 @@ public class EffectResolutionService {
                     isTwoOrMoreSpellsCastLastTurn(gameData);
             case AttacksAloneConditionalEffect ignored ->
                     isAttackingAlone(gameData, entry);
+            case MinimumAttackersConditionalEffect mac ->
+                    entry.getXValue() >= mac.minimumAttackers();
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;

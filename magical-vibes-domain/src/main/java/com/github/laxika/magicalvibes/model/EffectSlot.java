@@ -102,5 +102,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */
-    ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD
+    ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers when one or more creatures the controller controls are declared as attackers,
+     *  while this card is in the controller's graveyard.  The attacker count is passed via
+     *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
+    GRAVEYARD_ON_ALLY_CREATURES_ATTACK
 }

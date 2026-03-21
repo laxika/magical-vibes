@@ -289,7 +289,8 @@ public class GraveyardReturnResolutionService {
                 if (effect.destination() == GraveyardChoiceDestination.HAND) {
                     gameData.addCardToHand(targetPlayerId, card);
                 } else {
-                    putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
+                    putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
+                            effect.enterTapped(), effect.enterAttacking());
                 }
                 returnedNames.add(card.getName());
             }
@@ -552,6 +553,12 @@ public class GraveyardReturnResolutionService {
 
     private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
                                          CardColor grantColor, CardSubtype grantSubtype, boolean enterTapped) {
+        putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype, enterTapped, false);
+    }
+
+    private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         applyPermanentGrants(permanent, grantColor, grantSubtype);
@@ -559,10 +566,16 @@ public class GraveyardReturnResolutionService {
             permanent.tap();
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        if (enterAttacking) {
+            permanent.setAttacking(true);
+        }
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String tappedText = enterTapped ? " tapped" : "";
-        String logEntry = playerName + " puts " + card.getName() + " onto the battlefield" + tappedText + " from a graveyard.";
+        String stateText = (enterTapped && enterAttacking) ? " tapped and attacking"
+                : enterTapped ? " tapped"
+                : enterAttacking ? " attacking"
+                : "";
+        String logEntry = playerName + " puts " + card.getName() + " onto the battlefield" + stateText + " from a graveyard.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);

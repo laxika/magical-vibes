@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
@@ -359,6 +361,49 @@ public class CombatAttackService {
                 gameData.gameLog.add(triggerLog);
                 log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                         gameData.id, perm.getCard().getName(), attackerIndices.size());
+            }
+        }
+
+        // Check for graveyard-based "whenever you attack with N or more creatures" triggers
+        // (GRAVEYARD_ON_ALLY_CREATURES_ATTACK). These fire from the controller's graveyard.
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard != null) {
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> gyAttackEffects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK);
+                if (gyAttackEffects.isEmpty()) continue;
+
+                for (CardEffect effect : gyAttackEffects) {
+                    CardEffect innerEffect = effect;
+
+                    // Unwrap MinimumAttackersConditionalEffect — check minimum before offering the trigger
+                    if (innerEffect instanceof MinimumAttackersConditionalEffect mac) {
+                        if (attackerIndices.size() < mac.minimumAttackers()) {
+                            log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
+                                    gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());
+                            continue;
+                        }
+                        innerEffect = mac.wrapped();
+                    }
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            playerId,
+                            card.getName() + "'s graveyard attack trigger",
+                            new ArrayList<>(List.of(innerEffect)),
+                            attackerIndices.size(),
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ));
+                    String triggerLog = card.getName() + "'s graveyard attack ability triggers.";
+                    gameData.gameLog.add(triggerLog);
+                    log.info("Game {} - {} GRAVEYARD_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
+                            gameData.id, card.getName(), attackerIndices.size());
+                }
             }
         }
 

@@ -86,6 +86,8 @@ import lombok.Builder;
  * @param exileSourceFromGraveyard {@code true} to exile the source card from the controller's
  *                             graveyard before performing the return (e.g. Moldgraf Monstrosity);
  *                             ensures the source cannot be one of the randomly returned cards
+ * @param enterAttacking       {@code true} if the returned permanent enters the battlefield attacking
+ *                             (e.g. Warcry Phoenix); typically combined with {@link #enterTapped}
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -109,7 +111,8 @@ public record ReturnCardFromGraveyardEffect(
         boolean returnAtRandom,
         int randomCount,
         boolean choosePermanentType,
-        boolean exileSourceFromGraveyard
+        boolean exileSourceFromGraveyard,
+        boolean enterAttacking
 ) implements CardEffect {
 
     /**
