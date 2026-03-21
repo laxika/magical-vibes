@@ -490,7 +490,7 @@ public class ExileResolutionService {
 
             for (int i = 0; i < toExile; i++) {
                 Card card = deck.removeFirst();
-                exileService.exileCardTrackedWithSource(gameData, playerId, card, sourcePermanentId);
+                exileService.exileCard(gameData, playerId, card, sourcePermanentId);
                 exiledNames.add(card.getName());
             }
 
@@ -540,7 +540,7 @@ public class ExileResolutionService {
         Card originalCard = originalSpell.getCard();
         gameData.stack.remove(originalSpell);
 
-        exileService.exileCardTrackedWithSource(gameData, castingPlayerId, originalCard, kpPermanentId);
+        exileService.exileCard(gameData, castingPlayerId, originalCard, kpPermanentId);
 
         String playerName = gameData.playerIdToName.get(castingPlayerId);
         String exileLog = playerName + " exiles " + originalCard.getName() + " (Knowledge Pool).";
@@ -931,7 +931,7 @@ public class ExileResolutionService {
         if (effect.trackWithSource()) {
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
-                exileService.exileCardTrackedWithSource(gameData, controllerId, topCard, sourcePermanentId);
+                exileService.exileCard(gameData, controllerId, topCard, sourcePermanentId);
             } else {
                 exileService.exileCard(gameData, controllerId, topCard);
             }

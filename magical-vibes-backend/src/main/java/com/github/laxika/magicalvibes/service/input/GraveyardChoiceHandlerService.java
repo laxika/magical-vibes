@@ -169,7 +169,7 @@ public class GraveyardChoiceHandlerService {
                 }
                 case EXILE -> {
                     if (trackWithSourcePermanentId != null) {
-                        exileService.exileCardTrackedWithSource(gameData, playerId, card, trackWithSourcePermanentId);
+                        exileService.exileCard(gameData, playerId, card, trackWithSourcePermanentId);
                     } else {
                         exileService.exileCard(gameData, playerId, card);
                     }

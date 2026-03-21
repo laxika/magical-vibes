@@ -19,7 +19,7 @@ public class ExileService {
     /**
      * Exiles a card and tracks it with a source permanent (imprint).
      */
-    public void exileCardTrackedWithSource(GameData gameData, UUID ownerId, Card card, UUID sourcePermanentId) {
+    public void exileCard(GameData gameData, UUID ownerId, Card card, UUID sourcePermanentId) {
         gameData.addToExile(ownerId, card, sourcePermanentId);
     }
 }

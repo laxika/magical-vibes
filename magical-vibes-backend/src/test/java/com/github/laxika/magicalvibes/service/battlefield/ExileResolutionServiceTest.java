@@ -165,7 +165,7 @@ class ExileResolutionServiceTest {
             UUID sourcePermanentId = inv.getArgument(3);
             gameData.addToExile(ownerId, card, sourcePermanentId);
             return null;
-        }).when(exileService).exileCardTrackedWithSource(any(), any(), any(), any());
+        }).when(exileService).exileCard(any(), any(), any(), any());
     }
 
     // =========================================================================
@@ -1195,7 +1195,7 @@ class ExileResolutionServiceTest {
             assertThat(gd.stack).doesNotContain(originalSpell);
             // Original card added to pool and exile
             assertThat(gd.getCardsExiledByPermanent(kp.getId())).contains(originalCard);
-            verify(exileService).exileCardTrackedWithSource(gd, player1Id, originalCard, kp.getId());
+            verify(exileService).exileCard(gd, player1Id, originalCard, kp.getId());
             // No eligible cards → log message
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell."));

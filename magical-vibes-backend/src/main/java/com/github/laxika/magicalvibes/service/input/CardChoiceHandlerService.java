@@ -242,7 +242,7 @@ public class CardChoiceHandlerService {
 
         // Add to player's exile zone, tracked with source permanent if available (e.g. Karn Liberated)
         if (sourcePermanentId != null) {
-            exileService.exileCardTrackedWithSource(gameData, playerId, card, sourcePermanentId);
+            exileService.exileCard(gameData, playerId, card, sourcePermanentId);
         } else {
             exileService.exileCard(gameData, playerId, card);
         }

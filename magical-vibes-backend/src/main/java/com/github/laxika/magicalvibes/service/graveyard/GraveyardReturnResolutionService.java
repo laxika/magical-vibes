@@ -805,7 +805,7 @@ public class GraveyardReturnResolutionService {
         if (graveyardOwnerId != null) {
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
-                exileService.exileCardTrackedWithSource(gameData, graveyardOwnerId, targetCard, sourcePermanentId);
+                exileService.exileCard(gameData, graveyardOwnerId, targetCard, sourcePermanentId);
             } else {
                 exileService.exileCard(gameData, graveyardOwnerId, targetCard);
             }
