@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -324,9 +325,10 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 int count = 0;
+                FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(permanent.getCard().getId());
                 if (battlefield != null) {
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.matchesPermanentPredicate(gameData, p, manaPerPermanent.predicate())) {
+                        if (gameQueryService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
                             count++;
                         }
                     }
@@ -460,9 +462,10 @@ public class ActivatedAbilityExecutionService {
                 total += kom.amount();
             } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(permanent.getCard().getId());
                 if (battlefield != null) {
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.matchesPermanentPredicate(gameData, p, manaPerPermanent.predicate())) {
+                        if (gameQueryService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
                             total++;
                         }
                     }
