@@ -888,6 +888,8 @@ public class LifeResolutionService {
         ManaPool pool = gameData.playerManaPools.get(controllerId);
         if (effect.color() == ManaColor.RED) {
             pool.addRestrictedRed(effect.amount());
+        } else if (effect.color() == ManaColor.COLORLESS) {
+            pool.addInstantSorceryOnlyColorless(effect.amount());
         } else {
             pool.add(effect.color(), effect.amount());
         }

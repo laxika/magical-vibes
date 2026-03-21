@@ -89,8 +89,8 @@ public class SpellCastingService {
             SacrificePermanentCost sacrificePermanentCost
     ) {}
 
-    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen) {
-        boolean hasRestricted() { return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen; }
+    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless) {
+        boolean hasRestricted() { return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless; }
     }
 
     // --- Helper methods ---
@@ -156,7 +156,8 @@ public class SpellCastingService {
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
         boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
-        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked);
+        boolean instantSorceryOnlyColorless = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
+        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless);
     }
 
     private StackEntryType cardTypeToStackEntryType(CardType type) {
@@ -357,7 +358,7 @@ public class SpellCastingService {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (flags.hasRestricted()) {
-                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen())) {
+                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless())) {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost)) {
@@ -1435,13 +1436,13 @@ public class SpellCastingService {
             cost.pay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost);
         } else if (cost.hasX()) {
             if (flags.hasRestricted()) {
-                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen());
+                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless());
             } else {
                 cost.pay(pool, effectiveXValue + additionalCost);
             }
         } else {
             if (flags.hasRestricted()) {
-                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen());
+                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless());
             } else {
                 cost.pay(pool, additionalCost);
             }

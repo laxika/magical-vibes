@@ -5,5 +5,5 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 import java.util.Set;
 
-public record AwardRestrictedManaEffect(ManaColor color, int amount, Set<CardType> allowedSpellTypes) implements CardEffect {
+public record AwardRestrictedManaEffect(ManaColor color, int amount, Set<CardType> allowedSpellTypes) implements ManaProducingEffect {
 }

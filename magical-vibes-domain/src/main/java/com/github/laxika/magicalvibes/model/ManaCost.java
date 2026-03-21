@@ -170,6 +170,10 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext) {
+        return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, false);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext) {
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
         int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
 
@@ -196,6 +200,9 @@ public class ManaCost {
         }
         if (myrContext) {
             remaining += pool.getMyrOnlyColorless();
+        }
+        if (instantSorceryOnlyColorlessContext) {
+            remaining += pool.getInstantSorceryOnlyColorless();
         }
         if (restrictedRedContext) {
             int redNeeded = coloredCosts.getOrDefault(ManaColor.RED, 0);
@@ -309,6 +316,10 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext) {
+        pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, false);
+    }
+
+    public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext) {
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
         int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
 
@@ -341,6 +352,13 @@ public class ManaCost {
         if (artifactContext && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, pool.getArtifactOnlyColorless());
             pool.removeArtifactOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        // Spend instant/sorcery-only colorless for generic costs
+        if (instantSorceryOnlyColorlessContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getInstantSorceryOnlyColorless());
+            pool.removeInstantSorceryOnlyColorless(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
 

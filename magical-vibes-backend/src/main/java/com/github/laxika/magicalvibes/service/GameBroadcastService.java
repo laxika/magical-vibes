@@ -365,9 +365,11 @@ public class GameBroadcastService {
                         boolean hasKicker = card.getEffects(EffectSlot.STATIC).stream()
                                 .anyMatch(e -> e instanceof KickerEffect);
                         boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
-                        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen;
+                        boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                                && pool.getInstantSorceryOnlyColorless() > 0;
+                        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless;
                         boolean canAfford = hasRestricted
-                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen)
+                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless)
                                 : cost.canPay(pool, additionalCost);
                         if (canAfford && card.isRequiresCreatureMana()) {
                             canAfford = cost.canPayCreatureOnly(pool, additionalCost);

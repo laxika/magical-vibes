@@ -14,6 +14,7 @@ public class ManaPool {
     private int myrOnlyColorless;
     private int restrictedRed;
     private int kickedOnlyGreen;
+    private int instantSorceryOnlyColorless;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -34,6 +35,7 @@ public class ManaPool {
         this.myrOnlyColorless = source.myrOnlyColorless;
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
+        this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
     }
 
     public void add(ManaColor color) {
@@ -53,6 +55,7 @@ public class ManaPool {
         myrOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
+        instantSorceryOnlyColorless = 0;
     }
 
     public int get(ManaColor color) {
@@ -141,6 +144,18 @@ public class ManaPool {
         kickedOnlyGreen = Math.max(0, kickedOnlyGreen - amount);
     }
 
+    public int getInstantSorceryOnlyColorless() {
+        return instantSorceryOnlyColorless;
+    }
+
+    public void addInstantSorceryOnlyColorless(int amount) {
+        instantSorceryOnlyColorless += amount;
+    }
+
+    public void removeInstantSorceryOnlyColorless(int amount) {
+        instantSorceryOnlyColorless = Math.max(0, instantSorceryOnlyColorless - amount);
+    }
+
     /**
      * Adds mana that persists through step/phase transitions until end of turn.
      * The mana is added to both the regular pool and the persistent tracker.
@@ -173,6 +188,7 @@ public class ManaPool {
         myrOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
+        instantSorceryOnlyColorless = 0;
     }
 
     /**
@@ -194,7 +210,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
-                amount += artifactOnlyColorless + myrOnlyColorless;
+                amount += artifactOnlyColorless + myrOnlyColorless + instantSorceryOnlyColorless;
             }
             if (color == ManaColor.RED) {
                 amount += restrictedRed;

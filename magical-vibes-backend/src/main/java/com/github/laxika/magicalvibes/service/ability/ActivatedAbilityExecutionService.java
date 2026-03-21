@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessMan
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
@@ -322,6 +323,15 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).addMyrOnlyColorless(mom.amount());
             } else if (effect instanceof AwardKickedOnlyManaEffect kom) {
                 gameData.playerManaPools.get(playerId).addKickedOnlyGreen(kom.amount());
+            } else if (effect instanceof AwardRestrictedManaEffect arm) {
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (arm.color() == ManaColor.RED) {
+                    pool.addRestrictedRed(arm.amount());
+                } else if (arm.color() == ManaColor.COLORLESS) {
+                    pool.addInstantSorceryOnlyColorless(arm.amount());
+                } else {
+                    pool.add(arm.color(), arm.amount());
+                }
             } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 int count = 0;
