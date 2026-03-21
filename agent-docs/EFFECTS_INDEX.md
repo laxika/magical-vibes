@@ -1037,6 +1037,7 @@ Pass `null` as filter to allow any card.
 | `AbundanceDrawReplacementEffect` | `()` | replace draws with Abundance's reveal-until mechanic (static) |
 | `ReplaceSingleDrawEffect` | `(UUID playerId, DrawReplacementKind kind)` | replace a single draw with a replacement effect |
 | `PlayLandsFromGraveyardEffect` | `()` | you may play lands from your graveyard (static) |
+| `CastPermanentSpellsFromGraveyardEffect` | `()` | you may cast one permanent spell of each type from your graveyard per turn (static, Muldrotha) |
 
 ## Put onto battlefield
 

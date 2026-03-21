@@ -144,6 +144,7 @@ public class TurnProgressionService {
         gameData.landsPlayedThisTurn.clear();
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
+        gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();

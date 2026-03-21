@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffec
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -496,6 +497,9 @@ public class GameBroadcastService {
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
+        boolean hasGraveyardPermanentCast = canCastPermanentSpellsFromGraveyard(gameData, playerId);
+        Set<CardType> typesCastFromGraveyard = gameData.permanentTypesCastFromGraveyardThisTurn
+                .getOrDefault(playerId, Set.of());
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
@@ -510,7 +514,16 @@ public class GameBroadcastService {
             boolean emblemFlashback = flashback.isEmpty() && !grantedFlashback
                     && hasEmblemGrantedFlashback(gameData, playerId, card);
 
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && graveyardCast.isEmpty()) {
+            // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
+            boolean isGrantedGraveyardCast = false;
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && graveyardCast.isEmpty()
+                    && hasGraveyardPermanentCast) {
+                // Card must be a non-land permanent type with at least one unused type slot
+                isGrantedGraveyardCast = hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
+            }
+
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && graveyardCast.isEmpty()
+                    && !isGrantedGraveyardCast) {
                 continue;
             }
 
@@ -521,8 +534,8 @@ public class GameBroadcastService {
                 continue;
             }
 
-            // GraveyardCast, granted flashback, and emblem flashback use the card's mana cost
-            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback)
+            // GraveyardCast, granted flashback, emblem flashback, and granted graveyard cast use the card's mana cost
+            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || isGrantedGraveyardCast)
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
@@ -829,6 +842,38 @@ public class GameBroadcastService {
                 if (effect instanceof PlayLandsFromGraveyardEffect) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    public boolean canCastPermanentSpellsFromGraveyard(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CastPermanentSpellsFromGraveyardEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the card has at least one non-land permanent type whose slot
+     * has not been used this turn (for Muldrotha-style graveyard casting).
+     */
+    public static boolean hasUnusedPermanentTypeSlot(Card card, Set<CardType> typesCastFromGraveyard) {
+        // Check primary type
+        CardType primary = card.getType();
+        if (primary.isPermanentType() && primary != CardType.LAND && !typesCastFromGraveyard.contains(primary)) {
+            return true;
+        }
+        // Check additional types
+        for (CardType t : card.getAdditionalTypes()) {
+            if (t.isPermanentType() && t != CardType.LAND && !typesCastFromGraveyard.contains(t)) {
+                return true;
             }
         }
         return false;

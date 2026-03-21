@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 @Slf4j
@@ -994,7 +995,18 @@ public class SpellCastingService {
                 && gameBroadcastService.hasEmblemGrantedFlashback(gameData, playerId, card);
         boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty()
                 && !grantedFlashback && !emblemFlashback;
+
+        // Check if this card is castable via a Muldrotha-style static graveyard permanent cast effect
+        boolean isGrantedGraveyardCast = false;
         if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast) {
+            if (gameBroadcastService.canCastPermanentSpellsFromGraveyard(gameData, playerId)) {
+                Set<CardType> typesCastFromGraveyard = gameData.permanentTypesCastFromGraveyardThisTurn
+                        .getOrDefault(playerId, Set.of());
+                isGrantedGraveyardCast = GameBroadcastService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
+            }
+        }
+
+        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast && !isGrantedGraveyardCast) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
         }
 
@@ -1008,8 +1020,9 @@ public class SpellCastingService {
             throw new IllegalStateException("Cannot cast sorcery-speed spell from graveyard now");
         }
 
-        // Validate and pay mana cost (graveyard cast, granted flashback, and emblem flashback use the card's normal mana cost)
-        String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback)
+        // Validate and pay mana cost (graveyard cast, granted flashback, emblem flashback,
+        // and granted graveyard cast all use the card's normal mana cost)
+        String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || isGrantedGraveyardCast)
                 ? card.getManaCost()
                 : flashbackOpt.get().getCost(ManaCastingCost.class)
                         .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))
@@ -1018,7 +1031,7 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
         if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
-            throw new IllegalStateException("Not enough mana to pay " + (isGraveyardCast ? "casting" : "flashback") + " cost");
+            throw new IllegalStateException("Not enough mana to pay " + (isGraveyardCast || isGrantedGraveyardCast ? "casting" : "flashback") + " cost");
         }
         cost.pay(pool, effectiveXValue + additionalCost);
 
@@ -1030,8 +1043,23 @@ public class SpellCastingService {
         ExileNCardsFromGraveyardCost exileNCost = extractAndRemoveExileNCardsFromGraveyardCost(spellEffects);
         payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
 
-        if (isGraveyardCast) {
-            // GraveyardCast: creature/permanent spell — enters battlefield on resolution, no exile
+        if (isGraveyardCast || isGrantedGraveyardCast) {
+            // GraveyardCast / granted graveyard cast: permanent spell — enters battlefield on resolution, no exile
+            if (isGrantedGraveyardCast) {
+                // Track which permanent type slot was used (pick the first available type)
+                Set<CardType> typesCastFromGraveyard = gameData.permanentTypesCastFromGraveyardThisTurn
+                        .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
+                // Check primary type first, then additional types
+                CardType primary = card.getType();
+                if (primary.isPermanentType() && primary != CardType.LAND && !typesCastFromGraveyard.contains(primary)) {
+                    typesCastFromGraveyard.add(primary);
+                } else {
+                    card.getAdditionalTypes().stream()
+                            .filter(t -> t.isPermanentType() && t != CardType.LAND && !typesCastFromGraveyard.contains(t))
+                            .findFirst()
+                            .ifPresent(typesCastFromGraveyard::add);
+                }
+            }
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());
             StackEntry stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),
