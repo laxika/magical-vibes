@@ -80,5 +80,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_III,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
-    BEGINNING_OF_COMBAT_TRIGGERED
+    BEGINNING_OF_COMBAT_TRIGGERED,
+    /** Triggers whenever a creature an opponent controls is dealt damage (combat or non-combat).
+     *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
+     *  for permanents with this slot whose controller is different from the damaged creature's controller. */
+    ON_OPPONENT_CREATURE_DEALT_DAMAGE
 }

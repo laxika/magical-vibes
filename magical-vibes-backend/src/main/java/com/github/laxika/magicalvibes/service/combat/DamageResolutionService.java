@@ -1220,6 +1220,12 @@ public class DamageResolutionService {
                     ? gameQueryService.findPermanentController(gameData, damageSource.getId())
                     : entry.getControllerId();
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId);
+
+            // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
+            UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            if (damagedCreatureControllerId != null) {
+                triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+            }
         }
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
@@ -1276,6 +1282,12 @@ public class DamageResolutionService {
 
         if (damage > 0) {
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, entry.getControllerId());
+
+            // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
+            UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            if (damagedCreatureControllerId != null) {
+                triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
+            }
         }
 
         String sourceName = entry.getCard().getName();

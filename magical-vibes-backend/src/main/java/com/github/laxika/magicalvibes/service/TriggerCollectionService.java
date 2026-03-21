@@ -422,6 +422,39 @@ public class TriggerCollectionService {
         }
     }
 
+    // ── Opponent-creature-dealt-damage triggers ──────────────────────────
+
+    /**
+     * Fires ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers on permanents whose controller
+     * is different from the damaged creature's controller (i.e. the damaged creature is
+     * an opponent's creature from the perspective of the permanent's controller).
+     * Called once per damaged creature — each call produces one trigger per listening permanent.
+     */
+    public void checkOpponentCreatureDealtDamageTriggers(GameData gameData, UUID damagedCreatureControllerId) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            // Only fire when the damaged creature was controlled by an opponent of this permanent's controller
+            if (playerId.equals(damagedCreatureControllerId)) return;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_DEALT_DAMAGE);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (opponent creature dealt damage)", gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
     // ── Enchanted-permanent-tap triggers ───────────────────────────────
 
     public void checkEnchantedPermanentTapTriggers(GameData gameData, Permanent tappedPermanent) {

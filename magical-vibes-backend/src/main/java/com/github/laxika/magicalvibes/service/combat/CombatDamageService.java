@@ -205,6 +205,18 @@ public class CombatDamageService {
         // Process ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
         processDealtDamageTriggers(gameData, dealtDamageTriggerData);
 
+        // Process ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
+        for (var entry : state.defDamageTaken.entrySet()) {
+            if (entry.getValue() > 0) {
+                triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, defenderId);
+            }
+        }
+        for (var entry : state.atkDamageTaken.entrySet()) {
+            if (entry.getValue() > 0) {
+                triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, activeId);
+            }
+        }
+
         // Process combat damage to player triggers (e.g. Cephalid Constable)
         processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
