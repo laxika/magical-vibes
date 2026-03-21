@@ -703,7 +703,7 @@ class AbilityActivationServiceTest {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
             Permanent perm = addReadyPermanent(player1Id, card);
             perm.setLoyaltyCounters(5);
-            perm.setLoyaltyAbilityUsedThisTurn(true);
+            perm.setLoyaltyActivationsThisTurn(1);
 
             gameData.activePlayerId = player1Id;
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;

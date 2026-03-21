@@ -370,7 +370,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         assertThat(gd.exiledCardsWithSilverCounters).contains(forest.getId());
 
         // Next turn: −1 to get Forest back
-        karn.setLoyaltyAbilityUsedThisTurn(false);
+        karn.setLoyaltyActivationsThisTurn(0);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 

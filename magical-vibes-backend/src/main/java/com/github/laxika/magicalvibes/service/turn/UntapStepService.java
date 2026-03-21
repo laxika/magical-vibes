@@ -93,7 +93,7 @@ public class UntapStepService {
                     p.untap();
                 }
                 p.setSummoningSick(false);
-                p.setLoyaltyAbilityUsedThisTurn(false);
+                p.setLoyaltyActivationsThisTurn(0);
             });
         }
 

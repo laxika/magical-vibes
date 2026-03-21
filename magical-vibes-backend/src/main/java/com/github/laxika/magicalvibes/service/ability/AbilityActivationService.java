@@ -1031,8 +1031,9 @@ public class AbilityActivationService {
         if (!gameData.stack.isEmpty()) {
             throw new IllegalStateException("Loyalty abilities can only be activated when the stack is empty");
         }
-        // Once per turn
-        if (permanent.isLoyaltyAbilityUsedThisTurn()) {
+        // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi)
+        int maxActivations = gameQueryService.hasExtraLoyaltyActivation(gameData, playerId) ? 2 : 1;
+        if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) {
             throw new IllegalStateException("Only one loyalty ability per planeswalker per turn");
         }
 
@@ -1056,7 +1057,7 @@ public class AbilityActivationService {
 
         // Pay loyalty cost
         permanent.setLoyaltyCounters(permanent.getLoyaltyCounters() + loyaltyCost);
-        permanent.setLoyaltyAbilityUsedThisTurn(true);
+        permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
     }
 
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext) {

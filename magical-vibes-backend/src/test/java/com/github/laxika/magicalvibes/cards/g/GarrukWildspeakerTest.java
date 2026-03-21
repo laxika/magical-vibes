@@ -194,7 +194,7 @@ class GarrukWildspeakerTest extends BaseCardTest {
         assertThat(garruk.getLoyaltyCounters()).isEqualTo(4);
 
         // Reset for next turn
-        garruk.setLoyaltyAbilityUsedThisTurn(false);
+        garruk.setLoyaltyActivationsThisTurn(0);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         // Second activation

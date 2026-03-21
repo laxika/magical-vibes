@@ -68,7 +68,7 @@ public class Permanent {
     @Setter private int wishCounters;
     @Setter private int loreCounters;
     @Setter private int aimCounters;
-    @Setter private boolean loyaltyAbilityUsedThisTurn;
+    @Setter private int loyaltyActivationsThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -194,7 +194,7 @@ public class Permanent {
         this.wishCounters = source.wishCounters;
         this.loreCounters = source.loreCounters;
         this.aimCounters = source.aimCounters;
-        this.loyaltyAbilityUsedThisTurn = source.loyaltyAbilityUsedThisTurn;
+        this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);
         this.transientColors.addAll(source.transientColors);

@@ -282,7 +282,7 @@ class KarnLiberatedTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
             // Reset loyalty ability flag and set loyalty to 14
-            karn.setLoyaltyAbilityUsedThisTurn(false);
+            karn.setLoyaltyActivationsThisTurn(0);
             karn.setLoyaltyCounters(14);
 
             // Activate -14 (ultimate)

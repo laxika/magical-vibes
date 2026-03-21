@@ -255,7 +255,7 @@ class ElspethTirelTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Reset loyalty ability usage so we can activate another loyalty ability
-        elspeth.setLoyaltyAbilityUsedThisTurn(false);
+        elspeth.setLoyaltyActivationsThisTurn(0);
 
         // Now activate -5
         harness.activateAbility(player1, 0, 2, null, null);

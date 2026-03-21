@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
@@ -1388,6 +1389,15 @@ public class GameQueryService {
      */
     public boolean playerHasHexproof(GameData gameData, UUID playerId) {
         return playerBattlefieldHasStaticEffect(gameData, playerId, GrantControllerHexproofEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the player controls a permanent with
+     * {@link AllowExtraLoyaltyActivationEffect}, allowing planeswalker loyalty abilities
+     * to be activated twice per turn instead of once (Oath of Teferi).
+     */
+    public boolean hasExtraLoyaltyActivation(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraLoyaltyActivationEffect.class);
     }
 
     /**

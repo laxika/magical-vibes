@@ -121,11 +121,11 @@ class UntapStepServiceTest {
         @DisplayName("Clears loyalty ability used flag")
         void clearsLoyaltyAbilityUsedFlag() {
             Permanent perm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
-            perm.setLoyaltyAbilityUsedThisTurn(true);
+            perm.setLoyaltyActivationsThisTurn(1);
 
             sut.untapPermanents(gd, player1Id);
 
-            assertThat(perm.isLoyaltyAbilityUsedThisTurn()).isFalse();
+            assertThat(perm.getLoyaltyActivationsThisTurn()).isZero();
         }
     }
 
