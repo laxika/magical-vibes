@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
@@ -1132,9 +1133,8 @@ public class SpellCastingService {
         }
 
         UUID permittedPlayer = gameData.exilePlayPermissions.get(exileCardId);
-        if (permittedPlayer == null || !permittedPlayer.equals(playerId)) {
-            throw new IllegalStateException("No permission to play this exiled card");
-        }
+        boolean hasPermission = permittedPlayer != null && permittedPlayer.equals(playerId);
+        // Permission check is deferred until after we find the card — ExileCast cards bypass it
 
         Card card = null;
         int cardIndex = -1;
@@ -1147,6 +1147,24 @@ public class SpellCastingService {
         }
         if (card == null) {
             throw new IllegalStateException("Card not found in exile");
+        }
+
+        boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+        if (!hasPermission && !hasExileCast) {
+            throw new IllegalStateException("No permission to play this exiled card");
+        }
+
+        // Validate timing for ExileCast cards (creature/sorcery require sorcery-speed timing)
+        if (hasExileCast && !card.hasType(CardType.LAND)) {
+            boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
+            boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                    || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+            boolean stackEmpty = gameData.stack.isEmpty();
+            boolean isInstantSpeed = card.hasType(CardType.INSTANT)
+                    || card.getKeywords().contains(Keyword.FLASH);
+            if (!isInstantSpeed && !(isActivePlayer && isMainPhase && stackEmpty)) {
+                throw new IllegalStateException("Cannot cast sorcery-speed spell from exile now");
+            }
         }
 
         // Remove from exile and clean up permission

@@ -503,6 +503,11 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), exileGraveyardCardIndices);
     }
 
+    public void castFromExile(Player player, UUID exileCardId) {
+        ensurePriority(player);
+        gameService.playCardFromExile(gameData, player, exileCardId, null, null);
+    }
+
     public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);

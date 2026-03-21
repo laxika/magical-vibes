@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
@@ -590,7 +591,9 @@ public class GameBroadcastService {
 
         for (Card card : exiledCards) {
             UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
-            if (permittedPlayer == null || !permittedPlayer.equals(playerId)) {
+            boolean hasPermission = permittedPlayer != null && permittedPlayer.equals(playerId);
+            boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+            if (!hasPermission && !hasExileCast) {
                 continue;
             }
 
