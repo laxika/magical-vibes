@@ -78,7 +78,7 @@ class SyncopateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Spell should be exiled, NOT in graveyard
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Llanowar Elves"));
@@ -112,7 +112,7 @@ class SyncopateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Spell should be exiled, NOT in graveyard
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Llanowar Elves"));
@@ -144,7 +144,7 @@ class SyncopateTest extends BaseCardTest {
         // Elves should not be countered
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Resolve the elves spell
@@ -207,7 +207,7 @@ class SyncopateTest extends BaseCardTest {
         // Player1 declines to pay {0} (silly but valid)
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
     }
 

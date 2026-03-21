@@ -58,7 +58,7 @@ class SettleTheScoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
-        assertThat(gd.playerExiledCards.getOrDefault(player2.getId(), List.of())).isNotEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isNotEmpty();
     }
 
     // ===== Loyalty counters on planeswalker =====
@@ -95,7 +95,7 @@ class SettleTheScoreTest extends BaseCardTest {
 
         // Creature still exiled even with no planeswalker
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
-        assertThat(gd.playerExiledCards.getOrDefault(player2.getId(), List.of())).isNotEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isNotEmpty();
     }
 
     @Test

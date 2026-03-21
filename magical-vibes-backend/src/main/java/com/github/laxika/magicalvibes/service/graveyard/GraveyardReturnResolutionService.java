@@ -955,8 +955,9 @@ public class GraveyardReturnResolutionService {
             if (graveyard.isEmpty()) continue;
 
             int count = graveyard.size();
-            List<Card> exiledCards = gameData.playerExiledCards.get(playerId);
-            exiledCards.addAll(graveyard);
+            for (Card card : graveyard) {
+                gameData.addToExile(playerId, card);
+            }
             graveyard.clear();
 
             String playerName = gameData.playerIdToName.get(playerId);

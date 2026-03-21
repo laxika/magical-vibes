@@ -319,7 +319,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Opponent's bears should be exiled
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 

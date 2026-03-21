@@ -307,7 +307,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
         // Opponent's graveyard should be exiled
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         // Opponent's cards should be in exile
-        assertThat(gd.playerExiledCards.get(player2.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
 
         // Controller's graveyard should contain original card + sacrificed Saga
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()

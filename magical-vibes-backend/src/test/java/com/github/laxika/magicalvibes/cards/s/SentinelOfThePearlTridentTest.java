@@ -76,7 +76,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         // Ornithopter should be exiled
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ornithopter"));
     }
 
@@ -99,7 +99,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Kemba, Kha Regent"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kemba, Kha Regent"));
     }
 
@@ -165,7 +165,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         // Ornithopter should be back on battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
-        assertThat(gd.playerExiledCards.get(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Ornithopter"));
     }
 

@@ -166,7 +166,7 @@ class SqueeTheImmortalTest extends BaseCardTest {
 
         harness.castFromExile(player1, squee.getId());
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     @Test

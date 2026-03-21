@@ -61,7 +61,7 @@ class SealAwayTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Goblin Piker"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Goblin Piker"));
     }
 
@@ -114,7 +114,7 @@ class SealAwayTest extends BaseCardTest {
         Permanent creature = addTappedOpponentCreature();
         castAndResolve(creature.getId());
 
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Goblin Piker"));
 
         resetForFollowUpSpell();
@@ -134,7 +134,7 @@ class SealAwayTest extends BaseCardTest {
         // Exiled creature returns to battlefield under owner's control
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
 
@@ -161,7 +161,7 @@ class SealAwayTest extends BaseCardTest {
         // Exiled creature returns to battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Goblin Piker"));
-        assertThat(gd.playerExiledCards.get(player2.getId()))
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Goblin Piker"));
     }
 
