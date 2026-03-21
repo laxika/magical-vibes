@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -34,11 +35,16 @@ public class ValidTargetService {
     private final GameQueryService gameQueryService;
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds) {
+        return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, null);
+    }
+
+    public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue) {
         boolean isMultiTarget = card.getMaxTargets() > 1;
         Set<TargetType> allowedTargets = card.getAllowedTargets();
 
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
+        List<UUID> validGraveyardCardIds = new ArrayList<>();
         Set<UUID> excludeIds = alreadySelectedIds != null ? Set.copyOf(alreadySelectedIds) : Set.of();
 
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
@@ -72,12 +78,16 @@ public class ValidTargetService {
             }
         }
 
+        if (allowedTargets.contains(TargetType.GRAVEYARD)) {
+            validGraveyardCardIds.addAll(computeValidGraveyardTargets(gameData, card, controllerId, xValue));
+        }
+
         String prompt = "Select a target for " + card.getName();
         if (isMultiTarget) {
             prompt = "Select targets for " + card.getName();
         }
 
-        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, card.getMinTargets(), card.getMaxTargets(), prompt);
+        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, card.getMinTargets(), card.getMaxTargets(), prompt);
     }
 
     public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex) {
@@ -336,6 +346,56 @@ public class ValidTargetService {
         }
 
         return false;
+    }
+
+    /**
+     * Computes valid graveyard card targets for a spell. Handles scope filtering (controller's
+     * graveyard, opponent's, or all), card predicate filtering, and X-value mana value matching.
+     */
+    private List<UUID> computeValidGraveyardTargets(GameData gameData, Card card, UUID controllerId, Integer xValue) {
+        int effectiveXValue = xValue != null ? xValue : 0;
+        List<UUID> validIds = new ArrayList<>();
+
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (!effect.canTargetGraveyard()) continue;
+
+            if (effect instanceof ReturnCardFromGraveyardEffect rge) {
+                List<UUID> searchPlayerIds = switch (rge.source()) {
+                    case CONTROLLERS_GRAVEYARD -> List.of(controllerId);
+                    case OPPONENT_GRAVEYARD -> gameData.orderedPlayerIds.stream()
+                            .filter(id -> !id.equals(controllerId)).toList();
+                    case ALL_GRAVEYARDS -> gameData.orderedPlayerIds;
+                };
+
+                for (UUID playerId : searchPlayerIds) {
+                    for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (rge.filter() != null && !gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId())) {
+                            continue;
+                        }
+                        if (rge.requiresManaValueEqualsX() && c.getManaValue() != effectiveXValue) {
+                            continue;
+                        }
+                        validIds.add(c.getId());
+                    }
+                }
+            } else {
+                // Generic graveyard-targeting effects (e.g. PutCreatureFromOpponentGraveyard)
+                boolean anyGraveyard = effect.canTargetAnyGraveyard();
+                List<UUID> searchPlayerIds = anyGraveyard
+                        ? gameData.orderedPlayerIds
+                        : gameData.orderedPlayerIds.stream().filter(id -> !id.equals(controllerId)).toList();
+
+                for (UUID playerId : searchPlayerIds) {
+                    for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        validIds.add(c.getId());
+                    }
+                }
+            }
+
+            if (!validIds.isEmpty()) break;
+        }
+
+        return validIds;
     }
 
     /**

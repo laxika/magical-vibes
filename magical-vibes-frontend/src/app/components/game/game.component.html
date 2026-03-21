@@ -758,6 +758,24 @@
     </div>
   }
 
+  @if (choice.targeting.targetingGraveyard) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>{{ choice.targeting.graveyardTargetPrompt }}</h2>
+        <div class="reveal-hand-cards">
+          @for (card of choice.targeting.graveyardTargetCards; track $index) {
+            <app-card-display [card]="card"
+              class="choosable-card"
+              (click)="choice.targeting.selectGraveyardTarget(choice.targeting.graveyardTargetCardIds[$index])"
+              (mouseenter)="onCardHover(card)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+        <button class="btn-cancel-combat" (click)="choice.targeting.cancelGraveyardTargeting()">Cancel</button>
+      </div>
+    </div>
+  }
+
   @if (choice.revealingHand) {
     <div class="reveal-hand-overlay">
       <div class="reveal-hand-card">

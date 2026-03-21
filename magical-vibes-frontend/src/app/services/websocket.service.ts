@@ -571,6 +571,7 @@ export interface ValidTargetsResponse {
   type: MessageType;
   validPermanentIds: string[];
   validPlayerIds: string[];
+  validGraveyardCardIds: string[];
   minTargets: number;
   maxTargets: number;
   prompt: string;

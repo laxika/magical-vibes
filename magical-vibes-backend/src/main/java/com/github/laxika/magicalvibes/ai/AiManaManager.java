@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
@@ -211,6 +212,21 @@ class AiManaManager {
         int maxX = calculateMaxAffordableX(card, virtualPool);
         if (maxX <= 0) {
             return 0;
+        }
+
+        // For requiresManaValueEqualsX spells (e.g. Postmortem Lunge), X must match the
+        // graveyard target's mana value — pick X = target's mana value if affordable.
+        if (targetId != null) {
+            for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+                if (effect instanceof ReturnCardFromGraveyardEffect rge && rge.requiresManaValueEqualsX()) {
+                    Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
+                    if (graveyardCard != null) {
+                        int manaValue = graveyardCard.getManaValue();
+                        return manaValue >= 1 && manaValue <= maxX ? manaValue : 0;
+                    }
+                    break;
+                }
+            }
         }
 
         if (targetId != null) {

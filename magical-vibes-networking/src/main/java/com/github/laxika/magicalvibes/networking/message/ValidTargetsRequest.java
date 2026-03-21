@@ -7,6 +7,7 @@ public record ValidTargetsRequest(
         Integer cardIndex,
         Integer permanentIndex,
         Integer abilityIndex,
-        List<UUID> alreadySelectedIds
+        List<UUID> alreadySelectedIds,
+        Integer xValue
 ) {
 }

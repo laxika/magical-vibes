@@ -915,7 +915,8 @@ public class GameMessageHandler implements MessageHandler {
                     com.github.laxika.magicalvibes.model.Card card = hand.get(request.cardIndex());
                     response = validTargetService.computeValidTargetsForSpell(
                             gameData, card, player.getId(),
-                            request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of());
+                            request.alreadySelectedIds() != null ? request.alreadySelectedIds() : java.util.List.of(),
+                            request.xValue());
                 } else if (request.permanentIndex() != null && request.abilityIndex() != null) {
                     // Activated ability
                     java.util.List<com.github.laxika.magicalvibes.model.Permanent> battlefield = gameData.playerBattlefields.get(player.getId());

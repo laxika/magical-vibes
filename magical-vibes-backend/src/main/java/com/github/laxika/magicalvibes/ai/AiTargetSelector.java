@@ -183,6 +183,17 @@ class AiTargetSelector {
      * Examines the card's SPELL effects to determine the correct graveyard scope and filter.
      */
     List<Card> findValidGraveyardTargets(GameData gameData, Card card, UUID aiPlayerId) {
+        return findValidGraveyardTargets(gameData, card, aiPlayerId, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Returns all valid graveyard cards that the given spell can target,
+     * filtering by mana value for requiresManaValueEqualsX effects.
+     *
+     * @param maxAffordableX the maximum affordable X value — candidates with mana value
+     *                       exceeding this are excluded for requiresManaValueEqualsX effects
+     */
+    List<Card> findValidGraveyardTargets(GameData gameData, Card card, UUID aiPlayerId, int maxAffordableX) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (!effect.canTargetGraveyard()) continue;
@@ -193,6 +204,11 @@ class AiTargetSelector {
                 if (rge.filter() != null) {
                     candidates = candidates.stream()
                             .filter(c -> gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId()))
+                            .toList();
+                }
+                if (rge.requiresManaValueEqualsX() && maxAffordableX < Integer.MAX_VALUE) {
+                    candidates = candidates.stream()
+                            .filter(c -> c.getManaValue() >= 1 && c.getManaValue() <= maxAffordableX)
                             .toList();
                 }
             } else {

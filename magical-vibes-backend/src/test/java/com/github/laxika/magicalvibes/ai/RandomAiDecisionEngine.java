@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -186,8 +187,21 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 if (maxX <= 0) {
                     continue;
                 }
-                // Pick a random X between 1 and maxX
-                xValue = rng.nextInt(maxX) + 1;
+                // For requiresManaValueEqualsX spells (e.g. Postmortem Lunge), X must match the
+                // graveyard target's mana value — re-pick an affordable target and set X accordingly.
+                if (hasRequiresManaValueEqualsX(card)) {
+                    List<Card> validTargets = targetSelector.findValidGraveyardTargets(
+                            gameData, card, aiPlayer.getId(), maxX);
+                    if (validTargets.isEmpty()) {
+                        continue;
+                    }
+                    Card chosen = validTargets.get(rng.nextInt(validTargets.size()));
+                    targetId = chosen.getId();
+                    xValue = chosen.getManaValue();
+                } else {
+                    // Pick a random X between 1 and maxX
+                    xValue = rng.nextInt(maxX) + 1;
+                }
                 manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, xValue, costModifier, tapPermanentAction());
             } else {
                 manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
@@ -241,6 +255,15 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return null;
         }
         return validIndices.get(rng.nextInt(validIndices.size()));
+    }
+
+    /**
+     * Returns true if the card has a ReturnCardFromGraveyardEffect with requiresManaValueEqualsX,
+     * meaning X must match the graveyard target's mana value (e.g. Postmortem Lunge).
+     */
+    private boolean hasRequiresManaValueEqualsX(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(e -> e instanceof ReturnCardFromGraveyardEffect rge && rge.requiresManaValueEqualsX());
     }
 
     // ===== Random Sacrifice Target Selection =====

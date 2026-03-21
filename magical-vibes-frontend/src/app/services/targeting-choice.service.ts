@@ -90,6 +90,11 @@ export class TargetingChoiceService {
     this.alternateCostSacrificeCount = 0;
     this.alternateCostLifePayment = 0;
     this.alternateCostSelectedIds.set([]);
+    // Graveyard targeting
+    this.targetingGraveyard = false;
+    this.graveyardTargetCards = [];
+    this.graveyardTargetCardIds = [];
+    this.graveyardTargetPrompt = '';
   }
 
   private get hasPriority(): boolean {
@@ -169,14 +174,46 @@ export class TargetingChoiceService {
   alternateCostLifePayment = 0;
   alternateCostSelectedIds = signal<string[]>([]);
 
+  // --- Graveyard targeting state ---
+  targetingGraveyard = false;
+  graveyardTargetCards: Card[] = [];
+  graveyardTargetCardIds: string[] = [];
+  graveyardTargetPrompt = '';
+
   // ========== Message handlers ==========
 
   handleValidTargetsResponse(msg: ValidTargetsResponse): void {
     this.pendingTargetRequest = false;
 
+    const hasGraveyardTargets = msg.validGraveyardCardIds && msg.validGraveyardCardIds.length > 0;
+
     // No valid targets — auto-cancel to prevent stuck UI
-    if (msg.validPermanentIds.length === 0 && msg.validPlayerIds.length === 0 && msg.minTargets > 0) {
+    if (msg.validPermanentIds.length === 0 && msg.validPlayerIds.length === 0
+        && !hasGraveyardTargets && msg.minTargets > 0) {
       this.resetTargetingState();
+      return;
+    }
+
+    // Graveyard targeting: show graveyard cards as targets in an overlay
+    if (hasGraveyardTargets) {
+      const g = this.gameSignal();
+      if (g) {
+        const validIds = new Set(msg.validGraveyardCardIds);
+        const cards: Card[] = [];
+        const cardIds: string[] = [];
+        for (const graveyard of g.graveyards) {
+          for (const card of graveyard) {
+            if (card.id && validIds.has(card.id)) {
+              cards.push(card);
+              cardIds.push(card.id);
+            }
+          }
+        }
+        this.targetingGraveyard = true;
+        this.graveyardTargetCards = cards;
+        this.graveyardTargetCardIds = cardIds;
+        this.graveyardTargetPrompt = msg.prompt;
+      }
       return;
     }
 
@@ -200,15 +237,19 @@ export class TargetingChoiceService {
 
   // ========== Play card / targeting / abilities ==========
 
-  private sendValidTargetsRequest(cardIndex: number | null, permanentIndex: number | null, abilityIndex: number | null, alreadySelectedIds: string[] = []): void {
+  private sendValidTargetsRequest(cardIndex: number | null, permanentIndex: number | null, abilityIndex: number | null, alreadySelectedIds: string[] = [], xValue: number | null = null): void {
     this.pendingTargetRequest = true;
-    this.websocketService.send({
+    const msg: any = {
       type: MessageType.VALID_TARGETS_REQUEST,
       cardIndex,
       permanentIndex,
       abilityIndex,
       alreadySelectedIds
-    });
+    };
+    if (xValue != null) {
+      msg.xValue = xValue;
+    }
+    this.websocketService.send(msg);
   }
 
   playCard(index: number, isCardPlayable: (i: number) => boolean): void {
@@ -438,7 +479,7 @@ export class TargetingChoiceService {
         this.pendingConvokeCard = null;
         this.xValueCardIndex = -1;
         this.xValueCardName = '';
-        this.sendValidTargetsRequest(savedCardIndex, null, null);
+        this.sendValidTargetsRequest(savedCardIndex, null, null, [], savedXValue);
         return;
       }
       this.sendPlayCardMessage(this.xValueCardIndex, null, { xValue: this.xValueInput });
@@ -512,6 +553,29 @@ export class TargetingChoiceService {
       }
       this.sendPlayCardMessage(this.targetingCardIndex, playerId, extra);
     }
+    this.resetTargetingState();
+  }
+
+  selectGraveyardTarget(cardId: string): void {
+    if (!this.targetingGraveyard) return;
+    if (!this.graveyardTargetCardIds.includes(cardId)) return;
+    const extra: Record<string, any> = {};
+    if (this.pendingAbilityXValue != null) {
+      extra['xValue'] = this.pendingAbilityXValue;
+    }
+    this.sendPlayCardMessage(this.targetingCardIndex, cardId, extra);
+    this.targetingGraveyard = false;
+    this.graveyardTargetCards = [];
+    this.graveyardTargetCardIds = [];
+    this.graveyardTargetPrompt = '';
+    this.resetTargetingState();
+  }
+
+  cancelGraveyardTargeting(): void {
+    this.targetingGraveyard = false;
+    this.graveyardTargetCards = [];
+    this.graveyardTargetCardIds = [];
+    this.graveyardTargetPrompt = '';
     this.resetTargetingState();
   }
 
