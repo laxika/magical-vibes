@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -40,6 +41,15 @@ final class CombatHelper {
             }
         }
         return false;
+    }
+
+    static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,
+                                                     GameData gameData, Permanent attacker) {
+        boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance);
+        if (!hasEffect) return false;
+        UUID controllerId = findControllerOf(gameData, attacker);
+        return controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);
     }
 
     static UUID findControllerOf(GameData gameData, Permanent permanent) {

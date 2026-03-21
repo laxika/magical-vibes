@@ -691,7 +691,7 @@ public class ExileResolutionService {
                 spellEffects, 0, (UUID) null, null
         ));
 
-        gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
+        gameData.recordSpellCast(playerId, chosenCard);
         gameData.priorityPassedBy.clear();
 
         String logEntry = playerName + " casts " + chosenCard.getName() + " without paying its mana cost (Knowledge Pool).";
@@ -791,7 +791,7 @@ public class ExileResolutionService {
                         spellEffects, 0, (UUID) null, null
                 ));
 
-                gameData.spellsCastThisTurn.merge(targetPlayerId, 1, Integer::sum);
+                gameData.recordSpellCast(targetPlayerId, topCard);
                 gameData.priorityPassedBy.clear();
 
                 String castLog = playerName + " casts " + topCard.getName() + " without paying its mana cost.";

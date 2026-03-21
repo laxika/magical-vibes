@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquipp
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -197,6 +198,14 @@ public class GameQueryService {
 
     private boolean hasCardType(Card card, CardType type) {
         return card.hasType(type);
+    }
+
+    /**
+     * Returns true if the given player cast at least one historic spell (artifact, legendary, or Saga) this turn.
+     */
+    public boolean playerCastHistoricSpellThisTurn(GameData gameData, UUID playerId) {
+        return gameData.getSpellsCastThisTurn(playerId).stream()
+                .anyMatch(card -> matchesCardPredicate(card, new CardIsHistoricPredicate(), card.getId()));
     }
 
     private boolean hasCardType(Permanent permanent, CardType type) {
@@ -1544,6 +1553,12 @@ public class GameQueryService {
                 boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
                         .anyMatch(p -> matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (defenderMatches) {
+                    return Optional.of(attacker.getCard().getName() + " can't be blocked");
+                }
+            }
+            if (effect instanceof CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect) {
+                UUID controllerId = findPermanentController(gameData, attacker.getId());
+                if (controllerId != null && playerCastHistoricSpellThisTurn(gameData, controllerId)) {
                     return Optional.of(attacker.getCard().getName() + " can't be blocked");
                 }
             }

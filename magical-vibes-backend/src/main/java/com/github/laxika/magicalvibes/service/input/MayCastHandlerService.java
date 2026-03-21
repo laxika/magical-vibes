@@ -113,7 +113,7 @@ public class MayCastHandlerService {
                             spellEffects, 0, (UUID) null, null
                     ));
 
-                    gameData.spellsCastThisTurn.merge(player.getId(), 1, Integer::sum);
+                    gameData.recordSpellCast(player.getId(), cardToCast);
                     gameData.priorityPassedBy.clear();
 
                     String logEntry = playerName + " casts " + cardToCast.getName() + " without paying its mana cost.";
@@ -239,7 +239,7 @@ public class MayCastHandlerService {
                         spellEffects, 0, (UUID) null, null
                 ));
 
-                gameData.spellsCastThisTurn.merge(player.getId(), 1, Integer::sum);
+                gameData.recordSpellCast(player.getId(), cardToPlay);
                 gameData.priorityPassedBy.clear();
 
                 String logEntry = playerName + " casts " + cardToPlay.getName() + " without paying its mana cost.";
@@ -341,7 +341,7 @@ public class MayCastHandlerService {
                                 spellEffects, 0, (UUID) null, null
                         ));
 
-                        gameData.spellsCastThisTurn.merge(player.getId(), 1, Integer::sum);
+                        gameData.recordSpellCast(player.getId(), cardToCast);
                         gameData.priorityPassedBy.clear();
 
                         String logEntry = playerName + " casts " + cardToCast.getName() + castLabel + ".";

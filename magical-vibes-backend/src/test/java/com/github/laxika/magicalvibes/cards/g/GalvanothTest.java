@@ -227,14 +227,12 @@ class GalvanothTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Galvanoth());
         Card pyroclasm = new Pyroclasm();
         gd.playerDecks.get(player1.getId()).addFirst(pyroclasm);
-        gd.spellsCastThisTurn.put(player1.getId(), 0);
-
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack
         harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → second may prompt
         harness.handleMayAbilityChosen(player1, true); // cast Pyroclasm
 
-        assertThat(gd.spellsCastThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
     }
 
     // ===== Only triggers on controller's upkeep =====

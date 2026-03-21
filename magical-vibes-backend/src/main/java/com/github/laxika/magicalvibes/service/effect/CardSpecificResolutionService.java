@@ -978,7 +978,6 @@ public class CardSpecificResolutionService {
             gameData.playerPoisonCounters.put(playerId, 0);
             gameData.playerManaPools.put(playerId, new ManaPool());
             gameData.landsPlayedThisTurn.put(playerId, 0);
-            gameData.spellsCastThisTurn.put(playerId, 0);
             gameData.cardsDrawnThisTurn.put(playerId, 0);
             gameData.playerDamagePreventionShields.put(playerId, 0);
             gameData.permanentsEnteredBattlefieldThisTurn.put(playerId, Collections.synchronizedList(new ArrayList<>()));

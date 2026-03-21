@@ -278,7 +278,7 @@ public class GraveyardChoiceHandlerService {
             }
             gameData.stack.add(spellEntry);
 
-            gameData.spellsCastThisTurn.merge(controllerId, 1, Integer::sum);
+            gameData.recordSpellCast(controllerId, pendingCard);
             gameData.priorityPassedBy.clear();
 
             String castLog = gameData.playerIdToName.get(controllerId) + " casts " + pendingCard.getName()

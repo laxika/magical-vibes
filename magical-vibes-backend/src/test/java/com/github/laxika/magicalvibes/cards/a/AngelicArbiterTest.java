@@ -48,7 +48,7 @@ class AngelicArbiterTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(creature);
 
         // Player1 casts a spell this turn
-        gd.spellsCastThisTurn.put(player1.getId(), 1);
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
 
         // Try to attack
         harness.forceActivePlayer(player1);
@@ -145,7 +145,7 @@ class AngelicArbiterTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(creature);
 
         // Player1 cast a spell this turn
-        gd.spellsCastThisTurn.put(player1.getId(), 1);
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

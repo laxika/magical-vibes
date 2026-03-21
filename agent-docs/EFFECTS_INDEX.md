@@ -792,6 +792,7 @@ Pass `null` as filter to allow any card.
 | `CreaturesCantAttackUnlessPredicateEffect` | `(PermanentPredicate exemptionPredicate)` | global static: ALL creatures can't attack unless they match the exemption predicate (e.g. flying or islandwalk) |
 | `CantAttackUnlessOpponentDealtDamageThisTurnEffect` | `()` | can't attack unless an opponent has been dealt damage this turn from any source (static) |
 | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate)` | can't be blocked as long as defender controls matching permanent (static) |
+| `CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect` | `()` | can't be blocked as long as controller cast a historic spell (artifact, legendary, or Saga) this turn (static) |
 | `CanAttackAsThoughNoDefenderEffect` | `()` | this creature can attack as though it didn't have defender (static, typically wrapped in MetalcraftConditionalEffect) |
 | `MustAttackEffect` | `()` | this creature must attack each turn if able (static) |
 | `MustAttackThisTurnEffect` | `(boolean forceAttackController)` | target creature must attack this turn if able (one-shot, sets transient flag, cleared at end of turn). If forceAttackController=true, also sets mustAttackTargetId to ability controller (e.g. Alluring Siren "attacks you"). If false, creature may attack any legal target (e.g. Incite "attacks this turn if able"). |

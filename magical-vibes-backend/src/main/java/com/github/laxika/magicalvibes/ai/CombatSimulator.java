@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -639,6 +640,7 @@ public class CombatSimulator {
 
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
                 || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield)
+                || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
                 || hasLandwalkAgainstDefender(gameData, perm, defenderBattlefield);
 
         return new CreatureInfo(
@@ -676,6 +678,13 @@ public class CombatSimulator {
             }
         }
         return false;
+    }
+
+    private boolean isCantBeBlockedDueToHistoricCast(GameData gameData, Permanent attacker, UUID controllerId) {
+        return attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance)
+                && controllerId != null
+                && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);
     }
 
     private boolean isCantBeBlockedDueToDefenderCondition(GameData gameData, Permanent attacker,

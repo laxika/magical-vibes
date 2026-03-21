@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -538,7 +539,9 @@ class TurnProgressionServiceTest {
         @DisplayName("Clears per-turn tracking maps")
         void clearsPerTurnTracking() {
             gd.landsPlayedThisTurn.put(player1Id, 1);
-            gd.spellsCastThisTurn.put(player1Id, 3);
+            gd.recordSpellCast(player1Id, new GrizzlyBears());
+            gd.recordSpellCast(player1Id, new GrizzlyBears());
+            gd.recordSpellCast(player1Id, new GrizzlyBears());
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
             gd.playersSilencedThisTurn.add(player1Id);
             gd.activatedAbilityUsesThisTurn.put(player1Id, new HashMap<>());
@@ -554,7 +557,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceTurn(gd);
 
             assertThat(gd.landsPlayedThisTurn).isEmpty();
-            assertThat(gd.spellsCastThisTurn).isEmpty();
+            assertThat(gd.isSpellsCastThisTurnEmpty()).isTrue();
             assertThat(gd.playersDeclaredAttackersThisTurn).isEmpty();
             assertThat(gd.playersSilencedThisTurn).isEmpty();
             assertThat(gd.activatedAbilityUsesThisTurn).isEmpty();
@@ -571,15 +574,16 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Snapshots spellsCastThisTurn into spellsCastLastTurn before clearing")
         void snapshotsSpellsCastLastTurn() {
-            gd.spellsCastThisTurn.put(player1Id, 2);
-            gd.spellsCastThisTurn.put(player2Id, 1);
+            gd.recordSpellCast(player1Id, new GrizzlyBears());
+            gd.recordSpellCast(player1Id, new GrizzlyBears());
+            gd.recordSpellCast(player2Id, new GrizzlyBears());
             gd.spellsCastLastTurn.put(player1Id, 99); // old data should be replaced
 
             turnProgressionService.advanceTurn(gd);
 
             assertThat(gd.spellsCastLastTurn).containsEntry(player1Id, 2);
             assertThat(gd.spellsCastLastTurn).containsEntry(player2Id, 1);
-            assertThat(gd.spellsCastThisTurn).isEmpty();
+            assertThat(gd.isSpellsCastThisTurnEmpty()).isTrue();
         }
 
         @Test

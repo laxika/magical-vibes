@@ -83,7 +83,7 @@ public class PermanentChoiceSpellHandlerService {
             );
             gameData.stack.add(entry);
 
-            gameData.spellsCastThisTurn.merge(lct.controllerId(), 1, Integer::sum);
+            gameData.recordSpellCast(lct.controllerId(), lct.cardToCast());
             gameData.priorityPassedBy.clear();
 
             String targetName = isPlayerTarget
@@ -129,7 +129,7 @@ public class PermanentChoiceSpellHandlerService {
             );
             gameData.stack.add(entry);
 
-            gameData.spellsCastThisTurn.merge(ect.controllerId(), 1, Integer::sum);
+            gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
             gameData.priorityPassedBy.clear();
 
             String targetName = isPlayerTarget
@@ -170,7 +170,7 @@ public class PermanentChoiceSpellHandlerService {
             );
             gameData.stack.add(entry);
 
-            gameData.spellsCastThisTurn.merge(gct.controllerId(), 1, Integer::sum);
+            gameData.recordSpellCast(gct.controllerId(), gct.cardToCast());
             gameData.priorityPassedBy.clear();
 
             String targetName = isPlayerTarget
@@ -216,7 +216,7 @@ public class PermanentChoiceSpellHandlerService {
             );
             gameData.stack.add(entry);
 
-            gameData.spellsCastThisTurn.merge(hct.controllerId(), 1, Integer::sum);
+            gameData.recordSpellCast(hct.controllerId(), hct.cardToCast());
             gameData.priorityPassedBy.clear();
 
             String targetName = isPlayerTarget

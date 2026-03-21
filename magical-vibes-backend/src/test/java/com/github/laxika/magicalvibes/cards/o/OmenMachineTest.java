@@ -254,15 +254,13 @@ class OmenMachineTest extends BaseCardTest {
     @DisplayName("Casting from Omen Machine counts as spell cast")
     void castCountsAsSpellCast() {
         harness.addToBattlefield(player1, new OmenMachine());
-        gd.spellsCastThisTurn.put(player1.getId(), 0);
-
         Card pyroclasm = new Pyroclasm();
         gd.playerDecks.get(player1.getId()).addFirst(pyroclasm);
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve trigger — Pyroclasm goes on stack
 
-        assertThat(gd.spellsCastThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
     }
 
     // ===== Card does not go to hand =====

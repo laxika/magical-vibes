@@ -556,7 +556,7 @@ public class CombatAttackService {
      * "Each opponent who cast a spell this turn can't attack with creatures").
      */
     private boolean isPlayerPreventedFromAttacking(GameData gameData, UUID playerId) {
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         if (spellsCast == 0) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {

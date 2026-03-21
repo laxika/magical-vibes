@@ -1189,7 +1189,7 @@ public class SpellCastingService {
         ));
 
         // Use null hand list — card was already removed from exile
-        gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
+        gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
         String logEntry = player.getUsername() + " casts " + card.getName() + " from exile.";
@@ -1406,7 +1406,7 @@ public class SpellCastingService {
     }
 
     public void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card, boolean castFromHand) {
-        gameData.spellsCastThisTurn.merge(playerId, 1, Integer::sum);
+        gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
         String logEntry = player.getUsername() + " casts " + card.getName() + ".";

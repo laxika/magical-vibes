@@ -1269,7 +1269,7 @@ class ExileResolutionServiceTest {
             assertThat(gd.playerExiledCards.get(player1Id)).doesNotContain(chosenCard);
             // Spell on stack
             assertThat(gd.stack).anyMatch(se -> se.getCard() == chosenCard);
-            assertThat(gd.spellsCastThisTurn.get(player1Id)).isEqualTo(1);
+            assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
             verify(triggerCollectionService).checkSpellCastTriggers(gd, chosenCard, player1Id, false);
             verify(gameBroadcastService).broadcastGameState(gd);
         }
@@ -1376,7 +1376,7 @@ class ExileResolutionServiceTest {
             exileResolutionService.resolveOmenMachineDrawStep(gd, entry);
 
             assertThat(gd.stack).anyMatch(se -> se.getCard() == sorceryCard);
-            assertThat(gd.spellsCastThisTurn.get(player1Id)).isEqualTo(1);
+            assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
             verify(triggerCollectionService).checkSpellCastTriggers(gd, sorceryCard, player1Id, false);
         }
 

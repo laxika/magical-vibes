@@ -325,11 +325,11 @@ class SpellCastingServiceTest {
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.GREEN, 2);
             when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
-            int beforeCount = gd.spellsCastThisTurn.getOrDefault(player1Id, 0);
+            int beforeCount = gd.getSpellsCastThisTurnCount(player1Id);
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
-            assertThat(gd.spellsCastThisTurn.get(player1Id)).isEqualTo(beforeCount + 1);
+            assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(beforeCount + 1);
         }
     }
 
@@ -677,13 +677,13 @@ class SpellCastingServiceTest {
         @Test
         @DisplayName("Increments spellsCastThisTurn counter")
         void incrementsSpellCount() {
-            int before = gd.spellsCastThisTurn.getOrDefault(player1Id, 0);
+            int before = gd.getSpellsCastThisTurnCount(player1Id);
             Card dummy = createCreature("Dummy", "{G}");
 
             svc.finishSpellCast(gd, player1Id, player1,
                     gd.playerHands.get(player1Id), dummy);
 
-            assertThat(gd.spellsCastThisTurn.get(player1Id)).isEqualTo(before + 1);
+            assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(before + 1);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
             verify(gameBroadcastService).broadcastGameState(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), anyBoolean());
@@ -805,11 +805,11 @@ class SpellCastingServiceTest {
             gd.playerExiledCards.put(player1Id, new java.util.ArrayList<>(List.of(creature)));
             gd.exilePlayPermissions.put(creature.getId(), player1Id);
             addMana(player1Id, ManaColor.GREEN, 1);
-            int before = gd.spellsCastThisTurn.getOrDefault(player1Id, 0);
+            int before = gd.getSpellsCastThisTurnCount(player1Id);
 
             svc.playCardFromExile(gd, player1, creature.getId(), 0, null);
 
-            assertThat(gd.spellsCastThisTurn.get(player1Id)).isEqualTo(before + 1);
+            assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(before + 1);
         }
     }
 }

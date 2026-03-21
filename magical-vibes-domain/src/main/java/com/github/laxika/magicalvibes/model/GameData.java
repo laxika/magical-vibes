@@ -48,8 +48,9 @@ public class GameData {
     public final Set<UUID> priorityPassedBy = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
-    public final Map<UUID, Integer> spellsCastThisTurn = new ConcurrentHashMap<>();
-    /** Snapshot of spellsCastThisTurn from the previous turn. Used by werewolf transform triggers. */
+    /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
+    private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
@@ -306,6 +307,43 @@ public class GameData {
     }
 
     /**
+     * Records a spell cast by the given player this turn.
+     */
+    public void recordSpellCast(UUID playerId, Card card) {
+        spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
+    }
+
+    /**
+     * Returns the number of spells the given player has cast this turn.
+     */
+    public int getSpellsCastThisTurnCount(UUID playerId) {
+        return spellsCastThisTurn.getOrDefault(playerId, List.of()).size();
+    }
+
+    /**
+     * Returns an unmodifiable view of the spells the given player has cast this turn.
+     */
+    public List<Card> getSpellsCastThisTurn(UUID playerId) {
+        return Collections.unmodifiableList(spellsCastThisTurn.getOrDefault(playerId, List.of()));
+    }
+
+    /**
+     * Returns true if no spells have been cast by any player this turn.
+     */
+    public boolean isSpellsCastThisTurnEmpty() {
+        return spellsCastThisTurn.isEmpty();
+    }
+
+    /**
+     * Snapshots per-player spell counts into the given target map, then clears spell tracking for the new turn.
+     */
+    public void snapshotSpellCountsAndClear(Map<UUID, Integer> target) {
+        target.clear();
+        spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
+        spellsCastThisTurn.clear();
+    }
+
+    /**
      * Returns the current life total for the given player, defaulting to 20 if not yet set.
      */
     public int getLife(UUID playerId) {
@@ -503,7 +541,8 @@ public class GameData {
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
-        copy.spellsCastThisTurn.putAll(this.spellsCastThisTurn);
+        this.spellsCastThisTurn.forEach((k, v) ->
+                copy.spellsCastThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playerLifeTotals.putAll(this.playerLifeTotals);

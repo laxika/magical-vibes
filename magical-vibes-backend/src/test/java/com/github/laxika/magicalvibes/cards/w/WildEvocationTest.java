@@ -235,11 +235,9 @@ class WildEvocationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WildEvocation());
         Card bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
-        gd.spellsCastThisTurn.put(player1.getId(), 0);
-
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.spellsCastThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
     }
 }

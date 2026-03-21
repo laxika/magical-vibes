@@ -1431,7 +1431,7 @@ public class PlayerInteractionResolutionService {
                         spellEffects, 0, (UUID) null, null
                 ));
 
-                gameData.spellsCastThisTurn.merge(targetPlayerId, 1, Integer::sum);
+                gameData.recordSpellCast(targetPlayerId, revealed);
                 gameData.priorityPassedBy.clear();
 
                 String castLog = playerName + " casts " + revealed.getName() + " without paying its mana cost (" + sourceName + ").";

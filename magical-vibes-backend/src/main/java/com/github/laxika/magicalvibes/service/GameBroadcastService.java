@@ -310,7 +310,7 @@ public class GameBroadcastService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
@@ -490,7 +490,7 @@ public class GameBroadcastService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
@@ -573,7 +573,7 @@ public class GameBroadcastService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         int maxSpells = getMaxSpellsPerTurn(gameData);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttackExile = isPlayerPreventedFromCasting(gameData, playerId);
@@ -964,7 +964,7 @@ public class GameBroadcastService {
      * restrictions: spell limit, type restrictions, forbidden names, silence, etc.
      */
     public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         int maxSpells = getMaxSpellsPerTurn(gameData);
         if (spellsCast >= maxSpells) return false;
         if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
@@ -998,7 +998,7 @@ public class GameBroadcastService {
             }
         }
         if (taxAmount == 0) return 0;
-        int spellsCast = gameData.spellsCastThisTurn.getOrDefault(playerId, 0);
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         return taxAmount * spellsCast;
     }
 

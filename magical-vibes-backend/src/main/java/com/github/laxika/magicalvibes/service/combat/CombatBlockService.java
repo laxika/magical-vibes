@@ -115,6 +115,7 @@ public class CombatBlockService {
         attackerIndices = attackerIndices.stream()
                 .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, gameData, attackerBattlefield.get(idx), defenderBattlefield))
+                .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .toList();
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
