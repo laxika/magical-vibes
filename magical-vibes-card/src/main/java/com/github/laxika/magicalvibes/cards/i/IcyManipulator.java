@@ -13,6 +13,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "326")
+@CardRegistration(set = "DOM", collectorNumber = "219")
 public class IcyManipulator extends Card {
 
     public IcyManipulator() {
