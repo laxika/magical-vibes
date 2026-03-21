@@ -23,42 +23,43 @@ public record CreateCreatureTokenEffect(
         boolean tappedAndAttacking,
         boolean tapped,
         Map<EffectSlot, CardEffect> tokenEffects,
-        boolean exileAtEndOfCombat
+        boolean exileAtEndOfCombat,
+        boolean exileAtEndStep
 ) implements CardEffect {
 
     /** Single-color token (existing pattern) */
     public CreateCreatureTokenEffect(String tokenName, int power, int toughness,
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, Set<CardType> additionalTypes) {
-        this(1, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), false);
+        this(1, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), false, false);
     }
 
     /** Single-color token with amount */
     public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, Set<CardType> additionalTypes) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), false);
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), false, false);
     }
 
     /** Multi-color token */
     public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
                                      CardColor color, Set<CardColor> colors,
                                      List<CardSubtype> subtypes) {
-        this(amount, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, false, Map.of(), false);
+        this(amount, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, false, Map.of(), false, false);
     }
 
     /** Multi-color token (single) */
     public CreateCreatureTokenEffect(String tokenName, int power, int toughness,
                                      CardColor color, Set<CardColor> colors,
                                      List<CardSubtype> subtypes) {
-        this(1, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, false, Map.of(), false);
+        this(1, tokenName, power, toughness, color, colors, subtypes, Set.of(), Set.of(), false, false, Map.of(), false, false);
     }
 
     /** Single-color token, tapped and attacking */
     public CreateCreatureTokenEffect(int amount, String tokenName, int power, int toughness,
                                      CardColor color, List<CardSubtype> subtypes,
                                      boolean tappedAndAttacking) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, Set.of(), Set.of(), tappedAndAttacking, false, Map.of(), false);
+        this(amount, tokenName, power, toughness, color, null, subtypes, Set.of(), Set.of(), tappedAndAttacking, false, Map.of(), false, false);
     }
 
     /** Single-color token with keywords, tapped and attacking, exile at end of combat */
@@ -66,7 +67,7 @@ public record CreateCreatureTokenEffect(
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, boolean tappedAndAttacking,
                                      boolean exileAtEndOfCombat) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, Set.of(), tappedAndAttacking, false, Map.of(), exileAtEndOfCombat);
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, Set.of(), tappedAndAttacking, false, Map.of(), exileAtEndOfCombat, false);
     }
 
     /** Single-color token with amount and token effects */
@@ -74,7 +75,7 @@ public record CreateCreatureTokenEffect(
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, Set<CardType> additionalTypes,
                                      Map<EffectSlot, CardEffect> tokenEffects) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, tokenEffects, false);
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, tokenEffects, false, false);
     }
 
     /** Single-color token, enters tapped (not attacking) */
@@ -82,6 +83,6 @@ public record CreateCreatureTokenEffect(
                                      CardColor color, List<CardSubtype> subtypes,
                                      Set<Keyword> keywords, Set<CardType> additionalTypes,
                                      boolean tapped) {
-        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, tapped, Map.of(), false);
+        this(amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, tapped, Map.of(), false, false);
     }
 }

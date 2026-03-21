@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureAnd
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenPerAttachmentOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
@@ -171,7 +172,7 @@ public class PermanentControlResolutionService {
         CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
                 creatureCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), null, effect.subtypes(), effect.keywords(), effect.additionalTypes(),
-                effect.tappedAndAttacking(), false, Map.of(), false
+                effect.tappedAndAttacking(), false, Map.of(), false, false
         );
         applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     }
@@ -400,6 +401,9 @@ public class PermanentControlResolutionService {
             if (token.exileAtEndOfCombat()) {
                 gameData.pendingTokenExilesAtEndOfCombat.add(tokenPermanent.getId());
             }
+            if (token.exileAtEndStep()) {
+                gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+            }
 
             String colorDesc;
             if (token.colors() != null && !token.colors().isEmpty()) {
@@ -511,6 +515,48 @@ public class PermanentControlResolutionService {
         CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
                 equipmentCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
+        );
+        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+    }
+
+    @HandlesEffect(CreateTokenPerAttachmentOnSourceEffect.class)
+    private void resolveCreateTokenPerAttachmentOnSource(GameData gameData, StackEntry entry, CreateTokenPerAttachmentOnSourceEffect effect) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            log.warn("Game {} - CreateTokenPerAttachmentOnSource requires sourcePermanentId", gameData.id);
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            log.info("Game {} - Source permanent no longer on battlefield, skipping token creation", gameData.id);
+            return;
+        }
+
+        // Count Auras and/or Equipment attached to the source permanent
+        int attachmentCount = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (!p.isAttached() || !p.getAttachedTo().equals(sourcePermanentId)) continue;
+                boolean isAura = p.getCard().getSubtypes().contains(CardSubtype.AURA);
+                boolean isEquipment = p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT);
+                if ((effect.countAuras() && isAura) || (effect.countEquipment() && isEquipment)) {
+                    attachmentCount++;
+                }
+            }
+        }
+
+        if (attachmentCount == 0) {
+            log.info("Game {} - No matching attachments on {}, no tokens created", gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+                attachmentCount, effect.tokenName(), effect.power(), effect.toughness(),
+                effect.color(), null, effect.subtypes(), effect.keywords(), effect.additionalTypes(),
+                false, false, Map.of(), false, effect.exileAtEndStep()
         );
         applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
