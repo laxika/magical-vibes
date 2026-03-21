@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEqualToSourcePowerEf
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
@@ -59,8 +61,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -337,6 +341,28 @@ public class ActivatedAbilityExecutionService {
                 String logEntry = player.getUsername() + " adds " + count + " " + manaPerPermanent.color().getCode()
                         + " (" + manaPerPermanent.description() + " controlled).";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
+                Set<CardColor> availableColors = collectColorsAmongControlled(gameData, playerId, manaAmong);
+                if (availableColors.size() == 1) {
+                    CardColor onlyColor = availableColors.iterator().next();
+                    ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
+                    gameData.playerManaPools.get(playerId).add(manaColor);
+                    String logEntry = player.getUsername() + " adds {" + onlyColor.getCode() + "} from " + permanent.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                } else if (availableColors.size() > 1) {
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+                    List<String> colors = availableColors.stream()
+                            .map(Enum::name)
+                            .sorted()
+                            .toList();
+                    sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+                    log.info("Game {} - Awaiting {} to choose a mana color from legendary colors", gameData.id, player.getUsername());
+                } else {
+                    String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
+                            + " but produces no mana (no colors among legendary creatures and planeswalkers).";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
             } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
                 int count = permanent.getChargeCounters();
                 if (count > 0) {
@@ -441,6 +467,11 @@ public class ActivatedAbilityExecutionService {
                         }
                     }
                 }
+            } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
+                Set<CardColor> colors = collectColorsAmongControlled(gameData, playerId, manaAmong);
+                if (!colors.isEmpty()) {
+                    total += 1;
+                }
             } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
                 total += permanent.getChargeCounters();
             } else if (effect instanceof AwardManaEqualToSourcePowerEffect) {
@@ -450,6 +481,30 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return total;
+    }
+
+    private Set<CardColor> collectColorsAmongControlled(GameData gameData, UUID playerId,
+                                                         AwardManaOfColorsAmongControlledEffect effect) {
+        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return colors;
+        }
+        for (Permanent p : battlefield) {
+            if (!gameQueryService.matchesPermanentPredicate(gameData, p, effect.predicate())) {
+                continue;
+            }
+            if (p.isColorOverridden()) {
+                colors.addAll(p.getTransientColors());
+            } else {
+                if (p.getCard().getColors() != null) {
+                    colors.addAll(p.getCard().getColors());
+                }
+                colors.addAll(p.getTransientColors());
+                colors.addAll(p.getGrantedColors());
+            }
+        }
+        return colors;
     }
 
     private void pushAbilityOnStack(GameData gameData,
