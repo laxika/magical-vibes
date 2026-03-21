@@ -85,6 +85,10 @@ public class Permanent {
      *  For persistent subtype grants from one-shot effects, see {@link #grantedSubtypes}. */
     private final List<CardSubtype> transientSubtypes = new ArrayList<>();
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
+    /** Card types permanently granted by one-shot effects (e.g. Phyrexian Scriptures "becomes an artifact").
+     *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
+     *  For transient card type grants from static/activated effects, see {@link #grantedCardTypes}. */
+    private final Set<CardType> persistentGrantedCardTypes = EnumSet.noneOf(CardType.class);
     private final List<TextReplacement> textReplacements = new ArrayList<>();
     private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
     private final Set<CardColor> protectionFromColorsUntilEndOfTurn = EnumSet.noneOf(CardColor.class);
@@ -205,6 +209,7 @@ public class Permanent {
         this.colorOverridden = source.colorOverridden;
         this.transientSubtypes.addAll(source.transientSubtypes);
         this.grantedCardTypes.addAll(source.grantedCardTypes);
+        this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);

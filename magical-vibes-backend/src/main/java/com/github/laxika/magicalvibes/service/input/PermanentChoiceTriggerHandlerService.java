@@ -539,6 +539,68 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleSagaChapterTarget(GameData gameData, UUID chosenId, PermanentChoiceContext.SagaChapterTarget sct) {
+        // If the player chose their own player ID, it means "skip" (up to one — chose zero)
+        boolean skipped = gameData.playerIdToName.containsKey(chosenId)
+                && chosenId.equals(sct.controllerId());
+
+        if (skipped) {
+            // Push the chapter ability with no target
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sct.sourceCard(),
+                    sct.controllerId(),
+                    sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " ability",
+                    new ArrayList<>(sct.effects()),
+                    null,
+                    sct.sourcePermanentId()
+            ));
+            String logEntry = sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " targets no creature.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chapter {} skipped targeting", gameData.id, sct.sourceCard().getName(), sct.chapterName());
+        } else {
+            Permanent target = gameQueryService.findPermanentById(gameData, chosenId);
+            if (target != null) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sct.sourceCard(),
+                        sct.controllerId(),
+                        sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " ability",
+                        new ArrayList<>(sct.effects()),
+                        chosenId,
+                        sct.sourcePermanentId()
+                );
+                gameData.stack.add(entry);
+
+                String targetName = getTargetDisplayName(gameData, chosenId);
+                String logEntry = sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " targets " + targetName + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} chapter {} targets {}", gameData.id, sct.sourceCard().getName(), sct.chapterName(), targetName);
+            } else {
+                // Target no longer exists — push ability with no target
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sct.sourceCard(),
+                        sct.controllerId(),
+                        sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " ability",
+                        new ArrayList<>(sct.effects()),
+                        null,
+                        sct.sourcePermanentId()
+                ));
+                String logEntry = sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " target no longer exists.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
+        }
+
+        if (!gameData.pendingSagaChapterTargets.isEmpty()) {
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     private String getTargetDisplayName(GameData gameData, UUID targetId) {
         String playerName = gameData.playerIdToName.get(targetId);
         if (playerName != null) return playerName;

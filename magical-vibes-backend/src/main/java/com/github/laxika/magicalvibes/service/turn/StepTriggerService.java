@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -78,6 +79,7 @@ public class StepTriggerService {
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Scans battlefields, graveyards, and (on turn 1) hands for upkeep-triggered
@@ -749,19 +751,34 @@ public class StepTriggerService {
                 default -> String.valueOf(newLoreCount);
             };
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    activePlayerId,
-                    card.getName() + "'s chapter " + chapterName + " ability",
-                    new ArrayList<>(chapterEffects),
-                    null,
-                    saga.getId()
-            ));
+            boolean needsTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+            if (needsTarget) {
+                gameData.pendingSagaChapterTargets.add(
+                        new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
+                                new ArrayList<>(chapterEffects), saga.getId(), chapterName));
+                String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        activePlayerId,
+                        card.getName() + "'s chapter " + chapterName + " ability",
+                        new ArrayList<>(chapterEffects),
+                        null,
+                        saga.getId()
+                ));
 
-            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
+                String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
+            }
+        }
+
+        // Process any queued saga chapter target selections
+        if (!gameData.pendingSagaChapterTargets.isEmpty()) {
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
         }
     }
 

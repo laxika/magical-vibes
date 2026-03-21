@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -105,6 +106,13 @@ public class StackResolutionService {
 
         if (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        if (!gameData.pendingSagaChapterTargets.isEmpty()) {
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -527,7 +535,8 @@ public class StackResolutionService {
 
     /**
      * Triggers the appropriate Saga chapter ability for the given lore counter value.
-     * Pushes the chapter's effects onto the stack as a triggered ability.
+     * If the chapter's effects need targeting, queues for target selection;
+     * otherwise pushes the chapter's effects onto the stack as a triggered ability.
      */
     private void triggerSagaChapter(GameData gameData, Permanent sagaPerm, Card card, UUID controllerId, int loreCount) {
         EffectSlot chapterSlot = switch (loreCount) {
@@ -548,19 +557,30 @@ public class StackResolutionService {
             default -> String.valueOf(loreCount);
         };
 
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                controllerId,
-                card.getName() + "'s chapter " + chapterName + " ability",
-                new ArrayList<>(chapterEffects),
-                null,
-                sagaPerm.getId()
-        ));
+        boolean needsTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+        if (needsTarget) {
+            gameData.pendingSagaChapterTargets.add(
+                    new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
+                            new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
+            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s chapter " + chapterName + " ability",
+                    new ArrayList<>(chapterEffects),
+                    null,
+                    sagaPerm.getId()
+            ));
 
-        String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
+            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
+        }
     }
 
     private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {

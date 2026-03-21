@@ -90,6 +90,11 @@ public class AutoPassService {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
         }
 
+        // Process any pending saga chapter targeted triggers
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSagaChapterTargets.isEmpty()) {
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
+        }
+
         // Process any pending end-step targeted triggers
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingEndStepTriggerTargets.isEmpty()) {
             stepTriggerService.processNextEndStepTriggerTarget(gameData);

@@ -546,12 +546,13 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the permanent is an artifact, either by its natural card type
-     * or by a granted card type (temporary, from activated/triggered abilities).
+     * Returns {@code true} if the permanent is an artifact, either by its natural card type,
+     * a transient granted card type (until end of turn), or a persistent granted card type (permanent).
      */
     public boolean isArtifact(Permanent permanent) {
         return hasCardType(permanent, CardType.ARTIFACT)
-                || permanent.getGrantedCardTypes().contains(CardType.ARTIFACT);
+                || permanent.getGrantedCardTypes().contains(CardType.ARTIFACT)
+                || permanent.getPersistentGrantedCardTypes().contains(CardType.ARTIFACT);
     }
 
     /**

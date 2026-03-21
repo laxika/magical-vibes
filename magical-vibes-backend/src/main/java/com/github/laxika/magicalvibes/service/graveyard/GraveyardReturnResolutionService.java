@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
@@ -926,6 +927,33 @@ public class GraveyardReturnResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
+    }
+
+    /**
+     * Resolves an {@link ExileAllOpponentsGraveyardsEffect} by exiling all cards from every
+     * opponent's graveyard. Does not affect the controller's graveyard.
+     */
+    @HandlesEffect(ExileAllOpponentsGraveyardsEffect.class)
+    void resolveExileAllOpponentsGraveyards(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard.isEmpty()) continue;
+
+            int count = graveyard.size();
+            List<Card> exiledCards = gameData.playerExiledCards.get(playerId);
+            exiledCards.addAll(graveyard);
+            graveyard.clear();
+
+            String playerName = gameData.playerIdToName.get(playerId);
+            String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {}'s graveyard ({} cards) exiled by ExileAllOpponentsGraveyardsEffect",
+                    gameData.id, playerName, count);
+        }
     }
 
     /**

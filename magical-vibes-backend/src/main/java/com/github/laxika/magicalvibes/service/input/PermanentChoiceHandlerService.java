@@ -111,6 +111,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleETBSpellTargetTrigger(gameData, permanentId, etbStt);
         } else if (context instanceof PermanentChoiceContext.EndStepTriggerTarget est) {
             triggerHandler.handleEndStepTrigger(gameData, permanentId, est);
+        } else if (context instanceof PermanentChoiceContext.SagaChapterTarget sct) {
+            triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
         } else if (gameData.interaction.pendingAuraCard() != null) {

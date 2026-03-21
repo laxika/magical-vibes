@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -303,6 +305,58 @@ public class TriggeredAbilityQueueService {
             String logEntry = pending.emblemDescription() + "'s triggered ability - choose target permanent.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} emblem trigger awaiting target selection", gameData.id, pending.emblemDescription());
+            return;
+        }
+    }
+
+    public void processNextSagaChapterTarget(GameData gameData) {
+        while (!gameData.pendingSagaChapterTargets.isEmpty()) {
+            PermanentChoiceContext.SagaChapterTarget pending = gameData.pendingSagaChapterTargets.peekFirst();
+
+            // Collect valid creature targets across all battlefields
+            List<UUID> validCreatureTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)) {
+                        validCreatureTargets.add(p.getId());
+                    }
+                }
+            }
+
+            gameData.pendingSagaChapterTargets.removeFirst();
+
+            if (validCreatureTargets.isEmpty()) {
+                // "Up to one target creature" — no valid targets, push ability with no target
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s chapter " + pending.chapterName() + " ability",
+                        new ArrayList<>(pending.effects()),
+                        null,
+                        pending.sourcePermanentId()
+                ));
+                String logEntry = pending.sourceCard().getName() + "'s chapter " + pending.chapterName() + " has no valid creature targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} chapter {} no valid targets, pushed with null target",
+                        gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                continue;
+            }
+
+            // "Up to one" — add controller player ID as a "skip" option
+            List<UUID> allChoices = new ArrayList<>(validCreatureTargets);
+            List<UUID> playerChoices = List.of(pending.controllerId());
+
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), allChoices, playerChoices,
+                    pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
+                            + " — Choose target creature, or yourself to skip.");
+
+            String logEntry = pending.sourceCard().getName() + "'s chapter " + pending.chapterName() + " - choose target creature.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chapter {} awaiting target selection", gameData.id, pending.sourceCard().getName(), pending.chapterName());
             return;
         }
     }

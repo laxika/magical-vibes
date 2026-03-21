@@ -648,6 +648,10 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextLifeGainTriggerTarget(gameData);
     }
 
+    public void processNextSagaChapterTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
+    }
+
     // ── Internal dispatch ──────────────────────────────────────────────
 
     private void dispatchSlot(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot, TriggerContext ctx) {

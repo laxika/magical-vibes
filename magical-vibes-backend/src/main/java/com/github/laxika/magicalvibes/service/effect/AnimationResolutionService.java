@@ -125,13 +125,18 @@ public class AnimationResolutionService {
             return;
         }
 
-        target.getGrantedCardTypes().add(effect.cardType());
+        if (effect.persistent()) {
+            target.getPersistentGrantedCardTypes().add(effect.cardType());
+        } else {
+            target.getGrantedCardTypes().add(effect.cardType());
+        }
 
         String typeName = effect.cardType().name().charAt(0) + effect.cardType().name().substring(1).toLowerCase();
-        String logEntry = target.getCard().getName() + " becomes an " + typeName + " in addition to its other types until end of turn.";
+        String duration = effect.persistent() ? "" : " until end of turn";
+        String logEntry = target.getCard().getName() + " becomes an " + typeName + " in addition to its other types" + duration + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} becomes an {} until end of turn", gameData.id, target.getCard().getName(), typeName);
+        log.info("Game {} - {} becomes an {}{}", gameData.id, target.getCard().getName(), typeName, duration);
     }
 
     @HandlesEffect(AnimateTargetPermanentEffect.class)
