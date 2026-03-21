@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLand
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "249")
+@CardRegistration(set = "DOM", collectorNumber = "248")
 public class WoodlandCemetery extends Card {
 
     public WoodlandCemetery() {
