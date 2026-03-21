@@ -37,7 +37,7 @@ class RunAmokTest extends BaseCardTest {
         assertThat(boost.toughnessBoost()).isEqualTo(3);
 
         GrantKeywordEffect trample = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(trample.keyword()).isEqualTo(Keyword.TRAMPLE);
+        assertThat(trample.keywords()).containsExactly(Keyword.TRAMPLE);
         assertThat(trample.scope()).isEqualTo(GrantScope.TARGET);
     }
 
