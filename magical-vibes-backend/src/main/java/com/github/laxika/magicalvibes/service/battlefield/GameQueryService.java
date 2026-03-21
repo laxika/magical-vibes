@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfOpponentAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
@@ -609,6 +610,22 @@ public class GameQueryService {
             return true;
         }
         return hasGrantedEffect(gameData, permanent, CantHaveCountersEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the permanent cannot be the target of opponents' abilities,
+     * either from its own static effects or from effects granted by other permanents.
+     * This does NOT block spells — only activated and triggered abilities.
+     */
+    public boolean cantBeTargetOfOpponentAbilities(GameData gameData, Permanent permanent) {
+        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && !computeStaticBonus(gameData, permanent).losesAllAbilities()) {
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CantBeTargetOfOpponentAbilitiesEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return hasGrantedEffect(gameData, permanent, CantBeTargetOfOpponentAbilitiesEffect.class);
     }
 
     /**

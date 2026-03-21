@@ -277,6 +277,14 @@ public class ValidTargetService {
             return false;
         }
 
+        // Can't be the target of opponents' abilities (e.g. Shanna, Sisay's Legacy)
+        if (gameQueryService.cantBeTargetOfOpponentAbilities(gameData, perm)) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
+            if (targetController != null && !targetController.equals(controllerId)) {
+                return false;
+            }
+        }
+
         // Hexproof from color (blocks opponent's abilities of the specified color)
         if (isBlockedByHexproofFromColor(gameData, perm, sourceCard != null ? sourceCard.getColor() : null, controllerId)) {
             return false;

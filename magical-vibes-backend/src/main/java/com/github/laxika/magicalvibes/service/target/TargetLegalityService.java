@@ -144,6 +144,18 @@ public class TargetLegalityService {
 
         validateTargetable(gameData, targetId, playerId);
 
+        // Can't be the target of opponents' abilities (e.g. Shanna, Sisay's Legacy)
+        if (targetId != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null && gameQueryService.cantBeTargetOfOpponentAbilities(gameData, target)) {
+                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+                if (targetController != null && !targetController.equals(playerId)) {
+                    throw new IllegalStateException(target.getCard().getName()
+                            + " can't be the target of abilities opponents control");
+                }
+            }
+        }
+
         // Hexproof from color (blocks opponent's abilities of the specified color)
         if (targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -302,6 +314,10 @@ public class TargetLegalityService {
                     targetFizzled = true;
                 } else if (targetPerm != null) {
                     targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
+                    if (!targetFizzled
+                            && (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)) {
+                        targetFizzled = isBlockedByOpponentAbilityRestriction(gameData, targetPerm, entry.getControllerId());
+                    }
                     if (!targetFizzled) {
                         targetFizzled = isSpellProtected(gameData, targetPerm, entry);
                     }
@@ -425,6 +441,14 @@ public class TargetLegalityService {
             }
         }
         return null;
+    }
+
+    private boolean isBlockedByOpponentAbilityRestriction(GameData gameData, Permanent target, UUID sourcePlayerId) {
+        if (gameQueryService.cantBeTargetOfOpponentAbilities(gameData, target)) {
+            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+            return targetController != null && !targetController.equals(sourcePlayerId);
+        }
+        return false;
     }
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {

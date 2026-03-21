@@ -882,6 +882,7 @@ Pass `null` as filter to allow any card.
 | `CantBeTargetedBySpellColorsEffect` | `(Set<CardColor> colors)` | can't be targeted by spells of specified colors (static) |
 | `HexproofFromColorsEffect` | `(Set<CardColor> colors)` | hexproof from specified colors (static). Blocks targeting by opponent-controlled spells AND abilities of the specified color(s). Unlike full hexproof, allows non-matching-color opponent sources. Unlike CantBeTargetedBySpellColorsEffect, also blocks abilities. Note: Scryfall includes "Hexproof" keyword alongside "Hexproof from" — call `removeKeyword(Keyword.HEXPROOF)` in card constructor. Used by Knight of Grace (BLACK), Knight of Malice (WHITE) |
 | `CantBeTargetedByNonColorSourcesEffect` | `(CardColor allowedColor)` | can't be targeted by spells or abilities from sources that don't have the allowed color (static, e.g. Gaea's Revenge) |
+| `CantBeTargetOfOpponentAbilitiesEffect` | `()` | can't be targeted by opponents' abilities only (spells still work), e.g. Shanna, Sisay's Legacy |
 | `CantBeTargetOfSpellsOrAbilitiesEffect` | `()` | can't be targeted by opponents' spells or abilities (hexproof behavior, use with GrantEffectEffect) |
 | `GrantEffectEffect` | `(CardEffect effect, GrantScope scope)` | grant a CardEffect to permanents matching scope (e.g. OWN_CREATURES) |
 | `RedirectPlayerDamageToEnchantedCreatureEffect` | `()` | redirect damage dealt to player to enchanted creature |
