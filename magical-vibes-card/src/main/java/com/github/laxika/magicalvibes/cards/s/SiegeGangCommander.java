@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "234")
 @CardRegistration(set = "M10", collectorNumber = "157")
+@CardRegistration(set = "DOM", collectorNumber = "143")
 public class SiegeGangCommander extends Card {
 
     public SiegeGangCommander() {
