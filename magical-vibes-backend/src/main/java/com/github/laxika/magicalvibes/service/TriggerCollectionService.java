@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
@@ -91,6 +93,45 @@ public class TriggerCollectionService {
             if (playerId.equals(castingPlayerId)) return;
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx);
         });
+
+        // GRAVEYARD_ON_CONTROLLER_CASTS_SPELL — graveyard-resident spell-cast triggers
+        // (e.g. Lingering Phantom: "Whenever you cast a historic spell, you may pay {B}. If you do, return ~ to hand.")
+        List<Card> castingPlayerGraveyard = gameData.playerGraveyards.get(castingPlayerId);
+        if (castingPlayerGraveyard != null) {
+            for (Card card : new ArrayList<>(castingPlayerGraveyard)) {
+                List<CardEffect> graveyardEffects = card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL);
+                if (graveyardEffects == null || graveyardEffects.isEmpty()) continue;
+
+                for (CardEffect effect : graveyardEffects) {
+                    if (effect instanceof SpellCastTriggerEffect trigger) {
+                        if (!gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) continue;
+
+                        if (trigger.manaCost() != null) {
+                            // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
+                            CardEffect resolvedEffect = trigger.resolvedEffects().getFirst();
+                            MayPayManaEffect mayPay = new MayPayManaEffect(
+                                    trigger.manaCost(),
+                                    resolvedEffect,
+                                    "Pay " + trigger.manaCost() + " to return " + card.getName()
+                                            + " from your graveyard to your hand?"
+                            );
+                            gameData.queueMayAbility(card, castingPlayerId, mayPay, null);
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    card,
+                                    castingPlayerId,
+                                    card.getName() + "'s ability",
+                                    new ArrayList<>(trigger.resolvedEffects())
+                            ));
+                        }
+
+                        log.info("Game {} - {} graveyard spell-cast trigger queued",
+                                gameData.id, card.getName());
+                    }
+                }
+            }
+        }
 
         // Emblem spell cast triggers (e.g. Venser's emblem)
         for (Emblem emblem : gameData.emblems) {

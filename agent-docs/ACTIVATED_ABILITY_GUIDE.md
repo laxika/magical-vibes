@@ -430,6 +430,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |
 | `ENCHANTED_PLAYER_UPKEEP_TRIGGERED` | Upkeep of the enchanted player (for player auras/Curses). The enchanted player's ID is passed as `targetId` on the stack entry. Curse subtype is auto-detected via `isEnchantPlayer()` |
 | `GRAVEYARD_UPKEEP_TRIGGERED` | Upkeep trigger from graveyard |
+| `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL` | Spell-cast trigger from graveyard — fires when the controller casts a spell matching the `SpellCastTriggerEffect.spellFilter()` while this card is in their graveyard (e.g. Lingering Phantom). Supports `manaCost` for "you may pay" patterns |
 | `DRAW_TRIGGERED` | At the beginning of controller's draw step (draw step only, not spell draws) |
 | `EACH_DRAW_TRIGGERED` | At the beginning of any player's draw step (draw step only) |
 | `ON_CONTROLLER_DRAWS` | Whenever controller draws a card (all draws: draw step, spells, abilities) |

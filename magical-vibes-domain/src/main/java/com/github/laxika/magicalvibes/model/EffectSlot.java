@@ -84,5 +84,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a creature an opponent controls is dealt damage (combat or non-combat).
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */
-    ON_OPPONENT_CREATURE_DEALT_DAMAGE
+    ON_OPPONENT_CREATURE_DEALT_DAMAGE,
+    /** Triggers when the controller casts a spell matching the filter, while this card is in
+     *  the controller's graveyard.  Checked per-card inside
+     *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
+    GRAVEYARD_ON_CONTROLLER_CASTS_SPELL
 }
