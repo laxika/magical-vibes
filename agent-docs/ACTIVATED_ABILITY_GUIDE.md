@@ -486,3 +486,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `SAGA_CHAPTER_I` | Saga chapter I ability (MTG rule 714). Triggers when the first lore counter is placed on the Saga (on ETB and at beginning of precombat main). Effects are pushed onto the stack as a TRIGGERED_ABILITY. Used by Chainer's Torment |
 | `SAGA_CHAPTER_II` | Saga chapter II ability (MTG rule 714). Triggers when the second lore counter is placed. Used by Chainer's Torment |
 | `SAGA_CHAPTER_III` | Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. Saga is sacrificed as SBA after this ability leaves the stack. Used by Chainer's Torment |
+| `BEGINNING_OF_COMBAT_TRIGGERED` | At the beginning of combat on the controller's turn. Only fires for the active player's permanents. Used by Helm of the Host |

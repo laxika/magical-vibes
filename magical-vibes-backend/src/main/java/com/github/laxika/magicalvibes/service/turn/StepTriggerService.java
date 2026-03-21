@@ -1068,4 +1068,53 @@ public class StepTriggerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} end-step trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
     }
+
+    /**
+     * Scans the active player's battlefield for permanents with
+     * {@code BEGINNING_OF_COMBAT_TRIGGERED} effects and pushes them onto the stack.
+     * Only fires for the active player's permanents (CR 507.1: "At the beginning
+     * of combat on your turn").
+     *
+     * @param gameData the current game state to modify
+     */
+    public void handleBeginningOfCombatTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> combatEffects = perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED);
+            if (combatEffects == null || combatEffects.isEmpty()) continue;
+
+            for (CardEffect effect : combatEffects) {
+                // For equipment triggers, only fire if the equipment is attached to a creature
+                if (perm.isAttached()) {
+                    Permanent equippedCreature = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+                    if (equippedCreature == null || !gameQueryService.isCreature(gameData, equippedCreature)) {
+                        continue;
+                    }
+                }
+
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            activePlayerId,
+                            perm.getCard().getName() + "'s combat ability",
+                            new ArrayList<>(List.of(effect)),
+                            (UUID) null,
+                            perm.getId()
+                    ));
+
+                    String logMsg = perm.getCard().getName() + "'s beginning of combat ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                    log.info("Game {} - {} beginning-of-combat trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                }
+            }
+        }
+
+        playerInputService.processNextMayAbility(gameData);
+    }
 }

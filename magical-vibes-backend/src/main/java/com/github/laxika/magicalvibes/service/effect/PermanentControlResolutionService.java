@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledLand
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensPerOwnCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAndCreateTokensEffect;
@@ -1146,6 +1148,87 @@ public class PermanentControlResolutionService {
             String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - Token copy of {} created via Mirrorworks-like ability", gameData.id, sourceCard.getName());
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+        }
+    }
+
+    @HandlesEffect(CreateTokenCopyOfEquippedCreatureEffect.class)
+    private void resolveCreateTokenCopyOfEquippedCreature(GameData gameData, StackEntry entry,
+                                                          CreateTokenCopyOfEquippedCreatureEffect effect) {
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (sourcePermanent == null) {
+            log.info("Game {} - Source equipment no longer on battlefield", gameData.id);
+            return;
+        }
+
+        UUID equippedCreatureId = sourcePermanent.getAttachedTo();
+        if (equippedCreatureId == null) {
+            log.info("Game {} - Equipment is not attached to any creature", gameData.id);
+            return;
+        }
+
+        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, equippedCreatureId);
+        if (equippedCreature == null) {
+            log.info("Game {} - Equipped creature no longer on battlefield", gameData.id);
+            return;
+        }
+
+        Card sourceCard = equippedCreature.getCard();
+
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            // Create a token that's a copy of the equipped creature (copying all copiable values per CR 707.2)
+            Card tokenCard = new Card();
+            tokenCard.setName(sourceCard.getName());
+            tokenCard.setType(sourceCard.getType());
+            tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+            tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
+            tokenCard.setToken(true);
+            tokenCard.setColor(sourceCard.getColor());
+            tokenCard.setPower(sourceCard.getPower());
+            tokenCard.setToughness(sourceCard.getToughness());
+            tokenCard.setSubtypes(sourceCard.getSubtypes());
+            tokenCard.setCardText(sourceCard.getCardText());
+            tokenCard.setSetCode(sourceCard.getSetCode());
+            tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
+
+            // Handle supertypes: optionally remove LEGENDARY
+            if (effect.removeLegendary() && sourceCard.getSupertypes().contains(CardSupertype.LEGENDARY)) {
+                EnumSet<CardSupertype> modifiedSupertypes = EnumSet.copyOf(sourceCard.getSupertypes());
+                modifiedSupertypes.remove(CardSupertype.LEGENDARY);
+                tokenCard.setSupertypes(modifiedSupertypes);
+            } else {
+                tokenCard.setSupertypes(sourceCard.getSupertypes());
+            }
+
+            // Copy keywords, optionally adding haste
+            if (sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) {
+                EnumSet<Keyword> tokenKeywords = EnumSet.copyOf(sourceCard.getKeywords());
+                if (effect.grantHaste()) {
+                    tokenKeywords.add(Keyword.HASTE);
+                }
+                tokenCard.setKeywords(tokenKeywords);
+            } else if (effect.grantHaste()) {
+                tokenCard.setKeywords(EnumSet.of(Keyword.HASTE));
+            }
+
+            // Copy effects and activated abilities (copiable characteristics per CR 707.2)
+            for (EffectSlot slot : EffectSlot.values()) {
+                for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                    tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+                }
+            }
+            for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
+                tokenCard.addActivatedAbility(ability);
+            }
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+
+            String logMsg = "A token copy of " + sourceCard.getName() + " is created (non-legendary, with haste).";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - Token copy of {} created via Helm of the Host", gameData.id, sourceCard.getName());
 
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
         }

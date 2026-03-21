@@ -76,6 +76,8 @@ public class TurnProgressionService {
                 stepTriggerService.handlePrecombatMainTriggers(gameData);
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
+            } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
+                stepTriggerService.handleBeginningOfCombatTriggers(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 combatService.handleDeclareAttackersStep(gameData);
             } else if (next == TurnStep.DECLARE_BLOCKERS) {

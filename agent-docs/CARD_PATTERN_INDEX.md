@@ -414,6 +414,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Evasion + sacrifice-equip-to-deal-damage | `b/BlazingTorch.java` | STATIC CanBeBlockedOnlyByFilterEffect(PermanentNotPredicate(vampires/zombies)) + GrantActivatedAbilityEffect(EQUIPPED_CREATURE) with SacrificeSourceEquipmentCost + DealDamageToAnyTargetEffect + equip |
 | Double combat damage dealt/received equip | `i/InquisitorsFlail.java` | STATIC DoubleEquippedCreatureCombatDamageEffect + equip. Doubles combat damage dealt by and received by equipped creature |
 | Per-card-type boost + dual equip cost | `b/BlackbladeReforged.java` | STATIC BoostCreaturePerControlledCardTypeEffect(LAND, 1, 1, EQUIPPED_CREATURE) + equip legendary creature {3} (ActivatedAbility with PermanentAllOfPredicate(creature + legendary)) + EquipActivatedAbility("{7}") |
+| Combat-triggered token copy equip | `h/HelmOfTheHost.java` | BEGINNING_OF_COMBAT_TRIGGERED CreateTokenCopyOfEquippedCreatureEffect(true, true) + EquipActivatedAbility("{5}") — at beginning of combat on your turn, create a token copy of equipped creature (not legendary, gains haste) |
 | Boost + subtype combat destroy equip | `w/WoodenStake.java` | STATIC StaticBoostEffect(1, 0, EQUIPPED_CREATURE) + ON_BLOCK DestroySubtypeCombatOpponentEffect(VAMPIRE, true) + ON_BECOMES_BLOCKED DestroySubtypeCombatOpponentEffect(VAMPIRE, true) PER_BLOCKER + equip. Destroys Vampires that block or are blocked by equipped creature (can't regenerate) |
 
 ## Activated abilities

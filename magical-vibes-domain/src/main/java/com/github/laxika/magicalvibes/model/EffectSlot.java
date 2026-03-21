@@ -77,5 +77,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Saga chapter II ability (MTG rule 714). Triggers when the second lore counter is placed. */
     SAGA_CHAPTER_II,
     /** Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. */
-    SAGA_CHAPTER_III
+    SAGA_CHAPTER_III,
+    /** Triggers at the beginning of combat on the controller's turn.
+     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
+    BEGINNING_OF_COMBAT_TRIGGERED
 }
