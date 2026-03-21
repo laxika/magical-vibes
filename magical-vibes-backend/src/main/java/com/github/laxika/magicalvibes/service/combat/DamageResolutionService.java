@@ -1154,6 +1154,10 @@ public class DamageResolutionService {
             rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
         }
+        // Apply target+source-specific prevention shields (e.g. Healing Grace)
+        if (sourcePermId != null) {
+            rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
+        }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
         if (damageSource != null) {
@@ -1388,6 +1392,10 @@ public class DamageResolutionService {
         if (rawDamage <= 0) return;
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
+            // Apply target+source-specific prevention shields (e.g. Healing Grace)
+            if (entry.getSourcePermanentId() != null) {
+                rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+            }
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);

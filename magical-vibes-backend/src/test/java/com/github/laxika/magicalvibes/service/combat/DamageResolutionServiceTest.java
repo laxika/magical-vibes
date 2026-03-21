@@ -162,6 +162,7 @@ class DamageResolutionServiceTest {
         lenient().when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
         lenient().when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
     }
 
     private void stubLethalDamage(boolean isLethal) {
@@ -183,6 +184,7 @@ class DamageResolutionServiceTest {
         lenient().when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(playerId), any())).thenReturn(false);
         lenient().when(damagePreventionService.applyOpponentSourceDamageReduction(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), eq(playerId), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
         lenient().when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(playerId), anyInt(), anyString())).thenAnswer(inv -> inv.getArgument(2));
         lenient().when(gameQueryService.canPlayerLifeChange(gd, playerId)).thenReturn(true);

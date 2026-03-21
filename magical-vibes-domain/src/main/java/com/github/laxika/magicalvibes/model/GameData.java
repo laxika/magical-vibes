@@ -161,6 +161,8 @@ public class GameData {
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
     /** Source-specific damage redirect shields (e.g. Harm's Way): prevent damage from a chosen source and redirect to any target. */
     public final List<SourceDamageRedirectShield> sourceDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Target+source-specific damage prevention shields (e.g. Healing Grace): prevent next N damage from a chosen source to a specific target. */
+    public final List<TargetSourceDamagePreventionShield> targetSourceDamagePreventionShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending source redirect damage to deal after source-specific prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<SourceDamageRedirectShield> pendingSourceRedirectDamage = Collections.synchronizedList(new ArrayList<>());
     public boolean pendingSacrificeAttackingCreature;
@@ -476,6 +478,7 @@ public class GameData {
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
+        copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
 
         // --- List<UUID> (synchronized) ---

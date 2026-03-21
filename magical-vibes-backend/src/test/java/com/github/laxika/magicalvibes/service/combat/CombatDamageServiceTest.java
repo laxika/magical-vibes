@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -145,6 +146,9 @@ class CombatDamageServiceTest {
         when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
+        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.findPermanentController(eq(gameData), any(UUID.class)))
                 .thenAnswer(inv -> {
                     UUID permId = inv.getArgument(1);
@@ -191,6 +195,9 @@ class CombatDamageServiceTest {
         when(damagePreventionService.applyOpponentSourceDamageReduction(
                 eq(gameData), any(UUID.class), any(), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.shouldDamageBeDealtAsInfect(eq(gameData), any(UUID.class)))
                 .thenReturn(false);
         when(gameQueryService.canPlayerLifeChange(eq(gameData), any(UUID.class))).thenReturn(true);
@@ -211,6 +218,9 @@ class CombatDamageServiceTest {
                 eq(gameData), any(UUID.class), any())).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(
                 eq(gameData), any(UUID.class), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.canPlayerGetPoisonCounters(eq(gameData), any(UUID.class)))
                 .thenReturn(true);

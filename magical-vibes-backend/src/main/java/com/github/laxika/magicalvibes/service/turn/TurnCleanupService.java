@@ -73,6 +73,7 @@ public class TurnCleanupService {
         gameData.playerDamagePreventionShields.clear();
         gameData.damageRedirectShields.clear();
         gameData.sourceDamageRedirectShields.clear();
+        gameData.targetSourceDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
         gameData.combatDamageExemptPredicate = null;

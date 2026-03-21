@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -325,6 +326,41 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData.id, playerName, chosenPermanent.getCard().getName(), redirectSource.amount());
 
         stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePreventDamageToTargetFromSourceChoice(GameData gameData, UUID permanentId,
+                                                             PermanentChoiceContext.PreventDamageToTargetFromSourceChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID targetId = ctx.targetId();
+        gameData.targetSourceDamagePreventionShields.add(new TargetSourceDamagePreventionShield(
+                targetId, permanentId, ctx.amount()));
+
+        // Determine target name for logging
+        Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
+        String targetName = targetPerm != null
+                ? targetPerm.getCard().getName()
+                : gameData.playerIdToName.getOrDefault(targetId, "unknown");
+
+        String logEntry = "The next " + ctx.amount() + " damage " + chosenPermanent.getCard().getName()
+                + " would deal to " + targetName + " is prevented.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - Chose {} as damage source, preventing up to {} damage to {}",
+                gameData.id, chosenPermanent.getCard().getName(), ctx.amount(), targetName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        // Resume pending effect resolution (e.g. GainLifeEffect after prevention source choice)
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
         turnProgressionService.resolveAutoPass(gameData);
     }
 

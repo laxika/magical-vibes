@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
@@ -43,6 +44,37 @@ public class DamagePreventionService {
         int prevented = Math.min(shield, damage);
         gameData.globalDamagePreventionShield = shield - prevented;
         return damage - prevented;
+    }
+
+    /**
+     * Applies target+source-specific prevention shields (e.g. Healing Grace).
+     * Only prevents damage from the chosen source to the chosen target.
+     * Returns the remaining damage after prevention.
+     */
+    public int applyTargetSourcePreventionShield(GameData gameData, UUID targetId, UUID sourceId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (damage <= 0 || targetId == null || sourceId == null || gameData.targetSourceDamagePreventionShields.isEmpty())
+            return damage;
+
+        int remaining = damage;
+        List<TargetSourceDamagePreventionShield> toReAdd = new ArrayList<>();
+        Iterator<TargetSourceDamagePreventionShield> it = gameData.targetSourceDamagePreventionShields.iterator();
+
+        while (it.hasNext() && remaining > 0) {
+            TargetSourceDamagePreventionShield shield = it.next();
+            if (!shield.targetId().equals(targetId) || !shield.sourceId().equals(sourceId)) continue;
+
+            int prevented = Math.min(shield.remainingAmount(), remaining);
+            remaining -= prevented;
+            it.remove();
+
+            if (prevented < shield.remainingAmount()) {
+                toReAdd.add(shield.withReducedAmount(prevented));
+            }
+        }
+
+        gameData.targetSourceDamagePreventionShields.addAll(toReAdd);
+        return remaining;
     }
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage) {

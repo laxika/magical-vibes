@@ -1135,6 +1135,8 @@ public class CombatDamageService {
             if (damage > 0 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
                 UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
                 damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
+                // Apply target+source-specific prevention shields (e.g. Healing Grace)
+                damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, defenderId, atk.getId(), damage);
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
@@ -1180,6 +1182,8 @@ public class CombatDamageService {
             damage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, source.getId(), damage);
             processSourceRedirectDamage(gameData);
         }
+        // Apply target+source-specific prevention shields (e.g. Healing Grace) before generic creature prevention
+        damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)

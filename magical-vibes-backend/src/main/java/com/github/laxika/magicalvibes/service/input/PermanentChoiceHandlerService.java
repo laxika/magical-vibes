@@ -81,6 +81,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.RedirectDamageSourceChoice redirectSource) {
             battlefieldHandler.handleRedirectDamageSourceChoice(gameData, permanentId, redirectSource);
+        } else if (context instanceof PermanentChoiceContext.PreventDamageToTargetFromSourceChoice preventTargetSource) {
+            battlefieldHandler.handlePreventDamageToTargetFromSourceChoice(gameData, permanentId, preventTargetSource);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
         } else if (context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {

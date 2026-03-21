@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSou
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageToControllerAndRedirectToTargetPlayerEffect;
@@ -258,5 +259,28 @@ public class PreventionResolutionService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.PreventDamageSourceChoice(controllerId));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 "Choose a source. Prevent all damage it would deal to you this turn.");
+    }
+
+    @HandlesEffect(PreventDamageToTargetFromChosenSourceEffect.class)
+    void resolvePreventDamageToTargetFromChosenSource(GameData gameData, StackEntry entry,
+                                                       PreventDamageToTargetFromChosenSourceEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) return;
+
+        // Collect all permanents on all battlefields as valid source choices
+        List<UUID> validIds = new ArrayList<>();
+        gameData.forEachPermanent((playerId, perm) -> validIds.add(perm.getId()));
+
+        if (validIds.isEmpty()) {
+            String logEntry = "No permanents on the battlefield to choose as a damage source.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.PreventDamageToTargetFromSourceChoice(controllerId, effect.amount(), targetId));
+        playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                "Choose a source. The next " + effect.amount() + " damage it would deal to the target is prevented.");
     }
 }
