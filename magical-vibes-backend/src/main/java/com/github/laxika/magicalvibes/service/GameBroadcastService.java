@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
@@ -487,20 +489,22 @@ public class GameBroadcastService {
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
             boolean grantedFlashback = flashback.isEmpty()
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
+            boolean emblemFlashback = flashback.isEmpty() && !grantedFlashback
+                    && hasEmblemGrantedFlashback(gameData, playerId, card);
 
-            if (flashback.isEmpty() && !grantedFlashback && graveyardCast.isEmpty()) {
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && graveyardCast.isEmpty()) {
                 continue;
             }
 
-            boolean isGraveyardCast = graveyardCast.isPresent() && flashback.isEmpty() && !grantedFlashback;
+            boolean isGraveyardCast = graveyardCast.isPresent() && flashback.isEmpty() && !grantedFlashback && !emblemFlashback;
             boolean isInstantSpeed = card.hasType(CardType.INSTANT);
             boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
             if (!canCastTiming) {
                 continue;
             }
 
-            // GraveyardCast and granted flashback use the card's mana cost
-            String manaCostStr = (isGraveyardCast || grantedFlashback)
+            // GraveyardCast, granted flashback, and emblem flashback use the card's mana cost
+            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback)
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
@@ -694,6 +698,22 @@ public class GameBroadcastService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect) {
                         return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean hasEmblemGrantedFlashback(GameData gameData, UUID playerId, Card card) {
+        for (Emblem emblem : gameData.emblems) {
+            if (!emblem.controllerId().equals(playerId)) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof EmblemGrantsFlashbackEffect egf) {
+                    for (CardType type : egf.cardTypes()) {
+                        if (card.hasType(type)) {
+                            return true;
+                        }
                     }
                 }
             }

@@ -313,7 +313,7 @@ public class GameTestHarness {
                 sessionManager, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
-                gameQueryService, graveyardService, battlefieldEntryService, gameBroadcastService,
+                drawService, gameQueryService, graveyardService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService, playerInteractionResolutionService, exileService);
         InputCompletionService inputCompletionService = new InputCompletionService(
                 playerInputService, gameBroadcastService, turnProgressionService, stateBasedActionService, effectResolutionService);

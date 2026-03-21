@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
@@ -327,6 +328,46 @@ public class PlayerInteractionResolutionService {
         applyDrawCards(gameData, controllerId, effect.drawAmount());
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, controllerId, effect.discardAmount());
+    }
+
+    @HandlesEffect(DiscardUpToThenDrawThatManyEffect.class)
+    private void resolveDiscardUpToThenDraw(GameData gameData, StackEntry entry,
+                                            DiscardUpToThenDrawThatManyEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String cardName = entry.getCard().getName();
+
+        // Re-entry after player chose how many to discard
+        if (gameData.chosenXValue != null) {
+            int chosenCount = gameData.chosenXValue;
+            gameData.chosenXValue = null;
+
+            if (chosenCount == 0) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " chooses to discard 0 cards for " + cardName + ".");
+                log.info("Game {} - {} chooses to discard 0 for {}", gameData.id, playerName, cardName);
+                return;
+            }
+
+            // Store the draw count for after discards complete
+            gameData.pendingRummageDrawCount = chosenCount;
+            gameData.discardCausedByOpponent = false;
+            resolveDiscardCards(gameData, controllerId, chosenCount);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " has no cards to discard for " + cardName + ".");
+            log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
+            return;
+        }
+
+        int maxDiscard = Math.min(effect.maxDiscard(), hand.size());
+        String prompt = "Discard up to " + effect.maxDiscard() + " cards for " + cardName
+                + ". You will draw that many cards.";
+        playerInputService.beginXValueChoice(gameData, controllerId, maxDiscard, prompt, cardName);
     }
 
     @HandlesEffect(EachPlayerDiscardsEffect.class)

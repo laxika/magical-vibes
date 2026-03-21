@@ -132,6 +132,8 @@ public class GameData {
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
+    /** Number of cards to draw after a "discard up to N, then draw that many" completes. */
+    public int pendingRummageDrawCount;
     /** Queue of player IDs still needing to discard for an "each player discards" effect (APNAP order). */
     public final Deque<UUID> pendingEachPlayerDiscardQueue = new ArrayDeque<>();
     public UUID pendingEachPlayerDiscardControllerId;

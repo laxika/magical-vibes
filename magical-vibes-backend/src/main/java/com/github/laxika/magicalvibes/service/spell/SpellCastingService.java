@@ -977,8 +977,11 @@ public class SpellCastingService {
         var graveyardCastOpt = card.getCastingOption(GraveyardCast.class);
         boolean grantedFlashback = flashbackOpt.isEmpty()
                 && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
-        boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty() && !grantedFlashback;
-        if (flashbackOpt.isEmpty() && !grantedFlashback && !isGraveyardCast) {
+        boolean emblemFlashback = flashbackOpt.isEmpty() && !grantedFlashback
+                && gameBroadcastService.hasEmblemGrantedFlashback(gameData, playerId, card);
+        boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty()
+                && !grantedFlashback && !emblemFlashback;
+        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
         }
 
@@ -992,8 +995,8 @@ public class SpellCastingService {
             throw new IllegalStateException("Cannot cast sorcery-speed spell from graveyard now");
         }
 
-        // Validate and pay mana cost (graveyard cast uses the card's normal mana cost)
-        String manaCostStr = (isGraveyardCast || grantedFlashback)
+        // Validate and pay mana cost (graveyard cast, granted flashback, and emblem flashback use the card's normal mana cost)
+        String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback)
                 ? card.getManaCost()
                 : flashbackOpt.get().getCost(ManaCastingCost.class)
                         .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))

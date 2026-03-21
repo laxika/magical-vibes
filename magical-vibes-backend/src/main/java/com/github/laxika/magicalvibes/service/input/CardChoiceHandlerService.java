@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -36,6 +37,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CardChoiceHandlerService {
 
+    private final DrawService drawService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -183,6 +185,18 @@ public class CardChoiceHandlerService {
             if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
                 triggerCollectionService.processNextDiscardSelfTrigger(gameData);
                 return;
+            }
+
+            // Draw cards after "discard up to N, then draw that many" completes
+            if (gameData.pendingRummageDrawCount > 0) {
+                int drawCount = gameData.pendingRummageDrawCount;
+                gameData.pendingRummageDrawCount = 0;
+                for (int i = 0; i < drawCount; i++) {
+                    drawService.resolveDrawCard(gameData, playerId);
+                }
+                String drawPlayerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".");
             }
 
             // Resume resolving remaining effects on the same spell/ability

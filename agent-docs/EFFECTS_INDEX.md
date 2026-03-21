@@ -412,6 +412,7 @@ Pass `null` as filter to allow any card.
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
 | `DrawAndDiscardCardEffect` | `(int drawAmount, int discardAmount)` | draw N then discard N cards (loot). Convenience ctor: `()` defaults to `(1, 1)`. Commonly wrapped in MayEffect for "you may draw a card. If you do, discard a card." |
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
+| `DiscardUpToThenDrawThatManyEffect` | `(int maxDiscard)` | discard up to N cards, then draw that many cards (rummage with "up to" choice). Uses X value choice for count selection, then sequential discard interaction, then draws. Used by Jaya Ballard. |
 | `EachPlayerDiscardsEffect` | `(int amount)` | each player discards N cards in APNAP order (active player first). Uses queued sequential discard interaction. Controller's discard has `discardCausedByOpponent=false`; others have `true`. |
 | `EachOpponentDiscardsEffect` | `(int amount)` | each opponent discards N cards in APNAP order (skips controller). Uses same queued sequential discard interaction as EachPlayerDiscardsEffect. All discards have `discardCausedByOpponent=true`. Convenience ctor: `()` defaults to amount=1. |
 | `EachPlayerRandomDiscardEffect` | `(int amount)` | each player discards N cards at random in APNAP order. No player interaction required (random selection). Controller's discard has `discardCausedByOpponent=false`; others have `true`. Used by Burning Inquiry. |
@@ -1023,7 +1024,9 @@ Pass `null` as filter to allow any card.
 | `AjaniUltimateEffect` | `()` | Ajani's ultimate: put 100 counters (planeswalker-specific) |
 | `KothEmblemEffect` | `()` | Koth's emblem: Mountains you control have '{T}: This land deals 1 damage to any target.' |
 | `VenserEmblemEffect` | `()` | Venser's emblem: "Whenever you cast a spell, exile target permanent." Creates emblem with ExileTargetOnControllerSpellCastEffect |
+| `JayaBallardEmblemEffect` | `()` | Jaya Ballard's emblem: "You may cast instant and sorcery spells from your graveyard. If a spell cast this way would be put into your graveyard, exile it instead." Creates emblem with EmblemGrantsFlashbackEffect |
 | `ExileTargetOnControllerSpellCastEffect` | `()` | Marker effect stored in Emblem.staticEffects. Triggers when controller casts a spell, prompting target permanent choice then exiling it |
+| `EmblemGrantsFlashbackEffect` | `(Set<CardType> cardTypes)` | Static effect stored in Emblem.staticEffects. Permanently grants flashback (at card's mana cost) to cards of matching types in controller's graveyard. Cast spells are exiled after resolution (flashback disposition). |
 | `KarnRestartGameEffect` | `()` | Karn's ultimate: restart the game per CR 727, leaving non-Aura permanent cards exiled with Karn in exile, then put them onto battlefield under controller's control. Resets life totals, hands, libraries, graveyards, exile zones, battlefields, and all game state. Controller goes first, no mulligans |
 | `GenesisWaveEffect` | `()` | reveal top X cards, put any number of permanent cards with MV ≤ X onto battlefield, rest to graveyard. X read from `StackEntry.getXValue()` |
 | `SphinxAmbassadorEffect` | `()` | ON_COMBAT_DAMAGE_TO_PLAYER trigger: search damaged player's library for a card, that player names a card, if you found a creature with a different name you may put it onto battlefield under your control, then shuffle |

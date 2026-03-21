@@ -39,10 +39,9 @@ public class XValueChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        var pool = gameData.playerManaPools.get(player.getId());
-        int availableMana = pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
-        if (chosenValue < 0 || chosenValue > availableMana) {
-            throw new IllegalArgumentException("X value must be between 0 and " + availableMana);
+        int maxAllowed = xValueChoice.maxValue();
+        if (chosenValue < 0 || chosenValue > maxAllowed) {
+            throw new IllegalArgumentException("X value must be between 0 and " + maxAllowed);
         }
 
         // Store chosen value for the effect handler to use on re-entry

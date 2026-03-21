@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
+import com.github.laxika.magicalvibes.model.effect.JayaBallardEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect;
@@ -337,6 +339,23 @@ public class CardSpecificResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets Venser emblem", gameData.id, playerName);
+    }
+
+    @HandlesEffect(JayaBallardEmblemEffect.class)
+    void resolveJayaBallardEmblem(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        Emblem emblem = new Emblem(controllerId, List.of(
+                new EmblemGrantsFlashbackEffect(Set.of(CardType.INSTANT, CardType.SORCERY))
+        ), entry.getCard());
+
+        gameData.emblems.add(emblem);
+
+        String logEntry = playerName + " gets an emblem with \"You may cast instant and sorcery spells from your graveyard. If a spell cast this way would be put into your graveyard, exile it instead.\".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets Jaya Ballard emblem", gameData.id, playerName);
     }
 
     @HandlesEffect(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)
@@ -927,6 +946,7 @@ public class CardSpecificResolutionService {
         gameData.pendingProliferateCount = 0;
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
+        gameData.pendingRummageDrawCount = 0;
         gameData.pendingEachPlayerDiscardControllerId = null;
         gameData.pendingEachPlayerDiscardAmount = 0;
         gameData.combatDamageRedirectTarget = null;
