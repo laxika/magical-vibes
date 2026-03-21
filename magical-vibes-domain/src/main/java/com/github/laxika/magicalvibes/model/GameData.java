@@ -215,6 +215,12 @@ public class GameData {
     public final List<DelayedUntapPermanents> pendingDelayedUntapPermanents = Collections.synchronizedList(new ArrayList<>());
 
     public record DelayedUntapPermanents(UUID controllerId, int count, PermanentPredicate filter, Card sourceCard) {}
+
+    /** Delayed trigger: card UUID → owner UUID, return from graveyard to owner's hand at the beginning
+     *  of the next end step. Used by Tiana, Ship's Caretaker. */
+    public final List<DelayedGraveyardToHandReturn> pendingDelayedGraveyardToHandReturns = Collections.synchronizedList(new ArrayList<>());
+
+    public record DelayedGraveyardToHandReturn(UUID cardId, UUID ownerId) {}
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
@@ -787,6 +793,9 @@ public class GameData {
 
         // --- Delayed untap permanents (records are immutable) ---
         copy.pendingDelayedUntapPermanents.addAll(this.pendingDelayedUntapPermanents);
+
+        // --- Delayed graveyard-to-hand returns (records are immutable) ---
+        copy.pendingDelayedGraveyardToHandReturns.addAll(this.pendingDelayedGraveyardToHandReturns);
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);

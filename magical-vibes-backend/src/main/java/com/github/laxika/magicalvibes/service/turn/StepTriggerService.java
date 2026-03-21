@@ -903,6 +903,35 @@ public class StepTriggerService {
             }
         }
 
+        // Process delayed graveyard-to-hand returns (e.g. Tiana, Ship's Caretaker)
+        if (!gameData.pendingDelayedGraveyardToHandReturns.isEmpty()) {
+            List<GameData.DelayedGraveyardToHandReturn> pendingReturns = new ArrayList<>(gameData.pendingDelayedGraveyardToHandReturns);
+            gameData.pendingDelayedGraveyardToHandReturns.clear();
+            for (GameData.DelayedGraveyardToHandReturn pending : pendingReturns) {
+                List<Card> graveyard = gameData.playerGraveyards.get(pending.ownerId());
+                if (graveyard == null) continue;
+                Card cardToReturn = null;
+                for (Card card : graveyard) {
+                    if (card.getId().equals(pending.cardId())) {
+                        cardToReturn = card;
+                        break;
+                    }
+                }
+                if (cardToReturn != null) {
+                    graveyard.remove(cardToReturn);
+                    gameData.addCardToHand(pending.ownerId(), cardToReturn);
+                    String playerName = gameData.playerIdToName.get(pending.ownerId());
+                    String logEntry = cardToReturn.getName() + " returns to " + playerName + "'s hand (delayed trigger).";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} returns to {}'s hand from graveyard (delayed end-step trigger)",
+                            gameData.id, cardToReturn.getName(), playerName);
+                } else {
+                    log.info("Game {} - Delayed graveyard-to-hand return for card {} skipped (no longer in graveyard)",
+                            gameData.id, pending.cardId());
+                }
+            }
+        }
+
         UUID activePlayerId = gameData.activePlayerId;
         List<UUID> triggerOrder = new ArrayList<>();
         triggerOrder.add(activePlayerId);

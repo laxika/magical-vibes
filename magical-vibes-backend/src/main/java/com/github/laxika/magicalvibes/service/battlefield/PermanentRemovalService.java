@@ -433,6 +433,10 @@ public class PermanentRemovalService {
                 deathTriggerService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
             deathTriggerService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId, target.getCard().getId());
+            // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)
+            if (target.getCard().isAura() || target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                deathTriggerService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
+            }
         }
     }
 

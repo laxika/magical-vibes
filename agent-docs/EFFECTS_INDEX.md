@@ -843,6 +843,7 @@ Pass `null` as filter to allow any card.
 | `UntapAllControlledPermanentsEffect` | `(PermanentPredicate filter)` | untap all permanents you control matching filter (e.g. `PermanentIsLandPredicate` for "untap all lands you control") |
 | `UntapUpToControlledPermanentsEffect` | `(int count, PermanentPredicate filter)` | untap up to N tapped permanents the controller controls matching filter; if filter is null, any tapped permanent qualifies |
 | `RegisterDelayedUntapPermanentsEffect` | `(int count, PermanentPredicate filter)` | registers a delayed trigger that fires at the beginning of the next end step, putting an `UntapUpToControlledPermanentsEffect(count, filter)` on the stack. Used by Teferi, Hero of Dominaria +1 with `PermanentIsLandPredicate` |
+| `RegisterDelayedReturnCardFromGraveyardToHandEffect` | `(UUID cardId)` | registers a delayed trigger that fires at the beginning of the next end step, returning the card from its owner's graveyard to their hand (if still there). Used by Tiana, Ship's Caretaker with `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` slot |
 | `UntapEachOtherCreatureYouControlEffect` | `(PermanentPredicate filter)` | untap each other creature you control matching filter; `()` no-arg overload untaps all (ON_ATTACK trigger or activated ability) |
 | `UnattachEquipmentFromTargetPermanentsEffect` | `()` | unattach all equipment from target permanents (multi-target) |
 

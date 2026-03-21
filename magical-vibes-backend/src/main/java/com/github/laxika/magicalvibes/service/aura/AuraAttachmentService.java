@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.aura;
 
+import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +32,7 @@ public class AuraAttachmentService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardService graveyardService;
+    private final DeathTriggerService deathTriggerService;
 
     /**
      * Removes auras whose enchanted permanent no longer exists and detaches equipment whose
@@ -58,10 +60,14 @@ public class AuraAttachmentService {
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
                     } else {
                         it.remove();
-                        graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
+                        boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                         String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
+                        // Check for Tiana-style triggers (Aura put into graveyard from battlefield)
+                        if (wentToGraveyard) {
+                            deathTriggerService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, p.getCard(), playerId);
+                        }
                     }
                 }
             }

@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
@@ -1552,5 +1553,40 @@ public class GraveyardReturnResolutionService {
         gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.BATTLEFIELD, null);
         playerInputService.beginGraveyardChoice(gameData, next.playerId(), matchingIndices,
                 "Return a " + filterLabel + " from your graveyard to the battlefield.");
+    }
+
+    /**
+     * Registers a delayed trigger that will return the specified card from its owner's graveyard
+     * to their hand at the beginning of the next end step. The card must still be in the graveyard
+     * when the end step arrives for the return to happen.
+     *
+     * <p>Used by Tiana, Ship's Caretaker.
+     */
+    @HandlesEffect(RegisterDelayedReturnCardFromGraveyardToHandEffect.class)
+    private void resolveRegisterDelayedReturnCardFromGraveyardToHand(GameData gameData, StackEntry entry,
+                                                                      RegisterDelayedReturnCardFromGraveyardToHandEffect effect) {
+        UUID cardId = effect.cardId();
+        if (cardId == null) return;
+
+        // Find the card's owner (whose graveyard it's in)
+        UUID ownerId = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard != null && graveyard.stream().anyMatch(c -> c.getId().equals(cardId))) {
+                ownerId = playerId;
+                break;
+            }
+        }
+
+        if (ownerId == null) {
+            String logEntry = "Delayed return fizzles — card is no longer in any graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Delayed return registered but card {} not in any graveyard", gameData.id, cardId);
+            return;
+        }
+
+        gameData.pendingDelayedGraveyardToHandReturns.add(new GameData.DelayedGraveyardToHandReturn(cardId, ownerId));
+        log.info("Game {} - Delayed graveyard-to-hand return registered for card {} (owner {})",
+                gameData.id, cardId, ownerId);
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -534,6 +535,46 @@ public class DeathTriggerService {
             String triggerLog = target.getCard().getName() + "'s ability triggers (left the battlefield).";
             gameBroadcastService.logAndBroadcast(gameData, triggerLog);
             log.info("Game {} - {} triggers (left the battlefield)", gameData.id, target.getCard().getName());
+        }
+    }
+
+    /**
+     * Checks for permanents with {@code ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD}
+     * triggers on the controller's battlefield. For each, queues a MayEffect that registers a delayed
+     * return-from-graveyard-to-hand trigger at the beginning of the next end step.
+     *
+     * <p>Used by Tiana, Ship's Caretaker: "Whenever an Aura or Equipment you control is put into
+     * a graveyard from the battlefield, you may return that card to its owner's hand at the beginning
+     * of the next end step."
+     *
+     * @param gameData     the current game state
+     * @param dyingCard    the Aura or Equipment card that was put into the graveyard
+     * @param controllerId the player who controlled the Aura or Equipment
+     */
+    public void checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(GameData gameData, Card dyingCard, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                if (effect instanceof RegisterDelayedReturnCardFromGraveyardToHandEffect) {
+                    // Construct the actual delayed return effect with the dying card's ID baked in
+                    RegisterDelayedReturnCardFromGraveyardToHandEffect delayedEffect =
+                            new RegisterDelayedReturnCardFromGraveyardToHandEffect(dyingCard.getId());
+                    MayEffect may = new MayEffect(delayedEffect,
+                            "Return " + dyingCard.getName() + " to its owner's hand at the beginning of the next end step?");
+                    gameData.queueMayAbility(perm.getCard(), controllerId, may);
+
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers (" + dyingCard.getName()
+                            + " was put into a graveyard from the battlefield).";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers (ally Aura/Equipment {} put into graveyard from battlefield)",
+                            gameData.id, perm.getCard().getName(), dyingCard.getName());
+                }
+            }
         }
     }
 }

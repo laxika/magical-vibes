@@ -98,5 +98,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_LOSES_LIFE,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
      *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
-    ON_SELF_LEAVES_BATTLEFIELD
+    ON_SELF_LEAVES_BATTLEFIELD,
+    /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
+     *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
+     *  the graveyard. Used by Tiana, Ship's Caretaker. */
+    ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD
 }
