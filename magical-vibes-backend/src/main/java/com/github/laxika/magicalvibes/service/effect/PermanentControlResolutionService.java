@@ -172,7 +172,7 @@ public class PermanentControlResolutionService {
         CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
                 creatureCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), null, effect.subtypes(), effect.keywords(), effect.additionalTypes(),
-                effect.tappedAndAttacking(), false, Map.of(), false, false
+                effect.tappedAndAttacking(), false, Map.of(), false, false, false
         );
         applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     }
@@ -373,6 +373,9 @@ public class PermanentControlResolutionService {
             if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
                 tokenCard.setAdditionalTypes(token.additionalTypes());
             }
+            if (token.legendary()) {
+                tokenCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+            }
             if (token.tokenEffects() != null) {
                 for (Map.Entry<EffectSlot, CardEffect> tokenEffect : token.tokenEffects().entrySet()) {
                     tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
@@ -556,7 +559,7 @@ public class PermanentControlResolutionService {
         CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
                 attachmentCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), null, effect.subtypes(), effect.keywords(), effect.additionalTypes(),
-                false, false, Map.of(), false, effect.exileAtEndStep()
+                false, false, Map.of(), false, effect.exileAtEndStep(), false
         );
         applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
