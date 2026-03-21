@@ -771,7 +771,7 @@ public class StaticEffectResolutionService {
                 accumulator.addKeywords(boost.grantedKeywords());
             } else if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeyword(grant.keyword());
+                    accumulator.addKeywords(grant.keywords());
                 }
             } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
                 accumulator.addProtectionColors(protection.colors());
@@ -931,7 +931,7 @@ public class StaticEffectResolutionService {
             accumulator.addToughness(boost.toughnessBoost());
             accumulator.addKeywords(boost.grantedKeywords());
         } else if (wrapped instanceof GrantKeywordEffect grant) {
-            accumulator.addKeyword(grant.keyword());
+            accumulator.addKeywords(grant.keywords());
         }
     }
 
