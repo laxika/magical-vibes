@@ -138,6 +138,12 @@ public class Permanent {
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
+    /** Activated abilities granted until the controller's next turn begins
+     *  (e.g. Song of Freyalise "{T}: Add one mana of any color.").
+     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
+     *  Cleared at the beginning of the controller's next turn by
+     *  {@link com.github.laxika.magicalvibes.model.Permanent#clearUntilNextTurnAbilities()}. */
+    private final List<ActivatedAbility> untilNextTurnActivatedAbilities = new ArrayList<>();
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -232,6 +238,7 @@ public class Permanent {
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.kicked = source.kicked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
+        this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
     }
 
     public Card getOriginalCard() {
@@ -411,5 +418,14 @@ public class Permanent {
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.temporaryActivatedAbilities.clear();
+    }
+
+    /**
+     * Clears activated abilities that were granted "until your next turn"
+     * (e.g. Song of Freyalise). Called at the beginning of the controller's
+     * next turn, not at end of turn.
+     */
+    public void clearUntilNextTurnAbilities() {
+        this.untilNextTurnActivatedAbilities.clear();
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -161,6 +162,12 @@ public class TurnProgressionService {
         turnCleanupService.drainManaPools(gameData);
 
         gameData.forEachPermanent((playerId, p) -> p.setAttackedThisTurn(false));
+
+        // Clear "until your next turn" activated abilities for the active player's permanents
+        List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
+        if (activePlayerBf != null) {
+            activePlayerBf.forEach(Permanent::clearUntilNextTurnAbilities);
+        }
 
         untapStepService.untapPermanents(gameData, nextActive);
 

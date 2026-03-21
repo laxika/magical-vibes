@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect;
@@ -368,5 +370,40 @@ public class KeywordGrantResolutionService {
         String logEntry = entry.getCard().getName() + " grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} grants damage bounce to {} creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(GrantActivatedAbilityEffect.class)
+    private void resolveGrantActivatedAbility(GameData gameData, StackEntry entry,
+                                               GrantActivatedAbilityEffect effect) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+        int count = 0;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                if (effect.filter() != null
+                        && !gameQueryService.matchesPermanentPredicate(permanent, effect.filter(), filterContext)) {
+                    continue;
+                }
+                if (effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+                    permanent.getUntilNextTurnActivatedAbilities().add(effect.ability());
+                } else {
+                    permanent.getTemporaryActivatedAbilities().add(effect.ability());
+                }
+                count++;
+            }
+        }
+
+        String durationText = effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
+                ? "until your next turn" : "until end of turn";
+        String logEntry = entry.getCard().getName() + " grants \"" + effect.ability().getDescription()
+                + "\" to " + count + " creature(s) " + durationText + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} grants activated ability to {} creature(s) {}",
+                gameData.id, entry.getCard().getName(), count, durationText);
     }
 }
