@@ -107,9 +107,15 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
-        // Case 1: Pre-targeted (from spell cast or activated ability targeting)
-        if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
-            resolvePreTargeted(gameData, entry, effect, controllerId, sourceCardId);
+        // Skip if targeted graveyard effect but no target was provided ("up to one" with 0 chosen)
+        if (effect.targetGraveyard() && entry.getTargetId() == null
+                && (entry.getTargetCardIds() == null || entry.getTargetCardIds().isEmpty())) {
+            return;
+        }
+
+        // Case 1: Pre-targeted (from spell cast, activated ability, or multi-target spell)
+        if (effect.targetGraveyard() && entry.getTargetId() != null) {
+            resolvePreTargetedById(gameData, entry, effect, controllerId, sourceCardId, entry.getTargetId());
             return;
         }
 

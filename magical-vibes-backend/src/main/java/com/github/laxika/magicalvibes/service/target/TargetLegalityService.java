@@ -241,6 +241,19 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
     }
 
+    /**
+     * Validates only the graveyard-targeting effects of a spell, ignoring permanent-targeting effects.
+     * Used for spells with mixed graveyard + permanent targets (e.g. Yawgmoth's Vile Offering)
+     * where each target type is validated separately.
+     */
+    public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, UUID targetId) {
+        List<CardEffect> graveyardEffects = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CardEffect::canTargetGraveyard)
+                .toList();
+        targetValidationService.validateEffectTargets(graveyardEffects,
+                new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD, card));
+    }
+
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
         validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets());
 
@@ -370,6 +383,10 @@ public class TargetLegalityService {
             if (allSecondaryGone && entry.getTargetId() != null) {
                 Permanent primaryTarget = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 boolean primaryStillLegal = primaryTarget != null || gameData.playerIds.contains(entry.getTargetId());
+                // Also check graveyard for graveyard-zone primary targets (e.g. Yawgmoth's Vile Offering)
+                if (!primaryStillLegal && entry.getTargetZone() == Zone.GRAVEYARD) {
+                    primaryStillLegal = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) != null;
+                }
                 targetFizzled = !primaryStillLegal;
             } else {
                 targetFizzled = allSecondaryGone;

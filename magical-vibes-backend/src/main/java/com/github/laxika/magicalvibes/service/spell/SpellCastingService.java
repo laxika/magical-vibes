@@ -461,7 +461,12 @@ public class SpellCastingService {
                         throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
                     }
                 }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue);
+                if (card.getMaxTargets() > 0) {
+                    // Mixed graveyard + permanent targeting: validate only graveyard effects
+                    targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card, targetId);
+                } else {
+                    targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue);
+                }
             } else if (needsGraveyardEffectTargeting) {
                 if (!canTargetAnyGraveyard) {
                     boolean inControllersGraveyard = gameData.playerGraveyards
@@ -472,7 +477,12 @@ public class SpellCastingService {
                         throw new IllegalStateException("Target must be in an opponent's graveyard");
                     }
                 }
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
+                if (card.getMaxTargets() > 0) {
+                    // Mixed graveyard + permanent targeting: validate only graveyard effects
+                    targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card, targetId);
+                } else {
+                    targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
+                }
             } else {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, unwrappedNeedsTarget);
             }
@@ -482,10 +492,17 @@ public class SpellCastingService {
                     ? "Must target an exiled " + exileFilterLabel + " you own"
                     : "Must target an exiled " + exileFilterLabel);
         } else if (unwrappedNeedsTarget && needsSingleGraveyardTargeting) {
-            String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
-            throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
+            // For spells with multi-target permanent targeting, graveyard target is optional
+            if (card.getMaxTargets() == 0) {
+                String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
+                throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
+            }
         } else if (unwrappedNeedsTarget && needsGraveyardEffectTargeting) {
-            throw new IllegalStateException("Must target a card in a graveyard");
+            // For spells with multi-target permanent targeting (e.g. Yawgmoth's Vile Offering),
+            // graveyard target is optional when the spell's permanent target min allows it
+            if (card.getMaxTargets() == 0) {
+                throw new IllegalStateException("Must target a card in a graveyard");
+            }
         }
 
         // Validate multi-target permanent targeting
@@ -801,6 +818,13 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId,
                         null, Map.of(), null, List.of(), targetIds
+                ));
+            } else if (!targetIds.isEmpty() && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) && targetId != null) {
+                // Combined graveyard + permanent targeting (e.g. Yawgmoth's Vile Offering)
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, resolvedXValue, targetId,
+                        null, Map.of(), Zone.GRAVEYARD, List.of(), targetIds
                 ));
             } else if (!targetIds.isEmpty() && !sacFlags.usesSacrificeAllCreaturesCost()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")

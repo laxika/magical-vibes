@@ -592,6 +592,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    public void castSorcery(Player player, int cardIndex, UUID targetId, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, targetIds, List.of());
+    }
+
     public void castSorcery(Player player, int cardIndex, int xValue, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of());
