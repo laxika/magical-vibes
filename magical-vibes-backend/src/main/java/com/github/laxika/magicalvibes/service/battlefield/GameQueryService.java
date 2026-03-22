@@ -1034,18 +1034,56 @@ public class GameQueryService {
 
     /**
      * Returns the amount of combat damage this creature assigns.
-     * Normally equal to effective power, but some effects (e.g. Bark of Doran)
-     * cause a creature to assign damage equal to its toughness when toughness > power.
+     * Normally equal to effective power, but some effects cause a creature to assign
+     * damage equal to its toughness instead:
+     * <ul>
+     *   <li>Equipment/aura-scoped (e.g. Bark of Doran): only when toughness &gt; power.</li>
+     *   <li>Controller-scoped (e.g. Belligerent Brontodon): always uses toughness.</li>
+     * </ul>
      */
     public int getEffectiveCombatDamage(GameData gameData, Permanent creature) {
         int power = getEffectivePower(gameData, creature);
         int toughness = getEffectiveToughness(gameData, creature);
 
+        // Controller-scoped: always use toughness (e.g. Belligerent Brontodon)
+        if (hasControllerToughnessAssignEffect(gameData, creature)) {
+            return toughness;
+        }
+
+        // Equipment/aura-scoped: use toughness only when toughness > power
         if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
             return toughness;
         }
 
         return power;
+    }
+
+    /**
+     * Returns {@code true} if the creature's controller has a permanent on the battlefield
+     * with an {@link AssignCombatDamageWithToughnessEffect} whose scope covers this creature
+     * ({@link GrantScope#OWN_CREATURES} or {@link GrantScope#ALL_OWN_CREATURES}).
+     */
+    private boolean hasControllerToughnessAssignEffect(GameData gameData, Permanent creature) {
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        if (bf == null) return false;
+
+        for (Permanent p : bf) {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AssignCombatDamageWithToughnessEffect acdt) {
+                    GrantScope scope = acdt.scope();
+                    if (scope == GrantScope.ALL_OWN_CREATURES) {
+                        return true;
+                    }
+                    if (scope == GrantScope.OWN_CREATURES && !p.getId().equals(creature.getId())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

@@ -827,7 +827,7 @@ Pass `null` as filter to allow any card.
 | `MustBeBlockedIfAbleEffect` | `()` | at least one creature must block this if able (static, Gaea's Protector-style) |
 | `MustBlockSourceEffect` | `(UUID sourcePermanentId)` | target creature must block source permanent this turn if able |
 | `AssignCombatDamageAsThoughUnblockedEffect` | `()` | assign combat damage as though unblocked (static) |
-| `AssignCombatDamageWithToughnessEffect` | `()` | assign combat damage using toughness instead of power (static) |
+| `AssignCombatDamageWithToughnessEffect` | `()` or `(GrantScope scope)` | assign combat damage using toughness instead of power (static). No-arg defaults to `EQUIPPED_CREATURE` (toughness > power only, equipment/aura pattern). Use `ALL_OWN_CREATURES` for controller-wide effect that always uses toughness (e.g. Belligerent Brontodon). |
 | `MakeCreatureUnblockableEffect` | `()` or `(boolean selfTargeting)` | target creature is unblockable this turn. No-arg (false) targets another permanent; `true` makes the source creature unblockable (self-targeting, e.g. Trespassing Souleater) |
 | `MakeAllCreaturesUnblockableEffect` | `()` | all creatures on all battlefields can't be blocked this turn |
 | `TargetCreatureCantBlockThisTurnEffect` | `()` | target creature can't block this turn |
