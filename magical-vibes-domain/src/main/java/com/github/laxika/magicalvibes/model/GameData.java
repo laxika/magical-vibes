@@ -86,6 +86,8 @@ public class GameData {
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
+    /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
+    public boolean preventAllDamageToAllCreatures;
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public boolean allPermanentsEnterTappedThisTurn;
@@ -564,6 +566,7 @@ public class GameData {
         copy.turnNumber = this.turnNumber;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
+        copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->

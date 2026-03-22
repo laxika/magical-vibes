@@ -77,6 +77,7 @@ public class TurnCleanupService {
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
+        gameData.preventAllDamageToAllCreatures = false;
         gameData.combatDamageExemptPredicate = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.preventDamageFromColors.clear();

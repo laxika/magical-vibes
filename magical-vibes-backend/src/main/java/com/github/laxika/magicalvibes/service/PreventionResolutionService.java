@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCo
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageExceptBySubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndCreaturesEffect;
@@ -83,6 +84,14 @@ public class PreventionResolutionService {
         gameData.preventAllCombatDamage = true;
 
         String logEntry = "All combat damage will be prevented this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+    }
+
+    @HandlesEffect(PreventAllDamageToAllCreaturesEffect.class)
+    void resolvePreventAllDamageToAllCreatures(GameData gameData, StackEntry entry) {
+        gameData.preventAllDamageToAllCreatures = true;
+
+        String logEntry = "All damage that would be dealt to creatures this turn is prevented.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
     }
 

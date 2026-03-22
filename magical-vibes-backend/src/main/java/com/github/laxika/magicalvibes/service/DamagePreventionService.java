@@ -83,6 +83,8 @@ public class DamagePreventionService {
     }
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
+        // Blinding Fog: prevent all damage to all creatures
+        if (gameQueryService.isDamagePreventable(gameData) && gameData.preventAllDamageToAllCreatures) return 0;
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention
         if (gameQueryService.isDamagePreventable(gameData)) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());

@@ -899,6 +899,7 @@ Pass `null` as filter to allow any card.
 | `PreventDamageFromColorsEffect` | `(Set<CardColor> colors)` | prevent all damage from sources of specified colors (static) |
 | `PreventNextColorDamageToControllerEffect` | `(CardColor chosenColor)` | prevent next damage of chosen color to controller |
 | `PreventAllDamageToControllerAndCreaturesEffect` | `()` | prevent all damage to controller and creatures controller controls this turn (Safe Passage-style) |
+| `PreventAllDamageToAllCreaturesEffect` | `()` | prevent all damage to all creatures (both players') this turn (Blinding Fog-style). Sets `gameData.preventAllDamageToAllCreatures` flag. Does NOT prevent damage to players |
 | `PreventAllDamageByTargetCreatureEffect` | `()` | prevent all damage target creature(s) would deal this turn (multi-target via targetIds) |
 | `PreventAllDamageFromChosenSourceEffect` | `()` | prevent all damage a chosen source would deal to controller this turn (prompts permanent choice on resolution) |
 | `PreventDamageToTargetFromChosenSourceEffect` | `(int amount)` | prevent next N damage from a chosen source to a specific target this turn. Target chosen on cast, source chosen on resolution (prompts permanent choice). `canTargetPlayer()=true`, `canTargetPermanent()=true` (e.g. Healing Grace) |
