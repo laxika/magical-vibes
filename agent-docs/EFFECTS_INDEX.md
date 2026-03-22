@@ -633,6 +633,7 @@ Pass `null` as filter to allow any card.
 | `DealDamageOnSpellLifeGainEffect` | `(int damage, CardColor triggeringColor)` | ON_CONTROLLER_GAINS_LIFE marker: deals N damage to target creature or player when a spell of the specified color causes controller to gain life. Only triggers from instant/sorcery spell sources. MiscTriggerCollectorService queues a DealDamageToAnyTargetEffect via pendingLifeGainTriggerTargets. Used by Firesong and Sunspeaker |
 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `(int lifeLoss, int lifeGain)` | drain: target loses N, you gain M |
 | `DrainLifePerControlledPermanentEffect` | `(PermanentPredicate filter, int multiplier)` | target player loses X life, controller gains X life, where X = multiplier × matching permanents controlled (e.g. Tezzeret -4: twice artifacts) |
+| `TargetPlayerLosesLifePerControlledPermanentEffect` | `(PermanentPredicate filter, int multiplier)` | target player loses X life (no life gain), where X = multiplier × matching permanents controlled (e.g. Bishop of the Bloodstained: 1× Vampires) |
 | `EnchantedCreatureControllerLosesLifeEffect` | `(int amount, UUID affectedPlayerId)` | enchanted creature's controller loses N life (trigger) |
 | `EachPlayerLosesLifeEffect` | `(int amount)` | each player (including controller) loses N life |
 | `EachPlayerLosesLifePerCreatureControlledEffect` | `(int lifePerCreature)` | each player loses N life per creature they control |
