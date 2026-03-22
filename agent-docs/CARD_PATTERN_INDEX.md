@@ -329,7 +329,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Subtype cost reduction | `d/DanithaCapashenParagon.java` | STATIC ReduceOwnCastCostForSubtypeEffect(Set.of(AURA, EQUIPMENT), 1) — from battlefield permanent |
 | Creature mana only | `m/MyrSuperion.java` | setRequiresCreatureMana(true) — can only be cast with mana produced by creatures |
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
-| Double damage | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
+| Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
+| Double damage (controller's sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect — doubles all damage from sources you control (combat, spells, abilities) |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |

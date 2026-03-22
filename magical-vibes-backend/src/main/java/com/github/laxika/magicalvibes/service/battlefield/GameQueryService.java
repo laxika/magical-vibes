@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
@@ -1934,7 +1935,9 @@ public class GameQueryService {
         int bonus = (damage > 0 && entry != null)
                 ? getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
                 : 0;
-        return (damage + bonus) * getDamageMultiplier(gameData) * getControllerSpellDamageMultiplier(gameData, entry);
+        UUID controllerId = entry != null ? entry.getControllerId() : null;
+        return (damage + bonus) * getDamageMultiplier(gameData) * getControllerSpellDamageMultiplier(gameData, entry)
+                * getControllerDamageMultiplier(gameData, controllerId);
     }
 
     /**
@@ -1953,6 +1956,27 @@ public class GameQueryService {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof DoubleControllerSpellDamageEffect dcsde
                         && entry.getCard().getColors().contains(dcsde.color())) {
+                    multiplier[0] *= 2;
+                }
+            }
+        });
+        return multiplier[0];
+    }
+
+    /**
+     * Returns the per-controller damage multiplier based on {@link DoubleControllerDamageEffect}
+     * permanents on the battlefield. Only applies when the source is controlled by the same player
+     * who controls the permanent with the effect. Doubles ALL damage from sources the controller
+     * controls (combat, spells, abilities). Multiple instances stack multiplicatively.
+     */
+    int getControllerDamageMultiplier(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return 1;
+
+        int[] multiplier = {1};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!playerId.equals(controllerId)) return;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof DoubleControllerDamageEffect) {
                     multiplier[0] *= 2;
                 }
             }
@@ -2013,13 +2037,14 @@ public class GameQueryService {
      */
     public int applyCombatDamageMultiplier(GameData gameData, int damage, Permanent source, Permanent target) {
         int bonus = 0;
+        UUID controllerId = findPermanentController(gameData, source.getId());
         if (damage > 0) {
-            UUID controllerId = findPermanentController(gameData, source.getId());
             if (controllerId != null) {
                 bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors());
             }
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
+        result *= getControllerDamageMultiplier(gameData, controllerId);
         result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);

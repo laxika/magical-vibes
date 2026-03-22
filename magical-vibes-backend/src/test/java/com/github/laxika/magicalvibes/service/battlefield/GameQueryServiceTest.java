@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEf
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -1335,6 +1336,54 @@ class GameQueryServiceTest {
         @DisplayName("applyDamageMultiplier with no effect returns same value")
         void applyMultiplierNoEffect() {
             assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(3);
+        }
+    }
+
+    // ===== getControllerDamageMultiplier =====
+
+    @Nested
+    @DisplayName("getControllerDamageMultiplier")
+    class ControllerDamageMultiplier {
+
+        @Test
+        @DisplayName("returns 1 by default")
+        void returnsOneByDefault() {
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("returns 1 for null controllerId")
+        void returnsOneForNull() {
+            assertThat(gqs.getControllerDamageMultiplier(gd, null)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("returns 2 when controller has one DoubleControllerDamageEffect")
+        void returnsTwoWithOneEffect() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
+                    new DoubleControllerDamageEffect()));
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("does not affect opponent")
+        void doesNotAffectOpponent() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
+                    new DoubleControllerDamageEffect()));
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player2Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("returns 4 with two DoubleControllerDamageEffect permanents")
+        void returnsFourWithTwoEffects() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
+                    new DoubleControllerDamageEffect()));
+            addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
+                    new DoubleControllerDamageEffect()));
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id)).isEqualTo(4);
         }
     }
 
