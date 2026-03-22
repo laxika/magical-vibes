@@ -30,6 +30,8 @@ function makeCard(overrides: Partial<Card>): Card {
     hasAlternateCastingCost: false,
     alternateCostLifePayment: 0,
     alternateCostSacrificeCount: 0,
+    alternateCostTapCount: 0,
+    alternateCostManaCost: null,
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,

@@ -124,8 +124,9 @@ public class ExampleCard extends Card {
 
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
-  - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`)
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
+  - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`)
+  - Example (sacrifice + life): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
+  - Example (mana + tap artifact): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/z/ZahidDjinnOfTheLamp.java`
 
 - Graveyard cast ("You may cast this card from your graveyard"):
   - `addCastingOption(new GraveyardCast())` — uses the card's normal mana cost, no exile after resolution (unlike flashback)

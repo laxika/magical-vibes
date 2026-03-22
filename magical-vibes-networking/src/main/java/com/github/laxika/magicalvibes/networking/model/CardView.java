@@ -39,6 +39,8 @@ public record CardView(
         boolean hasAlternateCastingCost,
         int alternateCostLifePayment,
         int alternateCostSacrificeCount,
+        int alternateCostTapCount,
+        String alternateCostManaCost,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         boolean transformable,
         String kickerCost

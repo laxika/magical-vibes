@@ -61,15 +61,24 @@
       <div class="combat-banner targeting-banner">
         <span>Cast {{ choice.targeting.alternateCostCardName }} &mdash; choose how to pay:</span>
         <button class="btn-confirm-combat" (click)="choice.targeting.choosePayMana()">Pay Mana</button>
-        <button class="btn-confirm-combat" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
+        @if (choice.targeting.alternateCostSacrificeCount > 0) {
+          <button class="btn-confirm-combat" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
+        } @else if (choice.targeting.alternateCostTapCount > 0) {
+          <button class="btn-confirm-combat" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Tap {{ choice.targeting.alternateCostTapCount }} Artifact</button>
+        }
         <button class="btn-confirm-combat" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
       </div>
     }
 
     @if (choice.targeting.selectingAlternateCostCreatures) {
       <div class="combat-banner targeting-banner">
-        <span>Select {{ choice.targeting.alternateCostSacrificeCount }} creatures to sacrifice for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostSacrificeCount }})</span>
-        <button class="btn-confirm-combat" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostSacrificeCount">Cast</button>
+        @if (choice.targeting.alternateCostSacrificeCount > 0) {
+          <span>Select {{ choice.targeting.alternateCostSacrificeCount }} creatures to sacrifice for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostSacrificeCount }})</span>
+          <button class="btn-confirm-combat" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostSacrificeCount">Cast</button>
+        } @else if (choice.targeting.alternateCostTapCount > 0) {
+          <span>Select {{ choice.targeting.alternateCostTapCount }} untapped artifact to tap for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostTapCount }})</span>
+          <button class="btn-confirm-combat" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostTapCount">Cast</button>
+        }
         <button class="btn-confirm-combat" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
       </div>
     }

@@ -179,6 +179,8 @@ export interface Card {
   hasAlternateCastingCost: boolean;
   alternateCostLifePayment: number;
   alternateCostSacrificeCount: number;
+  alternateCostTapCount: number;
+  alternateCostManaCost: string | null;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;

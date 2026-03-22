@@ -145,6 +145,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -171,6 +173,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -195,6 +199,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -219,6 +225,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -243,6 +251,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -270,6 +280,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -296,6 +308,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -322,6 +336,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -388,6 +404,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -410,6 +428,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()
@@ -460,6 +480,8 @@ public class PermanentViewFactory {
                 cardView.hasAlternateCastingCost(),
                 cardView.alternateCostLifePayment(),
                 cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+                cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
                 cardView.kickerCost()

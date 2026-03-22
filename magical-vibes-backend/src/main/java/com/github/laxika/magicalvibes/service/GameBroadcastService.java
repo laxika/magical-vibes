@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -894,6 +895,22 @@ public class GameBroadcastService {
                     .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
                     .count();
             if (matchingCount < sacCost.get().count()) return false;
+        }
+
+        var tapCost = altCast.getCost(TapUntappedPermanentsCost.class);
+        if (tapCost.isPresent()) {
+            if (battlefield == null) return false;
+            long matchingCount = battlefield.stream()
+                    .filter(p -> !p.isTapped() && gameQueryService.matchesPermanentPredicate(gameData, p, tapCost.get().filter()))
+                    .count();
+            if (matchingCount < tapCost.get().count()) return false;
+        }
+
+        var manaCost = altCast.getCost(ManaCastingCost.class);
+        if (manaCost.isPresent()) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaCost cost = new ManaCost(manaCost.get().manaCost());
+            if (!cost.canPay(pool, 0)) return false;
         }
 
         return true;

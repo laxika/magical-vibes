@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -43,6 +45,7 @@ public class CardViewFactory {
                 base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
                 base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
+                base.alternateCostTapCount(), base.alternateCostManaCost(),
                 base.graveyardActivatedAbilities(), base.transformable(), base.kickerCost());
     }
 
@@ -69,6 +72,8 @@ public class CardViewFactory {
         boolean hasAlternateCastingCost = altCastOpt.isPresent();
         int alternateCostLifePayment = altCastOpt.flatMap(a -> a.getCost(LifeCastingCost.class)).map(LifeCastingCost::amount).orElse(0);
         int alternateCostSacrificeCount = altCastOpt.flatMap(a -> a.getCost(SacrificePermanentsCost.class)).map(SacrificePermanentsCost::count).orElse(0);
+        int alternateCostTapCount = altCastOpt.flatMap(a -> a.getCost(TapUntappedPermanentsCost.class)).map(TapUntappedPermanentsCost::count).orElse(0);
+        String alternateCostManaCost = altCastOpt.flatMap(a -> a.getCost(ManaCastingCost.class)).map(ManaCastingCost::manaCost).orElse(null);
 
         return new CardView(
                 card.getId(),
@@ -99,6 +104,8 @@ public class CardViewFactory {
                 hasAlternateCastingCost,
                 alternateCostLifePayment,
                 alternateCostSacrificeCount,
+                alternateCostTapCount,
+                alternateCostManaCost,
                 graveyardAbilityViews,
                 card.getBackFaceCard() != null,
                 card.getEffects(EffectSlot.STATIC).stream()

@@ -89,6 +89,8 @@ export class TargetingChoiceService {
     this.alternateCostCardName = '';
     this.alternateCostSacrificeCount = 0;
     this.alternateCostLifePayment = 0;
+    this.alternateCostTapCount = 0;
+    this.alternateCostManaCost = '';
     this.alternateCostSelectedIds.set([]);
     // Graveyard targeting
     this.targetingGraveyard = false;
@@ -172,6 +174,8 @@ export class TargetingChoiceService {
   alternateCostCardName = '';
   alternateCostSacrificeCount = 0;
   alternateCostLifePayment = 0;
+  alternateCostTapCount = 0;
+  alternateCostManaCost = '';
   alternateCostSelectedIds = signal<string[]>([]);
 
   // --- Graveyard targeting state ---
@@ -264,6 +268,8 @@ export class TargetingChoiceService {
         this.alternateCostCardName = card.name;
         this.alternateCostSacrificeCount = card.alternateCostSacrificeCount;
         this.alternateCostLifePayment = card.alternateCostLifePayment;
+        this.alternateCostTapCount = card.alternateCostTapCount;
+        this.alternateCostManaCost = card.alternateCostManaCost ?? '';
         return;
       }
 
@@ -852,11 +858,12 @@ export class TargetingChoiceService {
 
   toggleAlternateCostCreature(permanentId: string): void {
     if (!this.selectingAlternateCostCreatures) return;
+    const totalNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount;
     const current = this.alternateCostSelectedIds();
     if (current.includes(permanentId)) {
       this.alternateCostSelectedIds.set(current.filter(id => id !== permanentId));
     } else {
-      if (current.length >= this.alternateCostSacrificeCount) return;
+      if (current.length >= totalNeeded) return;
       this.alternateCostSelectedIds.set([...current, permanentId]);
     }
   }
@@ -867,8 +874,9 @@ export class TargetingChoiceService {
 
   confirmAlternateCost(): void {
     if (!this.selectingAlternateCostCreatures) return;
+    const totalNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount;
     const selected = this.alternateCostSelectedIds();
-    if (selected.length !== this.alternateCostSacrificeCount) return;
+    if (selected.length !== totalNeeded) return;
     this.websocketService.send({
       type: MessageType.PLAY_CARD,
       cardIndex: this.alternateCostCardIndex,
@@ -888,6 +896,8 @@ export class TargetingChoiceService {
     this.alternateCostCardName = '';
     this.alternateCostSacrificeCount = 0;
     this.alternateCostLifePayment = 0;
+    this.alternateCostTapCount = 0;
+    this.alternateCostManaCost = '';
     this.alternateCostSelectedIds.set([]);
   }
 

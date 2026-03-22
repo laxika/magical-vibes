@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -325,6 +326,44 @@ public class SpellCastingService {
                 int currentLife = gameData.getLife(playerId);
                 if (currentLife < lifeCost.get().amount()) {
                     throw new IllegalStateException("Not enough life to pay alternate cost");
+                }
+            }
+
+            var tapCost = altCast.getCost(TapUntappedPermanentsCost.class);
+            if (tapCost.isPresent()) {
+                int requiredCount = tapCost.get().count();
+                // When sacrifice cost is also present, the IDs are used for sacrifice; tap IDs come separately
+                // When only tap cost is present, all IDs are for tapping
+                int sacCount = sacCost.map(SacrificePermanentsCost::count).orElse(0);
+                int tapIdCount = alternateCostSacrificePermanentIds.size() - sacCount;
+                if (tapIdCount != requiredCount) {
+                    throw new IllegalStateException("Must tap exactly " + requiredCount + " permanents");
+                }
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                List<UUID> tapIds = alternateCostSacrificePermanentIds.subList(sacCount, alternateCostSacrificePermanentIds.size());
+                for (UUID tapId : tapIds) {
+                    Permanent toTap = battlefield.stream()
+                            .filter(p -> p.getId().equals(tapId))
+                            .findFirst()
+                            .orElse(null);
+                    if (toTap == null) {
+                        throw new IllegalStateException("Tap target not found on your battlefield");
+                    }
+                    if (toTap.isTapped()) {
+                        throw new IllegalStateException("Permanent is already tapped");
+                    }
+                    if (!gameQueryService.matchesPermanentPredicate(gameData, toTap, tapCost.get().filter())) {
+                        throw new IllegalStateException("Tap target does not match the required filter");
+                    }
+                }
+            }
+
+            var manaCost = altCast.getCost(ManaCastingCost.class);
+            if (manaCost.isPresent()) {
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                ManaCost cost = new ManaCost(manaCost.get().manaCost());
+                if (!cost.canPay(pool, 0)) {
+                    throw new IllegalStateException("Not enough mana to pay alternate casting cost");
                 }
             }
         }
@@ -1530,6 +1569,31 @@ public class SpellCastingService {
             gameData.playerLifeTotals.put(playerId, currentLife - lifeCost.amount());
             gameBroadcastService.logAndBroadcast(gameData,
                     player.getUsername() + " pays " + lifeCost.amount() + " life for " + card.getName() + ".");
+        });
+
+        // Tap untapped permanents
+        var tapCost = altCast.getCost(TapUntappedPermanentsCost.class);
+        if (tapCost.isPresent()) {
+            int sacCount = altCast.getCost(SacrificePermanentsCost.class).map(SacrificePermanentsCost::count).orElse(0);
+            List<UUID> tapIds = sacrificePermanentIds.subList(sacCount, sacrificePermanentIds.size());
+            for (UUID tapId : tapIds) {
+                Permanent toTap = gameQueryService.findPermanentById(gameData, tapId);
+                if (toTap != null) {
+                    toTap.tap();
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            player.getUsername() + " taps " + toTap.getCard().getName()
+                                    + " for " + card.getName() + ".");
+                }
+            }
+        }
+
+        // Pay mana (for alternate costs that include a mana component)
+        altCast.getCost(ManaCastingCost.class).ifPresent(manaCost -> {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaCost cost = new ManaCost(manaCost.manaCost());
+            cost.pay(pool);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    player.getUsername() + " pays " + manaCost.manaCost() + " for " + card.getName() + ".");
         });
     }
 
