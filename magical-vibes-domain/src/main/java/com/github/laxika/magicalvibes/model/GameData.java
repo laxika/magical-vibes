@@ -207,13 +207,19 @@ public class GameData {
     public CounterType pendingOwnPermanentCounterType;
     public int pendingOwnPermanentCounterCount;
     public UUID pendingTapSubtypeBoostSourcePermanentId;
-    /** Pile separation state (Liliana of the Veil ultimate): controller divides, target player chooses pile to sacrifice. */
+    /** Pile separation state: shared by permanent-pile effects (Liliana of the Veil) and card-pile effects (Boneyard Parley).
+     *  When {@code pendingPileSeparationCards} is non-empty, the pile IDs refer to card UUIDs (card-pile mode);
+     *  otherwise they refer to permanent UUIDs (permanent-pile mode). */
     public boolean pendingPileSeparation;
     public UUID pendingPileSeparationControllerId;
     public UUID pendingPileSeparationTargetPlayerId;
     public final List<UUID> pendingPileSeparationAllPermanentIds = Collections.synchronizedList(new ArrayList<>());
     public final List<UUID> pendingPileSeparationPile1Ids = Collections.synchronizedList(new ArrayList<>());
     public final List<UUID> pendingPileSeparationPile2Ids = Collections.synchronizedList(new ArrayList<>());
+    /** Card-pile mode only: the actual Card objects held during separation (not in any zone). */
+    public final List<Card> pendingPileSeparationCards = Collections.synchronizedList(new ArrayList<>());
+    /** Card-pile mode only: maps card UUID → original owner UUID for returning to owners' graveyards. */
+    public final Map<UUID, UUID> pendingPileSeparationCardOwners = new ConcurrentHashMap<>();
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Delayed triggers that untap up to N permanents matching a filter at the beginning of the next end step. */
     public final List<DelayedUntapPermanents> pendingDelayedUntapPermanents = Collections.synchronizedList(new ArrayList<>());
@@ -614,6 +620,8 @@ public class GameData {
         copy.pendingPileSeparationAllPermanentIds.addAll(this.pendingPileSeparationAllPermanentIds);
         copy.pendingPileSeparationPile1Ids.addAll(this.pendingPileSeparationPile1Ids);
         copy.pendingPileSeparationPile2Ids.addAll(this.pendingPileSeparationPile2Ids);
+        copy.pendingPileSeparationCards.addAll(this.pendingPileSeparationCards);
+        copy.pendingPileSeparationCardOwners.putAll(this.pendingPileSeparationCardOwners);
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);

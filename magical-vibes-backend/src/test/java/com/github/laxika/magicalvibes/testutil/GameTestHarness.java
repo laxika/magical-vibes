@@ -261,7 +261,7 @@ public class GameTestHarness {
         PermanentControlResolutionService permanentControlResolutionService = new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService);
         miscTriggerCollectorService.setPermanentControlResolutionService(permanentControlResolutionService);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, sessionManager, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
-        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService);
+        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService, cardViewFactory);
         PermanentCounterResolutionService permanentCounterResolutionService = new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
@@ -345,7 +345,7 @@ public class GameTestHarness {
                 inputCompletionService, gameQueryService, drawService, gameBroadcastService, mulliganService, playerInputService, turnProgressionService, battlefieldEntryService, sessionManager);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
-                gameQueryService, gameBroadcastService, playerInputService, turnProgressionService, effectResolutionService, destructionResolutionService);
+                gameQueryService, gameBroadcastService, playerInputService, turnProgressionService, effectResolutionService, destructionResolutionService, graveyardReturnResolutionService);
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 gameBroadcastService, stateBasedActionService,
                 playerInputService, turnProgressionService, effectResolutionService);

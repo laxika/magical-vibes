@@ -257,7 +257,7 @@ public class GameSimulator {
         PermanentControlResolutionService permanentControlResolutionService = new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService);
         miscTriggerCollectorService.setPermanentControlResolutionService(permanentControlResolutionService);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
-        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService);
+        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService, cardViewFactory);
         PermanentCounterResolutionService permanentCounterResolutionService = new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
@@ -340,7 +340,7 @@ public class GameSimulator {
                 inputCompletionService, gameQueryService, drawService, gameBroadcastService, mulliganService, playerInputService, turnProgressionService, battlefieldEntryService, noOpSession);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
-                gameQueryService, gameBroadcastService, playerInputService, turnProgressionService, effectResolutionService, destructionResolutionService);
+                gameQueryService, gameBroadcastService, playerInputService, turnProgressionService, effectResolutionService, destructionResolutionService, graveyardReturnResolutionService);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 noOpSession, gameQueryService, graveyardService, warpWorldService, battlefieldEntryService, legendRuleService, stateBasedActionService, gameBroadcastService,
                 cardViewFactory, turnProgressionService, playerInputService, effectResolutionService, exileService);

@@ -934,6 +934,34 @@ public class BattlefieldEntryService {
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from " + targetPlayerName + "'s graveyard.");
     }
 
+    public void handleUpToNAllGraveyardsSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
+                                            List<CardEffect> spellEffects) {
+        List<UUID> matchingCardIds = new ArrayList<>();
+        List<CardView> cardViews = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCardIds.add(graveyardCard.getId());
+                    cardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        int maxTargets = Math.min(maxTargetsCap, matchingCardIds.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
+                "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from graveyards.");
+    }
+
     // ===== Enter triggers =====
 
     void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {

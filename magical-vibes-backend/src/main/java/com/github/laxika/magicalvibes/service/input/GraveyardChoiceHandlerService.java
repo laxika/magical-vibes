@@ -281,6 +281,14 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        // Card pile separation (Boneyard Parley): opponent assigns exiled cards to piles
+        if (gameData.pendingPileSeparation && !gameData.pendingPileSeparationCards.isEmpty()) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.interaction.clearMultiGraveyardChoice();
+            graveyardReturnResolutionService.completeCardPileSeparationStep1(gameData, cardIds);
+            return;
+        }
+
         // Retrieve the pending info
         Card pendingCard = gameData.graveyardTargetOperation.card;
         UUID controllerId = gameData.graveyardTargetOperation.controllerId;

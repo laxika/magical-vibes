@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -629,6 +630,12 @@ public class SpellCastingService {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId);
             }
 
+            // Check for "up to N target cards from all graveyards" pile separation spells (e.g. Boneyard Parley)
+            ExileTargetGraveyardCardsAndSeparateIntoPilesEffect pileSeparationEffect =
+                    (ExileTargetGraveyardCardsAndSeparateIntoPilesEffect) filteredSpellEffects.stream()
+                            .filter(ExileTargetGraveyardCardsAndSeparateIntoPilesEffect.class::isInstance)
+                            .findFirst().orElse(null);
+
             // Check for "up to N target cards from graveyard" spells (e.g. Morbid Plunder)
             ReturnTargetCardsFromGraveyardToHandEffect graveyardToHandEffect =
                     (ReturnTargetCardsFromGraveyardToHandEffect) filteredSpellEffects.stream()
@@ -647,7 +654,27 @@ public class SpellCastingService {
                             .filter(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class::isInstance)
                             .findFirst().orElse(null);
 
-            if (shuffleGraveyardCardsEffect != null) {
+            if (pileSeparationEffect != null) {
+                // Target up to N creature cards from ALL graveyards
+                long matchingCount = 0;
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    matchingCount += gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
+                            .filter(c -> gameQueryService.matchesCardPredicate(c, pileSeparationEffect.filter(), card.getId()))
+                            .count();
+                }
+                if (matchingCount > 0) {
+                    battlefieldEntryService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
+                            entryType, pileSeparationEffect.filter(),
+                            pileSeparationEffect.maxTargets(), filteredSpellEffects);
+                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                }
+                // No matching cards in any graveyard — put spell on stack with 0 targets
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
+            } else if (shuffleGraveyardCardsEffect != null) {
                 // Target player is specified via targetId
                 UUID targetGraveyardOwner = targetId;
                 if (targetGraveyardOwner == null) {

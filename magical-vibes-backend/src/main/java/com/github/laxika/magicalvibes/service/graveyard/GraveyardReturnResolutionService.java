@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
@@ -47,7 +48,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCre
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +84,7 @@ public class GraveyardReturnResolutionService {
     private final PlayerInputService playerInputService;
     private final LifeResolutionService lifeResolutionService;
     private final ExileService exileService;
+    private final CardViewFactory cardViewFactory;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -1607,5 +1612,180 @@ public class GraveyardReturnResolutionService {
         gameData.pendingDelayedGraveyardToHandReturns.add(new GameData.DelayedGraveyardToHandReturn(cardId, ownerId));
         log.info("Game {} - Delayed graveyard-to-hand return registered for card {} (owner {})",
                 gameData.id, cardId, ownerId);
+    }
+
+    // ===== Card pile separation (Boneyard Parley) =====
+
+    @HandlesEffect(ExileTargetGraveyardCardsAndSeparateIntoPilesEffect.class)
+    void resolveExileTargetGraveyardCardsAndSeparateIntoPiles(GameData gameData, StackEntry entry,
+                                                              ExileTargetGraveyardCardsAndSeparateIntoPilesEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<UUID> targetCardIds = entry.getTargetCardIds();
+
+        if (targetCardIds == null || targetCardIds.isEmpty()) {
+            return;
+        }
+
+        // Exile targeted cards from their graveyards
+        List<Card> exiledCards = new ArrayList<>();
+        Map<UUID, UUID> cardOwners = new HashMap<>();
+
+        for (UUID cardId : targetCardIds) {
+            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card != null && ownerId != null) {
+                List<Card> ownerGraveyard = gameData.playerGraveyards.get(ownerId);
+                if (ownerGraveyard != null && ownerGraveyard.removeIf(c -> c.getId().equals(cardId))) {
+                    exiledCards.add(card);
+                    cardOwners.put(cardId, ownerId);
+                }
+            }
+        }
+
+        if (exiledCards.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s " + entry.getCard().getName() + " fizzles — no valid targets.");
+            return;
+        }
+
+        // Log the exile
+        String exiledNames = exiledCards.stream().map(Card::getName).collect(java.util.stream.Collectors.joining(", "));
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData, playerName + " exiles " + exiledNames + " from graveyards.");
+
+        // Determine opponent (in 2-player, it's the other player)
+        UUID opponentId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst()
+                .orElseThrow();
+
+        // Store pile separation state (reusing shared pile separation fields)
+        gameData.pendingPileSeparation = true;
+        gameData.pendingPileSeparationControllerId = controllerId;
+        gameData.pendingPileSeparationTargetPlayerId = opponentId;
+        gameData.pendingPileSeparationCards.clear();
+        gameData.pendingPileSeparationCards.addAll(exiledCards);
+        gameData.pendingPileSeparationCardOwners.clear();
+        gameData.pendingPileSeparationCardOwners.putAll(cardOwners);
+        gameData.pendingPileSeparationAllPermanentIds.clear();
+        gameData.pendingPileSeparationPile1Ids.clear();
+        gameData.pendingPileSeparationPile2Ids.clear();
+
+        // Prompt opponent to separate into two piles
+        List<UUID> cardIds = exiledCards.stream().map(Card::getId).toList();
+        List<CardView> cardViews = exiledCards.stream().map(cardViewFactory::create).toList();
+        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, cardIds, cardViews, cardIds.size(),
+                "Separate the exiled cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
+    }
+
+    /**
+     * Step 1: opponent has assigned cards to Pile 1. Unselected cards form Pile 2.
+     * Prompt controller to choose which pile to put onto the battlefield.
+     */
+    public void completeCardPileSeparationStep1(GameData gameData, List<UUID> pile1CardIds) {
+        gameData.pendingPileSeparationPile1Ids.addAll(pile1CardIds);
+        // Pile 2 is everything not in Pile 1
+        for (Card card : gameData.pendingPileSeparationCards) {
+            if (!pile1CardIds.contains(card.getId())) {
+                gameData.pendingPileSeparationPile2Ids.add(card.getId());
+            }
+        }
+
+        String pile1Desc = buildCardPileDescription(gameData.pendingPileSeparationCards, gameData.pendingPileSeparationPile1Ids);
+        String pile2Desc = buildCardPileDescription(gameData.pendingPileSeparationCards, gameData.pendingPileSeparationPile2Ids);
+
+        UUID opponentId = gameData.pendingPileSeparationTargetPlayerId;
+        String opponentName = gameData.playerIdToName.get(opponentId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                opponentName + " separates cards into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + ".");
+
+        UUID controllerId = gameData.pendingPileSeparationControllerId;
+        String prompt = "Choose a pile to put onto the battlefield. Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, controllerId, List.of(), prompt));
+        playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Step 2: controller has chosen a pile. Put chosen pile onto the battlefield under controller's control;
+     * return the other pile to their owners' graveyards.
+     */
+    public void completeCardPileSeparationStep2(GameData gameData, boolean accepted) {
+        List<UUID> chosenPileCardIds = accepted
+                ? new ArrayList<>(gameData.pendingPileSeparationPile1Ids)
+                : new ArrayList<>(gameData.pendingPileSeparationPile2Ids);
+        List<UUID> otherPileCardIds = accepted
+                ? new ArrayList<>(gameData.pendingPileSeparationPile2Ids)
+                : new ArrayList<>(gameData.pendingPileSeparationPile1Ids);
+        String chosenPileName = accepted ? "Pile 1" : "Pile 2";
+
+        UUID controllerId = gameData.pendingPileSeparationControllerId;
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // Store references before cleanup
+        List<Card> allCards = new ArrayList<>(gameData.pendingPileSeparationCards);
+        Map<UUID, UUID> cardOwners = new HashMap<>(gameData.pendingPileSeparationCardOwners);
+
+        // Build descriptions before cleanup
+        String chosenDesc = buildCardPileDescription(allCards, chosenPileCardIds);
+        String otherDesc = buildCardPileDescription(allCards, otherPileCardIds);
+
+        // Clean up pending state
+        gameData.pendingPileSeparation = false;
+        gameData.pendingPileSeparationControllerId = null;
+        gameData.pendingPileSeparationTargetPlayerId = null;
+        gameData.pendingPileSeparationAllPermanentIds.clear();
+        gameData.pendingPileSeparationPile1Ids.clear();
+        gameData.pendingPileSeparationPile2Ids.clear();
+        gameData.pendingPileSeparationCards.clear();
+        gameData.pendingPileSeparationCardOwners.clear();
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                controllerName + " chooses " + chosenPileName + ".");
+
+        // Chosen pile → battlefield under controller's control
+        for (UUID cardId : chosenPileCardIds) {
+            Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+            if (card != null) {
+                putCardOntoBattlefieldFromExile(gameData, controllerId, card);
+            }
+        }
+
+        // Other pile → owners' graveyards
+        for (UUID cardId : otherPileCardIds) {
+            Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+            if (card != null) {
+                UUID ownerId = cardOwners.get(cardId);
+                gameData.playerGraveyards.get(ownerId).add(card);
+                String ownerName = gameData.playerIdToName.get(ownerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        card.getName() + " returns to " + ownerName + "'s graveyard.");
+            }
+        }
+    }
+
+    private void putCardOntoBattlefieldFromExile(GameData gameData, UUID controllerId, Card card) {
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        Permanent permanent = new Permanent(card);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String logEntry = playerName + " puts " + card.getName() + " onto the battlefield.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+    }
+
+    private String buildCardPileDescription(List<Card> allCards, List<UUID> cardIds) {
+        if (cardIds.isEmpty()) {
+            return "empty";
+        }
+        List<String> names = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            allCards.stream()
+                    .filter(c -> c.getId().equals(cardId))
+                    .findFirst()
+                    .ifPresent(c -> names.add(c.getName()));
+        }
+        return String.join(", ", names);
     }
 }

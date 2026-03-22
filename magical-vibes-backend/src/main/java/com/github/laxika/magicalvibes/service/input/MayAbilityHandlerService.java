@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -85,6 +86,7 @@ public class MayAbilityHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final DestructionResolutionService destructionResolutionService;
+    private final GraveyardReturnResolutionService graveyardReturnResolutionService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -99,9 +101,13 @@ public class MayAbilityHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearMayAbilityChoice();
 
-        // Pile separation (Liliana of the Veil ultimate): target player chooses which pile to sacrifice
+        // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley)
         if (gameData.pendingPileSeparation) {
-            destructionResolutionService.completePileSeparationStep2(gameData, accepted);
+            if (!gameData.pendingPileSeparationCards.isEmpty()) {
+                graveyardReturnResolutionService.completeCardPileSeparationStep2(gameData, accepted);
+            } else {
+                destructionResolutionService.completePileSeparationStep2(gameData, accepted);
+            }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }
