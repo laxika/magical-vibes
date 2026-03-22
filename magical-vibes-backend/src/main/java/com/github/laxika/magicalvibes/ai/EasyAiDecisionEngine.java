@@ -64,6 +64,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Try casting an instant outside main phase (any priority window)
+        if (tryCastInstant(gameData)) {
+            return;
+        }
+
         // Pass priority
         send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
     }
@@ -165,6 +170,86 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {
             log.warn("AI: PlayCard failed silently in game {}", gameId);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Tries to cast the highest-scored instant from hand. Used outside the main
+     * phase so the Easy AI doesn't sit on instants forever.
+     */
+    private boolean tryCastInstant(GameData gameData) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (hand == null) {
+            return false;
+        }
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        List<int[]> castableInstants = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (!card.hasType(CardType.INSTANT)) continue;
+            if (card.getManaCost() == null) continue;
+            if (card.isNeedsSpellTarget()) continue; // Can't target spells on stack
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+            int score = scoreCard(gameData, card);
+            castableInstants.add(new int[]{i, score});
+        }
+
+        if (castableInstants.isEmpty()) {
+            return false;
+        }
+
+        castableInstants.sort((a, b) -> Integer.compare(b[1], a[1]));
+        int cardIndex = castableInstants.get(0)[0];
+        Card card = hand.get(cardIndex);
+
+        Map<UUID, Integer> damageAssignments = null;
+        if (card.isNeedsDamageDistribution()) {
+            damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
+            if (damageAssignments == null) return false;
+        }
+
+        UUID targetId = null;
+        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+            targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
+            if (targetId == null) return false;
+        }
+
+        UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
+
+        List<Integer> exileGraveyardCardIndices = null;
+        if (findExileXGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        }
+
+        ManaCost castCost = new ManaCost(card.getManaCost());
+        Integer xValue = null;
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        if (castCost.hasX()) {
+            int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
+            smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+            if (smartX <= 0) return false;
+            xValue = smartX;
+            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapPermanentAction());
+        } else {
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
+        }
+
+        log.info("AI: Casting instant {}{} in game {}", card.getName(),
+                xValue != null ? " (X=" + xValue + ")" : "", gameId);
+        int handSizeBefore = hand.size();
+        final UUID finalTargetId = targetId;
+        final Integer finalXValue = xValue;
+        final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
+        final UUID finalSacrificePermanentId = sacrificePermanentId;
+        final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
+        send(() -> messageHandler.handlePlayCard(selfConnection,
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
+        if (hand.size() >= handSizeBefore) {
+            log.warn("AI: Instant cast failed silently in game {}", gameId);
             return false;
         }
         return true;

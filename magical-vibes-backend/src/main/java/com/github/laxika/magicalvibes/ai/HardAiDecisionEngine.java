@@ -77,12 +77,84 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 return;
             }
 
-            if (tryCastSpellMCTS(gameData)) {
+            if (tryCastSpellWithInstantAwareness(gameData)) {
                 return;
             }
         }
 
+        // Try casting instants with timing evaluation
+        if (tryCastInstantWithTimingEvaluation(gameData)) {
+            return;
+        }
+
         send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
+    }
+
+    /**
+     * Wraps sorcery-speed casting with "hold up mana" reasoning. Before committing
+     * to a sorcery, checks whether keeping mana open for instants would be higher
+     * expected value. If so, skips sorcery casting this priority pass.
+     */
+    private boolean tryCastSpellWithInstantAwareness(GameData gameData) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (hand == null) return false;
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        // Find best sorcery-speed spell value
+        double bestSorceryValue = 0;
+        for (Card card : hand) {
+            if (card.hasType(CardType.LAND) || card.hasType(CardType.INSTANT)) continue;
+            if (card.getManaCost() == null) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+            double value = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
+            bestSorceryValue = Math.max(bestSorceryValue, value);
+        }
+
+        // Find best instant's held value (with timing multiplier)
+        double bestInstantHeldValue = evaluateBestHeldInstant(gameData, hand, virtualPool);
+
+        // If holding instant mana is significantly better, skip sorcery casting.
+        // The 0.8 factor provides a slight bias toward casting now (bird in hand).
+        if (bestSorceryValue > 0 && bestInstantHeldValue > bestSorceryValue * 0.8) {
+            log.info("AI (Hard): Holding mana for instant (held={}, sorcery={}) in game {}",
+                    String.format("%.1f", bestInstantHeldValue),
+                    String.format("%.1f", bestSorceryValue), gameId);
+            return false;
+        }
+
+        return tryCastSpellMCTS(gameData);
+    }
+
+    /**
+     * Evaluates the expected value of holding mana for the best instant in hand.
+     * Applies timing multipliers based on the instant's category to reflect the
+     * value of casting it at the ideal moment later.
+     */
+    private double evaluateBestHeldInstant(GameData gameData, List<Card> hand, ManaPool virtualPool) {
+        double bestValue = 0;
+        for (Card card : hand) {
+            if (!card.hasType(CardType.INSTANT)) continue;
+            if (card.getManaCost() == null) continue;
+            if (card.isNeedsSpellTarget()) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+
+            double baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
+            if (baseValue <= 0) continue;
+
+            InstantCategory category = InstantCategoryClassifier.classify(card);
+            double multiplier = switch (category) {
+                case REMOVAL -> 1.3;       // Removal in combat is very strong
+                case COMBAT_TRICK -> 1.5;  // Combat tricks create blowouts
+                case CARD_ADVANTAGE -> 1.1; // Slightly better to hold for end step
+                case BURN_TO_FACE -> 1.0;   // Same value whenever cast
+                case COUNTERSPELL -> 0;     // AI can't use these yet
+                case OTHER -> 0.8;          // Slight discount for unknown timing
+            };
+
+            bestValue = Math.max(bestValue, baseValue * multiplier);
+        }
+        return bestValue;
     }
 
     /**
@@ -271,6 +343,158 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {
             log.warn("AI (Hard): PlayCard failed silently in game {}", gameId);
+            return false;
+        }
+        return true;
+    }
+
+    // ===== Instant Casting with Timing Evaluation =====
+
+    /**
+     * Tries to cast the best instant using category-based timing with value multipliers.
+     * Only casts if the timing-adjusted value exceeds a minimum threshold.
+     */
+    private boolean tryCastInstantWithTimingEvaluation(GameData gameData) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (hand == null) return false;
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        boolean isOpponentsTurn = !aiPlayer.getId().equals(gameData.activePlayerId);
+        TurnStep step = gameData.currentStep;
+
+        record TimedCandidate(int index, double adjustedValue) {}
+        List<TimedCandidate> candidates = new ArrayList<>();
+
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (!card.hasType(CardType.INSTANT)) continue;
+            if (card.getManaCost() == null) continue;
+            if (card.isNeedsSpellTarget()) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+
+            InstantCategory category = InstantCategoryClassifier.classify(card);
+            if (!isGoodTimingForHard(category, step, isOpponentsTurn)) continue;
+
+            double baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
+            if (baseValue <= 0) continue;
+
+            double timingMultiplier = getTimingMultiplier(category, step, isOpponentsTurn);
+            double adjustedValue = baseValue * timingMultiplier;
+
+            // Only cast if the timing-adjusted value meets a minimum threshold
+            if (adjustedValue >= 5.0) {
+                candidates.add(new TimedCandidate(i, adjustedValue));
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+
+        candidates.sort(Comparator.comparingDouble(TimedCandidate::adjustedValue).reversed());
+        TimedCandidate best = candidates.getFirst();
+        return castInstantAtIndex(gameData, hand, best.index, best.adjustedValue);
+    }
+
+    /**
+     * Determines whether the current game state is a good time to cast an instant
+     * of the given category. Same timing windows as Medium AI but with additional
+     * flexibility (e.g. removal also good at end step as fallback).
+     */
+    private boolean isGoodTimingForHard(InstantCategory category, TurnStep step, boolean isOpponentsTurn) {
+        return switch (category) {
+            case REMOVAL -> isOpponentsTurn
+                    && (step == TurnStep.BEGINNING_OF_COMBAT
+                    || step == TurnStep.DECLARE_ATTACKERS
+                    || step == TurnStep.DECLARE_BLOCKERS
+                    || step == TurnStep.END_STEP);
+            case BURN_TO_FACE -> isOpponentsTurn && step == TurnStep.END_STEP;
+            case CARD_ADVANTAGE -> isOpponentsTurn && step == TurnStep.END_STEP;
+            case COMBAT_TRICK -> !isOpponentsTurn
+                    && (step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE);
+            case COUNTERSPELL -> false; // AI can't target spells on the stack yet
+            case OTHER -> step == TurnStep.PRECOMBAT_MAIN || step == TurnStep.POSTCOMBAT_MAIN
+                    || (isOpponentsTurn && step == TurnStep.END_STEP);
+        };
+    }
+
+    /**
+     * Returns a timing multiplier that reflects how valuable it is to cast
+     * an instant of the given category at the current step.
+     */
+    private double getTimingMultiplier(InstantCategory category, TurnStep step, boolean isOpponentsTurn) {
+        return switch (category) {
+            case REMOVAL -> {
+                if (step == TurnStep.DECLARE_BLOCKERS) yield 1.4; // Best: after blocks
+                if (step == TurnStep.DECLARE_ATTACKERS) yield 1.3; // Good: kill attacker
+                if (step == TurnStep.BEGINNING_OF_COMBAT) yield 1.2;
+                yield 1.0; // End step fallback
+            }
+            case COMBAT_TRICK -> {
+                if (step == TurnStep.DECLARE_BLOCKERS) yield 1.5; // Blowout potential
+                yield 1.2;
+            }
+            case CARD_ADVANTAGE -> 1.1;
+            case BURN_TO_FACE -> 1.0;
+            case COUNTERSPELL -> 0;
+            case OTHER -> 0.9;
+        };
+    }
+
+    /**
+     * Casts the instant at the given hand index. Handles targeting, mana tapping,
+     * sacrifice costs, graveyard exile, and X-value calculation.
+     */
+    private boolean castInstantAtIndex(GameData gameData, List<Card> hand, int cardIndex, double value) {
+        Card card = hand.get(cardIndex);
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        Map<UUID, Integer> damageAssignments = null;
+        if (card.isNeedsDamageDistribution()) {
+            damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
+            if (damageAssignments == null) return false;
+        }
+
+        UUID targetId = null;
+        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+            targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
+            if (targetId == null) return false;
+        }
+
+        UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
+
+        List<Integer> exileGraveyardCardIndices = null;
+        if (findExileXGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        }
+
+        ManaCost castCost = new ManaCost(card.getManaCost());
+        Integer xValue = null;
+        IntConsumer tapAction = tapPermanentAction();
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        if (card.isRequiresCreatureMana()) {
+            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
+        } else if (castCost.hasX()) {
+            int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
+            smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+            if (smartX <= 0) return false;
+            xValue = smartX;
+            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapAction);
+        } else {
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
+        }
+
+        log.info("AI (Hard): Casting instant {}{} (value={}) in game {}", card.getName(),
+                xValue != null ? " (X=" + xValue + ")" : "",
+                String.format("%.1f", value), gameId);
+        int handSizeBefore = hand.size();
+        final UUID finalTargetId = targetId;
+        final Integer finalXValue = xValue;
+        final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
+        final UUID finalSacrificePermanentId = sacrificePermanentId;
+        final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
+        send(() -> messageHandler.handlePlayCard(selfConnection,
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
+        if (hand.size() >= handSizeBefore) {
+            log.warn("AI (Hard): Instant cast failed silently in game {}", gameId);
             return false;
         }
         return true;
