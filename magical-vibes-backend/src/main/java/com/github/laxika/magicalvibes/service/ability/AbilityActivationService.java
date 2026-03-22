@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAct
 import com.github.laxika.magicalvibes.service.ability.cost.SubtypeSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapXPermanentsCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -68,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
@@ -419,14 +421,13 @@ public class AbilityActivationService {
 
         handler.validateAndPay(gameData, player, chosen);
 
-        int remaining = context.remaining() - 1;
+        int remaining = context.remaining() - handler.lastPaymentWeight();
         if (remaining > 0) {
-            List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
-            if (validIds.size() < remaining) {
+            if (!handler.canPayRemaining(gameData, playerId, remaining)) {
                 throw new IllegalStateException("Not enough permanents remaining");
             }
-            if (validIds.size() == remaining) {
-                // Auto-pay remaining
+            if (handler.shouldAutoPayAll(gameData, playerId, remaining)) {
+                List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 for (UUID id : validIds) {
                     Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
                     if (autoPay != null) {
@@ -435,6 +436,7 @@ public class AbilityActivationService {
                 }
             } else {
                 // Re-prompt for next choice
+                List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.GraveyardAbilityCostChoice(
                         playerId, card, context.graveyardCardIndex(), context.abilityIndex(),
                         context.costEffect(), remaining));
@@ -921,6 +923,7 @@ public class AbilityActivationService {
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         return null;
     }
 
@@ -929,8 +932,9 @@ public class AbilityActivationService {
                                                PermanentChoiceCostHandler handler) {
         int required = handler.requiredCount();
         if (required <= 0) return false;
-        List<UUID> validIds = handler.getValidChoiceIds(gameData, player.getId());
-        if (validIds.size() <= required) {
+        UUID playerId = player.getId();
+        if (handler.shouldAutoPayAll(gameData, playerId, required)) {
+            List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
             for (UUID id : validIds) {
                 Permanent chosen = gameQueryService.findPermanentById(gameData, id);
                 if (chosen != null) {
@@ -939,10 +943,11 @@ public class AbilityActivationService {
             }
             return false;
         }
+        List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
-                player.getId(), source.getId(), abilityIndex, xValue, targetId, targetZone,
+                playerId, source.getId(), abilityIndex, xValue, targetId, targetZone,
                 handler.costEffect(), required));
-        playerInputService.beginPermanentChoice(gameData, player.getId(), validIds,
+        playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                 handler.getPromptMessage(required));
         gameBroadcastService.broadcastGameState(gameData);
         return true;
@@ -999,13 +1004,13 @@ public class AbilityActivationService {
 
         handler.validateAndPay(gameData, player, chosen);
 
-        int remaining = context.remaining() - 1;
+        int remaining = context.remaining() - handler.lastPaymentWeight();
         if (remaining > 0) {
-            List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
-            if (validIds.size() < remaining) {
+            if (!handler.canPayRemaining(gameData, playerId, remaining)) {
                 throw new IllegalStateException("Not enough permanents remaining");
             }
-            if (validIds.size() == remaining) {
+            if (handler.shouldAutoPayAll(gameData, playerId, remaining)) {
+                List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 for (UUID id : validIds) {
                     Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
                     if (autoPay != null) {
@@ -1013,6 +1018,7 @@ public class AbilityActivationService {
                     }
                 }
             } else {
+                List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
                         playerId, context.sourcePermanentId(), context.abilityIndex(), context.xValue(),
                         context.targetId(), context.targetZone(), context.costEffect(), remaining));

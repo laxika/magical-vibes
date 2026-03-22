@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentE
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfAsCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
@@ -137,6 +138,28 @@ public class AnimationResolutionService {
 
         log.info("Game {} - {} artifacts animated as {}/{} creatures until end of turn",
                 gameData.id, count, effect.power(), effect.toughness());
+    }
+
+    @HandlesEffect(AnimateSelfAsCreatureEffect.class)
+    private void resolveAnimateSelfAsCreature(GameData gameData, StackEntry entry, AnimateSelfAsCreatureEffect effect) {
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (self == null) {
+            return;
+        }
+
+        int power = self.getCard().getPower() != null ? self.getCard().getPower() : 0;
+        int toughness = self.getCard().getToughness() != null ? self.getCard().getToughness() : 0;
+        self.setAnimatedUntilEndOfTurn(true);
+        self.setAnimatedPower(power);
+        self.setAnimatedToughness(toughness);
+        self.getGrantedCardTypes().add(CardType.CREATURE);
+
+        String logEntry = self.getCard().getName() + " becomes a " + power + "/" + toughness
+                + " artifact creature until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} becomes a {}/{} artifact creature (crewed)",
+                gameData.id, self.getCard().getName(), power, toughness);
     }
 
     @HandlesEffect(AnimateSelfEffect.class)

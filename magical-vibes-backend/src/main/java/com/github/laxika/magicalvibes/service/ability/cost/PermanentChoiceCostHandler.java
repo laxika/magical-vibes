@@ -56,6 +56,33 @@ public interface PermanentChoiceCostHandler {
     /**
      * Returns the number of permanents the player must choose to fully pay this cost.
      * Typically 1 for single-sacrifice/tap costs, or N for {@link MultiplePermanentSacrificeCostHandler}.
+     * For power-based costs like Crew, this returns the required power threshold.
      */
     int requiredCount();
+
+    /**
+     * Returns the weight of the most recent payment towards the remaining count.
+     * By default returns 1 (each permanent chosen decrements remaining by 1).
+     * For power-based costs (e.g. Crew), returns the effective power of the last tapped creature,
+     * so that {@code remaining} tracks the power deficit rather than a fixed count.
+     */
+    default int lastPaymentWeight() { return 1; }
+
+    /**
+     * Returns {@code true} if the cost can still be paid given the remaining deficit.
+     * By default checks that enough valid permanents exist (count-based).
+     * For power-based costs, checks that total available power &ge; remaining.
+     */
+    default boolean canPayRemaining(GameData gameData, UUID playerId, int remaining) {
+        return getValidChoiceIds(gameData, playerId).size() >= remaining;
+    }
+
+    /**
+     * Returns {@code true} if all remaining valid permanents should be auto-paid without prompting.
+     * By default, auto-pays when valid choices &le; remaining (no real choice left).
+     * For power-based costs, may override to only auto-pay when exactly one creature remains.
+     */
+    default boolean shouldAutoPayAll(GameData gameData, UUID playerId, int remaining) {
+        return getValidChoiceIds(gameData, playerId).size() <= remaining;
+    }
 }

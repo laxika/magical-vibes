@@ -34,7 +34,8 @@ public enum Keyword {
     SCRY,
     FLASHBACK,
     TRANSFORM,
-    KICKER;
+    KICKER,
+    CREW;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.
