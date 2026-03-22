@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
@@ -233,6 +234,10 @@ public class EffectResolutionService {
                     isAttackingAlone(gameData, entry);
             case MinimumAttackersConditionalEffect mac ->
                     entry.getXValue() >= mac.minimumAttackers();
+            case ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck -> {
+                int lifeTotal = gameData.playerLifeTotals.getOrDefault(entry.getControllerId(), 20);
+                yield lifeTotal <= lifeCheck.lifeThreshold();
+            }
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;

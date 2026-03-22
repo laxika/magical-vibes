@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
@@ -171,6 +172,25 @@ public class StepTriggerService {
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: no other {}s)",
                                 gameData.id, perm.getCard().getName(), noOtherSubtype.subtype().getDisplayName());
+                    }
+                } else if (effect instanceof ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck) {
+                    // Intervening-if: only trigger if controller's life total <= threshold
+                    int lifeTotal = gameData.playerLifeTotals.getOrDefault(activePlayerId, 20);
+                    if (lifeTotal <= lifeCheck.lifeThreshold()) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: life {} <= {})",
+                                gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.lifeThreshold());
                     }
                 } else if (effect instanceof WinGameIfCreaturesInGraveyardEffect winEffect) {
                     // Intervening-if: only trigger if condition is met
