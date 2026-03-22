@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -70,24 +69,7 @@ public class MayCastHandlerService {
 
                 if (cardToCast.isNeedsTarget()) {
                     // Targeted spell — need to choose target before putting on stack
-                    List<UUID> validTargets = new ArrayList<>();
-                    for (UUID pid : gameData.orderedPlayerIds) {
-                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                        if (battlefield == null) continue;
-                        for (Permanent p : battlefield) {
-                            if (cardToCast.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                                if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                                    validTargets.add(p.getId());
-                                }
-                            } else if (gameQueryService.isCreature(gameData, p)) {
-                                validTargets.add(p.getId());
-                            }
-                        }
-                    }
-                    boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-                    if (canTargetPlayer) {
-                        validTargets.addAll(gameData.orderedPlayerIds);
-                    }
+                    List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
 
                     if (validTargets.isEmpty()) {
                         // No valid targets — spell can't be cast, put card back on top of library
@@ -196,24 +178,7 @@ public class MayCastHandlerService {
 
             if (cardToPlay.isNeedsTarget()) {
                 // Targeted spell — need to choose target before putting on stack
-                List<UUID> validTargets = new ArrayList<>();
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (cardToPlay.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                                validTargets.add(p.getId());
-                            }
-                        } else if (gameQueryService.isCreature(gameData, p)) {
-                            validTargets.add(p.getId());
-                        }
-                    }
-                }
-                boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-                if (canTargetPlayer) {
-                    validTargets.addAll(gameData.orderedPlayerIds);
-                }
+                List<UUID> validTargets = buildValidSpellTargets(gameData, cardToPlay, spellEffects);
 
                 if (validTargets.isEmpty()) {
                     // No valid targets — exile the card instead
@@ -251,6 +216,36 @@ public class MayCastHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Builds a list of valid target UUIDs for a targeted spell, including both permanents and players
+     * as appropriate based on the spell's effects and target filter.
+     */
+    List<UUID> buildValidSpellTargets(GameData gameData, Card card, List<CardEffect> spellEffects) {
+        List<UUID> validTargets = new ArrayList<>();
+        boolean canTargetPermanent = spellEffects.stream().anyMatch(CardEffect::canTargetPermanent)
+                || card.getTargetFilter() instanceof PermanentPredicateTargetFilter;
+        if (canTargetPermanent) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                        if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                            validTargets.add(p.getId());
+                        }
+                    } else if (gameQueryService.isCreature(gameData, p)) {
+                        validTargets.add(p.getId());
+                    }
+                }
+            }
+        }
+        boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+        if (canTargetPlayer) {
+            validTargets.addAll(gameData.orderedPlayerIds);
+        }
+        return validTargets;
     }
 
     private void exileTopCardFromLibrary(GameData gameData, UUID playerId, List<Card> deck, Card card, String playerName) {
@@ -298,24 +293,7 @@ public class MayCastHandlerService {
 
                     if (cardToCast.isNeedsTarget()) {
                         // Targeted spell — need to choose target before putting on stack
-                        List<UUID> validTargets = new ArrayList<>();
-                        for (UUID pid : gameData.orderedPlayerIds) {
-                            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                            if (battlefield == null) continue;
-                            for (Permanent p : battlefield) {
-                                if (cardToCast.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                                    if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                                        validTargets.add(p.getId());
-                                    }
-                                } else if (gameQueryService.isCreature(gameData, p)) {
-                                    validTargets.add(p.getId());
-                                }
-                            }
-                        }
-                        boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-                        if (canTargetPlayer) {
-                            validTargets.addAll(gameData.orderedPlayerIds);
-                        }
+                        List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
 
                         if (validTargets.isEmpty()) {
                             // No valid targets — card goes to owner's graveyard
