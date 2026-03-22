@@ -873,6 +873,7 @@ Pass `null` as filter to allow any card.
 | `AttachTargetToSourcePermanentEffect` | `()` | attach the targeted permanent to the source permanent (e.g. steal Equipment and equip it — combine with GainControlOfTargetPermanentUntilEndOfTurnEffect) |
 | `GainControlOfEnchantedTargetEffect` | `()` | gain control of enchanted permanent (static, Control Magic-style) |
 | `GainControlOfTargetAuraEffect` | `()` | gain control of target aura |
+| `GainControlIfSubtypesDealtCombatDamageEffect` | `(CardSubtype subtype, int threshold)` | end-step trigger: gain control of target nonland permanent controlled by a player dealt combat damage by `threshold`+ creatures of `subtype` this turn. Intervening-if + targeting handled by StepTriggerService; resolves via GainControlOfTargetPermanentEffect |
 | `ControlEnchantedCreatureEffect` | `()` | control enchanted creature (static) |
 | `GrantSupertypeToEnchantedPermanentEffect` | `(CardSupertype supertype)` | enchanted permanent gains the specified supertype (static). E.g. In Bolas's Clutches — "Enchanted permanent is legendary." Integrates with legend rule |
 | `EnchantedCreatureDealsDamageToItsOwnerEffect` | `(int damage)` | enchanted creature deals N damage to its owner (the original owner, not current controller). Use on `UPKEEP_TRIGGERED` slot for auras that steal + ping owner |

@@ -130,6 +130,7 @@ public enum CardSubtype {
     UNICORN("Unicorn"),
     ASSEMBLY_WORKER("Assembly-Worker"),
     PEGASUS("Pegasus"),
+    PIRATE("Pirate"),
     KRAKEN("Kraken"),
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),

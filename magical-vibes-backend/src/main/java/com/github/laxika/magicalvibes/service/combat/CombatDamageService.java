@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
@@ -586,6 +587,19 @@ public class CombatDamageService {
             gameData.combatDamageToPlayersThisTurn
                     .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                     .add(defenderId);
+
+            // Record creature subtypes at combat damage time for subtype-conditional triggers
+            // (e.g. Admiral Beckett Brass checks if 3+ Pirates dealt damage to a player)
+            if (!gameData.combatDamageSourceSubtypesThisTurn.containsKey(creature.getId())) {
+                Set<CardSubtype> effectiveSubtypes = ConcurrentHashMap.newKeySet();
+                effectiveSubtypes.addAll(creature.getCard().getSubtypes());
+                effectiveSubtypes.addAll(creature.getGrantedSubtypes());
+                effectiveSubtypes.addAll(creature.getTransientSubtypes());
+                gameData.combatDamageSourceSubtypesThisTurn.put(creature.getId(), effectiveSubtypes);
+                if (gameQueryService.hasKeyword(gameData, creature, Keyword.CHANGELING)) {
+                    gameData.combatDamageSourcesWithChangelingThisTurn.add(creature.getId());
+                }
+            }
 
             List<CardEffect> allDamageEffects = new ArrayList<>();
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));

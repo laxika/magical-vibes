@@ -153,6 +153,8 @@ public class TurnProgressionService {
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
+        gameData.combatDamageSourceSubtypesThisTurn.clear();
+        gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();

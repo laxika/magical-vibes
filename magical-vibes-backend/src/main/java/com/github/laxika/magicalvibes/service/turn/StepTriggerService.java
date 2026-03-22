@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -1094,6 +1097,40 @@ public class StepTriggerService {
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof GainControlIfSubtypesDealtCombatDamageEffect subtypeEffect) {
+                        // Intervening-if: check if any opponent was dealt combat damage by enough
+                        // creatures of the required subtype this turn
+                        boolean conditionMet = false;
+                        for (UUID opponentId : gameData.orderedPlayerIds) {
+                            if (opponentId.equals(activePlayerId)) continue;
+                            int count = 0;
+                            for (var dmgEntry : gameData.combatDamageToPlayersThisTurn.entrySet()) {
+                                UUID permId = dmgEntry.getKey();
+                                if (!dmgEntry.getValue().contains(opponentId)) continue;
+                                Set<CardSubtype> subtypes = gameData.combatDamageSourceSubtypesThisTurn
+                                        .getOrDefault(permId, Set.of());
+                                if (subtypes.contains(subtypeEffect.subtype())
+                                        || gameData.combatDamageSourcesWithChangelingThisTurn.contains(permId)) {
+                                    count++;
+                                }
+                            }
+                            if (count >= subtypeEffect.threshold()) {
+                                conditionMet = true;
+                                break;
+                            }
+                        }
+                        if (!conditionMet) {
+                            log.info("Game {} - {} end-step trigger skipped (no opponent dealt combat damage by {} or more {}s)",
+                                    gameData.id, perm.getCard().getName(), subtypeEffect.threshold(),
+                                    subtypeEffect.subtype().getDisplayName());
+                            continue;
+                        }
+                        // Condition met — queue for targeting with GainControlOfTargetPermanentEffect.
+                        // The card's targetFilter restricts to nonland opponent permanents.
+                        gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                                perm.getCard(), activePlayerId,
+                                new ArrayList<>(List.of(new GainControlOfTargetPermanentEffect())),
+                                perm.getId()));
                     } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
                         // Targeting triggered ability — queue for target selection
                         gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(

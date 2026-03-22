@@ -278,6 +278,15 @@ public class GameData {
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
     public final Set<UUID> playersDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks subtypes of creatures that dealt combat damage to players this turn.
+     *  Maps source permanent UUID → set of subtypes the creature had at the time of dealing damage.
+     *  Used by end-step triggers that check which subtypes dealt combat damage (e.g. Admiral Beckett Brass). */
+    public final Map<UUID, Set<CardSubtype>> combatDamageSourceSubtypesThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks which creatures that dealt combat damage to players this turn had the Changeling keyword.
+     *  These creatures count as having all creature subtypes for subtype-conditional triggers. */
+    public final Set<UUID> combatDamageSourcesWithChangelingThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
 
@@ -649,6 +658,12 @@ public class GameData {
             copy.combatDamageToPlayersThisTurn.put(k, s);
         });
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
+        this.combatDamageSourceSubtypesThisTurn.forEach((k, v) -> {
+            Set<CardSubtype> s = ConcurrentHashMap.newKeySet();
+            s.addAll(v);
+            copy.combatDamageSourceSubtypesThisTurn.put(k, s);
+        });
+        copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
         copy.pendingDelayedPlusOnePlusOneCounters.putAll(this.pendingDelayedPlusOnePlusOneCounters);
 
         // --- Map<UUID, Set<TurnStep>> ---

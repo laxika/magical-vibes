@@ -951,6 +951,8 @@ public class CardSpecificResolutionService {
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.pendingTurnControl.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
+        gameData.combatDamageSourceSubtypesThisTurn.clear();
+        gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.paidSearchTaxPermanentIds.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
