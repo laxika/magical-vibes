@@ -745,22 +745,25 @@ public class PermanentCounterResolutionService {
     }
 
     @HandlesEffect(PutPlusOnePlusOneCounterOnEachOwnCreatureEffect.class)
-    private void resolvePutPlusOnePlusOneCounterOnEachOwnCreature(GameData gameData, StackEntry entry) {
+    private void resolvePutPlusOnePlusOneCounterOnEachOwnCreature(GameData gameData, StackEntry entry,
+                                                                   PutPlusOnePlusOneCounterOnEachOwnCreatureEffect effect) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) return;
 
-        int count = 0;
+        int countersPerCreature = effect.count();
+        int creatureCount = 0;
         for (Permanent p : battlefield) {
             if (!gameQueryService.isCreature(gameData, p)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
 
-            p.setPlusOnePlusOneCounters(p.getPlusOnePlusOneCounters() + 1);
-            count++;
+            p.setPlusOnePlusOneCounters(p.getPlusOnePlusOneCounters() + countersPerCreature);
+            creatureCount++;
         }
 
-        String logEntry = entry.getCard().getName() + " puts a +1/+1 counter on " + count + " creature(s) you control.";
+        String counterText = countersPerCreature == 1 ? "a +1/+1 counter" : countersPerCreature + " +1/+1 counters";
+        String logEntry = entry.getCard().getName() + " puts " + counterText + " on " + creatureCount + " creature(s) you control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} puts +1/+1 counter on {} own creature(s)", gameData.id, entry.getCard().getName(), count);
+        log.info("Game {} - {} puts {} +1/+1 counter(s) on {} own creature(s)", gameData.id, entry.getCard().getName(), countersPerCreature, creatureCount);
     }
 
     @HandlesEffect(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class)
