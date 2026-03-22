@@ -188,9 +188,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (bestAction instanceof SimulationAction.PlayCard pc) {
                 Card card = hand.get(pc.handIndex());
 
+                // Handle modal spells (ChooseOneEffect)
+                ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
+                if (modalPlan == null && findChooseOneEffect(card) != null) {
+                    return false;
+                }
+
                 // Build damage assignments for divided damage spells
                 Map<UUID, Integer> damageAssignments = null;
-                if (card.isNeedsDamageDistribution()) {
+                if (modalPlan == null && card.isNeedsDamageDistribution()) {
                     damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
                     if (damageAssignments == null) {
                         return false;
@@ -201,7 +207,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
                 ManaCost castCost = new ManaCost(card.getManaCost());
-                Integer xValue = null;
+                Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
                 var tapAction = tapPermanentAction();
                 int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 if (card.isRequiresCreatureMana()) {
@@ -221,7 +227,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         xValue != null ? " (X=" + xValue + ")" : "", gameId);
                 int handSizeBefore = hand.size();
                 final int cardIndex = pc.handIndex();
-                final UUID targetId = card.isNeedsDamageDistribution() ? null : pc.targetId();
+                final UUID targetId = modalPlan != null ? modalPlan.targetId() : (card.isNeedsDamageDistribution() ? null : pc.targetId());
                 final Integer finalXValue = xValue;
                 final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
                 final UUID finalSacrificePermanentId = sacrificePermanentId;
@@ -282,18 +288,24 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         CastCandidate best = candidates.getFirst();
         Card card = hand.get(best.index);
 
+        // Handle modal spells (ChooseOneEffect)
+        ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
+        if (modalPlan == null && findChooseOneEffect(card) != null) {
+            return false;
+        }
+
         // Build damage assignments for divided damage spells
         Map<UUID, Integer> damageAssignments = null;
-        if (card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && card.isNeedsDamageDistribution()) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) {
                 return false;
             }
         }
 
-        // Determine target if needed (skip for damage distribution spells)
-        UUID targetId = null;
-        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        // Determine target if needed (skip for modal and damage distribution spells)
+        UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
+        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -310,7 +322,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());
-        Integer xValue = null;
+        Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         IntConsumer tapAction = tapPermanentAction();
         int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (card.isRequiresCreatureMana()) {
@@ -447,14 +459,20 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         Card card = hand.get(cardIndex);
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
+        // Handle modal spells (ChooseOneEffect)
+        ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
+        if (modalPlan == null && findChooseOneEffect(card) != null) {
+            return false;
+        }
+
         Map<UUID, Integer> damageAssignments = null;
-        if (card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && card.isNeedsDamageDistribution()) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return false;
         }
 
-        UUID targetId = null;
-        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
+        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;
         }
@@ -467,7 +485,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());
-        Integer xValue = null;
+        Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         IntConsumer tapAction = tapPermanentAction();
         int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (card.isRequiresCreatureMana()) {

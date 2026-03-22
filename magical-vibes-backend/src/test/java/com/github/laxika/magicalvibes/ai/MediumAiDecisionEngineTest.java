@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.s.Slagstorm;
+import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -47,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,6 +98,22 @@ class MediumAiDecisionEngineTest {
             Permanent plains = new Permanent(new Plains());
             plains.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(plains);
+        }
+    }
+
+    private void giveAiIslands(int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent island = new Permanent(new Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(island);
+        }
+    }
+
+    private void giveAiMountains(int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(mountain);
         }
     }
 
@@ -487,5 +506,93 @@ class MediumAiDecisionEngineTest {
             assertThat(request.damageAssignments()).isNotNull();
             assertThat(request.damageAssignments()).containsEntry(creature.getId(), 3);
         }
+    }
+
+    // ===== Modal spell handling (ChooseOneEffect) =====
+
+    @Test
+    @DisplayName("Medium AI does not cast Steel Sabotage when no mode has valid targets")
+    void doesNotCastSteelSabotageWhenNoValidMode() {
+        giveAiPriority();
+        giveAiIslands(1);
+
+        harness.setHand(aiPlayer, List.of(new SteelSabotage()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Medium AI skips Steel Sabotage (no valid mode) and casts another available spell")
+    void skipsModalSpellAndCastsAlternative() {
+        giveAiPriority();
+        giveAiPlains(2);
+
+        // Opponent has a creature (Pacifism will be high value)
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(airElemental);
+
+        // Steel Sabotage has no valid mode (no artifacts), but Pacifism is castable
+        harness.setHand(aiPlayer, List.of(new SteelSabotage(), new Pacifism()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should skip Steel Sabotage and cast Pacifism
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Steel Sabotage to bounce artifact creature on opponent's battlefield")
+    void castsSteelSabotageToBounceArtifact() {
+        // Set up as opponent's turn, beginning of combat — good timing for REMOVAL instants
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+
+        giveAiIslands(1);
+
+        // Artifact creature so bounce evaluator gives positive value (creature score)
+        Card artifactCreature = new Card();
+        artifactCreature.setName("Test Artifact Creature");
+        artifactCreature.setType(CardType.ARTIFACT);
+        artifactCreature.setAdditionalTypes(Set.of(CardType.CREATURE));
+        artifactCreature.setPower(3);
+        artifactCreature.setToughness(3);
+        Permanent artifactPerm = new Permanent(artifactCreature);
+        gd.playerBattlefields.get(human.getId()).add(artifactPerm);
+
+        harness.setHand(aiPlayer, List.of(new SteelSabotage()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Steel Sabotage");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifactPerm.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Slagstorm to wipe opponent's creatures")
+    void castsSlagstorm() {
+        giveAiPriority();
+        giveAiMountains(3);
+
+        // Opponent has creatures so board wipe evaluator gives positive value
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new Slagstorm()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
     }
 }

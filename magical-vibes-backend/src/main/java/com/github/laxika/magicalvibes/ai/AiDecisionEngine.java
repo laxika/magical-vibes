@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -297,7 +298,14 @@ public abstract class AiDecisionEngine {
         if (cost.hasX() && getMaxXForGraveyardRequirements(gameData, card) <= 0) {
             return false;
         }
-        return canAffordSpell(gameData, card, virtualPool);
+        if (!canAffordSpell(gameData, card, virtualPool)) {
+            return false;
+        }
+        // For modal spells, ensure at least one mode has valid targets
+        if (!hasValidModalMode(gameData, card)) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -440,6 +448,110 @@ public abstract class AiDecisionEngine {
             indices.add(i);
         }
         return indices;
+    }
+
+    // ===== Modal Spell Handling (ChooseOneEffect) =====
+
+    /**
+     * Internal record for modal spell casting: holds the selected mode index
+     * (used as xValue in PlayCardRequest) and the target for that mode.
+     */
+    protected record ModalCastPlan(int modeIndex, UUID targetId) {}
+
+    /**
+     * Finds the ChooseOneEffect in the card's SPELL effects, if any.
+     */
+    protected ChooseOneEffect findChooseOneEffect(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ChooseOneEffect coe) {
+                return coe;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns true if the card is non-modal, or if at least one modal mode
+     * has valid targets available (excluding spell-targeting modes the AI can't handle).
+     */
+    protected boolean hasValidModalMode(GameData gameData, Card card) {
+        ChooseOneEffect coe = findChooseOneEffect(card);
+        if (coe == null) return true;
+
+        for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
+            if (isModalModeValid(gameData, card, option)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * For a ChooseOneEffect card, selects the first valid non-spell mode and
+     * finds a target if needed. Returns null if the card is not modal or
+     * if no valid mode exists.
+     */
+    protected ModalCastPlan prepareModalSpellCast(GameData gameData, Card card) {
+        ChooseOneEffect coe = findChooseOneEffect(card);
+        if (coe == null) return null;
+
+        for (int i = 0; i < coe.options().size(); i++) {
+            ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
+            CardEffect effect = option.effect();
+
+            if (effect.canTargetSpell()) continue;
+
+            if (effect.canTargetPermanent()) {
+                UUID target = findModalPermanentTarget(gameData, card, option);
+                if (target != null) return new ModalCastPlan(i, target);
+                continue;
+            }
+
+            if (effect.canTargetPlayer()) {
+                UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+                return new ModalCastPlan(i, opponentId);
+            }
+
+            if (effect.canTargetGraveyard()) {
+                List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
+                if (!targets.isEmpty()) return new ModalCastPlan(i, targets.getFirst().getId());
+                continue;
+            }
+
+            // No targeting required — mode is always valid
+            return new ModalCastPlan(i, null);
+        }
+        return null;
+    }
+
+    private boolean isModalModeValid(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+        CardEffect effect = option.effect();
+        if (effect.canTargetSpell()) return false;
+        if (effect.canTargetPermanent()) return findModalPermanentTarget(gameData, card, option) != null;
+        if (effect.canTargetPlayer()) return true;
+        if (effect.canTargetGraveyard()) {
+            return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
+        }
+        return true;
+    }
+
+    private UUID findModalPermanentTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+        var savedFilter = card.getCastTimeTargetFilter();
+        card.setCastTimeTargetFilter(option.targetFilter());
+        try {
+            UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+            for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
+                if (playerId == null) continue;
+                for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                    if (targetSelector.isValidPermanentTarget(gameData, card, p, aiPlayer.getId())) {
+                        return p.getId();
+                    }
+                }
+            }
+            return null;
+        } finally {
+            card.setCastTimeTargetFilter(savedFilter);
+        }
     }
 
     protected IntConsumer tapPermanentAction() {

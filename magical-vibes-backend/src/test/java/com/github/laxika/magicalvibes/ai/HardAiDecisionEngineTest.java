@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.Slagstorm;
+import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -47,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -491,5 +494,156 @@ class HardAiDecisionEngineTest {
             assertThat(request.damageAssignments()).isNotNull();
             assertThat(request.damageAssignments()).containsEntry(creature.getId(), 3);
         }
+    }
+
+    // ===== Modal spell handling (ChooseOneEffect) =====
+
+    @Test
+    @DisplayName("Hard AI does not cast Steel Sabotage when no mode has valid targets")
+    void doesNotCastSteelSabotageWhenNoValidMode() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        Permanent island = new Permanent(new Island());
+        island.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(island);
+
+        harness.setHand(player1, List.of(new SteelSabotage()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI skips Steel Sabotage (no valid mode) and casts another available spell")
+    void skipsModalSpellAndCastsAlternative() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // 2 Plains for Pacifism ({1}{W})
+        for (int i = 0; i < 2; i++) {
+            Permanent plains = new Permanent(new com.github.laxika.magicalvibes.cards.p.Plains());
+            plains.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(plains);
+        }
+
+        // Opponent has a creature (Pacifism target)
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        // Steel Sabotage has no valid mode (no artifacts), but Pacifism is castable
+        harness.setHand(player1, List.of(new SteelSabotage(), new com.github.laxika.magicalvibes.cards.p.Pacifism()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should skip Steel Sabotage and cast Pacifism
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+    }
+
+    @Test
+    @DisplayName("Hard AI casts Steel Sabotage to bounce artifact creature on opponent's battlefield")
+    void castsSteelSabotageToBounceArtifact() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        // Set up as opponent's turn, end step — good timing for REMOVAL instants
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        Permanent island = new Permanent(new Island());
+        island.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(island);
+
+        // Artifact creature so bounce evaluator gives positive value (creature score)
+        Card artifactCreature = new Card();
+        artifactCreature.setName("Test Artifact Creature");
+        artifactCreature.setType(CardType.ARTIFACT);
+        artifactCreature.setAdditionalTypes(Set.of(CardType.CREATURE));
+        artifactCreature.setPower(3);
+        artifactCreature.setToughness(3);
+        Permanent artifactPerm = new Permanent(artifactCreature);
+        gd.playerBattlefields.get(player2.getId()).add(artifactPerm);
+
+        harness.setHand(player1, List.of(new SteelSabotage()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Steel Sabotage");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifactPerm.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI casts Slagstorm to wipe opponent's creatures")
+    void castsSlagstorm() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        for (int i = 0; i < 3; i++) {
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(mountain);
+        }
+
+        // Opponent has creatures so board wipe evaluator gives positive value
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new Slagstorm()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
     }
 }

@@ -22,7 +22,10 @@ import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkaabRuinator;
+import com.github.laxika.magicalvibes.cards.s.Slagstorm;
+import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.cards.u.UnburialRites;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -1038,6 +1041,170 @@ class AiDecisionEngineTest {
 
         // AI should not cast — empty graveyard
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Modal spell handling (ChooseOneEffect) =====
+
+    @Test
+    @DisplayName("findChooseOneEffect returns ChooseOneEffect for modal card")
+    void findChooseOneEffectReturnsEffectForModalCard() {
+        Card steelSabotage = new SteelSabotage();
+        ChooseOneEffect coe = ai.findChooseOneEffect(steelSabotage);
+        assertThat(coe).isNotNull();
+        assertThat(coe.options()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("findChooseOneEffect returns null for non-modal card")
+    void findChooseOneEffectReturnsNullForNonModalCard() {
+        Card bears = new GrizzlyBears();
+        assertThat(ai.findChooseOneEffect(bears)).isNull();
+    }
+
+    @Test
+    @DisplayName("hasValidModalMode returns true for non-modal card")
+    void hasValidModalModeReturnsTrueForNonModalCard() {
+        assertThat(ai.hasValidModalMode(gd, new GrizzlyBears())).isTrue();
+    }
+
+    @Test
+    @DisplayName("hasValidModalMode returns false for Steel Sabotage when no artifacts and no spells on stack")
+    void hasValidModalModeReturnsFalseWhenNoValidMode() {
+        giveAiPriority();
+        // No artifacts on any battlefield, no spells on stack
+        assertThat(ai.hasValidModalMode(gd, new SteelSabotage())).isFalse();
+    }
+
+    @Test
+    @DisplayName("hasValidModalMode returns true for Steel Sabotage when artifact on battlefield")
+    void hasValidModalModeReturnsTrueWhenArtifactPresent() {
+        giveAiPriority();
+        Card artifactCard = new Card();
+        artifactCard.setName("Test Artifact");
+        artifactCard.setType(CardType.ARTIFACT);
+        Permanent artifactPerm = new Permanent(artifactCard);
+        gd.playerBattlefields.get(human.getId()).add(artifactPerm);
+
+        assertThat(ai.hasValidModalMode(gd, new SteelSabotage())).isTrue();
+    }
+
+    @Test
+    @DisplayName("hasValidModalMode returns true for Slagstorm (untargeted modes)")
+    void hasValidModalModeReturnsTrueForUntargetedModes() {
+        assertThat(ai.hasValidModalMode(gd, new Slagstorm())).isTrue();
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast returns null for non-modal card")
+    void prepareModalSpellCastReturnsNullForNonModalCard() {
+        assertThat(ai.prepareModalSpellCast(gd, new GrizzlyBears())).isNull();
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast returns null for Steel Sabotage when no valid mode")
+    void prepareModalSpellCastReturnsNullWhenNoValidMode() {
+        giveAiPriority();
+        assertThat(ai.prepareModalSpellCast(gd, new SteelSabotage())).isNull();
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast returns mode 1 (bounce) and artifact target for Steel Sabotage")
+    void prepareModalSpellCastReturnsBounceMode() {
+        giveAiPriority();
+        Card artifactCard = new Card();
+        artifactCard.setName("Test Artifact");
+        artifactCard.setType(CardType.ARTIFACT);
+        Permanent artifactPerm = new Permanent(artifactCard);
+        gd.playerBattlefields.get(human.getId()).add(artifactPerm);
+
+        var plan = ai.prepareModalSpellCast(gd, new SteelSabotage());
+        assertThat(plan).isNotNull();
+        // Mode 0 is "counter artifact spell" (canTargetSpell → skipped), mode 1 is "bounce artifact"
+        assertThat(plan.modeIndex()).isEqualTo(1);
+        assertThat(plan.targetId()).isEqualTo(artifactPerm.getId());
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast returns mode 0 with null target for Slagstorm")
+    void prepareModalSpellCastReturnsUntargetedMode() {
+        var plan = ai.prepareModalSpellCast(gd, new Slagstorm());
+        assertThat(plan).isNotNull();
+        assertThat(plan.modeIndex()).isEqualTo(0);
+        assertThat(plan.targetId()).isNull();
+    }
+
+    @Test
+    @DisplayName("AI does not cast Steel Sabotage when no mode has valid targets")
+    void doesNotCastSteelSabotageWhenNoValidMode() {
+        giveAiPriority();
+        giveAiIslands(1);
+
+        harness.setHand(aiPlayer, List.of(new SteelSabotage()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI casts Steel Sabotage to bounce artifact on opponent's battlefield")
+    void castsSteelSabotageToBounceArtifact() {
+        giveAiPriority();
+        giveAiIslands(1);
+
+        Card artifactCard = new Card();
+        artifactCard.setName("Test Artifact");
+        artifactCard.setType(CardType.ARTIFACT);
+        Permanent artifactPerm = new Permanent(artifactCard);
+        gd.playerBattlefields.get(human.getId()).add(artifactPerm);
+
+        harness.setHand(aiPlayer, List.of(new SteelSabotage()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Steel Sabotage");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(artifactPerm.getId());
+        // xValue should be 1 (mode index for "bounce artifact")
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("AI casts Slagstorm (untargeted modal spell)")
+    void castsSlagstorm() {
+        giveAiPriority();
+        giveAiMountains(3);
+
+        harness.setHand(aiPlayer, List.of(new Slagstorm()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
+    }
+
+    @Test
+    @DisplayName("AI skips Steel Sabotage (no valid mode) and casts another available spell")
+    void skipsModalSpellAndCastsAlternative() {
+        giveAiPriority();
+
+        // 1 Island + 1 Forest: enough for either Steel Sabotage ({U}) or Grizzly Bears ({1}{G})
+        Permanent island = new Permanent(new Island());
+        island.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(island);
+
+        Permanent forest = new Permanent(new Forest());
+        forest.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(forest);
+
+        // No artifacts on battlefield → Steel Sabotage has no valid mode
+        harness.setHand(aiPlayer, List.of(new SteelSabotage(), new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should skip Steel Sabotage and cast Grizzly Bears
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
     }
 
     // ===== tryPlayLand silent failure recovery =====

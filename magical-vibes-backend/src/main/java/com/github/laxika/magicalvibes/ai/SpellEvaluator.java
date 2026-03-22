@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -100,6 +101,16 @@ public class SpellEvaluator {
                                      UUID aiPlayerId, UUID opponentId) {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
+        // Modal ETB: evaluate each option and return the best value
+        if (effect instanceof ChooseOneEffect coe) {
+            double bestValue = 0;
+            for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
+                double optionValue = evaluateEtbEffect(gameData, card, option.effect(), aiPlayerId, opponentId);
+                bestValue = Math.max(bestValue, optionValue);
+            }
+            return bestValue;
+        }
+
         if (effect instanceof DestroyTargetPermanentEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         }
@@ -145,6 +156,17 @@ public class SpellEvaluator {
     private double evaluateSingleEffect(GameData gameData, Card card, CardEffect effect,
                                         UUID aiPlayerId, UUID opponentId,
                                         List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
+        // Modal spells: evaluate each option and return the best value
+        if (effect instanceof ChooseOneEffect coe) {
+            double bestValue = 0;
+            for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
+                double optionValue = evaluateSingleEffect(gameData, card, option.effect(),
+                        aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+                bestValue = Math.max(bestValue, optionValue);
+            }
+            return bestValue;
+        }
+
         // Removal
         if (effect instanceof DestroyTargetPermanentEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);

@@ -144,18 +144,24 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         for (int cardIndex : castableIndices) {
             Card card = hand.get(cardIndex);
 
+            // Handle modal spells (ChooseOneEffect)
+            ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
+            if (modalPlan == null && findChooseOneEffect(card) != null) {
+                continue; // No valid mode for this modal spell
+            }
+
             // Build damage assignments for divided damage spells
             Map<UUID, Integer> damageAssignments = null;
-            if (card.isNeedsDamageDistribution()) {
+            if (modalPlan == null && card.isNeedsDamageDistribution()) {
                 damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
                 if (damageAssignments == null) {
                     continue; // No valid targets for damage distribution
                 }
             }
 
-            // Determine target if needed (skip for damage distribution spells)
-            UUID targetId = null;
-            if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+            // Determine target if needed (skip for modal and damage distribution spells)
+            UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
+            if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
                 targetId = pickRandomTarget(gameData, card);
                 if (targetId == null) {
                     continue; // No valid target, try next spell
@@ -187,9 +193,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Select sacrifice target if the spell has a sacrifice cost
             UUID sacrificePermanentId = selectRandomSacrificeTarget(gameData, card);
 
-            // Calculate X value and tap mana sources
+            // Calculate X value and tap mana sources (for modal spells, xValue is the mode index)
             ManaCost castCost = new ManaCost(card.getManaCost());
-            Integer xValue = null;
+            Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
             int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
             if (card.isRequiresCreatureMana()) {
                 manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());

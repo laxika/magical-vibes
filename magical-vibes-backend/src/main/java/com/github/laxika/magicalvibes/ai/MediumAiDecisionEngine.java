@@ -119,18 +119,24 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         CastCandidate best = candidates.getFirst();
         Card card = hand.get(best.index);
 
+        // Handle modal spells (ChooseOneEffect)
+        ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
+        if (modalPlan == null && findChooseOneEffect(card) != null) {
+            return false;
+        }
+
         // Build damage assignments for divided damage spells
         Map<UUID, Integer> damageAssignments = null;
-        if (card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && card.isNeedsDamageDistribution()) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) {
                 return false;
             }
         }
 
-        // Determine target if needed (skip for damage distribution spells)
-        UUID targetId = null;
-        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        // Determine target if needed (skip for modal and damage distribution spells)
+        UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
+        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -146,9 +152,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
         }
 
-        // Calculate X value and tap mana sources
+        // Calculate X value and tap mana sources (for modal spells, xValue is the mode index)
         ManaCost castCost = new ManaCost(card.getManaCost());
-        Integer xValue = null;
+        Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         IntConsumer tapAction = tapPermanentAction();
         int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (card.isRequiresCreatureMana()) {
@@ -255,14 +261,20 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         Card card = hand.get(cardIndex);
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
+        // Handle modal spells (ChooseOneEffect)
+        ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
+        if (modalPlan == null && findChooseOneEffect(card) != null) {
+            return false;
+        }
+
         Map<UUID, Integer> damageAssignments = null;
-        if (card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && card.isNeedsDamageDistribution()) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return false;
         }
 
-        UUID targetId = null;
-        if (!card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
+        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;
         }
@@ -275,7 +287,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());
-        Integer xValue = null;
+        Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         IntConsumer tapAction = tapPermanentAction();
         int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (card.isRequiresCreatureMana()) {
