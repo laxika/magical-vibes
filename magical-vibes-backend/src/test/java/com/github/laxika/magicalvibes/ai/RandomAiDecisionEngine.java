@@ -85,7 +85,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Always try to play a land (maximizes mana for more interesting games)
             tryPlayLand(gameData);
 
-            if (tryCastRandomSpell(gameData, false)) {
+            if (gameData.stack.isEmpty() && tryCastRandomSpell(gameData, false)) {
                 return;
             }
         }
