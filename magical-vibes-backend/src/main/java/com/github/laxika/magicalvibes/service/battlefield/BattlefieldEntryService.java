@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -136,6 +137,7 @@ public class BattlefieldEntryService {
         applyAllPermanentsEnterTapped(gameData, permanent);
         applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
         applyEnterWithPlusOnePlusOneCountersPerSubtype(gameData, controllerId, permanent);
+        applyEnterWithPlusOnePlusOneCountersPerCreatureDeaths(gameData, permanent);
         applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
@@ -334,6 +336,32 @@ public class BattlefieldEntryService {
             permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() + count);
             log.info("Game {} - {} enters with {} +1/+1 counter(s) (per {} count)",
                     gameData.id, permanent.getCard().getName(), count, subtype);
+        }
+    }
+
+    /**
+     * Replacement effect (MTG Rule 614.1c): "This creature enters with a +1/+1 counter on it
+     * for each creature that died this turn."
+     * Sums creature deaths across all players this turn. (e.g. Bloodcrazed Paladin)
+     */
+    private void applyEnterWithPlusOnePlusOneCountersPerCreatureDeaths(GameData gameData,
+                                                                       Permanent permanent) {
+        boolean hasEffect = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect);
+        if (!hasEffect) return;
+
+        boolean cantHaveCounters = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantHaveCountersEffect);
+        if (cantHaveCounters) return;
+
+        int count = gameData.creatureDeathCountThisTurn.values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        if (count > 0) {
+            permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() + count);
+            log.info("Game {} - {} enters with {} +1/+1 counter(s) (creature deaths this turn)",
+                    gameData.id, permanent.getCard().getName(), count);
         }
     }
 

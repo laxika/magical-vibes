@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
@@ -175,9 +176,11 @@ public class StackResolutionService {
         String playerName = gameData.playerIdToName.get(controllerId);
         boolean hasSubtypeCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerSubtypeEffect);
+        boolean hasDeathCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect);
         boolean hasKickedCounterEffect = entry.isKicked() && enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect);
-        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect || hasKickedCounterEffect) && perm.getPlusOnePlusOneCounters() > 0) {
+        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect || hasDeathCounterEffect || hasKickedCounterEffect) && perm.getPlusOnePlusOneCounters() > 0) {
             String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getPlusOnePlusOneCounters() + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (perm.getWishCounters() > 0) {
