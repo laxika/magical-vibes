@@ -305,13 +305,13 @@ public class GameTestHarness {
         AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService, stepTriggerService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
-        spellCastingService = new SpellCastingService(
-                battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
                 damagePreventionService, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, sessionManager, lifeResolutionService);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, sessionManager, permanentRemovalService, triggerCollectionService, exileService);
+        spellCastingService = new SpellCastingService(
+                abilityActivationService, battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
                 sessionManager, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);

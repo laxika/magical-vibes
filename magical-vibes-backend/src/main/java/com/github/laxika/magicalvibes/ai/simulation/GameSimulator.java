@@ -300,13 +300,13 @@ public class GameSimulator {
         AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService, stepTriggerService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
-        SpellCastingService spellCastingService = new SpellCastingService(
-                battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
                 damagePreventionService, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, lifeResolutionService);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, noOpSession, permanentRemovalService, triggerCollectionService, exileService);
+        SpellCastingService spellCastingService = new SpellCastingService(
+                abilityActivationService, battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
                 noOpSession, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);

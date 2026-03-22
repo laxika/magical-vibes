@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.IntConsumer;
 
 /**
  * Medium difficulty AI that uses board evaluation, spell evaluation, and exhaustive
@@ -152,23 +151,16 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
         }
 
-        // Calculate X value and tap mana sources (for modal spells, xValue is the mode index)
+        // Calculate X value (for modal spells, xValue is the mode index)
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        IntConsumer tapAction = tapPermanentAction();
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
-        if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
-        } else if (castCost.hasX()) {
+        if (castCost.hasX() && xValue == null) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
             if (smartX <= 0) {
                 return false;
             }
             xValue = smartX;
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapAction);
-        } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
         }
 
         log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
@@ -288,18 +280,11 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        IntConsumer tapAction = tapPermanentAction();
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
-        if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
-        } else if (castCost.hasX()) {
+        if (castCost.hasX() && xValue == null) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
             if (smartX <= 0) return false;
             xValue = smartX;
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapAction);
-        } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapAction);
         }
 
         log.info("AI (Medium): Casting instant {}{} (value={}) in game {}", card.getName(),

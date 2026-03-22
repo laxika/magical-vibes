@@ -144,22 +144,16 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
         }
 
-        // Calculate X value and tap mana sources (for modal spells, xValue is the mode index)
+        // Calculate X value (for modal spells, xValue is the mode index)
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
-        if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
-        } else if (castCost.hasX()) {
+        if (castCost.hasX() && xValue == null) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
             if (smartX <= 0) {
                 return false;
             }
             xValue = smartX;
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapPermanentAction());
-        } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
         }
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
@@ -239,15 +233,11 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
-        if (castCost.hasX()) {
+        if (castCost.hasX() && xValue == null) {
             int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
             smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
             if (smartX <= 0) return false;
             xValue = smartX;
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, smartX, costModifier, tapPermanentAction());
-        } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
         }
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),

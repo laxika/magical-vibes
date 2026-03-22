@@ -193,13 +193,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Select sacrifice target if the spell has a sacrifice cost
             UUID sacrificePermanentId = selectRandomSacrificeTarget(gameData, card);
 
-            // Calculate X value and tap mana sources (for modal spells, xValue is the mode index)
+            // Calculate X value (for modal spells, xValue is the mode index)
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-            int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
-            if (card.isRequiresCreatureMana()) {
-                manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
-            } else if (castCost.hasX()) {
+            if (castCost.hasX() && xValue == null) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
                 if (maxX <= 0) {
@@ -220,9 +217,6 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     // Pick a random X between 1 and maxX
                     xValue = rng.nextInt(maxX) + 1;
                 }
-                manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, xValue, costModifier, tapPermanentAction());
-            } else {
-                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tapPermanentAction());
             }
 
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
