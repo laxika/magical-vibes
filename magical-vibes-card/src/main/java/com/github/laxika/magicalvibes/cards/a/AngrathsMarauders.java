@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AngrathsMarauders extends Card {
 
     public AngrathsMarauders() {
-        addEffect(EffectSlot.STATIC, new DoubleControllerDamageEffect());
+        addEffect(EffectSlot.STATIC, new DoubleControllerDamageEffect(null, true));
     }
 }

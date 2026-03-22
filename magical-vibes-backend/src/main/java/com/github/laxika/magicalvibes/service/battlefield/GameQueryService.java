@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTrig
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleControllerSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
@@ -65,6 +64,12 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -1944,11 +1949,11 @@ public class GameQueryService {
     }
 
     /**
-     * Applies both the global damage multiplier and per-controller spell damage multipliers
-     * (e.g. {@link DoubleControllerSpellDamageEffect}) to the given damage amount.
+     * Applies the global damage multiplier and per-controller damage multipliers
+     * (e.g. {@link DoubleControllerDamageEffect}) to the given damage amount.
      *
-     * @param entry the stack entry representing the damage source; used to check if the source
-     *              is an instant/sorcery spell of the appropriate color for controller-specific doubling
+     * @param entry the stack entry representing the damage source; used to check controller
+     *              and to evaluate stack-entry predicates on controller damage effects
      * @return the damage after applying all multipliers
      */
     public int applyDamageMultiplier(GameData gameData, int damage, StackEntry entry) {
@@ -1956,52 +1961,79 @@ public class GameQueryService {
                 ? getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
                 : 0;
         UUID controllerId = entry != null ? entry.getControllerId() : null;
-        return (damage + bonus) * getDamageMultiplier(gameData) * getControllerSpellDamageMultiplier(gameData, entry)
-                * getControllerDamageMultiplier(gameData, controllerId);
-    }
-
-    /**
-     * Returns the per-controller spell damage multiplier based on {@link DoubleControllerSpellDamageEffect}
-     * permanents on the battlefield. Only applies when the stack entry is an instant or sorcery spell
-     * whose color matches the effect's required color and whose controller matches the permanent's controller.
-     */
-    int getControllerSpellDamageMultiplier(GameData gameData, StackEntry entry) {
-        if (entry == null) return 1;
-        StackEntryType type = entry.getEntryType();
-        if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL) return 1;
-
-        int[] multiplier = {1};
-        gameData.forEachPermanent((playerId, p) -> {
-            if (!playerId.equals(entry.getControllerId())) return;
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof DoubleControllerSpellDamageEffect dcsde
-                        && entry.getCard().getColors().contains(dcsde.color())) {
-                    multiplier[0] *= 2;
-                }
-            }
-        });
-        return multiplier[0];
+        return (damage + bonus) * getDamageMultiplier(gameData)
+                * getControllerDamageMultiplier(gameData, controllerId, entry, false);
     }
 
     /**
      * Returns the per-controller damage multiplier based on {@link DoubleControllerDamageEffect}
      * permanents on the battlefield. Only applies when the source is controlled by the same player
-     * who controls the permanent with the effect. Doubles ALL damage from sources the controller
-     * controls (combat, spells, abilities). Multiple instances stack multiplicatively.
+     * who controls the permanent with the effect.
+     *
+     * <p>Each effect has a {@code stackFilter} predicate and an {@code appliesToCombatDamage} flag.
+     * For stack-based damage, the effect applies if the filter is {@code null} (matches all) or if
+     * the entry matches the filter. For combat damage ({@code isCombat=true}), the effect applies
+     * only if {@code appliesToCombatDamage} is {@code true}.
+     *
+     * <p>Multiple instances stack multiplicatively.
+     *
+     * @param entry the stack entry, or {@code null} for combat damage
+     * @param isCombat whether this is combat damage
      */
-    int getControllerDamageMultiplier(GameData gameData, UUID controllerId) {
+    int getControllerDamageMultiplier(GameData gameData, UUID controllerId, StackEntry entry, boolean isCombat) {
         if (controllerId == null) return 1;
 
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof DoubleControllerDamageEffect) {
-                    multiplier[0] *= 2;
+                if (effect instanceof DoubleControllerDamageEffect dcde) {
+                    if (isCombat) {
+                        if (dcde.appliesToCombatDamage()) {
+                            multiplier[0] *= 2;
+                        }
+                    } else if (entry != null) {
+                        if (dcde.stackFilter() == null || matchesStackEntryPredicate(entry, dcde.stackFilter())) {
+                            multiplier[0] *= 2;
+                        }
+                    }
                 }
             }
         });
         return multiplier[0];
+    }
+
+    /**
+     * Evaluates a {@link StackEntryPredicate} against a stack entry for damage multiplier purposes.
+     */
+    private boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate) {
+        if (predicate instanceof StackEntryTypeInPredicate typeIn) {
+            return typeIn.spellTypes().contains(entry.getEntryType());
+        }
+        if (predicate instanceof StackEntryColorInPredicate colorIn) {
+            List<CardColor> colors = entry.getCard().getColors();
+            if (colors == null) return false;
+            for (CardColor color : colors) {
+                if (colorIn.colors().contains(color)) return true;
+            }
+            return false;
+        }
+        if (predicate instanceof StackEntryAllOfPredicate allOf) {
+            for (StackEntryPredicate nested : allOf.predicates()) {
+                if (!matchesStackEntryPredicate(entry, nested)) return false;
+            }
+            return true;
+        }
+        if (predicate instanceof StackEntryAnyOfPredicate anyOf) {
+            for (StackEntryPredicate nested : anyOf.predicates()) {
+                if (matchesStackEntryPredicate(entry, nested)) return true;
+            }
+            return false;
+        }
+        if (predicate instanceof StackEntryNotPredicate not) {
+            return !matchesStackEntryPredicate(entry, not.predicate());
+        }
+        return false;
     }
 
     /**
@@ -2064,7 +2096,7 @@ public class GameQueryService {
             }
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
-        result *= getControllerDamageMultiplier(gameData, controllerId);
+        result *= getControllerDamageMultiplier(gameData, controllerId, null, true);
         result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
         if (target != null) {
             result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);

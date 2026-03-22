@@ -60,6 +60,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -1346,44 +1349,107 @@ class GameQueryServiceTest {
     class ControllerDamageMultiplier {
 
         @Test
-        @DisplayName("returns 1 by default")
-        void returnsOneByDefault() {
-            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id)).isEqualTo(1);
+        @DisplayName("returns 1 by default for combat damage")
+        void returnsOneByDefaultCombat() {
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(1);
         }
 
         @Test
         @DisplayName("returns 1 for null controllerId")
         void returnsOneForNull() {
-            assertThat(gqs.getControllerDamageMultiplier(gd, null)).isEqualTo(1);
+            assertThat(gqs.getControllerDamageMultiplier(gd, null, null, true)).isEqualTo(1);
         }
 
         @Test
-        @DisplayName("returns 2 when controller has one DoubleControllerDamageEffect")
-        void returnsTwoWithOneEffect() {
+        @DisplayName("returns 2 for combat when appliesToCombatDamage is true")
+        void returnsTwoForCombatWithAllSourcesEffect() {
             addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
-                    new DoubleControllerDamageEffect()));
+                    new DoubleControllerDamageEffect(null, true)));
 
-            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id)).isEqualTo(2);
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 1 for combat when appliesToCombatDamage is false")
+        void returnsOneForCombatWithSpellOnlyEffect() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Fire Servant", 4, 3, CardColor.RED,
+                    new DoubleControllerDamageEffect(
+                            new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
+                            false)));
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("returns 2 for matching stack entry when filter matches")
+        void returnsTwoForMatchingStackEntry() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Fire Servant", 4, 3, CardColor.RED,
+                    new DoubleControllerDamageEffect(
+                            new StackEntryAllOfPredicate(List.of(
+                                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
+                                    new StackEntryColorInPredicate(Set.of(CardColor.RED))
+                            )),
+                            false)));
+
+            Card redSpell = new Card();
+            redSpell.setName("Shock");
+            redSpell.setColors(List.of(CardColor.RED));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, redSpell, player1Id,
+                    "Shock", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, entry, false)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 1 for non-matching stack entry color")
+        void returnsOneForNonMatchingColor() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Fire Servant", 4, 3, CardColor.RED,
+                    new DoubleControllerDamageEffect(
+                            new StackEntryColorInPredicate(Set.of(CardColor.RED)),
+                            false)));
+
+            Card greenSpell = new Card();
+            greenSpell.setName("Giant Growth");
+            greenSpell.setColors(List.of(CardColor.GREEN));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, greenSpell, player1Id,
+                    "Giant Growth", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, entry, false)).isEqualTo(1);
         }
 
         @Test
         @DisplayName("does not affect opponent")
         void doesNotAffectOpponent() {
             addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
-                    new DoubleControllerDamageEffect()));
+                    new DoubleControllerDamageEffect(null, true)));
 
-            assertThat(gqs.getControllerDamageMultiplier(gd, player2Id)).isEqualTo(1);
+            assertThat(gqs.getControllerDamageMultiplier(gd, player2Id, null, true)).isEqualTo(1);
         }
 
         @Test
         @DisplayName("returns 4 with two DoubleControllerDamageEffect permanents")
         void returnsFourWithTwoEffects() {
             addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
-                    new DoubleControllerDamageEffect()));
+                    new DoubleControllerDamageEffect(null, true)));
             addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
-                    new DoubleControllerDamageEffect()));
+                    new DoubleControllerDamageEffect(null, true)));
 
-            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id)).isEqualTo(4);
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("null filter matches any stack entry")
+        void nullFilterMatchesAnyStackEntry() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
+                    new DoubleControllerDamageEffect(null, true)));
+
+            Card greenSpell = new Card();
+            greenSpell.setName("Giant Growth");
+            greenSpell.setColors(List.of(CardColor.GREEN));
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, greenSpell, player1Id,
+                    "Giant Growth", new ArrayList<>(), null);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, entry, false)).isEqualTo(2);
         }
     }
 

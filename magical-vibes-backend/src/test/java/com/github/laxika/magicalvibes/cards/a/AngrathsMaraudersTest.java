@@ -34,6 +34,9 @@ class AngrathsMaraudersTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
                 .isInstanceOf(DoubleControllerDamageEffect.class);
+        DoubleControllerDamageEffect effect = (DoubleControllerDamageEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.stackFilter()).isNull();
+        assertThat(effect.appliesToCombatDamage()).isTrue();
     }
 
     // ===== Doubles spell damage to player =====
