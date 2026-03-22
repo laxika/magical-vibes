@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTo
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandEffect;
@@ -348,6 +349,23 @@ public class PlayerInteractionResolutionService {
     private void resolveDiscardCard(GameData gameData, StackEntry entry, DiscardCardEffect effect) {
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, entry.getControllerId(), effect.amount());
+    }
+
+    @HandlesEffect(DiscardCardUnlessAttackedThisTurnEffect.class)
+    private void resolveDiscardCardUnlessAttackedThisTurn(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String cardName = entry.getCard().getName();
+
+        if (gameData.playersDeclaredAttackersThisTurn.contains(controllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " attacked this turn — no discard required (" + cardName + ").");
+            log.info("Game {} - {} attacked this turn, skipping discard for {}", gameData.id, playerName, cardName);
+            return;
+        }
+
+        gameData.discardCausedByOpponent = false;
+        resolveDiscardCards(gameData, controllerId, 1);
     }
 
     @HandlesEffect(DiscardOwnHandEffect.class)
