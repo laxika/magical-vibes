@@ -19,6 +19,7 @@ public enum CardSet {
     NEW_PHYREXIA("NPH"),
     INNISTRAD("ISD"),
     DARK_ASCENSION("DKA"),
+    IXALAN("XLN"),
     DOMINARIA("DOM");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
