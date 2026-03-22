@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
@@ -669,6 +670,18 @@ public class AbilityActivationService {
             handler.validateCanPay(gameData, playerId);
         }
 
+        // Validate pay-life cost
+        Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
+                .filter(PayLifeCost.class::isInstance)
+                .map(PayLifeCost.class::cast)
+                .findFirst();
+        if (payLifeCost.isPresent()) {
+            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            if (life < payLifeCost.get().amount()) {
+                throw new IllegalStateException("Not enough life to pay (need " + payLifeCost.get().amount() + ", have " + life + ")");
+            }
+        }
+
         // Pre-validate mana cost before entering interactive cost choices (CR 602.2b)
         if (abilityCost != null) {
             ManaCost preCheck = new ManaCost(abilityCost);
@@ -807,6 +820,13 @@ public class AbilityActivationService {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext);
+        }
+
+        // Pay life cost
+        if (payLifeCost.isPresent()) {
+            int amount = payLifeCost.get().amount();
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            gameData.playerLifeTotals.put(playerId, currentLife - amount);
         }
 
         if (discardCardTypeCost != null) {
