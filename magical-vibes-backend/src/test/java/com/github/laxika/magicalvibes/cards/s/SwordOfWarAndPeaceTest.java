@@ -343,7 +343,79 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature2, CardColor.WHITE)).isTrue();
     }
 
+    // ===== Animated equipment (creature itself deals combat damage) =====
+
+    @Test
+    @DisplayName("Animated Sword deals damage by opponent hand size when it deals combat damage as a creature")
+    void animatedSwordDealsDamageByHandSize() {
+        harness.setLife(player2, 20);
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        // Give opponent 5 cards in hand
+        harness.setHand(player2, new ArrayList<>(List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>());
+
+        resolveCombat();
+
+        // Combat damage: 3 (animated) + 5 (hand size damage) = 8
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("Animated Sword grants life by controller hand size when it deals combat damage as a creature")
+    void animatedSwordGrantsLifeByHandSize() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        harness.setHand(player1, new ArrayList<>(List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>());
+
+        resolveCombat();
+
+        // Controller gains 3 life
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("Animated Sword fires both damage and life gain when dealing combat damage as a creature")
+    void animatedSwordFiresBothEffects() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        // Opponent has 4 cards, controller has 2 cards
+        harness.setHand(player2, new ArrayList<>(List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(
+                new GrizzlyBears(), new GrizzlyBears())));
+
+        resolveCombat();
+
+        // Combat damage: 3 (animated) + 4 (hand size damage) = 7 total to opponent
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+
+        // Controller gains 2 life (2 cards in hand)
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
     // ===== Helpers =====
+
+    private Permanent addAnimatedSword(Player player) {
+        Permanent perm = new Permanent(new SwordOfWarAndPeace());
+        perm.setSummoningSick(false);
+        perm.setAnimatedUntilEndOfTurn(true);
+        perm.setAnimatedPower(3);
+        perm.setAnimatedToughness(3);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new SwordOfWarAndPeace());

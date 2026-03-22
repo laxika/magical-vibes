@@ -316,7 +316,77 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature2, CardColor.BLUE)).isTrue();
     }
 
+    // ===== Animated equipment (creature itself deals combat damage) =====
+
+    @Test
+    @DisplayName("Animated Sword creates Wolf token when it deals combat damage as a creature")
+    void animatedSwordCreatesTokenOnCombatDamage() {
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        setDeck(player2, 15);
+
+        resolveCombat();
+
+        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Wolf"))
+                .toList();
+        assertThat(wolves).hasSize(1);
+        assertThat(wolves.getFirst().getCard().getPower()).isEqualTo(2);
+        assertThat(wolves.getFirst().getCard().getToughness()).isEqualTo(2);
+        assertThat(wolves.getFirst().getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(wolves.getFirst().getCard().getSubtypes()).contains(CardSubtype.WOLF);
+    }
+
+    @Test
+    @DisplayName("Animated Sword mills 10 cards when it deals combat damage as a creature")
+    void animatedSwordMillsOnCombatDamage() {
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        setDeck(player2, 15);
+
+        resolveCombat();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Animated Sword fires both token and mill when dealing combat damage as a creature")
+    void animatedSwordFiresBothEffects() {
+        harness.setLife(player2, 20);
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        setDeck(player2, 15);
+
+        resolveCombat();
+
+        // Wolf token created
+        List<Permanent> wolves = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Wolf"))
+                .toList();
+        assertThat(wolves).hasSize(1);
+
+        // 10 cards milled
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(10);
+
+        // Combat damage dealt (animated 3/3)
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
     // ===== Helpers =====
+
+    private Permanent addAnimatedSword(Player player) {
+        Permanent perm = new Permanent(new SwordOfBodyAndMind());
+        perm.setSummoningSick(false);
+        perm.setAnimatedUntilEndOfTurn(true);
+        perm.setAnimatedPower(3);
+        perm.setAnimatedToughness(3);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new SwordOfBodyAndMind());

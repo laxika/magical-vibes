@@ -369,7 +369,80 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature2, CardColor.GREEN)).isTrue();
     }
 
+    // ===== Animated equipment (creature itself deals combat damage) =====
+
+    @Test
+    @DisplayName("Animated Sword triggers discard when it deals combat damage as a creature")
+    void animatedSwordTriggersDiscardOnCombatDamage() {
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+
+        resolveCombat();
+
+        // Game pauses for discard choice
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Animated Sword triggers untap when it deals combat damage as a creature")
+    void animatedSwordTriggersUntapOnCombatDamage() {
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        Permanent land = addTappedLand(player1);
+        harness.setHand(player2, new ArrayList<>());
+
+        resolveCombat();
+
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animated Sword fires both discard and untap when dealing combat damage as a creature")
+    void animatedSwordFiresBothEffects() {
+        harness.setLife(player2, 20);
+        Permanent sword = addAnimatedSword(player1);
+        sword.setAttacking(true);
+
+        Permanent land = addTappedLand(player1);
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+
+        resolveCombat();
+
+        // Discard prompt appears
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        harness.handleCardChosen(player2, 0);
+
+        // Discard happened
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+
+        // Land untapped
+        assertThat(land.isTapped()).isFalse();
+
+        // Combat damage dealt (animated 3/3)
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
     // ===== Helpers =====
+
+    private Permanent addAnimatedSword(Player player) {
+        Permanent perm = new Permanent(new SwordOfFeastAndFamine());
+        perm.setSummoningSick(false);
+        perm.setAnimatedUntilEndOfTurn(true);
+        perm.setAnimatedPower(3);
+        perm.setAnimatedToughness(3);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new SwordOfFeastAndFamine());

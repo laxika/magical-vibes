@@ -3,11 +3,16 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DeathTriggerService;
@@ -933,6 +938,76 @@ class CombatDamageServiceTest {
             gameData.combatDamagePhase1State = emptyPhase1State(Map.of(0, List.of(0, 1)));
 
             return blocker1;
+        }
+    }
+
+    // ===== Combat Damage To Player Triggers =====
+
+    @Nested
+    @DisplayName("Combat Damage To Player Trigger Targeting")
+    class CombatDamageToPlayerTriggerTest {
+
+        @BeforeEach
+        void setUpStubs() {
+            stubCombatSetup();
+            stubDamageResolution();
+            stubRegularPlayerDamage();
+        }
+
+        private Permanent addAttackerWithEffect(String name, int power, int toughness,
+                                                 EffectSlot slot, com.github.laxika.magicalvibes.model.effect.CardEffect effect) {
+            Card card = createCard(name, power, toughness);
+            card.addEffect(slot, effect);
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            perm.setAttacking(true);
+            gameData.playerBattlefields.get(player1Id).add(perm);
+            return perm;
+        }
+
+        @Test
+        @DisplayName("TargetPlayerDiscardsEffect stack entry has defenderId as targetId")
+        void targetPlayerDiscardsEffectSetsDefenderAsTarget() {
+            addAttackerWithEffect("Animated Sword", 3, 3,
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TargetPlayerDiscardsEffect(1));
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof TargetPlayerDiscardsEffect))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("MillTargetPlayerEffect stack entry has defenderId as targetId")
+        void millTargetPlayerEffectSetsDefenderAsTarget() {
+            addAttackerWithEffect("Animated Sword", 3, 3,
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillTargetPlayerEffect(10));
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof MillTargetPlayerEffect))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("DealDamageToTargetPlayerByHandSizeEffect stack entry has defenderId as targetId")
+        void dealDamageByHandSizeEffectSetsDefenderAsTarget() {
+            addAttackerWithEffect("Animated Sword", 3, 3,
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DealDamageToTargetPlayerByHandSizeEffect());
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof DealDamageToTargetPlayerByHandSizeEffect))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
         }
     }
 }
