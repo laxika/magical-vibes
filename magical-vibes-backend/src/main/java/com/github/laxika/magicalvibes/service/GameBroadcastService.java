@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
@@ -1088,6 +1089,7 @@ public class GameBroadcastService {
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
         int increase = getOpponentCostIncrease(gameData, playerId, card.getType());
         increase += getSpellCastTaxIncrease(gameData, playerId);
+        increase += getPredicateSpellCostIncrease(gameData, card);
         int reduction = getOwnCostReduction(gameData, playerId, card);
         return increase - reduction;
     }
@@ -1109,6 +1111,24 @@ public class GameBroadcastService {
         if (taxAmount == 0) return 0;
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
         return taxAmount * spellsCast;
+    }
+
+    private int getPredicateSpellCostIncrease(GameData gameData, Card card) {
+        int totalIncrease = 0;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof IncreaseSpellCostEffect increase
+                                && gameQueryService.matchesCardPredicate(card, increase.predicate(), null)) {
+                            totalIncrease += increase.amount();
+                        }
+                    }
+                }
+            }
+        }
+        return totalIncrease;
     }
 
     private int getOwnCostReduction(GameData gameData, UUID playerId, Card card) {

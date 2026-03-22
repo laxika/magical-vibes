@@ -313,6 +313,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Limit spells | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
 | Tax attackers | `w/WindbornMuse.java` | STATIC RequirePaymentToAttackEffect |
 | Tax opponent spells | `a/AuraOfSilence.java` | STATIC IncreaseOpponentCastCostEffect |
+| Tax matching spells (all players) | `t/ThaliaGuardianOfThraben.java` | STATIC IncreaseSpellCostEffect(CardNotPredicate(CardTypePredicate(CREATURE)), 1) — symmetric, affects all players |
 | Enters tapped | `r/RootMaze.java` | STATIC EnterPermanentsOfTypesTappedEffect |
 | Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, OWN_CREATURES) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
 | P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC PowerToughnessEqualToControlledLandCountEffect |

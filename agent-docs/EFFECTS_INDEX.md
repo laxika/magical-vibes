@@ -1021,6 +1021,7 @@ Pass `null` as filter to allow any card.
 | `PlayersCannotDrawCardsEffect` | `()` | players can't draw cards (static, Omen Machine) |
 | `LimitSpellsPerTurnEffect` | `(int maxSpells)` | each player can cast at most N spells per turn (static) |
 | `IncreaseOpponentCastCostEffect` | `(Set<CardType> affectedTypes, int amount)` | opponent's spells of types cost N more (static) |
+| `IncreaseSpellCostEffect` | `(CardPredicate predicate, int amount)` | matching spells cost N more for all players (static, symmetric; e.g. Thalia with CardNotPredicate(CardTypePredicate(CREATURE))) |
 | `IncreaseEachPlayerCastCostPerSpellThisTurnEffect` | `(int amountPerSpell)` | each spell a player casts costs N more for each other spell that player has already cast this turn; affects all players (static, Damping Sphere) |
 | `ReplaceLandExcessManaWithColorlessEffect` | `()` | if a land is tapped for two or more mana, it produces {C} instead of any other type and amount (static, Damping Sphere) |
 | `RequirePaymentToAttackEffect` | `(int amountPerAttacker)` | must pay N mana per attacking creature (static) |

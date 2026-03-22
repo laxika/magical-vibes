@@ -18,6 +18,7 @@ public enum CardSet {
     MIRRODIN_BESIEGED("MBS"),
     NEW_PHYREXIA("NPH"),
     INNISTRAD("ISD"),
+    DARK_ASCENSION("DKA"),
     DOMINARIA("DOM");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
