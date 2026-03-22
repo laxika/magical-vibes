@@ -668,6 +668,8 @@ Pass `null` as filter to allow any card.
 | `DamageDealtAsInfectBelowZeroLifeEffect` | `()` | as long as you have 0 or less life, all damage dealt to you is dealt as though its source had infect (static) |
 | `LifeTotalCantChangeEffect` | `()` | controller's life total can't change (static) |
 | `PlayersCantGainLifeEffect` | `()` | no player can gain life (static, global — checked on any battlefield) |
+| `PlayersCantCastSpellsFromGraveyardsEffect` | `()` | no player can cast spells from graveyards (static, global — prevents flashback, graveyard cast, etc.; does not prevent playing lands from graveyards) |
+| `PlayersCantActivateAbilitiesOfGraveyardCardsEffect` | `()` | no player can activate abilities of cards in graveyards (static, global — checked in AbilityActivationService) |
 | `DamageCantBePreventedEffect` | `()` | damage can't be prevented by any means (static, global — bypasses shields, protection damage, color prevention) |
 | `AllowExtraLoyaltyActivationEffect` | `()` | you may activate loyalty abilities of planeswalkers you control twice each turn rather than only once (static). Checked in `AbilityActivationService.validateAndPayLoyaltyCost()` via `GameQueryService.hasExtraLoyaltyActivation()`. Used by Oath of Teferi |
 

@@ -309,6 +309,11 @@ public class AbilityActivationService {
      * the player can pay the mana cost. Pays the cost and pushes the ability onto the stack.</p>
      */
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
+        // Ashes of the Abhorrent etc.: players can't activate abilities of cards in graveyards
+        if (!gameQueryService.canPlayersActivateGraveyardAbilities(gameData)) {
+            throw new IllegalStateException("Abilities of cards in graveyards can't be activated");
+        }
+
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {

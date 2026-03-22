@@ -1034,6 +1034,11 @@ public class SpellCastingService {
             throw new IllegalStateException("Game is not running");
         }
 
+        // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
+        if (!gameQueryService.canPlayersCastSpellsFromGraveyards(gameData)) {
+            throw new IllegalStateException("Spells can't be cast from graveyards");
+        }
+
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {

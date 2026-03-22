@@ -266,6 +266,13 @@ public class MayCastHandlerService {
         GraveyardSearchScope scope = castEffect.scope();
         String castLabel = castEffect.withoutPayingManaCost() ? " without paying its mana cost" : "";
 
+        // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
+        if (accepted && !gameQueryService.canPlayersCastSpellsFromGraveyards(gameData)) {
+            String logEntry = cardToCast.getName() + " can't be cast from the graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            accepted = false;
+        }
+
         if (accepted) {
             // Verify the card is still in a graveyard matching the scope
             Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());

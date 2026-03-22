@@ -42,6 +42,8 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
@@ -484,6 +486,24 @@ public class GameQueryService {
     public boolean canPlayerGainLife(GameData gameData, UUID playerId) {
         if (!canPlayerLifeChange(gameData, playerId)) return false;
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if players are allowed to cast spells from graveyards.
+     * Returns {@code false} when a {@link PlayersCantCastSpellsFromGraveyardsEffect}
+     * is on any battlefield (e.g. Ashes of the Abhorrent).
+     */
+    public boolean canPlayersCastSpellsFromGraveyards(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantCastSpellsFromGraveyardsEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if players are allowed to activate abilities of cards in graveyards.
+     * Returns {@code false} when a {@link PlayersCantActivateAbilitiesOfGraveyardCardsEffect}
+     * is on any battlefield (e.g. Ashes of the Abhorrent).
+     */
+    public boolean canPlayersActivateGraveyardAbilities(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantActivateAbilitiesOfGraveyardCardsEffect.class);
     }
 
     /**

@@ -518,6 +518,11 @@ public class GameBroadcastService {
             return playable;
         }
 
+        // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
+        if (!gameQueryService.canPlayersCastSpellsFromGraveyards(gameData)) {
+            return playable;
+        }
+
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null) {
             return playable;
