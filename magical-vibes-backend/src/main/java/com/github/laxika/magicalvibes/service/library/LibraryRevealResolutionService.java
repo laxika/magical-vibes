@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseNToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
@@ -1006,6 +1007,63 @@ public class LibraryRevealResolutionService {
 
         log.info("Game {} - {} resolving {} with X={}, {} revealed, {} eligible",
                 gameData.id, playerName, entry.getCard().getName(), xValue, count, eligibleCards.size());
+    }
+
+    /**
+     * The source creature explores: reveal the top card of the controller's library.
+     * If it's a land card, put it into the controller's hand.
+     * Otherwise, put a +1/+1 counter on the exploring creature, then ask the controller
+     * whether to put the revealed card into their graveyard (if declined, it stays on top).
+     * Used by Brazen Buccaneers and other Ixalan explore creatures.
+     */
+    @HandlesEffect(ExploreEffect.class)
+    void resolveExplore(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + "'s library is empty (" + sourceName + " explores).");
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+
+        // Reveal the top card to all players
+        gameBroadcastService.logAndBroadcast(gameData,
+                sourceName + " explores — " + playerName + " reveals " + topCard.getName() + ".");
+
+        if (topCard.hasType(CardType.LAND)) {
+            // Land — put into controller's hand
+            deck.removeFirst();
+            gameData.addCardToHand(controllerId, topCard);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " puts " + topCard.getName() + " into their hand.");
+            log.info("Game {} - {} explores, reveals land {} — to hand",
+                    gameData.id, sourceName, topCard.getName());
+        } else {
+            // Not a land — put a +1/+1 counter on the exploring creature
+            Permanent source = entry.getSourcePermanentId() != null
+                    ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                    : null;
+            if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
+                source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + 1);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        source.getCard().getName() + " gets a +1/+1 counter.");
+            }
+
+            // Ask: put the revealed card into your graveyard?
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), controllerId,
+                    List.of(new ExploreEffect()),
+                    sourceName + " — Put " + topCard.getName() + " into your graveyard?"
+            ));
+
+            log.info("Game {} - {} explores, reveals non-land {} — +1/+1 counter, may graveyard",
+                    gameData.id, sourceName, topCard.getName());
+        }
     }
 
     // =========================================================================

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
@@ -134,6 +135,14 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof RevealTopCardMayPlayFreeOrExileEffect);
         if (isPlayFromLibraryOrExile) {
             mayCastHandlerService.handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Explore — may put revealed non-land card into graveyard
+        boolean isExplore = ability.effects().stream()
+                .anyMatch(e -> e instanceof ExploreEffect);
+        if (isExplore) {
+            mayMiscHandlerService.handleExploreMayGraveyardChoice(gameData, player, accepted);
             return;
         }
 
