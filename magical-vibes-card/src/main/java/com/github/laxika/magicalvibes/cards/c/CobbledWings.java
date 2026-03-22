@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ISD", collectorNumber = "219")
+@CardRegistration(set = "XLN", collectorNumber = "233")
 public class CobbledWings extends Card {
 
     public CobbledWings() {
