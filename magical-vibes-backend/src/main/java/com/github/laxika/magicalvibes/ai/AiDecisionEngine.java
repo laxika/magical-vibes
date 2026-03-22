@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -359,6 +360,8 @@ public abstract class AiDecisionEngine {
                 boolean hasMatch = graveyard.stream()
                         .anyMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()));
                 if (!hasMatch) return false;
+            } else if (effect instanceof ExileXCardsFromGraveyardCost) {
+                if (graveyard.isEmpty()) return false;
             }
         }
         return true;
@@ -412,6 +415,31 @@ public abstract class AiDecisionEngine {
             }
         }
         return null;
+    }
+
+    /**
+     * Finds an ExileXCardsFromGraveyardCost in the card's SPELL effects, if any.
+     */
+    protected ExileXCardsFromGraveyardCost findExileXGraveyardCost(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ExileXCardsFromGraveyardCost cost) {
+                return cost;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns indices for all cards in the player's graveyard, for use with
+     * {@link ExileXCardsFromGraveyardCost}. Returns an empty list if the graveyard is empty.
+     */
+    protected List<Integer> selectAllGraveyardIndices(GameData gameData) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            indices.add(i);
+        }
+        return indices;
     }
 
     protected IntConsumer tapPermanentAction() {

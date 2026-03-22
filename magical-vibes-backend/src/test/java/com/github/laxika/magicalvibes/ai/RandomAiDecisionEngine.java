@@ -162,7 +162,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
-            // Determine exile graveyard card index if needed
+            // Determine exile graveyard card index if needed (single card exile)
             Integer exileGraveyardCardIndex = null;
             ExileCardFromGraveyardCost exileCost = findExileGraveyardCost(card);
             if (exileCost != null) {
@@ -170,6 +170,18 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 if (exileGraveyardCardIndex == null) {
                     continue; // No valid graveyard card, try next spell
                 }
+            }
+
+            // Determine exile graveyard card indices if needed (X cards exile, e.g. Harvest Pyre)
+            List<Integer> exileGraveyardCardIndices = null;
+            if (findExileXGraveyardCost(card) != null) {
+                List<Integer> allIndices = selectAllGraveyardIndices(gameData);
+                if (allIndices.isEmpty()) {
+                    continue; // No graveyard cards, try next spell
+                }
+                Collections.shuffle(allIndices, rng);
+                int count = rng.nextInt(allIndices.size()) + 1;
+                exileGraveyardCardIndices = new ArrayList<>(allIndices.subList(0, count));
             }
 
             // Select sacrifice target if the spell has a sacrifice cost
@@ -213,10 +225,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;
             final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
+            final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
             final UUID finalSacrificePermanentId = sacrificePermanentId;
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             send(() -> messageHandler.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, null, null, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
 
             if (hand.size() >= handSizeBefore) {
                 log.warn("Random AI: PlayCard failed silently in game {}", gameId);
