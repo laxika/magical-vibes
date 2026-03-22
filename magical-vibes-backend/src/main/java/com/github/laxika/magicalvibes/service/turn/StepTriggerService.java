@@ -114,11 +114,19 @@ public class StepTriggerService {
             List<CardEffect> upkeepEffects = perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED);
             if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
-            // If any effect targets a player, group all effects into a single player-targeted trigger
+            // If any effect targets a player, group all effects into a player-targeted trigger
             boolean hasPlayerTarget = upkeepEffects.stream().anyMatch(CardEffect::canTargetPlayer);
             if (hasPlayerTarget) {
-                gameData.pendingUpkeepPlayerTargets.add(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
-                        perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                int maxPlayerTargets = upkeepEffects.stream()
+                        .mapToInt(CardEffect::requiredPlayerTargetCount)
+                        .max().orElse(1);
+                if (maxPlayerTargets >= 2) {
+                    gameData.pendingUpkeepMultiPlayerTargets.add(new PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger(
+                            perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                } else {
+                    gameData.pendingUpkeepPlayerTargets.add(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                            perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                }
                 continue;
             }
 
@@ -436,7 +444,13 @@ public class StepTriggerService {
             }
         }
 
-        // Process upkeep player-targeted triggers first (mandatory targeting at trigger time, CR 603.3d)
+        // Process upkeep multi-player-targeted triggers first (e.g. Axis of Mortality, CR 603.3d)
+        if (!gameData.pendingUpkeepMultiPlayerTargets.isEmpty()) {
+            processNextUpkeepMultiPlayerTarget(gameData);
+            return;
+        }
+
+        // Process upkeep player-targeted triggers (mandatory targeting at trigger time, CR 603.3d)
         if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
             processNextUpkeepPlayerTarget(gameData);
             return;
@@ -481,6 +495,48 @@ public class StepTriggerService {
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} upkeep trigger awaiting player target selection", gameData.id, trigger.sourceCard().getName());
+    }
+
+    /**
+     * Processes the next pending upkeep multi-player-targeted trigger (e.g. Axis of Mortality).
+     * Presents the controller with a player choice for the first target; when selected,
+     * a second target selection is initiated via {@code UpkeepSecondPlayerTargetTrigger}.
+     */
+    public void processNextUpkeepMultiPlayerTarget(GameData gameData) {
+        if (gameData.pendingUpkeepMultiPlayerTargets.isEmpty()) {
+            processNextUpkeepPlayerTarget(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger trigger = gameData.pendingUpkeepMultiPlayerTargets.removeFirst();
+
+        List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+        playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
+                List.of(), validPlayerTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose first target player.");
+
+        String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep trigger awaiting first player target selection", gameData.id, trigger.sourceCard().getName());
+    }
+
+    /**
+     * Processes the second player target for an upkeep multi-player-targeted trigger.
+     * After the second target is selected, the trigger is pushed onto the stack with both targets.
+     */
+    public void processUpkeepSecondPlayerTarget(GameData gameData, PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger trigger) {
+        List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+        // Cannot target the same player twice
+        validPlayerTargets.remove(trigger.firstTargetPlayerId());
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+        playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
+                List.of(), validPlayerTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose second target player.");
+
+        log.info("Game {} - {} upkeep trigger awaiting second player target selection", gameData.id, trigger.sourceCard().getName());
     }
 
     /**

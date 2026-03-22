@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -225,6 +226,14 @@ public class TurnProgressionService {
 
     public void processNextUpkeepPlayerTarget(GameData gameData) {
         stepTriggerService.processNextUpkeepPlayerTarget(gameData);
+    }
+
+    public void processNextUpkeepMultiPlayerTarget(GameData gameData) {
+        stepTriggerService.processNextUpkeepMultiPlayerTarget(gameData);
+    }
+
+    public void processUpkeepSecondPlayerTarget(GameData gameData, PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger trigger) {
+        stepTriggerService.processUpkeepSecondPlayerTarget(gameData, trigger);
     }
 
     public void processNextUpkeepCopyTarget(GameData gameData) {

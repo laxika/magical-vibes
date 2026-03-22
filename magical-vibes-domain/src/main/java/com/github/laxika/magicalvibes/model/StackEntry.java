@@ -198,6 +198,23 @@ public class StackEntry {
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }
 
+    // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID sourcePermanentId, List<UUID> targetIds) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = 0;
+        this.targetId = null;
+        this.sourcePermanentId = sourcePermanentId;
+        this.damageAssignments = Map.of();
+        this.targetZone = null;
+        this.targetCardIds = List.of();
+        this.targetFilter = null;
+        this.targetIds = targetIds != null ? targetIds : List.of();
+    }
+
     // Multi-target permanent spell constructor (e.g. "one or two target creatures")
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, List<UUID> targetIds) {
         this.entryType = entryType;

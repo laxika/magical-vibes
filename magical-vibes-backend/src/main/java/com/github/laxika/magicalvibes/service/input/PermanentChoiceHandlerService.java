@@ -103,6 +103,10 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
         } else if (context instanceof PermanentChoiceContext.EmblemTriggerTarget ett) {
             triggerHandler.handleEmblemTrigger(gameData, permanentId, ett);
+        } else if (context instanceof PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger umpt) {
+            triggerHandler.handleUpkeepMultiPlayerFirstTarget(gameData, permanentId, umpt);
+        } else if (context instanceof PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger uspt) {
+            triggerHandler.handleUpkeepMultiPlayerSecondTarget(gameData, permanentId, uspt);
         } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
             triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
         } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {

@@ -26,6 +26,13 @@ public interface CardEffect {
     default boolean isSelfTargeting() { return false; }
 
     /**
+     * Returns the number of distinct player targets this effect requires.
+     * Default is 1 (single player target). Override for effects that target
+     * multiple players (e.g. "two target players exchange life totals" returns 2).
+     */
+    default int requiredPlayerTargetCount() { return 1; }
+
+    /**
      * Returns {@code true} if this effect deals damage or destroys a permanent.
      * Used by targeting validation to check protection from source.
      */

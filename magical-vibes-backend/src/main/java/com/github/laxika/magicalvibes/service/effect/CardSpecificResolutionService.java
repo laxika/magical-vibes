@@ -931,6 +931,7 @@ public class CardSpecificResolutionService {
         gameData.pendingSpellTargetTriggers.clear();
         gameData.pendingEmblemTriggerTargets.clear();
         gameData.pendingUpkeepPlayerTargets.clear();
+        gameData.pendingUpkeepMultiPlayerTargets.clear();
         gameData.pendingUpkeepCopyTargets.clear();
         gameData.pendingEachPlayerDiscardQueue.clear();
         gameData.emblems.clear();

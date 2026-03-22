@@ -138,6 +138,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.ETBSpellTargetTrigger> pendingETBSpellTargetTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepPlayerTargetTrigger> pendingUpkeepPlayerTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger> pendingUpkeepMultiPlayerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.CapriciousEfreetOwnTarget> pendingCapriciousEfreetTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EndStepTriggerTarget> pendingEndStepTriggerTargets = new ArrayDeque<>();
@@ -788,6 +789,7 @@ public class GameData {
         copy.pendingETBSpellTargetTriggers.addAll(this.pendingETBSpellTargetTriggers);
         copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
         copy.pendingUpkeepPlayerTargets.addAll(this.pendingUpkeepPlayerTargets);
+        copy.pendingUpkeepMultiPlayerTargets.addAll(this.pendingUpkeepMultiPlayerTargets);
         copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);
         copy.pendingCapriciousEfreetTargets.addAll(this.pendingCapriciousEfreetTargets);
         copy.pendingEndStepTriggerTargets.addAll(this.pendingEndStepTriggerTargets);

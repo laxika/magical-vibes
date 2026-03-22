@@ -328,6 +328,71 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleUpkeepMultiPlayerFirstTarget(GameData gameData, UUID firstPlayerId,
+                                                    PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger umpt) {
+        String playerName = gameData.playerIdToName.get(firstPlayerId);
+        log.info("Game {} - {} upkeep multi-player trigger first target: {}",
+                gameData.id, umpt.sourceCard().getName(), playerName);
+
+        // Proceed to second target selection
+        PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger secondTrigger =
+                new PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger(
+                        umpt.sourceCard(), umpt.controllerId(), umpt.effects(),
+                        umpt.sourcePermanentId(), firstPlayerId);
+        turnProgressionService.processUpkeepSecondPlayerTarget(gameData, secondTrigger);
+    }
+
+    public void handleUpkeepMultiPlayerSecondTarget(GameData gameData, UUID secondPlayerId,
+                                                     PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger uspt) {
+        List<UUID> targetIds = List.of(uspt.firstTargetPlayerId(), secondPlayerId);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                uspt.sourceCard(),
+                uspt.controllerId(),
+                uspt.sourceCard().getName() + "'s upkeep ability",
+                new ArrayList<>(uspt.effects()),
+                uspt.sourcePermanentId(),
+                targetIds
+        );
+        gameData.stack.add(entry);
+
+        String firstName = gameData.playerIdToName.get(uspt.firstTargetPlayerId());
+        String secondName = gameData.playerIdToName.get(secondPlayerId);
+        String logEntry = uspt.sourceCard().getName() + "'s ability targets " + firstName + " and " + secondName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep multi-player trigger targets {} and {}",
+                gameData.id, uspt.sourceCard().getName(), firstName, secondName);
+
+        if (!gameData.pendingUpkeepMultiPlayerTargets.isEmpty()) {
+            turnProgressionService.processNextUpkeepMultiPlayerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+            turnProgressionService.processNextUpkeepPlayerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+            turnProgressionService.processNextUpkeepCopyTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+            turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleUpkeepCopyTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target != null) {

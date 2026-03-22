@@ -21,4 +21,9 @@ public record MayEffect(CardEffect wrapped, String prompt) implements CardEffect
     public boolean canTargetGraveyard() {
         return wrapped.canTargetGraveyard();
     }
+
+    @Override
+    public int requiredPlayerTargetCount() {
+        return wrapped.requiredPlayerTargetCount();
+    }
 }

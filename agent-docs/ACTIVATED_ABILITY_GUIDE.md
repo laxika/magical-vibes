@@ -429,7 +429,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ENTER_BATTLEFIELD` | Permanent enters the battlefield (ETB) |
 | `ON_TAP` | Permanent is tapped for mana (lands) |
 | `STATIC` | Continuous effect, always active while on battlefield |
-| `UPKEEP_TRIGGERED` | Controller's upkeep |
+| `UPKEEP_TRIGGERED` | Controller's upkeep. Supports single-player targeting (e.g. Bloodgift Demon via `pendingUpkeepPlayerTargets`) and multi-player targeting (e.g. Axis of Mortality via `pendingUpkeepMultiPlayerTargets` when any effect has `requiredPlayerTargetCount() >= 2`) |
 | `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
 | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |

@@ -712,7 +712,8 @@ public class MayAbilityHandlerService {
             boolean isTargetedPermanent = innerEffect != null && innerEffect.canTargetPermanent();
             boolean isTargetedPlayer = innerEffect != null && innerEffect.canTargetPlayer();
             boolean isTargetedGraveyard = innerEffect != null && innerEffect.canTargetGraveyard();
-            boolean targetAlreadySet = pendingEntry != null && pendingEntry.getTargetId() != null;
+            boolean targetAlreadySet = pendingEntry != null
+                    && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty());
             if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
                 gameData.resolvedMayAccepted = true;
                 handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);
