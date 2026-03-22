@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -329,13 +330,23 @@ public class GameQueryService {
      * @return {@code true} if the card matches the predicate
      */
     public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId) {
+        return matchesCardPredicate(card, predicate, sourceCardId, null, null);
+    }
+
+    /**
+     * Overload that accounts for Arcane Adaptation-style effects: when a {@link GameData} and
+     * card owner are provided, {@link CardSubtypePredicate} checks also include subtypes
+     * granted by {@link GrantChosenSubtypeToOwnCreaturesEffect} with {@code affectsAllZones = true}.
+     */
+    public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId,
+                                        GameData gameData, UUID cardOwnerId) {
         if (predicate == null) return true;
 
         if (predicate instanceof CardTypePredicate p) {
             return hasCardType(card, p.cardType());
         }
         if (predicate instanceof CardSubtypePredicate p) {
-            return card.getSubtypes().contains(p.subtype());
+            return cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
         }
         if (predicate instanceof CardKeywordPredicate p) {
             return card.getKeywords().contains(p.keyword());
@@ -373,15 +384,57 @@ public class GameQueryService {
             return card.getManaValue() >= p.minManaValue();
         }
         if (predicate instanceof CardNotPredicate p) {
-            return !matchesCardPredicate(card, p.predicate(), sourceCardId);
+            return !matchesCardPredicate(card, p.predicate(), sourceCardId, gameData, cardOwnerId);
         }
         if (predicate instanceof CardAllOfPredicate p) {
-            return p.predicates().stream().allMatch(sub -> matchesCardPredicate(card, sub, sourceCardId));
+            return p.predicates().stream().allMatch(sub -> matchesCardPredicate(card, sub, sourceCardId, gameData, cardOwnerId));
         }
         if (predicate instanceof CardAnyOfPredicate p) {
-            return p.predicates().stream().anyMatch(sub -> matchesCardPredicate(card, sub, sourceCardId));
+            return p.predicates().stream().anyMatch(sub -> matchesCardPredicate(card, sub, sourceCardId, gameData, cardOwnerId));
         }
         return false;
+    }
+
+    // --- Arcane Adaptation / all-zone subtype grants ---
+
+    /**
+     * Returns {@code true} if the card has the given subtype, considering both its natural
+     * subtypes and any subtypes granted by "affects all zones" static effects (e.g. Arcane
+     * Adaptation). Only creature cards receive granted subtypes.
+     *
+     * <p>When {@code gameData} or {@code cardOwnerId} is {@code null}, falls back to checking
+     * only the card's natural subtypes.
+     */
+    public boolean cardHasSubtype(Card card, CardSubtype subtype, GameData gameData, UUID cardOwnerId) {
+        if (card.getSubtypes().contains(subtype)) return true;
+        if (gameData == null || cardOwnerId == null) return false;
+        if (!card.hasType(CardType.CREATURE)) return false;
+        return computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype);
+    }
+
+    /**
+     * Computes the list of subtypes granted to creature cards owned by the given player in
+     * non-battlefield zones (hand, graveyard, library, exile) and creature spells they control
+     * on the stack. Scans the owner's battlefield for permanents with
+     * {@link GrantChosenSubtypeToOwnCreaturesEffect#affectsAllZones()} == {@code true}.
+     */
+    public List<CardSubtype> computeGrantedSubtypesForOwnedCreatureCard(GameData gameData, UUID ownerId) {
+        List<CardSubtype> result = new ArrayList<>();
+        List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
+        if (bf == null) return result;
+        for (Permanent perm : bf) {
+            CardSubtype chosen = perm.getChosenSubtype();
+            if (chosen == null) continue;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GrantChosenSubtypeToOwnCreaturesEffect g && g.affectsAllZones()) {
+                    if (!result.contains(chosen)) {
+                        result.add(chosen);
+                    }
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     // --- Player queries ---

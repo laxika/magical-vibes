@@ -137,7 +137,7 @@ public class DeathTriggerService {
                 // Unwrap subtype-filtered effects: skip if the dying creature lacks the required subtype
                 CardEffect resolvedEffect = effect;
                 if (effect instanceof SubtypeConditionalEffect filtered) {
-                    if (!dyingCard.getSubtypes().contains(filtered.subtype())) {
+                    if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, dyingCreatureControllerId)) {
                         continue;
                     }
                     resolvedEffect = filtered.wrapped();
@@ -352,7 +352,7 @@ public class DeathTriggerService {
         });
     }
 
-    public void checkAnyCreatureDeathTriggers(GameData gameData, Card dyingCard) {
+    public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Card dyingCard) {
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES);
             if (effects == null || effects.isEmpty()) return;
@@ -361,7 +361,7 @@ public class DeathTriggerService {
                 // Unwrap subtype-filtered effects: skip if the dying creature lacks the required subtype
                 CardEffect resolvedEffect = effect;
                 if (effect instanceof SubtypeConditionalEffect filtered) {
-                    if (!dyingCard.getSubtypes().contains(filtered.subtype())) {
+                    if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, dyingCreatureControllerId)) {
                         continue;
                     }
                     resolvedEffect = filtered.wrapped();

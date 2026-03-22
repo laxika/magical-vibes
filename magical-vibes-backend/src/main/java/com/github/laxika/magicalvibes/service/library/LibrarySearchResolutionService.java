@@ -725,7 +725,7 @@ public class LibrarySearchResolutionService {
                 entry.getControllerId(),
                 card -> {
                     boolean isCreatureCard = card.hasType(CardType.CREATURE);
-                    return isCreatureCard && card.getSubtypes().contains(requiredSubtype);
+                    return isCreatureCard && gameQueryService.cardHasSubtype(card, requiredSubtype, gameData, entry.getControllerId());
                 },
                 subtypeName + " creature card",
                 "Search your library for a " + subtypeName + " creature card and put it onto the battlefield.",
@@ -759,7 +759,7 @@ public class LibrarySearchResolutionService {
         }
 
         List<Card> matchingCards = deck.stream()
-                .filter(card -> card.getSubtypes().contains(requiredSubtype))
+                .filter(card -> gameQueryService.cardHasSubtype(card, requiredSubtype, gameData, controllerId))
                 .toList();
 
         if (matchingCards.isEmpty()) {

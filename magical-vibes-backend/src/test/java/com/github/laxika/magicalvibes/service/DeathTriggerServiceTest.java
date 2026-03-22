@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -72,6 +73,17 @@ class DeathTriggerServiceTest {
         gd.playerBattlefields.put(PLAYER2_ID, new ArrayList<>());
         gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>());
         gd.playerGraveyards.put(PLAYER2_ID, new ArrayList<>());
+    }
+
+    /** Stubs cardHasSubtype to delegate to real implementation (for tests with SubtypeConditionalEffect). */
+    private void stubSubtypeChecks() {
+        when(gameQueryService.cardHasSubtype(any(), any(), any(), any())).thenCallRealMethod();
+    }
+
+    /** Stubs both cardHasSubtype and the granted subtypes lookup (for tests where subtype is NOT on the card). */
+    private void stubSubtypeChecksWithGrantedLookup() {
+        stubSubtypeChecks();
+        when(gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(any(), any())).thenReturn(List.of());
     }
 
     private Card createCreature(String name, int power, int toughness) {
@@ -537,6 +549,7 @@ class DeathTriggerServiceTest {
         @Test
         @DisplayName("SubtypeConditionalEffect fires when dying creature has matching subtype")
         void subtypeConditional_matchingSubtype_fires() {
+            stubSubtypeChecks();
             Card watcher = createCreature("Slimefoot", 2, 3);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                     new SubtypeConditionalEffect(CardSubtype.SAPROLING, new DrawCardEffect(1)));
@@ -554,6 +567,7 @@ class DeathTriggerServiceTest {
         @Test
         @DisplayName("SubtypeConditionalEffect does NOT fire when dying creature lacks subtype")
         void subtypeConditional_nonMatchingSubtype_doesNotFire() {
+            stubSubtypeChecksWithGrantedLookup();
             Card watcher = createCreature("Slimefoot", 2, 3);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                     new SubtypeConditionalEffect(CardSubtype.SAPROLING, new DrawCardEffect(1)));
@@ -570,6 +584,7 @@ class DeathTriggerServiceTest {
         @Test
         @DisplayName("Multiple effects grouped into single stack entry for same permanent")
         void multipleEffects_groupedInSingleStackEntry() {
+            stubSubtypeChecks();
             Card watcher = createCreature("Multi Watcher", 1, 1);
             watcher.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                     new SubtypeConditionalEffect(CardSubtype.SAPROLING, new DealDamageToEachOpponentEffect(1)));
@@ -900,7 +915,7 @@ class DeathTriggerServiceTest {
         void noEffects_doesNothing() {
             addToBattlefield(PLAYER1_ID, createCreature("Vanilla", 2, 2));
 
-            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
+            svc.checkAnyCreatureDeathTriggers(gd, PLAYER1_ID, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingDeathTriggerTargets).isEmpty();
@@ -913,7 +928,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(1));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
+            svc.checkAnyCreatureDeathTriggers(gd, PLAYER1_ID, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
@@ -930,7 +945,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutChargeCounterOnTargetPermanentEffect());
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
+            svc.checkAnyCreatureDeathTriggers(gd, PLAYER1_ID, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
@@ -947,7 +962,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new MayEffect(new DrawCardEffect(1), "Draw?"));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
+            svc.checkAnyCreatureDeathTriggers(gd, PLAYER1_ID, createCreature("Dying Creature", 1, 1));
 
             // CR 603.5 — "you may" triggered abilities go on the stack immediately
             assertThat(gd.stack).hasSize(1);
@@ -961,7 +976,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
             Permanent watcherPerm = addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
+            svc.checkAnyCreatureDeathTriggers(gd, PLAYER1_ID, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.get(0);
@@ -980,7 +995,7 @@ class DeathTriggerServiceTest {
             watcher2.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(2));
             addToBattlefield(PLAYER2_ID, watcher2);
 
-            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
+            svc.checkAnyCreatureDeathTriggers(gd, PLAYER1_ID, createCreature("Dying Creature", 1, 1));
 
             assertThat(gd.stack).hasSize(2);
             assertThat(gd.stack.get(0).getControllerId()).isEqualTo(PLAYER1_ID);
@@ -994,7 +1009,7 @@ class DeathTriggerServiceTest {
             watcher.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new DrawCardEffect(1));
             addToBattlefield(PLAYER1_ID, watcher);
 
-            svc.checkAnyCreatureDeathTriggers(gd, createCreature("Dying Creature", 1, 1));
+            svc.checkAnyCreatureDeathTriggers(gd, PLAYER1_ID, createCreature("Dying Creature", 1, 1));
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Morbid Watcher") && msg.contains("triggers")));
         }

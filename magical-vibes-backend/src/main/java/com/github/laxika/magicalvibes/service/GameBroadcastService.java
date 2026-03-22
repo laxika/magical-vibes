@@ -104,8 +104,9 @@ public class GameBroadcastService {
         UUID priorityPlayerId = gameData.interaction.isAwaitingInput() ? null : gameQueryService.getPriorityPlayerId(gameData);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
+            List<CardSubtype> playerGranted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, playerId);
             List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
-                    .stream().map(cardViewFactory::create).toList();
+                    .stream().map(c -> cardViewFactory.create(c, playerGranted)).toList();
             List<CardView> opponentHand = getRevealedOpponentHand(gameData, playerId);
             int mulliganCount = gameData.mulliganCounts.getOrDefault(playerId, 0);
             Map<String, Integer> manaPool = getManaPool(gameData, playerId);
@@ -124,8 +125,9 @@ public class GameBroadcastService {
             if (gameData.mindControllerPlayerId != null && playerId.equals(gameData.mindControllerPlayerId)) {
                 UUID controlledId = gameData.mindControlledPlayerId;
                 if (controlledId != null) {
+                    List<CardSubtype> controlledGranted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, controlledId);
                     opponentHand = gameData.playerHands.getOrDefault(controlledId, List.of())
-                            .stream().map(cardViewFactory::create).toList();
+                            .stream().map(c -> cardViewFactory.create(c, controlledGranted)).toList();
                     playableCardIndices = getPlayableCardIndices(gameData, controlledId);
                     playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, controlledId);
                     playableExileCards = getPlayableExileCards(gameData, controlledId);
@@ -147,7 +149,11 @@ public class GameBroadcastService {
     }
 
     List<StackEntryView> getStackViews(GameData gameData) {
-        return gameData.stack.stream().map(stackEntryViewFactory::create).toList();
+        return gameData.stack.stream().map(entry -> {
+            List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(
+                    gameData, entry.getControllerId());
+            return stackEntryViewFactory.create(entry, granted);
+        }).toList();
     }
 
     List<List<PermanentView>> getBattlefields(GameData data) {
@@ -178,7 +184,8 @@ public class GameBroadcastService {
         List<List<CardView>> graveyards = new ArrayList<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> gy = data.playerGraveyards.get(pid);
-            graveyards.add(gy != null ? gy.stream().map(cardViewFactory::create).toList() : new ArrayList<>());
+            List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, pid);
+            graveyards.add(gy != null ? gy.stream().map(c -> cardViewFactory.create(c, granted)).toList() : new ArrayList<>());
         }
         return graveyards;
     }
@@ -211,8 +218,9 @@ public class GameBroadcastService {
         if (!reveals) return List.of();
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (!opponentId.equals(playerId)) {
+                List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
                 return gameData.playerHands.getOrDefault(opponentId, List.of())
-                        .stream().map(cardViewFactory::create).toList();
+                        .stream().map(c -> cardViewFactory.create(c, granted)).toList();
             }
         }
         return List.of();
@@ -360,7 +368,7 @@ public class GameBroadcastService {
                         ManaPool pool = gameData.playerManaPools.get(playerId);
                         int additionalCost = getCastCostModifier(gameData, playerId, card);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
-                        boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+                        boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
                         boolean hasRestrictedRedContext = isArtifact
                                 || card.hasType(CardType.CREATURE);
                         boolean hasKicker = card.getEffects(EffectSlot.STATIC).stream()
@@ -665,7 +673,7 @@ public class GameBroadcastService {
                     ManaCost cost = new ManaCost(card.getManaCost());
                     int additionalCost = getCastCostModifier(gameData, playerId, card);
                     boolean isArtifact = card.hasType(CardType.ARTIFACT);
-                    boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+                    boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
                     boolean hasRestrictedRedContext = isArtifact
                             || card.hasType(CardType.CREATURE);
                     boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
@@ -1172,7 +1180,7 @@ public class GameBroadcastService {
                     }
                     if (effect instanceof ReduceOwnCastCostForSubtypeEffect subtypeReduce) {
                         for (CardSubtype subtype : subtypeReduce.affectedSubtypes()) {
-                            if (card.getSubtypes().contains(subtype)) {
+                            if (gameQueryService.cardHasSubtype(card, subtype, gameData, playerId)) {
                                 reduction += subtypeReduce.amount();
                                 break;
                             }
@@ -1305,8 +1313,11 @@ public class GameBroadcastService {
     }
 
     public JoinGame getJoinGame(GameData data, UUID playerId) {
+        List<CardSubtype> playerGranted = playerId != null
+                ? gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, playerId)
+                : List.of();
         List<CardView> hand = playerId != null
-                ? data.playerHands.getOrDefault(playerId, List.of()).stream().map(cardViewFactory::create).toList()
+                ? data.playerHands.getOrDefault(playerId, List.of()).stream().map(c -> cardViewFactory.create(c, playerGranted)).toList()
                 : List.of();
         int mulliganCount = playerId != null ? data.mulliganCounts.getOrDefault(playerId, 0) : 0;
         Map<String, Integer> manaPool = getManaPool(data, playerId);

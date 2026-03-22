@@ -784,6 +784,7 @@ class LibraryRevealResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Giant Growth", CardType.INSTANT));
 
             when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+            when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
 
             LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
                     new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE));
@@ -805,6 +806,7 @@ class LibraryRevealResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
 
             when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+            when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
 
             LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
                     new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE), true);

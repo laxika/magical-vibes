@@ -1060,7 +1060,7 @@ Pass `null` as filter to allow any card.
 | `ChooseSubtypeOnEnterEffect` | `()` | choose a creature type as ETB. Detected by `StackResolutionService.resolveEnchantmentSpell()` to prompt `beginSubtypeChoice`. Stores result in `Permanent.chosenSubtype` |
 | `ChooseBasicLandTypeOnEnterEffect` | `()` | choose a basic land type as ETB. Detected by `StackResolutionService.resolveEnchantmentSpell()` (aura path) to prompt `beginBasicLandTypeChoice`. Stores result in `Permanent.chosenSubtype`. Used by Convincing Mirage |
 | `ChooseAnotherCreatureOnEnterEffect` | `()` | "As this creature enters, choose another creature you control." Replacement effect (CR 614.1c) — not suppressed by Torpor Orb. Detected by `BattlefieldEntryService.handleCreatureEnteredBattlefield()`. Prompts permanent choice, stores result in `Permanent.chosenPermanentId`. If no other creatures exist, enters with no choice. Used by Dauntless Bodyguard |
-| `GrantChosenSubtypeToOwnCreaturesEffect` | `()` | static effect: each creature you control is the chosen type in addition to its other types. Reads `chosenSubtype` from source permanent. Used by Xenograft |
+| `GrantChosenSubtypeToOwnCreaturesEffect` | `(boolean affectsAllZones)` | static effect: each creature you control is the chosen type in addition to its other types. Reads `chosenSubtype` from source permanent. No-arg constructor defaults to `affectsAllZones=false` (battlefield only, e.g. Xenograft). When `affectsAllZones=true`, also applies to creature spells on the stack and creature cards you own in hand/graveyard/library/exile (e.g. Arcane Adaptation). Engine checks via `GameQueryService.cardHasSubtype()` and `computeGrantedSubtypesForOwnedCreatureCard()` |
 
 ## Draw replacement / library interaction
 

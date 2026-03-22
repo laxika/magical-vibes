@@ -15,10 +15,36 @@ import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.springframework.stereotype.Service;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class CardViewFactory {
+
+    /**
+     * Creates a CardView with additional granted subtypes merged in.
+     * Only merges granted subtypes for creature cards.
+     */
+    public CardView create(Card card, List<CardSubtype> grantedSubtypes) {
+        CardView base = create(card);
+        if (grantedSubtypes.isEmpty() || !card.hasType(CardType.CREATURE)) return base;
+        List<CardSubtype> merged = new ArrayList<>(base.subtypes());
+        for (CardSubtype st : grantedSubtypes) {
+            if (!merged.contains(st)) merged.add(st);
+        }
+        return new CardView(
+                base.id(), base.name(), base.type(), base.additionalTypes(), base.supertypes(),
+                merged, base.cardText(), base.manaCost(), base.power(), base.toughness(),
+                base.keywords(), base.hasTapAbility(), base.setCode(), base.collectorNumber(),
+                base.color(), base.colors(), base.needsTarget(), base.needsSpellTarget(),
+                base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
+                base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
+                base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
+                base.graveyardActivatedAbilities(), base.transformable(), base.kickerCost());
+    }
 
     public CardView create(Card card) {
         boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty();

@@ -54,7 +54,7 @@ public class SpellCastTriggerCollectorService {
     @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleAnyPlayerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard());
+        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
     }
 
     @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
@@ -183,7 +183,7 @@ public class SpellCastTriggerCollectorService {
     @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard());
+        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
     }
 
     @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
@@ -250,7 +250,8 @@ public class SpellCastTriggerCollectorService {
     private boolean handleManaValueDamage(TriggerMatchContext match,
             DealDamageEqualToSpellManaValueToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null)) return false;
+        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                match.gameData(), sc.castingPlayerId())) return false;
 
         int manaValue = sc.spellCard().getManaValue();
         List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(manaValue));
@@ -270,7 +271,8 @@ public class SpellCastTriggerCollectorService {
             GiveTargetPlayerPoisonCountersEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (trigger.spellFilter() == null) return false;
-        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null)) return false;
+        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                match.gameData(), sc.castingPlayerId())) return false;
 
         List<CardEffect> resolvedEffects = List.of(new GiveTargetPlayerPoisonCountersEffect(trigger.amount()));
         match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -337,7 +339,8 @@ public class SpellCastTriggerCollectorService {
             LoseLifeUnlessPaysEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (trigger.spellFilter() != null
-                && !gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null)) {
+                && !gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                        match.gameData(), sc.castingPlayerId())) {
             return false;
         }
         StackEntry entry = new StackEntry(
@@ -363,8 +366,10 @@ public class SpellCastTriggerCollectorService {
 
     // ── Shared helpers ─────────────────────────────────────────────────
 
-    private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, Card spellCard) {
-        if (!gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) return false;
+    private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
+                                                    Card spellCard, UUID castingPlayerId) {
+        if (!gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
+                match.gameData(), castingPlayerId)) return false;
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
         boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);

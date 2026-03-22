@@ -148,13 +148,13 @@ public class SpellCastingService {
         return effectiveXValue;
     }
 
-    private ManaRestrictionFlags computeManaRestrictionFlags(Card card) {
-        return computeManaRestrictionFlags(card, false);
+    private ManaRestrictionFlags computeManaRestrictionFlags(GameData gameData, UUID playerId, Card card) {
+        return computeManaRestrictionFlags(gameData, playerId, card, false);
     }
 
-    private ManaRestrictionFlags computeManaRestrictionFlags(Card card, boolean kicked) {
+    private ManaRestrictionFlags computeManaRestrictionFlags(GameData gameData, UUID playerId, Card card, boolean kicked) {
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
-        boolean isMyr = card.getSubtypes().contains(CardSubtype.MYR);
+        boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
         boolean instantSorceryOnlyColorless = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
         return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless);
@@ -352,7 +352,7 @@ public class SpellCastingService {
                         }
                         int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
                         int totalAdditionalCost = additionalCost + perTargetCost;
-                        ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
+                        ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);
                         if (card.getXColorRestriction() != null) {
                             if (!cost.canPay(pool, effectiveXValue, card.getXColorRestriction(), totalAdditionalCost)) {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
@@ -1409,7 +1409,7 @@ public class SpellCastingService {
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card) - extraCostReduction;
-        ManaRestrictionFlags flags = computeManaRestrictionFlags(card, kicked);
+        ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);
 
         // Check if we should use a non-zero alternative cost from the battlefield (e.g. Jodah)
         // Use the alternative cost if the normal cost can't be paid but the alternative can
