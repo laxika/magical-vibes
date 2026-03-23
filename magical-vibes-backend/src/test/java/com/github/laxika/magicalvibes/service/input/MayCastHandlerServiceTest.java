@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -55,7 +54,6 @@ class MayCastHandlerServiceTest {
     @Mock private GraveyardService graveyardService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private TurnProgressionService turnProgressionService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
@@ -452,6 +450,47 @@ class MayCastHandlerServiceTest {
         }
 
         @Test
+        @DisplayName("Non-targeted instant uses INSTANT_SPELL type")
+        void nonTargetedInstantUsesInstantType() {
+            Card card = createInstant("Think Twice");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            PendingMayAbility ability = abilityFor(card);
+
+            svc.handlePlayFromLibraryOrExileChoice(gd, player1, true, ability);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
+        }
+
+        @Test
+        @DisplayName("Creature spell uses CREATURE_SPELL type")
+        void creatureSpellUsesCreatureType() {
+            Card card = createCreature("Grizzly Bears");
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            PendingMayAbility ability = abilityFor(card);
+
+            svc.handlePlayFromLibraryOrExileChoice(gd, player1, true, ability);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        }
+
+        @Test
+        @DisplayName("Non-targeted spell clears priorityPassedBy")
+        void nonTargetedSpellClearsPriorityPassedBy() {
+            Card card = createSorcery("Divination");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            gd.priorityPassedBy.add(PLAYER1_ID);
+            PendingMayAbility ability = abilityFor(card);
+
+            svc.handlePlayFromLibraryOrExileChoice(gd, player1, true, ability);
+
+            assertThat(gd.priorityPassedBy).isEmpty();
+        }
+
+        @Test
         @DisplayName("Targeted spell with no valid targets exiles the card")
         void targetedSpellNoTargetsExilesCard() {
             Card card = createInstant("No Targets");
@@ -489,11 +528,6 @@ class MayCastHandlerServiceTest {
     @DisplayName("handleCastFromGraveyardChoice")
     class HandleCastFromGraveyardChoice {
 
-        @BeforeEach
-        void allowGraveyardCasting() {
-            org.mockito.Mockito.lenient().when(gameQueryService.canPlayersCastSpellsFromGraveyards(gd)).thenReturn(true);
-        }
-
         private CastTargetInstantOrSorceryFromGraveyardEffect opponentGraveyardFree() {
             return new CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope.OPPONENT_GRAVEYARD, true);
         }
@@ -504,6 +538,10 @@ class MayCastHandlerServiceTest {
 
         private CastTargetInstantOrSorceryFromGraveyardEffect controllerGraveyardPaid() {
             return new CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false);
+        }
+
+        private void allowGraveyardCasting() {
+            when(gameQueryService.canPlayersCastSpellsFromGraveyards(gd)).thenReturn(true);
         }
 
         @Test
@@ -520,8 +558,24 @@ class MayCastHandlerServiceTest {
         }
 
         @Test
+        @DisplayName("Graveyard casting blocked by Ashes of the Abhorrent prevents cast")
+        void graveyardCastingBlockedPrevents() {
+            Card card = createSorcery("Divination");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+            PendingMayAbility ability = abilityFor(card);
+            when(gameQueryService.canPlayersCastSpellsFromGraveyards(gd)).thenReturn(false);
+
+            svc.handleCastFromGraveyardChoice(gd, player1, true, ability, opponentGraveyardFree());
+
+            assertThat(gd.stack).isEmpty();
+            verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+            verifyNoInteractions(permanentRemovalService);
+        }
+
+        @Test
         @DisplayName("Card no longer in graveyard logs and does not put on stack")
         void cardNoLongerInGraveyardLogsAndSkips() {
+            allowGraveyardCasting();
             Card card = createSorcery("Gone Spell");
             PendingMayAbility ability = abilityFor(card);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(null);
@@ -535,6 +589,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Invalid scope logs and does not cast")
         void invalidScopeLogsAndSkips() {
+            allowGraveyardCasting();
             Card card = createSorcery("Tome Scour");
             PendingMayAbility ability = abilityFor(card);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
@@ -551,6 +606,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("OPPONENT_GRAVEYARD scope accepts card from opponent's graveyard")
         void opponentScopeAcceptsOpponentGraveyard() {
+            allowGraveyardCasting();
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
@@ -566,6 +622,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("CONTROLLERS_GRAVEYARD scope accepts card from controller's graveyard")
         void controllerScopeAcceptsControllerGraveyard() {
+            allowGraveyardCasting();
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
@@ -581,6 +638,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("CONTROLLERS_GRAVEYARD scope rejects card from opponent's graveyard")
         void controllerScopeRejectsOpponentGraveyard() {
+            allowGraveyardCasting();
             Card card = createSorcery("Tome Scour");
             PendingMayAbility ability = abilityFor(card);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
@@ -595,6 +653,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Non-targeted spell is removed from graveyard and put on stack")
         void nonTargetedSpellPutOnStack() {
+            allowGraveyardCasting();
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
@@ -614,6 +673,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Non-targeted instant uses INSTANT_SPELL type")
         void nonTargetedInstantUsesInstantType() {
+            allowGraveyardCasting();
             Card card = createInstant("Opt");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
             PendingMayAbility ability = abilityFor(card);
@@ -628,6 +688,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Non-targeted spell clears priorityPassedBy")
         void nonTargetedSpellClearsPriorityPassedBy() {
+            allowGraveyardCasting();
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
@@ -643,6 +704,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Targeted spell with valid targets begins permanent choice")
         void targetedSpellWithTargetsBeginsChoice() {
+            allowGraveyardCasting();
             Card card = createSorcery("Tome Scour");
             card.addEffect(EffectSlot.SPELL, new MillTargetPlayerEffect(5));
             PendingMayAbility ability = abilityFor(card);
@@ -658,6 +720,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Targeted spell with no valid targets puts card back in graveyard")
         void targetedSpellNoTargetsPutsCardBackInGraveyard() {
+            allowGraveyardCasting();
             Card card = createInstant("No Targets");
             CardEffect permanentOnly = new CardEffect() {
                 @Override public boolean canTargetPermanent() { return true; }
@@ -677,6 +740,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Player-only targeting spell does not offer permanents as targets (the original bug)")
         void playerOnlyTargetingDoesNotOfferPermanents() {
+            allowGraveyardCasting();
             Card card = createSorcery("Tome Scour");
             card.addEffect(EffectSlot.SPELL, new MillTargetPlayerEffect(5));
             PendingMayAbility ability = abilityFor(card);

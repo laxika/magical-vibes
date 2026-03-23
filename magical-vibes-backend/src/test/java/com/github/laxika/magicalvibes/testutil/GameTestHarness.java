@@ -334,7 +334,7 @@ public class GameTestHarness {
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
                 gameQueryService, battlefieldEntryService, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService, playerInputService, lifeResolutionService, exileService, graveyardReturnResolutionService, inputCompletionService, effectResolutionService);
         MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
-                inputCompletionService, gameQueryService, graveyardService, gameBroadcastService, playerInputService, turnProgressionService, permanentRemovalService, triggerCollectionService, battlefieldEntryService, exileService);
+                inputCompletionService, gameQueryService, graveyardService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, battlefieldEntryService, exileService);
         MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(
                 inputCompletionService, gameQueryService, cloneService, stateBasedActionService, gameBroadcastService, playerInputService, turnProgressionService, targetLegalityService, triggerCollectionService);
         MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService = new MayPenaltyChoiceHandlerService(
