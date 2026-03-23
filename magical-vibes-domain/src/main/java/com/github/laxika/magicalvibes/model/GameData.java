@@ -155,6 +155,8 @@ public class GameData {
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
     /** Number of cards to draw after a "discard up to N, then draw that many" completes. */
     public int pendingRummageDrawCount;
+    /** Permanent ID to untap after a "discard a card, then untap [source]" completes. */
+    public UUID pendingUntapAfterDiscardPermanentId;
     /** Queue of player IDs still needing to discard for an "each player discards" effect (APNAP order). */
     public final Deque<UUID> pendingEachPlayerDiscardQueue = new ArrayDeque<>();
     public UUID pendingEachPlayerDiscardControllerId;

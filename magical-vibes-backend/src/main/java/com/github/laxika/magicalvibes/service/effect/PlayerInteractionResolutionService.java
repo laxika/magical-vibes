@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardAndUntapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
@@ -500,6 +501,20 @@ public class PlayerInteractionResolutionService {
         gameData.pendingRummageDrawCount = effect.drawAmount();
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, controllerId, effect.discardAmount());
+    }
+
+    @HandlesEffect(DiscardCardAndUntapSelfEffect.class)
+    private void resolveDiscardAndUntapSelf(GameData gameData, StackEntry entry, DiscardCardAndUntapSelfEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = gameData.playerIdToName.get(controllerId) + " has no cards to discard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+        gameData.pendingUntapAfterDiscardPermanentId = entry.getSourcePermanentId();
+        gameData.discardCausedByOpponent = false;
+        resolveDiscardCards(gameData, controllerId, 1);
     }
 
     @HandlesEffect(EachPlayerDiscardsEffect.class)

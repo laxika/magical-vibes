@@ -199,6 +199,24 @@ public class CardChoiceHandlerService {
                         drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".");
             }
 
+            // Untap permanent after "discard a card, then untap [source]" completes
+            if (gameData.pendingUntapAfterDiscardPermanentId != null) {
+                UUID permanentId = gameData.pendingUntapAfterDiscardPermanentId;
+                gameData.pendingUntapAfterDiscardPermanentId = null;
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                    if (bf == null) continue;
+                    for (Permanent p : bf) {
+                        if (p.getId().equals(permanentId)) {
+                            p.untap();
+                            String untapLog = p.getCard().getName() + " untaps.";
+                            gameBroadcastService.logAndBroadcast(gameData, untapLog);
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Resume resolving remaining effects on the same spell/ability
             // (e.g. "Target player discards a card, then mills a card.")
             if (gameData.pendingEffectResolutionEntry != null) {

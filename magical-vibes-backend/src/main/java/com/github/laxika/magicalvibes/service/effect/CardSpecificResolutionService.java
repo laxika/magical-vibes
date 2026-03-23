@@ -973,6 +973,7 @@ public class CardSpecificResolutionService {
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
         gameData.pendingRummageDrawCount = 0;
+        gameData.pendingUntapAfterDiscardPermanentId = null;
         gameData.pendingEachPlayerDiscardControllerId = null;
         gameData.pendingEachPlayerDiscardAmount = 0;
         gameData.combatDamageRedirectTarget = null;
