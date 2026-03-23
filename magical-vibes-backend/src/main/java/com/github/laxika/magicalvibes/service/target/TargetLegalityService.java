@@ -215,15 +215,24 @@ public class TargetLegalityService {
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget) {
-        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget)
+        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget, 0)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
+    public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget, int xValue) {
+        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget, xValue)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
     public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
-        return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, EffectResolution.needsTarget(card));
+        return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, EffectResolution.needsTarget(card), 0);
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget) {
+        return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget, 0);
+    }
+
+    private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget, int xValue) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && !gameData.playerIds.contains(targetId)) {
             return Optional.of("Invalid target");
@@ -251,7 +260,7 @@ public class TargetLegalityService {
         if (card.getTargetFilter() != null && target != null) {
             Optional<String> filterReason = gameQueryService.checkTargetFilter(card.getTargetFilter(),
                     target,
-                    filterContext(gameData, card.getId(), controllerId));
+                    filterContext(gameData, card.getId(), controllerId).withXValue(xValue));
             if (filterReason.isPresent()) return filterReason;
         }
 

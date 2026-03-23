@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -857,6 +858,14 @@ public class GameQueryService {
                 return permanent.getEffectivePower() <= xVal;
             }
             return getEffectivePower(gameData, permanent) <= xVal;
+        }
+        if (predicate instanceof PermanentManaValueEqualsXPredicate) {
+            // When xValue is null (e.g. during valid-target checks before X is chosen),
+            // any creature is potentially valid since X can be any non-negative integer.
+            if (filterContext == null || filterContext.xValue() == null) {
+                return true;
+            }
+            return permanent.getCard().getManaValue() == filterContext.xValue();
         }
         if (predicate instanceof PermanentPowerAtLeastPredicate powerAtLeastPredicate) {
             if (gameData == null) {
