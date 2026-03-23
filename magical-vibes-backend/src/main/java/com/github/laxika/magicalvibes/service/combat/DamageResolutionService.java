@@ -116,6 +116,22 @@ public class DamageResolutionService {
     @HandlesEffect(DealDamageToTargetCreatureEffect.class)
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+
+        // Multi-target: deal damage to each valid target
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetIds()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) continue;
+                if (effect.unpreventable()) {
+                    dealDamageAndDestroyIfLethalUnpreventable(gameData, entry, target, damage);
+                } else if (!isDamagePreventedForCreature(gameData, entry, target)) {
+                    dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
+                }
+            }
+            return;
+        }
+
+        // Single-target fallback
         if (effect.unpreventable()) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) return;
