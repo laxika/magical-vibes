@@ -838,6 +838,7 @@ Pass `null` as filter to allow any card.
 | `MustAttackThisTurnEffect` | `(boolean forceAttackController)` | target creature must attack this turn if able (one-shot, sets transient flag, cleared at end of turn). If forceAttackController=true, also sets mustAttackTargetId to ability controller (e.g. Alluring Siren "attacks you"). If false, creature may attack any legal target (e.g. Incite "attacks this turn if able"). |
 | `MustBeBlockedByAllCreaturesEffect` | `()` | all creatures able to block this must do so (static, Lure-style) |
 | `MustBeBlockedIfAbleEffect` | `()` | at least one creature must block this if able (static, Gaea's Protector-style) |
+| `MustBeBlockedIfAbleThisTurnEffect` | `()` | target creature must be blocked this turn if able (one-shot, sets transient flag, cleared at end of turn). Unlike MustBeBlockedIfAbleEffect which is static, this is for spells like Emergent Growth |
 | `MustBlockSourceEffect` | `(UUID sourcePermanentId)` | target creature must block source permanent this turn if able |
 | `AssignCombatDamageAsThoughUnblockedEffect` | `()` | assign combat damage as though unblocked (static) |
 | `AssignCombatDamageWithToughnessEffect` | `()` or `(GrantScope scope)` | assign combat damage using toughness instead of power (static). No-arg defaults to `EQUIPPED_CREATURE` (toughness > power only, equipment/aura pattern). Use `ALL_OWN_CREATURES` for controller-wide effect that always uses toughness (e.g. Belligerent Brontodon). |

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
@@ -69,6 +70,20 @@ public class CombatRestrictionResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} must attack this turn if able", gameData.id, target.getCard().getName());
         }
+    }
+
+    @HandlesEffect(MustBeBlockedIfAbleThisTurnEffect.class)
+    private void resolveMustBeBlockedIfAbleThisTurn(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        target.setMustBeBlockedThisTurn(true);
+
+        String logEntry = target.getCard().getName() + " must be blocked this turn if able.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} must be blocked this turn if able", gameData.id, target.getCard().getName());
     }
 
     @HandlesEffect(MustBlockSourceEffect.class)

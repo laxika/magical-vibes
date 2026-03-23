@@ -39,6 +39,8 @@ public class Permanent {
     @Setter private boolean mustAttackThisTurn;
     /** When non-null, this creature must attack this specific player (not their planeswalkers). Cleared at end of turn. */
     @Setter private UUID mustAttackTargetId;
+    /** When true, at least one creature must block this creature this turn if able (e.g. Emergent Growth). Cleared at end of turn. */
+    @Setter private boolean mustBeBlockedThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
@@ -203,6 +205,7 @@ public class Permanent {
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
+        this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
@@ -428,6 +431,7 @@ public class Permanent {
         this.cantBlockThisTurn = false;
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;
+        this.mustBeBlockedThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;
