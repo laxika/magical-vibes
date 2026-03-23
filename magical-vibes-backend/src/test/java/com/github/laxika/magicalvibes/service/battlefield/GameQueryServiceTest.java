@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -2173,6 +2174,32 @@ class GameQueryServiceTest {
             // Original color should not match when overridden
             assertThat(gqs.matchesPermanentPredicate(gd, perm,
                     new PermanentColorInPredicate(EnumSet.of(CardColor.GREEN)))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentDealtDamageThisTurnPredicate matches permanent dealt damage this turn")
+        void dealtDamageThisTurnPredicateMatches() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            gd.permanentsDealtDamageThisTurn.add(perm.getId());
+
+            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentDealtDamageThisTurnPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentDealtDamageThisTurnPredicate rejects permanent not dealt damage this turn")
+        void dealtDamageThisTurnPredicateRejects() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentDealtDamageThisTurnPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentDealtDamageThisTurnPredicate returns false when gameData is null")
+        void dealtDamageThisTurnPredicateReturnsFalseWithNullGameData() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            gd.permanentsDealtDamageThisTurn.add(perm.getId());
+
+            assertThat(gqs.matchesPermanentPredicate(perm, new PermanentDealtDamageThisTurnPredicate(), null)).isFalse();
         }
 
         @Test

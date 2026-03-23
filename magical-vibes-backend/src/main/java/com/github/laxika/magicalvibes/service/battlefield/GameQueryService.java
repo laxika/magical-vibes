@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -962,6 +963,9 @@ public class GameQueryService {
                 return false;
             }
             return permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
+        }
+        if (predicate instanceof PermanentDealtDamageThisTurnPredicate) {
+            return gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
         }
         if (predicate instanceof PermanentTruePredicate) {
             return true;

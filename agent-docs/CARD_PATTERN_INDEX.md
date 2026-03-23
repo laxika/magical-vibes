@@ -145,6 +145,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillControllerEffect(4) — controller mills N cards, no target |
 | ETB draw + downside | `p/PhyrexianRager.java` | Draw + LoseLifeEffect |
 | ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
+| ETB destroy (conditional, dealt damage) | `f/FathomFleetCutthroat.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect + PermanentAllOfPredicate(IsCreature, NotControlledBySource, DealtDamageThisTurn) |
 | ETB may destroy (filtered) | `a/AcidWebSpider.java` | MayEffect(DestroyTargetPermanentEffect) + PermanentPredicateTargetFilter |
 | ETB destroy all (predicate) + static hexproof | `w/WitchbaneOrb.java` | DestroyAllPermanentsEffect(AllOf(HasSubtype(CURSE), AttachedToSourceController)) + GrantControllerHexproofEffect STATIC |
 | ETB set target player life total | `t/TorgaarFamineIncarnate.java` | STATIC SacrificeCreaturesForCostReductionEffect(2) + ON_ENTER_BATTLEFIELD SetTargetPlayerLifeToHalfStartingEffect() with `target(PlayerPredicateTargetFilter(ANY), 0, 1)` for "up to one target player". Sacrifice creatures as additional cost to reduce mana by 2 per creature |

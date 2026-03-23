@@ -290,6 +290,11 @@ public class GameData {
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
     public final Set<UUID> playersDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks which permanents (by UUID) have been dealt damage this turn (from any source — combat, spells, abilities).
+     *  Survives regeneration (which removes marked damage but does not undo "was dealt damage").
+     *  Cleared at start of new turn. */
+    public final Set<UUID> permanentsDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
      *  Maps source permanent UUID → set of subtypes the creature had at the time of dealing damage.
      *  Used by end-step triggers that check which subtypes dealt combat damage (e.g. Admiral Beckett Brass). */
@@ -674,6 +679,7 @@ public class GameData {
             copy.combatDamageToPlayersThisTurn.put(k, s);
         });
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
+        copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) -> {
             Set<CardSubtype> s = ConcurrentHashMap.newKeySet();
             s.addAll(v);

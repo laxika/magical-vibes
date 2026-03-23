@@ -576,6 +576,18 @@ class CombatDamageServiceTest {
         }
 
         @Test
+        @DisplayName("Combat damage tracks both attacker and blocker in permanentsDealtDamageThisTurn")
+        void combatDamageTracksPermanentsDealtDamageThisTurn() {
+            Permanent attacker = addAttacker("Bear", 2, 2);
+            Permanent blocker = addBlocker("Spider", 2, 4, 0);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.permanentsDealtDamageThisTurn).contains(attacker.getId());
+            assertThat(gameData.permanentsDealtDamageThisTurn).contains(blocker.getId());
+        }
+
+        @Test
         @DisplayName("Dead creature has marked damage equal to attacker power before removal")
         void deadCreatureHasMarkedDamage() {
             Permanent attacker = addAttacker("Bear", 2, 2);

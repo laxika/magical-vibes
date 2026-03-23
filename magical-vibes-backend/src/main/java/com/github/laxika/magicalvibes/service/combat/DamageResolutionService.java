@@ -1287,6 +1287,8 @@ public class DamageResolutionService {
 
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
         if (damage > 0) {
+            gameData.permanentsDealtDamageThisTurn.add(target.getId());
+
             UUID sourceControllerId = damageSource != null
                     ? gameQueryService.findPermanentController(gameData, damageSource.getId())
                     : entry.getControllerId();
@@ -1644,6 +1646,7 @@ public class DamageResolutionService {
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
                     targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
+                    gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
                     int effToughness = gameQueryService.getEffectiveToughness(gameData, targetPerm);
                     if (gameQueryService.isLethalDamage(targetPerm.getMarkedDamage(), effToughness, false)
                             && !gameQueryService.hasKeyword(gameData, targetPerm, Keyword.INDESTRUCTIBLE)) {

@@ -184,7 +184,7 @@ public class CombatDamageService {
         List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
 
         // Update markedDamage on creatures that took combat damage (CR 704.5g)
-        updateMarkedDamageFromCombat(atkBf, defBf, state);
+        updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
 
         List<String> deadCreatureNames = removeDeadCreatures(gameData, state, atkBf, defBf, activeId, defenderId);
 
@@ -890,7 +890,7 @@ public class CombatDamageService {
      * Updates markedDamage on creatures from combat damage maps (CR 704.5g).
      * Called after determineCasualties so the prevention-applied values are final.
      */
-    private void updateMarkedDamageFromCombat(List<Permanent> atkBf, List<Permanent> defBf,
+    private void updateMarkedDamageFromCombat(GameData gameData, List<Permanent> atkBf, List<Permanent> defBf,
                                                CombatDamageState state) {
         for (var entry : state.atkDamageTaken.entrySet()) {
             int idx = entry.getKey();
@@ -898,6 +898,7 @@ public class CombatDamageService {
             if (dmg > 0 && idx < atkBf.size()) {
                 Permanent atk = atkBf.get(idx);
                 atk.setMarkedDamage(atk.getMarkedDamage() + dmg);
+                gameData.permanentsDealtDamageThisTurn.add(atk.getId());
             }
         }
         for (var entry : state.defDamageTaken.entrySet()) {
@@ -906,6 +907,7 @@ public class CombatDamageService {
             if (dmg > 0 && idx < defBf.size()) {
                 Permanent def = defBf.get(idx);
                 def.setMarkedDamage(def.getMarkedDamage() + dmg);
+                gameData.permanentsDealtDamageThisTurn.add(def.getId());
             }
         }
     }
@@ -1082,6 +1084,7 @@ public class CombatDamageService {
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage, true);
                 if (effectiveDamage > 0) {
                     targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
+                    gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
                     int effToughness = gameQueryService.getEffectiveToughness(gameData, targetPerm);
                     if (gameQueryService.isLethalDamage(targetPerm.getMarkedDamage(), effToughness, false)
                             && !gameQueryService.hasKeyword(gameData, targetPerm, Keyword.INDESTRUCTIBLE)) {
