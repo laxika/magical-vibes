@@ -489,6 +489,11 @@ class MayCastHandlerServiceTest {
     @DisplayName("handleCastFromGraveyardChoice")
     class HandleCastFromGraveyardChoice {
 
+        @BeforeEach
+        void allowGraveyardCasting() {
+            org.mockito.Mockito.lenient().when(gameQueryService.canPlayersCastSpellsFromGraveyards(gd)).thenReturn(true);
+        }
+
         private CastTargetInstantOrSorceryFromGraveyardEffect opponentGraveyardFree() {
             return new CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope.OPPONENT_GRAVEYARD, true);
         }

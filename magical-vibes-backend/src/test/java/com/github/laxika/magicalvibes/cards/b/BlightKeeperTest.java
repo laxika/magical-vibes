@@ -13,10 +13,15 @@ class BlightKeeperTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
 
+    private void addReadyBlightKeeper() {
+        var perm = harness.addToBattlefieldAndReturn(player1, new BlightKeeper());
+        perm.setSummoningSick(false);
+    }
+
     @Test
     @DisplayName("Activating ability sacrifices Blight Keeper and puts drain on stack")
     void activateAbilitySacrificesAndPutsOnStack() {
-        harness.addToBattlefield(player1, new BlightKeeper());
+        addReadyBlightKeeper();
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -31,7 +36,7 @@ class BlightKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability causes target opponent to lose 4 life and controller gains 4 life")
     void drainsOpponent() {
-        harness.addToBattlefield(player1, new BlightKeeper());
+        addReadyBlightKeeper();
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -45,7 +50,7 @@ class BlightKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Blight Keeper goes to graveyard after sacrifice")
     void goesToGraveyardAfterSacrifice() {
-        harness.addToBattlefield(player1, new BlightKeeper());
+        addReadyBlightKeeper();
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
