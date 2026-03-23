@@ -198,11 +198,11 @@ class MillResolutionServiceTest {
                 gd.playerDecks.get(player2Id).add(createCard("Card" + i));
             }
 
-            MillHalfLibraryEffect effect = new MillHalfLibraryEffect();
+            MillHalfLibraryEffect effect = new MillHalfLibraryEffect(false);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Traumatize"),
                     player1Id, "Traumatize", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillHalfLibrary(gd, entry);
+            service.resolveMillHalfLibrary(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 5);
         }
@@ -210,11 +210,11 @@ class MillResolutionServiceTest {
         @Test
         @DisplayName("Empty library does nothing")
         void emptyLibraryDoesNothing() {
-            MillHalfLibraryEffect effect = new MillHalfLibraryEffect();
+            MillHalfLibraryEffect effect = new MillHalfLibraryEffect(false);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Traumatize"),
                     player1Id, "Traumatize", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillHalfLibrary(gd, entry);
+            service.resolveMillHalfLibrary(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("mills nothing")));

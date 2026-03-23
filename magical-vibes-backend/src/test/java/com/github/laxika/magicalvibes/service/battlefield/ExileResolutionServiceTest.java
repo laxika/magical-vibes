@@ -1374,7 +1374,7 @@ class ExileResolutionServiceTest {
         void playerOnlySpellDoesNotOfferCreatureTargets() {
             Player player = new Player(player1Id, "Player1");
             Card chosenCard = createSorceryCard("Traumatize");
-            chosenCard.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect());
+            chosenCard.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
             UUID kpId = UUID.randomUUID();
 
             gd.knowledgePoolSourcePermanentId = kpId;
