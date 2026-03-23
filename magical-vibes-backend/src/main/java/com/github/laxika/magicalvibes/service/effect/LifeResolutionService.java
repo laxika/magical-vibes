@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermane
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesFractionOfLifeRoundedUpEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
@@ -661,6 +662,18 @@ public class LifeResolutionService {
     private void resolveEachPlayerLosesLife(GameData gameData, StackEntry entry, EachPlayerLosesLifeEffect effect) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             applyLifeLoss(gameData, playerId, effect.amount(), entry.getCard().getName());
+        }
+    }
+
+    @HandlesEffect(EachPlayerLosesFractionOfLifeRoundedUpEffect.class)
+    private void resolveEachPlayerLosesFractionOfLifeRoundedUp(GameData gameData, StackEntry entry,
+                                                                EachPlayerLosesFractionOfLifeRoundedUpEffect effect) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            int currentLife = gameData.getLife(playerId);
+            int lifeLoss = (currentLife + effect.divisor() - 1) / effect.divisor();
+            if (lifeLoss > 0) {
+                applyLifeLoss(gameData, playerId, lifeLoss, entry.getCard().getName());
+            }
         }
     }
 

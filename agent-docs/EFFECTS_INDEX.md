@@ -645,6 +645,7 @@ Pass `null` as filter to allow any card.
 | `DrainLifePerControlledPermanentEffect` | `(PermanentPredicate filter, int multiplier)` | target player loses X life, controller gains X life, where X = multiplier × matching permanents controlled (e.g. Tezzeret -4: twice artifacts) |
 | `TargetPlayerLosesLifePerControlledPermanentEffect` | `(PermanentPredicate filter, int multiplier)` | target player loses X life (no life gain), where X = multiplier × matching permanents controlled (e.g. Bishop of the Bloodstained: 1× Vampires) |
 | `EnchantedCreatureControllerLosesLifeEffect` | `(int amount, UUID affectedPlayerId)` | enchanted creature's controller loses N life (trigger) |
+| `EachPlayerLosesFractionOfLifeRoundedUpEffect` | `(int divisor)` | each player loses 1/divisor of their life total, rounded up (e.g. divisor=3 for Dire Fleet Ravager) |
 | `EachPlayerLosesLifeEffect` | `(int amount)` | each player (including controller) loses N life |
 | `EachPlayerLosesLifePerCreatureControlledEffect` | `(int lifePerCreature)` | each player loses N life per creature they control |
 | `LoseLifeUnlessDiscardEffect` | `(int lifeLoss)` | target player loses N life unless they discard a card. Punisher choice made by the affected player. Place in `ON_OPPONENT_CASTS_SPELL` slot. Resolved via `PlayerInteractionResolutionService` → may ability prompt → discard choice or life loss |
