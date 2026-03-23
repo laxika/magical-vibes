@@ -1157,17 +1157,25 @@ public class PermanentControlResolutionService {
     }
 
     @HandlesEffect(CreateTokenCopyOfSourceEffect.class)
-    private void resolveCreateTokenCopyOfSource(GameData gameData, StackEntry entry) {
+    private void resolveCreateTokenCopyOfSource(GameData gameData, StackEntry entry, CreateTokenCopyOfSourceEffect effect) {
+        // Try to get the source card from the battlefield; if the source left (e.g. planeswalker
+        // at 0 loyalty after paying cost), fall back to the card stored on the stack entry
+        // (CR 608.2b: abilities resolve even if the source has left the zone).
+        Card sourceCard;
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (sourcePermanent == null) {
-            log.info("Game {} - Source permanent no longer on battlefield", gameData.id);
-            return;
+        if (sourcePermanent != null) {
+            sourceCard = sourcePermanent.getCard();
+        } else {
+            sourceCard = entry.getCard();
+            if (sourceCard == null) {
+                log.info("Game {} - Source permanent no longer on battlefield and no card reference", gameData.id);
+                return;
+            }
         }
 
-        Card sourceCard = sourcePermanent.getCard();
-
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
-        for (int copy = 0; copy < tokenMultiplier; copy++) {
+        int totalAmount = effect.amount() * tokenMultiplier;
+        for (int copy = 0; copy < totalAmount; copy++) {
             // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
             Card tokenCard = new Card();
             tokenCard.setName(sourceCard.getName());
@@ -1176,13 +1184,22 @@ public class PermanentControlResolutionService {
             tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
             tokenCard.setToken(true);
             tokenCard.setColor(sourceCard.getColor());
-            tokenCard.setSupertypes(sourceCard.getSupertypes());
+            tokenCard.setLoyalty(sourceCard.getLoyalty());
             tokenCard.setPower(sourceCard.getPower());
             tokenCard.setToughness(sourceCard.getToughness());
             tokenCard.setSubtypes(sourceCard.getSubtypes());
             tokenCard.setCardText(sourceCard.getCardText());
             tokenCard.setSetCode(sourceCard.getSetCode());
             tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
+
+            // Handle supertypes: optionally remove LEGENDARY
+            if (effect.removeLegendary() && sourceCard.getSupertypes().contains(CardSupertype.LEGENDARY)) {
+                EnumSet<CardSupertype> modifiedSupertypes = EnumSet.copyOf(sourceCard.getSupertypes());
+                modifiedSupertypes.remove(CardSupertype.LEGENDARY);
+                tokenCard.setSupertypes(modifiedSupertypes);
+            } else {
+                tokenCard.setSupertypes(sourceCard.getSupertypes());
+            }
 
             // Copy keywords
             if (sourceCard.getKeywords() != null) {
@@ -1200,9 +1217,18 @@ public class PermanentControlResolutionService {
             }
 
             Permanent tokenPermanent = new Permanent(tokenCard);
+
+            // Planeswalker tokens enter with loyalty counters and no summoning sickness
+            if (tokenCard.getType() == CardType.PLANESWALKER) {
+                tokenPermanent.setLoyaltyCounters(tokenCard.getLoyalty() != null ? tokenCard.getLoyalty() : 0);
+                tokenPermanent.setSummoningSick(false);
+            }
+
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-            String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
+            String logMsg = effect.removeLegendary()
+                    ? "A non-legendary token copy of " + sourceCard.getName() + " is created."
+                    : "A token copy of " + sourceCard.getName() + " is created.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
 

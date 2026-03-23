@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerRandomDiscardEffect
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageLootEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipTwoCoinsEffect;
@@ -421,6 +422,17 @@ public class PlayerInteractionResolutionService {
         applyDrawCards(gameData, controllerId, effect.drawAmount());
         gameData.discardCausedByOpponent = false;
         resolveDiscardCards(gameData, controllerId, effect.discardAmount());
+    }
+
+    @HandlesEffect(RegisterDelayedCombatDamageLootEffect.class)
+    private void resolveRegisterDelayedCombatDamageLoot(GameData gameData, StackEntry entry,
+                                                        RegisterDelayedCombatDamageLootEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        gameData.pendingDelayedCombatDamageLoots.add(
+                new GameData.DelayedCombatDamageLoot(controllerId, effect.drawAmount(), effect.discardAmount(), entry.getCard()));
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - {} registers delayed combat damage loot trigger (draw {}, discard {})",
+                gameData.id, playerName, effect.drawAmount(), effect.discardAmount());
     }
 
     @HandlesEffect(DiscardUnlessExileCardFromGraveyardEffect.class)

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
@@ -225,6 +226,9 @@ public class CombatDamageService {
 
         // Process combat damage to player triggers (e.g. Cephalid Constable)
         processCombatDamageToPlayerTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
+
+        // Process delayed combat damage loot triggers (e.g. Jace, Cunning Castaway's +1)
+        processDelayedCombatDamageLootTriggers(gameData, state.combatDamageDealtToPlayer, activeId);
 
         // Process defender-side damage triggers (e.g. Dissipation Field)
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
@@ -791,6 +795,44 @@ public class CombatDamageService {
                     gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName()
                             + "'s triggered ability goes on the stack.");
                 }
+            }
+        }
+    }
+
+    /**
+     * Checks delayed combat damage loot triggers registered this turn (e.g. Jace, Cunning Castaway's +1).
+     * Each fires once per combat damage step if one or more creatures the controller controls dealt
+     * combat damage to a player.
+     */
+    private void processDelayedCombatDamageLootTriggers(GameData gameData,
+                                                         Map<Permanent, Integer> combatDamageDealtToPlayer,
+                                                         UUID attackerId) {
+        if (gameData.pendingDelayedCombatDamageLoots.isEmpty()) return;
+
+        // Check if any creature controlled by the trigger's controller dealt combat damage to a player
+        for (GameData.DelayedCombatDamageLoot loot : gameData.pendingDelayedCombatDamageLoots) {
+            boolean creatureDealtDamage = false;
+            if (loot.controllerId().equals(attackerId)) {
+                for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {
+                    if (dmgEntry.getValue() > 0) {
+                        creatureDealtDamage = true;
+                        break;
+                    }
+                }
+            }
+            if (creatureDealtDamage) {
+                StackEntry se = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        loot.sourceCard(),
+                        loot.controllerId(),
+                        loot.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new DrawAndDiscardCardEffect(loot.drawAmount(), loot.discardAmount()))
+                );
+                se.setNonTargeting(true);
+                gameData.stack.add(se);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        loot.sourceCard().getName() + "'s delayed trigger fires — draw " + loot.drawAmount()
+                                + ", discard " + loot.discardAmount() + ".");
             }
         }
     }

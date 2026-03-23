@@ -285,6 +285,12 @@ public class GameData {
      *  put two +1/+1 counters on it at the beginning of the next end step." */
     public final Map<UUID, Integer> pendingDelayedPlusOnePlusOneCounters = new ConcurrentHashMap<>();
 
+    /** Delayed triggers: "Whenever one or more creatures you control deal combat damage to a player this turn,
+     *  draw N, then discard N." Registered by Jace, Cunning Castaway's +1. Cleared at start of new turn. */
+    public final List<DelayedCombatDamageLoot> pendingDelayedCombatDamageLoots = Collections.synchronizedList(new ArrayList<>());
+
+    public record DelayedCombatDamageLoot(UUID controllerId, int drawAmount, int discardAmount, Card sourceCard) {}
+
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
@@ -689,6 +695,7 @@ public class GameData {
         });
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
         copy.pendingDelayedPlusOnePlusOneCounters.putAll(this.pendingDelayedPlusOnePlusOneCounters);
+        copy.pendingDelayedCombatDamageLoots.addAll(this.pendingDelayedCombatDamageLoots);
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, ConcurrentHashMap.newKeySet()));

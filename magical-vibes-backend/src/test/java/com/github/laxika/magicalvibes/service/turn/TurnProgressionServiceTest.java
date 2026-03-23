@@ -547,6 +547,7 @@ class TurnProgressionServiceTest {
             gd.creatureDeathCountThisTurn.put(player1Id, 2);
             gd.cardsDrawnThisTurn.put(player1Id, 3);
             gd.combatDamageToPlayersThisTurn.put(UUID.randomUUID(), new HashSet<>());
+            gd.pendingDelayedCombatDamageLoots.add(new GameData.DelayedCombatDamageLoot(player1Id, 1, 1, new Card()));
             gd.playersDealtDamageThisTurn.add(player1Id);
             gd.permanentsDealtDamageThisTurn.add(UUID.randomUUID());
             gd.creatureCardsDamagedThisTurnBySourcePermanent.put(UUID.randomUUID(), new HashSet<>());
@@ -564,6 +565,7 @@ class TurnProgressionServiceTest {
             assertThat(gd.creatureDeathCountThisTurn).isEmpty();
             assertThat(gd.cardsDrawnThisTurn).isEmpty();
             assertThat(gd.combatDamageToPlayersThisTurn).isEmpty();
+            assertThat(gd.pendingDelayedCombatDamageLoots).isEmpty();
             assertThat(gd.playersDealtDamageThisTurn).isEmpty();
             assertThat(gd.permanentsDealtDamageThisTurn).isEmpty();
             assertThat(gd.creatureCardsDamagedThisTurnBySourcePermanent).isEmpty();
