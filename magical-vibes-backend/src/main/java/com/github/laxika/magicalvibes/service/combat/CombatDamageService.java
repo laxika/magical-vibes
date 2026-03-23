@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnDamageDealerEffect;
@@ -665,7 +666,8 @@ public class CombatDamageService {
                         || effect instanceof DealDamageToEachCreatureDamagedPlayerControlsEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), damageDealt, defenderId, null);
-                } else if (effect instanceof PutCountersOnSourceEffect) {
+                } else if (effect instanceof PutCountersOnSourceEffect
+                        || effect instanceof ExploreEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), null, creature.getId());
                 } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect
