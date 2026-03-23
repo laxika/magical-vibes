@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -125,6 +126,66 @@ public class LibrarySearchResolutionService {
                 effect.may(),
                 LibrarySearchDestination.BATTLEFIELD
         );
+    }
+
+    /**
+     * Destroys the targeted permanent, then each player (APNAP order) searches their library for
+     * a basic land card and puts it onto the battlefield, then shuffles. The search is mandatory.
+     * Used by Field of Ruin.
+     */
+    @HandlesEffect(DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect.class)
+    void resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(
+            GameData gameData, StackEntry entry,
+            DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        // Attempt to destroy the permanent
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
+            String logEntry = target.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        // Build APNAP-ordered queue: active player first, then others in turn order
+        gameData.pendingEachPlayerBasicLandSearchQueue.clear();
+        UUID activePlayerId = gameData.activePlayerId;
+        gameData.pendingEachPlayerBasicLandSearchQueue.add(activePlayerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId)) {
+                gameData.pendingEachPlayerBasicLandSearchQueue.add(playerId);
+            }
+        }
+
+        // Start the first player's search
+        startNextEachPlayerBasicLandSearch(gameData);
+    }
+
+    /**
+     * Starts the next pending "each player searches for a basic land" search from the queue.
+     * Returns true if a search was initiated, false if the queue is empty.
+     */
+    boolean startNextEachPlayerBasicLandSearch(GameData gameData) {
+        while (!gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) {
+            UUID nextPlayerId = gameData.pendingEachPlayerBasicLandSearchQueue.pollFirst();
+            boolean started = performLibrarySearch(
+                    gameData,
+                    nextPlayerId,
+                    card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC),
+                    "basic land cards",
+                    "Search your library for a basic land card and put it onto the battlefield.",
+                    false,
+                    true,
+                    LibrarySearchDestination.BATTLEFIELD
+            );
+            if (started) {
+                return true;
+            }
+            // If search could not start (empty library, Leonin Arbiter, etc.), try the next player
+        }
+        return false;
     }
 
     /**

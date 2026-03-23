@@ -166,6 +166,8 @@ public class GameData {
     public int lastBroadcastedLogSize = 0;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
+    /** Queue of player IDs still needing to search for a basic land for an "each player searches" effect (APNAP order). */
+    public final Deque<UUID> pendingEachPlayerBasicLandSearchQueue = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
     public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
@@ -825,6 +827,7 @@ public class GameData {
         copy.pendingEachPlayerDiscardAmount = this.pendingEachPlayerDiscardAmount;
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
+        copy.pendingEachPlayerBasicLandSearchQueue.addAll(this.pendingEachPlayerBasicLandSearchQueue);
 
         // --- Combat damage assignment state ---
         this.combatDamagePlayerAssignments.forEach((k, v) ->

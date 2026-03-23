@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
@@ -111,6 +114,12 @@ class LibrarySearchResolutionServiceTest {
     private static Card createCard(String name, CardType type) {
         Card card = createCard(name);
         card.setType(type);
+        return card;
+    }
+
+    private static Card createBasicLand(String name) {
+        Card card = createCard(name, CardType.LAND);
+        card.setSupertypes(Set.of(CardSupertype.BASIC));
         return card;
     }
 
@@ -554,6 +563,281 @@ class LibrarySearchResolutionServiceTest {
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("prevented by Leonin Arbiter")));
+        }
+    }
+
+    // =========================================================================
+    // resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield (Field of Ruin)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield")
+    class ResolveDestroyTargetAndEachPlayerSearches {
+
+        private DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect effect;
+
+        @BeforeEach
+        void init() {
+            effect = new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect();
+        }
+
+        private StackEntry entryWithTarget(UUID targetId) {
+            return new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Field of Ruin"),
+                    player1Id, "Field of Ruin", List.of(effect), 0, targetId, null);
+        }
+
+        @Test
+        @DisplayName("Returns without action when target permanent not found")
+        void returnsWhenTargetNotFound() {
+            UUID targetId = UUID.randomUUID();
+            StackEntry entry = entryWithTarget(targetId);
+
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), anyBoolean());
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Destroys target permanent and logs destruction")
+        void destroysTargetPermanent() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            verify(permanentRemovalService).tryDestroyPermanent(gd, target, false);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Ghost Quarter is destroyed."));
+        }
+
+        @Test
+        @DisplayName("Builds APNAP queue with active player first")
+        void buildsApnapQueue() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+            stubCardViewFactory();
+
+            // active player is player1Id; put basic lands in both libraries
+            gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
+            gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            // Active player (player1) should be prompted first
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
+            // Player2 should be in the pending queue
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).containsExactly(player2Id);
+        }
+
+        @Test
+        @DisplayName("Search only shows basic land cards from library")
+        void searchOnlyShowsBasicLands() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+            stubCardViewFactory();
+
+            gd.playerDecks.get(player1Id).addAll(List.of(
+                    createBasicLand("Plains"),
+                    createBasicLand("Island"),
+                    createCard("Grizzly Bears", CardType.CREATURE),
+                    createCard("Ghost Quarter", CardType.LAND) // nonbasic land
+            ));
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+            assertThat(gd.interaction.librarySearch().cards())
+                    .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
+        }
+
+        @Test
+        @DisplayName("Search destination is BATTLEFIELD")
+        void searchDestinationIsBattlefield() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+            stubCardViewFactory();
+
+            gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            assertThat(gd.interaction.librarySearch().destination())
+                    .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
+        }
+
+        @Test
+        @DisplayName("Skips active player with no basic lands and prompts next player")
+        void skipsPlayerWithNoBasicLands() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+            stubCardViewFactory();
+
+            // player1 has no basic lands, player2 does
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+            gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            // Player1 was skipped, player2 is prompted
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Skips active player with empty library and prompts next player")
+        void skipsPlayerWithEmptyLibrary() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+            stubCardViewFactory();
+
+            // player1 has empty library, player2 has basic lands
+            gd.playerDecks.get(player2Id).add(createBasicLand("Mountain"));
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            // Player1 was skipped, player2 is prompted
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("No search when both players lack basic lands")
+        void noSearchWhenNobodyHasBasicLands() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+
+            // Neither player has basic lands
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+            gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Leonin Arbiter prevents active player's search, paid player still searches")
+        void arbiterPreventsActivePlayerPaidPlayerSearches() {
+            Card landCard = createCard("Ghost Quarter", CardType.LAND);
+            Permanent target = new Permanent(landCard);
+            StackEntry entry = entryWithTarget(target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+            stubCardViewFactory();
+
+            // Both players have basic lands
+            gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
+            gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
+
+            // Leonin Arbiter on the battlefield
+            Permanent arbiter = addArbiterToBattlefield(player2Id);
+
+            // Player2 has paid the Arbiter tax, player1 has not
+            gd.paidSearchTaxPermanentIds
+                    .computeIfAbsent(player2Id, k -> new HashSet<>())
+                    .add(arbiter.getId());
+
+            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+
+            // Player1's search was prevented (no tax paid), player2 gets to search (tax paid)
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+        }
+    }
+
+    // =========================================================================
+    // startNextEachPlayerBasicLandSearch
+    // =========================================================================
+
+    @Nested
+    @DisplayName("startNextEachPlayerBasicLandSearch")
+    class StartNextEachPlayerBasicLandSearch {
+
+        @Test
+        @DisplayName("Returns false when queue is empty")
+        void returnsFalseWhenQueueEmpty() {
+            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("Starts library search for next player in queue")
+        void startsSearchForNextPlayer() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
+            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
+
+            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+
+            assertThat(result).isTrue();
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Skips player with no basic lands and tries next")
+        void skipsPlayerWithNoBasicLands() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+            gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
+            gd.pendingEachPlayerBasicLandSearchQueue.add(player1Id);
+            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
+
+            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+
+            assertThat(result).isTrue();
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Returns false when all queued players lack basic lands")
+        void returnsFalseWhenAllPlayersLackBasicLands() {
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+            gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+            gd.pendingEachPlayerBasicLandSearchQueue.add(player1Id);
+            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
+
+            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+
+            assertThat(result).isFalse();
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
         }
     }
 }

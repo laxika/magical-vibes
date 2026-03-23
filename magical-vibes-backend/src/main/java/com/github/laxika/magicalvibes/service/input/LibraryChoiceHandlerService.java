@@ -460,6 +460,7 @@ public class LibraryChoiceHandlerService {
                 String shuffleLog = player.getUsername() + "'s library is shuffled.";
                 gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             }
+            if (startPendingEachPlayerBasicLandSearch(gameData)) return;
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -721,6 +722,7 @@ public class LibraryChoiceHandlerService {
 
         if (startPendingBasicLandToHandSearch(gameData, playerId)) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId)) return;
+        if (startPendingEachPlayerBasicLandSearch(gameData)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
     /**
@@ -833,6 +835,55 @@ public class LibraryChoiceHandlerService {
         List<CardView> cardViews = deck.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, false));
         return true;
+    }
+
+    /**
+     * If a pending "each player searches for a basic land to battlefield" queue is non-empty,
+     * starts the next player's library search and returns true. Otherwise returns false.
+     * Used by Field of Ruin.
+     */
+    private boolean startPendingEachPlayerBasicLandSearch(GameData gameData) {
+        if (gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) return false;
+
+        while (!gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) {
+            UUID nextPlayerId = gameData.pendingEachPlayerBasicLandSearchQueue.pollFirst();
+            String playerName = gameData.playerIdToName.get(nextPlayerId);
+
+            List<Card> deck = gameData.playerDecks.get(nextPlayerId);
+            if (deck == null || deck.isEmpty()) {
+                String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                continue;
+            }
+
+            List<Card> basicLands = deck.stream()
+                    .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                    .toList();
+
+            if (basicLands.isEmpty()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
+                String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                continue;
+            }
+
+            String prompt = "Search your library for a basic land card and put it onto the battlefield.";
+            LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(basicLands))
+                    .reveals(false)
+                    .canFailToFind(true)
+                    .destination(LibrarySearchDestination.BATTLEFIELD)
+                    .build();
+
+            gameData.interaction.beginLibrarySearch(params);
+            List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
+            sessionManager.sendToPlayer(nextPlayerId, new ChooseCardFromLibraryMessage(cardViews, prompt, true));
+
+            String logMsg = playerName + " searches their library.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return true;
+        }
+
+        return false;
     }
 
     public void handleLibraryRevealChoice(GameData gameData, Player player, List<UUID> cardIds) {
