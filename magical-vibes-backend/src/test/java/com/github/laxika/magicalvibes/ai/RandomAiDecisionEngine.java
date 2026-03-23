@@ -397,6 +397,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Cap attackers to what we can afford given attack tax, and tap mana to pay
+        attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
+
         log.info("Random AI: Declaring {} of {} attackers in game {}",
                 attackerIndices.size(), availableIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;

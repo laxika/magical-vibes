@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -552,5 +553,44 @@ class EasyAiDecisionEngineTest {
         // Should assign 1 to the 1/1 and 2 to the 2/2 (kills both)
         assertThat(request.damageAssignments()).containsEntry(creature1.getId(), 1);
         assertThat(request.damageAssignments()).containsEntry(creature2.getId(), 2);
+    }
+
+    // ===== Attack tax handling =====
+
+    @Test
+    @DisplayName("Easy AI caps attackers to affordable count when attack tax is present")
+    void capsAttackersWhenAttackTaxPresent() throws Exception {
+        gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+
+        // 3 creatures on the AI battlefield
+        for (int i = 0; i < 3; i++) {
+            Permanent creature = new Permanent(new Card());
+            creature.getCard().setName("Bear " + i);
+            creature.getCard().setType(CardType.CREATURE);
+            creature.getCard().setPower(2);
+            creature.getCard().setToughness(2);
+            creature.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
+        }
+
+        // AI has 2 mana in pool — tax is {1} per creature, so can afford at most 2
+        gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.COLORLESS, 2);
+
+        when(combatAttackService.getAttackableCreatureIndices(gd, aiPlayer.getId()))
+                .thenReturn(List.of(0, 1, 2));
+        when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
+                .thenReturn(List.of());
+        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+                .thenReturn(1);
+        when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
+        when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
+
+        createEngine().handleMessage("AVAILABLE_ATTACKERS", "");
+
+        ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
+        verify(messageHandler).handleDeclareAttackers(eq(selfConnection), captor.capture());
+
+        assertThat(captor.getValue().attackerIndices()).hasSizeLessThanOrEqualTo(2);
     }
 }

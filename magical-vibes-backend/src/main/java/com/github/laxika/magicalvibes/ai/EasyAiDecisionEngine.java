@@ -341,6 +341,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
+        // Cap attackers to what we can afford given attack tax, and tap mana to pay
+        attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
+
         log.info("AI: Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
         send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices, null)));

@@ -147,6 +147,90 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
     }
 
+    // ===== State preservation on failed tax check (CombatAttackService fix) =====
+
+    @Test
+    @DisplayName("Failed tax check preserves ATTACKER_DECLARATION awaiting state")
+    void failedTaxCheckPreservesAwaitingState() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
+
+        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Failed tax check does not mark any creatures as attacking")
+    void failedTaxCheckDoesNotMarkAttackers() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        assertThat(bear.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Failed tax check does not deduct mana")
+    void failedTaxCheckDoesNotDeductMana() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+    }
+
+    // ===== GameService re-sends AVAILABLE_ATTACKERS on failure =====
+
+    @Test
+    @DisplayName("Failed tax check re-sends AVAILABLE_ATTACKERS to the player")
+    void failedTaxCheckResendsAvailableAttackers() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.clearMessages();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(harness.getConn2().getMessagesContaining("AVAILABLE_ATTACKERS")).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Player can retry with fewer attackers after failed tax check")
+    void canRetryWithFewerAttackersAfterFailedTaxCheck() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        // First attempt: 2 attackers — fails
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        // Retry with 1 attacker — should succeed (state was preserved)
+        gs.declareAttackers(gd, player2, List.of(0));
+
+        Permanent bear = gd.playerBattlefields.get(player2.getId()).get(0);
+        assertThat(bear.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
+    }
+
     // ===== Helpers =====
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {

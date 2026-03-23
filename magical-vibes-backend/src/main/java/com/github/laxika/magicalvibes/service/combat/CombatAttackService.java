@@ -166,15 +166,15 @@ public class CombatAttackService {
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
 
-        gameData.interaction.clearAwaitingInput();
-
+        // Empty declaration is always valid — no tax or target validation needed
         if (attackerIndices.isEmpty()) {
+            gameData.interaction.clearAwaitingInput();
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
             gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declares no attackers.");
             return CombatResult.AUTO_PASS_ONLY;
         }
 
-        // Check attack tax (e.g. Windborn Muse / Ghostly Prison)
+        // Validate attack tax (e.g. Windborn Muse / Ghostly Prison)
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             int totalTax = taxPerCreature * attackerIndices.size();
@@ -182,10 +182,37 @@ public class CombatAttackService {
             if (pool.getTotal() < totalTax) {
                 throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
             }
-            payGenericMana(pool, totalTax);
         }
 
-        // Check Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
+        // Validate attack targets
+        UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
+        Set<UUID> validTargetIds = buildValidAttackTargetIds(gameData, playerId);
+        Map<Integer, UUID> resolvedTargets = new HashMap<>();
+        for (int idx : attackerIndices) {
+            UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
+            if (targetId == null) {
+                targetId = defenderId;
+            }
+            if (!validTargetIds.contains(targetId)) {
+                throw new IllegalStateException("Invalid attack target for attacker at index " + idx);
+            }
+            // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
+            Permanent attacker = battlefield.get(idx);
+            if (attacker.getMustAttackTargetId() != null && !attacker.getMustAttackTargetId().equals(targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
+            }
+            resolvedTargets.put(idx, targetId);
+        }
+
+        // --- All validation passed — commit state changes ---
+        gameData.interaction.clearAwaitingInput();
+
+        // Pay attack tax
+        if (taxPerCreature > 0) {
+            payGenericMana(gameData.playerManaPools.get(playerId), taxPerCreature * attackerIndices.size());
+        }
+
+        // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
         List<ManaColor> phyrexianPayments = gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
         if (!phyrexianPayments.isEmpty()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -207,26 +234,6 @@ public class CombatAttackService {
 
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
-
-        // Resolve and validate attack targets
-        UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
-        Set<UUID> validTargetIds = buildValidAttackTargetIds(gameData, playerId);
-        Map<Integer, UUID> resolvedTargets = new HashMap<>();
-        for (int idx : attackerIndices) {
-            UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
-            if (targetId == null) {
-                targetId = defenderId;
-            }
-            if (!validTargetIds.contains(targetId)) {
-                throw new IllegalStateException("Invalid attack target for attacker at index " + idx);
-            }
-            // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
-            Permanent attacker = battlefield.get(idx);
-            if (attacker.getMustAttackTargetId() != null && !attacker.getMustAttackTargetId().equals(targetId)) {
-                throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
-            }
-            resolvedTargets.put(idx, targetId);
-        }
 
         // Mark creatures as attacking and tap them (vigilance skips tapping)
         for (int idx : attackerIndices) {

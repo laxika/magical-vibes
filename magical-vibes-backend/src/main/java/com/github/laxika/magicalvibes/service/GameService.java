@@ -523,7 +523,13 @@ public class GameService {
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets), gameData);
+            try {
+                turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets), gameData);
+            } catch (IllegalStateException | IllegalArgumentException e) {
+                // Re-send available attackers so the player (or AI) can retry
+                combatService.handleDeclareAttackersStep(gameData);
+                throw e;
+            }
         }
     }
 

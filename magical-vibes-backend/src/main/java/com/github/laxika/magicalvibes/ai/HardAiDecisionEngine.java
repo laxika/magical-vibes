@@ -526,9 +526,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (bestAction instanceof SimulationAction.DeclareAttackers da) {
                 // Ensure must-attack creatures are included in the MCTS result
                 List<Integer> attackerIndices = enforceMustAttack(da.attackerIndices(), mustAttackIndices);
+                // Cap attackers to what we can afford given attack tax, and tap mana to pay
+                attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
                 log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
+                final List<Integer> finalAttackerIndices = attackerIndices;
                 send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                        new DeclareAttackersRequest(attackerIndices, null)));
+                        new DeclareAttackersRequest(finalAttackerIndices, null)));
                 return;
             }
         } catch (Exception e) {
@@ -544,9 +547,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
                 gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
 
+        // Cap attackers to what we can afford given attack tax, and tap mana to pay
+        attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
+
         log.info("AI (Hard): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
+        final List<Integer> finalAttackerIndices = attackerIndices;
         send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                new DeclareAttackersRequest(attackerIndices, null)));
+                new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
     @Override

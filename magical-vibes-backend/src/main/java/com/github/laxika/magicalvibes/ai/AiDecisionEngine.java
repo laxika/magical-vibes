@@ -262,6 +262,43 @@ public abstract class AiDecisionEngine {
     }
 
     /**
+     * Returns the maximum number of attackers the AI can afford given the current
+     * attack tax (e.g. Windborn Muse / Ghostly Prison). Returns {@link Integer#MAX_VALUE}
+     * if there is no attack tax.
+     */
+    protected int getMaxAffordableAttackers(GameData gameData) {
+        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        if (taxPerCreature <= 0) {
+            return Integer.MAX_VALUE;
+        }
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        return virtualPool.getTotal() / taxPerCreature;
+    }
+
+    /**
+     * Caps the attacker list to the maximum affordable given the attack tax,
+     * then taps lands to pay the tax before the declaration is sent.
+     */
+    protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
+        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        if (taxPerCreature <= 0 || attackerIndices.isEmpty()) {
+            return attackerIndices;
+        }
+        int maxAffordable = getMaxAffordableAttackers(gameData);
+        if (maxAffordable <= 0) {
+            return List.of();
+        }
+        List<Integer> capped = attackerIndices.size() <= maxAffordable
+                ? attackerIndices
+                : new ArrayList<>(attackerIndices.subList(0, maxAffordable));
+        // Tap lands to put enough mana in the pool to pay the tax
+        int totalTax = taxPerCreature * capped.size();
+        String taxCostStr = "{" + totalTax + "}";
+        manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, tapPermanentAction());
+        return capped;
+    }
+
+    /**
      * Sends a blocker declaration with automatic fallback to empty blockers
      * if the original declaration fails server-side validation.
      */

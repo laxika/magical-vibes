@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
+import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -1385,6 +1386,124 @@ class AiDecisionEngineTest {
                 .filter(Permanent::isTapped)
                 .count();
         assertThat(tappedCount).isEqualTo(1);
+    }
+
+    // ===== Attack tax handling =====
+
+    @Test
+    @DisplayName("getMaxAffordableAttackers returns MAX_VALUE when no tax")
+    void maxAffordableAttackersNoTax() {
+        assertThat(ai.getMaxAffordableAttackers(gd)).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    @DisplayName("getMaxAffordableAttackers limits based on available mana and tax")
+    void maxAffordableAttackersWithTax() {
+        // Baird imposes {1} per attacker tax
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has 3 untapped Plains = 3 virtual mana
+        giveAiPlains(3);
+
+        assertThat(ai.getMaxAffordableAttackers(gd)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("getMaxAffordableAttackers returns 0 when no mana available")
+    void maxAffordableAttackersNoMana() {
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // No lands/mana for AI
+        assertThat(ai.getMaxAffordableAttackers(gd)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax caps attackers to affordable count")
+    void prepareAttackersForTaxCapsAttackers() {
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has 2 untapped Plains = can afford 2 attackers at {1} each
+        giveAiPlains(2);
+
+        List<Integer> requested = List.of(0, 1, 2, 3);
+        List<Integer> result = ai.prepareAttackersForTax(gd, requested);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactly(0, 1);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax returns all attackers when affordable")
+    void prepareAttackersForTaxReturnsAllWhenAffordable() {
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // 3 Plains = can afford 3 attackers at {1} each
+        giveAiPlains(3);
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1));
+
+        // Both attackers should be kept (affordable)
+        assertThat(result).containsExactly(0, 1);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax returns empty list when no mana for tax")
+    void prepareAttackersForTaxReturnsEmptyWhenBroke() {
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // No lands/mana for AI
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax passes through when no tax")
+    void prepareAttackersForTaxNoOp() {
+        List<Integer> original = List.of(0, 1, 2);
+        List<Integer> result = ai.prepareAttackersForTax(gd, original);
+
+        assertThat(result).isEqualTo(original);
+    }
+
+    @Test
+    @DisplayName("AI handleAttackers limits attackers when attack tax is present")
+    void handleAttackersLimitsForTax() {
+        // Setup: human controls Baird (tax {1} per attacker)
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has 3 creatures and only 1 Plains
+        giveAiPlains(1);
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+        }
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // At most 1 creature should be attacking (can only afford {1} tax)
+        long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isAttacking)
+                .count();
+        assertThat(attackingCount).isLessThanOrEqualTo(1);
     }
 
     // ===== tryPlayLand silent failure recovery =====

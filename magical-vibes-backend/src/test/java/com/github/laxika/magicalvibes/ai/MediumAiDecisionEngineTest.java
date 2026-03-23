@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -627,5 +628,38 @@ class MediumAiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
+    }
+
+    // ===== Attack tax handling =====
+
+    @Test
+    @DisplayName("Medium AI limits attackers when attack tax is present")
+    void limitsAttackersWhenAttackTaxPresent() {
+        // Human controls Baird (tax {1} per attacker)
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has 3 creatures and only 1 Plains
+        giveAiPlains(1);
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+        }
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // At most 1 creature should be attacking (can only afford {1} tax)
+        long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isAttacking)
+                .count();
+        assertThat(attackingCount).isLessThanOrEqualTo(1);
     }
 }

@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -645,5 +647,48 @@ class HardAiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
+    }
+
+    // ===== Attack tax handling =====
+
+    @Test
+    @DisplayName("Hard AI limits attackers when attack tax is present")
+    void limitsAttackersWhenAttackTaxPresent() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        // Player 2 (human/opponent) controls Baird (tax {1} per attacker)
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(baird);
+
+        // AI (player1) has 3 creatures and only 1 Plains
+        Permanent plains = new Permanent(new Plains());
+        plains.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(plains);
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+        }
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.beginAttackerDeclaration(player1.getId());
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // At most 1 creature should be attacking (can only afford {1} tax)
+        long attackingCount = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isAttacking)
+                .count();
+        assertThat(attackingCount).isLessThanOrEqualTo(1);
     }
 }

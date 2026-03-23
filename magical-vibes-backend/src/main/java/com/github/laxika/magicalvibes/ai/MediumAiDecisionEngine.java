@@ -316,9 +316,13 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
                 gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
 
+        // Cap attackers to what we can afford given attack tax, and tap mana to pay
+        attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
+
         log.info("AI (Medium): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
+        final List<Integer> finalAttackerIndices = attackerIndices;
         send(() -> messageHandler.handleDeclareAttackers(selfConnection,
-                new DeclareAttackersRequest(attackerIndices, null)));
+                new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
     @Override
