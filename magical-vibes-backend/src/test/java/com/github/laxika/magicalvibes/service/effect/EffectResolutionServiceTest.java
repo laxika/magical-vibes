@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
@@ -625,6 +627,75 @@ class EffectResolutionServiceTest {
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("Fathom Fleet Captain") && msg.contains("does nothing")
                             && msg.contains("nontoken")));
+        }
+    }
+
+    // =========================================================================
+    // ControlsSubtypeReplacementEffect
+    // (HuatlisSpurring: ControlsSubtypeReplacementEffect(HUATLI, BoostTargetCreatureEffect(2,0), BoostTargetCreatureEffect(4,0)))
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveControlsSubtypeReplacementEffect")
+    class ResolveControlsSubtypeReplacementEffect {
+
+        @Test
+        @DisplayName("Resolves base effect when controller does not control the subtype")
+        void resolvesBaseEffectWhenSubtypeNotControlled() {
+            CardEffect base = new BoostTargetCreatureEffect(2, 0);
+            CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
+            CardEffect replacement = new ControlsSubtypeReplacementEffect(CardSubtype.HUATLI, base, upgraded);
+            StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
+
+            // No permanents with HUATLI subtype on battlefield
+            EffectHandler handler = stubHandler(base);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, base);
+        }
+
+        @Test
+        @DisplayName("Resolves upgraded effect when controller controls the subtype")
+        void resolvesUpgradedEffectWhenSubtypeControlled() {
+            CardEffect base = new BoostTargetCreatureEffect(2, 0);
+            CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
+            CardEffect replacement = new ControlsSubtypeReplacementEffect(CardSubtype.HUATLI, base, upgraded);
+            StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
+
+            // Add a permanent with HUATLI subtype
+            Card huatliCard = createCard("Huatli, Warrior Poet");
+            huatliCard.setSubtypes(List.of(CardSubtype.HUATLI));
+            Permanent huatli = new Permanent(huatliCard, player1Id);
+            gd.playerBattlefields.get(player1Id).add(huatli);
+
+            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(huatli), any())).thenReturn(true);
+            EffectHandler handler = stubHandler(upgraded);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, upgraded);
+        }
+
+        @Test
+        @DisplayName("Opponent's subtype permanent does not meet the condition")
+        void opponentSubtypeDoesNotCount() {
+            CardEffect base = new BoostTargetCreatureEffect(2, 0);
+            CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
+            CardEffect replacement = new ControlsSubtypeReplacementEffect(CardSubtype.HUATLI, base, upgraded);
+            StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
+
+            // Huatli on opponent's battlefield only
+            Card huatliCard = createCard("Huatli, Warrior Poet");
+            huatliCard.setSubtypes(List.of(CardSubtype.HUATLI));
+            Permanent huatli = new Permanent(huatliCard, player2Id);
+            gd.playerBattlefields.get(player2Id).add(huatli);
+
+            EffectHandler handler = stubHandler(base);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, base);
         }
     }
 }

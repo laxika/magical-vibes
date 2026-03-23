@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedCondit
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -277,6 +278,14 @@ public class EffectResolutionService {
                     yield source.getCard().getSubtypes().contains(ssre.subtype());
                 }
                 yield entry.getCard().getSubtypes().contains(ssre.subtype());
+            }
+            case ControlsSubtypeReplacementEffect csre -> {
+                UUID controllerId = entry.getControllerId();
+                List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+                if (battlefield == null) yield false;
+                PermanentHasSubtypePredicate predicate = new PermanentHasSubtypePredicate(csre.subtype());
+                yield battlefield.stream()
+                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, predicate));
             }
             case KickerReplacementEffect ignored ->
                     entry.isKicked();

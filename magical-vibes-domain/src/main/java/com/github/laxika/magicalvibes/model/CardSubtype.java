@@ -61,6 +61,7 @@ public enum CardSubtype {
     SERPENT("Serpent"),
     SHADE("Shade"),
     HORSE("Horse"),
+    HUATLI("Huatli"),
     NIGHTMARE("Nightmare"),
     SHAPESHIFTER("Shapeshifter"),
     CRAB("Crab"),
