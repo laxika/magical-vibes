@@ -418,6 +418,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `ReturnOneOfEachSubtypeFromGraveyardToHandEffect` | `(List<CardSubtype> subtypes)` | return one card of each listed subtype from controller's graveyard to hand, processed sequentially. Single matches auto-return; multiple matches prompt choice. A multi-typed card can only satisfy one subtype. Used by Grim Captain's Call |
 | `PutTargetCardsFromGraveyardOnTopOfLibraryEffect` | `(CardPredicate filter)` | put any number of target cards matching filter from controller's graveyard on top of library. Multi-target selection at cast time via SpellCastingService "any number" graveyard targeting. Used by Frantic Salvage |
 | `ReturnTargetCardsFromGraveyardToHandEffect` | `(CardPredicate filter, int maxTargets)` | return up to maxTargets target cards matching filter from controller's graveyard to hand. Multi-target selection at cast time via SpellCastingService "up to N" graveyard targeting. Used by Morbid Plunder |
 | `ShuffleTargetCardsFromGraveyardIntoLibraryEffect` | `(CardPredicate filter, int maxTargets)` | target player shuffles up to maxTargets target cards matching filter from their graveyard into their library. `canTargetPlayer()=true`. Target player chosen at cast time, then graveyard card selection prompted via "up to N target player's graveyard" targeting. Used by Memory's Journey |

@@ -93,10 +93,13 @@ public class GraveyardChoiceHandlerService {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
             // Player declined — if this is part of a "each player returns" flow, skip remaining
-            // picks for this player by removing queued entries for the same player from the front
+            // picks for this player by removing queued entries for the same player from the front.
+            // Entries with skipRemainingOnDecline=false are independent choices (e.g. Grim Captain's
+            // Call) and should not be removed when another choice is declined.
             UUID decliningPlayerId = playerId;
             while (!gameData.pendingGraveyardReturnQueue.isEmpty()
-                    && gameData.pendingGraveyardReturnQueue.getFirst().playerId().equals(decliningPlayerId)) {
+                    && gameData.pendingGraveyardReturnQueue.getFirst().playerId().equals(decliningPlayerId)
+                    && gameData.pendingGraveyardReturnQueue.getFirst().skipRemainingOnDecline()) {
                 gameData.pendingGraveyardReturnQueue.removeFirst();
             }
             String logEntry = player.getUsername() + " chooses not to return a card.";

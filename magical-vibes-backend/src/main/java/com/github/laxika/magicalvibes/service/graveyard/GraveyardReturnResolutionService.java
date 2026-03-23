@@ -46,12 +46,14 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFrom
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnOneOfEachSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1622,7 +1624,61 @@ public class GraveyardReturnResolutionService {
             } else {
                 // Player must choose — add to queue
                 gameData.pendingGraveyardReturnQueue.add(
-                        new PendingGraveyardReturnChoice(playerId, effect.maxCount(), effect.filter()));
+                        new PendingGraveyardReturnChoice(playerId, effect.maxCount(), effect.filter(),
+                                GraveyardChoiceDestination.BATTLEFIELD, true));
+            }
+        }
+
+        if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
+            beginNextGraveyardReturnFromQueue(gameData);
+        }
+    }
+
+    /**
+     * Resolves a {@link ReturnOneOfEachSubtypeFromGraveyardToHandEffect} by queuing sequential
+     * graveyard choices — one per subtype. For each subtype that has matching cards in the
+     * controller's graveyard, a choice entry is queued. If only one card matches a subtype,
+     * it is returned automatically without prompting. Cards already returned for a previous
+     * subtype are naturally excluded because they have been removed from the graveyard.
+     */
+    @HandlesEffect(ReturnOneOfEachSubtypeFromGraveyardToHandEffect.class)
+    void resolveReturnOneOfEachSubtype(GameData gameData, StackEntry entry,
+                                       ReturnOneOfEachSubtypeFromGraveyardToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+
+        for (CardSubtype subtype : effect.subtypes()) {
+            CardSubtypePredicate filter = new CardSubtypePredicate(subtype);
+
+            if (graveyard == null || graveyard.isEmpty()) {
+                break;
+            }
+
+            List<Card> matching = graveyard.stream()
+                    .filter(card -> gameQueryService.matchesCardPredicate(card, filter, null))
+                    .toList();
+
+            if (matching.isEmpty()) {
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " has no " + subtype.getDisplayName() + " cards in their graveyard.");
+                continue;
+            }
+
+            if (matching.size() == 1) {
+                // Only one match — return it automatically
+                Card card = matching.getFirst();
+                graveyard.remove(card);
+                gameData.addCardToHand(controllerId, card);
+
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " returns " + card.getName() + " from graveyard to hand.");
+            } else {
+                // Multiple matches — queue a choice prompt
+                gameData.pendingGraveyardReturnQueue.add(
+                        new PendingGraveyardReturnChoice(controllerId, 1, filter,
+                                GraveyardChoiceDestination.HAND, false));
             }
         }
 
@@ -1664,13 +1720,16 @@ public class GraveyardReturnResolutionService {
         // Re-enqueue with decremented remaining count if the player has more picks after this one
         if (next.remainingCount() > 1) {
             gameData.pendingGraveyardReturnQueue.addFirst(
-                    new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter()));
+                    new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter(),
+                            next.destination(), next.skipRemainingOnDecline()));
         }
 
+        GraveyardChoiceDestination destination = next.destination();
         String filterLabel = CardPredicateUtils.describeFilter(next.filter());
-        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.BATTLEFIELD, null);
+        gameData.interaction.prepareGraveyardChoice(destination, null);
+        String destText = destination == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield";
         playerInputService.beginGraveyardChoice(gameData, next.playerId(), matchingIndices,
-                "Return a " + filterLabel + " from your graveyard to the battlefield.");
+                "Return a " + filterLabel + " from your graveyard to " + destText + ".");
     }
 
     /**
