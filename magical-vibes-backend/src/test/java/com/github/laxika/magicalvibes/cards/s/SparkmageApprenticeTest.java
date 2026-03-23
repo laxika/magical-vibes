@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -196,6 +197,105 @@ class SparkmageApprenticeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Hexproof interaction (Shalai board state) =====
+
+    @Test
+    @DisplayName("Can cast Sparkmage Apprentice without target when opponent has hexproof from Shalai")
+    void canCastWithoutTargetWhenOpponentHasHexproof() {
+        // Reproduce fuzz test board state: opponent controls Shalai, Voice of Plenty
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+        harness.setHand(player1, List.of(new SparkmageApprentice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        // Verify opponent has hexproof
+        assertThat(gqs.playerHasHexproof(gd, player2.getId())).isTrue();
+
+        // Cast without a target — creature spell itself doesn't target
+        harness.castCreature(player1, 0);
+
+        // Resolve creature spell
+        harness.passBothPriorities();
+
+        // Creature enters battlefield, ETB skipped (no target provided)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB fizzles when targeting hexproof opponent (Shalai on battlefield)")
+    void etbFizzlesWhenTargetingHexproofOpponent() {
+        // Reproduce fuzz test board state: opponent controls Shalai, Voice of Plenty
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SparkmageApprentice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        // Cast targeting the hexproof opponent — spell itself doesn't target, so cast succeeds
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, player2.getId(), null);
+
+        // Resolve creature spell → enters battlefield, ETB triggers with hexproof player target
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+
+        // Resolve ETB → fizzles because target player has hexproof
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("ETB still works targeting self when opponent has hexproof from Shalai")
+    void etbCanTargetSelfWhenOpponentHasHexproof() {
+        // Opponent controls Shalai but caster can still target themselves
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SparkmageApprentice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        // Target self — hexproof only blocks opponents
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, player1.getId(), null);
+
+        // Resolve creature spell
+        harness.passBothPriorities();
+        // Resolve ETB → deals 1 damage to self
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("ETB fizzles when targeting hexproof creature (Shalai grants hexproof to other creatures)")
+    void etbFizzlesWhenTargetingHexproofCreature() {
+        // Shalai grants hexproof to other creatures controller controls
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SparkmageApprentice()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        // Cast targeting hexproof creature — spell itself doesn't target
+        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, bearsId, null);
+
+        // Resolve creature spell → enters battlefield, ETB triggers
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Sparkmage Apprentice"));
+
+        // Resolve ETB → fizzles because target creature has hexproof
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        // Grizzly Bears should still be alive (no damage dealt)
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
 
     // ===== Fizzle =====

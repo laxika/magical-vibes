@@ -360,6 +360,12 @@ public class TargetLegalityService {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (targetPerm == null && !gameData.playerIds.contains(entry.getTargetId())) {
                     targetFizzled = true;
+                } else if (targetPerm == null && gameData.playerIds.contains(entry.getTargetId())) {
+                    // Player target: check hexproof/shroud at resolution time
+                    String playerReason = checkPlayerUntargetableReason(gameData, entry.getTargetId(), entry.getControllerId());
+                    if (playerReason != null) {
+                        targetFizzled = true;
+                    }
                 } else if (targetPerm != null) {
                     targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
                     if (!targetFizzled

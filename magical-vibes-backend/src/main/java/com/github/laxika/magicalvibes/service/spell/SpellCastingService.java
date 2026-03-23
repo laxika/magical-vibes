@@ -1,5 +1,4 @@
 package com.github.laxika.magicalvibes.service.spell;
-import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -75,7 +74,6 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class SpellCastingService {
 
-    private final AbilityActivationService abilityActivationService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -295,9 +293,12 @@ public class SpellCastingService {
         boolean unwrappedNeedsSpellTarget = wasModal
                 ? filteredSpellEffects.stream().anyMatch(CardEffect::canTargetSpell)
                 : card.isNeedsSpellTarget();
+        // Per MTG rule 601.2c, only the spell itself determines whether a target is required
+        // at cast time. ETB triggered abilities choose targets when they go on the stack after
+        // the permanent enters, so isNeedsSpellCastTarget() (which excludes ETB effects) is correct.
         boolean unwrappedNeedsTarget = wasModal
                 ? filteredSpellEffects.stream().anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer() || e.canTargetGraveyard())
-                : card.isNeedsTarget();
+                : card.isNeedsSpellCastTarget();
 
         // Validate alternate casting cost if used (e.g. Demon of Death's Gate)
         if (usingAlternateCost) {

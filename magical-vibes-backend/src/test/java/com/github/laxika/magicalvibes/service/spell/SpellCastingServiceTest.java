@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -52,9 +51,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SpellCastingServiceTest {
-
-    @Mock
-    private AbilityActivationService abilityActivationService;
 
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
@@ -334,6 +330,95 @@ class SpellCastingServiceTest {
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(beforeCount + 1);
+        }
+    }
+
+    // =========================================================================
+    // ETB-only targeting (creature with ON_ENTER_BATTLEFIELD effects)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("ETB-only targeting")
+    class EtbOnlyTargeting {
+
+        @Test
+        @DisplayName("Creature with ETB targeting can be cast without a target")
+        void creatureWithEtbCanBeCastWithoutTarget() {
+            Card creature = createCreature("Sparkmage", "{1}{R}");
+            creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
+            setHand(player1Id, List.of(creature));
+            addMana(player1Id, ManaColor.RED, 2);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+            assertThat(gd.stack.getLast().getTargetId()).isNull();
+        }
+
+        @Test
+        @DisplayName("Creature with ETB targeting can be cast with a valid target")
+        void creatureWithEtbCanBeCastWithTarget() {
+            Card creature = createCreature("Sparkmage", "{1}{R}");
+            creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
+            setHand(player1Id, List.of(creature));
+            addMana(player1Id, ManaColor.RED, 2);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Creature with ETB targeting does not validate hexproof at cast time")
+        void creatureWithEtbDoesNotValidateHexproofAtCastTime() {
+            Card creature = createCreature("Sparkmage", "{1}{R}");
+            creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
+            setHand(player1Id, List.of(creature));
+            addMana(player1Id, ManaColor.RED, 2);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            // Cast targeting opponent — should succeed even though hexproof is not checked
+            // (hexproof is checked at ETB resolution time instead)
+            svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            // validateSpellTargeting is called with needsTarget=false (ETB-only),
+            // so hexproof won't be enforced at cast time
+            verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(creature), eq(player2Id), any(), eq(player1Id), eq(false));
+        }
+
+        @Test
+        @DisplayName("Sorcery with spell-level targeting validates hexproof at cast time")
+        void sorceryWithSpellTargetingValidatesHexproof() {
+            Card sorcery = createSorcery("Test Burn", "{R}");
+            sorcery.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            setHand(player1Id, List.of(sorcery));
+            addMana(player1Id, ManaColor.RED, 1);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
+
+            // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
+            verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(sorcery), eq(player2Id), any(), eq(player1Id), eq(true));
+        }
+
+        @Test
+        @DisplayName("Instant with spell-level targeting validates hexproof at cast time")
+        void instantWithSpellTargetingValidatesHexproof() {
+            Card instant = createInstant("Test Bolt", "{R}");
+            instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.RED, 1);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
+
+            // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
+            verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(instant), eq(player2Id), any(), eq(player1Id), eq(true));
         }
     }
 

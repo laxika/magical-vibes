@@ -311,7 +311,7 @@ public class GameTestHarness {
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, sessionManager, permanentRemovalService, triggerCollectionService, exileService);
         spellCastingService = new SpellCastingService(
-                abilityActivationService, battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
+                battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
                 sessionManager, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, turnProgressionService, legendRuleService);

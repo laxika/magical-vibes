@@ -1441,6 +1441,50 @@ class TargetLegalityServiceTest {
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
+
+        // ----- Player hexproof/shroud at resolution -----
+
+        @Test
+        @DisplayName("returns true when target player has hexproof and source is opponent")
+        void returnsTrueWhenTargetPlayerHasHexproof() {
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+            when(gameQueryService.playerHasHexproof(gd, player2Id)).thenReturn(true);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when target player has hexproof but source is self")
+        void returnsFalseWhenTargetPlayerHasHexproofButSelf() {
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+                    spell.getEffects(EffectSlot.SPELL), 0, player1Id, Map.of());
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true when target player has shroud")
+        void returnsTrueWhenTargetPlayerHasShroud() {
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+            when(gameQueryService.playerHasShroud(gd, player2Id)).thenReturn(true);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when target player has no hexproof or shroud")
+        void returnsFalseWhenTargetPlayerHasNoProtection() {
+            Card spell = createTargetingSpell("Burn", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+        }
     }
 
     // ===== matchesStackEntryPredicate =====
