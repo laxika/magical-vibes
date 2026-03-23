@@ -782,7 +782,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
@@ -804,7 +804,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
             assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
@@ -823,7 +823,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
@@ -845,7 +845,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             assertThat(gd.exileReturnOnPermanentLeave.get(source.getId()))
                     .isNotNull()
@@ -868,7 +868,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry);
+            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Spellbook is exiled by Leonin Relic-Warder."));

@@ -357,7 +357,8 @@ public class ExileResolutionService {
      * Respects stolen-creature ownership for the return.
      */
     @HandlesEffect(ExileTargetPermanentUntilSourceLeavesEffect.class)
-    void resolveExileTargetPermanentUntilSourceLeaves(GameData gameData, StackEntry entry) {
+    void resolveExileTargetPermanentUntilSourceLeaves(GameData gameData, StackEntry entry,
+                                                      ExileTargetPermanentUntilSourceLeavesEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
@@ -365,12 +366,14 @@ public class ExileResolutionService {
 
         // Find the source permanent on the battlefield by card reference
         UUID sourcePermanentId = null;
+        Permanent sourcePermanent = null;
         UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
                 if (p.getCard() == entry.getCard()) {
                     sourcePermanentId = p.getId();
+                    sourcePermanent = p;
                     break;
                 }
             }
@@ -387,6 +390,11 @@ public class ExileResolutionService {
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), targetControllerId);
 
         permanentRemovalService.removePermanentToExile(gameData, target);
+
+        // Imprint the exiled card onto the source (e.g. Ixalan's Binding)
+        if (effect.imprint() && sourcePermanent != null) {
+            sourcePermanent.getCard().setImprintedCard(card);
+        }
 
         String logEntry = card.getName() + " is exiled by " + entry.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

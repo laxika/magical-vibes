@@ -333,7 +333,7 @@ public class GameBroadcastService {
 
         boolean stackEmpty = gameData.stack.isEmpty();
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
-        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
+        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
 
         // Count untapped creatures for convoke playability
         int untappedCreatureCount = 0;
@@ -635,7 +635,7 @@ public class GameBroadcastService {
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttackExile = isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
-        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
+        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
 
         // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
         Set<UUID> castableFromExileWithSource = getCastableExiledCardIds(gameData, playerId);
@@ -746,7 +746,7 @@ public class GameBroadcastService {
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
-        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData);
+        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
 
         if (spellLimitReached || cantCastDueToAttack) return playable;
         if (restrictedSpellTypes.contains(topCard.getType())
@@ -1036,14 +1036,18 @@ public class GameBroadcastService {
         return restricted;
     }
 
-    Set<String> getForbiddenCardNames(GameData gameData) {
+    Set<String> getForbiddenCardNames(GameData gameData, UUID castingPlayerId) {
         Set<String> forbidden = new HashSet<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CantCastSpellsWithSameNameAsExiledCardEffect) {
+                    if (effect instanceof CantCastSpellsWithSameNameAsExiledCardEffect cantCast) {
+                        // If opponentsOnly, skip if the casting player is the controller
+                        if (cantCast.opponentsOnly() && pid.equals(castingPlayerId)) {
+                            continue;
+                        }
                         Card imprinted = perm.getCard().getImprintedCard();
                         if (imprinted != null) {
                             forbidden.add(imprinted.getName());
@@ -1108,7 +1112,7 @@ public class GameBroadcastService {
         Set<CardType> restricted = getRestrictedSpellTypes(gameData, playerId);
         if (restricted.contains(card.getType())
                 || card.getAdditionalTypes().stream().anyMatch(restricted::contains)) return false;
-        Set<String> forbidden = getForbiddenCardNames(gameData);
+        Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (forbidden.contains(card.getName())) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
