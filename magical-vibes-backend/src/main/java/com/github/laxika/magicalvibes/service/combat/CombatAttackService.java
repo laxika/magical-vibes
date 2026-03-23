@@ -305,7 +305,8 @@ public class CombatAttackService {
                     }
 
                     if (!otherEffects.isEmpty()) {
-                        boolean needsTarget = otherEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+                        boolean needsTarget = otherEffects.stream()
+                                .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
                         if (needsTarget) {
                             gameData.pendingAttackTriggerTargets.add(
                                     new PermanentChoiceContext.AttackTriggerTarget(

@@ -533,7 +533,7 @@ Pass `null` as filter to allow any card.
 | `MillControllerCost` | `(int count)` | **Cost**: controller mills N cards as activation cost. Blocks activation if library too small. Used by Deranged Assistant |
 | `MillTargetPlayerAndBoostSelfByManaValueEffect` | `()` | target player mills one card, source creature gets +X/+X until end of turn where X is milled card's mana value. Used by Mindshrieker |
 | `MillTargetPlayerEffect` | `(int count)` | target player mills N cards |
-| `MillHalfLibraryEffect` | `()` | target player mills half their library |
+| `MillHalfLibraryEffect` | `(boolean roundUp)` | target player mills half their library. `roundUp=false` rounds down (Traumatize), `roundUp=true` rounds up (Fleet Swallower) |
 | `MillByHandSizeEffect` | `()` | target player mills cards equal to hand size |
 | `MillTargetPlayerByChargeCountersEffect` | `()` | target player mills X cards where X is charge counters on source (reads snapshotted count from xValue) |
 | `EachOpponentMillsEffect` | `(int count)` | each opponent mills N cards |

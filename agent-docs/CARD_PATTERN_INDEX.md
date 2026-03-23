@@ -97,7 +97,8 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Steal artifact (temp) | `m/MetallicMastery.java` | GainControlOfTargetPermanentUntilEndOfTurn + untap + haste + PermanentIsArtifactPredicate filter |
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |
 | Extra combat | `r/RelentlessAssault.java` | AdditionalCombatMainPhaseEffect |
-| Mill | `t/Traumatize.java` | MillHalfLibraryEffect |
+| Mill half library (spell) | `t/Traumatize.java` | MillHalfLibraryEffect(false) |
+| Mill half library (ON_ATTACK) | `f/FleetSwallower.java` | ON_ATTACK MillHalfLibraryEffect(true) — creature attacks, target player mills half library rounded up |
 | Shuffle-back spell | `b/BeaconOfDestruction.java` | Effect + ShuffleIntoLibraryEffect |
 | X draw (controller) | `m/MindSpring.java` | DrawXCardsEffect — non-targeting X draw for controller |
 | X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealXDamageToAnyTargetEffect(true) + ShuffleIntoLibraryEffect |

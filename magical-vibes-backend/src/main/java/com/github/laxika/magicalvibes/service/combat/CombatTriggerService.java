@@ -104,7 +104,8 @@ public class CombatTriggerService {
                                 gameData.id, perm.getCard().getName(), creature.getCard().getName());
                     } else {
                         // Check if any effect needs a permanent target — queue for target selection
-                        boolean needsTarget = effectsForStack.stream().anyMatch(CardEffect::canTargetPermanent);
+                        boolean needsTarget = effectsForStack.stream()
+                                .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
                         if (needsTarget) {
                             gameData.pendingAttackTriggerTargets.add(
                                     new PermanentChoiceContext.AttackTriggerTarget(

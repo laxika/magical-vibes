@@ -173,16 +173,16 @@ public class MillResolutionService {
     }
 
     /**
-     * Mills half the target player's library, rounded down.
-     * Used by cards like Traumatize.
+     * Mills half the target player's library.
+     * Rounds down by default (Traumatize), or up if roundUp is true (Fleet Swallower).
      */
     @HandlesEffect(MillHalfLibraryEffect.class)
-    void resolveMillHalfLibrary(GameData gameData, StackEntry entry) {
+    void resolveMillHalfLibrary(GameData gameData, StackEntry entry, MillHalfLibraryEffect effect) {
         UUID targetPlayerId = entry.getTargetId();
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
-        int cardsToMill = deck.size() / 2;
+        int cardsToMill = effect.roundUp() ? (deck.size() + 1) / 2 : deck.size() / 2;
         if (cardsToMill == 0) {
             String logEntry = playerName + "'s library has " + pluralCards(deck.size()) + " — mills nothing.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
