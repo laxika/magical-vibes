@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -77,6 +78,35 @@ public class TargetLegalityService {
     public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
         checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
+    /**
+     * Validates that the given graveyard card IDs are legal targets for a multi-target graveyard ability.
+     * Each card must exist in an opponent's graveyard (not the controller's).
+     */
+    public void validateMultiTargetGraveyardAbility(GameData gameData, UUID playerId,
+                                                     List<CardEffect> effects, List<UUID> targetCardIds) {
+        if (targetCardIds == null || targetCardIds.isEmpty()) {
+            throw new IllegalStateException("Must select graveyard targets");
+        }
+        for (CardEffect effect : effects) {
+            if (effect instanceof ExileTargetCardsFromOpponentGraveyardEffect graveyardEffect) {
+                if (targetCardIds.size() != graveyardEffect.count()) {
+                    throw new IllegalStateException("Must select exactly " + graveyardEffect.count() + " target cards");
+                }
+                for (UUID cardId : targetCardIds) {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                    if (card == null) {
+                        throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (graveyardOwnerId != null && graveyardOwnerId.equals(playerId)) {
+                        throw new IllegalStateException("Target must be in an opponent's graveyard");
+                    }
+                }
+                break;
+            }
+        }
     }
 
     public void validateMultiTargetAbility(GameData gameData, UUID playerId, ActivatedAbility ability, List<UUID> targetIds, Card sourceCard) {

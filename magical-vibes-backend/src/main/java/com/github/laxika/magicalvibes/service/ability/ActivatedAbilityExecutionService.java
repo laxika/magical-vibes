@@ -537,6 +537,12 @@ public class ActivatedAbilityExecutionService {
             effectiveTargetZone = null;
         }
         List<UUID> effectiveTargetIds = targetIds != null ? targetIds : List.of();
+        // When targeting graveyard cards with multiple targets, use targetCardIds
+        // (for proper fizzle checking and resolution by graveyard handlers)
+        List<UUID> effectiveTargetCardIds = (effectiveTargetZone == Zone.GRAVEYARD && !effectiveTargetIds.isEmpty())
+                ? effectiveTargetIds : List.of();
+        List<UUID> effectivePermanentTargetIds = (effectiveTargetZone == Zone.GRAVEYARD && !effectiveTargetIds.isEmpty())
+                ? List.of() : effectiveTargetIds;
         StackEntry stackEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 permanent.getCard(),
@@ -548,8 +554,8 @@ public class ActivatedAbilityExecutionService {
                 permanent.getId(),
                 Map.of(),
                 effectiveTargetZone,
-                List.of(),
-                effectiveTargetIds
+                effectiveTargetCardIds,
+                effectivePermanentTargetIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);

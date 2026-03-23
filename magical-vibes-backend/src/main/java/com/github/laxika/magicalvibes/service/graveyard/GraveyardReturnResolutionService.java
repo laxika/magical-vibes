@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
@@ -936,6 +937,42 @@ public class GraveyardReturnResolutionService {
                             effect.noncreaturePowerBoost(), effect.noncreatureToughnessBoost());
                 }
             }
+        }
+    }
+
+    /**
+     * Resolves an {@link ExileTargetCardsFromOpponentGraveyardEffect} by exiling
+     * the pre-targeted cards from an opponent's graveyard. Reads target card IDs from
+     * {@code entry.getTargetCardIds()}. Cards that are no longer in a graveyard at
+     * resolution time are silently skipped.
+     */
+    @HandlesEffect(ExileTargetCardsFromOpponentGraveyardEffect.class)
+    void resolveExileTargetCardsFromOpponentGraveyard(GameData gameData, StackEntry entry,
+                                                       ExileTargetCardsFromOpponentGraveyardEffect effect) {
+        List<UUID> targetCardIds = entry.getTargetCardIds();
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+
+        if (targetCardIds == null || targetCardIds.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (no targets).");
+            return;
+        }
+
+        List<String> exiledNames = new ArrayList<>();
+        for (UUID cardId : targetCardIds) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            if (card != null) {
+                exiledNames.add(card.getName());
+                exileCardFromAnyGraveyard(gameData, cardId, card);
+            }
+        }
+
+        if (!exiledNames.isEmpty()) {
+            String logEntry = playerName + " exiles " + String.join(", ", exiledNames)
+                    + " from an opponent's graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} exiled {} cards from opponent's graveyard",
+                    gameData.id, playerName, exiledNames.size());
         }
     }
 

@@ -777,6 +777,11 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null, targetIds);
     }
 
+    public void activateAbilityWithGraveyardTargets(Player player, int permanentIndex, int abilityIndex, List<UUID> graveyardCardIds) {
+        ensurePriority(player);
+        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, Zone.GRAVEYARD, graveyardCardIds);
+    }
+
     public void activateGraveyardAbility(Player player, int graveyardCardIndex) {
         ensurePriority(player);
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, 0);

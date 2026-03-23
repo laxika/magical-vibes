@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -129,6 +130,7 @@ public class ValidTargetService {
 
         boolean targetsPlayer = ability.getEffects().stream().anyMatch(CardEffect::canTargetPlayer);
         boolean targetsPermanent = ability.getEffects().stream().anyMatch(CardEffect::canTargetPermanent);
+        boolean targetsGraveyard = ability.getEffects().stream().anyMatch(CardEffect::canTargetGraveyard);
         boolean targetsBlockingThis = ability.getEffects().stream()
                 .anyMatch(e -> e instanceof DestroyCreatureBlockingThisEffect);
 
@@ -148,9 +150,26 @@ public class ValidTargetService {
             }
         }
 
+        List<UUID> validGraveyardCardIds = new ArrayList<>();
+        if (targetsGraveyard) {
+            validGraveyardCardIds.addAll(computeValidGraveyardTargetsForAbility(gameData, ability, controllerId, excludeIds));
+        }
+
+        int minTargets = 1;
+        int maxTargets = 1;
         String prompt = "Select a target for " + sourceCard.getName() + " ability";
 
-        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, 1, 1, prompt);
+        // Multi-target graveyard ability (e.g. "exile two target cards")
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof ExileTargetCardsFromOpponentGraveyardEffect graveyardEffect) {
+                minTargets = graveyardEffect.count();
+                maxTargets = graveyardEffect.count();
+                prompt = "Select " + graveyardEffect.count() + " target cards from an opponent's graveyard";
+                break;
+            }
+        }
+
+        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, minTargets, maxTargets, prompt);
     }
 
     /**
@@ -413,6 +432,41 @@ public class ValidTargetService {
             if (!validIds.isEmpty()) break;
         }
 
+        return validIds;
+    }
+
+    private List<UUID> computeValidGraveyardTargetsForAbility(GameData gameData, ActivatedAbility ability,
+                                                                UUID controllerId, Set<UUID> excludeIds) {
+        List<UUID> validIds = new ArrayList<>();
+
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof ExileTargetCardsFromOpponentGraveyardEffect) {
+                // Opponent-only graveyard targeting
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    if (playerId.equals(controllerId)) continue;
+                    for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (!excludeIds.contains(c.getId())) {
+                            validIds.add(c.getId());
+                        }
+                    }
+                }
+                break;
+            }
+            if (effect.canTargetGraveyard()) {
+                boolean anyGraveyard = effect.canTargetAnyGraveyard();
+                List<UUID> searchPlayerIds = anyGraveyard
+                        ? gameData.orderedPlayerIds
+                        : gameData.orderedPlayerIds.stream().filter(id -> !id.equals(controllerId)).toList();
+                for (UUID playerId : searchPlayerIds) {
+                    for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (!excludeIds.contains(c.getId())) {
+                            validIds.add(c.getId());
+                        }
+                    }
+                }
+                break;
+            }
+        }
         return validIds;
     }
 
