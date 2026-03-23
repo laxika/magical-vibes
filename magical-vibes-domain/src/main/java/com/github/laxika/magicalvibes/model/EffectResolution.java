@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 
 import java.util.ArrayList;
@@ -136,7 +137,8 @@ public final class EffectResolution {
     public static boolean needsDamageDistribution(List<CardEffect> effects) {
         return effects.stream()
                 .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect);
+                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect
+                        || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
     }
 
     // ===== Card convenience overloads (union semantics, no casting context) =====
@@ -185,7 +187,8 @@ public final class EffectResolution {
         boolean inAbility = card.getActivatedAbilities().stream()
                 .flatMap(a -> a.getEffects().stream())
                 .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect);
+                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect
+                        || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
         return inSpell || inAbility;
     }
 

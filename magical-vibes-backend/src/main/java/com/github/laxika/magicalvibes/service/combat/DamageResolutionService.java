@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedEvenlyAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
@@ -707,6 +708,40 @@ public class DamageResolutionService {
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), entry);
             if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
                 destroyed.add(target);
+            }
+        }
+
+        destroyAllLethal(gameData, destroyed);
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealXDamageDividedAmongTargetCreaturesCantBlockEffect} — deals X damage
+     * divided as chosen among any number of target creatures, then marks each creature that
+     * was dealt damage as unable to block this turn.
+     */
+    @HandlesEffect(DealXDamageDividedAmongTargetCreaturesCantBlockEffect.class)
+    void resolveDealXDamageDividedAmongTargetCreaturesCantBlock(GameData gameData, StackEntry entry) {
+        Map<UUID, Integer> assignments = entry.getDamageAssignments();
+        if (assignments == null || assignments.isEmpty()) return;
+
+        if (isDamageSourcePreventedWithLog(gameData, entry)) return;
+
+        List<Permanent> destroyed = new ArrayList<>();
+
+        for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+            if (target == null) continue;
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard())) continue;
+
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), entry);
+            if (rawDamage > 0) {
+                if (dealCreatureDamage(gameData, entry, target, rawDamage)) {
+                    destroyed.add(target);
+                }
+                target.setCantBlockThisTurn(true);
+                String logMsg = target.getCard().getName() + " can't block this turn.";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
             }
         }
 

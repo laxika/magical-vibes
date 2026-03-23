@@ -160,6 +160,7 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the perman
 | `DealXDamageToAnyTargetAndGainXLifeEffect` | `()` | deal X damage and gain X life (X spell) |
 | `DealXDamageToTargetCreatureEffect` | `()` | deal X damage to target creature (X spell) |
 | `DealXDamageDividedAmongTargetAttackingCreaturesEffect` | `()` | deal X damage divided among attacking creatures |
+| `DealXDamageDividedAmongTargetCreaturesCantBlockEffect` | `()` | deal X damage divided among any number of target creatures; creatures dealt damage this way can't block this turn |
 | `DealXDamageDividedEvenlyAmongTargetsEffect` | `()` | deal X damage divided evenly (rounded down) among any number of targets (creatures/players). Uses `targetIds` for target list. Pair with `setAdditionalCostPerExtraTarget(1)` for Fireball-style cost |
 | `DealXDamageToEachTargetEffect` | `()` | deal X damage to each of multiple targets (creatures/players). Each target receives the full X damage (not divided). Uses `targetIds` for target list |
 | `FirstTargetDealsPowerDamageToSecondTargetEffect` | `()` | first target creature deals damage equal to its power to second target creature (bite mechanic) |
@@ -633,6 +634,7 @@ Pass `null` as filter to allow any card.
 | `GainLifeEqualToToughnessEffect` | `()` | gain life equal to own toughness (self, e.g. dies trigger) |
 | `GainLifeEqualToDamageDealtEffect` | `()` | gain life equal to damage dealt (lifelink-style, static) |
 | `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
+| `GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect` | `()` | gain life equal to the greatest power among creatures you control |
 | `GainLifeEqualToXValueEffect` | `()` | gain life equal to xValue on stack entry (use with `SacrificeCreatureCost(trackToughness/power)` or other xValue-setting costs) |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `EachTargetPlayerGainsLifeEffect` | `(int amount)` | each targeted player gains N life (multi-target, reads from `targetIds`). Pair with `setMinTargets(0)` and `setMaxTargets(99)` for "any number of target players". Used by Hunters' Feast |

@@ -777,6 +777,11 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
     }
 
+    public void activateAbilityWithDamageAssignments(Player player, int permanentIndex, int abilityIndex, Integer xValue, Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, null, null, null, damageAssignments);
+    }
+
     public void activateAbilityWithMultiTargets(Player player, int permanentIndex, int abilityIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null, targetIds);

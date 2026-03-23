@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersE
 import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachSubtypeOnBattlefieldEffect;
@@ -338,6 +339,29 @@ public class LifeResolutionService {
             return;
         }
         applyGainLife(gameData, entry.getControllerId(), amount, entry.getCard().getName());
+    }
+
+    @HandlesEffect(GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect.class)
+    private void resolveGainLifeEqualToGreatestPower(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+
+        int greatestPower = 0;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    int power = gameQueryService.getEffectivePower(gameData, permanent);
+                    if (power > greatestPower) {
+                        greatestPower = power;
+                    }
+                }
+            }
+        }
+
+        if (greatestPower > 0) {
+            applyGainLife(gameData, controllerId, greatestPower, entry.getCard().getName(),
+                    entry.getCard(), entry.getEntryType());
+        }
     }
 
     @HandlesEffect(GainLifeEqualToChargeCountersOnSourceEffect.class)

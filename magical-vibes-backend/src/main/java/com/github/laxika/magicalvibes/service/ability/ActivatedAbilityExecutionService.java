@@ -128,7 +128,7 @@ public class ActivatedAbilityExecutionService {
                                              UUID targetId,
                                              Zone targetZone,
                                              boolean markAsNonTargetingForSacCreatureCost) {
-        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetId, targetZone, markAsNonTargetingForSacCreatureCost, null);
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetId, targetZone, markAsNonTargetingForSacCreatureCost, null, null);
     }
 
     public void completeActivationAfterCosts(GameData gameData,
@@ -141,6 +141,20 @@ public class ActivatedAbilityExecutionService {
                                              Zone targetZone,
                                              boolean markAsNonTargetingForSacCreatureCost,
                                              List<UUID> targetIds) {
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue, targetId, targetZone, markAsNonTargetingForSacCreatureCost, targetIds, null);
+    }
+
+    public void completeActivationAfterCosts(GameData gameData,
+                                             Player player,
+                                             Permanent permanent,
+                                             ActivatedAbility ability,
+                                             List<CardEffect> abilityEffects,
+                                             int effectiveXValue,
+                                             UUID targetId,
+                                             Zone targetZone,
+                                             boolean markAsNonTargetingForSacCreatureCost,
+                                             List<UUID> targetIds,
+                                             Map<UUID, Integer> damageAssignments) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -239,7 +253,7 @@ public class ActivatedAbilityExecutionService {
             return;
         }
 
-        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetIds);
+        pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetIds, damageAssignments);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -529,7 +543,8 @@ public class ActivatedAbilityExecutionService {
                                     int effectiveXValue,
                                     UUID effectiveTargetId,
                                     Zone targetZone,
-                                    List<UUID> targetIds) {
+                                    List<UUID> targetIds,
+                                    Map<UUID, Integer> damageAssignments) {
         Zone effectiveTargetZone = targetZone;
         if (ability.isNeedsSpellTarget()) {
             effectiveTargetZone = Zone.STACK;
@@ -553,7 +568,7 @@ public class ActivatedAbilityExecutionService {
                 effectiveXValue,
                 effectiveTargetId,
                 permanent.getId(),
-                Map.of(),
+                damageAssignments != null ? damageAssignments : Map.of(),
                 effectiveTargetZone,
                 effectiveTargetCardIds,
                 effectivePermanentTargetIds
