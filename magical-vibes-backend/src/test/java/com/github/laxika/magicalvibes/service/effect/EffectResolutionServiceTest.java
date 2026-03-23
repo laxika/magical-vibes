@@ -666,7 +666,7 @@ class EffectResolutionServiceTest {
             // Add a permanent with HUATLI subtype
             Card huatliCard = createCard("Huatli, Warrior Poet");
             huatliCard.setSubtypes(List.of(CardSubtype.HUATLI));
-            Permanent huatli = new Permanent(huatliCard, player1Id);
+            Permanent huatli = new Permanent(huatliCard);
             gd.playerBattlefields.get(player1Id).add(huatli);
 
             when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(huatli), any())).thenReturn(true);
@@ -688,7 +688,7 @@ class EffectResolutionServiceTest {
             // Huatli on opponent's battlefield only
             Card huatliCard = createCard("Huatli, Warrior Poet");
             huatliCard.setSubtypes(List.of(CardSubtype.HUATLI));
-            Permanent huatli = new Permanent(huatliCard, player2Id);
+            Permanent huatli = new Permanent(huatliCard);
             gd.playerBattlefields.get(player2Id).add(huatli);
 
             EffectHandler handler = stubHandler(base);
