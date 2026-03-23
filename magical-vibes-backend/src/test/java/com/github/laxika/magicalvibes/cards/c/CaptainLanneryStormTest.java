@@ -119,6 +119,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
 
         // Activate the Treasure token's ability (tap + sacrifice → add mana)
         harness.activateAbility(player1, treasureIndex, null, null);
+        harness.handleListChoice(player1, "RED");
 
         // The Treasure sacrifice trigger should have fired, putting +1/+0 on stack
         resolveAllTriggers();
@@ -148,6 +149,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
 
         // Sacrifice first treasure
         harness.activateAbility(player1, firstTreasure, null, null);
+        harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
         assertThat(captain.getPowerModifier()).isEqualTo(1);
@@ -163,6 +165,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
             }
         }
         harness.activateAbility(player1, remainingTreasure, null, null);
+        harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
         assertThat(captain.getPowerModifier()).isEqualTo(2);
@@ -213,6 +216,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
         }
 
         harness.activateAbility(player1, treasureIndex, null, null);
+        harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
         assertThat(captain.getPowerModifier()).isEqualTo(1);
