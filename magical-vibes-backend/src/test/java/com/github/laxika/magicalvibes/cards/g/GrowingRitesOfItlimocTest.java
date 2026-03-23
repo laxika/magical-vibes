@@ -207,7 +207,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         addCreatureReady(player1);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.SECOND_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to end step, trigger goes on stack
         harness.passBothPriorities(); // resolve transform trigger
@@ -227,7 +227,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         addCreatureReady(player1);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.SECOND_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to end step
         harness.passBothPriorities(); // resolve transform trigger
@@ -244,7 +244,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         addCreatureReady(player1);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.SECOND_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to end step — no trigger
 
@@ -258,7 +258,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         Permanent enchantment = addEnchantmentReady(player1);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.SECOND_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -277,7 +277,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
 
         // It's player2's turn, not player1's
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.SECOND_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
@@ -295,7 +295,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         harness.activateAbility(player1, itlimocIdx, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerManaPools.get(player1.getId()).getGreen()).isGreaterThanOrEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isGreaterThanOrEqualTo(1);
     }
 
     @Test
@@ -310,7 +310,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         harness.activateAbility(player1, itlimocIdx, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerManaPools.get(player1.getId()).getGreen()).isGreaterThanOrEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isGreaterThanOrEqualTo(3);
     }
 
     @Test
@@ -318,12 +318,12 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
     void itlimocPerCreatureTapWithZeroCreatures() {
         Permanent itlimoc = addTransformedItlimoc(player1);
 
-        int greenBefore = gd.playerManaPools.get(player1.getId()).getGreen();
+        int greenBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
         int itlimocIdx = indexOf(player1, itlimoc);
         harness.activateAbility(player1, itlimocIdx, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerManaPools.get(player1.getId()).getGreen()).isEqualTo(greenBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(greenBefore);
     }
 
     // ===== Helpers =====
