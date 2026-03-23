@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RaidReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
@@ -257,6 +258,8 @@ public class EffectResolutionService {
                     gameQueryService.isMetalcraftMet(gameData, entry.getControllerId());
             case MorbidReplacementEffect ignored ->
                     gameQueryService.isMorbidMet(gameData);
+            case RaidReplacementEffect ignored ->
+                    gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
             case TargetSubtypeReplacementEffect tsre -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 yield target != null && target.getCard().getSubtypes().contains(tsre.subtype());
