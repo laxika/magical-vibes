@@ -36,10 +36,12 @@ public class TurnProgressionService {
         if (gameData.currentStep == TurnStep.END_OF_COMBAT
                 && (!gameData.permanentsToSacrificeAtEndOfCombat.isEmpty()
                     || !gameData.pendingTokenExilesAtEndOfCombat.isEmpty()
-                    || !gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.isEmpty())) {
+                    || !gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.isEmpty()
+                    || !gameData.pendingExileAndReturnTransformedAtEndOfCombat.isEmpty())) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
+            combatService.processEndOfCombatExileAndReturnTransformed(gameData);
             gameData.priorityPassedBy.clear();
             return;
         }

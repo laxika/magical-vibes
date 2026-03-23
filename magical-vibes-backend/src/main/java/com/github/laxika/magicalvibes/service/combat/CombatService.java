@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ public class CombatService {
     private final CombatDamageService combatDamageService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
+    private final BattlefieldEntryService battlefieldEntryService;
 
     // ===== Attack delegation =====
 
@@ -175,6 +178,56 @@ public class CombatService {
                             gameData.id, equipment.getCard().getName());
                 }
             }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Exiles all permanents marked for end-of-combat exile-and-return-transformed
+     * (e.g. Conqueror's Galleon). Each permanent is exiled and immediately returned
+     * to the battlefield transformed (as its back face) under its controller's control.
+     */
+    public void processEndOfCombatExileAndReturnTransformed(GameData gameData) {
+        Set<UUID> toProcess = new HashSet<>(gameData.pendingExileAndReturnTransformedAtEndOfCombat);
+        gameData.pendingExileAndReturnTransformedAtEndOfCombat.clear();
+
+        for (UUID permId : toProcess) {
+            // Find the permanent and its controller
+            Permanent perm = null;
+            UUID controllerId = null;
+            for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+                for (Permanent p : entry.getValue()) {
+                    if (p.getId().equals(permId)) {
+                        perm = p;
+                        controllerId = entry.getKey();
+                        break;
+                    }
+                }
+                if (perm != null) break;
+            }
+            if (perm == null) continue; // Already left the battlefield
+
+            Card originalCard = perm.getOriginalCard();
+            Card backFace = originalCard.getBackFaceCard();
+            if (backFace == null) continue;
+
+            // Exile the permanent
+            permanentRemovalService.removePermanentToExile(gameData, perm);
+            // Remove from exile immediately (it returns right away as the back face)
+            gameData.removeFromExile(originalCard.getId());
+
+            // Create new permanent from original card, then transform to back face
+            Permanent newPerm = new Permanent(originalCard);
+            newPerm.setCard(backFace);
+            newPerm.setTransformed(true);
+            newPerm.setSummoningSick(false); // Lands don't have summoning sickness
+
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);
+
+            String logEntry = originalCard.getName() + " is exiled and returns transformed as " + backFace.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} exiled and returned transformed as {}",
+                    gameData.id, originalCard.getName(), backFace.getName());
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

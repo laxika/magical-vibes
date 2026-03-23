@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfAtEndOfCombatAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
@@ -316,6 +317,22 @@ public class ExileResolutionService {
         }
 
         exileAndScheduleReturn(gameData, entry, source, entry.getControllerId(), false);
+    }
+
+    /**
+     * Schedules the source permanent for exile-and-return-transformed at end of combat.
+     * Used by Conqueror's Galleon and similar cards that exile themselves when attacking
+     * and return transformed.
+     */
+    @HandlesEffect(ExileSelfAtEndOfCombatAndReturnTransformedEffect.class)
+    void resolveExileSelfAtEndOfCombatAndReturnTransformed(GameData gameData, StackEntry entry) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        gameData.pendingExileAndReturnTransformedAtEndOfCombat.add(source.getId());
+        log.info("Game {} - {} scheduled for exile and return transformed at end of combat",
+                gameData.id, source.getCard().getName());
     }
 
     private void exileAndScheduleReturn(GameData gameData, StackEntry entry,
