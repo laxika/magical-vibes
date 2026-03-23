@@ -39,6 +39,9 @@ subprojects {
 
         tasks.withType<Test> {
             useJUnitPlatform()
+            maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+            jvmArgs("-Xmx1g")
+            forkEvery = 250
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzSeed", "fuzzGames").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
