@@ -5,12 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
@@ -85,6 +89,10 @@ class EffectResolutionServiceTest {
 
     private StackEntry createEntry(Card card, UUID controllerId, List<CardEffect> effects) {
         return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), effects);
+    }
+
+    private StackEntry createTriggeredEntry(Card card, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, card.getName(), effects, null, sourcePermanentId);
     }
 
     private EffectHandler stubHandler(CardEffect effect) {
@@ -495,6 +503,128 @@ class EffectResolutionServiceTest {
 
             assertThat(gd.pendingEffectResolutionEntry).isNull();
             assertThat(gd.pendingEffectResolutionIndex).isZero();
+        }
+    }
+
+    // =========================================================================
+    // ControlsAnotherSubtypeConditionalEffect (nontokenOnly)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveControlsAnotherSubtypeConditionalEffect")
+    class ResolveControlsAnotherSubtypeConditionalEffect {
+
+        private Permanent createPiratePermanent(boolean isToken) {
+            Card card = new Card();
+            card.setName(isToken ? "Pirate Token" : "Pirate Creature");
+            card.setType(CardType.CREATURE);
+            card.setSubtypes(List.of(CardSubtype.PIRATE));
+            card.setToken(isToken);
+            return new Permanent(card);
+        }
+
+        @Test
+        @DisplayName("Resolves wrapped effect when another nontoken permanent with subtype exists")
+        void resolvesWhenAnotherNontokenSubtypeExists() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsAnotherSubtypeConditionalEffect(CardSubtype.PIRATE, true, wrapped);
+
+            UUID sourcePermanentId = UUID.randomUUID();
+            StackEntry entry = createTriggeredEntry(createCard("Fathom Fleet Captain"), player1Id,
+                    List.of(conditional), sourcePermanentId);
+
+            // Add a nontoken Pirate (different from source)
+            Permanent pirate = createPiratePermanent(false);
+            gd.playerBattlefields.get(player1Id).add(pirate);
+
+            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(pirate), any(PermanentHasSubtypePredicate.class)))
+                    .thenReturn(true);
+            EffectHandler handler = stubHandler(wrapped);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, wrapped);
+        }
+
+        @Test
+        @DisplayName("Skips wrapped effect when only token permanents with subtype exist and nontokenOnly is true")
+        void skipsWhenOnlyTokenSubtypeExistsAndNontokenOnly() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsAnotherSubtypeConditionalEffect(CardSubtype.PIRATE, true, wrapped);
+
+            UUID sourcePermanentId = UUID.randomUUID();
+            StackEntry entry = createTriggeredEntry(createCard("Fathom Fleet Captain"), player1Id,
+                    List.of(conditional), sourcePermanentId);
+
+            // Add only a token Pirate
+            Permanent tokenPirate = createPiratePermanent(true);
+            gd.playerBattlefields.get(player1Id).add(tokenPirate);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(registry, never()).getHandler(wrapped);
+        }
+
+        @Test
+        @DisplayName("Token permanents satisfy condition when nontokenOnly is false")
+        void tokensSatisfyConditionWhenNontokenOnlyFalse() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsAnotherSubtypeConditionalEffect(CardSubtype.PIRATE, false, wrapped);
+
+            UUID sourcePermanentId = UUID.randomUUID();
+            StackEntry entry = createTriggeredEntry(createCard("Ghitu Journeymage"), player1Id,
+                    List.of(conditional), sourcePermanentId);
+
+            // Add a token Pirate (should be accepted when nontokenOnly=false)
+            Permanent tokenPirate = createPiratePermanent(true);
+            gd.playerBattlefields.get(player1Id).add(tokenPirate);
+
+            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(tokenPirate), any(PermanentHasSubtypePredicate.class)))
+                    .thenReturn(true);
+            EffectHandler handler = stubHandler(wrapped);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, wrapped);
+        }
+
+        @Test
+        @DisplayName("Skips when no other permanent exists (source excluded)")
+        void skipsWhenNoOtherPermanentExists() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsAnotherSubtypeConditionalEffect(CardSubtype.PIRATE, true, wrapped);
+
+            // The source permanent is a Pirate — but it should be excluded from the check
+            Permanent source = createPiratePermanent(false);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            StackEntry entry = createTriggeredEntry(createCard("Fathom Fleet Captain"), player1Id,
+                    List.of(conditional), source.getId());
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(registry, never()).getHandler(wrapped);
+        }
+
+        @Test
+        @DisplayName("Logs skip message when nontokenOnly condition not met")
+        void logsSkipMessageWhenNontokenConditionNotMet() {
+            CardEffect wrapped = new DrawCardEffect(1);
+            CardEffect conditional = new ControlsAnotherSubtypeConditionalEffect(CardSubtype.PIRATE, true, wrapped);
+
+            UUID sourcePermanentId = UUID.randomUUID();
+            StackEntry entry = createTriggeredEntry(createCard("Fathom Fleet Captain"), player1Id,
+                    List.of(conditional), sourcePermanentId);
+
+            // Only a token Pirate on battlefield — condition not met
+            Permanent tokenPirate = createPiratePermanent(true);
+            gd.playerBattlefields.get(player1Id).add(tokenPirate);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("Fathom Fleet Captain") && msg.contains("does nothing")
+                            && msg.contains("nontoken")));
         }
     }
 }

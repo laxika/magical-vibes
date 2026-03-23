@@ -7,17 +7,26 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * Checked at both trigger time and resolution time per CR 603.4.
  * The condition is met when the controller has at least one other permanent
  * with the specified subtype on the battlefield besides the source permanent.
+ *
+ * @param nontokenOnly when {@code true}, only nontoken permanents satisfy the condition
  */
-public record ControlsAnotherSubtypeConditionalEffect(CardSubtype subtype, CardEffect wrapped) implements ConditionalEffect {
+public record ControlsAnotherSubtypeConditionalEffect(CardSubtype subtype, boolean nontokenOnly, CardEffect wrapped) implements ConditionalEffect {
+
+    /** Backward-compatible constructor that does not restrict to nontokens. */
+    public ControlsAnotherSubtypeConditionalEffect(CardSubtype subtype, CardEffect wrapped) {
+        this(subtype, false, wrapped);
+    }
 
     @Override
     public String conditionName() {
-        return "controls another " + subtype.getDisplayName();
+        String tokenQualifier = nontokenOnly ? "nontoken " : "";
+        return "controls another " + tokenQualifier + subtype.getDisplayName();
     }
 
     @Override
     public String conditionNotMetReason() {
-        return "controller does not control another " + subtype.getDisplayName();
+        String tokenQualifier = nontokenOnly ? "nontoken " : "";
+        return "controller does not control another " + tokenQualifier + subtype.getDisplayName();
     }
 
     @Override

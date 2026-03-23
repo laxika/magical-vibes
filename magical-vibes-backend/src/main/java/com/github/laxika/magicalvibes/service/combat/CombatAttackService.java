@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
@@ -262,6 +263,19 @@ public class CombatAttackService {
                         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
                         return bf == null || bf.stream().noneMatch(
                                 p -> p.getCard().getSubtypes().contains(csc.subtype()));
+                    }
+                    return false;
+                });
+
+                // Filter out ControlsAnotherSubtypeConditionalEffect when condition not met (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> {
+                    if (e instanceof ControlsAnotherSubtypeConditionalEffect cas) {
+                        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+                        if (bf == null) return true;
+                        return bf.stream().noneMatch(
+                                p -> !p.getId().equals(attacker.getId())
+                                        && (!cas.nontokenOnly() || !p.getCard().isToken())
+                                        && p.getCard().getSubtypes().contains(cas.subtype()));
                     }
                     return false;
                 });

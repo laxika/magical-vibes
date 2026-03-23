@@ -311,6 +311,7 @@ public class EffectResolutionService {
         PermanentHasSubtypePredicate predicate = new PermanentHasSubtypePredicate(cas.subtype());
         return battlefield.stream()
                 .anyMatch(p -> !p.getId().equals(sourcePermanentId)
+                        && (!cas.nontokenOnly() || !p.getCard().isToken())
                         && gameQueryService.matchesPermanentPredicate(gameData, p, predicate));
     }
 
