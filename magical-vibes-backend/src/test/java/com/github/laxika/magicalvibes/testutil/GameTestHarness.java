@@ -457,6 +457,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, mode, targetId, null);
     }
 
+    public void castCreature(Player player, int cardIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
+    }
+
     public void castKickedCreature(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, null, null, null, true);

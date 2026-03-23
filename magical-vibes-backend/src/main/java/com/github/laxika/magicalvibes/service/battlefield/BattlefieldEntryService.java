@@ -408,11 +408,11 @@ public class BattlefieldEntryService {
     // ===== ETB pipeline =====
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
-        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0, false);
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, List.of());
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
-        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, false);
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, false, List.of());
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked) {
@@ -611,7 +611,7 @@ public class BattlefieldEntryService {
                                     Map.of(),
                                     null,
                                     List.of(),
-                                    List.of()
+                                    targetIds != null ? targetIds : List.of()
                             );
                             if (modeTargetFilter != null) {
                                 extraEtbEntry.setTargetFilter(modeTargetFilter);
