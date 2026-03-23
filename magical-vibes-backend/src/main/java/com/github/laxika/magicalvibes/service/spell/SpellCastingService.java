@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
@@ -177,58 +176,6 @@ public class SpellCastingService {
         };
     }
 
-    /**
-     * Auto-taps untapped mana-producing permanents to generate enough mana
-     * for the given spell. Taps only deterministic sources (AwardManaEffect);
-     * skips any-color sources that require player choice.
-     * Called atomically within the playCard synchronized block so there is
-     * no window for another thread to drain the pool.
-     */
-    private void autoTapForSpell(GameData gameData, Player player, Card card, int effectiveXValue) {
-        ManaCost cost = new ManaCost(card.getManaCost());
-        int additionalCost = gameBroadcastService.getCastCostModifier(gameData, player.getId(), card);
-        ManaPool pool = gameData.playerManaPools.get(player.getId());
-
-        int totalExtra = cost.hasX() ? Math.max(0, effectiveXValue + additionalCost) : additionalCost;
-        if (cost.canPay(pool, Math.max(0, totalExtra))) return;
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
-        if (battlefield == null) return;
-
-        // For requiresCreatureMana spells, prefer creature mana sources first
-        boolean needsCreatureMana = card.isRequiresCreatureMana();
-        if (needsCreatureMana) {
-            autoTapFiltered(gameData, player, battlefield, cost, totalExtra, true);
-            pool = gameData.playerManaPools.get(player.getId());
-            if (cost.canPay(pool, Math.max(0, totalExtra))) return;
-        }
-
-        autoTapFiltered(gameData, player, battlefield, cost, totalExtra, false);
-    }
-
-    private void autoTapFiltered(GameData gameData, Player player, List<Permanent> battlefield,
-                                 ManaCost cost, int totalExtra, boolean creaturesOnly) {
-        for (int i = 0; i < battlefield.size(); i++) {
-            Permanent perm = battlefield.get(i);
-            if (perm.isTapped()) continue;
-
-            boolean producesDeterministicMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(AwardManaEffect.class::isInstance);
-            if (!producesDeterministicMana) continue;
-
-            if (creaturesOnly && !gameQueryService.isCreature(gameData, perm)) continue;
-
-            try {
-                abilityActivationService.tapPermanent(gameData, player, i);
-            } catch (IllegalStateException e) {
-                continue; // Summoning sickness, ability lock, etc.
-            }
-
-            ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (cost.canPay(pool, Math.max(0, totalExtra))) return;
-        }
-    }
-
     // --- Main methods ---
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
@@ -309,14 +256,6 @@ public class SpellCastingService {
 
             turnProgressionService.resolveAutoPass(gameData);
             return;
-        }
-
-        // Auto-tap mana sources if the pool is insufficient for the spell.
-        // This eliminates the race window between tapping and casting that caused
-        // "Card is not playable" errors when another thread drained the pool.
-        Card autoTapCard = handEarly.get(cardIndex);
-        if (!autoTapCard.hasType(CardType.LAND) && autoTapCard.getManaCost() != null) {
-            autoTapForSpell(gameData, player, autoTapCard, effectiveXValue);
         }
 
         List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, playerId);
