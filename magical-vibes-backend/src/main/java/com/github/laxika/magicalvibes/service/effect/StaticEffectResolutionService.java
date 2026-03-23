@@ -1202,6 +1202,10 @@ public class StaticEffectResolutionService {
                 accumulator.addKeywords(boost.grantedKeywords());
             } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
                 accumulator.addProtectionColors(protection.colors());
+            } else if (wrapped instanceof GrantEffectEffect grant) {
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addGrantedEffect(grant.effect());
+                }
             }
         }
     }

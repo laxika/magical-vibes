@@ -365,6 +365,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Life threshold boost + keyword | `s/SerraAscendant.java` | STATIC ControllerLifeThresholdConditionalEffect(30, StaticBoostEffect(5, 5, [FLYING], SELF)) — +5/+5 and flying as long as controller has 30+ life |
 | Graveyard card threshold boost + keyword | `g/GhituLavarunner.java` | STATIC ControllerGraveyardCardThresholdConditionalEffect(2, instant/sorcery filter, StaticBoostEffect(1, 0, [HASTE], SELF)) — +1/+0 and haste as long as 2+ instant/sorcery cards in controller's graveyard |
 | Controls-subtype self-boost | `t/TeferisSentinel.java` | STATIC ControlsSubtypeConditionalEffect(TEFERI, StaticBoostEffect(4, 0, SELF)) — +4/+0 as long as you control a Teferi planeswalker |
+| Controls-subtype self-boost + unblockable | `j/JacesSentinel.java` | STATIC ControlsSubtypeConditionalEffect(JACE, StaticBoostEffect(1, 0, SELF)) + ControlsSubtypeConditionalEffect(JACE, GrantEffectEffect(CantBeBlockedEffect, SELF)) — +1/+0 and can't be blocked as long as you control a Jace planeswalker |
 
 ## Auras
 
