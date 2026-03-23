@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1413,6 +1414,30 @@ public class StaticEffectResolutionService {
             return target.getEffectiveToughness() <= p.maxToughness();
         if (filter instanceof PermanentPowerAtLeastPredicate p)
             return target.getEffectivePower() >= p.minPower();
+        if (filter instanceof PermanentHasCountersPredicate p)
+            return switch (p.counterType()) {
+                case PLUS_ONE_PLUS_ONE -> target.getPlusOnePlusOneCounters() > 0;
+                case MINUS_ONE_MINUS_ONE -> target.getMinusOneMinusOneCounters() > 0;
+                case CHARGE -> target.getChargeCounters() > 0;
+                case LOYALTY -> target.getLoyaltyCounters() > 0;
+                case HATCHLING -> target.getHatchlingCounters() > 0;
+                case SLIME -> target.getSlimeCounters() > 0;
+                case STUDY -> target.getStudyCounters() > 0;
+                case WISH -> target.getWishCounters() > 0;
+                case LORE -> target.getLoreCounters() > 0;
+                case AIM -> target.getAimCounters() > 0;
+                case ANY -> target.getPlusOnePlusOneCounters() > 0
+                        || target.getMinusOneMinusOneCounters() > 0
+                        || target.getChargeCounters() > 0
+                        || target.getLoyaltyCounters() > 0
+                        || target.getHatchlingCounters() > 0
+                        || target.getSlimeCounters() > 0
+                        || target.getStudyCounters() > 0
+                        || target.getWishCounters() > 0
+                        || target.getLoreCounters() > 0
+                        || target.getAimCounters() > 0;
+                default -> false;
+            };
         throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());
     }
 

@@ -382,6 +382,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentHasGreatestPowerAmongControlledCreaturesPredicate` | `()` | creatures controlled by source's controller with the greatest power (ties allowed). Requires FilterContext with gameData + sourceControllerId |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by the source's controller |
 | `PermanentAttachedToSourceControllerPredicate` | `()` | permanents attached to (enchanting/cursing) the source's controller |
+| `PermanentHasCountersPredicate` | `(CounterType)` | permanents with one or more counters of the specified type (supports ANY for any counter) |
 | `PermanentDealtDamageThisTurnPredicate` | `()` | permanents that were dealt damage this turn (from any source). Evaluated against `GameData.permanentsDealtDamageThisTurn` |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |
 | `PermanentAllOfPredicate` | `(List<PermanentPredicate>)` | AND: all predicates must match |

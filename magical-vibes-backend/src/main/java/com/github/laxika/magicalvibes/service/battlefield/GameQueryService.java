@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -972,6 +973,31 @@ public class GameQueryService {
                 return false;
             }
             return permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
+        }
+        if (predicate instanceof PermanentHasCountersPredicate hasCountersPredicate) {
+            return switch (hasCountersPredicate.counterType()) {
+                case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters() > 0;
+                case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters() > 0;
+                case CHARGE -> permanent.getChargeCounters() > 0;
+                case LOYALTY -> permanent.getLoyaltyCounters() > 0;
+                case HATCHLING -> permanent.getHatchlingCounters() > 0;
+                case SLIME -> permanent.getSlimeCounters() > 0;
+                case STUDY -> permanent.getStudyCounters() > 0;
+                case WISH -> permanent.getWishCounters() > 0;
+                case LORE -> permanent.getLoreCounters() > 0;
+                case AIM -> permanent.getAimCounters() > 0;
+                case ANY -> permanent.getPlusOnePlusOneCounters() > 0
+                        || permanent.getMinusOneMinusOneCounters() > 0
+                        || permanent.getChargeCounters() > 0
+                        || permanent.getLoyaltyCounters() > 0
+                        || permanent.getHatchlingCounters() > 0
+                        || permanent.getSlimeCounters() > 0
+                        || permanent.getStudyCounters() > 0
+                        || permanent.getWishCounters() > 0
+                        || permanent.getLoreCounters() > 0
+                        || permanent.getAimCounters() > 0;
+                default -> false;
+            };
         }
         if (predicate instanceof PermanentDealtDamageThisTurnPredicate) {
             return gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
