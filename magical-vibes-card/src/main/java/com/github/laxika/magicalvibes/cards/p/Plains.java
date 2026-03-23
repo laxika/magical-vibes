@@ -33,6 +33,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DOM", collectorNumber = "251")
 @CardRegistration(set = "DOM", collectorNumber = "252")
 @CardRegistration(set = "DOM", collectorNumber = "253")
+@CardRegistration(set = "XLN", collectorNumber = "260")
+@CardRegistration(set = "XLN", collectorNumber = "261")
+@CardRegistration(set = "XLN", collectorNumber = "262")
+@CardRegistration(set = "XLN", collectorNumber = "263")
 public class Plains extends Card {
 
     public Plains() {
