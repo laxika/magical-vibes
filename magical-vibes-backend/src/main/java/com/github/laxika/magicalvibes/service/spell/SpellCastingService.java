@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -1327,24 +1328,18 @@ public class SpellCastingService {
 
         UUID playerId = player.getId();
 
-        // Find the card in exile
-        List<Card> exiledCards = gameData.getPlayerExiledCards(playerId);
-        if (exiledCards.isEmpty()) {
-            throw new IllegalStateException("No exiled cards");
-        }
-
+        // Find the card in exile — check player's own exile first, then all exile zones
+        // (cards exiled by AllowCastFromCardsExiledWithSourceEffect may belong to other players)
         UUID permittedPlayer = gameData.exilePlayPermissions.get(exileCardId);
         boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
                 || hasCastFromExiledWithSourcePermission(gameData, playerId, exileCardId);
-        // Permission check is deferred until after we find the card — ExileCast cards bypass it
+        boolean anyManaType = hasAnyManaTypePermission(gameData, playerId, exileCardId);
 
-        Card card = exiledCards.stream()
-                .filter(c -> c.getId().equals(exileCardId))
-                .findFirst()
-                .orElse(null);
-        if (card == null) {
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
+        if (exiledEntry == null) {
             throw new IllegalStateException("Card not found in exile");
         }
+        Card card = exiledEntry.card();
 
         boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
         if (!hasPermission && !hasExileCast) {
@@ -1381,8 +1376,13 @@ public class SpellCastingService {
             return;
         }
 
-        // Pay mana cost
-        paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+        // Pay mana cost — if anyManaType, any mana can pay for any color requirement
+        if (anyManaType && card.getManaCost() != null) {
+            ManaCost cost = new ManaCost(card.getManaCost());
+            cost.payAsGeneric(gameData.playerManaPools.get(playerId));
+        } else {
+            paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
+        }
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
 
@@ -1424,6 +1424,22 @@ public class SpellCastingService {
             boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
             if (hasEffect) {
+                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
+                for (Card c : exiledWithPerm) {
+                    if (c.getId().equals(cardId)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            boolean hasAnyMana = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect a && a.anyManaType());
+            if (hasAnyMana) {
                 List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
                 for (Card c : exiledWithPerm) {
                     if (c.getId().equals(cardId)) return true;

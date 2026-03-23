@@ -819,7 +819,7 @@ class SpellCastingServiceTest {
 
             assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, UUID.randomUUID(), 0, null))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("No exiled cards");
+                    .hasMessage("Card not found in exile");
         }
 
         @Test

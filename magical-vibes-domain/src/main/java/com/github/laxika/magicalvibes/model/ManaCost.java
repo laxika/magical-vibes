@@ -482,6 +482,22 @@ public class ManaCost {
         payGenericPreferColorless(pool, remainingGeneric);
     }
 
+    /**
+     * Checks whether the pool has enough total mana to pay the mana value,
+     * ignoring color requirements (mana of any type can be spent).
+     */
+    public boolean canPayAsGeneric(ManaPool pool) {
+        return pool.getTotal() >= getManaValue();
+    }
+
+    /**
+     * Pays the full mana value using any mana from the pool, ignoring color requirements
+     * (mana of any type can be spent to cast the spell).
+     */
+    public void payAsGeneric(ManaPool pool) {
+        payGenericPreferColorless(pool, getManaValue());
+    }
+
     private void payGenericPreferColorless(ManaPool pool, int remainingGeneric) {
         // Prefer colorless mana for generic costs since it can only pay generic,
         // while colored mana is more versatile (can pay both colored and generic).

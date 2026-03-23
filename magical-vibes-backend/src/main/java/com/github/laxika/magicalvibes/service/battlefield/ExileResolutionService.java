@@ -403,6 +403,13 @@ public class ExileResolutionService {
 
         if (sourcePermanentId != null) {
             gameData.exileReturnOnPermanentLeave.put(sourcePermanentId, new PendingExileReturn(card, ownerId));
+
+            // Also add source tracking so AllowCastFromCardsExiledWithSourceEffect can find it
+            var exiledEntry = gameData.findExiledCard(card.getId());
+            if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
+                gameData.removeFromExile(card.getId());
+                gameData.addToExile(ownerId, card, sourcePermanentId);
+            }
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

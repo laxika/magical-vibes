@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -639,8 +640,21 @@ public class GameBroadcastService {
 
         // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
         Set<UUID> castableFromExileWithSource = getCastableExiledCardIds(gameData, playerId);
+        Set<UUID> anyManaTypeIds = getAnyManaTypeExiledCardIds(gameData, playerId);
 
-        List<Card> exiledCards = gameData.getPlayerExiledCards(playerId);
+        // Include player's own exiled cards plus cards from any exile zone castable via source effect
+        List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
+        Set<UUID> alreadyIncluded = new HashSet<>();
+        for (Card c : exiledCards) alreadyIncluded.add(c.getId());
+        for (UUID cardId : castableFromExileWithSource) {
+            if (!alreadyIncluded.contains(cardId)) {
+                ExiledCardEntry entry = gameData.findExiledCard(cardId);
+                if (entry != null) {
+                    exiledCards.add(entry.card());
+                    alreadyIncluded.add(cardId);
+                }
+            }
+        }
         if (exiledCards.isEmpty()) {
             return playable;
         }
@@ -678,17 +692,22 @@ public class GameBroadcastService {
                     playable.add(cardViewFactory.create(card));
                 } else {
                     ManaCost cost = new ManaCost(card.getManaCost());
-                    int additionalCost = getCastCostModifier(gameData, playerId, card);
-                    boolean isArtifact = card.hasType(CardType.ARTIFACT);
-                    boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
-                    boolean hasRestrictedRedContext = isArtifact
-                            || card.hasType(CardType.CREATURE);
-                    boolean canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
-                            ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
-                            : cost.canPay(pool, additionalCost);
-                    // Check non-zero alternative cost from battlefield (e.g. Jodah)
-                    if (!canAfford) {
-                        canAfford = canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                    boolean canAfford;
+                    if (anyManaTypeIds.contains(card.getId())) {
+                        canAfford = cost.canPayAsGeneric(pool);
+                    } else {
+                        int additionalCost = getCastCostModifier(gameData, playerId, card);
+                        boolean isArtifact = card.hasType(CardType.ARTIFACT);
+                        boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
+                        boolean hasRestrictedRedContext = isArtifact
+                                || card.hasType(CardType.CREATURE);
+                        canAfford = (isArtifact || isMyr || hasRestrictedRedContext)
+                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext)
+                                : cost.canPay(pool, additionalCost);
+                        // Check non-zero alternative cost from battlefield (e.g. Jodah)
+                        if (!canAfford) {
+                            canAfford = canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                        }
                     }
                     if (canAfford) {
                         playable.add(cardViewFactory.create(card));
@@ -820,6 +839,27 @@ public class GameBroadcastService {
             }
         }
         return castableIds;
+    }
+
+    /**
+     * Returns the set of exiled card IDs for which "mana of any type" can be spent,
+     * via {@link AllowCastFromCardsExiledWithSourceEffect#anyManaType()}.
+     */
+    private Set<UUID> getAnyManaTypeExiledCardIds(GameData gameData, UUID playerId) {
+        Set<UUID> anyManaIds = new HashSet<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return anyManaIds;
+        for (Permanent perm : battlefield) {
+            boolean hasAnyMana = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect a && a.anyManaType());
+            if (hasAnyMana) {
+                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
+                for (Card c : exiledWithPerm) {
+                    anyManaIds.add(c.getId());
+                }
+            }
+        }
+        return anyManaIds;
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
