@@ -117,10 +117,13 @@ public class DamageResolutionService {
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
 
-        // Multi-target: deal damage to each valid creature target (e.g. Dual Shot targeting two creatures).
-        // Only enters this path when targetIds has multiple entries. Skips non-creature UUIDs (e.g. player
+        // Multi-target: deal damage to each valid creature target (e.g. Dual Shot targeting two creatures,
+        // Fire Shrine Keeper targeting up to two creatures via activated ability).
+        // Enters this path when targetIds has 2+ entries, or when targetIds has 1 entry but targetId is null
+        // (multi-target ability with a single target selected). Skips non-creature UUIDs (e.g. player
         // targets from kicked spells) since those are handled by other effects like DealDamageToSecondaryTargetEffect.
-        if (entry.getTargetIds() != null && entry.getTargetIds().size() > 1) {
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
+                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;

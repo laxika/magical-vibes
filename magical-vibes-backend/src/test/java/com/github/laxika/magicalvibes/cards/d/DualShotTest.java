@@ -45,8 +45,8 @@ class DualShotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         bf = harness.getGameData().playerBattlefields.get(player2.getId());
-        assertThat(bf.get(0).getDamage()).isEqualTo(1);
-        assertThat(bf.get(1).getDamage()).isEqualTo(1);
+        assertThat(bf.get(0).getMarkedDamage()).isEqualTo(1);
+        assertThat(bf.get(1).getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -60,7 +60,7 @@ class DualShotTest extends BaseCardTest {
 
         // Pre-damage the bear so 1 more will be lethal (toughness 2)
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        bear.setDamage(1);
+        bear.setMarkedDamage(1);
         UUID bearId = bear.getId();
 
         harness.castInstant(player1, 0, List.of(bearId));
@@ -94,7 +94,7 @@ class DualShotTest extends BaseCardTest {
         // Second creature should still take damage
         bf = harness.getGameData().playerBattlefields.get(player2.getId());
         assertThat(bf).hasSize(1);
-        assertThat(bf.getFirst().getDamage()).isEqualTo(1);
+        assertThat(bf.getFirst().getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
