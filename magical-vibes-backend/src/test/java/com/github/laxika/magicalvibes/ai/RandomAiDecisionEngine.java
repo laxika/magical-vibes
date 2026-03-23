@@ -221,6 +221,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
+            tapManaForSpell(gameData, card, xValue);
             int handSizeBefore = hand.size();
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;

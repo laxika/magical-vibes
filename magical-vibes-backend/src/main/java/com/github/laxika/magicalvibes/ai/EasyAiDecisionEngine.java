@@ -158,6 +158,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
+        tapManaForSpell(gameData, card, xValue);
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
@@ -242,6 +243,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
+        tapManaForSpell(gameData, card, xValue);
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;

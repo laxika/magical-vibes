@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
+import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -1205,6 +1206,185 @@ class AiDecisionEngineTest {
         // Should skip Steel Sabotage and cast Grizzly Bears
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    // ===== Mana tapping before spell casting =====
+
+    /**
+     * Adds the given number of untapped Forests to the AI's battlefield.
+     */
+    private void giveAiForests(int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(forest);
+        }
+    }
+
+    @Test
+    @DisplayName("AI taps lands before casting spell when mana pool is empty")
+    void tapsLandsBeforeCastingSpell() {
+        giveAiPriority();
+        giveAiForests(2); // GrizzlyBears costs {1}{G}
+
+        // Mana pool is empty — AI must tap Forests to cast
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Grizzly Bears should be on the stack
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+
+        // Both Forests should now be tapped
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count();
+        assertThat(tappedCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("AI taps only enough lands to pay for spell cost")
+    void tapsOnlyEnoughLands() {
+        giveAiPriority();
+        giveAiForests(5); // 5 Forests available, spell costs {1}{G} = 2
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+
+        // Only 2 of the 5 lands should be tapped (spell costs 2 mana)
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count();
+        assertThat(tappedCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("AI does not re-tap lands that are already tapped")
+    void doesNotReTapAlreadyTappedLands() {
+        giveAiPriority();
+
+        // 1 tapped Forest + 2 untapped Forests
+        Permanent tappedForest = new Permanent(new Forest());
+        tappedForest.setSummoningSick(false);
+        tappedForest.tap();
+        gd.playerBattlefields.get(aiPlayer.getId()).add(tappedForest);
+
+        giveAiForests(2);
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+
+        // The previously-tapped Forest should remain tapped, plus 2 newly tapped = 3 total tapped
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count();
+        assertThat(tappedCount).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("AI taps lands for X spell with correct total mana")
+    void tapsLandsForXSpell() {
+        giveAiPriority();
+        giveAiMountains(3); // 3 Mountains for Blaze {X}{R}, X will be chosen by AI
+
+        harness.setHand(aiPlayer, List.of(new Blaze()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Blaze should be on the stack (targeting opponent)
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blaze");
+
+        // All Mountains should be tapped (AI uses all available mana for X)
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count();
+        assertThat(tappedCount).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("AI taps creature mana dorks for requiresCreatureMana spell")
+    void tapsCreatureManaDorksForCreatureManaSpell() {
+        giveAiPriority();
+
+        // Add two Llanowar Elves (creature mana dorks)
+        Permanent elf1 = new Permanent(new LlanowarElves());
+        elf1.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elf1);
+
+        Permanent elf2 = new Permanent(new LlanowarElves());
+        elf2.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elf2);
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Myr Superion should be on the stack
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
+
+        // Both elves should be tapped
+        assertThat(elf1.isTapped()).isTrue();
+        assertThat(elf2.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("AI skips tapping if mana pool already has enough mana")
+    void skipsTappingWhenManaPoolSufficient() {
+        giveAiPriority();
+        giveAiForests(2); // Untapped but shouldn't be needed
+
+        // Pre-fill mana pool with enough mana
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+
+        // Forests should remain untapped — mana pool already had enough
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count();
+        assertThat(tappedCount).isZero();
+    }
+
+    @Test
+    @DisplayName("AI taps lands before casting instant")
+    void tapsLandsBeforeCastingInstant() {
+        giveAiPriority();
+        giveAiPlains(1);
+
+        // Mana pool is empty — AI must tap Plains
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+
+        // Only an instant in hand — Easy AI falls through to tryCastInstant
+        harness.setHand(aiPlayer, List.of(new HolyDay()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Holy Day should be on the stack
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Holy Day");
+
+        // Plains should be tapped
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count();
+        assertThat(tappedCount).isEqualTo(1);
     }
 
     // ===== tryPlayLand silent failure recovery =====

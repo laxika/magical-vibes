@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -356,6 +356,39 @@ class MediumAiDecisionEngineTest {
 
         // Berserkers (4 power) must have attacked; combat fully resolves with no blockers
         assertThat(gd.playerLifeTotals.get(human.getId())).isLessThanOrEqualTo(16);
+    }
+
+    // ===== Mana tapping before spell casting =====
+
+    @Test
+    @DisplayName("Medium AI taps lands before casting sorcery-speed spell")
+    void tapsLandsBeforeCastingSorcery() {
+        giveAiPriority();
+
+        // Use Forests so GrizzlyBears ({1}{G}) is castable
+        Permanent forest1 = new Permanent(new com.github.laxika.magicalvibes.cards.f.Forest());
+        forest1.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(forest1);
+
+        Permanent forest2 = new Permanent(new com.github.laxika.magicalvibes.cards.f.Forest());
+        forest2.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(forest2);
+
+        // Mana pool is empty — AI must tap Forests
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+
+        // Forests should be tapped
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped)
+                .count();
+        assertThat(tappedCount).isEqualTo(2);
     }
 
     // ===== tryCastSpell silent failure recovery =====

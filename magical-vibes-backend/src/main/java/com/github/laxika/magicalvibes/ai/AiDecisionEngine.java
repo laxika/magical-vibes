@@ -554,6 +554,29 @@ public abstract class AiDecisionEngine {
         }
     }
 
+    /**
+     * Taps lands (and creature-mana producers if needed) to pay for the given spell
+     * before sending a PlayCardRequest. Must be called before handlePlayCard so the
+     * actual mana pool satisfies the playability check in SpellCastingService.
+     */
+    protected void tapManaForSpell(GameData gameData, Card card, Integer xValue) {
+        if (card.getManaCost() == null) return;
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        IntConsumer tap = tapPermanentAction();
+
+        if (card.isRequiresCreatureMana()) {
+            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
+            return;
+        }
+
+        ManaCost cost = new ManaCost(card.getManaCost());
+        if (cost.hasX() && xValue != null) {
+            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, xValue, costModifier, tap);
+        } else {
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
+        }
+    }
+
     protected IntConsumer tapPermanentAction() {
         return idx -> send(() -> messageHandler.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
     }

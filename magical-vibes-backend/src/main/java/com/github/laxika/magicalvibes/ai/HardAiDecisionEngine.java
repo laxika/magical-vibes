@@ -217,6 +217,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 }
                 log.info("AI (Hard/MCTS): Casting {}{} in game {}", card.getName(),
                         xValue != null ? " (X=" + xValue + ")" : "", gameId);
+                tapManaForSpell(gameData, card, xValue);
                 int handSizeBefore = hand.size();
                 final int cardIndex = pc.handIndex();
                 final UUID targetId = modalPlan != null ? modalPlan.targetId() : (card.isNeedsDamageDistribution() ? null : pc.targetId());
@@ -327,6 +328,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
+        tapManaForSpell(gameData, card, xValue);
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final int cardIndex = best.index;
@@ -481,6 +483,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): Casting instant {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", value), gameId);
+        tapManaForSpell(gameData, card, xValue);
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
