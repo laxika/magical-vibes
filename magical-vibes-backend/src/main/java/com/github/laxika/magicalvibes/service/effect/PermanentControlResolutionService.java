@@ -969,7 +969,7 @@ public class PermanentControlResolutionService {
     }
 
     @HandlesEffect(GainControlOfTargetPermanentEffect.class)
-    private void resolveGainControlOfTargetPermanent(GameData gameData, StackEntry entry, GainControlOfTargetPermanentEffect effect) {
+    void resolveGainControlOfTargetPermanent(GameData gameData, StackEntry entry, GainControlOfTargetPermanentEffect effect) {
         List<UUID> targetIds = entry.getTargetIds().isEmpty()
                 ? (entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of())
                 : entry.getTargetIds();
