@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
@@ -94,6 +95,17 @@ public class PermanentControlResolutionService {
     @HandlesEffect(CreateTokenEffect.class)
     private void resolveCreateToken(GameData gameData, StackEntry entry, CreateTokenEffect effect) {
         applyCreateToken(gameData, entry.getControllerId(), effect, entry.getCard().getSetCode());
+    }
+
+    @HandlesEffect(CreateTokenForTargetPlayerEffect.class)
+    private void resolveCreateTokenForTargetPlayer(GameData gameData, StackEntry entry,
+                                                    CreateTokenForTargetPlayerEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            log.info("Game {} - CreateTokenForTargetPlayerEffect fizzles (no valid target player)", gameData.id);
+            return;
+        }
+        applyCreateToken(gameData, targetPlayerId, effect.tokenEffect(), entry.getCard().getSetCode());
     }
 
     @HandlesEffect(PutSlimeCounterAndCreateOozeTokenEffect.class)
