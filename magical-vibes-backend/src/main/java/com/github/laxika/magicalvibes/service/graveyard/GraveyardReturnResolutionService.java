@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsGraveyardsEffect;
@@ -880,6 +881,62 @@ public class GraveyardReturnResolutionService {
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameBroadcastService.logAndBroadcast(gameData,
                 playerName + " exiles " + targetCard.getName() + " from a graveyard.");
+    }
+
+    /**
+     * Resolves an {@link ExileGraveyardCardWithConditionalBonusEffect} by exiling the targeted card
+     * from a graveyard, then conditionally gaining life (if the exiled card is a creature) or
+     * boosting the source permanent (if the exiled card is a noncreature).
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry being resolved
+     * @param effect   the effect configuration (life gain amount, power/toughness boost amounts)
+     */
+    @HandlesEffect(ExileGraveyardCardWithConditionalBonusEffect.class)
+    void resolveExileGraveyardCardWithConditionalBonus(GameData gameData, StackEntry entry,
+                                                       ExileGraveyardCardWithConditionalBonusEffect effect) {
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            return;
+        }
+
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+
+        if (graveyardOwnerId != null) {
+            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+        }
+
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " exiles " + targetCard.getName() + " from a graveyard.");
+
+        boolean isCreatureCard = targetCard.hasType(CardType.CREATURE);
+        if (isCreatureCard) {
+            // Creature card exiled: gain life
+            lifeResolutionService.applyGainLife(gameData, controllerId, effect.creatureLifeGain(),
+                    entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+        } else {
+            // Noncreature card exiled: boost source permanent
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (sourcePermanentId != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (source != null) {
+                    source.setPowerModifier(source.getPowerModifier() + effect.noncreaturePowerBoost());
+                    source.setToughnessModifier(source.getToughnessModifier() + effect.noncreatureToughnessBoost());
+
+                    String boostLog = source.getCard().getName() + " gets +"
+                            + effect.noncreaturePowerBoost() + "/+" + effect.noncreatureToughnessBoost()
+                            + " until end of turn.";
+                    gameBroadcastService.logAndBroadcast(gameData, boostLog);
+                    log.info("Game {} - {} gets +{}/+{}", gameData.id, source.getCard().getName(),
+                            effect.noncreaturePowerBoost(), effect.noncreatureToughnessBoost());
+                }
+            }
+        }
     }
 
     /**
