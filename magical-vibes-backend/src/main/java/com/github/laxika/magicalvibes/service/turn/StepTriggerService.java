@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
@@ -1152,6 +1153,30 @@ public class StepTriggerService {
 
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ControlsPermanentCountConditionalEffect countCheck) {
+                        // Intervening-if: only trigger if controller has enough matching permanents
+                        List<Permanent> controllerBf = gameData.playerBattlefields.get(activePlayerId);
+                        long matchCount = controllerBf == null ? 0 : controllerBf.stream()
+                                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
+                                .count();
+                        if (matchCount < countCheck.minCount()) {
+                            log.info("Game {} - {} end-step trigger skipped (only {} matching permanents, need {})",
+                                    gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+
+                        String countLogEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, countLogEntry);
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof DidntAttackConditionalEffect didntAttack) {
                         // Intervening-if: only trigger if the creature didn't attack this turn

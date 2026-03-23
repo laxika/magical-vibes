@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
@@ -216,6 +217,8 @@ public class EffectResolutionService {
                     isControlsSubtypeConditionMet(gameData, entry, csc);
             case ControlsPermanentConditionalEffect cpc ->
                     isControlsPermanentConditionMet(gameData, entry, cpc);
+            case ControlsPermanentCountConditionalEffect cpcc ->
+                    isControlsPermanentCountConditionMet(gameData, entry, cpcc);
             case NoOtherSubtypeConditionalEffect noOther ->
                     isNoOtherSubtypeConditionMet(gameData, entry, noOther);
             case ActivationCountConditionalEffect acc ->
@@ -335,6 +338,17 @@ public class EffectResolutionService {
         if (battlefield == null) return false;
         return battlefield.stream()
                 .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpc.filter()));
+    }
+
+    private boolean isControlsPermanentCountConditionMet(GameData gameData, StackEntry entry,
+                                                         ControlsPermanentCountConditionalEffect cpcc) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        long count = battlefield.stream()
+                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpcc.filter()))
+                .count();
+        return count >= cpcc.minCount();
     }
 
     private boolean isNoOtherSubtypeConditionMet(GameData gameData, StackEntry entry,
