@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
@@ -1188,6 +1189,29 @@ public class StaticEffectResolutionService {
     private void resolveControlsSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var conditional = (ControlsSubtypeConditionalEffect) effect;
         int subtypeCount = countControlledPermanents(context, p -> p.getCard().getSubtypes().contains(conditional.subtype()));
+        if (subtypeCount > 0) {
+            CardEffect wrapped = conditional.wrapped();
+            if (wrapped instanceof GrantKeywordEffect grant) {
+                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                    accumulator.addKeywords(grant.keywords());
+                }
+            } else if (wrapped instanceof StaticBoostEffect boost) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
+                accumulator.addProtectionColors(protection.colors());
+            }
+        }
+    }
+
+    @HandlesStaticEffect(value = ControlsAnotherSubtypeConditionalEffect.class, selfOnly = true)
+    private void resolveControlsAnotherSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControlsAnotherSubtypeConditionalEffect) effect;
+        int subtypeCount = countControlledPermanents(context, p ->
+                !p.getId().equals(context.source().getId())
+                        && (!conditional.nontokenOnly() || !p.getCard().isToken())
+                        && p.getCard().getSubtypes().contains(conditional.subtype()));
         if (subtypeCount > 0) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
