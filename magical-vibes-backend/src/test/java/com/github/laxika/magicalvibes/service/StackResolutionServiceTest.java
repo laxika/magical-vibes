@@ -264,7 +264,7 @@ class StackResolutionServiceTest {
                 gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
                 return null;
             }).when(battlefieldEntryService).handleCreatureEnteredBattlefield(
-                    any(), any(), any(), any(), anyBoolean(), anyInt(), anyBoolean());
+                    any(), any(), any(), any(), anyBoolean(), anyInt(), anyBoolean(), any());
 
             svc.resolveTopOfStack(gd);
 

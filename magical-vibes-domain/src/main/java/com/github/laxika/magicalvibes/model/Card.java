@@ -187,6 +187,28 @@ public class Card {
     }
 
     /**
+     * Returns true if the target group at the given expanded position allows player targets.
+     * Used by the valid target service to determine per-position player targeting in multi-target spells.
+     */
+    public boolean doesPositionAllowPlayerTargets(int expandedPosition) {
+        if (spellTargets.isEmpty()) return false;
+        int cumulative = 0;
+        for (SpellTarget st : spellTargets) {
+            cumulative += st.getMaxTargets();
+            if (expandedPosition < cumulative) {
+                int groupIndex = st.getIndex();
+                for (Map.Entry<CardEffect, Integer> entry : effectTargetIndexMap.entrySet()) {
+                    if (entry.getValue() == groupIndex && entry.getKey().canTargetPlayer()) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Copies targeting configuration from another card (used by spell copy effects).
      */
     public void copyTargetingFrom(Card original) {

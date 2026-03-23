@@ -605,10 +605,19 @@ public class SpellCastingService {
             }
             payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, 0);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
-            StackEntry entry = new StackEntry(
-                    cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
-                    List.of(), stackX, stackTarget, null
-            );
+            StackEntry entry;
+            if (!targetIds.isEmpty()) {
+                // Multi-target creature (e.g. Burning Sun's Avatar ETB with multiple targets)
+                entry = new StackEntry(
+                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        List.of(), stackX, targetIds
+                );
+            } else {
+                entry = new StackEntry(
+                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        List.of(), stackX, stackTarget, null
+                );
+            }
             if (kicked && kickerEffect != null) {
                 entry.setKicked(true);
             }

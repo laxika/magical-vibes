@@ -65,11 +65,14 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
-            boolean multiTargetAllowsPlayers = isMultiTarget && card.getEffects(EffectSlot.SPELL).stream()
-                    .anyMatch(CardEffect::canTargetPlayer);
-            boolean singleTargetAllowsPlayers = !isMultiTarget;
+            boolean positionAllowsPlayers;
+            if (!isMultiTarget) {
+                positionAllowsPlayers = true;
+            } else {
+                positionAllowsPlayers = card.doesPositionAllowPlayerTargets(positionIndex);
+            }
 
-            if (singleTargetAllowsPlayers || multiTargetAllowsPlayers) {
+            if (positionAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
                     if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId)) {
@@ -222,8 +225,17 @@ public class ValidTargetService {
 
     private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
                                             boolean isMultiTarget, TargetFilter positionFilter) {
-        if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId)) {
-            return false;
+        // For multi-target spells with per-position filters, use protection/hexproof checks
+        // but skip the global targetFilter from canPermanentBeTargetedBySpell, since the
+        // per-position filter below handles type restriction for each target group.
+        if (positionFilter != null) {
+            if (!canPermanentBeTargetedBySpellCore(gameData, perm, card, controllerId)) {
+                return false;
+            }
+        } else {
+            if (!canPermanentBeTargetedBySpell(gameData, perm, card, controllerId)) {
+                return false;
+            }
         }
 
         // Per-position filter for multi-target spells
@@ -234,7 +246,7 @@ public class ValidTargetService {
         // "Any target" in MTG means creature, planeswalker, or player — not all permanents.
         // When all permanent-targeting spell effects also target players (i.e. "any target"),
         // restrict valid permanent targets to creatures and planeswalkers.
-        if (card.getTargetFilter() == null) {
+        if (card.getTargetFilter() == null && positionFilter == null) {
             List<CardEffect> permanentEffects = card.getEffects(EffectSlot.SPELL).stream()
                     .filter(CardEffect::canTargetPermanent)
                     .toList();
@@ -249,6 +261,22 @@ public class ValidTargetService {
             }
         }
 
+        return true;
+    }
+
+    /**
+     * Core targeting checks (protection, hexproof, shroud) without the global TargetFilter check.
+     * Used by multi-target spells where per-position filters handle type restriction.
+     */
+    private boolean canPermanentBeTargetedBySpellCore(GameData gameData, Permanent perm, Card spellCard, UUID castingPlayerId) {
+        CardColor sourceColor = spellCard.getColor();
+        if (gameQueryService.hasProtectionFrom(gameData, perm, sourceColor)) return false;
+        if (gameQueryService.hasProtectionFromSourceCardTypes(perm, spellCard)) return false;
+        if (gameQueryService.hasProtectionFromSourceSubtypes(perm, spellCard)) return false;
+        if (isBlockedByHexproofOrGrantedEffect(gameData, perm, castingPlayerId)) return false;
+        if (isBlockedByHexproofFromColor(gameData, perm, sourceColor, castingPlayerId)) return false;
+        if (gameQueryService.cantBeTargetedBySpellColor(gameData, perm, sourceColor)) return false;
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spellCard)) return false;
         return true;
     }
 
@@ -361,11 +389,15 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {
-            boolean multiTargetAllowsPlayers = isMultiTarget && card.getEffects(EffectSlot.SPELL).stream()
-                    .anyMatch(CardEffect::canTargetPlayer);
-            boolean singleTargetAllowsPlayers = !isMultiTarget;
+            // Check if any position allows player targets (position 0 for hasValidTargets check)
+            boolean anyPositionAllowsPlayers;
+            if (!isMultiTarget) {
+                anyPositionAllowsPlayers = true;
+            } else {
+                anyPositionAllowsPlayers = card.doesPositionAllowPlayerTargets(0);
+            }
 
-            if (singleTargetAllowsPlayers || multiTargetAllowsPlayers) {
+            if (anyPositionAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
                     if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId)) {
                         return true;

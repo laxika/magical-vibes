@@ -194,7 +194,7 @@ public class StackResolutionService {
         // happens as part of the entering process before state-based actions are checked.
         handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked());
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 
@@ -258,7 +258,7 @@ public class StackResolutionService {
 
                 // Process aura ETB effects (e.g., Volition Reins)
                 if (!gameData.interaction.isAwaitingInput()) {
-                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true);
+                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true, entry.getTargetIds());
                 }
             }
         } else {
@@ -306,7 +306,7 @@ public class StackResolutionService {
 
             // Process general ETB effects (e.g., token creation, exile-until-leaves)
             if (!gameData.interaction.isAwaitingInput()) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true);
+                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true, entry.getTargetIds());
             }
 
             checkLegendRuleIfIdle(gameData, controllerId);

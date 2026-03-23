@@ -415,6 +415,10 @@ public class BattlefieldEntryService {
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked) {
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, List.of());
+    }
+
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked, List<UUID> targetIds) {
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -451,18 +455,26 @@ public class BattlefieldEntryService {
             return;
         }
 
-        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked);
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, targetIds);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
-        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0, false);
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, List.of());
+    }
+
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, List<UUID> targetIds) {
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, targetIds);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
-        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, false);
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, false, List.of());
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked) {
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, List.of());
+    }
+
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked, List<UUID> targetIds) {
         // Torpor Orb: "Creatures entering don't cause abilities to trigger."
         if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
             log.info("Game {} - {} ETB triggers suppressed (creature entering triggers disabled)", gameData.id, card.getName());
@@ -559,7 +571,7 @@ public class BattlefieldEntryService {
 
                 // Put non-special effects on the stack as before
                 if (!otherEffects.isEmpty()) {
-                    if (!card.isNeedsTarget() || targetId != null) {
+                    if (!card.isNeedsTarget() || targetId != null || !targetIds.isEmpty()) {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
@@ -575,7 +587,7 @@ public class BattlefieldEntryService {
                                 Map.of(),
                                 null,
                                 List.of(),
-                                List.of()
+                                targetIds != null ? targetIds : List.of()
                         );
                         if (modeTargetFilter != null) {
                             etbEntry.setTargetFilter(modeTargetFilter);

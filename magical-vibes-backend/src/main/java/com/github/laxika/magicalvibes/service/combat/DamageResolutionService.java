@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndRece
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSecondaryTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDealDamageByHighestManaValueEffect;
@@ -586,6 +587,20 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageToTargetOpponentOrPlaneswalkerEffect} — deals a fixed amount of damage
+     * to target opponent or planeswalker. Used by Burning Sun's Avatar.
+     */
+    @HandlesEffect(DealDamageToTargetOpponentOrPlaneswalkerEffect.class)
+    void resolveDealDamageToTargetOpponentOrPlaneswalker(GameData gameData, StackEntry entry, DealDamageToTargetOpponentOrPlaneswalkerEffect effect) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) return;
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+        resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }
 

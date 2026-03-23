@@ -287,15 +287,13 @@ public class TargetLegalityService {
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
         validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets());
 
-        boolean allowsPlayers = card.getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(CardEffect::canTargetPlayer);
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
 
             // Player-targeting position
             if (gameData.playerIds.contains(targetId)) {
-                if (!allowsPlayers) {
+                if (!card.doesPositionAllowPlayerTargets(i)) {
                     throw new IllegalStateException("This spell cannot target players");
                 }
                 if (card.isNeedsTarget()) {
