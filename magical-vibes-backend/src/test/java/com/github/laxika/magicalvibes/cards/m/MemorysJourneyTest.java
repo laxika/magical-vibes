@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -55,7 +56,7 @@ class MemorysJourneyTest extends BaseCardTest {
     void needsTarget() {
         MemorysJourney card = new MemorysJourney();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
     }
 
     // ===== Casting normally — targeting own graveyard =====

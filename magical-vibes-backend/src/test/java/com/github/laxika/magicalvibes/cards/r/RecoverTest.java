@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.s.Shunt;
@@ -30,7 +31,7 @@ class RecoverTest extends BaseCardTest {
     void hasCorrectCardProperties() {
         Recover card = new Recover();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);

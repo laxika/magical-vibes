@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -22,7 +23,7 @@ class GoblinChainwhirlerTest extends BaseCardTest {
     void doesNotNeedTarget() {
         GoblinChainwhirler card = new GoblinChainwhirler();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -27,7 +28,7 @@ class RallyTheForcesTest extends BaseCardTest {
     void hasCorrectEffects() {
         RallyTheForces card = new RallyTheForces();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllCreaturesEffect.class);
         BoostAllCreaturesEffect boost = (BoostAllCreaturesEffect) card.getEffects(EffectSlot.SPELL).get(0);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,7 +32,7 @@ class ConeOfFlameTest extends BaseCardTest {
     void hasCorrectProperties() {
         ConeOfFlame card = new ConeOfFlame();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getMinTargets()).isEqualTo(3);
         assertThat(card.getMaxTargets()).isEqualTo(3);
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);

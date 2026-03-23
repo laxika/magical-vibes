@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -26,7 +27,7 @@ class InciteTest extends BaseCardTest {
     void hasCorrectEffects() {
         Incite card = new Incite();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantColorUntilEndOfTurnEffect.class);
         GrantColorUntilEndOfTurnEffect colorEffect = (GrantColorUntilEndOfTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);

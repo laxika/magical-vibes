@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -28,7 +29,7 @@ class EvacuationTest extends BaseCardTest {
     void hasCorrectProperties() {
         Evacuation card = new Evacuation();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
                 .isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,7 +28,7 @@ class RighteousnessTest extends BaseCardTest {
     void hasCorrectProperties() {
         Righteousness card = new Righteousness();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();

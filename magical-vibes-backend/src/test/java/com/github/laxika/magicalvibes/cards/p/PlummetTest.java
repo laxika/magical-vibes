@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -30,7 +31,7 @@ class PlummetTest extends BaseCardTest {
     void hasCorrectProperties() {
         Plummet card = new Plummet();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

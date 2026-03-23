@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -46,7 +47,7 @@ class KarnsTemporalSunderingTest extends BaseCardTest {
     void hasCorrectProperties() {
         KarnsTemporalSundering card = new KarnsTemporalSundering();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getMinTargets()).isEqualTo(1);
         assertThat(card.getMaxTargets()).isEqualTo(2);
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);

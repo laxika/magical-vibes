@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -38,7 +39,7 @@ class LumengridDrakeTest extends BaseCardTest {
     @DisplayName("Card needs target (delegates from metalcraft wrapper)")
     void needsTarget() {
         LumengridDrake card = new LumengridDrake();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
     }
 
     // ===== ETB with metalcraft met =====

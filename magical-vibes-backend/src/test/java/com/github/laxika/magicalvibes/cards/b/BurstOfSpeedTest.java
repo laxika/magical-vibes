@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -27,7 +28,7 @@ class BurstOfSpeedTest extends BaseCardTest {
     void hasCorrectProperties() {
         BurstOfSpeed card = new BurstOfSpeed();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();

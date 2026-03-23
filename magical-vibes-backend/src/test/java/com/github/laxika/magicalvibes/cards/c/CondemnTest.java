@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -30,7 +31,7 @@ class CondemnTest extends BaseCardTest {
     void hasCorrectProperties() {
         Condemn card = new Condemn();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainLifeEqualToTargetToughnessEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(PutTargetOnBottomOfLibraryEffect.class);

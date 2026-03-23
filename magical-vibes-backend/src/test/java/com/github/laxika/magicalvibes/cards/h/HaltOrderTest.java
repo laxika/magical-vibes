@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -30,7 +31,7 @@ class HaltOrderTest extends BaseCardTest {
     void hasCorrectProperties() {
         HaltOrder card = new HaltOrder();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.ARTIFACT_SPELL)),
                 "Target must be an artifact spell."

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -30,7 +31,7 @@ class SurgicalExtractionTest extends BaseCardTest {
     void hasCorrectProperties() {
         SurgicalExtraction card = new SurgicalExtraction();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ExileTargetGraveyardCardAndSameNameFromZonesEffect.class);
     }

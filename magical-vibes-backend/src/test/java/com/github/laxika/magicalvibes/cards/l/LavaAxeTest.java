@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,7 +27,7 @@ class LavaAxeTest extends BaseCardTest {
     void hasCorrectProperties() {
         LavaAxe card = new LavaAxe();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToTargetPlayerEffect.class);
         DealDamageToTargetPlayerEffect effect = (DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).getFirst();

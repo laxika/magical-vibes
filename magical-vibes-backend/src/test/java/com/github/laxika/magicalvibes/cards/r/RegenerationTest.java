@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +23,7 @@ class RegenerationTest extends BaseCardTest {
     void hasCorrectProperties() {
         Regeneration card = new Regeneration();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();

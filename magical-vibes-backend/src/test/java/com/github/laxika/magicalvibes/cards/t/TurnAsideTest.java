@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -30,7 +31,7 @@ class TurnAsideTest extends BaseCardTest {
     void hasCorrectProperties() {
         TurnAside card = new TurnAside();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
                 new StackEntryTargetsYourPermanentPredicate(),
                 "Target spell must target a permanent you control."

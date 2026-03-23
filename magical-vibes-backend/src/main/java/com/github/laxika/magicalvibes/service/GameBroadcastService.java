@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -440,7 +441,7 @@ public class GameBroadcastService {
         playable.removeIf(i -> {
             Card card = hand.get(i);
             if (card.hasType(CardType.LAND)) return false;
-            return card.isNeedsSpellCastTarget() && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
+            return EffectResolution.needsSpellCastTarget(card) && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
         });
 
         // MTG rule 601.2b: can't cast if additional cost requiring N graveyard cards can't be paid
@@ -760,7 +761,7 @@ public class GameBroadcastService {
         if (!canCastTiming) return playable;
 
         // Check if spell requires a legal target (MTG rule 601.2c)
-        if (topCard.isNeedsSpellCastTarget() && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
+        if (EffectResolution.needsSpellCastTarget(topCard) && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
             return playable;
         }
 

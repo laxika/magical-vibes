@@ -157,8 +157,8 @@ public class ExampleCard extends Card {
 
 - Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).
 - Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
-- `Card.isNeedsTarget()`, `Card.isNeedsSpellTarget()`, `ActivatedAbility.isNeedsTarget()`, and `ActivatedAbility.isNeedsSpellTarget()` are all derived getters — never stored as fields.
-- `Card.getAllowedTargets()` returns a `Set<TargetType>` computed from SPELL and ON_ENTER_BATTLEFIELD effects, plus `isAura()`.
+- `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute targeting from effects. `ActivatedAbility.isNeedsTarget()` and `ActivatedAbility.isNeedsSpellTarget()` are derived getters on the ability.
+- For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` to get the resolved effect list before computing targets.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
 - Add `setTargetFilter(...)` (on Card) or pass a `TargetFilter` to the `ActivatedAbility` constructor when target legality is restricted.
 - Multi-zone targeting (spell + permanent): when a spell targets both a spell on the stack and a permanent (e.g. Lost in the Mist), chain both effects (`CounterSpellEffect` + `ReturnTargetPermanentToHandEffect`). The engine stores the spell target in `targetId` (Zone.STACK) and permanent targets in `targetIds`. Uses multi-zone fizzle logic: only fizzles when ALL targets become illegal. Cast in tests via `castInstant(player, cardIndex, spellTargetId, permanentTargetId)`.
@@ -172,7 +172,7 @@ Create a new `CardEffect` record only if both are true:
 
 Then do all of:
 - Add effect record in `magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/`
-  - Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` to return `true` as appropriate. This drives automatic `isNeedsTarget()`/`isNeedsSpellTarget()` computation on `Card` and the `targetsPlayer` flag in `CardViewFactory`.
+  - Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` to return `true` as appropriate. This drives `EffectResolution.needsTarget()`/`needsSpellTarget()` computation and the `targetsPlayer` flag in `CardViewFactory`.
 - Add an annotated resolver method in the correct resolution service (see `EFFECTS_INDEX.md` provider map):
   ```java
   @HandlesEffect(YourNewEffect.class)

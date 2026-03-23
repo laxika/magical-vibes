@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.Card;
@@ -48,7 +49,7 @@ class VictimOfNightTest extends BaseCardTest {
     void hasCorrectProperties() {
         VictimOfNight card = new VictimOfNight();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

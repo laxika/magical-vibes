@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,7 +30,7 @@ class RescueTest extends BaseCardTest {
     void hasCorrectProperties() {
         Rescue card = new Rescue();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
         assertThat(card.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);

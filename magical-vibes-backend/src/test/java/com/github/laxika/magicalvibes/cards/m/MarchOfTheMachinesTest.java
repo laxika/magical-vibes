@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -27,7 +28,7 @@ class MarchOfTheMachinesTest extends BaseCardTest {
     void hasCorrectProperties() {
         MarchOfTheMachines card = new MarchOfTheMachines();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AnimateNoncreatureArtifactsEffect.class);
     }

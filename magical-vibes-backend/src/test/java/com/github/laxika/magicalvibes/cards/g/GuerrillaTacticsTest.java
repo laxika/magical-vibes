@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
@@ -29,7 +30,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
     void hasCorrectProperties() {
         GuerrillaTactics card = new GuerrillaTactics();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
     }
 
     @Test

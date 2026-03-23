@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -30,7 +31,7 @@ class FleshAllergyTest extends BaseCardTest {
     void hasCorrectProperties() {
         FleshAllergy card = new FleshAllergy();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"

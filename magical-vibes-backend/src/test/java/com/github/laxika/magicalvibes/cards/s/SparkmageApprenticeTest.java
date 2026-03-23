@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -26,7 +27,7 @@ class SparkmageApprenticeTest extends BaseCardTest {
     void hasCorrectProperties() {
         SparkmageApprentice card = new SparkmageApprentice();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(DealDamageToAnyTargetEffect.class);

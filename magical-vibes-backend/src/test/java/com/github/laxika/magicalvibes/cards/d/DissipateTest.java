@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -25,7 +26,7 @@ class DissipateTest extends BaseCardTest {
     void hasCorrectProperties() {
         Dissipate card = new Dissipate();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isNull();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellAndExileEffect.class);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,7 +25,7 @@ class SamiteHealerTest extends BaseCardTest {
     void hasCorrectProperties() {
         SamiteHealer card = new SamiteHealer();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst()).isInstanceOf(PreventNextDamageEffect.class);
     }

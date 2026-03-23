@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -124,7 +125,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
 
             // Skip spells that target spells on the stack (e.g. Twincast) — AI can't pick spell targets
-            if (card.isNeedsSpellTarget()) {
+            if (EffectResolution.needsSpellTarget(card)) {
                 continue;
             }
 
@@ -152,7 +153,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Build damage assignments for divided damage spells
             Map<UUID, Integer> damageAssignments = null;
-            if (modalPlan == null && card.isNeedsDamageDistribution()) {
+            if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
                 damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
                 if (damageAssignments == null) {
                     continue; // No valid targets for damage distribution
@@ -161,7 +162,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Determine target if needed (skip for modal and damage distribution spells)
             UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-            if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+            if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
                 targetId = pickRandomTarget(gameData, card);
                 if (targetId == null) {
                     continue; // No valid target, try next spell
@@ -315,7 +316,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<UUID> validTargets = new ArrayList<>();
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
 
-        Set<TargetType> allowed = card.getAllowedTargets();
+        Set<TargetType> allowed = EffectResolution.computeAllowedTargets(card);
 
         // Add players as targets if allowed, respecting player relation predicates
         if (allowed.contains(TargetType.PLAYER)) {

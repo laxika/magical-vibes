@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -35,7 +36,7 @@ class TreetopBracersTest extends BaseCardTest {
     void hasCorrectProperties() {
         TreetopBracers card = new TreetopBracers();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);

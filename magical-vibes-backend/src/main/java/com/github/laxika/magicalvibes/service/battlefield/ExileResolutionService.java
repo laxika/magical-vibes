@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
@@ -675,8 +676,8 @@ public class ExileResolutionService {
         String playerName = gameData.playerIdToName.get(playerId);
 
         // If the spell needs a target, set up target selection
-        if (chosenCard.isNeedsTarget()) {
-            Set<TargetType> allowedTargets = chosenCard.getAllowedTargets();
+        if (EffectResolution.needsTarget(chosenCard)) {
+            Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(chosenCard);
             List<UUID> validTargets = new ArrayList<>();
 
             // Only add permanents if the spell can actually target them
@@ -777,9 +778,9 @@ public class ExileResolutionService {
             StackEntryType spellType = mapCardTypeToSpellType(topCard);
             List<CardEffect> spellEffects = new ArrayList<>(topCard.getEffects(EffectSlot.SPELL));
 
-            if (topCard.isNeedsTarget()) {
+            if (EffectResolution.needsTarget(topCard)) {
                 // Targeted spell — need to choose a target
-                Set<TargetType> allowedTargets = topCard.getAllowedTargets();
+                Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(topCard);
                 List<UUID> validTargets = new ArrayList<>();
 
                 // Only add permanents if the spell can actually target them

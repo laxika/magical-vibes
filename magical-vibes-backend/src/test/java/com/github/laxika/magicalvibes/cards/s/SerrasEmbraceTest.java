@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,7 +30,7 @@ class SerrasEmbraceTest extends BaseCardTest {
     void hasCorrectProperties() {
         SerrasEmbrace card = new SerrasEmbrace();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);

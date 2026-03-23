@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -30,7 +31,7 @@ class EvilPresenceTest extends BaseCardTest {
         EvilPresence card = new EvilPresence();
 
         assertThat(card.isAura()).isTrue();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())

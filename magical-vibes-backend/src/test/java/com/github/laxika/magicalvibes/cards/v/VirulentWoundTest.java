@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -29,7 +30,7 @@ class VirulentWoundTest extends BaseCardTest {
     void hasCorrectEffects() {
         VirulentWound card = new VirulentWound();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
                 .isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);

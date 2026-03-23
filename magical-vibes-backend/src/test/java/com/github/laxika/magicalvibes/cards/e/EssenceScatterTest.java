@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
@@ -30,7 +31,7 @@ class EssenceScatterTest extends BaseCardTest {
     void hasCorrectProperties() {
         EssenceScatter card = new EssenceScatter();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                 "Target must be a creature spell."

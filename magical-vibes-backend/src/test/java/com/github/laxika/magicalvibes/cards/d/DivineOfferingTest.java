@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -25,7 +26,7 @@ class DivineOfferingTest extends BaseCardTest {
     void hasCorrectEffect() {
         DivineOffering card = new DivineOffering();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
                 .isInstanceOf(DestroyTargetPermanentAndGainLifeEqualToManaValueEffect.class);

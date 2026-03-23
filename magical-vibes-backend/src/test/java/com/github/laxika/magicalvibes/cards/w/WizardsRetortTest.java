@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AetherAdept;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -28,7 +29,7 @@ class WizardsRetortTest extends BaseCardTest {
     void hasCorrectProperties() {
         WizardsRetort card = new WizardsRetort();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isNull();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);

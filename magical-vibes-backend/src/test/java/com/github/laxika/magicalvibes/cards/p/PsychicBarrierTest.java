@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
@@ -31,7 +32,7 @@ class PsychicBarrierTest extends BaseCardTest {
     void hasCorrectProperties() {
         PsychicBarrier card = new PsychicBarrier();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                 "Target must be a creature spell."

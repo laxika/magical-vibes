@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -30,7 +31,7 @@ class ReverberateTest extends BaseCardTest {
     void hasCorrectProperties() {
         Reverberate card = new Reverberate();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CopySpellEffect.class);
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(

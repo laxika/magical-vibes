@@ -52,7 +52,8 @@
       "Bash(./gradlew :magical-vibes-card:compileJava:*)",
       "Bash(do echo:*)",
       "Bash(./gradlew:*)",
-      "WebFetch(domain:ancestral.vision)"
+      "WebFetch(domain:ancestral.vision)",
+      "Bash(xargs sed:*)"
     ]
   },
   "hooks": {

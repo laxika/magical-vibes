@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -33,7 +34,7 @@ class FlashfreezeTest extends BaseCardTest {
     void hasCorrectProperties() {
         Flashfreeze card = new Flashfreeze();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
                 new StackEntryColorInPredicate(Set.of(CardColor.RED, CardColor.GREEN)),
                 "Target spell must be red or green."

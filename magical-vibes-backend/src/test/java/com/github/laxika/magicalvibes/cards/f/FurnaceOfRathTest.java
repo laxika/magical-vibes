@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -37,7 +38,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     void hasCorrectProperties() {
         FurnaceOfRath card = new FurnaceOfRath();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(DoubleDamageEffect.class);
     }

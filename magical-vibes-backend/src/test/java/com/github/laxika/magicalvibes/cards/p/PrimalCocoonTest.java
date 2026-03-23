@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -26,7 +27,7 @@ class PrimalCocoonTest extends BaseCardTest {
     void hasCorrectEffects() {
         PrimalCocoon card = new PrimalCocoon();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())

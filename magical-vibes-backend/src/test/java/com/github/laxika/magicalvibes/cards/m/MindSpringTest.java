@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -29,7 +30,7 @@ class MindSpringTest extends BaseCardTest {
     @Test
     @DisplayName("Mind Spring does not require a target")
     void doesNotRequireTarget() {
-        assertThat(new MindSpring().isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(new MindSpring())).isFalse();
     }
 
     // ===== Casting =====

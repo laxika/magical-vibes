@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,7 +29,7 @@ class RelicPutrescenceTest extends BaseCardTest {
         RelicPutrescence card = new RelicPutrescence();
 
         assertThat(card.isAura()).isTrue();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
         assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED).getFirst())

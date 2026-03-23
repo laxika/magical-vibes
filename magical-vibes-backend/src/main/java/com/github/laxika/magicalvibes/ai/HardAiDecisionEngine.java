@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -135,7 +136,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (Card card : hand) {
             if (!card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
-            if (card.isNeedsSpellTarget()) continue;
+            if (EffectResolution.needsSpellTarget(card)) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
             double baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
@@ -195,7 +196,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
                 // Build damage assignments for divided damage spells
                 Map<UUID, Integer> damageAssignments = null;
-                if (modalPlan == null && card.isNeedsDamageDistribution()) {
+                if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
                     damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
                     if (damageAssignments == null) {
                         return false;
@@ -220,7 +221,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 tapManaForSpell(gameData, card, xValue);
                 int handSizeBefore = hand.size();
                 final int cardIndex = pc.handIndex();
-                final UUID targetId = modalPlan != null ? modalPlan.targetId() : (card.isNeedsDamageDistribution() ? null : pc.targetId());
+                final UUID targetId = modalPlan != null ? modalPlan.targetId() : (EffectResolution.needsDamageDistribution(card) ? null : pc.targetId());
                 final Integer finalXValue = xValue;
                 final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
                 final UUID finalSacrificePermanentId = sacrificePermanentId;
@@ -289,7 +290,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // Build damage assignments for divided damage spells
         Map<UUID, Integer> damageAssignments = null;
-        if (modalPlan == null && card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) {
                 return false;
@@ -298,7 +299,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // Determine target if needed (skip for modal and damage distribution spells)
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -368,7 +369,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             Card card = hand.get(i);
             if (!card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
-            if (card.isNeedsSpellTarget()) continue;
+            if (EffectResolution.needsSpellTarget(card)) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
             InstantCategory category = InstantCategoryClassifier.classify(card);
@@ -453,13 +454,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         Map<UUID, Integer> damageAssignments = null;
-        if (modalPlan == null && card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return false;
         }
 
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;
         }

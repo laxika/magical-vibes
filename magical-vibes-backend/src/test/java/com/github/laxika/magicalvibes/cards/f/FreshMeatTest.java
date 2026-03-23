@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -25,7 +26,7 @@ class FreshMeatTest extends BaseCardTest {
     void hasCorrectEffect() {
         FreshMeat card = new FreshMeat();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CreateTokensPerOwnCreatureDeathsThisTurnEffect.class);
     }

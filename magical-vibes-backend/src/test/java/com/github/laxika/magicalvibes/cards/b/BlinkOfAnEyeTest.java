@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -39,7 +40,7 @@ class BlinkOfAnEyeTest extends BaseCardTest {
     void hasCorrectSpellEffects() {
         BlinkOfAnEye card = new BlinkOfAnEye();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL))
                 .hasSize(2)
                 .anySatisfy(e -> assertThat(e).isInstanceOf(ReturnTargetPermanentToHandEffect.class))

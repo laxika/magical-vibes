@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
@@ -27,7 +28,7 @@ class HurkylsRecallTest extends BaseCardTest {
     void hasCorrectProperties() {
         HurkylsRecall card = new HurkylsRecall();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
                 .isInstanceOf(ReturnArtifactsTargetPlayerOwnsToHandEffect.class);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -31,7 +32,7 @@ class ContaminatedBondTest extends BaseCardTest {
     void hasCorrectProperties() {
         ContaminatedBond card = new ContaminatedBond();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(EnchantedCreatureControllerLosesLifeEffect.class);
         assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);

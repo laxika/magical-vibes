@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -29,7 +30,7 @@ class AgonizingMemoriesTest extends BaseCardTest {
     void hasCorrectProperties() {
         AgonizingMemories card = new AgonizingMemories();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ChooseCardsFromTargetHandToTopOfLibraryEffect.class);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -30,7 +31,7 @@ class GoForTheThroatTest extends BaseCardTest {
     void hasCorrectProperties() {
         GoForTheThroat card = new GoForTheThroat();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

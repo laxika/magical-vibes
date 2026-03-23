@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -45,7 +46,7 @@ class ThinkTwiceTest extends BaseCardTest {
     void doesNotNeedTarget() {
         ThinkTwice card = new ThinkTwice();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
     }
 
     // ===== Casting normally =====

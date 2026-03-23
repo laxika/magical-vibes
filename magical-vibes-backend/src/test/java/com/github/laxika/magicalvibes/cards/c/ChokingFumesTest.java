@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -24,7 +25,7 @@ class ChokingFumesTest extends BaseCardTest {
     void hasCorrectProperties() {
         ChokingFumes card = new ChokingFumes();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).singleElement()
                 .isInstanceOf(PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect.class);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -21,7 +22,7 @@ class HuntersFeastTest extends BaseCardTest {
     void hasCorrectEffects() {
         HuntersFeast card = new HuntersFeast();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getMinTargets()).isZero();
         assertThat(card.getMaxTargets()).isEqualTo(99);
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);

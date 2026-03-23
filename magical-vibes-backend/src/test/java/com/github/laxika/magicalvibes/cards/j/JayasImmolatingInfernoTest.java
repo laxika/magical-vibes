@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -28,7 +29,7 @@ class JayasImmolatingInfernoTest extends BaseCardTest {
     void hasCorrectProperties() {
         JayasImmolatingInferno card = new JayasImmolatingInferno();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getMinTargets()).isEqualTo(1);
         assertThat(card.getMaxTargets()).isEqualTo(3);
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);

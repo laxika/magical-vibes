@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -25,7 +26,7 @@ class SyncopateTest extends BaseCardTest {
     void hasCorrectProperties() {
         Syncopate card = new Syncopate();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isNull();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         CounterUnlessPaysEffect effect = (CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -571,7 +572,7 @@ public class BattlefieldEntryService {
 
                 // Put non-special effects on the stack as before
                 if (!otherEffects.isEmpty()) {
-                    if (!card.isNeedsTarget() || targetId != null || !targetIds.isEmpty()) {
+                    if (!EffectResolution.needsTarget(card) || targetId != null || !targetIds.isEmpty()) {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 

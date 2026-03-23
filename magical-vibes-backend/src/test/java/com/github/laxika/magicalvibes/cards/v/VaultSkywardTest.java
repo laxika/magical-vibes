@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -27,7 +28,7 @@ class VaultSkywardTest extends BaseCardTest {
     void hasCorrectEffects() {
         VaultSkyward card = new VaultSkyward();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(0);

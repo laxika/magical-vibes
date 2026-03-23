@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -29,7 +30,7 @@ class EviscerateTest extends BaseCardTest {
     void hasCorrectProperties() {
         Eviscerate card = new Eviscerate();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"

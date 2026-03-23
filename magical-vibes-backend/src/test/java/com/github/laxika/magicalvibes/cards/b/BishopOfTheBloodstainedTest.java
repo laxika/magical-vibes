@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AdantoVanguard;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,7 @@ class BishopOfTheBloodstainedTest extends BaseCardTest {
     void hasCorrectProperties() {
         BishopOfTheBloodstained card = new BishopOfTheBloodstained();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
     }
 

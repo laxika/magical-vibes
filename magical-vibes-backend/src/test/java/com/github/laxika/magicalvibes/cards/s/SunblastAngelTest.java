@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,7 +26,7 @@ class SunblastAngelTest extends BaseCardTest {
     void hasCorrectProperties() {
         SunblastAngel card = new SunblastAngel();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(DestroyAllPermanentsEffect.class);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -22,7 +23,7 @@ class WreathOfGeistsTest extends BaseCardTest {
     void hasCorrectProperties() {
         WreathOfGeists card = new WreathOfGeists();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())

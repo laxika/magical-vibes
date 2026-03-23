@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -28,7 +29,7 @@ class LifesFinaleTest extends BaseCardTest {
     void hasCorrectEffects() {
         LifesFinale card = new LifesFinale();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyAllPermanentsEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(SearchTargetLibraryForCardsToGraveyardEffect.class);

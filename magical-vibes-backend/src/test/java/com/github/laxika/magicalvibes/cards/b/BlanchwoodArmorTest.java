@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -25,7 +26,7 @@ class BlanchwoodArmorTest extends BaseCardTest {
     void hasCorrectProperties() {
         BlanchwoodArmor card = new BlanchwoodArmor();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturePerControlledSubtypeEffect.class);

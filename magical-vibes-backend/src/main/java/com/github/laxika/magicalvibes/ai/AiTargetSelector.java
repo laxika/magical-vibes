@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -45,7 +46,7 @@ class AiTargetSelector {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
 
         // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
-        Set<TargetType> allowedTargets = card.getAllowedTargets();
+        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
             return opponentId;
         }

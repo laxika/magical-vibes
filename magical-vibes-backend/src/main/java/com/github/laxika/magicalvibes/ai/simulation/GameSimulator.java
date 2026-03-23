@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.config.EffectRegistryConfig;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -400,7 +401,7 @@ public class GameSimulator {
                         }
                         // For targeted spells, try to find a target
                         UUID targetId = null;
-                        if (card.isNeedsTarget() || card.isAura()) {
+                        if (EffectResolution.needsTarget(card) || card.isAura()) {
                             targetId = findBestTarget(gd, card, playerId);
                             if (targetId == null) continue; // no valid target
                         }
@@ -935,7 +936,7 @@ public class GameSimulator {
         UUID opponentId = getOpponentId(gd, playerId);
 
         // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
-        Set<TargetType> allowedTargets = card.getAllowedTargets();
+        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
             return opponentId;
         }

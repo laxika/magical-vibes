@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrchardSpirit;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -26,7 +27,7 @@ class UrgentExorcismTest extends BaseCardTest {
     void hasCorrectProperties() {
         UrgentExorcism card = new UrgentExorcism();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
     }

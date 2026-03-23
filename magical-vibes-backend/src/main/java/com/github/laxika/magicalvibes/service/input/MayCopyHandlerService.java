@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -116,7 +117,7 @@ public class MayCopyHandlerService {
         Card copiedCard = copyEntry.getCard();
         List<UUID> validTargets = new ArrayList<>();
 
-        if (copiedCard.isNeedsSpellTarget()) {
+        if (EffectResolution.needsSpellTarget(copiedCard)) {
             // Targets a spell on the stack
             for (StackEntry se : gameData.stack) {
                 if (se.getCard().getId().equals(copyCardId)) continue; // exclude the copy itself
@@ -127,7 +128,7 @@ public class MayCopyHandlerService {
                     // Invalid target for copied spell filter; skip.
                 }
             }
-        } else if (copiedCard.isNeedsTarget()) {
+        } else if (EffectResolution.needsTarget(copiedCard)) {
             Zone targetZone = copyEntry.getTargetZone() != null ? copyEntry.getTargetZone() : Zone.BATTLEFIELD;
 
             List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);
@@ -202,7 +203,7 @@ public class MayCopyHandlerService {
         Card spellCard = targetSpellEntry.getCard();
         List<UUID> validTargets = new ArrayList<>();
 
-        if (spellCard.isNeedsSpellTarget()) {
+        if (EffectResolution.needsSpellTarget(spellCard)) {
             for (StackEntry se : gameData.stack) {
                 if (se.getCard().getId().equals(spellCardId)) continue;
                 try {
@@ -211,7 +212,7 @@ public class MayCopyHandlerService {
                 } catch (IllegalStateException ignored) {
                 }
             }
-        } else if (spellCard.isNeedsTarget()) {
+        } else if (EffectResolution.needsTarget(spellCard)) {
             Zone targetZone = targetSpellEntry.getTargetZone() != null ? targetSpellEntry.getTargetZone() : Zone.BATTLEFIELD;
 
             List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);

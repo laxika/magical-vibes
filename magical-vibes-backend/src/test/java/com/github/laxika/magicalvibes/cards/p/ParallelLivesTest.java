@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,7 +25,7 @@ class ParallelLivesTest extends BaseCardTest {
     void hasCorrectEffects() {
         ParallelLives card = new ParallelLives();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MultiplyTokenCreationEffect.class);
         MultiplyTokenCreationEffect effect = (MultiplyTokenCreationEffect) card.getEffects(EffectSlot.STATIC).getFirst();

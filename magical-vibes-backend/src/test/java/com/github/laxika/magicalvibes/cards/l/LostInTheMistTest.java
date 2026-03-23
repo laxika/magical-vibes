@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -27,8 +28,8 @@ class LostInTheMistTest extends BaseCardTest {
     void hasCorrectProperties() {
         LostInTheMist card = new LostInTheMist();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ReturnTargetPermanentToHandEffect.class);

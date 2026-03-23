@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -92,8 +93,8 @@ public class CardViewFactory {
                 card.getCollectorNumber(),
                 card.getColor(),
                 card.getColors(),
-                card.isNeedsTarget(),
-                card.isNeedsSpellTarget(),
+                EffectResolution.needsTarget(card),
+                EffectResolution.needsSpellTarget(card),
                 abilityViews,
                 card.getLoyalty(),
                 card.getKeywords().contains(Keyword.CONVOKE),

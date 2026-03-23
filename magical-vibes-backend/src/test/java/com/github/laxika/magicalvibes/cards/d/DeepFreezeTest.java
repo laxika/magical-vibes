@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -33,7 +34,7 @@ class DeepFreezeTest extends BaseCardTest {
     void hasCorrectEffects() {
         DeepFreeze card = new DeepFreeze();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(5);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(SetBasePowerToughnessStaticEffect.class);

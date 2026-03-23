@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -57,7 +58,7 @@ class GaeasBlessingTest extends BaseCardTest {
     void needsTarget() {
         GaeasBlessing card = new GaeasBlessing();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
     }
 
     // ===== Casting — graveyard targeting + draw =====

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -29,7 +30,7 @@ class CorpseLungeTest extends BaseCardTest {
     void hasCorrectEffects() {
         CorpseLunge card = new CorpseLunge();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
         ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -35,7 +36,7 @@ class UnwindTest extends BaseCardTest {
     void hasCorrectProperties() {
         Unwind card = new Unwind();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
                 new StackEntryNotPredicate(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))

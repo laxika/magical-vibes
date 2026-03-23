@@ -42,7 +42,7 @@ Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `Pow
 
 ## Effect targeting declarations
 
-Effects declare what they can target via default methods on `CardEffect`. `Card.isNeedsTarget()` and `Card.isNeedsSpellTarget()` are derived automatically — never call `setNeedsTarget`/`setNeedsSpellTarget`.
+Effects declare what they can target via default methods on `CardEffect`. Targeting is computed via `EffectResolution.needsTarget(card)` and `EffectResolution.needsSpellTarget(card)` — never call `setNeedsTarget`/`setNeedsSpellTarget`. For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` first to get the resolved effect list.
 
 When creating a new effect, override the relevant method(s) to return `true`:
 

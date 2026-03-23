@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -31,7 +32,7 @@ class TempestOfLightTest extends BaseCardTest {
     void hasCorrectProperties() {
         TempestOfLight card = new TempestOfLight();
 
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
         DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();

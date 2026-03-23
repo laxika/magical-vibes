@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -27,7 +28,7 @@ class CuriosityTest extends BaseCardTest {
     void hasCorrectEffects() {
         Curiosity card = new Curiosity();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst())

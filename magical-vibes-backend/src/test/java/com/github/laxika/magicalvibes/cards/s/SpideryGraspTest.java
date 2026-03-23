@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -28,7 +29,7 @@ class SpideryGraspTest extends BaseCardTest {
     void hasCorrectEffects() {
         SpideryGrasp card = new SpideryGrasp();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
 

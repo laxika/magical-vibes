@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -52,7 +53,7 @@ class TimeStretchTest extends BaseCardTest {
     void hasCorrectProperties() {
         TimeStretch card = new TimeStretch();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExtraTurnEffect.class);
         ExtraTurnEffect effect = (ExtraTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);

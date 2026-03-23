@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -25,7 +26,7 @@ class ParasiticImplantTest extends BaseCardTest {
     void hasCorrectEffects() {
         ParasiticImplant card = new ParasiticImplant();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())

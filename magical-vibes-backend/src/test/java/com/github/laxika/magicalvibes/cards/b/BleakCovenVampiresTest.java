@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -41,7 +42,7 @@ class BleakCovenVampiresTest extends BaseCardTest {
     @DisplayName("Card needs target (delegates from metalcraft wrapper)")
     void needsTarget() {
         BleakCovenVampires card = new BleakCovenVampires();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
     }
 
     // ===== ETB with metalcraft met =====

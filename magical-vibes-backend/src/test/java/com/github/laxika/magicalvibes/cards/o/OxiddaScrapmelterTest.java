@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -30,7 +31,7 @@ class OxiddaScrapmelterTest extends BaseCardTest {
     void hasCorrectProperties() {
         OxiddaScrapmelter card = new OxiddaScrapmelter();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(DestroyTargetPermanentEffect.class);

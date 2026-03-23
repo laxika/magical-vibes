@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -135,7 +136,7 @@ public class TargetRedirectionResolutionService {
     private boolean isValidNewTargetForSpell(GameData gameData, StackEntry targetSpell, UUID candidateTargetId) {
         Card spellCard = targetSpell.getCard();
 
-        if (spellCard.isNeedsSpellTarget()) {
+        if (EffectResolution.needsSpellTarget(spellCard)) {
             return targetLegalityService.checkSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter(), targetSpell.getControllerId()).isEmpty();
         }
 

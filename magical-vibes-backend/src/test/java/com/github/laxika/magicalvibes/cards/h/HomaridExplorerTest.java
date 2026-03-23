@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,7 @@ class HomaridExplorerTest extends BaseCardTest {
     void hasCorrectProperties() {
         HomaridExplorer card = new HomaridExplorer();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(MillTargetPlayerEffect.class);

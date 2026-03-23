@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -27,7 +28,7 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
 
         assertThat(card.isAura()).isTrue();
         assertThat(card.isEnchantPlayer()).isTrue();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED).getFirst())
                 .isInstanceOf(MillTargetPlayerEffect.class);

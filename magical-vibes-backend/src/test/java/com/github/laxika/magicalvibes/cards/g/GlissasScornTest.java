@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.d.DarksteelPlate;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -23,7 +24,7 @@ class GlissasScornTest extends BaseCardTest {
     void hasCorrectEffect() {
         GlissasScorn card = new GlissasScorn();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
                 .isInstanceOf(DestroyTargetPermanentAndControllerLosesLifeEffect.class);

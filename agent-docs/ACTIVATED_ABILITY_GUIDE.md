@@ -18,7 +18,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `requiredControlledSubtype` | `CardSubtype` | Subtype you must control N+ of to activate (e.g. `CardSubtype.VAMPIRE`). `null` for no restriction |
 | `requiredControlledSubtypeCount` | `int` | Minimum count of `requiredControlledSubtype` permanents you must control. `0` when unused |
 
-**Targeting is computed from effects** — `isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
+**Targeting is computed from effects** — `ActivatedAbility.isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. For Cards, use `EffectResolution.needsTarget(card)` / `EffectResolution.needsSpellTarget(card)` instead. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
 
 ### ActivationTimingRestriction values
 
@@ -416,7 +416,7 @@ For spells (instants/sorceries) that need targets, targeting is auto-derived fro
 ```java
 setTargetFilter(new SomeTargetFilter()); // restricts valid targets (optional)
 addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
-// isNeedsTarget() and isNeedsSpellTarget() are computed automatically from effects
+// EffectResolution.needsTarget(card) and EffectResolution.needsSpellTarget(card) are computed automatically from effects
 ```
 
 ---

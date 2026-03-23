@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -310,75 +307,4 @@ public class Card {
         return isAura() && subtypes.contains(CardSubtype.CURSE);
     }
 
-    public Set<TargetType> getAllowedTargets() {
-        Set<TargetType> result = EnumSet.noneOf(TargetType.class);
-        if (isAura()) {
-            if (isEnchantPlayer()) {
-                result.add(TargetType.PLAYER);
-            } else {
-                result.add(TargetType.PERMANENT);
-            }
-        }
-        for (CardEffect e : getEffects(EffectSlot.SPELL)) {
-            collectTargetTypes(e, result);
-        }
-        for (CardEffect e : getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
-            if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
-        }
-        return result;
-    }
-
-    private void collectTargetTypes(CardEffect e, Set<TargetType> out) {
-        if (e.canTargetPlayer()) out.add(TargetType.PLAYER);
-        if (e.canTargetPermanent()) out.add(TargetType.PERMANENT);
-        if (e.canTargetSpell()) out.add(TargetType.SPELL_ON_STACK);
-        if (e.canTargetGraveyard()) out.add(TargetType.GRAVEYARD);
-        if (e.canTargetExile()) out.add(TargetType.EXILE);
-    }
-
-    public boolean isNeedsTarget() {
-        Set<TargetType> t = getAllowedTargets();
-        return t.contains(TargetType.PLAYER) || t.contains(TargetType.PERMANENT)
-                || t.contains(TargetType.GRAVEYARD) || t.contains(TargetType.EXILE);
-    }
-
-    /**
-     * Returns true if the spell itself requires a target to be cast (MTG rule 601.2c).
-     * Unlike {@link #isNeedsTarget()}, this excludes ON_ENTER_BATTLEFIELD effects because
-     * ETB abilities are separate from casting — a creature is always castable regardless of
-     * whether its ETB can find a valid target. Also excludes {@link CostEffect}s because
-     * sacrifice/discard costs are not "targeting" in MTG terms.
-     */
-    public boolean isNeedsSpellCastTarget() {
-        Set<TargetType> result = EnumSet.noneOf(TargetType.class);
-        if (isAura()) {
-            if (isEnchantPlayer()) {
-                result.add(TargetType.PLAYER);
-            } else {
-                result.add(TargetType.PERMANENT);
-            }
-        }
-        for (CardEffect e : getEffects(EffectSlot.SPELL)) {
-            if (e instanceof CostEffect) continue;
-            collectTargetTypes(e, result);
-        }
-        return result.contains(TargetType.PLAYER) || result.contains(TargetType.PERMANENT)
-                || result.contains(TargetType.GRAVEYARD) || result.contains(TargetType.EXILE);
-    }
-
-    public boolean isNeedsSpellTarget() {
-        return getAllowedTargets().contains(TargetType.SPELL_ON_STACK);
-    }
-
-    public boolean isNeedsDamageDistribution() {
-        boolean inSpell = getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect);
-        boolean inAbility = activatedAbilities.stream()
-                .flatMap(a -> a.getEffects().stream())
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect);
-        return inSpell || inAbility;
-    }
 }

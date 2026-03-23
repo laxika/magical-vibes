@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -36,12 +37,25 @@ public class ValidTargetService {
     private final GameQueryService gameQueryService;
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds) {
-        return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, null);
+        return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, null, null);
     }
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue) {
+        return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, xValue, null);
+    }
+
+    public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
         boolean isMultiTarget = card.getMaxTargets() > 1;
-        Set<TargetType> allowedTargets = card.getAllowedTargets();
+        Set<TargetType> allowedTargets;
+        if (kicked != null) {
+            List<CardEffect> resolvedEffects = EffectResolution.resolveEffects(
+                    card.getEffects(EffectSlot.SPELL), kicked, null);
+            allowedTargets = EffectResolution.computeAllowedTargets(
+                    resolvedEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                    card.isAura(), card.isEnchantPlayer());
+        } else {
+            allowedTargets = EffectResolution.computeAllowedTargets(card);
+        }
 
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
@@ -375,7 +389,7 @@ public class ValidTargetService {
      * Per MTG rule 601.2c, a spell can't be cast unless a legal set of targets can be chosen for it.
      */
     public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId) {
-        Set<TargetType> allowedTargets = card.getAllowedTargets();
+        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         boolean isMultiTarget = card.getMaxTargets() > 1;
 
         if (allowedTargets.contains(TargetType.PERMANENT)) {

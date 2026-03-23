@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -30,7 +31,7 @@ class DepthsOfDesireTest extends BaseCardTest {
     void hasCorrectSpellEffects() {
         DepthsOfDesire card = new DepthsOfDesire();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL))
                 .hasSize(2)
                 .anySatisfy(e -> assertThat(e).isInstanceOf(ReturnTargetPermanentToHandEffect.class))

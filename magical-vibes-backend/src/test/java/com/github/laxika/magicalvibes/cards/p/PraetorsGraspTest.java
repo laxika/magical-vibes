@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -25,7 +26,7 @@ class PraetorsGraspTest extends BaseCardTest {
     void hasCorrectEffects() {
         PraetorsGrasp card = new PraetorsGrasp();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SearchTargetLibraryForCardToExileWithPlayPermissionEffect.class);
     }

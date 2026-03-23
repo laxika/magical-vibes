@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -119,7 +120,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         // Build damage assignments for divided damage spells
         Map<UUID, Integer> damageAssignments = null;
-        if (modalPlan == null && card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) {
                 return false;
@@ -128,7 +129,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         // Determine target if needed (skip for modal and damage distribution spells)
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -193,7 +194,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             Card card = hand.get(i);
             if (!card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
-            if (card.isNeedsSpellTarget()) continue; // Can't target spells on stack
+            if (EffectResolution.needsSpellTarget(card)) continue; // Can't target spells on stack
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
             int score = scoreCard(gameData, card);
             castableInstants.add(new int[]{i, score});
@@ -214,13 +215,13 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         Map<UUID, Integer> damageAssignments = null;
-        if (modalPlan == null && card.isNeedsDamageDistribution()) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return false;
         }
 
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        if (modalPlan == null && !card.isNeedsDamageDistribution() && (card.isNeedsTarget() || card.isAura())) {
+        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;
         }

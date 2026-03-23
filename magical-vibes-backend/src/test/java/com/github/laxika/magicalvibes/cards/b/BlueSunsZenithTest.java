@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,7 +33,7 @@ class BlueSunsZenithTest extends BaseCardTest {
     @Test
     @DisplayName("Blue Sun's Zenith targets a player")
     void targetsPlayer() {
-        assertThat(new BlueSunsZenith().isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(new BlueSunsZenith())).isTrue();
     }
 
     // ===== Casting =====

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -33,7 +34,7 @@ class VoltChargeTest extends BaseCardTest {
         DealDamageToAnyTargetEffect dmg = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).get(0);
         assertThat(dmg.damage()).isEqualTo(3);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ProliferateEffect.class);
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
     }
 
     // ===== Damage to player =====

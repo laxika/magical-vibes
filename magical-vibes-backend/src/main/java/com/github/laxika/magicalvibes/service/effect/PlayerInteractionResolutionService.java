@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -1551,7 +1552,7 @@ public class PlayerInteractionResolutionService {
             StackEntryType spellType = mapCardTypeToSpellType(revealed);
             List<CardEffect> spellEffects = new ArrayList<>(revealed.getEffects(EffectSlot.SPELL));
 
-            if (revealed.isNeedsTarget()) {
+            if (EffectResolution.needsTarget(revealed)) {
                 // Targeted spell — check for valid targets
                 List<UUID> validTargets = new ArrayList<>();
                 for (UUID pid : gameData.orderedPlayerIds) {

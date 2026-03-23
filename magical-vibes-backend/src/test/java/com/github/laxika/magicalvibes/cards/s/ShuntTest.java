@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
@@ -32,7 +33,7 @@ class ShuntTest extends BaseCardTest {
     void hasCorrectProperties() {
         Shunt card = new Shunt();
 
-        assertThat(card.isNeedsSpellTarget()).isTrue();
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
                 new StackEntryIsSingleTargetPredicate(),
                 "Target spell must have a single target."

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,7 +32,7 @@ class BondsOfFaithTest extends BaseCardTest {
     void hasCorrectProperties() {
         BondsOfFaith card = new BondsOfFaith();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         var effect = (EnchantedCreatureSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();

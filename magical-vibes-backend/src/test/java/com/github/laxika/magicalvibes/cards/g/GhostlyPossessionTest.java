@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -29,7 +30,7 @@ class GhostlyPossessionTest extends BaseCardTest {
     void hasCorrectEffects() {
         GhostlyPossession card = new GhostlyPossession();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(GrantKeywordEffect.class);

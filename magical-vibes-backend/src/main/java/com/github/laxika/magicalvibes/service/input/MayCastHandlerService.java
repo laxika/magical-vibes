@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -65,7 +66,7 @@ public class MayCastHandlerService {
                 StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
                         ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
 
-                if (cardToCast.isNeedsTarget()) {
+                if (EffectResolution.needsTarget(cardToCast)) {
                     // Targeted spell — need to choose target before putting on stack
                     List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
 
@@ -174,7 +175,7 @@ public class MayCastHandlerService {
                     ? List.of()
                     : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
 
-            if (cardToPlay.isNeedsTarget()) {
+            if (EffectResolution.needsTarget(cardToPlay)) {
                 // Targeted spell — need to choose target before putting on stack
                 List<UUID> validTargets = buildValidSpellTargets(gameData, cardToPlay, spellEffects);
 
@@ -296,7 +297,7 @@ public class MayCastHandlerService {
                     StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
                             ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
 
-                    if (cardToCast.isNeedsTarget()) {
+                    if (EffectResolution.needsTarget(cardToCast)) {
                         // Targeted spell — need to choose target before putting on stack
                         List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
 

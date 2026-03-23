@@ -253,6 +253,13 @@ export class TargetingChoiceService {
     if (xValue != null) {
       msg.xValue = xValue;
     }
+    if (this.pendingKicked) {
+      msg.kicked = true;
+    } else if (cardIndex != null && permanentIndex == null) {
+      // Explicitly send kicked=false for spells from hand (not abilities)
+      // so the backend can resolve KickerReplacementEffect to the base effect
+      msg.kicked = false;
+    }
     this.websocketService.send(msg);
   }
 

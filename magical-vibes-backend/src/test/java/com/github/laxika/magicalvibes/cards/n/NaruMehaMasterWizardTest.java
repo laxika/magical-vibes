@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -52,8 +53,8 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
     void doesNotRequireSpellTargetAtCastTime() {
         NaruMehaMasterWizard card = new NaruMehaMasterWizard();
 
-        assertThat(card.isNeedsSpellTarget()).isFalse();
-        assertThat(card.isNeedsTarget()).isFalse();
+        assertThat(EffectResolution.needsSpellTarget(card)).isFalse();
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
     }
 
     // ===== ETB spell copy — targeting =====

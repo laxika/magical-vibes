@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.r.RatchetBomb;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -27,7 +28,7 @@ class ViridianHarvestTest extends BaseCardTest {
         ViridianHarvest card = new ViridianHarvest();
 
         assertThat(card.isAura()).isTrue();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
         assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD).getFirst())

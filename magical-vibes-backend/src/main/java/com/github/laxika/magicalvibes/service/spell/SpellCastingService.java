@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -292,13 +293,13 @@ public class SpellCastingService {
         // for non-modal spells, use the card's declared targeting (which accounts for auras, ETB effects, etc.)
         boolean unwrappedNeedsSpellTarget = wasModal
                 ? filteredSpellEffects.stream().anyMatch(CardEffect::canTargetSpell)
-                : card.isNeedsSpellTarget();
+                : EffectResolution.needsSpellTarget(card);
         // Per MTG rule 601.2c, only the spell itself determines whether a target is required
         // at cast time. ETB triggered abilities choose targets when they go on the stack after
         // the permanent enters, so isNeedsSpellCastTarget() (which excludes ETB effects) is correct.
         boolean unwrappedNeedsTarget = wasModal
                 ? filteredSpellEffects.stream().anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer() || e.canTargetGraveyard())
-                : card.isNeedsSpellCastTarget();
+                : EffectResolution.needsSpellCastTarget(card);
 
         // Validate alternate casting cost if used (e.g. Demon of Death's Gate)
         if (usingAlternateCost) {
@@ -775,7 +776,7 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null, damageAssignments
                 ));
-            } else if (card.isNeedsDamageDistribution()) {
+            } else if (EffectResolution.needsDamageDistribution(card)) {
                 // Validate damage assignments for damage distribution spells
                 if (damageAssignments == null || damageAssignments.isEmpty()) {
                     throw new IllegalStateException("Damage assignments required");
@@ -1290,11 +1291,11 @@ public class SpellCastingService {
         } else {
             // Single-target or no-target flashback spell
             boolean needsGraveyardEffectTargeting = spellEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
-            if (targetId != null && card.isNeedsTarget() && needsGraveyardEffectTargeting) {
+            if (targetId != null && EffectResolution.needsTarget(card) && needsGraveyardEffectTargeting) {
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
-            } else if (targetId != null && card.isNeedsTarget()) {
+            } else if (targetId != null && EffectResolution.needsTarget(card)) {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, true);
-            } else if (card.isNeedsTarget() && targetId == null) {
+            } else if (EffectResolution.needsTarget(card) && targetId == null) {
                 throw new IllegalStateException("Spell requires a target");
             }
             if (needsGraveyardEffectTargeting) {

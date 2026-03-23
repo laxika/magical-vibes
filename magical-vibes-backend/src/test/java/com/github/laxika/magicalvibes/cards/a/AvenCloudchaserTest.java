@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,7 +28,7 @@ class AvenCloudchaserTest extends BaseCardTest {
     void hasCorrectProperties() {
         AvenCloudchaser card = new AvenCloudchaser();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(DestroyTargetPermanentEffect.class);

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.target;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -209,7 +210,7 @@ public class TargetLegalityService {
     }
 
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
-        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, card.isNeedsTarget())
+        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, EffectResolution.needsTarget(card))
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
@@ -219,7 +220,7 @@ public class TargetLegalityService {
     }
 
     public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
-        return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, card.isNeedsTarget());
+        return checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, EffectResolution.needsTarget(card));
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget) {
@@ -296,7 +297,7 @@ public class TargetLegalityService {
                 if (!card.doesPositionAllowPlayerTargets(i)) {
                     throw new IllegalStateException("This spell cannot target players");
                 }
-                if (card.isNeedsTarget()) {
+                if (EffectResolution.needsTarget(card)) {
                     validatePlayerTargetable(gameData, targetId, controllerId);
                 }
                 continue;
@@ -321,7 +322,7 @@ public class TargetLegalityService {
                 throw new IllegalStateException(target.getCard().getName() + " is not a creature");
             }
 
-            if (card.isNeedsTarget()) {
+            if (EffectResolution.needsTarget(card)) {
                 validateSpellProtections(gameData, target, card);
                 validateHexproofFromColor(gameData, target, card, controllerId);
                 validatePermanentTargetable(gameData, target, controllerId);

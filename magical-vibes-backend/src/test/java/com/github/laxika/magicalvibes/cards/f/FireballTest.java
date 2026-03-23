@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -29,7 +30,7 @@ class FireballTest extends BaseCardTest {
     void hasCorrectProperties() {
         Fireball card = new Fireball();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getMinTargets()).isEqualTo(1);
         assertThat(card.getMaxTargets()).isEqualTo(99);
         assertThat(card.getAdditionalCostPerExtraTarget()).isEqualTo(1);

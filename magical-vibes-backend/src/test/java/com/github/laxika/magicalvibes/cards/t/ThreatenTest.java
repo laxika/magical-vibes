@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -33,7 +34,7 @@ class ThreatenTest extends BaseCardTest {
     void hasCorrectProperties() {
         Threaten card = new Threaten();
 
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);

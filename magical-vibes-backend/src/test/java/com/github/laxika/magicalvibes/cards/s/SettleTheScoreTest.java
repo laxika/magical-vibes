@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -41,7 +42,7 @@ class SettleTheScoreTest extends BaseCardTest {
     @DisplayName("Targets creatures")
     void targetsCreatures() {
         SettleTheScore card = new SettleTheScore();
-        assertThat(card.isNeedsTarget()).isTrue();
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
     }
 
     // ===== Exile target creature =====

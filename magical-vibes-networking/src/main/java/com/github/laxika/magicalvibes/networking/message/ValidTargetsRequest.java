@@ -8,6 +8,7 @@ public record ValidTargetsRequest(
         Integer permanentIndex,
         Integer abilityIndex,
         List<UUID> alreadySelectedIds,
-        Integer xValue
+        Integer xValue,
+        Boolean kicked
 ) {
 }
