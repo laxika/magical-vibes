@@ -103,7 +103,7 @@ class MiscTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Furnace Celebration");
             var inner = new BoostSelfEffect(1, 1);
             var effect = new MayPayManaEffect("{2}", inner, "Pay {2}?");
-            var ctx = new TriggerContext.AllySacrificed(player1Id);
+            var ctx = new TriggerContext.AllySacrificed(player1Id, null);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -120,7 +120,7 @@ class MiscTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Furnace Celebration");
             var inner = new BoostSelfEffect(1, 1);
             var effect = new MayPayManaEffect("{2}", inner, "Pay {2}?");
-            var ctx = new TriggerContext.AllySacrificed(player2Id);
+            var ctx = new TriggerContext.AllySacrificed(player2Id, null);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -142,7 +142,7 @@ class MiscTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Some Card");
             var inner = new BoostSelfEffect(1, 1);
             var effect = new MayEffect(inner, "Do you want to?");
-            var ctx = new TriggerContext.AllySacrificed(player1Id);
+            var ctx = new TriggerContext.AllySacrificed(player1Id, null);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -159,7 +159,7 @@ class MiscTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Some Card");
             var inner = new BoostSelfEffect(1, 1);
             var effect = new MayEffect(inner, "Do you want to?");
-            var ctx = new TriggerContext.AllySacrificed(player2Id);
+            var ctx = new TriggerContext.AllySacrificed(player2Id, null);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -180,7 +180,7 @@ class MiscTriggerCollectorServiceTest {
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Blood Artist");
             var effect = new BoostSelfEffect(1, 1);
-            var ctx = new TriggerContext.AllySacrificed(player1Id);
+            var ctx = new TriggerContext.AllySacrificed(player1Id, null);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -198,7 +198,7 @@ class MiscTriggerCollectorServiceTest {
         void stackEntryIncludesEffect() {
             Permanent perm = createPermanent("Blood Artist");
             var effect = new BoostSelfEffect(2, 2);
-            var ctx = new TriggerContext.AllySacrificed(player1Id);
+            var ctx = new TriggerContext.AllySacrificed(player1Id, null);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -212,7 +212,7 @@ class MiscTriggerCollectorServiceTest {
         void usesSacrificingPlayerIdAsController() {
             Permanent perm = createPermanent("Blood Artist");
             var effect = new BoostSelfEffect(1, 1);
-            var ctx = new TriggerContext.AllySacrificed(player2Id);
+            var ctx = new TriggerContext.AllySacrificed(player2Id, null);
 
             registry.dispatch(
                     match(perm, player1Id, effect),

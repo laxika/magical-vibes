@@ -196,6 +196,7 @@ public class ActivatedAbilityExecutionService {
         boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
         if (shouldSacrifice) {
             permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), permanent.getCard());
         }
 
         // Sacrifice the source equipment (e.g. Blazing Torch's "{T}, Sacrifice Blazing Torch: ...")

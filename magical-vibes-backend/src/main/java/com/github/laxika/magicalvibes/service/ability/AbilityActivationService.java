@@ -255,7 +255,7 @@ public class AbilityActivationService {
 
         // Sacrifice: remove from battlefield, add to graveyard
         permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         String logEntry = player.getUsername() + " sacrifices " + permanent.getCard().getName() + ".";
@@ -1107,7 +1107,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must sacrifice a permanent you control");
         }
         permanentRemovalService.removePermanentToGraveyard(gameData, sacTarget);
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacTarget.getCard());
         String sacLog = player.getUsername() + " sacrifices " + sacTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, sacLog);
     }

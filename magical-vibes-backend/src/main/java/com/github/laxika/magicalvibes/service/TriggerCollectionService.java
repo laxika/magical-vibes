@@ -292,11 +292,11 @@ public class TriggerCollectionService {
 
     // ── Ally-permanent-sacrificed triggers ──────────────────────────────
 
-    public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId) {
+    public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
         if (battlefield == null) return;
 
-        var ctx = new TriggerContext.AllySacrificed(sacrificingPlayerId);
+        var ctx = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
 
         for (Permanent perm : battlefield) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED);

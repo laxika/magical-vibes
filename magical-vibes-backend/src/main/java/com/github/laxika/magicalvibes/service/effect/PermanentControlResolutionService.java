@@ -824,7 +824,7 @@ public class PermanentControlResolutionService {
         }
 
         if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId());
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
             String logEntry = self.getCard().getName() + " is sacrificed.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             permanentRemovalService.removeOrphanedAuras(gameData);

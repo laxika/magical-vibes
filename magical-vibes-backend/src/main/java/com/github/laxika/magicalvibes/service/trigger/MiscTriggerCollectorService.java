@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -105,6 +106,31 @@ public class MiscTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect))
         ));
+        return true;
+    }
+
+    @CollectsTrigger(value = SacrificedPermanentSubtypeConditionalEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    private boolean handleSacrificeSubtypeConditional(TriggerMatchContext match,
+            SacrificedPermanentSubtypeConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
+        if (as.sacrificedCard() == null
+                || !as.sacrificedCard().getSubtypes().contains(conditional.requiredSubtype())) {
+            return false;
+        }
+        String cardName = match.permanent().getCard().getName();
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                as.sacrificingPlayerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId()
+        ));
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), triggerLog);
+        log.info("Game {} - {} triggers on {} sacrifice", match.gameData().id, cardName,
+                conditional.requiredSubtype().getDisplayName());
         return true;
     }
 

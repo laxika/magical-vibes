@@ -35,7 +35,7 @@ public sealed interface TriggerContext {
     /**
      * Context for ally-permanent-sacrificed triggers (ON_ALLY_PERMANENT_SACRIFICED).
      */
-    record AllySacrificed(UUID sacrificingPlayerId) implements TriggerContext {}
+    record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).

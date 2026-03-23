@@ -138,7 +138,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
             if (source != null) {
                 if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId);
+                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, source.getCard());
                     String logEntry = source.getCard().getName() + " is sacrificed.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} sacrificed for combat damage trigger", gameData.id, source.getCard().getName());

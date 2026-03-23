@@ -96,4 +96,14 @@ public record CreateTokenEffect(
                                                      List<ActivatedAbility> abilities) {
         return new CreateTokenEffect(CardType.ARTIFACT, amount, tokenName, 0, 0, null, null, subtypes, Set.of(), Set.of(), false, false, Map.of(), abilities, false, false, false);
     }
+
+    /** Treasure token: colorless artifact with "{T}, Sacrifice this artifact: Add one mana of any color." */
+    public static CreateTokenEffect ofTreasureToken(int amount) {
+        return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),
+                List.of(new ActivatedAbility(
+                        true, null,
+                        List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
+                        "{T}, Sacrifice this artifact: Add one mana of any color."
+                )));
+    }
 }
