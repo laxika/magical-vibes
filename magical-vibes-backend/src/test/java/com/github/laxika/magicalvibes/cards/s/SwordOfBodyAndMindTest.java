@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -68,7 +68,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
         List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects =
                 card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
         assertThat(effects).hasSize(2);
-        assertThat(effects).filteredOn(e -> e instanceof CreateCreatureTokenEffect).hasSize(1);
+        assertThat(effects).filteredOn(e -> e instanceof CreateTokenEffect).hasSize(1);
         assertThat(effects).filteredOn(e -> e instanceof MillTargetPlayerEffect).hasSize(1);
 
         MillTargetPlayerEffect mill = effects.stream()

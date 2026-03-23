@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -48,7 +48,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
 
         var minus2 = card.getActivatedAbilities().get(2);
         assertThat(minus2.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(minus2.getEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(minus2.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
     }
 
     // ===== Casting =====

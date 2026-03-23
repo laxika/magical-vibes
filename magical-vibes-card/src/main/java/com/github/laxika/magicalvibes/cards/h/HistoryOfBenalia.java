@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -25,14 +25,14 @@ public class HistoryOfBenalia extends Card {
 
     public HistoryOfBenalia() {
         // Chapter I: Create a 2/2 white Knight creature token with vigilance
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateCreatureTokenEffect(
+        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
                 1, "Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT),
                 Set.of(Keyword.VIGILANCE), Set.of()
         ));
 
         // Chapter II: Same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateCreatureTokenEffect(
+        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
                 1, "Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT),
                 Set.of(Keyword.VIGILANCE), Set.of()

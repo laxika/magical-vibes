@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -31,7 +31,7 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
                 .isInstanceOf(MayEffect.class);
 
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(mayEffect.wrapped()).isInstanceOf(CreateTokenEffect.class);
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
@@ -132,7 +132,7 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
     void openingHandRevealEffectIsCorrect() {
         MayEffect mayEffect =
                 (MayEffect) new ChancellorOfTheForge().getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        CreateCreatureTokenEffect revealEffect = (CreateCreatureTokenEffect) mayEffect.wrapped();
+        CreateTokenEffect revealEffect = (CreateTokenEffect) mayEffect.wrapped();
 
         assertThat(revealEffect.amount()).isEqualTo(1);
         assertThat(revealEffect.tokenName()).isEqualTo("Phyrexian Goblin");

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -30,7 +30,7 @@ public class LordOfLineage extends Card {
         // {T}: Create a 2/2 black Vampire creature token with flying.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new CreateCreatureTokenEffect(
+                List.of(new CreateTokenEffect(
                         "Vampire", 2, 2,
                         CardColor.BLACK,
                         List.of(CardSubtype.VAMPIRE),

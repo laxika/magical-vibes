@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -15,7 +15,7 @@ public class SporeSwarm extends Card {
 
     public SporeSwarm() {
         // Create three 1/1 green Saproling creature tokens.
-        addEffect(EffectSlot.SPELL, new CreateCreatureTokenEffect(3, "Saproling", 1, 1,
+        addEffect(EffectSlot.SPELL, new CreateTokenEffect(3, "Saproling", 1, 1,
                 CardColor.GREEN, List.of(CardSubtype.SAPROLING),
                 Set.of(), Set.of()));
     }

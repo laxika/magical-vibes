@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,13 +24,13 @@ class DoomedTravelerTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Has ON_DEATH CreateCreatureTokenEffect creating a 1/1 white Spirit token with flying")
+    @DisplayName("Has ON_DEATH CreateTokenEffect creating a 1/1 white Spirit token with flying")
     void hasCorrectEffects() {
         DoomedTraveler card = new DoomedTraveler();
 
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
 
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
+        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
         assertThat(effect.amount()).isEqualTo(1);
         assertThat(effect.tokenName()).isEqualTo("Spirit");
         assertThat(effect.power()).isEqualTo(1);

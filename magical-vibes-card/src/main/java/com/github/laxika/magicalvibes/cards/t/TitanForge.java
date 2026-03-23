@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 
@@ -30,7 +30,7 @@ public class TitanForge extends Card {
                 null,
                 List.of(
                         new RemoveChargeCountersFromSourceCost(3),
-                        new CreateCreatureTokenEffect("Golem", 9, 9, null,
+                        new CreateTokenEffect("Golem", 9, 9, null,
                                 List.of(CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT))
                 ),
                 "{T}, Remove three charge counters from Titan Forge: Create a 9/9 colorless Golem artifact creature token."

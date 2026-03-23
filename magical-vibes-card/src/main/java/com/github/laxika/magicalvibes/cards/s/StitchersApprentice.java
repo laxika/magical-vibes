@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControllerSacrificesCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +19,7 @@ public class StitchersApprentice extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}{U}",
                 List.of(
-                        new CreateCreatureTokenEffect(
+                        new CreateTokenEffect(
                                 "Homunculus", 2, 2,
                                 CardColor.BLUE,
                                 List.of(CardSubtype.HOMUNCULUS),

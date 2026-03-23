@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllTargetPermanentsEffect;
@@ -39,7 +39,7 @@ public class GarrukWildspeaker extends Card {
         // −1: Create a 3/3 green Beast creature token.
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new CreateCreatureTokenEffect("Beast", 3, 3,
+                List.of(new CreateTokenEffect("Beast", 3, 3,
                         CardColor.GREEN, List.of(CardSubtype.BEAST),
                         Set.of(), Set.of())),
                 "\u22121: Create a 3/3 green Beast creature token."

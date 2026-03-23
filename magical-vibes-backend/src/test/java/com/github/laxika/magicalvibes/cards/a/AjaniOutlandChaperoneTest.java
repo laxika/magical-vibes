@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -44,7 +44,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(1);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
     }
 
     @Test

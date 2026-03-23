@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -22,7 +22,7 @@ public class OriginSpellbomb extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new CreateCreatureTokenEffect(
+                List.of(new SacrificeSelfCost(), new CreateTokenEffect(
                         "Myr", 1, 1, null,
                         List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT))),
                 "{1}, {T}, Sacrifice Origin Spellbomb: Create a 1/1 colorless Myr artifact creature token."

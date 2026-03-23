@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,8 +31,8 @@ class HistoryOfBenaliaTest extends BaseCardTest {
 
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
         assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) effects.getFirst();
+        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
         assertThat(effect.amount()).isEqualTo(1);
         assertThat(effect.tokenName()).isEqualTo("Knight");
         assertThat(effect.power()).isEqualTo(2);
@@ -49,8 +49,8 @@ class HistoryOfBenaliaTest extends BaseCardTest {
 
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
         assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) effects.getFirst();
+        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
         assertThat(effect.amount()).isEqualTo(1);
         assertThat(effect.tokenName()).isEqualTo("Knight");
         assertThat(effect.power()).isEqualTo(2);

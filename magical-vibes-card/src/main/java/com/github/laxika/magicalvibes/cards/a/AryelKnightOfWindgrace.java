@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,7 +25,7 @@ public class AryelKnightOfWindgrace extends Card {
         // {2}{W}, {T}: Create a 2/2 white Knight creature token with vigilance.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{W}",
-                List.of(new CreateCreatureTokenEffect(
+                List.of(new CreateTokenEffect(
                         "Knight", 2, 2, CardColor.WHITE,
                         List.of(CardSubtype.KNIGHT),
                         Set.of(Keyword.VIGILANCE), Set.of()

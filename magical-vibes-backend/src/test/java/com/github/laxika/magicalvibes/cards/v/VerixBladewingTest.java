@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -36,8 +36,8 @@ class VerixBladewingTest extends BaseCardTest {
                 .isInstanceOf(KickedConditionalEffect.class);
         KickedConditionalEffect conditional =
                 (KickedConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) conditional.wrapped();
+        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect tokenEffect = (CreateTokenEffect) conditional.wrapped();
         assertThat(tokenEffect.tokenName()).isEqualTo("Karox Bladewing");
         assertThat(tokenEffect.power()).isEqualTo(4);
         assertThat(tokenEffect.toughness()).isEqualTo(4);

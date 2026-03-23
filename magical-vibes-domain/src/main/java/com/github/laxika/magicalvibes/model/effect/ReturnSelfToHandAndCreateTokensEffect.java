@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * Used by Thopter Assembly and similar cards that bounce themselves and produce tokens as a single
  * triggered ability resolution.
  */
-public record ReturnSelfToHandAndCreateTokensEffect(CreateCreatureTokenEffect tokenEffect) implements CardEffect {
+public record ReturnSelfToHandAndCreateTokensEffect(CreateTokenEffect tokenEffect) implements CardEffect {
 }

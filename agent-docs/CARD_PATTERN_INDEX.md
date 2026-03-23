@@ -105,7 +105,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Bite (pump + bite) | `a/AssertPerfection.java` | BoostFirstTargetCreatureEffect + FirstTargetDealsPowerDamageToSecondTargetEffect, multi-target with per-position filters |
 | Pump + debuff (two targets) | `l/LeechingBite.java` | BoostFirstTargetCreatureEffect + BoostSecondTargetCreatureEffect, multi-target with creature filters |
 | Damage creature + destroy equipment | `t/TurnToSlag.java` | DestroyEquipmentAttachedToTargetCreatureEffect + DealDamageToTargetCreatureEffect — effect order doesn't matter; lethal damage destruction is deferred until all effects on the stack entry resolve |
-| Sacrifice artifact spell cost + tokens | `k/KuldothaRebirth.java` | SacrificeArtifactCost + CreateCreatureTokenEffect — sacrifice artifact as additional spell cost |
+| Sacrifice artifact spell cost + tokens | `k/KuldothaRebirth.java` | SacrificeArtifactCost + CreateTokenEffect — sacrifice artifact as additional spell cost |
 | Sacrifice permanent spell cost + burn | `a/Artillerize.java` | SacrificePermanentCost(PermanentAnyOfPredicate) + DealDamageToAnyTargetEffect — sacrifice artifact or creature as additional spell cost |
 | Sacrifice creature spell cost + power-based mass debuff | `i/IchorExplosion.java` | SacrificeCreatureCost(false, true) + BoostAllCreaturesXEffect(-1, -1) — sacrifice creature, all creatures get -X/-X where X = sacrificed creature's power |
 | Exile graveyard creature spell cost + power-based damage | `c/CorpseLunge.java` | ExileCardFromGraveyardCost(CREATURE, false, false, true) + DealXDamageToTargetCreatureEffect — exile creature from graveyard as additional cost, deal damage equal to exiled card's power to target creature |
@@ -161,7 +161,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may bounce own historic | `g/GuardiansOfKoilos.java` | MayEffect(ReturnTargetPermanentToHandEffect()) + PermanentPredicateTargetFilter(AllOf(AnyOf(artifact, legendary, Saga), controlled-by-source, not-source)) — "you may return another target historic permanent you control to its owner's hand" |
 | ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has ON_OPENING_HAND_REVEAL MayEffect(EachOpponentMillsEffect(7)) |
 | ETB explore | `b/BrazenBuccaneers.java` | ON_ENTER_BATTLEFIELD ExploreEffect() — reveal top card; land → hand, non-land → +1/+1 counter + may put to graveyard |
-| ETB tokens + ability | `s/SiegeGangCommander.java` | CreateCreatureTokenEffect + activated sac ability |
+| ETB tokens + ability | `s/SiegeGangCommander.java` | CreateTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |
@@ -200,7 +200,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | On death | `b/BogardanFirefiend.java` | ON_DEATH DealDamageToTargetCreatureEffect |
-| On death with cascading tokens | `m/MitoticSlime.java` | ON_DEATH CreateCreatureTokenEffect with TokenEffectEntry — tokens themselves have death triggers creating smaller tokens |
+| On death with cascading tokens | `m/MitoticSlime.java` | ON_DEATH CreateTokenEffect with TokenEffectEntry — tokens themselves have death triggers creating smaller tokens |
 | On death exile self + random return | `m/MoldgrafMonstrosity.java` | ON_DEATH ReturnCardFromGraveyardEffect with `exileSourceFromGraveyard(true)` + `returnAtRandom(true)` + `randomCount(2)` + creature filter — exiles self then returns random creatures to battlefield |
 | Upkeep sacrifice/discard | `r/RazormaneMasticore.java` | UPKEEP_TRIGGERED + DRAW_TRIGGERED |
 | Upkeep sacrifice other + opponent life loss | `x/XathridDemon.java` | UPKEEP_TRIGGERED SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect(7) — sacrifice other creature, opponents lose life equal to its power; or tap self + lose 7 life |
@@ -213,7 +213,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pay life for keyword (no mana cost ability) | `a/AdantoVanguard.java` | STATIC StaticBoostEffect(2,0,SELF,PermanentIsAttackingPredicate) + ActivatedAbility(false, null, PayLifeCost(4)+GrantKeywordEffect(INDESTRUCTIBLE,SELF)) — "while attacking gets +2/+0" via static filter + "pay 4 life: gains indestructible until end of turn" with no mana cost |
 | Two abilities: sacrifice subtype for boost+life vs sacrifice another creature for boost | `t/ThallidOmnivore.java` | Ability 0: SacrificeSubtypeCreatureCost(SAPROLING)+BoostSelfEffect(2,2)+GainLifeEffect(2). Ability 1: SacrificeCreatureCost(excludeSelf=true)+BoostSelfEffect(2,2). Split "If a Saproling was sacrificed, gain life" into two separate activated abilities using existing effects |
 | Upkeep bounce | `s/StampedingWildebeests.java` | BounceCreatureOnUpkeepEffect |
-| Upkeep token | `v/VerdantForce.java` | EACH_UPKEEP_TRIGGERED CreateCreatureTokenEffect |
+| Upkeep token | `v/VerdantForce.java` | EACH_UPKEEP_TRIGGERED CreateTokenEffect |
 | Upkeep conditional self-bounce + tokens | `t/ThopterAssembly.java` | UPKEEP_TRIGGERED NoOtherSubtypeConditionalEffect(THOPTER, ReturnSelfToHandAndCreateTokensEffect) — intervening-if "no other Thopters", returns self + creates 5 tokens |
 | Upkeep token per equipment | `k/KembaKhaRegent.java` | UPKEEP_TRIGGERED CreateTokenPerEquipmentOnSourceEffect — tokens equal to attached Equipment |
 | Upkeep may target artifact charge | `v/VedalkenInfuser.java` | UPKEEP_TRIGGERED MayEffect(PutChargeCounterOnTargetPermanentEffect) + PermanentPredicateTargetFilter(PermanentIsArtifactPredicate) — may put charge counter on target artifact |
@@ -234,7 +234,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | On damaged creature dies | `s/SengirVampire.java` | ON_DAMAGED_CREATURE_DIES PutPlusOnePlusOneCounterOnSourceEffect |
 | On controller gains life | `a/AjanisPridemate.java` | ON_CONTROLLER_GAINS_LIFE PutCountersOnSourceEffect(1,1,1) — +1/+1 counter whenever controller gains life |
 | On ally creature with subtype enters | `c/ChampionOfTheParish.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD SubtypeConditionalEffect(HUMAN, PutCountersOnSourceEffect(1,1,1)) — +1/+1 counter whenever another Human you control enters |
-| On dealt damage to self | `n/NestedGhoul.java` | ON_DEALT_DAMAGE CreateCreatureTokenEffect — fires per source, both combat and non-combat |
+| On dealt damage to self | `n/NestedGhoul.java` | ON_DEALT_DAMAGE CreateTokenEffect — fires per source, both combat and non-combat |
 | On dealt damage: source controller poison | `r/ReaperOfSheoldred.java` | ON_DEALT_DAMAGE DamageSourceControllerGetsPoisonCounterEffect(null) marker — UUID filled at trigger time, gives source's controller 1 poison counter |
 | On dealt damage: source controller sacrifices | `p/PhyrexianObliterator.java` | ON_DEALT_DAMAGE DamageSourceControllerSacrificesPermanentsEffect(0,null) marker — count+playerId filled at trigger time, multi-permanent choice for sacrifice |
 | On opponent creature dealt damage | `k/KazarovSengirPureblood.java` | ON_OPPONENT_CREATURE_DEALT_DAMAGE PutCounterOnSelfEffect(PLUS_ONE_PLUS_ONE) — fires per damaged creature (combat + non-combat), scans all battlefields |
@@ -398,7 +398,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Sac creature for counter + sac self for draw | `c/CullingDais.java` | Two abilities: tap+SacrificeCreatureCost+PutChargeCounterOnSelfEffect, mana+SacrificeSelfCost+DrawCardsEqualToChargeCountersOnSourceEffect |
 | ETB + death draw (simple) | `i/IchorWellspring.java` | ON_ENTER_BATTLEFIELD DrawCardEffect + ON_DEATH DrawCardEffect — draws on ETB and when destroyed/sacrificed |
 | Spellbomb (sac for effect + may-pay draw) | `f/FlightSpellbomb.java` | Tap+SacrificeSelfCost+GrantKeywordEffect(TARGET) ability + ON_DEATH MayPayManaEffect("{U}", DrawCardEffect(1)) — Spellbomb cycle pattern |
-| Charge counter trigger + activated token | `g/GolemFoundry.java` | MayEffect(PutChargeCounterOnSelfOnArtifactCastEffect) on ON_ANY_PLAYER_CASTS_SPELL + activated RemoveChargeCountersFromSourceCost(3) + CreateCreatureTokenEffect |
+| Charge counter trigger + activated token | `g/GolemFoundry.java` | MayEffect(PutChargeCounterOnSelfOnArtifactCastEffect) on ON_ANY_PLAYER_CASTS_SPELL + activated RemoveChargeCountersFromSourceCost(3) + CreateTokenEffect |
 | Enters with fixed charge counters + tap-remove ability | `n/NecrogenCenser.java` | EnterWithFixedChargeCountersEffect(2) + tap+RemoveChargeCountersFromSourceCost(1)+TargetPlayerLosesLifeAndControllerGainsLifeEffect |
 | Discard predicate card cost + gain indestructible | `s/SanctumSpirit.java` | DiscardCardTypeCost(null, CardIsHistoricPredicate, "historic") + GrantKeywordEffect(INDESTRUCTIBLE, SELF) — discard a card matching a predicate as cost, no mana, no tap |
 | Study counter accumulation + sacrifice for mass reanimate | `g/GrimoireOfTheDead.java` | Ability 1: tap+{1}+DiscardCardTypeCost(null,null)+PutCounterOnSelfEffect(STUDY). Ability 2: tap+RemoveCounterFromSourceCost(3,STUDY)+SacrificeSelfCost+ReturnCardFromGraveyardEffect(returnAll, ALL_GRAVEYARDS, grantColor BLACK, grantSubtype ZOMBIE) |
@@ -419,7 +419,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep may multi-player target (exchange life) | `a/AxisOfMortality.java` | UPKEEP_TRIGGERED MayEffect(ExchangeTargetPlayersLifeTotalsEffect) — at beginning of your upkeep, you may have two target players exchange life totals. Uses `pendingUpkeepMultiPlayerTargets` queue for two-step player target selection, then MayEffect at resolution time |
 | Untap own artifacts on opponent's untap | `u/UnwindingClock.java` | STATIC UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(UNTAP, PermanentIsArtifactPredicate) — filtered variant of Seedborn Muse (which uses null filter for all permanents) |
 | Coin flip activated ability | `s/SorcerersStrongbox.java` | Tap+{2} FlipCoinWinEffect(SacrificeSelfAndDrawCardsEffect(3)) — flip a coin, if you win sacrifice self and draw 3 |
-| Token creation + tap-X-subtype destruction | `a/AryelKnightOfWindgrace.java` | Ability 1: tap+{2}{W} CreateCreatureTokenEffect(Knight 2/2 white vigilance). Ability 2: tap+{B}+TapXPermanentsCost(Knight, excludeSource)+DestroyTargetPermanentEffect with PermanentPowerAtMostXPredicate target filter — tap X untapped Knights to destroy creature with power X or less |
+| Token creation + tap-X-subtype destruction | `a/AryelKnightOfWindgrace.java` | Ability 1: tap+{2}{W} CreateTokenEffect(Knight 2/2 white vigilance). Ability 2: tap+{B}+TapXPermanentsCost(Knight, excludeSource)+DestroyTargetPermanentEffect with PermanentPowerAtMostXPredicate target filter — tap X untapped Knights to destroy creature with power X or less |
 
 ## Vehicles
 
@@ -483,7 +483,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
 | Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |
 | Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffectEffect(CantBeTargetOfSpellsOrAbilitiesEffect, GrantScope.OWN_CREATURES)` |
-| Create token | `d/DragonRoost.java` | CreateCreatureTokenEffect |
+| Create token | `d/DragonRoost.java` | CreateTokenEffect |
 | Mill target | `m/Millstone.java` | `(true, "{2}", MillTargetPlayerEffect, true)` |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
@@ -503,7 +503,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Planeswalker with discard/sacrifice/pile separation | `l/LilianaOfTheVeil.java` | +1 EachPlayerDiscardsEffect, -2 SacrificeCreatureEffect (targets player), -6 SeparatePermanentsIntoPilesAndSacrificeEffect |
-| Planeswalker with opponent reveal choice + silver counter exile + artifact-scaling token | `k/KarnScionOfUrza.java` | +1 KarnScionRevealTwoOpponentChoosesEffect, -1 KarnScionReturnSilverCounterCardEffect, -2 CreateCreatureTokenEffect with STATIC BoostSelfPerControlledPermanentEffect(1,1,PermanentIsArtifactPredicate) via tokenEffects map |
+| Planeswalker with opponent reveal choice + silver counter exile + artifact-scaling token | `k/KarnScionOfUrza.java` | +1 KarnScionRevealTwoOpponentChoosesEffect, -1 KarnScionReturnSilverCounterCardEffect, -2 CreateTokenEffect with STATIC BoostSelfPerControlledPermanentEffect(1,1,PermanentIsArtifactPredicate) via tokenEffects map |
 | Planeswalker with draw + delayed untap + tuck + emblem | `t/TeferiHeroOfDominaria.java` | +1 DrawCardEffect + RegisterDelayedUntapPermanentsEffect(2), -3 PutTargetPermanentIntoLibraryNFromTopEffect(2) with nonland filter, -8 TeferiHeroEmblemEffect. Emblem triggers ExileTargetOpponentPermanentOnDrawEffect on each draw |
 | Variable loyalty (-X) | `c/ChandraNalaar.java` | `ActivatedAbility.variableLoyaltyAbility(effects, desc, filter)` — loyalty cost is -X chosen by player, X stored in xValue |
 | Loyalty + mana + player damage | `c/ChandraBoldPyromancer.java` | +1 with AwardManaEffect + DealDamageToTargetPlayerEffect, -3 DealDamageToTargetCreatureOrPlaneswalkerEffect, -7 DealDamageToTargetPlayerEffect + DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect |

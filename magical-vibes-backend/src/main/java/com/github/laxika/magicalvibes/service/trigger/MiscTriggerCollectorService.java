@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
@@ -249,12 +249,12 @@ public class MiscTriggerCollectorService {
         }
 
         // Create the token for the controller of the triggering permanent
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 effect.tokenName(), effect.tokenPower(), effect.tokenToughness(),
                 effect.tokenColor(), effect.tokenSubtypes(),
                 Set.of(), Set.of()
         );
-        permanentControlResolutionService.applyCreateCreatureToken(
+        permanentControlResolutionService.applyCreateToken(
                 gameData, match.controllerId(), tokenEffect, match.permanent().getCard().getSetCode()
         );
 

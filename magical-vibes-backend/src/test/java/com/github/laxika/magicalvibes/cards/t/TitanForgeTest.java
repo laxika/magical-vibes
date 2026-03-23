@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,7 +45,7 @@ class TitanForgeTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(1).getManaCost()).isNull();
         assertThat(card.getActivatedAbilities().get(1).getEffects())
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 3)
-                .anyMatch(e -> e instanceof CreateCreatureTokenEffect);
+                .anyMatch(e -> e instanceof CreateTokenEffect);
     }
 
     // ===== First ability — charge counter =====

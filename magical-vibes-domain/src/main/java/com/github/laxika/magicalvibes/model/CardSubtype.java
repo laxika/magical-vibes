@@ -134,6 +134,7 @@ public enum CardSubtype {
     KRAKEN("Kraken"),
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),
+    TREASURE("Treasure"),
     VEHICLE("Vehicle");
 
     @Getter

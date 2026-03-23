@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
@@ -392,8 +392,8 @@ class MillResolutionServiceTest {
             service.resolveMillBottomOfTargetLibraryConditionalToken(gd, entry, effect);
 
             verify(graveyardService).addCardToGraveyard(gd, player2Id, creature);
-            verify(permanentControlResolutionService).applyCreateCreatureToken(
-                    eq(gd), eq(player1Id), any(CreateCreatureTokenEffect.class), eq("ISD"));
+            verify(permanentControlResolutionService).applyCreateToken(
+                    eq(gd), eq(player1Id), any(CreateTokenEffect.class), eq("ISD"));
             assertThat(gd.playerDecks.get(player2Id)).isEmpty();
         }
 

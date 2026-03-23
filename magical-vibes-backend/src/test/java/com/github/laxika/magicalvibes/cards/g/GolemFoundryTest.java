@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -43,7 +43,7 @@ class GolemFoundryTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getEffects())
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 3)
-                .anyMatch(e -> e instanceof CreateCreatureTokenEffect);
+                .anyMatch(e -> e instanceof CreateTokenEffect);
     }
 
     // ===== Charge counter trigger =====

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
@@ -24,10 +25,10 @@ public class VerixBladewing extends Card {
         // When Verix Bladewing enters, if it was kicked, create Karox Bladewing,
         // a legendary 4/4 red Dragon creature token with flying.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new KickedConditionalEffect(
-                new CreateCreatureTokenEffect(1, "Karox Bladewing", 4, 4,
+                new CreateTokenEffect(CardType.CREATURE, 1, "Karox Bladewing", 4, 4,
                         CardColor.RED, null, List.of(CardSubtype.DRAGON),
                         Set.of(Keyword.FLYING), Set.of(),
-                        false, false, Map.of(), false, false, true)
+                        false, false, Map.of(), List.of(), false, false, true)
         ));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
@@ -27,7 +27,7 @@ public class Slimefoot extends Card {
 
         // {4}: Create a 1/1 green Saproling creature token.
         addActivatedAbility(new ActivatedAbility(false, "{4}",
-                List.of(new CreateCreatureTokenEffect("Saproling", 1, 1,
+                List.of(new CreateTokenEffect("Saproling", 1, 1,
                         CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of())),
                 "{4}: Create a 1/1 green Saproling creature token."));
     }

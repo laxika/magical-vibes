@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -51,9 +51,9 @@ class MoorlandHauntTest extends BaseCardTest {
         assertThat(tokenAbility.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
         ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) tokenAbility.getEffects().get(0);
         assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(tokenAbility.getEffects().get(1)).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(tokenAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
 
-        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) tokenAbility.getEffects().get(1);
+        CreateTokenEffect tokenEffect = (CreateTokenEffect) tokenAbility.getEffects().get(1);
         assertThat(tokenEffect.tokenName()).isEqualTo("Spirit");
         assertThat(tokenEffect.power()).isEqualTo(1);
         assertThat(tokenEffect.toughness()).isEqualTo(1);

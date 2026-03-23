@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,9 +32,9 @@ class SiegeGangCommanderTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect tokenEffect =
-                (CreateCreatureTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+                .isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect tokenEffect =
+                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(tokenEffect.amount()).isEqualTo(3);
 
         assertThat(card.getActivatedAbilities()).hasSize(1);

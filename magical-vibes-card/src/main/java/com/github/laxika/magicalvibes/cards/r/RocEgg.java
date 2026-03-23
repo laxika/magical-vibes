@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +16,7 @@ public class RocEgg extends Card {
 
     public RocEgg() {
         // When Roc Egg dies, create a 3/3 white Bird creature token with flying.
-        addEffect(EffectSlot.ON_DEATH, new CreateCreatureTokenEffect(
+        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 "Bird", 3, 3, CardColor.WHITE,
                 List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()
         ));

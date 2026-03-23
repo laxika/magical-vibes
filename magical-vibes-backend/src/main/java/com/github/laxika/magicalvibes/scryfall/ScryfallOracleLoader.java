@@ -165,6 +165,17 @@ public class ScryfallOracleLoader {
         return result;
     }
 
+    /**
+     * Looks up the Scryfall token image data for a non-creature token (no power/toughness).
+     */
+    public static TokenImageData getTokenImage(String setCode, String tokenName, CardColor color) {
+        if (setCode == null) return null;
+        Map<String, TokenImageData> tokenMap = tokenImageRegistry.get(setCode);
+        if (tokenMap == null) return null;
+        String key = buildTokenKey(tokenName, null, null, color);
+        return tokenMap.get(key);
+    }
+
     private static void loadTokenSets(Path cachePath) {
         for (CardSet cardSet : CardSet.values()) {
             String tokenSetCode = "t" + cardSet.getCode().toLowerCase();

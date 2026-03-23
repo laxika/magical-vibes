@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
@@ -91,9 +91,9 @@ public class PermanentControlResolutionService {
     private final TriggerCollectionService triggerCollectionService;
     private final CreatureControlService creatureControlService;
 
-    @HandlesEffect(CreateCreatureTokenEffect.class)
-    private void resolveCreateCreatureToken(GameData gameData, StackEntry entry, CreateCreatureTokenEffect effect) {
-        applyCreateCreatureToken(gameData, entry.getControllerId(), effect, entry.getCard().getSetCode());
+    @HandlesEffect(CreateTokenEffect.class)
+    private void resolveCreateToken(GameData gameData, StackEntry entry, CreateTokenEffect effect) {
+        applyCreateToken(gameData, entry.getControllerId(), effect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(PutSlimeCounterAndCreateOozeTokenEffect.class)
@@ -123,24 +123,24 @@ public class PermanentControlResolutionService {
         log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
 
         // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 1, "Ooze", 0, 0,
                 CardColor.GREEN, List.of(CardSubtype.OOZE),
                 Set.of(), Set.of(),
                 Map.of(EffectSlot.STATIC, new BoostSelfBySlimeCountersOnLinkedPermanentEffect(sourcePermId))
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateXCreatureTokenEffect.class)
     private void resolveCreateXCreatureToken(GameData gameData, StackEntry entry, CreateXCreatureTokenEffect effect) {
         int amount = entry.getXValue();
         if (amount <= 0) return;
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 amount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensPerOwnCreatureDeathsThisTurnEffect.class)
@@ -148,11 +148,11 @@ public class PermanentControlResolutionService {
                                                                    CreateTokensPerOwnCreatureDeathsThisTurnEffect effect) {
         int amount = gameData.creatureDeathCountThisTurn.getOrDefault(entry.getControllerId(), 0);
         if (amount <= 0) return;
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 amount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensPerCreatureCardInGraveyardEffect.class)
@@ -169,12 +169,12 @@ public class PermanentControlResolutionService {
             }
         }
         if (creatureCount <= 0) return;
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
-                creatureCount, effect.tokenName(), effect.power(), effect.toughness(),
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
+                CardType.CREATURE, creatureCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), null, effect.subtypes(), effect.keywords(), effect.additionalTypes(),
-                effect.tappedAndAttacking(), false, Map.of(), false, false, false
+                effect.tappedAndAttacking(), false, Map.of(), List.of(), false, false, false
         );
-        applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensEqualToChargeCountersOnSourceEffect.class)
@@ -182,11 +182,11 @@ public class PermanentControlResolutionService {
                                                           CreateTokensEqualToChargeCountersOnSourceEffect effect) {
         int count = entry.getXValue();
         if (count <= 0) return;
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 count, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensEqualToControlledCreatureCountEffect.class)
@@ -203,11 +203,11 @@ public class PermanentControlResolutionService {
         }
         if (count <= 0) return;
 
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 count, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensPerControlledLandSubtypeEffect.class)
@@ -224,11 +224,11 @@ public class PermanentControlResolutionService {
         }
         if (count <= 0) return;
 
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 count, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokensPerControlledCreatureSubtypeEffect.class)
@@ -247,11 +247,11 @@ public class PermanentControlResolutionService {
         int tokenCount = count / effect.divisor();
         if (tokenCount <= 0) return;
 
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 tokenCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(ReturnSelfToHandAndCreateTokensEffect.class)
@@ -272,7 +272,7 @@ public class PermanentControlResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
 
-        applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect(), entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), effect.tokenEffect(), entry.getCard().getSetCode());
     }
 
     @HandlesEffect(SacrificeEnchantedCreatureAndCreateTokenEffect.class)
@@ -312,7 +312,7 @@ public class PermanentControlResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Create token for the aura's controller
-        applyCreateCreatureToken(gameData, entry.getControllerId(), effect.tokenEffect(), entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), effect.tokenEffect(), entry.getCard().getSetCode());
     }
 
     @HandlesEffect(SacrificeEnchantedCreatureEffect.class)
@@ -352,20 +352,23 @@ public class PermanentControlResolutionService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
-    public void applyCreateCreatureToken(GameData gameData, UUID controllerId, CreateCreatureTokenEffect token, String sourceSetCode) {
+    public void applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         int totalAmount = token.amount() * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        boolean isCreature = token.primaryType() == CardType.CREATURE;
         for (int i = 0; i < totalAmount; i++) {
             Card tokenCard = new Card();
             tokenCard.setName(token.tokenName());
-            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setType(token.primaryType());
             tokenCard.setManaCost("");
             tokenCard.setToken(true);
             tokenCard.setColor(token.color());
-            tokenCard.setPower(token.power());
-            tokenCard.setToughness(token.toughness());
+            if (isCreature) {
+                tokenCard.setPower(token.power());
+                tokenCard.setToughness(token.toughness());
+            }
             tokenCard.setSubtypes(token.subtypes());
             if (token.keywords() != null && !token.keywords().isEmpty()) {
                 tokenCard.setKeywords(token.keywords());
@@ -381,11 +384,23 @@ public class PermanentControlResolutionService {
                     tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
                 }
             }
+            if (token.tokenAbilities() != null) {
+                for (ActivatedAbility ability : token.tokenAbilities()) {
+                    tokenCard.addActivatedAbility(ability);
+                }
+            }
 
             // Look up token image from Scryfall token set
-            ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
-                    sourceSetCode, token.tokenName(), token.power(), token.toughness(), token.color()
-            );
+            ScryfallOracleLoader.TokenImageData imageData;
+            if (isCreature) {
+                imageData = ScryfallOracleLoader.getTokenImage(
+                        sourceSetCode, token.tokenName(), token.power(), token.toughness(), token.color()
+                );
+            } else {
+                imageData = ScryfallOracleLoader.getTokenImage(
+                        sourceSetCode, token.tokenName(), token.color()
+                );
+            }
             if (imageData != null) {
                 tokenCard.setSetCode(imageData.setCode());
                 tokenCard.setCollectorNumber(imageData.collectorNumber());
@@ -417,13 +432,20 @@ public class PermanentControlResolutionService {
             } else {
                 colorDesc = "";
             }
-            String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : (token.tapped() ? " tapped" : "");
-            String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-            if (!gameData.interaction.isAwaitingInput()) {
-                legendRuleService.checkLegendRule(gameData, controllerId);
+            if (isCreature) {
+                String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : (token.tapped() ? " tapped" : "");
+                String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    legendRuleService.checkLegendRule(gameData, controllerId);
+                }
+            } else {
+                String tokenTypeDesc = token.primaryType().name().charAt(0) + token.primaryType().name().substring(1).toLowerCase();
+                String logEntry = "A " + colorDesc + token.tokenName() + " " + tokenTypeDesc.toLowerCase() + " token enters the battlefield.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
             }
         }
 
@@ -515,11 +537,11 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 equipmentCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokenPerAttachmentOnSourceEffect.class)
@@ -556,12 +578,12 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
-                attachmentCount, effect.tokenName(), effect.power(), effect.toughness(),
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
+                CardType.CREATURE, attachmentCount, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), null, effect.subtypes(), effect.keywords(), effect.additionalTypes(),
-                false, false, Map.of(), false, effect.exileAtEndStep(), false
+                false, false, Map.of(), List.of(), false, effect.exileAtEndStep(), false
         );
-        applyCreateCreatureToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateTokenPerOpponentPoisonCounterEffect.class)
@@ -581,11 +603,11 @@ public class PermanentControlResolutionService {
             return;
         }
 
-        CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+        CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 totalPoison, effect.tokenName(), effect.power(), effect.toughness(),
                 effect.color(), effect.subtypes(), effect.keywords(), effect.additionalTypes()
         );
-        applyCreateCreatureToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
+        applyCreateToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     }
 
     @HandlesEffect(CreateLifeTotalAvatarTokenEffect.class)

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class GargoyleCastle extends Card {
                 "{5}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new CreateCreatureTokenEffect(
+                        new CreateTokenEffect(
                                 "Gargoyle", 3, 4, null,
                                 List.of(CardSubtype.GARGOYLE),
                                 Set.of(Keyword.FLYING),

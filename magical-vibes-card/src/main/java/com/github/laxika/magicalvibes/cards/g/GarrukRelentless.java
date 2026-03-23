@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -50,7 +50,7 @@ public class GarrukRelentless extends Card {
         // 0: Create a 2/2 green Wolf creature token.
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new CreateCreatureTokenEffect("Wolf", 2, 2,
+                List.of(new CreateTokenEffect("Wolf", 2, 2,
                         CardColor.GREEN, List.of(CardSubtype.WOLF),
                         Set.of(), Set.of())),
                 "0: Create a 2/2 green Wolf creature token."

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -19,7 +19,7 @@ public class Myrsmith extends Card {
     public Myrsmith() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new CreateCreatureTokenEffect("Myr", 1, 1, null,
+                        List.of(new CreateTokenEffect("Myr", 1, 1, null,
                                 List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT))),
                         "{1}"),
                 "Pay {1} to create a 1/1 colorless Myr artifact creature token?"

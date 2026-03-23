@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -34,8 +34,8 @@ class RiteOfBelzenlokTest extends BaseCardTest {
 
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
         assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) effects.getFirst();
+        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
         assertThat(effect.amount()).isEqualTo(2);
         assertThat(effect.tokenName()).isEqualTo("Cleric");
         assertThat(effect.power()).isZero();
@@ -52,8 +52,8 @@ class RiteOfBelzenlokTest extends BaseCardTest {
 
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
         assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) effects.getFirst();
+        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
         assertThat(effect.amount()).isEqualTo(2);
         assertThat(effect.tokenName()).isEqualTo("Cleric");
         assertThat(effect.power()).isZero();
@@ -67,8 +67,8 @@ class RiteOfBelzenlokTest extends BaseCardTest {
 
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
         assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) effects.getFirst();
+        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
         assertThat(effect.amount()).isEqualTo(1);
         assertThat(effect.tokenName()).isEqualTo("Demon");
         assertThat(effect.power()).isEqualTo(6);

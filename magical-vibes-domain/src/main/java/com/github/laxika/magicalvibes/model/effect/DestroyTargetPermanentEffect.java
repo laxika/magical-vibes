@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record DestroyTargetPermanentEffect(
         boolean cannotBeRegenerated,
-        CreateCreatureTokenEffect tokenForController
+        CreateTokenEffect tokenForController
 ) implements CardEffect {
 
     public DestroyTargetPermanentEffect() {

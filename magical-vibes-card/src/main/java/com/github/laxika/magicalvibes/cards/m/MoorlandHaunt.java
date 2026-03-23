@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class MoorlandHaunt extends Card {
                 "{W}{U}",
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.CREATURE),
-                        new CreateCreatureTokenEffect(
+                        new CreateTokenEffect(
                                 "Spirit", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.SPIRIT),
                                 Set.of(Keyword.FLYING),

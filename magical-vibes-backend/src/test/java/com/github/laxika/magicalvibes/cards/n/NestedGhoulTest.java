@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -32,7 +32,7 @@ class NestedGhoulTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
 
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0);
+        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0);
         assertThat(effect.amount()).isEqualTo(1);
         assertThat(effect.tokenName()).isEqualTo("Zombie");
         assertThat(effect.power()).isEqualTo(2);

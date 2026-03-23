@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -27,7 +27,7 @@ public class MemorialToGlory extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{W}",
-                List.of(new SacrificeSelfCost(), new CreateCreatureTokenEffect(
+                List.of(new SacrificeSelfCost(), new CreateTokenEffect(
                         2, "Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.SOLDIER), Set.of(), Set.of()
                 )),

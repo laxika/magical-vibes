@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class WurmcoilEngineTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(2);
 
-        CreateCreatureTokenEffect deathtouch = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
+        CreateTokenEffect deathtouch = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
         assertThat(deathtouch.amount()).isEqualTo(1);
         assertThat(deathtouch.tokenName()).isEqualTo("Phyrexian Wurm");
         assertThat(deathtouch.power()).isEqualTo(3);
@@ -37,7 +37,7 @@ class WurmcoilEngineTest extends BaseCardTest {
         assertThat(deathtouch.keywords()).containsExactly(Keyword.DEATHTOUCH);
         assertThat(deathtouch.additionalTypes()).containsExactly(CardType.ARTIFACT);
 
-        CreateCreatureTokenEffect lifelink = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(1);
+        CreateTokenEffect lifelink = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(1);
         assertThat(lifelink.amount()).isEqualTo(1);
         assertThat(lifelink.tokenName()).isEqualTo("Phyrexian Wurm");
         assertThat(lifelink.power()).isEqualTo(3);

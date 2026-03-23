@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesByCreatureCardsInGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
@@ -42,7 +42,7 @@ class GarrukRelentlessTest extends BaseCardTest {
                 .isInstanceOf(PlaneswalkerDealDamageAndReceivePowerDamageEffect.class);
         assertThat(card.getActivatedAbilities().get(1).getLoyaltyCost()).isEqualTo(0);
         assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(CreateCreatureTokenEffect.class);
+                .isInstanceOf(CreateTokenEffect.class);
         assertThat(card.getBackFaceCard()).isNotNull();
         assertThat(card.getBackFaceClassName()).isEqualTo("GarrukTheVeilCursed");
     }
@@ -54,7 +54,7 @@ class GarrukRelentlessTest extends BaseCardTest {
         assertThat(backFace.getActivatedAbilities()).hasSize(3);
         assertThat(backFace.getActivatedAbilities().get(0).getLoyaltyCost()).isEqualTo(1);
         assertThat(backFace.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(CreateCreatureTokenEffect.class);
+                .isInstanceOf(CreateTokenEffect.class);
         assertThat(backFace.getActivatedAbilities().get(1).getLoyaltyCost()).isEqualTo(-1);
         assertThat(backFace.getActivatedAbilities().get(1).getEffects().getFirst())
                 .isInstanceOf(SacrificeCreatureSearchLibraryForCreatureToHandEffect.class);

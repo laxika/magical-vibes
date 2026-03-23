@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -36,7 +36,7 @@ class MemorialToGloryTest extends BaseCardTest {
         assertThat(sacrificeAbility.getManaCost()).isEqualTo("{3}{W}");
         assertThat(sacrificeAbility.getEffects()).hasSize(2);
         assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
     }
 
     // ===== Enters the battlefield tapped =====

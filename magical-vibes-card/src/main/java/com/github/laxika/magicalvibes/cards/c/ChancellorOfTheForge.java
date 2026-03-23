@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
@@ -20,7 +20,7 @@ public class ChancellorOfTheForge extends Card {
         // You may reveal this card from your opening hand. If you do, at the beginning of
         // the first upkeep, create a 1/1 red Phyrexian Goblin creature token with haste.
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
-                new CreateCreatureTokenEffect(
+                new CreateTokenEffect(
                         "Phyrexian Goblin", 1, 1, CardColor.RED,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN),
                         Set.of(Keyword.HASTE), Set.of()),

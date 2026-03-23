@@ -104,7 +104,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
 - Kindred Enchantment with ETB token creation + activated token ability:
-  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateCreatureTokenEffect(N, tokenName, power, toughness, color, colors, subtypes))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateCreatureTokenEffect(tokenName, power, toughness, color, colors, subtypes)), description))`
+  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(N, tokenName, power, toughness, color, colors, subtypes))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes)), description))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/ClachanFestival.java`
 
 - Per-blocker trigger ("becomes blocked by a creature"):

@@ -8,6 +8,6 @@ package com.github.laxika.magicalvibes.model.effect;
  * The token is always created for the aura's controller regardless of who controlled the enchanted creature.</p>
  */
 public record SacrificeEnchantedCreatureAndCreateTokenEffect(
-        CreateCreatureTokenEffect tokenEffect
+        CreateTokenEffect tokenEffect
 ) implements CardEffect {
 }

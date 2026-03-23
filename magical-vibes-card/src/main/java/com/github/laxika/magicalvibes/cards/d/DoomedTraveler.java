@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +16,7 @@ public class DoomedTraveler extends Card {
 
     public DoomedTraveler() {
         // When Doomed Traveler dies, create a 1/1 white Spirit creature token with flying.
-        addEffect(EffectSlot.ON_DEATH, new CreateCreatureTokenEffect(
+        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 "Spirit", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()
         ));

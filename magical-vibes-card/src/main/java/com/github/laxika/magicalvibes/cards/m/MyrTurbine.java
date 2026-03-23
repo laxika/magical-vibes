@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -20,7 +20,7 @@ public class MyrTurbine extends Card {
         // {T}: Create a 1/1 colorless Myr artifact creature token.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new CreateCreatureTokenEffect(
+                List.of(new CreateTokenEffect(
                         1, "Myr", 1, 1, null,
                         List.of(CardSubtype.MYR),
                         Set.of(),

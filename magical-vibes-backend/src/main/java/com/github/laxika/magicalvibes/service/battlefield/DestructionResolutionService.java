@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelf
 import com.github.laxika.magicalvibes.model.effect.DestroySourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -1388,20 +1388,23 @@ public class DestructionResolutionService {
     }
 
     private void createTokenForPlayer(GameData gameData, UUID controllerId,
-                                      CreateCreatureTokenEffect token, String sourceName) {
+                                      CreateTokenEffect token, String sourceName) {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        boolean isCreature = token.primaryType() == CardType.CREATURE;
 
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = new Card();
             tokenCard.setName(token.tokenName());
-            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setType(token.primaryType());
             tokenCard.setManaCost("");
             tokenCard.setToken(true);
             tokenCard.setColor(token.color());
-            tokenCard.setPower(token.power());
-            tokenCard.setToughness(token.toughness());
+            if (isCreature) {
+                tokenCard.setPower(token.power());
+                tokenCard.setToughness(token.toughness());
+            }
             tokenCard.setSubtypes(token.subtypes());
             if (token.keywords() != null && !token.keywords().isEmpty()) {
                 tokenCard.setKeywords(token.keywords());
@@ -1415,13 +1418,20 @@ public class DestructionResolutionService {
 
             String playerName = gameData.playerIdToName.get(controllerId);
             String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
-            String logEntry = playerName + " creates a " + token.power() + "/" + token.toughness()
-                    + " " + colorName + token.tokenName() + " creature token.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
-                    token.power(), token.toughness(), token.tokenName(), playerName);
+            if (isCreature) {
+                String logEntry = playerName + " creates a " + token.power() + "/" + token.toughness()
+                        + " " + colorName + token.tokenName() + " creature token.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
+                        token.power(), token.toughness(), token.tokenName(), playerName);
 
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+            } else {
+                String logEntry = playerName + " creates a " + colorName + token.tokenName() + " token.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
+                        token.tokenName(), playerName);
+            }
         }
     }
 

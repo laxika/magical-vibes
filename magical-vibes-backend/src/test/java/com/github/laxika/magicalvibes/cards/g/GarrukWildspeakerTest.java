@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -58,7 +58,7 @@ class GarrukWildspeakerTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(ability.getEffects().get(0)).isInstanceOf(CreateTokenEffect.class);
     }
 
     @Test

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -40,9 +40,9 @@ class GargoyleCastleTest extends BaseCardTest {
         assertThat(sacrificeAbility.isNeedsTarget()).isFalse();
         assertThat(sacrificeAbility.getEffects()).hasSize(2);
         assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
 
-        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) sacrificeAbility.getEffects().get(1);
+        CreateTokenEffect tokenEffect = (CreateTokenEffect) sacrificeAbility.getEffects().get(1);
         assertThat(tokenEffect.tokenName()).isEqualTo("Gargoyle");
         assertThat(tokenEffect.power()).isEqualTo(3);
         assertThat(tokenEffect.toughness()).isEqualTo(4);

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,13 +24,13 @@ class MitoticSlimeTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Has ON_DEATH CreateCreatureTokenEffect creating two 2/2 Ooze tokens with their own death triggers")
+    @DisplayName("Has ON_DEATH CreateTokenEffect creating two 2/2 Ooze tokens with their own death triggers")
     void hasCorrectEffects() {
         MitoticSlime card = new MitoticSlime();
 
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
 
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
+        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
         assertThat(effect.amount()).isEqualTo(2);
         assertThat(effect.tokenName()).isEqualTo("Ooze");
         assertThat(effect.power()).isEqualTo(2);
@@ -44,9 +44,9 @@ class MitoticSlimeTest extends BaseCardTest {
         assertThat(effect.tokenEffects()).hasSize(1);
         assertThat(effect.tokenEffects()).containsKey(EffectSlot.ON_DEATH);
         CardEffect tokenDeathEffect = effect.tokenEffects().get(EffectSlot.ON_DEATH);
-        assertThat(tokenDeathEffect).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(tokenDeathEffect).isInstanceOf(CreateTokenEffect.class);
 
-        CreateCreatureTokenEffect innerEffect = (CreateCreatureTokenEffect) tokenDeathEffect;
+        CreateTokenEffect innerEffect = (CreateTokenEffect) tokenDeathEffect;
         assertThat(innerEffect.amount()).isEqualTo(2);
         assertThat(innerEffect.tokenName()).isEqualTo("Ooze");
         assertThat(innerEffect.power()).isEqualTo(1);
@@ -124,7 +124,7 @@ class MitoticSlimeTest extends BaseCardTest {
             for (Permanent oozeToken : oozeTokens) {
                 assertThat(oozeToken.getCard().getEffects(EffectSlot.ON_DEATH)).hasSize(1);
                 assertThat(oozeToken.getCard().getEffects(EffectSlot.ON_DEATH).getFirst())
-                        .isInstanceOf(CreateCreatureTokenEffect.class);
+                        .isInstanceOf(CreateTokenEffect.class);
             }
         }
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class ElspethTirel extends Card {
         // −2: Create three 1/1 white Soldier creature tokens.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new CreateCreatureTokenEffect(
+                List.of(new CreateTokenEffect(
                         3, "Soldier", 1, 1,
                         CardColor.WHITE,
                         List.of(CardSubtype.SOLDIER),

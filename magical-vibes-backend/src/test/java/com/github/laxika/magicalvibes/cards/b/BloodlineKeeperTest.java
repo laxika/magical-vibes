@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -195,7 +195,7 @@ class BloodlineKeeperTest extends BaseCardTest {
         // First ability: tap to create token
         assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
         assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .anyMatch(e -> e instanceof CreateCreatureTokenEffect);
+                .anyMatch(e -> e instanceof CreateTokenEffect);
 
         // Second ability: {B} transform with subtype restriction
         assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isFalse();

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
@@ -58,7 +58,7 @@ class ConversionChamberTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isEqualTo("{2}");
         assertThat(ability.getEffects())
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof CreateCreatureTokenEffect);
+                .anyMatch(e -> e instanceof CreateTokenEffect);
     }
 
     // ===== First ability — exile artifact from graveyard and gain charge counter =====

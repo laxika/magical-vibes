@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +18,7 @@ public class TheHive extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}",
-                List.of(new CreateCreatureTokenEffect(
+                List.of(new CreateTokenEffect(
                         "Wasp", 1, 1, null,
                         List.of(CardSubtype.INSECT),
                         Set.of(Keyword.FLYING),

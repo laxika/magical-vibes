@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,9 +23,9 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         ArmyOfTheDamned card = new ArmyOfTheDamned();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
 
-        CreateCreatureTokenEffect effect = (CreateCreatureTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.amount()).isEqualTo(13);
         assertThat(effect.tapped()).isTrue();
 

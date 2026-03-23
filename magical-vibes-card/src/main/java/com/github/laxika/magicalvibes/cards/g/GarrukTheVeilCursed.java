@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesByCreatureCardsInGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
@@ -24,7 +24,7 @@ public class GarrukTheVeilCursed extends Card {
         // +1: Create a 1/1 black Wolf creature token with deathtouch.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new CreateCreatureTokenEffect("Wolf", 1, 1,
+                List.of(new CreateTokenEffect("Wolf", 1, 1,
                         CardColor.BLACK, List.of(CardSubtype.WOLF),
                         Set.of(Keyword.DEATHTOUCH), Set.of())),
                 "+1: Create a 1/1 black Wolf creature token with deathtouch."

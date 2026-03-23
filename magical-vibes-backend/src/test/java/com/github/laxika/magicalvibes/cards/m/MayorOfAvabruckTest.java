@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -79,9 +79,9 @@ class MayorOfAvabruckTest extends BaseCardTest {
         // Controller end step token creation
         assertThat(backFace.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
         assertThat(backFace.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect tokenEffect =
-                (CreateCreatureTokenEffect) backFace.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
+                .isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect tokenEffect =
+                (CreateTokenEffect) backFace.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
         assertThat(tokenEffect.tokenName()).isEqualTo("Wolf");
         assertThat(tokenEffect.power()).isEqualTo(2);
         assertThat(tokenEffect.toughness()).isEqualTo(2);

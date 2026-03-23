@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +16,7 @@ public class PrecursorGolem extends Card {
 
     public PrecursorGolem() {
         // When Precursor Golem enters the battlefield, create two 3/3 colorless Golem artifact creature tokens.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateCreatureTokenEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 2, "Golem", 3, 3, null, List.of(CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT)));
 
         // Whenever a player casts an instant or sorcery spell that targets only a single Golem,

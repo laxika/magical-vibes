@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -40,7 +40,7 @@ public class KarnScionOfUrza extends Card {
         // "This creature gets +1/+1 for each artifact you control."
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new CreateCreatureTokenEffect(
+                List.of(new CreateTokenEffect(
                         1, "Construct", 0, 0,
                         null, List.of(CardSubtype.CONSTRUCT),
                         Set.of(), Set.of(CardType.ARTIFACT),

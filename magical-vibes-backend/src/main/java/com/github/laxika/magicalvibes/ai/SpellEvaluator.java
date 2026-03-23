@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
@@ -120,9 +120,13 @@ public class SpellEvaluator {
         if (effect instanceof DrawCardEffect draw) {
             return draw.amount() * 6.0;
         }
-        if (effect instanceof CreateCreatureTokenEffect token) {
-            double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-            return tokenScore * token.amount();
+        if (effect instanceof CreateTokenEffect token) {
+            if (token.primaryType() == CardType.CREATURE) {
+                double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
+                return tokenScore * token.amount();
+            } else {
+                return 3.0 * token.amount();
+            }
         }
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
             return evaluateDamageEffect(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
@@ -221,9 +225,13 @@ public class SpellEvaluator {
         }
 
         // Tokens
-        if (effect instanceof CreateCreatureTokenEffect token) {
-            double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-            return tokenScore * token.amount();
+        if (effect instanceof CreateTokenEffect token) {
+            if (token.primaryType() == CardType.CREATURE) {
+                double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
+                return tokenScore * token.amount();
+            } else {
+                return 3.0 * token.amount();
+            }
         }
 
         // Life

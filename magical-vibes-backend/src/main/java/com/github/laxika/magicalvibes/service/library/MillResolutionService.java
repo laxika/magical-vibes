@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCount
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilTypeMillAndBoostAttackerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -221,12 +221,12 @@ public class MillResolutionService {
                 gameData.id, sourceName, targetPlayerName, bottomCard.getName());
 
         if (bottomCard.hasType(effect.conditionType())) {
-            CreateCreatureTokenEffect tokenEffect = new CreateCreatureTokenEffect(
+            CreateTokenEffect tokenEffect = new CreateTokenEffect(
                     effect.tokenName(), effect.tokenPower(), effect.tokenToughness(),
                     effect.tokenColor(), effect.tokenSubtypes(),
                     Set.of(), Set.of()
             );
-            permanentControlResolutionService.applyCreateCreatureToken(
+            permanentControlResolutionService.applyCreateToken(
                     gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode()
             );
         }

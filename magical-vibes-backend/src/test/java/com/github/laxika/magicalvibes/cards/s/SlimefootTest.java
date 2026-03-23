@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
@@ -62,9 +62,9 @@ class SlimefootTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{4}");
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect tokenEffect =
-                (CreateCreatureTokenEffect) card.getActivatedAbilities().get(0).getEffects().get(0);
+                .isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect tokenEffect =
+                (CreateTokenEffect) card.getActivatedAbilities().get(0).getEffects().get(0);
         assertThat(tokenEffect.tokenName()).isEqualTo("Saproling");
         assertThat(tokenEffect.power()).isEqualTo(1);
         assertThat(tokenEffect.toughness()).isEqualTo(1);

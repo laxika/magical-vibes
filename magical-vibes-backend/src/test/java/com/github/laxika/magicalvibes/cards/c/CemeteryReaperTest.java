@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -53,7 +53,7 @@ class CemeteryReaperTest extends BaseCardTest {
         assertThat(ability.getEffects())
                 .anyMatch(e -> e instanceof ExileTargetCardFromGraveyardEffect ex
                         && ex.requiredType() == CardType.CREATURE)
-                .anyMatch(e -> e instanceof CreateCreatureTokenEffect);
+                .anyMatch(e -> e instanceof CreateTokenEffect);
     }
 
     // ===== Static effect: buffs own Zombies =====

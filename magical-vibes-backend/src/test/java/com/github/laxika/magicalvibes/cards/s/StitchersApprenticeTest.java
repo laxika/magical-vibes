@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControllerSacrificesCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ class StitchersApprenticeTest extends BaseCardTest {
     // ===== Ability structure =====
 
     @Test
-    @DisplayName("Activated ability has CreateCreatureTokenEffect and ControllerSacrificesCreatureEffect")
+    @DisplayName("Activated ability has CreateTokenEffect and ControllerSacrificesCreatureEffect")
     void abilityHasCorrectEffects() {
         StitchersApprentice card = new StitchersApprentice();
 
@@ -31,7 +31,7 @@ class StitchersApprenticeTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isTrue();
         assertThat(ability.getManaCost()).isEqualTo("{1}{U}");
         assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(ability.getEffects().get(0)).isInstanceOf(CreateTokenEffect.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(ControllerSacrificesCreatureEffect.class);
     }
 

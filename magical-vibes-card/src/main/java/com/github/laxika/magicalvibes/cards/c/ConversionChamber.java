@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
@@ -34,7 +34,7 @@ public class ConversionChamber extends Card {
                 "{2}",
                 List.of(
                         new RemoveChargeCountersFromSourceCost(1),
-                        new CreateCreatureTokenEffect("Golem", 3, 3, null,
+                        new CreateTokenEffect("Golem", 3, 3, null,
                                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT))
                 ),
                 "{2}, {T}, Remove a charge counter from Conversion Chamber: Create a 3/3 colorless Phyrexian Golem artifact creature token."

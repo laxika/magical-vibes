@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
@@ -36,7 +36,7 @@ public class TrigonOfInfestation extends Card {
                 "{2}",
                 List.of(
                         new RemoveChargeCountersFromSourceCost(1),
-                        new CreateCreatureTokenEffect("Phyrexian Insect", 1, 1, CardColor.GREEN,
+                        new CreateTokenEffect("Phyrexian Insect", 1, 1, CardColor.GREEN,
                                 List.of(CardSubtype.PHYREXIAN, CardSubtype.INSECT),
                                 Set.of(Keyword.INFECT), Set.of())
                 ),

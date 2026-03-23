@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -54,8 +54,8 @@ class ElspethTirelTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
-        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) ability.getEffects().getFirst();
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
         assertThat(tokenEffect.amount()).isEqualTo(3);
     }
 

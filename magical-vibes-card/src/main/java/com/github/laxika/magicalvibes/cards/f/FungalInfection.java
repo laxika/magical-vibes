@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +16,7 @@ public class FungalInfection extends Card {
 
     public FungalInfection() {
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, -1));
-        addEffect(EffectSlot.SPELL, new CreateCreatureTokenEffect(
+        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 "Saproling",
                 1,
                 1,

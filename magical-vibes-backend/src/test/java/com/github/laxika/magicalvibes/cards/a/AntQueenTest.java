@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,9 +34,9 @@ class AntQueenTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isEqualTo("{1}{G}");
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateCreatureTokenEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
 
-        CreateCreatureTokenEffect tokenEffect = (CreateCreatureTokenEffect) ability.getEffects().getFirst();
+        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
         assertThat(tokenEffect.tokenName()).isEqualTo("Insect");
         assertThat(tokenEffect.power()).isEqualTo(1);
         assertThat(tokenEffect.toughness()).isEqualTo(1);

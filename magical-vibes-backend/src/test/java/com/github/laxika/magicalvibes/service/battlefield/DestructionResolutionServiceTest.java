@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
@@ -434,7 +434,7 @@ class DestructionResolutionServiceTest {
 
             Card beastWithinCard = createCard("Beast Within");
             StackEntry entry = instantEntry(beastWithinCard, player1Id, bears.getId());
-            CreateCreatureTokenEffect token = new CreateCreatureTokenEffect(
+            CreateTokenEffect token = new CreateTokenEffect(
                     "Beast", 3, 3, CardColor.GREEN, List.of(CardSubtype.BEAST),
                     Set.of(), Set.of());
             DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect(false, token);
