@@ -970,19 +970,25 @@ public class PermanentControlResolutionService {
 
     @HandlesEffect(GainControlOfTargetPermanentEffect.class)
     private void resolveGainControlOfTargetPermanent(GameData gameData, StackEntry entry, GainControlOfTargetPermanentEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) return;
+        List<UUID> targetIds = entry.getTargetIds().isEmpty()
+                ? (entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of())
+                : entry.getTargetIds();
 
-        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (oldController != null && !oldController.equals(entry.getControllerId())) {
-            creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
-            gameData.permanentControlStolenCreatures.add(target.getId());
-        }
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) continue;
 
-        if (effect.grantedSubtype() != null && !target.getGrantedSubtypes().contains(effect.grantedSubtype())) {
-            target.getGrantedSubtypes().add(effect.grantedSubtype());
-            String subtypeLog = target.getCard().getName() + " becomes a " + effect.grantedSubtype().getDisplayName() + " in addition to its other types.";
-            gameBroadcastService.logAndBroadcast(gameData, subtypeLog);
+            UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
+            if (oldController != null && !oldController.equals(entry.getControllerId())) {
+                creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
+                gameData.permanentControlStolenCreatures.add(target.getId());
+            }
+
+            if (effect.grantedSubtype() != null && !target.getGrantedSubtypes().contains(effect.grantedSubtype())) {
+                target.getGrantedSubtypes().add(effect.grantedSubtype());
+                String subtypeLog = target.getCard().getName() + " becomes a " + effect.grantedSubtype().getDisplayName() + " in addition to its other types.";
+                gameBroadcastService.logAndBroadcast(gameData, subtypeLog);
+            }
         }
     }
 

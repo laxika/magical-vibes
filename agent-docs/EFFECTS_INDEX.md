@@ -895,7 +895,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `TargetPlayerGainsControlOfSourceCreatureEffect` | `()` | target opponent gains control of this creature (ETB) |
-| `GainControlOfTargetPermanentEffect` | `(CardSubtype grantedSubtype)` or `()` | gain control of target permanent permanently — optionally grants a subtype (e.g. Captivating Vampire "It becomes a Vampire") |
+| `GainControlOfTargetPermanentEffect` | `(CardSubtype grantedSubtype)` or `()` | gain control of target permanent permanently — optionally grants a subtype (e.g. Captivating Vampire "It becomes a Vampire"). Supports multi-target (iterates over `getTargetIds()` for "up to N target" abilities) |
 | `GainControlOfTargetPermanentUntilEndOfTurnEffect` | `()` | gain control of target permanent until end of turn — card's target filter handles type restriction (Threaten, Metallic Mastery) |
 | `GainControlOfTargetPermanentWhileSourceEffect` | `()` | gain control of target permanent for as long as you control the source permanent (e.g. Olivia Voldaren). Tracked via `sourceDependentStolenCreatures`; creature returns when source leaves the battlefield or changes controllers |
 | `AttachTargetToSourcePermanentEffect` | `()` | attach the targeted permanent to the source permanent (e.g. steal Equipment and equip it — combine with GainControlOfTargetPermanentUntilEndOfTurnEffect) |
