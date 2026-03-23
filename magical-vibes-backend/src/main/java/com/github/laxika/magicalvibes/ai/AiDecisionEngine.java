@@ -475,6 +475,18 @@ public abstract class AiDecisionEngine {
     }
 
     /**
+     * Finds an ExileNCardsFromGraveyardCost in the card's SPELL effects, if any.
+     */
+    protected ExileNCardsFromGraveyardCost findExileNGraveyardCost(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
+                return cost;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns indices for all cards in the player's graveyard, for use with
      * {@link ExileXCardsFromGraveyardCost}. Returns an empty list if the graveyard is empty.
      */
@@ -485,6 +497,26 @@ public abstract class AiDecisionEngine {
             indices.add(i);
         }
         return indices;
+    }
+
+    /**
+     * Selects exactly N graveyard card indices matching the required type for
+     * {@link ExileNCardsFromGraveyardCost} (e.g. Skaab Ruinator's "exile 3 creature cards").
+     * Returns null if the graveyard doesn't have enough matching cards.
+     */
+    protected List<Integer> selectNGraveyardIndicesToExile(GameData gameData, ExileNCardsFromGraveyardCost cost) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+        List<Integer> matchingIndices = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            Card c = graveyard.get(i);
+            if (cost.requiredType() == null || c.hasType(cost.requiredType())) {
+                matchingIndices.add(i);
+            }
+        }
+        if (matchingIndices.size() < cost.count()) {
+            return null;
+        }
+        return new ArrayList<>(matchingIndices.subList(0, cost.count()));
     }
 
     // ===== Modal Spell Handling (ChooseOneEffect) =====

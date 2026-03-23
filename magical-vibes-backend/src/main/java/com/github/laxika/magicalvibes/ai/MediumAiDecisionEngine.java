@@ -146,10 +146,12 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // Select sacrifice target if the spell has a sacrifice cost
         UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
-        // Select graveyard cards to exile if the spell has an ExileXCardsFromGraveyardCost (e.g. Harvest Pyre)
+        // Select graveyard cards to exile if the spell has a graveyard exile cost
         List<Integer> exileGraveyardCardIndices = null;
         if (findExileXGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        } else if (findExileNGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
         }
 
         // Calculate X value (for modal spells, xValue is the mode index)
@@ -278,6 +280,8 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         List<Integer> exileGraveyardCardIndices = null;
         if (findExileXGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        } else if (findExileNGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());

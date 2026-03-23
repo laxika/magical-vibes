@@ -206,6 +206,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Select sacrifice target if the spell has a sacrifice cost
                 UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
+                // Select graveyard cards to exile if the spell has a graveyard exile cost
+                List<Integer> exileGraveyardCardIndices = null;
+                if (findExileXGraveyardCost(card) != null) {
+                    exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+                } else if (findExileNGraveyardCost(card) != null) {
+                    exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
+                }
+
                 ManaCost castCost = new ManaCost(card.getManaCost());
                 Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
                 if (castCost.hasX() && xValue == null) {
@@ -225,8 +233,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 final Integer finalXValue = xValue;
                 final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
                 final UUID finalSacrificePermanentId = sacrificePermanentId;
+                final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
                 send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
                 // Verify the spell was actually cast — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 if (hand.size() >= handSizeBefore) {
@@ -309,10 +318,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Select sacrifice target if the spell has a sacrifice cost
         UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
-        // Select graveyard cards to exile if the spell has an ExileXCardsFromGraveyardCost (e.g. Harvest Pyre)
+        // Select graveyard cards to exile if the spell has a graveyard exile cost
         List<Integer> exileGraveyardCardIndices = null;
         if (findExileXGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        } else if (findExileNGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());
@@ -470,6 +481,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Integer> exileGraveyardCardIndices = null;
         if (findExileXGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        } else if (findExileNGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());

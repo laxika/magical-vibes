@@ -189,6 +189,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 Collections.shuffle(allIndices, rng);
                 int count = rng.nextInt(allIndices.size()) + 1;
                 exileGraveyardCardIndices = new ArrayList<>(allIndices.subList(0, count));
+            } else if (findExileNGraveyardCost(card) != null) {
+                exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
+                if (exileGraveyardCardIndices == null) {
+                    continue; // Not enough matching graveyard cards, try next spell
+                }
             }
 
             // Select sacrifice target if the spell has a sacrifice cost

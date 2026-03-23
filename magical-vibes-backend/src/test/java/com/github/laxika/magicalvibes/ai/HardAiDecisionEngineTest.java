@@ -691,4 +691,87 @@ class HardAiDecisionEngineTest {
                 .count();
         assertThat(attackingCount).isLessThanOrEqualTo(1);
     }
+
+    // ===== ExileNCardsFromGraveyardCost (e.g. Skaab Ruinator) =====
+
+    @Test
+    @DisplayName("Hard AI casts Skaab Ruinator when graveyard has 3 creature cards")
+    void castsSkaabRuinatorWithThreeCreatures() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // Add 3 Islands for mana
+        for (int i = 0; i < 3; i++) {
+            Permanent island = new Permanent(new com.github.laxika.magicalvibes.cards.i.Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(island);
+        }
+
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI casts Skaab Ruinator selecting only creatures from mixed graveyard")
+    void castsSkaabRuinatorFromMixedGraveyard() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        for (int i = 0; i < 3; i++) {
+            Permanent island = new Permanent(new com.github.laxika.magicalvibes.cards.i.Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(island);
+        }
+
+        gd.playerGraveyards.get(player1.getId()).add(new com.github.laxika.magicalvibes.cards.h.HolyDay());
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(player1.getId()).add(new com.github.laxika.magicalvibes.cards.h.HolyDay());
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .allMatch(c -> c.getName().equals("Holy Day"));
+    }
 }

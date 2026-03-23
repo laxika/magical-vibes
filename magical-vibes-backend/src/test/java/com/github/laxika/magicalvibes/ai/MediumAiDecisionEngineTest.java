@@ -662,4 +662,51 @@ class MediumAiDecisionEngineTest {
                 .count();
         assertThat(attackingCount).isLessThanOrEqualTo(1);
     }
+
+    // ===== ExileNCardsFromGraveyardCost (e.g. Skaab Ruinator) =====
+
+    @Test
+    @DisplayName("Medium AI casts Skaab Ruinator when graveyard has 3 creature cards")
+    void castsSkaabRuinatorWithThreeCreatures() {
+        giveAiPriority();
+        giveAiIslands(3); // Skaab Ruinator costs {1}{U}{U}
+
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Skaab Ruinator selecting only creatures from mixed graveyard")
+    void castsSkaabRuinatorFromMixedGraveyard() {
+        giveAiPriority();
+        giveAiIslands(3);
+
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new com.github.laxika.magicalvibes.cards.h.HolyDay());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new com.github.laxika.magicalvibes.cards.h.HolyDay());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(3);
+        // Only creatures exiled — 2 non-creatures remain
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
+                .allMatch(c -> c.getName().equals("Holy Day"));
+    }
 }

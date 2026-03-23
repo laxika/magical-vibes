@@ -593,4 +593,96 @@ class EasyAiDecisionEngineTest {
 
         assertThat(captor.getValue().attackerIndices()).hasSizeLessThanOrEqualTo(2);
     }
+
+    // ===== ExileNCardsFromGraveyardCost (e.g. Skaab Ruinator) =====
+
+    @Test
+    @DisplayName("Easy AI passes exileGraveyardCardIndices in PlayCardRequest for ExileNCardsFromGraveyardCost")
+    void passesExileGraveyardCardIndicesForExileNCost() throws Exception {
+        Card skaab = new Card();
+        skaab.setName("Skaab Ruinator");
+        skaab.setType(CardType.CREATURE);
+        skaab.setManaCost("{1}{U}{U}");
+        skaab.setPower(5);
+        skaab.setToughness(6);
+        skaab.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE));
+
+        gd.playerHands.get(aiPlayer.getId()).add(skaab);
+
+        // Put 3 creature cards in graveyard
+        for (int i = 0; i < 3; i++) {
+            Card creature = new Card();
+            creature.setName("Bear " + i);
+            creature.setType(CardType.CREATURE);
+            gd.playerGraveyards.get(aiPlayer.getId()).add(creature);
+        }
+
+        // Give AI enough mana
+        gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.BLUE, 2);
+        gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.COLORLESS, 1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        assertThat(request.exileGraveyardCardIndices()).isNotNull();
+        assertThat(request.exileGraveyardCardIndices()).hasSize(3);
+        assertThat(request.exileGraveyardCardIndices()).containsExactly(0, 1, 2);
+    }
+
+    @Test
+    @DisplayName("Easy AI selects only creature indices for ExileNCardsFromGraveyardCost in mixed graveyard")
+    void selectsOnlyCreatureIndicesForExileNCostInMixedGraveyard() throws Exception {
+        Card skaab = new Card();
+        skaab.setName("Skaab Ruinator");
+        skaab.setType(CardType.CREATURE);
+        skaab.setManaCost("{1}{U}{U}");
+        skaab.setPower(5);
+        skaab.setToughness(6);
+        skaab.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE));
+
+        gd.playerHands.get(aiPlayer.getId()).add(skaab);
+
+        // Mixed graveyard: instant, creature, instant, creature, creature
+        Card instant0 = new Card();
+        instant0.setName("Spell 0");
+        instant0.setType(CardType.INSTANT);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(instant0);
+
+        Card creature1 = new Card();
+        creature1.setName("Bear 1");
+        creature1.setType(CardType.CREATURE);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(creature1);
+
+        Card instant2 = new Card();
+        instant2.setName("Spell 2");
+        instant2.setType(CardType.INSTANT);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(instant2);
+
+        Card creature3 = new Card();
+        creature3.setName("Bear 3");
+        creature3.setType(CardType.CREATURE);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(creature3);
+
+        Card creature4 = new Card();
+        creature4.setName("Bear 4");
+        creature4.setType(CardType.CREATURE);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(creature4);
+
+        gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.BLUE, 2);
+        gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.COLORLESS, 1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        assertThat(request.exileGraveyardCardIndices()).isNotNull();
+        assertThat(request.exileGraveyardCardIndices()).hasSize(3);
+        // Should pick indices 1, 3, 4 (the creature indices, skipping instants at 0 and 2)
+        assertThat(request.exileGraveyardCardIndices()).containsExactly(1, 3, 4);
+    }
 }

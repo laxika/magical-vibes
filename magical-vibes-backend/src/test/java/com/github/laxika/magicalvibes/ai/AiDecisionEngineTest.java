@@ -1045,6 +1045,150 @@ class AiDecisionEngineTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("AI casts Skaab Ruinator when graveyard has exactly 3 creature cards")
+    void castsSkaabRuinatorWithExactlyThreeCreatures() {
+        giveAiPriority();
+        giveAiIslands(3); // Skaab Ruinator costs {1}{U}{U}
+
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast — 3 creature cards exiled from graveyard
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("AI casts Skaab Ruinator when graveyard has more than 3 creature cards")
+    void castsSkaabRuinatorWithMoreThanThreeCreatures() {
+        giveAiPriority();
+        giveAiIslands(3);
+
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast — exiles exactly 3 of the 4 creatures
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("AI casts Skaab Ruinator selecting only creatures from mixed graveyard")
+    void castsSkaabRuinatorSelectsOnlyCreaturesFromMixedGraveyard() {
+        giveAiPriority();
+        giveAiIslands(3);
+
+        // Mix of creatures and non-creatures — 3 creatures + 2 non-creatures
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast — it found 3 creature cards despite non-creatures mixed in
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(3);
+        // Only creatures were exiled — the 2 non-creatures remain
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
+                .allMatch(c -> c.getName().equals("Holy Day"));
+    }
+
+    // ===== selectNGraveyardIndicesToExile =====
+
+    @Test
+    @DisplayName("selectNGraveyardIndicesToExile returns first N matching indices")
+    void selectNGraveyardIndicesToExileReturnsFirstNMatching() {
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        var cost = new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE);
+        List<Integer> result = ai.selectNGraveyardIndicesToExile(gd, cost);
+
+        assertThat(result).containsExactly(0, 1, 2);
+    }
+
+    @Test
+    @DisplayName("selectNGraveyardIndicesToExile skips non-matching types")
+    void selectNGraveyardIndicesToExileSkipsNonMatchingTypes() {
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());       // index 0: instant
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());  // index 1: creature
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());       // index 2: instant
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());  // index 3: creature
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());  // index 4: creature
+
+        var cost = new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE);
+        List<Integer> result = ai.selectNGraveyardIndicesToExile(gd, cost);
+
+        assertThat(result).containsExactly(1, 3, 4);
+    }
+
+    @Test
+    @DisplayName("selectNGraveyardIndicesToExile returns null when not enough matching cards")
+    void selectNGraveyardIndicesToExileReturnsNullWhenNotEnough() {
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+
+        var cost = new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE);
+        List<Integer> result = ai.selectNGraveyardIndicesToExile(gd, cost);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @DisplayName("selectNGraveyardIndicesToExile with null requiredType matches any card")
+    void selectNGraveyardIndicesToExileWithNullTypeMatchesAny() {
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new GrizzlyBears());
+
+        var cost = new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(2, null);
+        List<Integer> result = ai.selectNGraveyardIndicesToExile(gd, cost);
+
+        assertThat(result).containsExactly(0, 1);
+    }
+
+    // ===== findExileNGraveyardCost =====
+
+    @Test
+    @DisplayName("findExileNGraveyardCost returns cost for Skaab Ruinator")
+    void findExileNGraveyardCostReturnsCostForSkaabRuinator() {
+        var result = ai.findExileNGraveyardCost(new SkaabRuinator());
+
+        assertThat(result).isNotNull();
+        assertThat(result.count()).isEqualTo(3);
+        assertThat(result.requiredType()).isEqualTo(CardType.CREATURE);
+    }
+
+    @Test
+    @DisplayName("findExileNGraveyardCost returns null for card without that cost")
+    void findExileNGraveyardCostReturnsNullForNormalCard() {
+        var result = ai.findExileNGraveyardCost(new GrizzlyBears());
+
+        assertThat(result).isNull();
+    }
+
     // ===== Modal spell handling (ChooseOneEffect) =====
 
     @Test
