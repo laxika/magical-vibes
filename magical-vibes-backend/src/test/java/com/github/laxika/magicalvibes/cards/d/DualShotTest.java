@@ -94,7 +94,7 @@ class DualShotTest extends BaseCardTest {
         // Second creature should still take damage
         bf = harness.getGameData().playerBattlefields.get(player2.getId());
         assertThat(bf).hasSize(1);
-        assertThat(bf.getFirst().getMarkedDamage()).isEqualTo(1);
+assertThat(bf.getFirst().getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

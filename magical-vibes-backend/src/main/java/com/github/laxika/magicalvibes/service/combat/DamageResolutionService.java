@@ -117,8 +117,10 @@ public class DamageResolutionService {
     void resolveDealDamageToTargetCreature(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect effect) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
 
-        // Multi-target: deal damage to each valid target
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+        // Multi-target: deal damage to each valid creature target (e.g. Dual Shot targeting two creatures).
+        // Only enters this path when targetIds has multiple entries. Skips non-creature UUIDs (e.g. player
+        // targets from kicked spells) since those are handled by other effects like DealDamageToSecondaryTargetEffect.
+        if (entry.getTargetIds() != null && entry.getTargetIds().size() > 1) {
             for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
@@ -131,7 +133,7 @@ public class DamageResolutionService {
             return;
         }
 
-        // Single-target fallback
+        // Single-target
         if (effect.unpreventable()) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) return;

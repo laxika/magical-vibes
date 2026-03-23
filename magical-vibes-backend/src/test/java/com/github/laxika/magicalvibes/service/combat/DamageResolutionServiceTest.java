@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
@@ -44,6 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -387,6 +389,83 @@ class DamageResolutionServiceTest {
 
             assertThat(bears.getMarkedDamage()).isEqualTo(3);
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
+        }
+
+        @Test
+        @DisplayName("Multi-target: deals damage to each creature in targetIds")
+        void multiTargetDealsDamageToEachCreature() {
+            Card burnCard = createCard("Dual Shot");
+            Permanent bear1 = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            Permanent bear2 = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            StackEntry entry = createMultiTargetEntry(burnCard, player1Id, List.of(bear1.getId(), bear2.getId()));
+            DealDamageToTargetCreatureEffect effect = new DealDamageToTargetCreatureEffect(1, false);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageCore(bear1, 2);
+            stubCreatureDamageCore(bear2, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(false);
+            when(gameQueryService.findPermanentById(gd, bear1.getId())).thenReturn(bear1);
+            when(gameQueryService.findPermanentById(gd, bear2.getId())).thenReturn(bear2);
+            when(gameQueryService.hasProtectionFromSource(eq(gd), any(Permanent.class), any(Card.class))).thenReturn(false);
+
+            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+
+            assertThat(bear1.getMarkedDamage()).isEqualTo(1);
+            assertThat(bear2.getMarkedDamage()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Multi-target: skips removed targets and damages remaining ones")
+        void multiTargetSkipsRemovedTargets() {
+            Card burnCard = createCard("Dual Shot");
+            Permanent bear1 = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            Permanent bear2 = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            UUID removedId = bear1.getId();
+            StackEntry entry = createMultiTargetEntry(burnCard, player1Id, List.of(removedId, bear2.getId()));
+            DealDamageToTargetCreatureEffect effect = new DealDamageToTargetCreatureEffect(1, false);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageCore(bear2, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(false);
+            // bear1 was removed from battlefield before resolution
+            when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
+            when(gameQueryService.findPermanentById(gd, bear2.getId())).thenReturn(bear2);
+            when(gameQueryService.hasProtectionFromSource(eq(gd), any(Permanent.class), any(Card.class))).thenReturn(false);
+
+            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+
+            assertThat(bear2.getMarkedDamage()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Single targetIds entry with primary targetId uses single-target path")
+        void singleTargetIdsWithPrimaryTargetUsesSingleTargetPath() {
+            Card burnCard = createCard("Goblin Barrage");
+            Permanent bears = addPermanent(player2Id, createCreature("Grizzly Bears", 2, 2));
+            // Kicked spell: creature in targetId, player in targetIds (size 1)
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, burnCard, player1Id, burnCard.getName(),
+                    List.of(), 0, bears.getId(), null, Map.of(), null, List.of(), List.of(player2Id));
+            DealDamageToTargetCreatureEffect effect = new DealDamageToTargetCreatureEffect(4, false);
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubCreatureDamageCore(bears, 2);
+            stubNoKeywordsOnSource(entry);
+            stubLethalDamage(true);
+            when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
+
+            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+
+            assertThat(bears.getMarkedDamage()).isEqualTo(4);
         }
     }
 
