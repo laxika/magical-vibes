@@ -750,7 +750,11 @@ public class StaticEffectResolutionService {
 
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.matchesPermanentPredicate(context.gameData(), permanent, boost.filter())) {
+            // Pass null for gameData to avoid recursive computeStaticBonus calls —
+            // type-checking predicates (isArtifact, isCreature) would otherwise trigger
+            // computeStaticBonus on each permanent, causing infinite recursion when the
+            // source itself is being evaluated. Natural type is sufficient here.
+            if (gameQueryService.matchesPermanentPredicate(null, permanent, boost.filter())) {
                 count++;
             }
         }
