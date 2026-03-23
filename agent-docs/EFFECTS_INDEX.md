@@ -827,6 +827,7 @@ Pass `null` as filter to allow any card.
 | `CanBlockOnlyIfAttackerMatchesPredicateEffect` | `(PermanentPredicate attackerPredicate, String allowedAttackersDescription)` | this creature can only block attackers matching predicate (static) |
 | `CantAttackOrBlockUnlessEquippedEffect` | `()` | this creature can't attack or block unless it's equipped (static) |
 | `CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect` | `(PermanentPredicate permanentPredicate, int minimumCount, String requirementDescription)` | can't attack unless there are N or more matching permanents across all battlefields (static) |
+| `CantAttackUnlessControllerControlsMatchingPermanentEffect` | `(PermanentPredicate controllerPermanentPredicate, String requirementDescription)` | can't attack unless controller controls a matching permanent (static) |
 | `CantAttackUnlessDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate, String requirementDescription)` | can't attack unless defender controls matching permanent (static) |
 | `CreaturesCantAttackUnlessPredicateEffect` | `(PermanentPredicate exemptionPredicate)` | global static: ALL creatures can't attack unless they match the exemption predicate (e.g. flying or islandwalk) |
 | `CantAttackUnlessOpponentDealtDamageThisTurnEffect` | `()` | can't attack unless an opponent has been dealt damage this turn from any source (static) |

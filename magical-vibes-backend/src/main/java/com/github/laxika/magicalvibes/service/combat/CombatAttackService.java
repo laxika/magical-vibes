@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEff
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessControllerControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessOpponentDealtDamageThisTurnEffect;
@@ -457,6 +458,7 @@ public class CombatAttackService {
         if (CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, creature)) return false;
         if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
         if (isCantAttackUnlessBattlefieldCount(gameData, creature)) return false;
+        if (isCantAttackUnlessControllerControls(gameData, creature)) return false;
         if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
         if (isCantAttackUnlessOpponentDealtDamage(gameData, creature)) return false;
         if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
@@ -509,6 +511,21 @@ public class CombatAttackService {
                                 .count()
                 );
                 if (count[0] < restriction.minimumCount()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isCantAttackUnlessControllerControls(GameData gameData, Permanent creature) {
+        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackUnlessControllerControlsMatchingPermanentEffect restriction) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
+                boolean controllerMatches = controllerBattlefield != null && controllerBattlefield.stream()
+                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.controllerPermanentPredicate()));
+                if (!controllerMatches) {
                     return true;
                 }
             }
