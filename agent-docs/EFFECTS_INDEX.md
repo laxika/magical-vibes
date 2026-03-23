@@ -721,6 +721,7 @@ Pass `null` as filter to allow any card.
 | `BoostSelfPerOpponentPoisonCounterEffect` | `(int powerPerCounter, int toughnessPerCounter)` | +X/+Y per poison counter on opponents (static). Counts total poison counters across all opponents, excludes controller's own counters |
 | `BoostSelfByImprintedCreaturePTEffect` | `()` | +X/+Y where X is the imprinted creature card's power and Y is its toughness (static, selfOnly). Used by Phyrexian Ingester |
 | `BoostSelfPerBlockingCreatureEffect` | `(int powerPerBlockingCreature, int toughnessPerBlockingCreature)` | +X/+Y for each creature blocking this (combat trigger) |
+| `BoostSelfPerOtherAttackingSubtypeEffect` | `(CardSubtype subtype, int powerPerCreature, int toughnessPerCreature)` | +X/+Y for each *other* attacking creature with subtype you control, excludes self (ON_ATTACK trigger). Used by Dire Fleet Captain |
 | `BoostSelfPerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | +X/+Y for each permanent you control matching the filter (activated ability) |
 | `BoostSelfPerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerPermanent, int toughnessPerPermanent)` | +X/+Y for each permanent with subtype you control (static, selfOnly). Used by Earth Servant |
 | `BoostSelfPerOtherControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerPermanent, int toughnessPerPermanent)` | +X/+Y for each *other* permanent with subtype you control, excludes self (static, selfOnly). Used by Rat Colony |

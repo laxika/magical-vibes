@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSecondTargetCreatureEffe
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherAttackingSubtypeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerControlledPermanentEffect;
@@ -120,6 +122,41 @@ public class BoostResolutionService {
 
         log.info("Game {} - {} gets +{}/+{} from {} blocker(s)",
                 gameData.id, self.getCard().getName(), powerBoost, toughnessBoost, blockerCount[0]);
+    }
+
+    @HandlesEffect(BoostSelfPerOtherAttackingSubtypeEffect.class)
+    private void resolveBoostSelfPerOtherAttackingSubtype(GameData gameData, StackEntry entry, BoostSelfPerOtherAttackingSubtypeEffect boost) {
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
+        if (self == null) {
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        int count = 0;
+        if (battlefield != null) {
+            PermanentHasSubtypePredicate subtypePredicate = new PermanentHasSubtypePredicate(boost.subtype());
+            for (Permanent permanent : battlefield) {
+                if (permanent.getId().equals(selfId)) continue;
+                if (permanent.isAttacking()
+                        && gameQueryService.matchesPermanentPredicate(gameData, permanent, subtypePredicate)) {
+                    count++;
+                }
+            }
+        }
+
+        int powerBoost = count * boost.powerPerCreature();
+        int toughnessBoost = count * boost.toughnessPerCreature();
+        self.setPowerModifier(self.getPowerModifier() + powerBoost);
+        self.setToughnessModifier(self.getToughnessModifier() + toughnessBoost);
+
+        String logEntry = self.getCard().getName() + " gets +" + powerBoost + "/+" + toughnessBoost
+                + " until end of turn (" + count + " other attacking " + boost.subtype().getDisplayName() + "(s)).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets +{}/+{} from {} other attacking {}(s)",
+                gameData.id, self.getCard().getName(), powerBoost, toughnessBoost, count, boost.subtype().getDisplayName());
     }
 
     @HandlesEffect(BoostSelfPerControlledPermanentEffect.class)

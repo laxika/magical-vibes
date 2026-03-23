@@ -278,6 +278,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |
 | Imprint ETB + dies | `c/CloneShell.java` | Artifact Creature — ON_ENTER_BATTLEFIELD ImprintFromTopCardsEffect + ON_DEATH PutImprintedCreatureOntoBattlefieldEffect |
 | Equipment enters may-draw + metalcraft equip {0} | `p/PuresteelPaladin.java` | ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD MayEffect(DrawCardEffect) + STATIC MetalcraftConditionalEffect(GrantActivatedAbilityEffect(EquipActivatedAbility("{0}"), OWN_PERMANENTS, PermanentHasSubtypePredicate(EQUIPMENT))) |
+| Attack boost per other attacking subtype | `d/DireFleetCaptain.java` | ON_ATTACK BoostSelfPerOtherAttackingSubtypeEffect(PIRATE, 1, 1) — +1/+1 per other attacking creature with subtype, excludes self |
 | Battle cry (attack boost others) | `a/AccorderPaladin.java` | Engine-handled via `BATTLE_CRY` keyword — CombatService auto-generates BoostAllOwnCreaturesEffect(1, 0, attacking + not-self filter) trigger for any creature with the keyword. Card class is empty-body. |
 | Battle cry + attack can't-block | `h/HeroOfOxidRidge.java` | ON_ATTACK CantBlockThisTurnEffect(PermanentPowerAtMostPredicate(1)) — battle cry keyword auto-handled, plus predicate-filtered mass can't-block on attack |
 | Damage-to-controller bounce | `d/DissipationField.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ReturnDamageSourcePermanentToHandEffect — bounces any permanent that deals damage to controller |

@@ -56,6 +56,7 @@ public enum CardSubtype {
     MERFOLK("Merfolk"),
     OCTOPUS("Octopus"),
     OOZE("Ooze"),
+    ORC("Orc"),
     SERPENT("Serpent"),
     SHADE("Shade"),
     HORSE("Horse"),
