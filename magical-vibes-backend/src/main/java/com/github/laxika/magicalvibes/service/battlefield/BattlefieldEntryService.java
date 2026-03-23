@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -518,6 +519,9 @@ public class BattlefieldEntryService {
                         }
                         if (e instanceof ControlsAnotherSubtypeConditionalEffect cas) {
                             return gameQueryService.controlsAnotherSubtype(gameData, controllerId, card, cas.subtype());
+                        }
+                        if (e instanceof RaidConditionalEffect) {
+                            return gameData.playersDeclaredAttackersThisTurn.contains(controllerId);
                         }
                         return true;
                     })

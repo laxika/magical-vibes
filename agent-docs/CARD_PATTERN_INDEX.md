@@ -152,6 +152,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may exile + return at end step (flicker) | `s/SentinelOfThePearlTrident.java` | MayEffect(ExileTargetPermanentAndReturnAtEndStepEffect) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, PermanentIsHistoricPredicate)). Flash creature that flickers own historic permanent |
 | ETB may rummage (discard then draw) | `k/KeldonRaider.java` | MayEffect(DiscardAndDrawCardEffect()) — may discard a card, if you do draw a card |
 | ETB discard (targeted) | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
+| ETB discard (raid conditional) | `d/DeadeyeTormentor.java` | RaidConditionalEffect(TargetPlayerDiscardsEffect(1)) + PlayerPredicateTargetFilter(OPPONENT). Raid = intervening-if checked at trigger and resolution time |
 | ETB discard (each opponent) | `l/LilianasSpecter.java` | EachOpponentDiscardsEffect — no targeting, all opponents discard |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
 | ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryForCardTypesToHandEffect(ARTIFACT, 6, MAX_VALUE)) — artifact with MV 6+ |

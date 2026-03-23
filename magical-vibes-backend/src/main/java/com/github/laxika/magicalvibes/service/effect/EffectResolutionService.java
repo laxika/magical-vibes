@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
@@ -234,6 +235,8 @@ public class EffectResolutionService {
                     isAttackingAlone(gameData, entry);
             case MinimumAttackersConditionalEffect mac ->
                     entry.getXValue() >= mac.minimumAttackers();
+            case RaidConditionalEffect ignored ->
+                    gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
             case ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck -> {
                 int lifeTotal = gameData.playerLifeTotals.getOrDefault(entry.getControllerId(), 20);
                 yield lifeTotal <= lifeCheck.lifeThreshold();
