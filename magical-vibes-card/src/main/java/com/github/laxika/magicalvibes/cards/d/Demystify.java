@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "14")
+@CardRegistration(set = "XLN", collectorNumber = "8")
 public class Demystify extends Card {
 
     public Demystify() {
