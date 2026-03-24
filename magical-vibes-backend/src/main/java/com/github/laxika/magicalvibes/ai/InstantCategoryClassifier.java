@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 
 /**
  * Classifies instant cards by their primary role. Scans the card's SPELL
@@ -72,6 +73,7 @@ public final class InstantCategoryClassifier {
         if (effect instanceof DestroyTargetPermanentEffect) return InstantCategory.REMOVAL;
         if (effect instanceof ExileTargetPermanentEffect) return InstantCategory.REMOVAL;
         if (effect instanceof ReturnTargetPermanentToHandEffect) return InstantCategory.REMOVAL;
+        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return InstantCategory.REMOVAL;
 
         // Damage-based removal (targets creatures)
         if (effect instanceof DealDamageToTargetCreatureEffect) return InstantCategory.REMOVAL;

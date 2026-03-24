@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -137,6 +138,9 @@ public class SpellEvaluator {
         if (effect instanceof ReturnTargetPermanentToHandEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
+        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
+            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
+        }
         if (effect instanceof GainLifeEffect gain) {
             return gain.amount() * 0.5;
         }
@@ -210,6 +214,9 @@ public class SpellEvaluator {
 
         // Bounce
         if (effect instanceof ReturnTargetPermanentToHandEffect) {
+            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
+        }
+        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof ReturnCreaturesToOwnersHandEffect) {

@@ -10,10 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEf
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +44,7 @@ public class BounceResolutionService {
     private final GameOutcomeService gameOutcomeService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     /**
      * Returns the source permanent to its owner's hand. Uses {@code sourcePermanentId} to
@@ -242,6 +247,44 @@ public class BounceResolutionService {
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(choosingPlayerId));
         playerInputService.beginPermanentChoice(gameData, choosingPlayerId, creatureIds, bounceEffect.prompt());
+    }
+
+    /**
+     * Returns a targeted permanent to its owner's hand, then conditionally resolves a bonus
+     * effect if the permanent's mana value was at or below the effect's threshold. Records the
+     * mana value before bouncing so it is available regardless of zone changes. The bonus
+     * effect is dispatched through the {@link EffectHandlerRegistry}, so it can be any
+     * registered effect (e.g. ScryEffect, DrawCardEffect, CreateTokenEffect).
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry containing the target permanent ID
+     * @param effect   the effect record containing the mana value threshold and bonus effect
+     */
+    @HandlesEffect(ReturnTargetPermanentToHandWithManaValueConditionalEffect.class)
+    void resolveReturnTargetPermanentToHandWithManaValueConditional(GameData gameData, StackEntry entry,
+                                                                    ReturnTargetPermanentToHandWithManaValueConditionalEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        int manaValue = target.getCard().getManaValue();
+
+        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+            String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (manaValue <= effect.maxManaValue()) {
+            CardEffect bonusEffect = effect.conditionalEffect();
+            EffectHandler handler = effectHandlerRegistry.getHandler(bonusEffect);
+            if (handler != null) {
+                handler.resolve(gameData, entry, bonusEffect);
+            }
+        }
     }
 
     /**
