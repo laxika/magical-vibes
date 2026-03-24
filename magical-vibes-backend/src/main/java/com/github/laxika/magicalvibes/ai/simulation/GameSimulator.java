@@ -52,7 +52,7 @@ import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
+import com.github.laxika.magicalvibes.service.trigger.DeathTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -197,7 +197,6 @@ public class GameSimulator {
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(gameQueryService);
         GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, noOpSession, gameRegistry, draftRegistry, null);
-        DeathTriggerService deathTriggerService = new DeathTriggerService(gameQueryService, gameBroadcastService);
         DrawService drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService, triggeredAbilityQueueService);
         BattlefieldEntryService battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, null, null);
         CloneService cloneService = new CloneService(gameQueryService, gameBroadcastService, playerInputService, legendRuleService, battlefieldEntryService);
@@ -205,17 +204,19 @@ public class GameSimulator {
         WarpWorldService warpWorldService = new WarpWorldService(gameQueryService, gameBroadcastService, playerInputService, battlefieldEntryService, legendRuleService, creatureControlService, cardViewFactory, noOpSession);
         ExileService exileService = new ExileService();
         GraveyardService graveyardService = new GraveyardService(gameQueryService, gameBroadcastService, exileService, null);
-        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService, deathTriggerService);
+        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService, null);
         PermanentRemovalService permanentRemovalService = new PermanentRemovalService(
-                graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
+                graveyardService, battlefieldEntryService, null, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
         TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
+        DeathTriggerCollectorService deathTriggerCollectorService = new DeathTriggerCollectorService(gameQueryService, gameBroadcastService);
         MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService, exileService, drawService, null, permanentRemovalService);
         List<Object> triggerCollectorBeans = List.of(
                 new SpellCastTriggerCollectorService(gameQueryService, gameBroadcastService),
                 new DiscardTriggerCollectorService(gameBroadcastService, gameQueryService, damagePreventionService, permanentRemovalService),
                 new LandTapTriggerCollectorService(gameQueryService, gameBroadcastService, damagePreventionService, permanentRemovalService),
                 new DamageTriggerCollectorService(gameQueryService, gameBroadcastService, permanentRemovalService, creatureControlService),
-                miscTriggerCollectorService
+                miscTriggerCollectorService,
+                deathTriggerCollectorService
         );
         for (Object bean : triggerCollectorBeans) {
             TriggerCollectorRegistry.scanBean(bean, triggerCollectorRegistry);
@@ -223,6 +224,8 @@ public class GameSimulator {
         TriggerCollectionService triggerCollectionService = new TriggerCollectionService(
                 triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
+        auraAttachmentService.setTriggerCollectionService(triggerCollectionService);
+        permanentRemovalService.setTriggerCollectionService(triggerCollectionService);
         StateTriggerService stateTriggerService = new StateTriggerService(gameBroadcastService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
@@ -230,7 +233,7 @@ public class GameSimulator {
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         this.combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, noOpSession, triggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, noOpSession, combatAttackService, combatTriggerService);
-        CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, deathTriggerService, permanentRemovalService, playerInputService, noOpSession, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
+        CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, permanentRemovalService, playerInputService, noOpSession, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
                 combatAttackService, combatBlockService, combatDamageService, gameBroadcastService, permanentRemovalService, battlefieldEntryService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -60,7 +59,6 @@ class CombatDamageServiceTest {
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private DamagePreventionService damagePreventionService;
     @Mock private GraveyardService graveyardService;
-    @Mock private DeathTriggerService deathTriggerService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private SessionManager sessionManager;

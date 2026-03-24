@@ -48,7 +48,6 @@ import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentN
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -79,7 +78,6 @@ public class CombatDamageService {
     private final GameOutcomeService gameOutcomeService;
     private final DamagePreventionService damagePreventionService;
     private final GraveyardService graveyardService;
-    private final DeathTriggerService deathTriggerService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;

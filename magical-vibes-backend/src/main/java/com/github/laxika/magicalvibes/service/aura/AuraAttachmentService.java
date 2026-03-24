@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.aura;
 
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.Iterator;
@@ -26,13 +26,26 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuraAttachmentService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardService graveyardService;
-    private final DeathTriggerService deathTriggerService;
+    private TriggerCollectionService triggerCollectionService;
+
+    public AuraAttachmentService(GameQueryService gameQueryService,
+                                 GameBroadcastService gameBroadcastService,
+                                 GraveyardService graveyardService,
+                                 @Lazy TriggerCollectionService triggerCollectionService) {
+        this.gameQueryService = gameQueryService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.graveyardService = graveyardService;
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
+        this.triggerCollectionService = triggerCollectionService;
+    }
 
     /**
      * Removes auras whose enchanted permanent no longer exists and detaches equipment whose
@@ -66,7 +79,7 @@ public class AuraAttachmentService {
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                         // Check for Tiana-style triggers (Aura put into graveyard from battlefield)
                         if (wentToGraveyard) {
-                            deathTriggerService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, p.getCard(), playerId);
+                            triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, p.getCard(), playerId);
                         }
                     }
                 }

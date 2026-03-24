@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -47,7 +47,7 @@ class PermanentRemovalServiceTest {
     private BattlefieldEntryService battlefieldEntryService;
 
     @Mock
-    private DeathTriggerService deathTriggerService;
+    private TriggerCollectionService triggerCollectionService;
 
     @Mock
     private DamagePreventionService damagePreventionService;
@@ -266,10 +266,10 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, bears);
 
-            verify(deathTriggerService).collectDeathTrigger(eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears));
-            verify(deathTriggerService).checkAllyCreatureDeathTriggers(gd, player1Id, bears.getCard());
-            verify(deathTriggerService).checkOpponentCreatureDeathTriggers(gd, player1Id);
-            verify(deathTriggerService).checkEquippedCreatureDeathTriggers(gd, bears.getId(), player1Id);
+            verify(triggerCollectionService).collectDeathTrigger(eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears));
+            verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears.getCard());
+            verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id);
+            verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(gd, bears.getId(), player1Id);
         }
 
         @Test
@@ -282,7 +282,7 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, artifact);
 
-            verify(deathTriggerService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
+            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
         }
 
         @Test

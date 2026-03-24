@@ -34,7 +34,7 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.DeathTriggerService;
+import com.github.laxika.magicalvibes.service.trigger.DeathTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -198,7 +198,6 @@ public class GameTestHarness {
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(gameQueryService);
         GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, sessionManager, gameRegistry, draftRegistry, null);
-        DeathTriggerService deathTriggerService = new DeathTriggerService(gameQueryService, gameBroadcastService);
         drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService, triggeredAbilityQueueService);
         battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, null, null);
         CloneService cloneService = new CloneService(gameQueryService, gameBroadcastService, playerInputService, legendRuleService, battlefieldEntryService);
@@ -206,9 +205,9 @@ public class GameTestHarness {
         WarpWorldService warpWorldService = new WarpWorldService(gameQueryService, gameBroadcastService, playerInputService, battlefieldEntryService, legendRuleService, creatureControlService, cardViewFactory, sessionManager);
         ExileService exileService = new ExileService();
         GraveyardService graveyardService = new GraveyardService(gameQueryService, gameBroadcastService, exileService, null);
-        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService, deathTriggerService);
+        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService, null);
         permanentRemovalService = new PermanentRemovalService(
-                graveyardService, battlefieldEntryService, deathTriggerService, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
+                graveyardService, battlefieldEntryService, null, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
         TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
         MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(gameBroadcastService, graveyardService, gameQueryService, exileService, drawService, null, permanentRemovalService);
         List<Object> triggerCollectorBeans = List.of(
@@ -216,6 +215,7 @@ public class GameTestHarness {
                 new DiscardTriggerCollectorService(gameBroadcastService, gameQueryService, damagePreventionService, permanentRemovalService),
                 new LandTapTriggerCollectorService(gameQueryService, gameBroadcastService, damagePreventionService, permanentRemovalService),
                 new DamageTriggerCollectorService(gameQueryService, gameBroadcastService, permanentRemovalService, creatureControlService),
+                new DeathTriggerCollectorService(gameQueryService, gameBroadcastService),
                 miscTriggerCollectorService
         );
         for (Object bean : triggerCollectorBeans) {
@@ -224,6 +224,8 @@ public class GameTestHarness {
         triggerCollectionService = new TriggerCollectionService(
                 triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
+        auraAttachmentService.setTriggerCollectionService(triggerCollectionService);
+        permanentRemovalService.setTriggerCollectionService(triggerCollectionService);
         StateTriggerService stateTriggerService = new StateTriggerService(gameBroadcastService);
         stateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
@@ -231,7 +233,7 @@ public class GameTestHarness {
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, sessionManager, triggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, sessionManager, combatAttackService, combatTriggerService);
-        CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, deathTriggerService, permanentRemovalService, playerInputService, sessionManager, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
+        CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, permanentRemovalService, playerInputService, sessionManager, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
                 combatAttackService, combatBlockService, combatDamageService, gameBroadcastService, permanentRemovalService, battlefieldEntryService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();

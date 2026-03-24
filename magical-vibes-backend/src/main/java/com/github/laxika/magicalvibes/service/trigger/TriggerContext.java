@@ -74,4 +74,55 @@ public sealed interface TriggerContext {
      * Context for creature-card-milled triggers (ON_OPPONENT_CREATURE_CARD_MILLED).
      */
     record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
+
+    // ── Death / leaves-battlefield contexts ────────────────────────────
+
+    /**
+     * Context for a card's own death triggers (ON_DEATH).
+     * The dying permanent may be null when the 4-arg overload is used.
+     */
+    record SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
+                     Permanent dyingPermanent) implements TriggerContext {}
+
+    /**
+     * Context for creature-death triggers that reference the dying creature's card and controller.
+     * Shared by ON_ALLY_CREATURE_DIES, ON_ANY_CREATURE_DIES, ON_ALLY_NONTOKEN_CREATURE_DIES,
+     * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES.
+     */
+    record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_EQUIPPED_CREATURE_DIES triggers.
+     */
+    record EquippedCreatureDeath(UUID dyingCreatureId,
+                                 UUID dyingCreatureControllerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD triggers.
+     */
+    record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                   UUID dyingCreatureCardId) implements TriggerContext {}
+
+    /**
+     * Context for ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD triggers.
+     */
+    record EnchantedPermanentLeaves(Permanent leavingPermanent) implements TriggerContext {}
+
+    /**
+     * Context for ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD and
+     * ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD triggers.
+     */
+    record ArtifactGraveyard(UUID graveyardOwnerId,
+                             UUID artifactControllerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
+     */
+    record SelfLeaves(UUID controllerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers.
+     */
+    record AllyAuraOrEquipmentGraveyard(Card dyingCard,
+                                        UUID controllerId) implements TriggerContext {}
 }

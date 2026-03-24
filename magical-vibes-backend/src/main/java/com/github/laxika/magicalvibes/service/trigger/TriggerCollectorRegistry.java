@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -53,7 +54,16 @@ public class TriggerCollectorRegistry {
             }
         }
 
-        // 3. Default handler (CardEffect.class)
+        // 3. MayPayManaEffect unwrap
+        if (effect instanceof MayPayManaEffect mayPay) {
+            CardEffect inner = mayPay.wrapped();
+            handler = handlers.get(new TriggerKey(slot, inner.getClass()));
+            if (handler != null) {
+                return handler.handle(match, inner, context);
+            }
+        }
+
+        // 4. Default handler (CardEffect.class)
         handler = handlers.get(new TriggerKey(slot, CardEffect.class));
         if (handler != null) {
             return handler.handle(match, effect, context);
