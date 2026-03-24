@@ -272,6 +272,7 @@ Effects in the `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` sl
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `CounterSpellEffect` | `()` | counter target spell |
+| `CounterSpellAndCreateTreasureTokensEffect` | `()` | counter target spell and create Treasure tokens equal to that spell's mana value. Treasures are created even if the spell can't be countered (uncounterable). Used by Spell Swindle |
 | `CounterSpellAndExileEffect` | `()` | counter target spell and exile it instead of putting it into its owner's graveyard |
 | `CounterSpellIfControllerPoisonedEffect` | `()` | counter target spell if its controller is poisoned (has at least one poison counter) |
 | `TargetSpellControllerLosesLifeEffect` | `(int amount)` | target spell's controller loses N life. Companion effect for counter spells (e.g. Psychic Barrier). Place before CounterSpellEffect so target is still on stack |

@@ -11,10 +11,13 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellAndCreateTreasureTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,7 @@ public class CounterResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
     private final StateTriggerService stateTriggerService;
+    private final PermanentControlResolutionService permanentControlResolutionService;
 
     /**
      * Resolves an unconditional counter spell (e.g. Cancel, Counterspell).
@@ -143,6 +147,66 @@ public class CounterResolutionService {
                     List.of(new CounterUnlessPaysEffect(payAmount, false, effect.exileIfCountered())),
                     prompt, targetCardId
             ));
+        }
+    }
+
+    /**
+     * Resolves a counter spell that also creates Treasure tokens equal to the countered spell's
+     * mana value (e.g. Spell Swindle).
+     *
+     * <p>If the target spell cannot be countered (uncounterable or protected), the counter part
+     * does nothing but Treasure tokens are still created based on the spell's mana value — the
+     * spell resolves as much as possible per MTG rules.</p>
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry of the counter spell being resolved
+     */
+    @HandlesEffect(CounterSpellAndCreateTreasureTokensEffect.class)
+    void resolveCounterSpellAndCreateTreasureTokens(GameData gameData, StackEntry entry) {
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null) return;
+
+        // Find the target on the stack — don't use findCounterTarget since that returns null
+        // for uncounterable spells, but we still need the mana value for Treasure creation
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter target no longer on stack", gameData.id);
+            return;
+        }
+
+        // Read mana value before countering — includes X value for X spells (CR 202.3e)
+        int manaValue = targetEntry.getCard().getManaValue() + targetEntry.getXValue();
+
+        // Try to counter the spell
+        boolean countered = false;
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+        } else if (gameQueryService.isProtectedFromCounterBySpellColor(gameData, targetEntry.getControllerId(), entry)) {
+            log.info("Game {} - {} cannot be countered by {} spells",
+                    gameData.id, targetEntry.getCard().getName(),
+                    entry.getCard().getColor().name().toLowerCase());
+        } else {
+            counterSpell(gameData, entry, targetEntry);
+            countered = true;
+        }
+
+        if (!countered) {
+            log.info("Game {} - {} could not counter {}, but still creating Treasure tokens",
+                    gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
+        }
+
+        // Create Treasure tokens equal to the spell's mana value regardless of counter success
+        if (manaValue > 0) {
+            CreateTokenEffect treasures = CreateTokenEffect.ofTreasureToken(manaValue);
+            permanentControlResolutionService.applyCreateToken(
+                    gameData, entry.getControllerId(), treasures, entry.getCard().getSetCode());
         }
     }
 
