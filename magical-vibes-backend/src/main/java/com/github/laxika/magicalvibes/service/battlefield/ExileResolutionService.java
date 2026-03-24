@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -27,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerCo
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAtEndOfCombatAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnImmediatelyEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAllWithSameNameEffect;
@@ -63,6 +66,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExileResolutionService {
 
+    private final DrawService drawService;
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -335,6 +339,53 @@ public class ExileResolutionService {
                 .orElse(false);
 
         exileAndScheduleReturn(gameData, entry, target, ownerId, returnTapped);
+    }
+
+    /**
+     * Exiles a target permanent and immediately returns it to the battlefield under its owner's
+     * control. Optionally triggers a bonus effect if the exiled permanent had a specific subtype
+     * (e.g. draw a card if it was a Pirate). Used by Siren's Ruse, Cloudshift, and similar.
+     */
+    @HandlesEffect(ExileTargetPermanentAndReturnImmediatelyEffect.class)
+    void resolveExileTargetPermanentAndReturnImmediately(GameData gameData, StackEntry entry,
+                                                         ExileTargetPermanentAndReturnImmediatelyEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+
+        Card card = target.getOriginalCard();
+        boolean hadBonusSubtype = effect.bonusSubtype() != null
+                && card.getSubtypes().contains(effect.bonusSubtype());
+
+        // Exile the permanent
+        permanentRemovalService.removePermanentToExile(gameData, target);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        // Immediately return from exile as a new permanent
+        gameData.removeFromExile(card.getId());
+        Permanent returned = new Permanent(card);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, returned);
+
+        String logEntry = card.getName() + " is exiled by " + entry.getCard().getName()
+                + " and returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} flickers {} (immediate return)", gameData.id, entry.getCard().getName(), card.getName());
+
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
+
+        // Apply bonus if the exiled permanent had the required subtype
+        if (hadBonusSubtype && effect.bonusEffect() instanceof DrawCardEffect drawEffect) {
+            for (int i = 0; i < drawEffect.amount(); i++) {
+                drawService.resolveDrawCard(gameData, entry.getControllerId());
+            }
+            String drawLog = gameData.playerIdToName.get(entry.getControllerId())
+                    + " draws a card (" + card.getName() + " was a " + effect.bonusSubtype().getDisplayName() + ").";
+            gameBroadcastService.logAndBroadcast(gameData, drawLog);
+        }
     }
 
     /**
