@@ -338,6 +338,9 @@ public class AbilityActivationService {
         }
         ActivatedAbility ability = abilities.get(idx);
 
+        // Validate timing restrictions applicable to graveyard abilities (e.g. Raid)
+        validateGraveyardTimingRestrictions(gameData, playerId, ability);
+
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         for (UUID opponentId : gameData.playerBattlefields.keySet()) {
             for (Permanent perm : gameData.playerBattlefields.get(opponentId)) {
@@ -1189,6 +1192,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Activate only if this creature's power is 4 or greater");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.RAID) {
+                if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) {
+                    throw new IllegalStateException("Raid — activate only if you attacked this turn");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated at sorcery speed");
@@ -1208,6 +1216,14 @@ public class AbilityActivationService {
             if (count < ability.getRequiredControlledSubtypeCount()) {
                 throw new IllegalStateException("Activate only if you control " + ability.getRequiredControlledSubtypeCount()
                         + " or more " + ability.getRequiredControlledSubtype().name() + "s");
+            }
+        }
+    }
+
+    private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.RAID) {
+            if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) {
+                throw new IllegalStateException("Raid — activate only if you attacked this turn");
             }
         }
     }
