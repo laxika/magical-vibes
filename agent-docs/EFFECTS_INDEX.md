@@ -68,6 +68,10 @@ Effects in the `ON_BECOMES_TARGET_OF_SPELL` slot fire when the permanent (or the
 
 Effects in the `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` slot fire when the permanent (or a permanent it is attached to) becomes the target of any spell or activated ability. The triggered ability goes directly on the stack with `sourcePermanentId` set to the source permanent. Cards using this: `IceCage`.
 
+### Ally creature becomes target of opponent spell or ability trigger
+
+Effects in the `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` slot fire on ALL permanents with this slot on the creature's controller's battlefield whenever a creature that player controls becomes the target of a spell or ability controlled by an opponent. Unlike the `ON_BECOMES_TARGET_*` slots (which fire on the targeted permanent itself), this slot fires on a separate permanent that monitors the event globally. Cards using this: `ShapersSanctuary`.
+
 ## Wrapper / modifier effects
 
 | Effect | Constructor | Description |

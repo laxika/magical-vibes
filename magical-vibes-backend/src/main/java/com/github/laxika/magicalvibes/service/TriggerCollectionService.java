@@ -378,6 +378,7 @@ public class TriggerCollectionService {
 
             collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent);
             collectBecomesTargetOfOpponentSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
+            collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry.getControllerId());
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead — their triggers
             // monitor the enchanted/equipped creature, not themselves.
@@ -429,13 +430,17 @@ public class TriggerCollectionService {
             Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
             if (targetPermanent == null) continue;
 
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead.
-            if (!targetPermanent.isAttached()) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
-                if (controllerId != null) {
-                    collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
-                }
+            if (!targetPermanent.isAttached() && controllerId != null) {
+                collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
+            }
+
+            // Check for "whenever a creature you control becomes the target of opponent's spell or ability"
+            if (controllerId != null) {
+                collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, abilityEntry.getControllerId());
             }
 
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -510,6 +515,45 @@ public class TriggerCollectionService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} becomes-target-of-opponent-spell counter trigger queued", gameData.id, source.getCard().getName());
             }
+        }
+    }
+
+    /**
+     * Checks ALL permanents on the targeted creature's controller's battlefield for
+     * {@link EffectSlot#ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY}.
+     * Only fires when the targeted permanent is a creature and the spell/ability
+     * is controlled by an opponent of the creature's controller.
+     */
+    private void collectAllyCreatureBecomesTargetOfOpponentTriggers(
+            GameData gameData, Permanent targetPermanent, UUID creatureControllerId, UUID spellOrAbilityControllerId) {
+        // Only trigger for creatures
+        if (!targetPermanent.getCard().hasType(CardType.CREATURE)) return;
+        // Only trigger if the spell/ability is controlled by an opponent
+        if (creatureControllerId.equals(spellOrAbilityControllerId)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
+        if (battlefield == null) return;
+
+        for (Permanent source : battlefield) {
+            List<CardEffect> effects = source.getCard().getEffects(
+                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY);
+            if (effects.isEmpty()) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    creatureControllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId()
+            );
+            gameData.stack.add(entry);
+
+            String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} ally-creature-becomes-target-of-opponent trigger queued",
+                    gameData.id, source.getCard().getName());
         }
     }
 
