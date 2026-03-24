@@ -680,6 +680,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `TargetPlayerLosesGameEffect` | `(UUID playerId)` | target player loses the game |
 | `LoseGameIfNotCastFromHandEffect` | `()` | lose the game if not cast from hand (ETB check) |
+| `WinGameEffect` | `()` | controller wins the game (use inside conditional wrappers like `ControlsPermanentCountConditionalEffect`) |
 | `WinGameIfCreaturesInGraveyardEffect` | `(int threshold)` | win if N+ creature cards in graveyard |
 | `WinGameOnEmptyLibraryDrawEffect` | `()` | static: if controller would draw from empty library, they win the game instead (Laboratory Maniac). Checked in `DrawService.performDrawCard()` |
 | `CantHaveCountersEffect` | `()` | this permanent can't have counters put on it (static) |

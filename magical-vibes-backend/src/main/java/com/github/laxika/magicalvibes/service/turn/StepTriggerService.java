@@ -214,6 +214,28 @@ public class StepTriggerService {
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: life {} <= {})",
                                 gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.lifeThreshold());
                     }
+                } else if (effect instanceof ControlsPermanentCountConditionalEffect countCheck) {
+                    // Intervening-if: only trigger if controller has enough matching permanents
+                    List<Permanent> controllerBf = gameData.playerBattlefields.get(activePlayerId);
+                    long matchCount = controllerBf == null ? 0 : controllerBf.stream()
+                            .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
+                            .count();
+                    if (matchCount >= countCheck.minCount()) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} matching permanents >= {})",
+                                gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
+                    }
                 } else if (effect instanceof WinGameIfCreaturesInGraveyardEffect winEffect) {
                     // Intervening-if: only trigger if condition is met
                     List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
