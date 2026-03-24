@@ -15,6 +15,8 @@ export class CombatZoneComponent {
   @Input() declaringAttackers = false;
   @Input() declaringBlockers = false;
   @Input() selectedBlockerIndex: number | null = null;
+  @Input() mustBeBlockedAttackerIndices = new Set<number>();
+  @Input() menaceAttackerIndices = new Set<number>();
   @Input() stackTargetId: string | null = null;
 
   // Targeting state from choice service (read-only display flags)

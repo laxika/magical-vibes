@@ -123,10 +123,10 @@ public class CombatBlockService {
             return CombatResult.ADVANCE_ONLY;
         }
 
-        Map<Integer, List<Integer>> legalPairs = computeLegalBlockPairs(gameData, blockable, attackerIndices, defenderId, activeId);
+        AvailableBlockersMessage message = buildAvailableBlockersMessage(gameData, blockable, attackerIndices, defenderId, activeId);
+
         gameData.interaction.beginBlockerDeclaration(defenderId);
-        sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, defenderId),
-                new AvailableBlockersMessage(blockable, attackerIndices, legalPairs));
+        sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, defenderId), message);
         return CombatResult.DONE;
     }
 
@@ -379,6 +379,66 @@ public class CombatBlockService {
         }
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    /**
+     * Builds the AvailableBlockersMessage with all blocking requirement metadata
+     * (must-be-blocked, menace, per-blocker must-block).
+     */
+    public AvailableBlockersMessage buildAvailableBlockersMessage(GameData gameData,
+                                                                   List<Integer> blockable,
+                                                                   List<Integer> attackerIndices,
+                                                                   UUID defenderId,
+                                                                   UUID activeId) {
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+
+        Map<Integer, List<Integer>> legalPairs = computeLegalBlockPairs(gameData, blockable, attackerIndices, defenderId, activeId);
+
+        // Compute "must be blocked if able" attacker indices
+        List<Integer> mustBeBlockedIndices = new ArrayList<>();
+        for (int idx : attackerIndices) {
+            Permanent attacker = attackerBattlefield.get(idx);
+            boolean mustBeBlocked = attacker.isMustBeBlockedThisTurn()
+                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
+                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+            if (mustBeBlocked) {
+                mustBeBlockedIndices.add(idx);
+            }
+        }
+
+        // Compute menace attacker indices
+        List<Integer> menaceIndices = new ArrayList<>();
+        for (int idx : attackerIndices) {
+            Permanent attacker = attackerBattlefield.get(idx);
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE)) {
+                menaceIndices.add(idx);
+            }
+        }
+
+        // Compute per-blocker must-block requirements (Provoke, MustBlockSource, etc.)
+        Map<Integer, List<Integer>> mustBlockReqs = new LinkedHashMap<>();
+        for (int blockerIdx : blockable) {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            if (blocker.getMustBlockIds().isEmpty()) continue;
+            List<Integer> requiredAttackerIndices = new ArrayList<>();
+            for (UUID mustBlockId : blocker.getMustBlockIds()) {
+                for (int atkIdx : attackerIndices) {
+                    Permanent attacker = attackerBattlefield.get(atkIdx);
+                    if (attacker.getId().equals(mustBlockId)
+                            && canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                        requiredAttackerIndices.add(atkIdx);
+                    }
+                }
+            }
+            if (!requiredAttackerIndices.isEmpty()) {
+                mustBlockReqs.put(blockerIdx, requiredAttackerIndices);
+            }
+        }
+
+        return new AvailableBlockersMessage(blockable, attackerIndices, legalPairs,
+                mustBeBlockedIndices, menaceIndices, mustBlockReqs);
     }
 
     // ===== Private helpers =====

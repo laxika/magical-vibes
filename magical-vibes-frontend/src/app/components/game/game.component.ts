@@ -596,6 +596,9 @@ export class GameComponent implements OnInit, OnDestroy {
   blockerAssignments = signal(new Map<number, number>());
   legalBlockPairs = signal(new Map<number, number[]>());
   selectedBlockerIndex = signal<number | null>(null);
+  mustBeBlockedAttackerIndices = signal(new Set<number>());
+  menaceAttackerIndices = signal(new Set<number>());
+  mustBlockRequirements = signal(new Map<number, number[]>());
   gameOverWinner = signal<string | null>(null);
   gameOverWinnerId = signal<string | null>(null);
   showSurrenderConfirm = signal(false);
@@ -621,6 +624,13 @@ export class GameComponent implements OnInit, OnDestroy {
     this.legalBlockPairs.set(pairs);
     this.blockerAssignments.set(new Map());
     this.selectedBlockerIndex.set(null);
+    this.mustBeBlockedAttackerIndices.set(new Set(msg.mustBeBlockedAttackerIndices || []));
+    this.menaceAttackerIndices.set(new Set(msg.menaceAttackerIndices || []));
+    const reqs = new Map<number, number[]>();
+    for (const [key, value] of Object.entries(msg.mustBlockRequirements || {})) {
+      reqs.set(Number(key), value);
+    }
+    this.mustBlockRequirements.set(reqs);
   }
 
   private handleGameOver(msg: GameOverNotification): void {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
+import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -80,6 +81,14 @@ public class CombatService {
                                                               UUID defenderId,
                                                               UUID attackerId) {
         return combatBlockService.computeLegalBlockPairs(gameData, blockerIndices, attackerIndices, defenderId, attackerId);
+    }
+
+    public AvailableBlockersMessage buildAvailableBlockersMessage(GameData gameData,
+                                                                   List<Integer> blockable,
+                                                                   List<Integer> attackerIndices,
+                                                                   UUID defenderId,
+                                                                   UUID activeId) {
+        return combatBlockService.buildAvailableBlockersMessage(gameData, blockable, attackerIndices, defenderId, activeId);
     }
 
     public CombatResult handleDeclareBlockersStep(GameData gameData) {

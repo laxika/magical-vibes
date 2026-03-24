@@ -122,6 +122,23 @@
   right: -8px;
 }
 
+.must-block-badge {
+  background: #d4a017;
+  color: #1a1a1a;
+  top: auto;
+  bottom: -8px;
+  left: -8px;
+}
+
+.menace-badge {
+  background: #8b2fc9;
+  color: var(--color-parchment);
+  top: auto;
+  bottom: -8px;
+  right: -8px;
+  left: auto;
+}
+
 /* Permanent stack (aura attachment) */
 
 .permanent-stack {

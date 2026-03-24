@@ -324,6 +324,7 @@ public class CombatSimulator {
     }
 
     private boolean hasMustBeBlockedIfAbleEffect(GameData gameData, Permanent attacker) {
+        if (attacker.isMustBeBlockedThisTurn()) return true;
         boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
         if (hasOnCard) return true;

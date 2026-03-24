@@ -89,8 +89,8 @@ public class ReconnectionService {
                     attackerIndices = attackerIndices.stream()
                             .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                             .toList();
-                    var legalPairs = combatService.computeLegalBlockPairs(gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId);
-                    sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices, legalPairs));
+                    sessionManager.sendToPlayer(defenderId, combatService.buildAvailableBlockersMessage(
+                            gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
                 }
             }
             case CARD_CHOICE, TARGETED_CARD_CHOICE, DISCARD_CHOICE, ACTIVATED_ABILITY_DISCARD_COST_CHOICE -> {
@@ -223,8 +223,8 @@ public class ReconnectionService {
                     attackerIndices = attackerIndices.stream()
                             .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                             .toList();
-                    var legalPairs = combatService.computeLegalBlockPairs(gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId);
-                    sessionManager.sendToPlayer(defenderId, new AvailableBlockersMessage(blockable, attackerIndices, legalPairs));
+                    sessionManager.sendToPlayer(defenderId, combatService.buildAvailableBlockersMessage(
+                            gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
                 }
             }
             case InteractionContext.CardChoice cc -> {

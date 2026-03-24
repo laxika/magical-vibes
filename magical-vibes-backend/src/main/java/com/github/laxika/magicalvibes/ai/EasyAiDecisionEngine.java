@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -25,8 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -491,8 +495,36 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Satisfy "must be blocked if able" requirements (Gaea's Protector style).
+        // At least one blocker must block each such attacker if able.
+        Set<Integer> alreadyBlockedAttackers = new HashSet<>();
+        for (BlockerAssignment a : assignments) {
+            alreadyBlockedAttackers.add(a.attackerIndex());
+        }
+        for (int[] attacker : attackers) {
+            int attackerIdx = attacker[0];
+            if (alreadyBlockedAttackers.contains(attackerIdx)) continue;
+            Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
+            if (!hasMustBeBlockedIfAble(gameData, attackingPerm)) continue;
+            List<Integer> availableBlockers = getAvailableBlockersForAttacker(
+                    gameData, battlefield, blockerUsed, attackingPerm);
+            if (!availableBlockers.isEmpty()) {
+                int blockerIdx = availableBlockers.getFirst();
+                assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
+                blockerUsed[blockerIdx] = true;
+            }
+        }
+
         log.info("AI: Declaring {} blockers in game {}", assignments.size(), gameId);
         sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
+    }
+
+    private boolean hasMustBeBlockedIfAble(GameData gameData, Permanent attacker) {
+        if (attacker.isMustBeBlockedThisTurn()) return true;
+        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
+        if (hasOnCard) return true;
+        return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
     }
 
     // ===== Combat Helpers =====

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -511,6 +512,29 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Phase 2.5: Satisfy "must be blocked if able" requirements (Gaea's Protector style).
+        // At least one blocker must block each such attacker if able.
+        Set<Integer> mustBeBlockedAttackerIndices = findMustBeBlockedAttackers(gameData, opponentBattlefield);
+        if (!mustBeBlockedAttackerIndices.isEmpty()) {
+            Set<Integer> alreadyBlockedAttackers = new HashSet<>();
+            for (BlockerAssignment a : assignments) {
+                alreadyBlockedAttackers.add(a.attackerIndex());
+            }
+            for (int attackerIdx : mustBeBlockedAttackerIndices) {
+                if (alreadyBlockedAttackers.contains(attackerIdx)) continue;
+                Permanent attacker = opponentBattlefield.get(attackerIdx);
+                for (int blockerIdx : availableBlockerIndices) {
+                    if (blockerUsed[blockerIdx]) continue;
+                    Permanent blocker = battlefield.get(blockerIdx);
+                    if (canBlock(gameData, blocker, attacker)) {
+                        assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
+                        blockerUsed[blockerIdx] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
         // Phase 3: Randomly assign remaining blockers to remaining attackers
         List<Integer> remainingAttackers = new ArrayList<>(attackerIndices);
         Collections.shuffle(remainingAttackers, rng);
@@ -590,6 +614,22 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
         return lureIndices;
+    }
+
+    private Set<Integer> findMustBeBlockedAttackers(GameData gameData, List<Permanent> opponentBattlefield) {
+        Set<Integer> indices = new HashSet<>();
+        for (int i = 0; i < opponentBattlefield.size(); i++) {
+            Permanent attacker = opponentBattlefield.get(i);
+            if (!attacker.isAttacking()) continue;
+            boolean mustBeBlocked = attacker.isMustBeBlockedThisTurn()
+                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
+                    || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+            if (mustBeBlocked) {
+                indices.add(i);
+            }
+        }
+        return indices;
     }
 
     // ===== Card Choice (random discard) =====

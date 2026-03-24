@@ -364,6 +364,9 @@ export interface AvailableBlockersNotification {
   blockerIndices: number[];
   attackerIndices: number[];
   legalBlockPairs: Record<number, number[]>;
+  mustBeBlockedAttackerIndices: number[];
+  menaceAttackerIndices: number[];
+  mustBlockRequirements: Record<number, number[]>;
 }
 
 export interface GameOverNotification {

@@ -58,6 +58,12 @@
                 (mouseenter)="onCardHover(group.attacker.card, group.attacker)"
                 (mouseleave)="onCardHoverEnd()">
                 <div class="card-combat-badge attacking-badge">Attacking</div>
+                @if (declaringBlockers && mustBeBlockedAttackerIndices.has(group.attackerIndex)) {
+                  <div class="card-combat-badge must-block-badge">Must Block</div>
+                }
+                @if (declaringBlockers && menaceAttackerIndices.has(group.attackerIndex)) {
+                  <div class="card-combat-badge menace-badge">Needs 2 Blockers</div>
+                }
                 @if (isDistributingDamage && getDamageAssigned(group.attacker.id) > 0) {
                   <div class="card-combat-badge damage-badge">{{ getDamageAssigned(group.attacker.id) }} dmg</div>
                 }
