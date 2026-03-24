@@ -273,7 +273,7 @@ public class GameSimulator {
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 graveyardReturnResolutionService,
-                new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService),
+                new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService, effectHandlerRegistry),
                 lifeResolutionService,
                 new AnimationResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),

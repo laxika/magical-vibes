@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -118,6 +119,9 @@ public class SpellEvaluator {
         if (effect instanceof ExileTargetPermanentEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.1;
         }
+        if (effect instanceof GainControlOfTargetPermanentEffect) {
+            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
+        }
         if (effect instanceof DrawCardEffect draw) {
             return draw.amount() * 6.0;
         }
@@ -181,6 +185,11 @@ public class SpellEvaluator {
         }
         if (effect instanceof ExileTargetPermanentEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.1;
+        }
+
+        // Steal (opponent loses creature + we gain it)
+        if (effect instanceof GainControlOfTargetPermanentEffect) {
+            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
 
         // Damage

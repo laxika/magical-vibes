@@ -778,29 +778,95 @@ class HardAiDecisionEngineTest {
     }
 
     // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) =====
-    // Note: Hard AI's SpellEvaluator does not yet score GainControlOfTargetPermanentEffect,
-    // so the evaluator returns 0 and the spell is not selected for casting.
-    // The core co-selection logic is tested via AiDecisionEngineTest (Easy AI harness).
 
-    @Test
-    @DisplayName("Hard AI hasPermanentManaValueEqualsXTarget detects Entrancing Melody")
-    void detectsEntrancingMelodyPredicate() {
+    private HardAiDecisionEngine createHardAi(Player aiPlayer) {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), aiPlayer.getUsername());
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
-                gd.id, player1, harness.getGameRegistry(),
+                gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getTargetValidationService());
+        ai.setSelfConnection(aiConn);
+        return ai;
+    }
 
-        assertThat(ai.hasPermanentManaValueEqualsXTarget(new EntrancingMelody())).isTrue();
+    private void givePlayerIslands(Player player, int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent island = new Permanent(new Island());
+            island.setSummoningSick(false);
+            gd.playerBattlefields.get(player.getId()).add(island);
+        }
+    }
+
+    private void giveAiPriority(Player aiPlayer) {
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
     }
 
     @Test
-    @DisplayName("Hard AI hasPermanentManaValueEqualsXTarget returns false for normal creature")
-    void doesNotDetectPredicateOnNormalCard() {
-        HardAiDecisionEngine ai = new HardAiDecisionEngine(
-                gd.id, player1, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+    @DisplayName("Hard AI casts Entrancing Melody with X matching target creature's mana value")
+    void castsEntrancingMelodyWithCorrectX() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerIslands(player1, 4); // maxX = 2
 
-        assertThat(ai.hasPermanentManaValueEqualsXTarget(new GrizzlyBears())).isFalse();
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hard AI picks highest affordable target for Entrancing Melody")
+    void picksHighestAffordableTargetForEntrancingMelody() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerIslands(player1, 4); // maxX = 2
+
+        Permanent vanguard = new Permanent(new EliteVanguard()); // MV=1
+        vanguard.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(vanguard);
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hard AI skips Entrancing Melody when target too expensive")
+    void skipsEntrancingMelodyWhenTooExpensive() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerIslands(player1, 3); // maxX = 1
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2, unaffordable
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -713,19 +713,64 @@ class MediumAiDecisionEngineTest {
     }
 
     // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) =====
-    // Note: Medium AI's SpellEvaluator does not yet score GainControlOfTargetPermanentEffect,
-    // so the evaluator returns 0 and the spell is not selected for casting.
-    // The core co-selection logic is tested via AiDecisionEngineTest (Easy AI harness).
 
     @Test
-    @DisplayName("Medium AI hasPermanentManaValueEqualsXTarget detects Entrancing Melody")
-    void detectsEntrancingMelodyPredicate() {
-        assertThat(ai.hasPermanentManaValueEqualsXTarget(new EntrancingMelody())).isTrue();
+    @DisplayName("Medium AI casts Entrancing Melody with X matching target creature's mana value")
+    void castsEntrancingMelodyWithCorrectX() {
+        giveAiPriority();
+        giveAiIslands(4); // maxX = 4 - 2 (for {U}{U}) = 2
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Medium AI hasPermanentManaValueEqualsXTarget returns false for normal creature")
-    void doesNotDetectPredicateOnNormalCard() {
-        assertThat(ai.hasPermanentManaValueEqualsXTarget(new GrizzlyBears())).isFalse();
+    @DisplayName("Medium AI picks highest affordable mana value target for Entrancing Melody")
+    void picksHighestAffordableTargetForEntrancingMelody() {
+        giveAiPriority();
+        giveAiIslands(4); // maxX = 2
+
+        Permanent vanguard = new Permanent(new EliteVanguard()); // MV=1
+        vanguard.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(vanguard);
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI skips Entrancing Melody when target too expensive")
+    void skipsEntrancingMelodyWhenTooExpensive() {
+        giveAiPriority();
+        giveAiIslands(3); // maxX = 1
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2, unaffordable
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
     }
 }

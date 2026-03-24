@@ -278,7 +278,7 @@ public class GameTestHarness {
                 graveyardReturnResolutionService,
                 new ExileReturnResolutionService(gameQueryService, gameBroadcastService),
                 new ExileEggCounterResolutionService(gameQueryService, gameBroadcastService, battlefieldEntryService),
-                new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService),
+                new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService, effectHandlerRegistry),
                 lifeResolutionService,
                 new AnimationResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),

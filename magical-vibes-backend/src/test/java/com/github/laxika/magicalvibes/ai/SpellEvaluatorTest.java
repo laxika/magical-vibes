@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -118,5 +119,41 @@ class SpellEvaluatorTest {
         double value = spellEvaluator.estimateSpellValue(gd, new Pacifism(), player1.getId());
 
         assertThat(value).isEqualTo(0);
+    }
+
+    // ===== Gain control effects =====
+
+    @Test
+    @DisplayName("Gain control spell has positive value when opponent has creatures")
+    void gainControlPositiveValueWithTargets() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new EntrancingMelody(), player1.getId());
+
+        assertThat(value).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("Gain control spell has zero value when opponent has no creatures")
+    void gainControlZeroValueWithoutTargets() {
+        double value = spellEvaluator.estimateSpellValue(gd, new EntrancingMelody(), player1.getId());
+
+        assertThat(value).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Gain control spell is valued higher than destroy for same target")
+    void gainControlValueHigherThanDestroy() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        double stealValue = spellEvaluator.estimateSpellValue(gd, new EntrancingMelody(), player1.getId());
+        double shockValue = spellEvaluator.estimateSpellValue(gd, new Shock(), player1.getId());
+
+        // Stealing a creature should be more valuable than just killing it
+        assertThat(stealValue).isGreaterThan(shockValue);
     }
 }
