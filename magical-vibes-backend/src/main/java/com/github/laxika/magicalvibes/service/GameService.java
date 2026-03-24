@@ -86,6 +86,16 @@ public class GameService {
     }
 
     /**
+     * Returns true if the game is currently in attacker declaration and the given player
+     * is the declaring player. Per CR 508.1i, mana abilities may be activated during this window.
+     */
+    private boolean isAttackTaxManaPayment(GameData gameData, Player player) {
+        return gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)
+                && gameData.interaction.currentContext() instanceof InteractionContext.AttackerDeclaration ad
+                && ad.activePlayerId().equals(player.getId());
+    }
+
+    /**
      * the controlled player when the controlled player should be acting (has priority
      * or is the expected respondent for an interaction).
      * If the controller is acting as themselves (e.g., passing their own priority as
@@ -366,7 +376,9 @@ public class GameService {
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            requirePriority(gameData, player);
+            if (!isAttackTaxManaPayment(gameData, player)) {
+                requirePriority(gameData, player);
+            }
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
         }
     }
@@ -390,7 +402,14 @@ public class GameService {
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            requirePriority(gameData, player);
+            if (isAttackTaxManaPayment(gameData, player)) {
+                // CR 508.1i: only mana abilities allowed during attacker declaration
+                if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
+                    throw new IllegalStateException("Only mana abilities can be activated during attacker declaration");
+                }
+            } else {
+                requirePriority(gameData, player);
+            }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
         }
     }

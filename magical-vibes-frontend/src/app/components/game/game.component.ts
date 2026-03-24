@@ -66,6 +66,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.gameOverWinnerId.set(null);
     this.declaringAttackers.set(false);
     this.declaringBlockers.set(false);
+    this.attackTaxPerCreature.set(0);
     this.availableAttackerIndices.set(new Set());
     this.mustAttackIndices.set(new Set());
     this.availableBlockerIndices.set(new Set());
@@ -584,6 +585,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   declaringAttackers = signal(false);
   declaringBlockers = signal(false);
+  attackTaxPerCreature = signal(0);
   availableAttackerIndices = signal(new Set<number>());
   mustAttackIndices = signal(new Set<number>());
   availableBlockerIndices = signal(new Set<number>());
@@ -605,6 +607,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.selectedAttackerIndices.set(new Set(msg.mustAttackIndices));
     this.availableAttackTargets.set(msg.availableTargets || []);
     this.attackerTargetAssignments.set(new Map());
+    this.attackTaxPerCreature.set(msg.taxPerCreature || 0);
   }
 
   private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
@@ -701,6 +704,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.mustAttackIndices.set(new Set());
     this.availableAttackTargets.set([]);
     this.attackerTargetAssignments.set(new Map());
+    this.attackTaxPerCreature.set(0);
   }
 
   canBlock(index: number): boolean {
@@ -923,6 +927,11 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.declaringAttackers()) {
+      // CR 508.1i: allow tapping mana sources to pay attack tax
+      if (this.attackTaxPerCreature() > 0 && perm && !this.canAttack(index) && this.canTapPermanentForMana(perm)) {
+        this.tapPermanentForMana(index, perm);
+        return;
+      }
       this.toggleAttacker(index);
     } else if (this.declaringBlockers()) {
       this.selectBlocker(index);
@@ -956,6 +965,24 @@ export class GameComponent implements OnInit, OnDestroy {
       this.selectBlocker(blocker.index);
     } else if (blocker.isMine) {
       this.choice.targeting.tapPermanent(blocker.index);
+    }
+  }
+
+  // ========== Attack tax mana helpers ==========
+
+  canTapPermanentForMana(perm: Permanent): boolean {
+    if (perm.tapped) return false;
+    if (perm.summoningSick && isPermanentCreature(perm)) return false;
+    if (perm.card.hasTapAbility) return true;
+    return perm.card.activatedAbilities.some(a => a.isManaAbility);
+  }
+
+  private tapPermanentForMana(index: number, perm: Permanent): void {
+    const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
+    if (manaAbilityIndex >= 0) {
+      this.websocketService.send({ type: MessageType.ACTIVATE_ABILITY, permanentIndex: index, abilityIndex: manaAbilityIndex });
+    } else {
+      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
     }
   }
 

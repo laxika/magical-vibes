@@ -350,7 +350,7 @@ public class GameSimulator {
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 gameBroadcastService, stateBasedActionService, playerInputService, turnProgressionService, effectResolutionService);
         ReconnectionService reconnectionService = new ReconnectionService(
-                noOpSession, cardViewFactory, combatService, gameQueryService);
+                noOpSession, cardViewFactory, combatService, gameQueryService, gameBroadcastService);
 
         this.gameService = new GameService(
                 gameRegistry, gameQueryService, gameBroadcastService,

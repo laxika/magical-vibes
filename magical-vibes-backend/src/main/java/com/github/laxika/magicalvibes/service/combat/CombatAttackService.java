@@ -129,9 +129,10 @@ public class CombatAttackService {
 
         List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
         List<AttackTarget> availableTargets = buildAvailableTargets(gameData, activeId);
+        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, activeId);
         gameData.interaction.beginAttackerDeclaration(activeId);
         sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, activeId),
-                new AvailableAttackersMessage(attackable, mustAttack, availableTargets));
+                new AvailableAttackersMessage(attackable, mustAttack, availableTargets, taxPerCreature));
     }
 
     /**

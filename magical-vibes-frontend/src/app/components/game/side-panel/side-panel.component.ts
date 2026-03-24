@@ -34,6 +34,7 @@ export class SidePanelComponent {
   @Input() gameLog: string[] = [];
   @Input() declaringAttackers = false;
   @Input() declaringBlockers = false;
+  @Input() attackTaxPerCreature = 0;
   @Input() hasPriority = false;
 
   // Player info inputs

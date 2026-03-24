@@ -550,6 +550,18 @@
   background: rgba(75, 0, 130, 0.9);
 }
 
+/* Attack tax banner */
+
+.attack-tax-banner {
+  text-align: center;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  background: rgba(180, 120, 0, 0.7);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
 /* Phyrexian mana banner */
 
 .phyrexian-banner {

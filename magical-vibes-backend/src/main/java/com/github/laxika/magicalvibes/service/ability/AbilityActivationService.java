@@ -1524,6 +1524,14 @@ public class AbilityActivationService {
         return null;
     }
 
+    public boolean isManaAbilityAt(GameData gameData, UUID playerId, int permanentIndex, Integer abilityIndex) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null || permanentIndex < 0 || permanentIndex >= bf.size() || abilityIndex == null) return false;
+        Permanent perm = bf.get(permanentIndex);
+        ActivatedAbility ability = resolveAbility(gameData, perm, abilityIndex);
+        return isManaAbility(ability);
+    }
+
     private boolean isManaAbility(ActivatedAbility ability) {
         if (ability.isNeedsTarget() || ability.isNeedsSpellTarget() || ability.getLoyaltyCost() != null) {
             return false;

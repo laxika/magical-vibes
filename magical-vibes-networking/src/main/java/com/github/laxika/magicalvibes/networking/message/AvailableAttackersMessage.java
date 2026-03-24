@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.networking.model.MessageType;
 
 import java.util.List;
 
-public record AvailableAttackersMessage(MessageType type, List<Integer> attackerIndices, List<Integer> mustAttackIndices, List<AttackTarget> availableTargets) {
-    public AvailableAttackersMessage(List<Integer> attackerIndices, List<Integer> mustAttackIndices, List<AttackTarget> availableTargets) {
-        this(MessageType.AVAILABLE_ATTACKERS, attackerIndices, mustAttackIndices, availableTargets);
+public record AvailableAttackersMessage(MessageType type, List<Integer> attackerIndices, List<Integer> mustAttackIndices, List<AttackTarget> availableTargets, int taxPerCreature) {
+    public AvailableAttackersMessage(List<Integer> attackerIndices, List<Integer> mustAttackIndices, List<AttackTarget> availableTargets, int taxPerCreature) {
+        this(MessageType.AVAILABLE_ATTACKERS, attackerIndices, mustAttackIndices, availableTargets, taxPerCreature);
     }
 }

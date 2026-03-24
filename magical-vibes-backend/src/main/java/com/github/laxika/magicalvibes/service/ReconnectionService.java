@@ -60,6 +60,7 @@ public class ReconnectionService {
     private final CardViewFactory cardViewFactory;
     private final CombatService combatService;
     private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
 
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
         InteractionContext context = gameData.interaction.currentContext();
@@ -75,7 +76,8 @@ public class ReconnectionService {
                 if (playerId.equals(gameData.activePlayerId)) {
                     List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);
                     List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, playerId, attackable);
-                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId)));
+                    int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId), taxPerCreature));
                 }
             }
             case BLOCKER_DECLARATION -> {
@@ -208,7 +210,8 @@ public class ReconnectionService {
                 if (playerId.equals(ad.activePlayerId())) {
                     List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);
                     List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, playerId, attackable);
-                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId)));
+                    int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId), taxPerCreature));
                 }
             }
             case InteractionContext.BlockerDeclaration bd -> {

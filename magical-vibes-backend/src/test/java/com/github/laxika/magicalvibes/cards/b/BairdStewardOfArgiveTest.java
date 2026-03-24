@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HierophantsChalice;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -228,6 +232,135 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).get(0);
         assertThat(bear.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
+    }
+
+    // ===== Mana abilities during attacker declaration (CR 508.1i) =====
+
+    @Test
+    @DisplayName("Can tap land for mana during attacker declaration then declare with tax paid")
+    void canTapLandDuringDeclarationThenDeclare() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.beginAttackerDeclaration(player2.getId());
+
+        // Bears at index 0, Forest at index 1
+        gs.tapPermanent(gd, player2, 1);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+
+        gs.declareAttackers(gd, player2, List.of(0));
+
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        assertThat(bear.isAttacking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Tapping insufficient mana then declaring too many attackers fails")
+    void tapInsufficientManaForMultipleAttackersFails() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.beginAttackerDeclaration(player2.getId());
+
+        // Bears at 0,1; Forest at index 2. Tap Forest for 1 mana — need 2 for both attackers
+        gs.tapPermanent(gd, player2, 2);
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
+    }
+
+    @Test
+    @DisplayName("Non-declarant cannot tap during opponent's attacker declaration")
+    void nonDeclarantCannotTapDuringDeclaration() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        harness.addToBattlefield(player1, new Forest());
+        addNonSickCreature(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.beginAttackerDeclaration(player2.getId());
+
+        // player1 tries to tap their Forest — should fail (they're not the declarant)
+        assertThatThrownBy(() -> gs.tapPermanent(gd, player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Non-mana activated ability is blocked during attacker declaration")
+    void nonManaAbilityBlockedDuringDeclaration() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new ProdigalPyromancer());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.beginAttackerDeclaration(player2.getId());
+
+        // Pyromancer's tap ability is not a mana ability — should be blocked
+        assertThatThrownBy(() -> gs.activateAbility(gd, player2, 0, 0, null, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Only mana abilities can be activated during attacker declaration");
+    }
+
+    @Test
+    @DisplayName("Mana activated ability is allowed during attacker declaration")
+    void manaAbilityAllowedDuringDeclaration() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HierophantsChalice());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.beginAttackerDeclaration(player2.getId());
+
+        // Hierophant's Chalice mana ability (index 1 = chalice on battlefield) — should succeed
+        gs.activateAbility(gd, player2, 1, 0, null, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Full flow: tap lands then attack with multiple creatures")
+    void fullFlowTapThenAttackMultiple() {
+        harness.addToBattlefield(player1, new BairdStewardOfArgive());
+        addNonSickCreature(player2, new GrizzlyBears());
+        addNonSickCreature(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.interaction.beginAttackerDeclaration(player2.getId());
+
+        // Bears at 0,1; Plains at 2,3
+        gs.tapPermanent(gd, player2, 2);
+        gs.tapPermanent(gd, player2, 3);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+
+        gs.declareAttackers(gd, player2, List.of(0, 1));
+
+        List<Permanent> bears = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .toList();
+        assertThat(bears).hasSize(2);
+        assertThat(bears).allMatch(Permanent::isAttacking);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
     }
 

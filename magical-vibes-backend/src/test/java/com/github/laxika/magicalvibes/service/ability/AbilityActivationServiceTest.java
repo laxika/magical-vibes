@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
@@ -1061,6 +1062,144 @@ class AbilityActivationServiceTest {
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no more than 1 times each turn");
+        }
+    }
+
+    // =========================================================================
+    // isManaAbilityAt
+    // =========================================================================
+
+    @Nested
+    @DisplayName("isManaAbilityAt")
+    class IsManaAbilityAt {
+
+        @Test
+        @DisplayName("Returns true for activated ability that produces mana")
+        void trueForManaProducingAbility() {
+            Card card = new Card();
+            card.setName("Mana Rock");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS, 1)), "{T}: Add {C}."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns false for non-mana activated ability")
+        void falseForNonManaAbility() {
+            Card card = new Card();
+            card.setName("Shock Staff");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new PutChargeCounterOnSelfEffect()), "{T}: Put a charge counter."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false for ability that produces mana but also targets (not a mana ability per CR 605.1a)")
+        void falseForTargetingManaAbility() {
+            Card card = new Card();
+            card.setName("Targeting Mana Source");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            // Ability produces mana BUT also targets — targeting disqualifies it as a mana ability
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null,
+                    List.of(new DealDamageToAnyTargetEffect(1), new AwardManaEffect(ManaColor.RED, 1)),
+                    "{T}: Deal 1 damage to any target and add {R}."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false for null battlefield")
+        void falseForNullBattlefield() {
+            UUID unknownId = UUID.randomUUID();
+            assertThat(service.isManaAbilityAt(gameData, unknownId, 0, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false for negative permanent index")
+        void falseForNegativePermanentIndex() {
+            assertThat(service.isManaAbilityAt(gameData, player1Id, -1, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false for out-of-bounds permanent index")
+        void falseForOutOfBoundsPermanentIndex() {
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 999, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false for null ability index")
+        void falseForNullAbilityIndex() {
+            Card card = new Card();
+            card.setName("Rock");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS, 1)), "{T}: Add {C}."
+            ));
+            addReadyPermanent(player1Id, card);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns correct value for multi-ability permanent with mixed abilities")
+        void correctForMultiAbilityPermanent() {
+            Card card = new Card();
+            card.setName("Dual Ability Artifact");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            // Ability 0: non-mana
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new PutChargeCounterOnSelfEffect()), "{T}: Put a charge counter."
+            ));
+            // Ability 1: mana
+            card.addActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new AwardManaEffect(ManaColor.GREEN, 1)), "Add {G}."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isFalse();
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 1)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns false for loyalty ability that produces mana (loyalty abilities are never mana abilities)")
+        void falseForLoyaltyManaAbility() {
+            Card card = new Card();
+            card.setName("Mana Walker");
+            card.setType(CardType.PLANESWALKER);
+            card.setManaCost("{3}");
+            // Loyalty ability with mana production — still not a mana ability per CR 605.1a
+            card.addActivatedAbility(new ActivatedAbility(
+                    1, List.of(new AwardManaEffect(ManaColor.RED, 1)), "+1: Add {R}."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isFalse();
         }
     }
 

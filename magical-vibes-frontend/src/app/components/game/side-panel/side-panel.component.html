@@ -143,6 +143,9 @@
 
   <div class="action-bar">
     @if (declaringAttackers) {
+      @if (attackTaxPerCreature > 0) {
+        <div class="attack-tax-banner">Each attacker costs {{ '{' + attackTaxPerCreature + '}' }} mana. Tap lands to pay.</div>
+      }
       <button class="btn-pass btn-pass-orange" (click)="confirmAttackers.emit()">Confirm Attackers</button>
     } @else if (declaringBlockers) {
       <button class="btn-pass btn-pass-blue" (click)="confirmBlockers.emit()">Confirm Blockers</button>
