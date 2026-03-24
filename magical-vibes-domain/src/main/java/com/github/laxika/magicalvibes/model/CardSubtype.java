@@ -112,6 +112,7 @@ public enum CardSubtype {
     VIASHINO("Viashino"),
     SAPROLING("Saproling"),
     TREEFOLK("Treefolk"),
+    TRILOBITE("Trilobite"),
     TROLL("Troll"),
     MASTICORE("Masticore"),
     DINOSAUR("Dinosaur"),
