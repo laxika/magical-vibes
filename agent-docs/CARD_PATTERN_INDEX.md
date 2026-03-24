@@ -106,6 +106,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealXDamageToAnyTargetEffect(true) + ShuffleIntoLibraryEffect |
 | X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateXCreatureTokenEffect + ShuffleIntoLibraryEffect |
 | Fight (two-target) | `p/PreyUpon.java` | FirstTargetFightsSecondTargetEffect, multi-target: creature you control + creature you don't control |
+| Fight + counter + target cost reduction | `s/SavageStomp.java` | STATIC ReduceOwnCastCostIfTargetingControlledSubtypeEffect(DINOSAUR, 2) + SPELL PutPlusOnePlusOneCounterOnFirstTargetEffect(1) + FirstTargetFightsSecondTargetEffect — costs less when targeting a specific subtype, puts +1/+1 counter on first target then fights |
 | Bite (pump + bite) | `a/AssertPerfection.java` | BoostFirstTargetCreatureEffect + FirstTargetDealsPowerDamageToSecondTargetEffect, multi-target with per-position filters |
 | Pump + debuff (two targets) | `l/LeechingBite.java` | BoostFirstTargetCreatureEffect + BoostSecondTargetCreatureEffect, multi-target with creature filters |
 | Damage creature + destroy equipment | `t/TurnToSlag.java` | DestroyEquipmentAttachedToTargetCreatureEffect + DealDamageToTargetCreatureEffect — effect order doesn't matter; lethal damage destruction is deferred until all effects on the stack entry resolve |

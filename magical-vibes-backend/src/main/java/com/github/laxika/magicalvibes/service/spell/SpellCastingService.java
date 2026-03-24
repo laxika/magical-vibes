@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
@@ -644,10 +645,28 @@ public class SpellCastingService {
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());
             int resolvedXValue = effectiveXValue;
             int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
+            int targetSubtypeCostReduction = computeTargetSubtypeCostReduction(card, gameData, playerId, targetIds);
+            // Validate mana when target-based cost reduction doesn't apply but playability
+            // check passed optimistically (e.g. Savage Stomp targeting a non-Dinosaur)
+            if (targetSubtypeCostReduction == 0 && !usingAlternateCost) {
+                ReduceOwnCastCostIfTargetingControlledSubtypeEffect targetReduceEffect =
+                        card.getEffects(EffectSlot.STATIC).stream()
+                                .filter(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::isInstance)
+                                .map(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::cast)
+                                .findFirst().orElse(null);
+                if (targetReduceEffect != null) {
+                    ManaCost validationCost = new ManaCost(card.getManaCost());
+                    ManaPool pool = gameData.playerManaPools.get(playerId);
+                    int costModifier = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+                    if (!validationCost.canPay(pool, costModifier)) {
+                        throw new IllegalStateException("Not enough mana — target does not qualify for cost reduction");
+                    }
+                }
+            }
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
             } else {
-                paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount, kicked, 0, targetingTax);
+                paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount, kicked, targetSubtypeCostReduction, targetingTax);
             }
             resolvedXValue = payAllSacrificeCosts(gameData, player, card, sacrificePermanentId, sacFlags, resolvedXValue);
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
@@ -993,6 +1012,34 @@ public class SpellCastingService {
             }
         }
         return Math.max(0, totalPower);
+    }
+
+    /**
+     * Computes the actual cost reduction for spells that cost less when targeting a
+     * controlled permanent with a specific subtype (e.g. Savage Stomp targeting a Dinosaur).
+     * Returns the reduction amount if the first target matches, 0 otherwise.
+     */
+    private int computeTargetSubtypeCostReduction(Card card, GameData gameData, UUID playerId, List<UUID> targetIds) {
+        ReduceOwnCastCostIfTargetingControlledSubtypeEffect effect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::isInstance)
+                .map(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::cast)
+                .findFirst().orElse(null);
+        if (effect == null || targetIds.isEmpty()) {
+            return 0;
+        }
+
+        UUID firstTargetId = targetIds.getFirst();
+        Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
+        if (firstTarget == null) {
+            return 0;
+        }
+
+        UUID targetController = gameQueryService.findPermanentController(gameData, firstTargetId);
+        if (playerId.equals(targetController)
+                && GameQueryService.permanentHasSubtype(firstTarget, effect.subtype())) {
+            return effect.amount();
+        }
+        return 0;
     }
 
     private int paySacrificeCreaturesForCostReduction(GameData gameData, Player player, Card card, List<UUID> sacrificeIds) {

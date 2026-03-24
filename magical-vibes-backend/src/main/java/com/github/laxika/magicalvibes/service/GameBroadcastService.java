@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeE
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
@@ -415,6 +416,18 @@ public class GameBroadcastService {
                                 }
                                 int maxReduction = creatureCount * sacReduce.reductionPerCreature();
                                 if (cost.canPay(pool, additionalCost - maxReduction)) {
+                                    playable.add(i);
+                                }
+                            }
+                        }
+                        // Check if castable with target-subtype cost reduction (e.g. Savage Stomp)
+                        if (!playable.contains(i)) {
+                            ReduceOwnCastCostIfTargetingControlledSubtypeEffect targetReduce =
+                                    (ReduceOwnCastCostIfTargetingControlledSubtypeEffect) card.getEffects(EffectSlot.STATIC).stream()
+                                            .filter(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::isInstance)
+                                            .findFirst().orElse(null);
+                            if (targetReduce != null && controlsSubtype(gameData, playerId, targetReduce.subtype())) {
+                                if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
                                     playable.add(i);
                                 }
                             }
@@ -1322,7 +1335,7 @@ public class GameBroadcastService {
         return reduction;
     }
 
-    private boolean controlsSubtype(GameData gameData, UUID playerId, CardSubtype subtype) {
+    public boolean controlsSubtype(GameData gameData, UUID playerId, CardSubtype subtype) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent p : battlefield) {

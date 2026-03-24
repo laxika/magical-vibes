@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnE
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnFirstTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
@@ -655,6 +656,26 @@ public class PermanentCounterResolutionService {
         }
 
         applyPlusOnePlusOneCounters(gameData, entry, target, effect.count());
+    }
+
+    @HandlesEffect(PutPlusOnePlusOneCounterOnFirstTargetEffect.class)
+    private void resolvePutPlusOnePlusOneCounterOnFirstTarget(GameData gameData, StackEntry entry,
+                                                              PutPlusOnePlusOneCounterOnFirstTargetEffect effect) {
+        if (entry.getTargetIds() == null || entry.getTargetIds().isEmpty()) {
+            return;
+        }
+
+        UUID firstTargetId = entry.getTargetIds().getFirst();
+        Permanent firstTarget = gameQueryService.findPermanentById(gameData, firstTargetId);
+        if (firstTarget == null) {
+            return;
+        }
+
+        if (gameQueryService.cantHaveCounters(gameData, firstTarget)) {
+            return;
+        }
+
+        applyPlusOnePlusOneCounters(gameData, entry, firstTarget, effect.count());
     }
 
     @HandlesEffect(PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect.class)
