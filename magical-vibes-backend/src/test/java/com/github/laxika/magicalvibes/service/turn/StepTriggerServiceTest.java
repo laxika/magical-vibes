@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
@@ -892,6 +893,49 @@ class StepTriggerServiceTest {
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping MayEffect queues may ability when raid met")
+        void raidConditionalEndStepMayEffectQueuedWhenRaidMet() {
+            Card card = createCardWithName("Raiding Looter");
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    new RaidConditionalEffect(new MayEffect(new GainLifeEffect(1), "Gain life?")));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playersDeclaredAttackersThisTurn.add(player1Id);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect skips when raid not met")
+        void raidConditionalEndStepSkipsWhenRaidNotMet() {
+            Card card = createCardWithName("Raiding Looter");
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    new RaidConditionalEffect(new MayEffect(new GainLifeEffect(1), "Gain life?")));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            // Do NOT add player1Id to playersDeclaredAttackersThisTurn
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping non-MayEffect pushes to stack when raid met")
+        void raidConditionalEndStepNonMayPushesToStackWhenRaidMet() {
+            Card card = createCardWithName("Raiding Creature");
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    new RaidConditionalEffect(new GainLifeEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playersDeclaredAttackersThisTurn.add(player1Id);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getDescription()).contains("Raiding Creature");
         }
 
         @Test

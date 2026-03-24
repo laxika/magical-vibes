@@ -281,6 +281,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | End step self-destruct | `s/SparkElemental.java` | END_STEP_TRIGGERED SacrificeSelfEffect |
 | End step morbid destroy | `r/ReaperFromTheAbyss.java` | END_STEP_TRIGGERED MorbidConditionalEffect(DestroyTargetPermanentEffect()) + target(PermanentPredicateTargetFilter(non-Demon creature)) — intervening-if morbid check at trigger time, targeting via `pendingEndStepTriggerTargets` |
 | Controller end step draw | `j/JinGitaxiasCoreAugur.java` | CONTROLLER_END_STEP_TRIGGERED DrawCardEffect(7) — "your end step" trigger (only fires on controller's turn) + STATIC ReduceOpponentMaxHandSizeEffect(7) |
+| Controller end step raid loot | `m/MaraudingLooter.java` | CONTROLLER_END_STEP_TRIGGERED RaidConditionalEffect(MayEffect(DrawAndDiscardCardEffect())) — raid intervening-if at trigger time, may draw-then-discard at resolution |
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |
 | Imprint ETB + dies | `c/CloneShell.java` | Artifact Creature — ON_ENTER_BATTLEFIELD ImprintFromTopCardsEffect + ON_DEATH PutImprintedCreatureOntoBattlefieldEffect |
 | Equipment enters may-draw + metalcraft equip {0} | `p/PuresteelPaladin.java` | ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD MayEffect(DrawCardEffect) + STATIC MetalcraftConditionalEffect(GrantActivatedAbilityEffect(EquipActivatedAbility("{0}"), OWN_PERMANENTS, PermanentHasSubtypePredicate(EQUIPMENT))) |

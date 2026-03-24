@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
@@ -1117,7 +1118,32 @@ public class StepTriggerService {
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : controllerEndStepEffects) {
-                    if (effect instanceof MayEffect may) {
+                    if (effect instanceof RaidConditionalEffect raidEffect) {
+                        // Intervening-if: only trigger if the controller attacked this turn
+                        if (!gameData.playersDeclaredAttackersThisTurn.contains(activePlayerId)) {
+                            log.info("Game {} - {} end-step raid trigger skipped (didn't attack this turn)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        CardEffect wrapped = raidEffect.wrapped();
+                        if (wrapped instanceof MayEffect may) {
+                            gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    activePlayerId,
+                                    perm.getCard().getName() + "'s end step ability",
+                                    new ArrayList<>(List.of(wrapped)),
+                                    null,
+                                    perm.getId()
+                            ));
+
+                            String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} controller end-step raid trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                        }
+                    } else if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                     } else if (effect instanceof DestroyRandomOpponentPermanentWithCounterEffect destroyRandom) {
                         // Intervening-if: only trigger if enough opponent permanents have the counter
