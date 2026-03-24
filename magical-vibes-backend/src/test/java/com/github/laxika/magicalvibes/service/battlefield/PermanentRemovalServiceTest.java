@@ -305,6 +305,28 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Exiled card returns to hand when source leaves and returnToHand is true")
+        void exileReturnToHandOnLeave() {
+            Permanent source = addPermanent(player1Id, createCreature("Kitesail Freebooter"));
+            stubGraveyardForCreature(source, player1Id);
+
+            Card exiledCard = new Card();
+            exiledCard.setName("Cancel");
+            exiledCard.setType(CardType.INSTANT);
+            gd.addToExile(player2Id, exiledCard);
+            gd.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(exiledCard, player2Id, false, true));
+
+            prs.removePermanentToGraveyard(gd, source);
+
+            assertThat(gd.getPlayerExiledCards(player2Id))
+                    .noneMatch(c -> c.getName().equals("Cancel"));
+            assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
+            assertThat(gd.playerHands.get(player2Id))
+                    .anyMatch(c -> c.getName().equals("Cancel"));
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
+        }
+
+        @Test
         @DisplayName("Equipment with SacrificeOnUnattachEffect sacrifices attached creature when removed")
         void sacrificeOnUnattachWhenEquipmentRemoved() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));

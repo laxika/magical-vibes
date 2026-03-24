@@ -514,14 +514,23 @@ public class PermanentRemovalService {
 
         // Remove card from exile zone
         if (gameData.removeFromExile(exiledCard.getId())) {
-            // Return as a new permanent
-            Permanent perm = new Permanent(exiledCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
             String playerName = gameData.playerIdToName.get(ownerId);
-            String logEntry = exiledCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} returns from exile (source left battlefield)", gameData.id, exiledCard.getName());
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, exiledCard, null, false);
+
+            if (pending.returnToHand()) {
+                // Return to owner's hand (e.g. Kitesail Freebooter — exiled from hand)
+                gameData.playerHands.get(ownerId).add(exiledCard);
+                String logEntry = exiledCard.getName() + " returns to " + playerName + "'s hand.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} returns to hand from exile (source left battlefield)", gameData.id, exiledCard.getName());
+            } else {
+                // Return as a new permanent on the battlefield
+                Permanent perm = new Permanent(exiledCard);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
+                String logEntry = exiledCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} returns from exile (source left battlefield)", gameData.id, exiledCard.getName());
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, exiledCard, null, false);
+            }
         } else {
             log.info("Game {} - Exiled card {} no longer in exile zone, return skipped", gameData.id, exiledCard.getName());
         }

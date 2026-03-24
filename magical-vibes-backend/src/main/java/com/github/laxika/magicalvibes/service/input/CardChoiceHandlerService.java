@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -384,6 +385,15 @@ public class CardChoiceHandlerService {
                 String exileLog = player.getUsername() + " exiles " + cardNames + " from " + targetName + "'s hand.";
                 gameBroadcastService.logAndBroadcast(gameData, exileLog);
                 log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+
+                // Track return-on-source-leave for exile-until-leaves effects (e.g. Kitesail Freebooter)
+                UUID sourcePermanentId = gameData.interaction.revealedHandChoice().sourcePermanentId();
+                if (sourcePermanentId != null) {
+                    for (Card exiled : chosenCards) {
+                        gameData.exileReturnOnPermanentLeave.put(sourcePermanentId,
+                                new PendingExileReturn(exiled, targetPlayerId, false, true));
+                    }
+                }
             } else {
                 // Put chosen cards on top of library
                 List<Card> deck = gameData.playerDecks.get(targetPlayerId);

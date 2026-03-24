@@ -667,12 +667,13 @@ public class PlayerInteractionResolutionService {
     @HandlesEffect(ChooseCardFromTargetHandToDiscardEffect.class)
     private void resolveChooseCardFromTargetHandToDiscardHandler(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToDiscardEffect effect) {
         gameData.discardCausedByOpponent = true;
-        resolveHandRevealAndChoose(gameData, entry, effect.count(), effect.excludedTypes(), effect.includedTypes(), true, false);
+        resolveHandRevealAndChoose(gameData, entry, effect.count(), effect.excludedTypes(), effect.includedTypes(), true, false, null);
     }
 
     @HandlesEffect(ChooseCardFromTargetHandToExileEffect.class)
     private void resolveChooseCardFromTargetHandToExileHandler(GameData gameData, StackEntry entry, ChooseCardFromTargetHandToExileEffect effect) {
-        resolveHandRevealAndChoose(gameData, entry, effect.count(), effect.excludedTypes(), effect.includedTypes(), false, true);
+        UUID sourcePermanentId = effect.returnOnSourceLeave() ? entry.getSourcePermanentId() : null;
+        resolveHandRevealAndChoose(gameData, entry, effect.count(), effect.excludedTypes(), effect.includedTypes(), false, true, sourcePermanentId);
     }
 
     @HandlesEffect(ChooseCardNameAndExileFromZonesEffect.class)
@@ -1146,7 +1147,7 @@ public class PlayerInteractionResolutionService {
 
     private void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
-                                             boolean discardMode, boolean exileMode) {
+                                             boolean discardMode, boolean exileMode, UUID sourcePermanentId) {
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -1206,6 +1207,12 @@ public class PlayerInteractionResolutionService {
         }
         playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
                 choicePrompt);
+
+        // Track source permanent for exile-until-source-leaves effects (must be set after
+        // playerInputService.beginRevealedHandChoice which recreates the state)
+        if (sourcePermanentId != null) {
+            gameData.interaction.revealedHandChoice().setSourcePermanentId(sourcePermanentId);
+        }
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);

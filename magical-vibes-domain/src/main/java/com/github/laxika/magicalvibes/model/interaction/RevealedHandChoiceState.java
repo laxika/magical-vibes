@@ -18,6 +18,7 @@ public class RevealedHandChoiceState {
     private boolean discardMode;
     private boolean exileMode;
     private int discardRemainingCount;
+    private UUID sourcePermanentId;
 
     public RevealedHandChoiceState(UUID choosingPlayerId, Set<Integer> validIndices,
                                    UUID targetPlayerId, int remainingCount,
@@ -86,6 +87,14 @@ public class RevealedHandChoiceState {
         return exileMode;
     }
 
+    public UUID sourcePermanentId() {
+        return sourcePermanentId;
+    }
+
+    public void setSourcePermanentId(UUID sourcePermanentId) {
+        this.sourcePermanentId = sourcePermanentId;
+    }
+
     public int discardRemainingCount() {
         return discardRemainingCount;
     }
@@ -107,6 +116,7 @@ public class RevealedHandChoiceState {
         this.discardMode = false;
         this.exileMode = false;
         this.chosenCards.clear();
+        this.sourcePermanentId = null;
     }
 
     public RevealedHandChoiceState deepCopy() {
@@ -120,6 +130,7 @@ public class RevealedHandChoiceState {
                 chosenCards
         );
         copy.discardRemainingCount = this.discardRemainingCount;
+        copy.sourcePermanentId = this.sourcePermanentId;
         return copy;
     }
 }
