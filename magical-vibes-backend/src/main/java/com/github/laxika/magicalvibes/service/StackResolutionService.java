@@ -291,6 +291,9 @@ public class StackResolutionService {
                     .map(e -> (ChooseCardNameOnEnterEffect) e)
                     .findFirst().orElse(null);
             if (chooseNameEffect != null) {
+                if (chooseNameEffect.lookAtOpponentHand()) {
+                    gameBroadcastService.revealOpponentHandToPlayer(gameData, controllerId);
+                }
                 playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
                 return;
             }
@@ -343,13 +346,16 @@ public class StackResolutionService {
             return;
         }
 
-        // "As enters" card name choice (e.g. Pithing Needle, Phyrexian Revoker) — name must be chosen
-        // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
+        // "As enters" card name choice (e.g. Pithing Needle, Phyrexian Revoker, Sorcerous Spyglass)
+        // — name must be chosen BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
         var chooseNameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
                 .map(e -> (ChooseCardNameOnEnterEffect) e)
                 .findFirst().orElse(null);
         if (chooseNameEffect != null) {
+            if (chooseNameEffect.lookAtOpponentHand()) {
+                gameBroadcastService.revealOpponentHandToPlayer(gameData, controllerId);
+            }
             playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
             return;
         }

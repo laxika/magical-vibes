@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
+import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
@@ -1490,6 +1491,25 @@ public class GameBroadcastService {
 
     public void logAndBroadcast(GameData gameData, String logEntry) {
         gameData.gameLog.add(logEntry);
+    }
+
+    public void revealOpponentHandToPlayer(GameData gameData, UUID controllerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        List<Card> hand = gameData.playerHands.get(opponentId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(opponentId);
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = controllerName + " looks at " + opponentName + "'s hand. It is empty.";
+            logAndBroadcast(gameData, logEntry);
+        } else {
+            String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+            String logEntry = controllerName + " looks at " + opponentName + "'s hand: " + cardNames + ".";
+            logAndBroadcast(gameData, logEntry);
+        }
+
+        List<CardView> cardViews = (hand == null ? List.<Card>of() : hand).stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new RevealHandMessage(cardViews, opponentName));
     }
 }
 
