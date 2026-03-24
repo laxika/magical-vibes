@@ -106,6 +106,7 @@ public enum CardSubtype {
     LIZARD("Lizard"),
     LHURGOYF("Lhurgoyf"),
     SCOUT("Scout"),
+    SIREN("Siren"),
     AVATAR("Avatar"),
     MINION("Minion"),
     VIASHINO("Viashino"),
