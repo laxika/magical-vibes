@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -1362,6 +1363,23 @@ public class BattlefieldEntryService {
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} triggers for {} entering (gain {} life)",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(), gainLife.amount());
+                } else if (effect instanceof DealDamageToTargetPlayerEffect damageEffect) {
+                    for (int t = 0; t < 1 + extraTriggers; t++) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(new DealDamageToTargetPlayerEffect(damageEffect.damage()))),
+                                enteringCreatureControllerId,
+                                perm.getId()
+                        ));
+                    }
+                    String triggerLog = perm.getCard().getName() + " triggers — deals " + damageEffect.damage() +
+                            " damage to " + gameData.playerIdToName.get(enteringCreatureControllerId) + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
+                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), damageEffect.damage());
                 }
             }
         });
