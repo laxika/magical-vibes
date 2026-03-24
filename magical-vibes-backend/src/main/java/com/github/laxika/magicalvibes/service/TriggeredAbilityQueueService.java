@@ -110,30 +110,34 @@ public class TriggeredAbilityQueueService {
                     ? new FilterContext(gameData, pending.sourceCard().getId(), pending.controllerId(), null)
                     : null;
 
-            // Check if effects can target players (any-target effects like DealDamageToAnyTargetEffect)
+            // Check if effects can target players and/or permanents
             boolean canTargetPlayers = pending.effects().stream().anyMatch(CardEffect::canTargetPlayer);
+            boolean canTargetPermanents = pending.effects().stream().anyMatch(CardEffect::canTargetPermanent);
 
             List<UUID> validTargets = new ArrayList<>();
 
-            // Add player IDs for any-target effects
+            // Add player IDs for player-targeting effects
             if (canTargetPlayers) {
                 validTargets.addAll(gameData.orderedPlayerIds);
             }
 
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {
-                        if (gameQueryService.matchesFilters(p, Set.of(cpf), filterCtx)) {
+            // Add permanent IDs for permanent-targeting effects (or any-target)
+            if (canTargetPermanents) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {
+                            if (gameQueryService.matchesFilters(p, Set.of(cpf), filterCtx)) {
+                                validTargets.add(p.getId());
+                            }
+                        } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+                            if (gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) {
+                                validTargets.add(p.getId());
+                            }
+                        } else {
                             validTargets.add(p.getId());
                         }
-                    } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
-                        if (gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) {
-                            validTargets.add(p.getId());
-                        }
-                    } else {
-                        validTargets.add(p.getId());
                     }
                 }
             }
@@ -147,7 +151,8 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
-            String targetDescription = canTargetPlayers ? "any target" : "target permanent";
+            String targetDescription = (canTargetPlayers && canTargetPermanents) ? "any target"
+                    : canTargetPlayers ? "target player" : "target permanent";
             gameData.pendingAttackTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,

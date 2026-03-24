@@ -51,6 +51,45 @@ class FleetSwallowerTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Attack trigger valid targets contain only player IDs, not permanents")
+        void attackTriggerTargetsOnlyPlayers() {
+            addReadyFleetSwallower(player1);
+            // Add an opponent creature — it should NOT appear as a valid target
+            Permanent opponentCreature = new Permanent(new FleetSwallower());
+            gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+
+            declareAttackers(List.of(0));
+
+            assertThat(gd.interaction.permanentChoice().validIds())
+                    .containsExactlyInAnyOrder(player1.getId(), player2.getId())
+                    .doesNotContain(opponentCreature.getId());
+        }
+
+        @Test
+        @DisplayName("Attack trigger resolves correctly when opponent has creatures on the battlefield")
+        void attackTriggerResolvesWithOpponentCreatures() {
+            harness.setLife(player1, 20);
+            harness.setLife(player2, 20);
+            addReadyFleetSwallower(player1);
+            // Add an opponent creature to ensure it doesn't interfere
+            Permanent opponentCreature = new Permanent(new FleetSwallower());
+            gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+
+            List<Card> deck = gd.playerDecks.get(player2.getId());
+            while (deck.size() > 10) {
+                deck.removeFirst();
+            }
+
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities(); // resolve attack trigger
+
+            // 10 / 2 = 5 milled, 5 remain
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+            assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+        }
+
+        @Test
         @DisplayName("Mills half of target player's library rounded up (even count)")
         void millsHalfLibraryRoundedUpEvenCount() {
             harness.setLife(player1, 20);
