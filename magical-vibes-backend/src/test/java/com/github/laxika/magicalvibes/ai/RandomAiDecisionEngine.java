@@ -335,17 +335,20 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         // Use base-mode targeting since AI never kicks spells
         Set<TargetType> allowed = targetSelector.computeBaseAllowedTargets(card);
 
-        // Add players as targets if allowed, respecting player relation predicates
+        // Add players as targets if allowed, respecting player relation predicates and hexproof/shroud
         if (allowed.contains(TargetType.PLAYER)) {
             PlayerRelation relation = PlayerRelation.ANY;
             if (card.getTargetFilter() instanceof PlayerPredicateTargetFilter ptf
                     && ptf.predicate() instanceof PlayerRelationPredicate prp) {
                 relation = prp.relation();
             }
-            if (relation != PlayerRelation.OPPONENT) {
+            if (relation != PlayerRelation.OPPONENT
+                    && !gameQueryService.playerHasShroud(gameData, aiPlayer.getId())) {
                 validTargets.add(aiPlayer.getId());
             }
-            if (relation != PlayerRelation.SELF && opponentId != null) {
+            if (relation != PlayerRelation.SELF && opponentId != null
+                    && !gameQueryService.playerHasShroud(gameData, opponentId)
+                    && !gameQueryService.playerHasHexproof(gameData, opponentId)) {
                 validTargets.add(opponentId);
             }
         }

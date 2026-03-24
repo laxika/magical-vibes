@@ -61,7 +61,12 @@ class AiTargetSelector {
         // Use base-mode targeting since AI never kicks spells
         Set<TargetType> allowedTargets = computeBaseAllowedTargets(card);
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
-            return opponentId;
+            if (opponentId != null
+                    && !gameQueryService.playerHasShroud(gameData, opponentId)
+                    && !gameQueryService.playerHasHexproof(gameData, opponentId)) {
+                return opponentId;
+            }
+            return null;
         }
 
         // Handle graveyard targeting (e.g. Unburial Rites, Gruesome Encore)

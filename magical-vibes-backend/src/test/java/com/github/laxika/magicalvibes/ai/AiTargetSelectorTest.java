@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -478,6 +479,79 @@ class AiTargetSelectorTest {
             assertThat(result).isNotNull();
             assertThat(result.values().stream().mapToInt(Integer::intValue).sum()).isEqualTo(10);
             assertThat(result).containsEntry(opponentId, 7);
+        }
+    }
+
+    // ===== chooseTarget: player hexproof / shroud =====
+
+    @Nested
+    @DisplayName("chooseTarget player hexproof / shroud (unit)")
+    class ChooseTargetPlayerHexproofShroudUnit {
+
+        private GameQueryService mockGqs;
+        private TargetValidationService mockTvs;
+        private AiTargetSelector unitSelector;
+        private GameData unitGd;
+        private UUID aiId;
+        private UUID opponentId;
+
+        @BeforeEach
+        void setUp() {
+            mockGqs = mock(GameQueryService.class);
+            mockTvs = mock(TargetValidationService.class);
+            unitSelector = new AiTargetSelector(mockGqs, mockTvs);
+
+            aiId = UUID.randomUUID();
+            opponentId = UUID.randomUUID();
+            unitGd = new GameData(UUID.randomUUID(), "test", aiId, "AI");
+            unitGd.orderedPlayerIds.add(aiId);
+            unitGd.orderedPlayerIds.add(opponentId);
+            unitGd.playerIds.add(aiId);
+            unitGd.playerIds.add(opponentId);
+            unitGd.playerBattlefields.put(aiId, Collections.synchronizedList(new ArrayList<>()));
+            unitGd.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>()));
+
+            lenient().when(mockTvs.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+        }
+
+        private Card makePlayerOnlySpell() {
+            Card spell = new Card();
+            spell.setName("Test Player Spell");
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerEffect(3));
+            return spell;
+        }
+
+        @Test
+        @DisplayName("Returns null when opponent has hexproof")
+        void returnsNullWhenOpponentHasHexproof() {
+            lenient().when(mockGqs.playerHasShroud(unitGd, opponentId)).thenReturn(false);
+            lenient().when(mockGqs.playerHasHexproof(unitGd, opponentId)).thenReturn(true);
+
+            UUID target = unitSelector.chooseTarget(unitGd, makePlayerOnlySpell(), aiId);
+
+            assertThat(target).isNull();
+        }
+
+        @Test
+        @DisplayName("Returns null when opponent has shroud")
+        void returnsNullWhenOpponentHasShroud() {
+            lenient().when(mockGqs.playerHasShroud(unitGd, opponentId)).thenReturn(true);
+
+            UUID target = unitSelector.chooseTarget(unitGd, makePlayerOnlySpell(), aiId);
+
+            assertThat(target).isNull();
+        }
+
+        @Test
+        @DisplayName("Returns opponent when opponent has no hexproof or shroud")
+        void returnsOpponentWhenNoProtection() {
+            lenient().when(mockGqs.playerHasShroud(unitGd, opponentId)).thenReturn(false);
+            lenient().when(mockGqs.playerHasHexproof(unitGd, opponentId)).thenReturn(false);
+
+            UUID target = unitSelector.chooseTarget(unitGd, makePlayerOnlySpell(), aiId);
+
+            assertThat(target).isEqualTo(opponentId);
         }
     }
 
