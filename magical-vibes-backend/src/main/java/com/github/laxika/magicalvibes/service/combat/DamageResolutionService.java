@@ -243,7 +243,7 @@ public class DamageResolutionService {
 
     /**
      * Resolves {@link MassDamageEffect} — deals damage to all creatures on the battlefield (optionally
-     * filtered by a predicate) and, if the effect specifies it, to all players as well.
+     * filtered by a predicate), optionally to all planeswalkers, and optionally to all players as well.
      */
     @HandlesEffect(MassDamageEffect.class)
     void resolveMassDamage(GameData gameData, StackEntry entry, MassDamageEffect effect) {
@@ -255,9 +255,12 @@ public class DamageResolutionService {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId());
+        Predicate<Permanent> baseFilter = effect.damagesPlaneswalkers()
+                ? p -> gameQueryService.isCreature(gameData, p) || p.getCard().hasType(CardType.PLANESWALKER)
+                : p -> gameQueryService.isCreature(gameData, p);
         Predicate<Permanent> creatureFilter = effect.filter() == null
-                ? p -> gameQueryService.isCreature(gameData, p)
-                : p -> gameQueryService.isCreature(gameData, p)
+                ? baseFilter
+                : p -> baseFilter.test(p)
                         && gameQueryService.matchesPermanentPredicate(p, effect.filter(), filterContext);
 
         damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter);
