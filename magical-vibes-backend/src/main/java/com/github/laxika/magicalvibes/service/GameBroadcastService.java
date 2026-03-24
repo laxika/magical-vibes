@@ -380,9 +380,10 @@ public class GameBroadcastService {
                         boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
                         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                                 && pool.getInstantSorceryOnlyColorless() > 0;
-                        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless;
+                        Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
+                        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || !subtypeCreatureContext.isEmpty();
                         boolean canAfford = hasRestricted
-                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless)
+                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext)
                                 : cost.canPay(pool, additionalCost);
                         if (canAfford && card.isRequiresCreatureMana()) {
                             canAfford = cost.canPayCreatureOnly(pool, additionalCost);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -63,6 +64,9 @@ class AiManaManager {
                         if (isCreature) {
                             virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
                         }
+                    } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                        // AI treats this as colorless for virtual pool estimation
+                        virtual.add(ManaColor.COLORLESS);
                     }
                 }
             }
@@ -95,7 +99,7 @@ class AiManaManager {
             }
 
             boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
             if (!producesMana) {
                 continue;
             }
@@ -136,7 +140,7 @@ class AiManaManager {
             }
 
             boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
             if (!producesMana) {
                 continue;
             }
@@ -180,7 +184,7 @@ class AiManaManager {
             }
 
             boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
             if (!producesMana) {
                 continue;
             }

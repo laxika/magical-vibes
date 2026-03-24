@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -220,6 +221,63 @@ public class ManaCost {
         return remaining >= genericCost + xValue;
     }
 
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext) {
+        if (subtypeCreatureContext == null || subtypeCreatureContext.isEmpty()) {
+            return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
+        }
+        int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+
+        // Check each colored cost can be paid from combined sources
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            int available = pool.get(entry.getKey());
+            available += pool.getSubtypeCreatureManaForColor(subtypeCreatureContext, entry.getKey());
+            if (entry.getKey() == ManaColor.RED) {
+                available += extraRed;
+            }
+            if (entry.getKey() == ManaColor.GREEN) {
+                available += extraGreen;
+            }
+            if (available < entry.getValue()) {
+                return false;
+            }
+        }
+
+        // Check generic costs: total available (regular + all restricted) minus colored costs
+        int remaining = pool.getTotal();
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            remaining -= entry.getValue();
+        }
+
+        if (artifactContext) {
+            remaining += pool.getArtifactOnlyColorless();
+        }
+        if (myrContext) {
+            remaining += pool.getMyrOnlyColorless();
+        }
+        if (instantSorceryOnlyColorlessContext) {
+            remaining += pool.getInstantSorceryOnlyColorless();
+        }
+        if (restrictedRedContext) {
+            int redNeeded = coloredCosts.getOrDefault(ManaColor.RED, 0);
+            int regularRed = pool.get(ManaColor.RED);
+            int restrictedRedUsedForColored = Math.max(0, redNeeded - regularRed);
+            remaining += extraRed - restrictedRedUsedForColored;
+        }
+        if (kickedOnlyGreenContext) {
+            int greenNeeded = coloredCosts.getOrDefault(ManaColor.GREEN, 0);
+            int regularGreen = pool.get(ManaColor.GREEN);
+            int kickedOnlyGreenUsedForColored = Math.max(0, greenNeeded - regularGreen);
+            remaining += extraGreen - kickedOnlyGreenUsedForColored;
+        }
+        // Subtype creature mana: add the full total. The colored check above ensures each color
+        // has enough individually, and the total (regular + subtype) minus colored costs correctly
+        // accounts for subtype mana used for colored costs being compensated.
+        remaining += pool.getSubtypeCreatureManaTotal(subtypeCreatureContext);
+
+        return remaining >= genericCost + xValue;
+    }
+
     public boolean canPay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
@@ -370,6 +428,88 @@ public class ManaCost {
         }
 
         // Spend kicked-only green for generic costs
+        if (kickedOnlyGreenContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, extraGreen);
+            pool.removeKickedOnlyGreen(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        payGenericPreferColorless(pool, remainingGeneric);
+    }
+
+    public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext) {
+        if (subtypeCreatureContext == null || subtypeCreatureContext.isEmpty()) {
+            pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
+            return;
+        }
+        int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
+        int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
+
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                // Prefer spending subtype creature mana first (most restricted)
+                int subtypeAvail = pool.getSubtypeCreatureManaForColor(subtypeCreatureContext, entry.getKey());
+                if (subtypeAvail > 0) {
+                    pool.removeSubtypeCreatureMana(subtypeCreatureContext, entry.getKey(), 1);
+                } else if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
+                    pool.removeRestrictedRed(1);
+                    extraRed--;
+                } else if (kickedOnlyGreenContext && entry.getKey() == ManaColor.GREEN && extraGreen > 0) {
+                    pool.removeKickedOnlyGreen(1);
+                    extraGreen--;
+                } else {
+                    pool.remove(entry.getKey());
+                }
+            }
+        }
+
+        int remainingGeneric = genericCost + xValue;
+
+        // Spend subtype creature mana for generic costs first (most restricted)
+        if (remainingGeneric > 0) {
+            int subtypeTotal = pool.getSubtypeCreatureManaTotal(subtypeCreatureContext);
+            int fromSubtype = Math.min(remainingGeneric, subtypeTotal);
+            if (fromSubtype > 0) {
+                // Remove from subtype pools color by color
+                int toRemove = fromSubtype;
+                for (ManaColor color : ManaColor.values()) {
+                    if (toRemove <= 0) break;
+                    int avail = pool.getSubtypeCreatureManaForColor(subtypeCreatureContext, color);
+                    int removeNow = Math.min(toRemove, avail);
+                    if (removeNow > 0) {
+                        pool.removeSubtypeCreatureMana(subtypeCreatureContext, color, removeNow);
+                        toRemove -= removeNow;
+                    }
+                }
+                remainingGeneric -= fromSubtype;
+            }
+        }
+
+        // Spend more-restrictive mana first: Myr-only before artifact-only
+        if (myrContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getMyrOnlyColorless());
+            pool.removeMyrOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        if (artifactContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getArtifactOnlyColorless());
+            pool.removeArtifactOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        if (instantSorceryOnlyColorlessContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getInstantSorceryOnlyColorless());
+            pool.removeInstantSorceryOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        if (restrictedRedContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, extraRed);
+            pool.removeRestrictedRed(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
         if (kickedOnlyGreenContext && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, extraGreen);
             pool.removeKickedOnlyGreen(fromRestricted);

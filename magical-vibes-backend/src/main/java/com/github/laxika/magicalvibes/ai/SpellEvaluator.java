@@ -447,6 +447,8 @@ public class SpellEvaluator {
                     virtualPool.add(me.color(), me.amount());
                 } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect) {
                     virtualPool.add(ManaColor.COLORLESS);
+                } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                    virtualPool.add(ManaColor.COLORLESS);
                 }
             }
         }

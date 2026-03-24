@@ -400,8 +400,19 @@ public class StackResolutionService {
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
 
+        // Check if artifact has "as enters" creature type choice (e.g. Pillar of Origins)
+        boolean needsSubtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof ChooseSubtypeOnEnterEffect);
+        if (needsSubtypeChoice) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId());
+        }
+
         // Process ETB effects for all artifacts (creature and non-creature)
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+        if (!gameData.interaction.isAwaitingInput()) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+        }
 
         checkLegendRuleIfIdle(gameData, controllerId);
     }

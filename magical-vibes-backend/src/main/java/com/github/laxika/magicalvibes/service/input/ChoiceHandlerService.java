@@ -170,9 +170,13 @@ public class ChoiceHandlerService {
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.amount();
-        manaPool.add(manaColor, amount);
-        if (ctx.fromCreature()) {
-            manaPool.addCreatureMana(manaColor, amount);
+        if (ctx.restrictedToCreatureSubtype() != null) {
+            manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount);
+        } else {
+            manaPool.add(manaColor, amount);
+            if (ctx.fromCreature()) {
+                manaPool.addCreatureMana(manaColor, amount);
+            }
         }
 
         String manaWord = amount == 1 ? "one" : String.valueOf(amount);

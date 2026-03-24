@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEqualToSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
@@ -325,6 +327,15 @@ public class ActivatedAbilityExecutionService {
                     for (int i = 0; i < current; i++) {
                         pool.add(color);
                     }
+                }
+            } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                CardSubtype chosenSubtype = permanent.getChosenSubtype();
+                if (chosenSubtype != null) {
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, false, 1, chosenSubtype);
+                    gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+                    List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                    sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+                    log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} creatures)", gameData.id, player.getUsername(), chosenSubtype);
                 }
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
                 ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aace.amount());

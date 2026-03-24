@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -849,6 +850,8 @@ public class GameSimulator {
                 } else if (effect instanceof AwardAnyColorManaEffect) {
                     virtual.add(ManaColor.COLORLESS);
                     if (isCreature) virtual.addCreatureMana(ManaColor.COLORLESS, 1);
+                } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                    virtual.add(ManaColor.COLORLESS);
                 }
             }
         }
@@ -871,7 +874,7 @@ public class GameSimulator {
                 if (perm.isSummoningSick()
                         && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
                 boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                        .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+                        .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
                 if (!producesMana) continue;
                 gameService.tapPermanent(gd, player, i);
                 currentPool = gd.playerManaPools.get(playerId);
@@ -896,7 +899,7 @@ public class GameSimulator {
             if (gameQueryService.isCreature(gd, perm) && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
             boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
+                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
             if (!producesMana) continue;
             gameService.tapPermanent(gd, player, i);
             currentPool = gd.playerManaPools.get(playerId);

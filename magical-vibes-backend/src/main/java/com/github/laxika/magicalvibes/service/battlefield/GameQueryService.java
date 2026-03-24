@@ -424,6 +424,17 @@ public class GameQueryService {
     }
 
     /**
+     * Returns all subtypes of a creature card, including those granted by Arcane Adaptation-style effects.
+     */
+    public Set<CardSubtype> getCardSubtypes(Card card, GameData gameData, UUID cardOwnerId) {
+        Set<CardSubtype> subtypes = new java.util.HashSet<>(card.getSubtypes());
+        if (gameData != null && cardOwnerId != null && card.hasType(CardType.CREATURE)) {
+            subtypes.addAll(computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId));
+        }
+        return subtypes;
+    }
+
+    /**
      * Computes the list of subtypes granted to creature cards owned by the given player in
      * non-battlefield zones (hand, graveyard, library, exile) and creature spells they control
      * on the stack. Scans the owner's battlefield for permanents with
