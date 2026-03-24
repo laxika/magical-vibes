@@ -27,8 +27,13 @@ import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -936,6 +941,64 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Raiding Creature");
+        }
+
+        @Test
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping targeting effect queues for target selection when raid met")
+        void raidConditionalEndStepTargetingEffectQueuesWhenRaidMet() {
+            Card card = createCardWithName("Navigator's Ruin");
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    new RaidConditionalEffect(new MillTargetPlayerEffect(4)));
+            card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                    "Target must be an opponent"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.playersDeclaredAttackersThisTurn.add(player1Id);
+
+            sut.handleEndStepTriggers(gd);
+
+            // Should not push directly to stack — should queue for target selection
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingEndStepTriggerTargets).isEmpty(); // processed immediately
+            // processNextEndStepTriggerTarget fires and presents choice
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
+        }
+
+        @Test
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping targeting effect skips when raid not met")
+        void raidConditionalEndStepTargetingEffectSkipsWhenRaidNotMet() {
+            Card card = createCardWithName("Navigator's Ruin");
+            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    new RaidConditionalEffect(new MillTargetPlayerEffect(4)));
+            card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                    "Target must be an opponent"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            // Do NOT add player1Id to playersDeclaredAttackersThisTurn
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingEndStepTriggerTargets).isEmpty();
+            verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("processNextEndStepTriggerTarget with PlayerPredicateTargetFilter OPPONENT excludes controller from valid targets")
+        void endStepTriggerOpponentFilterExcludesController() {
+            Card card = createCardWithName("Navigator's Ruin");
+            card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                    "Target must be an opponent"));
+            gd.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                    card, player1Id, new ArrayList<>(List.of(new MillTargetPlayerEffect(4))),
+                    UUID.randomUUID()));
+
+            sut.processNextEndStepTriggerTarget(gd);
+
+            // Should present choice with only opponent (player2), not controller (player1)
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
+                    eq(List.of(player2Id)), any());
         }
 
         @Test

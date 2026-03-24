@@ -46,6 +46,9 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -1128,6 +1131,10 @@ public class StepTriggerService {
                         CardEffect wrapped = raidEffect.wrapped();
                         if (wrapped instanceof MayEffect may) {
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                        } else if (wrapped.canTargetPermanent() || wrapped.canTargetPlayer()) {
+                            // Raid condition met, targeting required — queue for target selection
+                            gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
                         } else {
                             gameData.stack.add(new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
@@ -1322,7 +1329,17 @@ public class StepTriggerService {
         });
 
         if (canTargetPlayers) {
-            validTargets.addAll(gameData.orderedPlayerIds);
+            if (targetFilter instanceof PlayerPredicateTargetFilter ppf
+                    && ppf.predicate() instanceof PlayerRelationPredicate prp
+                    && prp.relation() == PlayerRelation.OPPONENT) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    if (!pid.equals(trigger.controllerId())) {
+                        validTargets.add(pid);
+                    }
+                }
+            } else {
+                validTargets.addAll(gameData.orderedPlayerIds);
+            }
         }
         if (canTargetPermanents) {
             // Extract target predicate from effects (e.g. UntapTargetPermanentEffect with artifact restriction)
