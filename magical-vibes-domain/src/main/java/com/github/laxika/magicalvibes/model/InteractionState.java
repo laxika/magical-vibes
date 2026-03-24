@@ -261,7 +261,7 @@ public class InteractionState {
         if (this.graveyardChoice == null) {
             this.graveyardChoice = new GraveyardChoiceState(playerId, new HashSet<>(validIndices), destination, cardPool);
         } else {
-            // Preserve independently-set fields (gainLife, attachToSource, grantColor, grantSubtype)
+            // Preserve independently-set fields (gainLife, attachToSource, grantColor, grantSubtype, mayAbility)
             GraveyardChoiceState prev = this.graveyardChoice;
             this.graveyardChoice = new GraveyardChoiceState(playerId, new HashSet<>(validIndices), destination, cardPool);
             this.graveyardChoice.setGainLifeEqualToManaValue(prev.gainLifeEqualToManaValue());
@@ -271,6 +271,11 @@ public class InteractionState {
             this.graveyardChoice.setExileRemainingCount(prev.exileRemainingCount());
             this.graveyardChoice.setGainLifeIfCreatureAmount(prev.gainLifeIfCreatureAmount());
             this.graveyardChoice.setGainLifeIfCreaturePlayerId(prev.gainLifeIfCreaturePlayerId());
+            if (prev.mayAbilitySourceCard() != null) {
+                this.graveyardChoice.setMayAbilityContext(
+                        prev.mayAbilitySourceCard(), prev.mayAbilityControllerId(),
+                        prev.mayAbilityEffects(), prev.mayAbilitySourcePermanentId());
+            }
         }
         this.context = new InteractionContext.GraveyardChoice(playerId, new HashSet<>(validIndices), destination, cardPool);
     }

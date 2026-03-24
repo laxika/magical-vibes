@@ -111,7 +111,14 @@ public class GraveyardChoiceHandlerService {
             }
 
             Card card;
-            if (cardPool != null) {
+            if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET) {
+                // MAY_ABILITY_TARGET: get reference without removal — the effect handler will exile it
+                if (cardPool != null) {
+                    card = cardPool.get(cardIndex);
+                } else {
+                    card = gameData.playerGraveyards.get(playerId).get(cardIndex);
+                }
+            } else if (cardPool != null) {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
                 card = cardPool.get(cardIndex);
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
@@ -202,16 +209,15 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 case MAY_ABILITY_TARGET -> {
-                    String logEntry = player.getUsername() + " targets " + card.getName() + " in graveyard with "
-                            + mayAbilitySourceCard.getName() + "'s ability.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
-                            player.getUsername(), card.getName());
-
                     // Resolution-time flow: set target on pending entry and resume resolution
                     if (gameData.resolvedMayTargetingEntry != null) {
                         StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
                         gameData.resolvedMayTargetingEntry = null;
+                        String resolveLog = player.getUsername() + " targets " + card.getName() + " in graveyard with "
+                                + pendingEntry.getCard().getName() + "'s ability.";
+                        gameBroadcastService.logAndBroadcast(gameData, resolveLog);
+                        log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
+                                player.getUsername(), card.getName());
                         pendingEntry.setTargetId(card.getId());
                         effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
                         if (!gameData.interaction.isAwaitingInput()) {
@@ -219,6 +225,12 @@ public class GraveyardChoiceHandlerService {
                         }
                         return;
                     }
+
+                    String logEntry = player.getUsername() + " targets " + card.getName() + " in graveyard with "
+                            + mayAbilitySourceCard.getName() + "'s ability.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
+                            player.getUsername(), card.getName());
 
                     // Non-stack flow: create a new stack entry
                     StackEntry entry = new StackEntry(
