@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +51,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         ControlsAnotherSubtypeConditionalEffect conditional =
                 (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.PIRATE);
+        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.PIRATE));
         assertThat(conditional.wrapped()).isInstanceOf(TapTargetPermanentEffect.class);
     }
 

@@ -531,7 +531,7 @@ public class BattlefieldEntryService {
                             return gameQueryService.isMorbidMet(gameData);
                         }
                         if (e instanceof ControlsAnotherSubtypeConditionalEffect cas) {
-                            return gameQueryService.controlsAnotherSubtype(gameData, controllerId, card, cas.subtype());
+                            return gameQueryService.controlsAnotherSubtype(gameData, controllerId, card, cas.subtypes());
                         }
                         if (e instanceof RaidConditionalEffect) {
                             return gameData.playersDeclaredAttackersThisTurn.contains(controllerId);

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +31,7 @@ class GhituJourneymageTest extends BaseCardTest {
 
         ControlsAnotherSubtypeConditionalEffect conditional =
                 (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.WIZARD);
+        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.WIZARD));
         assertThat(conditional.wrapped()).isInstanceOf(DealDamageToEachOpponentEffect.class);
 
         DealDamageToEachOpponentEffect damage = (DealDamageToEachOpponentEffect) conditional.wrapped();

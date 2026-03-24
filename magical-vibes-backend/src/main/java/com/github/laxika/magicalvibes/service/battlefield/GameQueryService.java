@@ -601,14 +601,14 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the given player controls at least one permanent with the
-     * specified subtype besides the given source card (for "controls another [subtype]").
+     * Returns {@code true} if the given player controls at least one permanent with any of the
+     * specified subtypes besides the given source card (for "controls another [subtype]").
      */
-    public boolean controlsAnotherSubtype(GameData gameData, UUID controllerId, Card sourceCard, CardSubtype subtype) {
+    public boolean controlsAnotherSubtype(GameData gameData, UUID controllerId, Card sourceCard, Set<CardSubtype> subtypes) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
-                .anyMatch(p -> p.getCard() != sourceCard && p.getCard().getSubtypes().contains(subtype));
+                .anyMatch(p -> p.getCard() != sourceCard && !Collections.disjoint(p.getCard().getSubtypes(), subtypes));
     }
 
     /**

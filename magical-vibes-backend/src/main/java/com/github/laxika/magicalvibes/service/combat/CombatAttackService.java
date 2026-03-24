@@ -282,7 +282,7 @@ public class CombatAttackService {
                         return bf.stream().noneMatch(
                                 p -> !p.getId().equals(attacker.getId())
                                         && (!cas.nontokenOnly() || !p.getCard().isToken())
-                                        && p.getCard().getSubtypes().contains(cas.subtype()));
+                                        && !Collections.disjoint(p.getCard().getSubtypes(), cas.subtypes()));
                     }
                     return false;
                 });

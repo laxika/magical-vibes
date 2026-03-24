@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +38,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
 
         ControlsAnotherSubtypeConditionalEffect conditional =
                 (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.PIRATE);
+        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.PIRATE));
         assertThat(conditional.nontokenOnly()).isTrue();
         assertThat(conditional.wrapped()).isInstanceOf(MayPayManaEffect.class);
 

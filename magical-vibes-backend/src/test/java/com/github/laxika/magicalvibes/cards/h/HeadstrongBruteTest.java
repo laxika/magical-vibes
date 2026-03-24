@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,7 +40,7 @@ class HeadstrongBruteTest extends BaseCardTest {
 
         ControlsAnotherSubtypeConditionalEffect conditional =
                 (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.PIRATE);
+        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.PIRATE));
         assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();

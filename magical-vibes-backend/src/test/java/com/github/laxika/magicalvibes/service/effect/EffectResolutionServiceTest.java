@@ -539,8 +539,6 @@ class EffectResolutionServiceTest {
             Permanent pirate = createPiratePermanent(false);
             gd.playerBattlefields.get(player1Id).add(pirate);
 
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(pirate), any(PermanentHasSubtypePredicate.class)))
-                    .thenReturn(true);
             EffectHandler handler = stubHandler(wrapped);
 
             effectResolutionService.resolveEffects(gd, entry);
@@ -581,8 +579,6 @@ class EffectResolutionServiceTest {
             Permanent tokenPirate = createPiratePermanent(true);
             gd.playerBattlefields.get(player1Id).add(tokenPirate);
 
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(tokenPirate), any(PermanentHasSubtypePredicate.class)))
-                    .thenReturn(true);
             EffectHandler handler = stubHandler(wrapped);
 
             effectResolutionService.resolveEffects(gd, entry);

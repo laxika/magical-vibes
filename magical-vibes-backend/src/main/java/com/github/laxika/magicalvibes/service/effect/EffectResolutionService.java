@@ -46,6 +46,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -323,11 +324,10 @@ public class EffectResolutionService {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
-        PermanentHasSubtypePredicate predicate = new PermanentHasSubtypePredicate(cas.subtype());
         return battlefield.stream()
                 .anyMatch(p -> !p.getId().equals(sourcePermanentId)
                         && (!cas.nontokenOnly() || !p.getCard().isToken())
-                        && gameQueryService.matchesPermanentPredicate(gameData, p, predicate));
+                        && !Collections.disjoint(p.getCard().getSubtypes(), cas.subtypes()));
     }
 
     private boolean isControlsSubtypeConditionMet(GameData gameData, StackEntry entry,

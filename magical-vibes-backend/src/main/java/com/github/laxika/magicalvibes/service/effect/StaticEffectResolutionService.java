@@ -105,6 +105,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -1216,7 +1217,7 @@ public class StaticEffectResolutionService {
         int subtypeCount = countControlledPermanents(context, p ->
                 !p.getId().equals(context.source().getId())
                         && (!conditional.nontokenOnly() || !p.getCard().isToken())
-                        && p.getCard().getSubtypes().contains(conditional.subtype()));
+                        && !Collections.disjoint(p.getCard().getSubtypes(), conditional.subtypes()));
         if (subtypeCount > 0) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
