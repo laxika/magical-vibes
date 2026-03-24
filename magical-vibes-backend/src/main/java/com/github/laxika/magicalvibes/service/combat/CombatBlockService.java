@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -466,7 +467,13 @@ public class CombatBlockService {
                         if (creature.getId().equals(p.getAttachedTo())) {
                             additionalBlocks += e.additionalBlocks();
                         }
+                    } else if (p.getCard().hasType(CardType.CREATURE)) {
+                        // Creature with "can block an additional creature" — self-only
+                        if (p.getId().equals(creature.getId())) {
+                            additionalBlocks += e.additionalBlocks();
+                        }
                     } else {
+                        // Non-creature, non-attachable (e.g. enchantment) — global effect
                         additionalBlocks += e.additionalBlocks();
                     }
                 } else if (effect instanceof GrantAdditionalBlockPerEquipmentEffect
