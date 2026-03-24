@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEff
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
@@ -138,6 +139,14 @@ public class StepTriggerService {
             for (CardEffect effect : upkeepEffects) {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
+                } else if (effect instanceof MayRevealSubtypeFromHandEffect mayReveal) {
+                    List<Card> hand = gameData.playerHands.get(activePlayerId);
+                    boolean hasSubtype = hand != null && hand.stream()
+                            .anyMatch(c -> c.getSubtypes().contains(mayReveal.subtype()));
+                    if (hasSubtype) {
+                        MayEffect may = new MayEffect(mayReveal.thenEffect(), mayReveal.prompt());
+                        gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
+                    }
                 } else if (effect instanceof BecomeCopyOfTargetCreatureEffect) {
                     // Targeted upkeep trigger: target is chosen at trigger time (CR 603.3d).
                     // Collect valid creature targets excluding self ("another creature").

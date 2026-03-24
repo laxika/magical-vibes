@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
@@ -785,6 +786,62 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             // Turn 2 — handleOpeningHandTriggers is not called
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("MayRevealSubtypeFromHandEffect queues may ability when hand contains matching subtype")
+        void mayRevealSubtypeQueuesWhenSubtypeInHand() {
+            gd.turnNumber = 2;
+            Card priestCard = createCardWithName("Priest of the Wakening Sun");
+            priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                    new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
+                            "Reveal a Dinosaur card from your hand to gain 2 life?"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
+
+            // Add a Dinosaur card to the player's hand
+            Card dinosaur = createCardWithName("Frenzied Raptor");
+            dinosaur.setSubtypes(List.of(CardSubtype.DINOSAUR));
+            gd.playerHands.get(player1Id).add(dinosaur);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(MayEffect.class);
+        }
+
+        @Test
+        @DisplayName("MayRevealSubtypeFromHandEffect does not queue when hand lacks matching subtype")
+        void mayRevealSubtypeSkipsWhenNoSubtypeInHand() {
+            gd.turnNumber = 2;
+            Card priestCard = createCardWithName("Priest of the Wakening Sun");
+            priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                    new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
+                            "Reveal a Dinosaur card from your hand to gain 2 life?"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
+
+            // Add a non-Dinosaur card to the player's hand
+            Card bear = createCardWithName("Grizzly Bears");
+            bear.setSubtypes(List.of(CardSubtype.BEAR));
+            gd.playerHands.get(player1Id).add(bear);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("MayRevealSubtypeFromHandEffect does not queue when hand is empty")
+        void mayRevealSubtypeSkipsWhenHandEmpty() {
+            gd.turnNumber = 2;
+            Card priestCard = createCardWithName("Priest of the Wakening Sun");
+            priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                    new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
+                            "Reveal a Dinosaur card from your hand to gain 2 life?"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
+
+            sut.handleUpkeepTriggers(gd);
+
             assertThat(gd.stack).isEmpty();
         }
     }
