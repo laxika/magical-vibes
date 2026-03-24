@@ -528,6 +528,7 @@ Pass `null` as filter to allow any card.
 | `RevealTopCardCreatureToBattlefieldOrMayBottomEffect` | `()` | reveal top card of controller's library; if creature, put onto battlefield; otherwise, may put on bottom of library. Used by Lurking Predators (ON_OPPONENT_CASTS_SPELL trigger) |
 | `EachPlayerNameCardRevealTopEffect` | `()` | each player names a card, then each reveals top card — match goes to hand, mismatch goes to bottom (ON_ATTACK trigger, Conundrum Sphinx) |
 | `ExileSpellEffect` | `()` | exile this spell instead of putting it into the graveyard after resolution (marker, like ShuffleIntoLibraryEffect) |
+| `PutSelfOnBottomOfOwnersLibraryEffect` | `()` | put this spell on the bottom of its owner's library instead of the graveyard after resolution (marker, like ExileSpellEffect). Used by Sanguine Sacrament |
 | `ShuffleIntoLibraryEffect` | `()` | shuffle this permanent into owner's library |
 | `ShuffleGraveyardIntoLibraryEffect` | `()` | shuffle graveyard into library. As SPELL: targets a player (`canTargetPlayer()=true`), shuffles target player's graveyard. As ON_SELF_MILLED: triggers when this card is milled from library, shuffles owner's graveyard into their library (e.g. Gaea's Blessing). As SAGA_CHAPTER / TRIGGERED_ABILITY (no target): falls back to controller's graveyard (e.g. The Mending of Dominaria chapter III) |
 | `ShuffleSelfAndGraveyardIntoLibraryEffect` | `()` | shuffle source permanent and controller's graveyard into library |
@@ -642,6 +643,7 @@ Pass `null` as filter to allow any card.
 | `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
 | `GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect` | `()` | gain life equal to the greatest power among creatures you control |
 | `GainLifeEqualToXValueEffect` | `()` | gain life equal to xValue on stack entry (use with `SacrificeCreatureCost(trackToughness/power)` or other xValue-setting costs) |
+| `GainLifeMultipliedByXValueEffect` | `(int multiplier)` | gain life equal to xValue × multiplier. For "gain twice X life" use multiplier=2. Used by Sanguine Sacrament |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `EachTargetPlayerGainsLifeEffect` | `(int amount)` | each targeted player gains N life (multi-target, reads from `targetIds`). Pair with `setMinTargets(0)` and `setMaxTargets(99)` for "any number of target players". Used by Hunters' Feast |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |

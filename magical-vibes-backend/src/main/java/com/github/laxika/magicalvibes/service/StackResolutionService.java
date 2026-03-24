@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCounte
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfRaidEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -531,6 +532,12 @@ public class StackResolutionService {
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
                 gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             }
+        } else if (entry.getEffectsToResolve().stream()
+                .anyMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryEffect)) {
+            List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+            deck.add(entry.getCard());
+            String bottomLog = entry.getCard().getName() + " is put on the bottom of its owner's library.";
+            gameBroadcastService.logAndBroadcast(gameData, bottomLog);
         } else {
             graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
         }

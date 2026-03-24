@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCounter
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToXValueEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeMultipliedByXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToTargetToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeForEachSubtypeOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -335,6 +336,15 @@ public class LifeResolutionService {
     @HandlesEffect(GainLifeEqualToXValueEffect.class)
     private void resolveGainLifeEqualToXValue(GameData gameData, StackEntry entry) {
         int amount = entry.getXValue();
+        if (amount <= 0) {
+            return;
+        }
+        applyGainLife(gameData, entry.getControllerId(), amount, entry.getCard().getName());
+    }
+
+    @HandlesEffect(GainLifeMultipliedByXValueEffect.class)
+    private void resolveGainLifeMultipliedByXValue(GameData gameData, StackEntry entry, GainLifeMultipliedByXValueEffect effect) {
+        int amount = entry.getXValue() * effect.multiplier();
         if (amount <= 0) {
             return;
         }
