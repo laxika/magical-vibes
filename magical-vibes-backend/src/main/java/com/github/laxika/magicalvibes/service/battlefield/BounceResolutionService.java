@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BounceCreatureOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnArtifactsTargetPlayerOwnsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsTargetPlayerControlsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
@@ -200,6 +201,46 @@ public class BounceResolutionService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Returns all permanents matching the effect's predicate that the targeted player controls
+     * to their owners' hands. The target player ID is stored in {@code targetId} on the stack
+     * entry. Only permanents on the target player's battlefield are considered (i.e. permanents
+     * they control, not own).
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry containing the target player ID and source card info
+     * @param effect   the effect record containing the permanent predicate filter
+     */
+    @HandlesEffect(ReturnPermanentsTargetPlayerControlsToHandEffect.class)
+    void resolveReturnPermanentsTargetPlayerControlsToHand(GameData gameData, StackEntry entry,
+                                                           ReturnPermanentsTargetPlayerControlsToHandEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        List<Permanent> toReturn = battlefield.stream()
+                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, effect.predicate()))
+                .toList();
+
+        for (Permanent permanent : toReturn) {
+            permanentRemovalService.removePermanentToHand(gameData, permanent);
+
+            String logEntry = permanent.getCard().getName() + " is returned to its owner's hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+        }
+
+        if (!toReturn.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
     }
 
     /**

@@ -68,6 +68,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Bounce target + life loss | `v/VaporSnag.java` | ReturnTargetPermanentToHandEffect(1) — bounce creature, its controller loses life |
 | Bounce creature + conditional draw | `t/TemporalMachinations.java` | SPELL ReturnTargetPermanentToHandEffect() + SPELL ControlsPermanentConditionalEffect(PermanentIsArtifactPredicate(), DrawCardEffect(1)) — bounce target creature, if you control an artifact draw a card. Use ControlsPermanentConditionalEffect for "if you control a [type]" conditions |
 | Bounce mass | `e/Evacuation.java` | ReturnCreaturesToOwnersHandEffect |
+| Bounce mass (target player, filtered) | `r/RiversRebuke.java` | ReturnPermanentsTargetPlayerControlsToHandEffect(PermanentNotPredicate(PermanentIsLandPredicate())) — return all nonland permanents target player controls to their owners' hands |
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardCardEffect |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + EachPlayerRandomDiscardEffect |
