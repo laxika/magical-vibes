@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1054,6 +1055,57 @@ public class DestructionResolutionService {
             performSimultaneousSacrifice(gameData);
         } else {
             beginNextForcedSacrificeFromQueue(gameData);
+        }
+    }
+
+    /**
+     * Resolves a {@link TargetPlayerSacrificesPermanentsEffect}, forcing the targeted player
+     * to sacrifice a number of permanents matching the filter. The targeted player chooses
+     * which permanents to sacrifice. If the player controls fewer matching permanents than
+     * the count, they sacrifice all of them.
+     */
+    @HandlesEffect(TargetPlayerSacrificesPermanentsEffect.class)
+    void resolveTargetPlayerSacrificesPermanents(GameData gameData, StackEntry entry,
+                                                  TargetPlayerSacrificesPermanentsEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " has no permanents to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no permanents to sacrifice", gameData.id, playerName);
+            return;
+        }
+
+        List<Permanent> matching = battlefield.stream()
+                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter()))
+                .toList();
+
+        if (matching.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " has no matching permanents to sacrifice.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
+            return;
+        }
+
+        if (matching.size() <= effect.count()) {
+            // Sacrifice all matching — no choice needed
+            for (Permanent perm : matching) {
+                sacrificeAndLog(gameData, perm, targetPlayerId);
+            }
+        } else {
+            // More matching permanents than required — prompt player to choose
+            List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
+            gameData.pendingForcedSacrificeCount = effect.count();
+            gameData.pendingForcedSacrificePlayerId = targetPlayerId;
+            playerInputService.beginMultiPermanentChoice(gameData, targetPlayerId, matchingIds,
+                    effect.count(), "Choose " + effect.count() + " permanent"
+                            + (effect.count() > 1 ? "s" : "") + " to sacrifice.");
         }
     }
 
