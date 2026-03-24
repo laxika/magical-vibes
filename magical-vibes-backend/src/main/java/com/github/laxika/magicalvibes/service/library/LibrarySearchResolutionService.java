@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -191,6 +192,83 @@ public class LibrarySearchResolutionService {
 
         // Start the first opponent's search
         startNextEachPlayerBasicLandSearch(gameData);
+    }
+
+    /**
+     * Exiles all attacking creatures target player controls, then that player may search their
+     * library for that many basic land cards, put them onto the battlefield tapped, then shuffle.
+     * Used by Settle the Wreckage.
+     */
+    @HandlesEffect(ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect.class)
+    void resolveExileTargetPlayerAttackingCreaturesAndSearchBasicLands(
+            GameData gameData, StackEntry entry,
+            ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (!gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        // Find and exile all attacking creatures the target player controls
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        List<Permanent> attackingCreatures = battlefield.stream()
+                .filter(Permanent::isAttacking)
+                .filter(p -> p.getCard().hasType(CardType.CREATURE))
+                .toList();
+
+        int exiledCount = 0;
+        for (Permanent creature : attackingCreatures) {
+            permanentRemovalService.removePermanentToExile(gameData, creature);
+            String logEntry = creature.getCard().getName() + " is exiled.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} is exiled by {}",
+                    gameData.id, creature.getCard().getName(), entry.getCard().getName());
+            exiledCount++;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (exiledCount == 0) {
+            return;
+        }
+
+        // Target player may search their library for up to that many basic land cards
+        if (isSearchPrevented(gameData, targetPlayerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        String playerName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> basicLands = deck.stream()
+                .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                .toList();
+
+        if (basicLands.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+            String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        String prompt = "You may search your library for up to " + exiledCount
+                + " basic land card" + (exiledCount != 1 ? "s" : "")
+                + " and put them onto the battlefield tapped (" + exiledCount + " remaining).";
+
+        sendLibrarySearchToPlayer(gameData, targetPlayerId, LibrarySearchParams.builder(targetPlayerId, new ArrayList<>(basicLands))
+                .remainingCount(exiledCount)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                .build(), prompt, true);
+
+        log.info("Game {} - {} may search library for up to {} basic lands", gameData.id, playerName, exiledCount);
     }
 
     /**
