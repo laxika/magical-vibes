@@ -64,6 +64,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Counter-unless-pay + discard | `f/FrightfulDelusion.java` | TargetSpellControllerDiscardsEffect(1) + CounterUnlessPaysEffect(1). Discard placed before counter so target is still on stack |
 | Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + ReduceOwnCastCostIfMetalcraftEffect(1) — costs {1} less with 3+ artifacts |
 | Counter (conditional, poisoned) | `c/CorruptedResolve.java` | CounterSpellIfControllerPoisonedEffect — counters only if target spell's controller is poisoned |
+| Counter spell/ability (sac creature) | `s/SirenStormtamer.java` | Activated: {U}+SacrificeSelfCost+CounterSpellEffect with StackEntryAllOfPredicate(StackEntryHasTargetPredicate, StackEntryTargetsYouOrCreatureYouControlPredicate) — counters spells OR abilities that target you or a creature you control. HasTargetPredicate enables ability targeting |
 | Bounce target | `u/Unsummon.java` | ReturnTargetPermanentToHandEffect |
 | Bounce target + life loss | `v/VaporSnag.java` | ReturnTargetPermanentToHandEffect(1) — bounce creature, its controller loses life |
 | Bounce creature + conditional draw | `t/TemporalMachinations.java` | SPELL ReturnTargetPermanentToHandEffect() + SPELL ControlsPermanentConditionalEffect(PermanentIsArtifactPredicate(), DrawCardEffect(1)) — bounce target creature, if you control an artifact draw a card. Use ControlsPermanentConditionalEffect for "if you control a [type]" conditions |

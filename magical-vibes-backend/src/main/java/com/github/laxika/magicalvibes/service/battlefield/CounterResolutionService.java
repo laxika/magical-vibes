@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
@@ -197,12 +198,18 @@ public class CounterResolutionService {
         // CR 603.8 — clean up state-trigger tracking when countered
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
 
+        // Abilities just cease to exist when countered — only spells go to graveyard
+        boolean isAbility = target.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || target.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+
         // Copies cease to exist per rule 707.10a — skip graveyard
-        if (!target.isCopy()) {
+        if (!target.isCopy() && !isAbility) {
             graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getCard());
         }
 
-        String logMsg = target.getCard().getName() + " is countered.";
+        String logMsg = isAbility
+                ? target.getCard().getName() + "'s ability is countered."
+                : target.getCard().getName() + " is countered.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }

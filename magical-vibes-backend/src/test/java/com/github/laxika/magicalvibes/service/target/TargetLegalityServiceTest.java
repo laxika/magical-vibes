@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1635,6 +1636,74 @@ class TargetLegalityServiceTest {
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryTargetsYourPermanentPredicate(), player1Id))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryTargetsYouOrCreatureYouControlPredicate when targeting your creature")
+        void matchesTargetsYouOrCreatureWhenTargetingYourCreature() {
+            Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
+                    spell.getEffects(EffectSlot.SPELL), 0, p1Creature.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
+            when(gameQueryService.isCreature(gd, p1Creature)).thenReturn(true);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryTargetsYouOrCreatureYouControlPredicate when targeting you (the player)")
+        void matchesTargetsYouOrCreatureWhenTargetingPlayer() {
+            Card spell = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
+                    spell.getEffects(EffectSlot.SPELL), 0, player1Id, Map.of());
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("rejects StackEntryTargetsYouOrCreatureYouControlPredicate when targeting opponent's creature")
+        void rejectsTargetsYouOrCreatureWhenTargetingOpponentsCreature() {
+            Permanent p2Creature = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Bolt",
+                    spell.getEffects(EffectSlot.SPELL), 0, p2Creature.getId(), Map.of());
+            when(gameQueryService.findPermanentController(gd, p2Creature.getId())).thenReturn(player2Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("rejects StackEntryTargetsYouOrCreatureYouControlPredicate when targeting opponent player")
+        void rejectsTargetsYouOrCreatureWhenTargetingOpponentPlayer() {
+            Card spell = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Bolt",
+                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryTargetsYouOrCreatureYouControlPredicate via multi-target")
+        void matchesTargetsYouOrCreatureViaMultiTarget() {
+            Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = createTargetingSpell("Multi", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player2Id, "Multi",
+                    spell.getEffects(EffectSlot.SPELL), 0, List.of(p1Creature.getId()));
+            when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
+            when(gameQueryService.isCreature(gd, p1Creature)).thenReturn(true);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
                     .isTrue();
         }
 

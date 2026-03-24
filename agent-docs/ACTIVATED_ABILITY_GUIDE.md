@@ -404,6 +404,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player ("you control") |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
+| `StackEntryTargetsYouOrCreatureYouControlPredicate` | `()` | spells/abilities targeting you (the player) or a creature you control |
 | `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |
 
 ### PlayerPredicate compositions

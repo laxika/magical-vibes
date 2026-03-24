@@ -258,6 +258,45 @@ class CounterResolutionServiceTest {
             assertThat(gd.stack).contains(bearsEntry);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
+
+        @Test
+        @DisplayName("Counters an activated ability — removes from stack without graveyard")
+        void countersActivatedAbilityWithoutGraveyard() {
+            Card fumeSpitter = createCreatureCard("Fume Spitter");
+            StackEntry abilityEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, fumeSpitter, player1Id,
+                    "Fume Spitter's ability", List.of());
+            gd.stack.add(abilityEntry);
+
+            Card stormtamer = createCreatureCard("Siren Stormtamer");
+            StackEntry counterEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, stormtamer, player2Id,
+                    "Siren Stormtamer's ability", List.of(new CounterSpellEffect()), 0, fumeSpitter.getId(), null);
+
+            service.resolveCounterSpell(gd, counterEntry);
+
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Fume Spitter"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Fume Spitter's ability is countered."));
+        }
+
+        @Test
+        @DisplayName("Counters a triggered ability — removes from stack without graveyard")
+        void countersTriggeredAbilityWithoutGraveyard() {
+            Card source = createCreatureCard("Some Creature");
+            StackEntry abilityEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id,
+                    "Some Creature's ability", List.of());
+            gd.stack.add(abilityEntry);
+
+            Card counter = createInstantCard("Stifle");
+            StackEntry counterEntry = counterSpellEntry(counter, player2Id, source.getId());
+
+            service.resolveCounterSpell(gd, counterEntry);
+
+            assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Some Creature"));
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    eq("Some Creature's ability is countered."));
+        }
     }
 
     // =========================================================================

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -749,6 +750,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryTargetsYourPermanentPredicate) {
             return targetsAPermanentControlledBy(gameData, stackEntry, controllerId);
         }
+        if (predicate instanceof StackEntryTargetsYouOrCreatureYouControlPredicate) {
+            return targetsPlayerOrCreatureControlledBy(gameData, stackEntry, controllerId);
+        }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
                 if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId)) {
@@ -786,6 +790,40 @@ public class TargetLegalityService {
                 if (controllerId.equals(targetController)) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean targetsPlayerOrCreatureControlledBy(GameData gameData, StackEntry stackEntry, UUID controllerId) {
+        // Check single target
+        if (stackEntry.getTargetId() != null) {
+            if (targetsPlayerOrCreature(gameData, stackEntry.getTargetId(), controllerId)) {
+                return true;
+            }
+        }
+        // Check multiple targets
+        if (stackEntry.getTargetIds() != null) {
+            for (UUID targetId : stackEntry.getTargetIds()) {
+                if (targetsPlayerOrCreature(gameData, targetId, controllerId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean targetsPlayerOrCreature(GameData gameData, UUID targetId, UUID controllerId) {
+        // "targets you" — the target is the player themselves
+        if (targetId.equals(controllerId)) {
+            return true;
+        }
+        // "targets a creature you control"
+        UUID targetController = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId.equals(targetController)) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, targetId);
+            if (perm != null && gameQueryService.isCreature(gameData, perm)) {
+                return true;
             }
         }
         return false;
