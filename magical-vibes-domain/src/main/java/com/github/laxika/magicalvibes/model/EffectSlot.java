@@ -110,5 +110,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code LibraryRevealResolutionService} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
-    ON_ALLY_CREATURE_EXPLORES
+    ON_ALLY_CREATURE_EXPLORES,
+    /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK
+     *  (which fires once per combat), this fires separately for each creature declared as an attacker.
+     *  Supports SubtypeConditionalEffect to filter by the attacking creature's subtype (e.g. Vampires).
+     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Sanctum Seeker. */
+    ON_ALLY_CREATURE_ATTACKS
 }

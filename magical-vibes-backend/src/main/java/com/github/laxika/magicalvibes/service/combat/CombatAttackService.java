@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.HasNontokenSubtypeAttackerCon
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
@@ -407,6 +408,44 @@ public class CombatAttackService {
             gameData.gameLog.add(triggerLog);
             log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                     gameData.id, perm.getCard().getName(), attackerIndices.size());
+        }
+
+        // Check for "whenever a creature you control attacks" triggers (ON_ALLY_CREATURE_ATTACKS)
+        // These fire once per attacking creature (not once per combat like ON_ALLY_CREATURES_ATTACK).
+        // Supports SubtypeConditionalEffect to filter by the attacking creature's subtype.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            for (Permanent perm : battlefield) {
+                List<CardEffect> perCreatureAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                if (perCreatureAttackEffects.isEmpty()) continue;
+
+                List<CardEffect> matchingEffects = new ArrayList<>();
+                for (CardEffect effect : perCreatureAttackEffects) {
+                    if (effect instanceof SubtypeConditionalEffect conditional) {
+                        if (!GameQueryService.permanentHasSubtype(attacker, conditional.subtype())) {
+                            continue;
+                        }
+                        matchingEffects.add(conditional.wrapped());
+                    } else {
+                        matchingEffects.add(effect);
+                    }
+                }
+                if (matchingEffects.isEmpty()) continue;
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s attack trigger",
+                        matchingEffects,
+                        null,
+                        perm.getId()
+                ));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameData.gameLog.add(triggerLog);
+                log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS trigger for {} attacking",
+                        gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+            }
         }
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers
