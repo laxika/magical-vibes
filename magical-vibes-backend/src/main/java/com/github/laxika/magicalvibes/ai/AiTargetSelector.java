@@ -134,6 +134,11 @@ class AiTargetSelector {
             }
         }
 
+        // No valid permanent targets — fall back to targeting the opponent if the spell allows it
+        if (allowedTargets.contains(TargetType.PLAYER)) {
+            return opponentId;
+        }
+
         return null;
     }
 
