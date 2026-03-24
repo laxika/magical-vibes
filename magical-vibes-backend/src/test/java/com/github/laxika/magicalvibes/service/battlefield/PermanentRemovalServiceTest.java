@@ -88,6 +88,8 @@ class PermanentRemovalServiceTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
     }
 
     // ===== Helper methods =====

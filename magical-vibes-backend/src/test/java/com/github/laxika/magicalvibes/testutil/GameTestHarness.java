@@ -205,7 +205,7 @@ public class GameTestHarness {
         WarpWorldService warpWorldService = new WarpWorldService(gameQueryService, gameBroadcastService, playerInputService, battlefieldEntryService, legendRuleService, creatureControlService, cardViewFactory, sessionManager);
         ExileService exileService = new ExileService();
         GraveyardService graveyardService = new GraveyardService(gameQueryService, gameBroadcastService, exileService, null);
-        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService, null);
+        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(gameQueryService, gameBroadcastService, graveyardService);
         permanentRemovalService = new PermanentRemovalService(
                 graveyardService, battlefieldEntryService, null, damagePreventionService, auraAttachmentService, gameQueryService, gameBroadcastService, exileService);
         TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
@@ -224,7 +224,6 @@ public class GameTestHarness {
         triggerCollectionService = new TriggerCollectionService(
                 triggerCollectorRegistry, gameOutcomeService, playerInputService, triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
         graveyardService.setTriggerCollectionService(triggerCollectionService);
-        auraAttachmentService.setTriggerCollectionService(triggerCollectionService);
         permanentRemovalService.setTriggerCollectionService(triggerCollectionService);
         StateTriggerService stateTriggerService = new StateTriggerService(gameBroadcastService);
         stateBasedActionService = new StateBasedActionService(

@@ -287,7 +287,10 @@ public class PermanentRemovalService {
      * @param gameData the current game state
      */
     public void removeOrphanedAuras(GameData gameData) {
-        auraAttachmentService.removeOrphanedAuras(gameData);
+        var removals = auraAttachmentService.removeOrphanedAuras(gameData);
+        for (var removal : removals) {
+            triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+        }
     }
 
     /**

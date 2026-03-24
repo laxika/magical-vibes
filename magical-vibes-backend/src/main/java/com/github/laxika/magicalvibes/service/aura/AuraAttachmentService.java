@@ -1,19 +1,20 @@
 package com.github.laxika.magicalvibes.service.aura;
 
-import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,26 +27,18 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuraAttachmentService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardService graveyardService;
-    private TriggerCollectionService triggerCollectionService;
 
-    public AuraAttachmentService(GameQueryService gameQueryService,
-                                 GameBroadcastService gameBroadcastService,
-                                 GraveyardService graveyardService,
-                                 @Lazy TriggerCollectionService triggerCollectionService) {
-        this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
-        this.graveyardService = graveyardService;
-        this.triggerCollectionService = triggerCollectionService;
-    }
-
-    public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
-        this.triggerCollectionService = triggerCollectionService;
-    }
+    /**
+     * A card that was put into the graveyard as an orphaned aura, along with the controller
+     * who owned it at the time. Callers use this to fire graveyard triggers after cleanup.
+     */
+    public record OrphanedAuraRemoval(Card card, UUID controllerId) {}
 
     /**
      * Removes auras whose enchanted permanent no longer exists and detaches equipment whose
@@ -55,7 +48,8 @@ public class AuraAttachmentService {
      *
      * @param gameData the current game state
      */
-    public void removeOrphanedAuras(GameData gameData) {
+    public List<OrphanedAuraRemoval> removeOrphanedAuras(GameData gameData) {
+        List<OrphanedAuraRemoval> removals = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -77,15 +71,15 @@ public class AuraAttachmentService {
                         String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
-                        // Check for Tiana-style triggers (Aura put into graveyard from battlefield)
                         if (wentToGraveyard) {
-                            triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, p.getCard(), playerId);
+                            removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));
                         }
                     }
                 }
             }
         }
         returnStolenCreatures(gameData, false);
+        return removals;
     }
 
     /**
