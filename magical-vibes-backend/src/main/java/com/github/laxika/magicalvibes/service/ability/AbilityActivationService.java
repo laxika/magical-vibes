@@ -690,6 +690,9 @@ public class AbilityActivationService {
             }
         }
 
+        // Compute targeting tax from effects like Kopala, Warden of Waves
+        int targetingTax = gameBroadcastService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
+
         // Pre-validate mana cost before entering interactive cost choices (CR 602.2b)
         if (abilityCost != null) {
             ManaCost preCheck = new ManaCost(abilityCost);
@@ -697,13 +700,19 @@ public class AbilityActivationService {
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             if (preCheck.hasX()) {
-                if (!preCheck.canPay(pool, effectiveXValue, artifactCtx, myrCtx)) {
+                if (!preCheck.canPay(pool, effectiveXValue + targetingTax, artifactCtx, myrCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
-                if (!preCheck.canPay(pool, 0, artifactCtx, myrCtx)) {
+                if (!preCheck.canPay(pool, targetingTax, artifactCtx, myrCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
+            }
+        } else if (targetingTax > 0) {
+            // No base mana cost but targeting tax applies — validate player can pay the tax
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            if (pool.getTotal() < targetingTax) {
+                throw new IllegalStateException("Not enough mana to activate ability");
             }
         }
 
@@ -823,11 +832,16 @@ public class AbilityActivationService {
             }
         }
 
-        // Pay mana cost
+        // Pay mana cost (including targeting tax if applicable)
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext);
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, targetingTax);
+        } else if (targetingTax > 0) {
+            // No base mana cost but targeting tax applies — pay generic mana for the tax
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaCost taxCost = new ManaCost("{" + targetingTax + "}");
+            taxCost.pay(pool);
         }
 
         // Pay life cost
@@ -1237,6 +1251,10 @@ public class AbilityActivationService {
     }
 
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext) {
+        payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, 0);
+    }
+
+    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext, int additionalCost) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         boolean hasRestricted = artifactContext || myrContext;
@@ -1253,27 +1271,34 @@ public class AbilityActivationService {
                 throw new IllegalStateException("X value cannot be negative");
             }
             if (hasRestricted) {
-                if (!cost.canPay(pool, effectiveXValue, artifactContext, myrContext)) {
+                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, effectiveXValue, artifactContext, myrContext);
+                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext);
             } else {
-                if (!cost.canPay(pool, effectiveXValue)) {
+                if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, effectiveXValue);
+                cost.pay(pool, effectiveXValue + additionalCost);
             }
         } else {
             if (hasRestricted) {
-                if (!cost.canPay(pool, 0, artifactContext, myrContext)) {
+                if (!cost.canPay(pool, additionalCost, artifactContext, myrContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, 0, artifactContext, myrContext);
+                cost.pay(pool, additionalCost, artifactContext, myrContext);
             } else {
-                if (!cost.canPay(pool)) {
-                    throw new IllegalStateException("Not enough mana to activate ability");
+                if (additionalCost > 0) {
+                    if (!cost.canPay(pool, additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to activate ability");
+                    }
+                    cost.pay(pool, additionalCost);
+                } else {
+                    if (!cost.canPay(pool)) {
+                        throw new IllegalStateException("Not enough mana to activate ability");
+                    }
+                    cost.pay(pool);
                 }
-                cost.pay(pool);
             }
         }
 

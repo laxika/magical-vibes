@@ -1700,7 +1700,7 @@ public class GameQueryService {
      * (which would cause infinite recursion). Checks base subtypes, transient subtypes,
      * granted subtypes, and the intrinsic Changeling keyword.
      */
-    private static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
+    public static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
         return permanent.getCard().getSubtypes().contains(subtype)
                 || permanent.getTransientSubtypes().contains(subtype)
                 || permanent.getGrantedSubtypes().contains(subtype)

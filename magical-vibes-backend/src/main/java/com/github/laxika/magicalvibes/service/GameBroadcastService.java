@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -1167,6 +1168,44 @@ public class GameBroadcastService {
         increase += getPredicateSpellCostIncrease(gameData, card);
         int reduction = getOwnCostReduction(gameData, playerId, card);
         return increase - reduction;
+    }
+
+    /**
+     * Computes the additional cost imposed by static effects that tax spells or abilities
+     * targeting permanents with a specific subtype (e.g. Kopala, Warden of Waves).
+     * The tax applies once per source permanent with the effect, regardless of how many
+     * matching permanents are targeted.
+     */
+    public int getTargetingSubtypeTax(GameData gameData, UUID casterId, UUID targetId, List<UUID> targetIds) {
+        Set<UUID> allTargetIds = new HashSet<>();
+        if (targetId != null) allTargetIds.add(targetId);
+        if (targetIds != null) allTargetIds.addAll(targetIds);
+        if (allTargetIds.isEmpty()) return 0;
+
+        int tax = 0;
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(casterId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof IncreaseOpponentCostForTargetingControlledSubtypeEffect taxEffect) {
+                        for (UUID tid : allTargetIds) {
+                            Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
+                            if (targetPerm != null) {
+                                UUID targetController = gameQueryService.findPermanentController(gameData, tid);
+                                if (controllerId.equals(targetController)
+                                        && gameQueryService.permanentHasSubtype(targetPerm, taxEffect.subtype())) {
+                                    tax += taxEffect.amount();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return tax;
     }
 
     private int getSpellCastTaxIncrease(GameData gameData, UUID playerId) {

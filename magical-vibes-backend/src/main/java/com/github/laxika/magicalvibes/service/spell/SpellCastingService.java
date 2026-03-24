@@ -374,10 +374,13 @@ public class SpellCastingService {
             }
         }
 
+        // Compute targeting tax from effects like Kopala, Warden of Waves
+        int targetingTax = gameBroadcastService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
+
         if (!usingAlternateCost && !gameBroadcastService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
             // Check if a non-zero alternative cost from the battlefield is affordable (e.g. Jodah)
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+            int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card) + targetingTax;
             boolean usingBattlefieldAlternativeCost = false;
             if (card.getManaCost() != null) {
                 ManaCost normalCost = new ManaCost(card.getManaCost());
@@ -599,7 +602,7 @@ public class SpellCastingService {
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
             } else {
-                paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked, sacrificeCostReduction);
+                paySpellManaCost(gameData, playerId, card, manaCostX, convokeContributions, phyrexianLifeCount, kicked, sacrificeCostReduction, targetingTax);
             }
             KickerEffect kickerEffect = findKickerEffect(card);
             if (kicked && kickerEffect != null) {
@@ -633,7 +636,7 @@ public class SpellCastingService {
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
             } else {
-                paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount, kicked);
+                paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount, kicked, 0, targetingTax);
             }
             resolvedXValue = payAllSacrificeCosts(gameData, player, card, sacrificePermanentId, sacFlags, resolvedXValue);
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
@@ -1195,6 +1198,7 @@ public class SpellCastingService {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+        additionalCost += gameBroadcastService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
         if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
             throw new IllegalStateException("Not enough mana to pay " + (isGraveyardCast || isGrantedGraveyardCast ? "casting" : "flashback") + " cost");
         }
@@ -1527,12 +1531,16 @@ public class SpellCastingService {
     }
 
     public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked, int extraCostReduction) {
+        paySpellManaCost(gameData, playerId, card, effectiveXValue, convokeContributions, phyrexianLifeCount, kicked, extraCostReduction, 0);
+    }
+
+    public void paySpellManaCost(GameData gameData, UUID playerId, Card card, int effectiveXValue, List<ManaColor> convokeContributions, Integer phyrexianLifeCount, boolean kicked, int extraCostReduction, int targetingTax) {
         if (card.getManaCost() == null) return;
         // Alternative zero cost (e.g. Rooftop Storm): skip mana payment entirely
         if (gameBroadcastService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card) - extraCostReduction;
+        int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card) - extraCostReduction + targetingTax;
         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);
 
         // Check if we should use a non-zero alternative cost from the battlefield (e.g. Jodah)
@@ -1544,6 +1552,9 @@ public class SpellCastingService {
                 ManaCost altCost = new ManaCost(altCostStr);
                 altCost.pay(pool, additionalCost);
                 return;
+            }
+            if (targetingTax > 0) {
+                throw new IllegalStateException("Not enough mana to pay targeting tax");
             }
         }
 
