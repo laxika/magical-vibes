@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
@@ -125,6 +126,36 @@ public class ExileResolutionService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Exiles all cards from all players' graveyards.
+     */
+    @HandlesEffect(ExileAllGraveyardsEffect.class)
+    void resolveExileAllGraveyards(GameData gameData, StackEntry entry) {
+        int totalExiled = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null || graveyard.isEmpty()) continue;
+            for (Card card : graveyard) {
+                exileService.exileCard(gameData, playerId, card);
+                totalExiled++;
+            }
+            graveyard.clear();
+        }
+
+        if (totalExiled > 0) {
+            String logEntry = "All graveyards are exiled (" + totalExiled + " card"
+                    + (totalExiled != 1 ? "s" : "") + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - All graveyards exiled ({} cards) by {}",
+                    gameData.id, totalExiled, entry.getCard().getName());
+        } else {
+            String logEntry = "All graveyards are already empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - All graveyards already empty when {} resolved",
+                    gameData.id, entry.getCard().getName());
+        }
     }
 
     /**
