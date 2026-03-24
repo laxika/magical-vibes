@@ -53,6 +53,9 @@ class AiManaManager {
                         && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                     continue;
                 }
+                if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect manaEffect) {
                         virtual.add(manaEffect.color(), manaEffect.amount());
@@ -97,6 +100,9 @@ class AiManaManager {
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                 continue;
             }
+            if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
+                continue;
+            }
 
             boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
                     .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
@@ -136,6 +142,9 @@ class AiManaManager {
             }
             if (perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                continue;
+            }
+            if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
                 continue;
             }
 
@@ -180,6 +189,9 @@ class AiManaManager {
             }
             if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                continue;
+            }
+            if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
                 continue;
             }
 

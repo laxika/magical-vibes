@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -2703,6 +2705,107 @@ class GameQueryServiceTest {
             }
 
             assertThat(lookaheadGameData.playerBattlefields.get(playerId)).containsExactlyElementsOf(bfBefore);
+        }
+    }
+
+    @Nested
+    @DisplayName("canActivateManaAbility")
+    class CanActivateManaAbility {
+
+        @Test
+        @DisplayName("returns true when no locks are on the battlefield")
+        void returnsTrue_whenNoLocks() {
+            Card artifactCard = createArtifact("Leaden Myr");
+            artifactCard.setAdditionalTypes(EnumSet.of(CardType.CREATURE));
+            Permanent myr = addPermanent(player1Id, artifactCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when Stony Silence locks artifact mana abilities")
+        void returnsFalse_whenStonySilenceLocks() {
+            // Stony Silence on opponent's battlefield
+            Card stonySilence = createEnchantmentWithStaticEffect("Stony Silence",
+                    new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(new PermanentIsArtifactPredicate()));
+            addPermanent(player2Id, stonySilence);
+
+            // Artifact creature on player1's battlefield
+            Card myrCard = createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true for non-artifact when Stony Silence is present")
+        void returnsTrue_forNonArtifactUnderStonySilence() {
+            Card stonySilence = createEnchantmentWithStaticEffect("Stony Silence",
+                    new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(new PermanentIsArtifactPredicate()));
+            addPermanent(player2Id, stonySilence);
+
+            Card landCard = createLand("Forest");
+            Permanent forest = addPermanent(player1Id, landCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, forest)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when chosen-name lock blocks mana abilities")
+        void returnsFalse_whenChosenNameLockBlocksMana() {
+            // Phyrexian Revoker names "Leaden Myr" and blocks mana abilities
+            Card revoker = createCreatureWithStaticEffect("Phyrexian Revoker", 2, 1, null,
+                    new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(true));
+            Permanent revokerPerm = addPermanent(player2Id, revoker);
+            revokerPerm.setChosenName("Leaden Myr");
+
+            Card myrCard = createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true when chosen-name lock does not block mana abilities")
+        void returnsTrue_whenChosenNameLockDoesNotBlockMana() {
+            // Pithing Needle names "Leaden Myr" but does NOT block mana abilities
+            Card needle = createEnchantmentWithStaticEffect("Pithing Needle",
+                    new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(false));
+            Permanent needlePerm = addPermanent(player2Id, needle);
+            needlePerm.setChosenName("Leaden Myr");
+
+            Card myrCard = createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns true when chosen-name lock names a different card")
+        void returnsTrue_whenChosenNameDoesNotMatch() {
+            Card revoker = createCreatureWithStaticEffect("Phyrexian Revoker", 2, 1, null,
+                    new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(true));
+            Permanent revokerPerm = addPermanent(player2Id, revoker);
+            revokerPerm.setChosenName("Sol Ring");
+
+            Card myrCard = createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when own Stony Silence locks own artifacts")
+        void returnsFalse_whenOwnStonySilenceLocks() {
+            // Stony Silence on same player's battlefield still locks
+            Card stonySilence = createEnchantmentWithStaticEffect("Stony Silence",
+                    new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(new PermanentIsArtifactPredicate()));
+            addPermanent(player1Id, stonySilence);
+
+            Card myrCard = createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
         }
     }
 }

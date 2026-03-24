@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
@@ -2273,5 +2275,32 @@ public class GameQueryService {
             }
         }
         return count;
+    }
+
+    /**
+     * Returns {@code true} if the permanent's mana abilities can currently be activated,
+     * i.e. no static lock (Stony Silence, Pithing Needle with blocksManaAbilities, Phyrexian Revoker)
+     * prevents it.
+     */
+    public boolean canActivateManaAbility(GameData gameData, Permanent permanent) {
+        String cardName = permanent.getCard().getName();
+
+        for (UUID pid : gameData.playerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock) {
+                        if (matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
+                            return false;
+                        }
+                    }
+                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect lock) {
+                        if (lock.blocksManaAbilities() && cardName.equals(p.getChosenName())) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 }
