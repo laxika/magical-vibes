@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "227")
 @CardRegistration(set = "M11", collectorNumber = "227")
+@CardRegistration(set = "XLN", collectorNumber = "256")
 public class RootboundCrag extends Card {
 
     public RootboundCrag() {
