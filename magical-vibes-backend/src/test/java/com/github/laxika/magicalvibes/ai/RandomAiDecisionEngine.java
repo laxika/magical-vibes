@@ -219,6 +219,17 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     Card chosen = validTargets.get(rng.nextInt(validTargets.size()));
                     targetId = chosen.getId();
                     xValue = chosen.getManaValue();
+                } else if (hasPermanentManaValueEqualsXTarget(card)) {
+                    // For PermanentManaValueEqualsXPredicate spells (e.g. Entrancing Melody),
+                    // X must match the target permanent's mana value — co-select target and X.
+                    List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
+                            gameData, card, aiPlayer.getId(), maxX);
+                    if (validTargets.isEmpty()) {
+                        continue;
+                    }
+                    Permanent chosen = validTargets.get(rng.nextInt(validTargets.size()));
+                    targetId = chosen.getId();
+                    xValue = chosen.getCard().getManaValue();
                 } else {
                     // Pick a random X between 1 and maxX
                     xValue = rng.nextInt(maxX) + 1;

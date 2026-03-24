@@ -151,12 +151,31 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         if (castCost.hasX() && xValue == null) {
-            int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
-            smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
-            if (smartX <= 0) {
-                return false;
+            if (hasPermanentManaValueEqualsXTarget(card)) {
+                // X must match the target permanent's mana value — use max affordable X
+                // (not smartX which clamps to toughness) and co-select target + X.
+                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
+                if (maxX <= 0) {
+                    return false;
+                }
+                List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
+                        gameData, card, aiPlayer.getId(), maxX);
+                if (validTargets.isEmpty()) {
+                    return false;
+                }
+                Permanent chosen = validTargets.stream()
+                        .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
+                        .orElse(validTargets.getFirst());
+                targetId = chosen.getId();
+                xValue = chosen.getCard().getManaValue();
+            } else {
+                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
+                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+                if (smartX <= 0) {
+                    return false;
+                }
+                xValue = smartX;
             }
-            xValue = smartX;
         }
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
@@ -240,10 +259,23 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         if (castCost.hasX() && xValue == null) {
-            int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
-            smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
-            if (smartX <= 0) return false;
-            xValue = smartX;
+            if (hasPermanentManaValueEqualsXTarget(card)) {
+                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
+                if (maxX <= 0) return false;
+                List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
+                        gameData, card, aiPlayer.getId(), maxX);
+                if (validTargets.isEmpty()) return false;
+                Permanent chosen = validTargets.stream()
+                        .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
+                        .orElse(validTargets.getFirst());
+                targetId = chosen.getId();
+                xValue = chosen.getCard().getManaValue();
+            } else {
+                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
+                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+                if (smartX <= 0) return false;
+                xValue = smartX;
+            }
         }
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),

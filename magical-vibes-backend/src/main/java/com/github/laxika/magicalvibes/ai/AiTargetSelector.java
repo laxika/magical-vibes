@@ -167,6 +167,28 @@ class AiTargetSelector {
     }
 
     /**
+     * Returns all valid permanent targets for an X spell whose target filter
+     * includes {@link com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate},
+     * filtered to those with mana value between 1 and maxAffordableX (inclusive).
+     */
+    List<Permanent> findValidPermanentTargetsForManaValueX(GameData gameData, Card card,
+                                                            UUID aiPlayerId, int maxAffordableX) {
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
+        List<Permanent> result = new ArrayList<>();
+        // Search opponent's battlefield first (more likely target for steal effects)
+        for (UUID playerId : new UUID[]{opponentId, aiPlayerId}) {
+            if (playerId == null) continue;
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                int mv = p.getCard().getManaValue();
+                if (mv >= 1 && mv <= maxAffordableX && isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
+                    result.add(p);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
      * Returns all valid graveyard cards that the given spell can target.
      * Examines the card's SPELL effects to determine the correct graveyard scope and filter.
      */

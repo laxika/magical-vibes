@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
@@ -773,5 +775,32 @@ class HardAiDecisionEngineTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .allMatch(c -> c.getName().equals("Holy Day"));
+    }
+
+    // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) =====
+    // Note: Hard AI's SpellEvaluator does not yet score GainControlOfTargetPermanentEffect,
+    // so the evaluator returns 0 and the spell is not selected for casting.
+    // The core co-selection logic is tested via AiDecisionEngineTest (Easy AI harness).
+
+    @Test
+    @DisplayName("Hard AI hasPermanentManaValueEqualsXTarget detects Entrancing Melody")
+    void detectsEntrancingMelodyPredicate() {
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+
+        assertThat(ai.hasPermanentManaValueEqualsXTarget(new EntrancingMelody())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI hasPermanentManaValueEqualsXTarget returns false for normal creature")
+    void doesNotDetectPredicateOnNormalCard() {
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService());
+
+        assertThat(ai.hasPermanentManaValueEqualsXTarget(new GrizzlyBears())).isFalse();
     }
 }

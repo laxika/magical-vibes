@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -18,12 +22,15 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -684,5 +691,113 @@ class EasyAiDecisionEngineTest {
         assertThat(request.exileGraveyardCardIndices()).hasSize(3);
         // Should pick indices 1, 3, 4 (the creature indices, skipping instants at 0 and 2)
         assertThat(request.exileGraveyardCardIndices()).containsExactly(1, 3, 4);
+    }
+
+    // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) — harness-based =====
+
+    @Nested
+    @DisplayName("Entrancing Melody co-selection of X and target")
+    class EntrancingMelodyTests {
+
+        private GameTestHarness testHarness;
+        private Player human;
+        private Player aiTestPlayer;
+        private GameData testGd;
+        private EasyAiDecisionEngine easyAi;
+
+        @BeforeEach
+        void setUpHarness() {
+            testHarness = new GameTestHarness();
+            human = testHarness.getPlayer1();
+            aiTestPlayer = testHarness.getPlayer2();
+            testGd = testHarness.getGameData();
+            testHarness.skipMulligan();
+            testHarness.clearMessages();
+
+            FakeConnection aiConn = new FakeConnection("ai-easy-test");
+            testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
+            easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
+                    testHarness.getMessageHandler(), testHarness.getGameQueryService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
+                    testHarness.getTargetValidationService());
+            easyAi.setSelfConnection(aiConn);
+        }
+
+        private void giveAiPriorityLocal() {
+            testHarness.forceActivePlayer(aiTestPlayer);
+            testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testGd.interaction.setAwaitingInput(null);
+            testGd.stack.clear();
+        }
+
+        private void giveAiIslandsLocal(int count) {
+            for (int i = 0; i < count; i++) {
+                Permanent island = new Permanent(new Island());
+                island.setSummoningSick(false);
+                testGd.playerBattlefields.get(aiTestPlayer.getId()).add(island);
+            }
+        }
+
+        @Test
+        @DisplayName("Easy AI casts Entrancing Melody with X matching target's mana value")
+        void castsEntrancingMelodyWithCorrectX() {
+            giveAiPriorityLocal();
+            giveAiIslandsLocal(4); // maxX = 2
+
+            Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+            bears.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(bears);
+
+            testHarness.setHand(aiTestPlayer, List.of(new EntrancingMelody()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Easy AI picks highest affordable target for Entrancing Melody")
+        void picksHighestAffordableTarget() {
+            giveAiPriorityLocal();
+            giveAiIslandsLocal(4); // maxX = 2
+
+            Permanent vanguard = new Permanent(new EliteVanguard()); // MV=1
+            vanguard.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(vanguard);
+
+            Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+            bears.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(bears);
+
+            testHarness.setHand(aiTestPlayer, List.of(new EntrancingMelody()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Easy AI skips Entrancing Melody when target too expensive")
+        void skipsEntrancingMelodyWhenTooExpensive() {
+            giveAiPriorityLocal();
+            giveAiIslandsLocal(3); // maxX = 1
+
+            Permanent bears = new Permanent(new GrizzlyBears()); // MV=2, unaffordable
+            bears.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(bears);
+
+            testHarness.setHand(aiTestPlayer, List.of(new EntrancingMelody()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            assertThat(testGd.stack).isEmpty();
+        }
     }
 }

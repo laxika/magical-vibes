@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
@@ -708,5 +710,22 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerGraveyards.get(aiPlayer.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
                 .allMatch(c -> c.getName().equals("Holy Day"));
+    }
+
+    // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) =====
+    // Note: Medium AI's SpellEvaluator does not yet score GainControlOfTargetPermanentEffect,
+    // so the evaluator returns 0 and the spell is not selected for casting.
+    // The core co-selection logic is tested via AiDecisionEngineTest (Easy AI harness).
+
+    @Test
+    @DisplayName("Medium AI hasPermanentManaValueEqualsXTarget detects Entrancing Melody")
+    void detectsEntrancingMelodyPredicate() {
+        assertThat(ai.hasPermanentManaValueEqualsXTarget(new EntrancingMelody())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Medium AI hasPermanentManaValueEqualsXTarget returns false for normal creature")
+    void doesNotDetectPredicateOnNormalCard() {
+        assertThat(ai.hasPermanentManaValueEqualsXTarget(new GrizzlyBears())).isFalse();
     }
 }

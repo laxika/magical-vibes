@@ -14,8 +14,12 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -427,6 +431,29 @@ public abstract class AiDecisionEngine {
         return (int) gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of()).stream()
                 .filter(c -> c.hasType(CardType.CREATURE))
                 .count();
+    }
+
+    /**
+     * Returns true if the card's target filter contains a {@link PermanentManaValueEqualsXPredicate},
+     * meaning the target's mana value must match X (e.g. Entrancing Melody).
+     */
+    protected boolean hasPermanentManaValueEqualsXTarget(Card card) {
+        TargetFilter filter = card.getTargetFilter();
+        if (filter instanceof PermanentPredicateTargetFilter pf) {
+            return containsManaValueEqualsXPredicate(pf.predicate());
+        }
+        return false;
+    }
+
+    private boolean containsManaValueEqualsXPredicate(
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate predicate) {
+        if (predicate instanceof PermanentManaValueEqualsXPredicate) {
+            return true;
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOf) {
+            return allOf.predicates().stream().anyMatch(this::containsManaValueEqualsXPredicate);
+        }
+        return false;
     }
 
     /**

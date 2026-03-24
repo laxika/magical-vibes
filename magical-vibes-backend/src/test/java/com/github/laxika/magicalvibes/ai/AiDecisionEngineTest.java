@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -1740,6 +1742,136 @@ class AiDecisionEngineTest {
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
         }
+    }
+
+    // ===== hasPermanentManaValueEqualsXTarget =====
+
+    @Test
+    @DisplayName("hasPermanentManaValueEqualsXTarget returns true for Entrancing Melody")
+    void hasPermanentManaValueEqualsXTargetTrueForEntrancingMelody() {
+        assertThat(ai.hasPermanentManaValueEqualsXTarget(new EntrancingMelody())).isTrue();
+    }
+
+    @Test
+    @DisplayName("hasPermanentManaValueEqualsXTarget returns false for non-X-targeting spell")
+    void hasPermanentManaValueEqualsXTargetFalseForGrizzlyBears() {
+        assertThat(ai.hasPermanentManaValueEqualsXTarget(new GrizzlyBears())).isFalse();
+    }
+
+    @Test
+    @DisplayName("hasPermanentManaValueEqualsXTarget returns false for X damage spell (Blaze)")
+    void hasPermanentManaValueEqualsXTargetFalseForBlaze() {
+        assertThat(ai.hasPermanentManaValueEqualsXTarget(new Blaze())).isFalse();
+    }
+
+    // ===== AI casts Entrancing Melody with correct X and target =====
+
+    @Test
+    @DisplayName("AI casts Entrancing Melody setting X to match target creature's mana value")
+    void castsEntrancingMelodyWithCorrectXForTarget() {
+        giveAiPriority();
+        // Entrancing Melody costs {X}{U}{U}. With 4 Islands, maxX = 2.
+        giveAiIslands(4);
+
+        // Opponent has Grizzly Bears (MV=2) — affordable at X=2
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast with target = bears and X = 2
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("AI skips Entrancing Melody when no creature has affordable mana value")
+    void skipsEntrancingMelodyWhenTargetTooExpensive() {
+        giveAiPriority();
+        // With 3 Islands, maxX = 1 (3 - 2 for {U}{U} = 1)
+        giveAiIslands(3);
+
+        // Opponent has only Grizzly Bears (MV=2) — too expensive at maxX=1
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — can't afford X=2 for the bears
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI picks highest mana value target it can afford for Entrancing Melody")
+    void picksHighestAffordableManaValueTarget() {
+        giveAiPriority();
+        // With 4 Islands, maxX = 2
+        giveAiIslands(4);
+
+        // Opponent has EliteVanguard (MV=1) and GrizzlyBears (MV=2)
+        Permanent vanguard = new Permanent(new EliteVanguard());
+        vanguard.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(vanguard);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should pick the highest affordable target (MV=2 bears over MV=1 vanguard)
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("AI targets lower MV creature when higher one is unaffordable")
+    void targetsLowerMvWhenHigherUnaffordable() {
+        giveAiPriority();
+        // With 3 Islands, maxX = 1
+        giveAiIslands(3);
+
+        // Opponent has EliteVanguard (MV=1) and GrizzlyBears (MV=2)
+        Permanent vanguard = new Permanent(new EliteVanguard());
+        vanguard.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(vanguard);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Can only afford X=1, so should target EliteVanguard
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(vanguard.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("AI skips Entrancing Melody when opponent has no creatures")
+    void skipsEntrancingMelodyWhenNoCreatures() {
+        giveAiPriority();
+        giveAiIslands(6);
+
+        harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
     }
 }
 
