@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -1975,6 +1976,9 @@ public class GameQueryService {
         if (filter instanceof PermanentPredicateTargetFilter f) {
             return matchesPermanentPredicate(target, f.predicate(), filterContext);
         }
+        if (filter instanceof PlayerPredicateTargetFilter) {
+            return false;
+        }
         return true;
     }
 
@@ -1982,6 +1986,7 @@ public class GameQueryService {
         if (filter instanceof ControlledPermanentPredicateTargetFilter f) return f.errorMessage();
         if (filter instanceof OwnedPermanentPredicateTargetFilter f) return f.errorMessage();
         if (filter instanceof PermanentPredicateTargetFilter f) return f.errorMessage();
+        if (filter instanceof PlayerPredicateTargetFilter f) return f.errorMessage();
         return "Target does not match filter";
     }
 
