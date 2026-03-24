@@ -629,7 +629,23 @@ public class PermanentCounterResolutionService {
     @HandlesEffect(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class)
     private void resolvePutPlusOnePlusOneCounterOnTargetCreature(GameData gameData, StackEntry entry,
                                                                  PutPlusOnePlusOneCounterOnTargetCreatureEffect effect) {
-        // Multi-target: apply counters to each valid target
+        // Multi-group spell (e.g. River Heralds' Boon): each effect uses its own target
+        // set by EffectResolutionService via the SpellTarget index mapping.
+        // If targetId is null, the optional target wasn't chosen — do nothing.
+        // Only applies to spell entries — triggered/activated abilities use their own target layout.
+        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getCard().getSpellTargets().size() > 1) {
+            if (entry.getTargetId() != null) {
+                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+                if (target == null) return;
+                if (gameQueryService.cantHaveCounters(gameData, target)) return;
+                applyPlusOnePlusOneCounters(gameData, entry, target, effect.count());
+            }
+            return;
+        }
+
+        // Single-group multi-target: apply counters to each valid target (e.g. Dual Shot pattern)
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
             for (UUID targetId : entry.getTargetIds()) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);

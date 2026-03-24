@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -295,7 +296,7 @@ public class TargetLegalityService {
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
-        validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets());
+        validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets(), card.getSpellTargets());
 
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
         for (int i = 0; i < targetIds.size(); i++) {
@@ -603,11 +604,34 @@ public class TargetLegalityService {
     }
 
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max) {
+        validateMultiTargetCount(targetIds, min, max, null);
+    }
+
+    /**
+     * Validates target count and uniqueness. Per MTG rule 114.6c, the same permanent
+     * can be chosen for different targeting instances (target groups), but targets
+     * within the same group must be unique.
+     */
+    private void validateMultiTargetCount(List<UUID> targetIds, int min, int max, List<SpellTarget> spellTargets) {
         if (targetIds == null || targetIds.size() < min || targetIds.size() > max) {
             throw new IllegalStateException("Must target between " + min + " and " + max + " targets");
         }
-        if (new HashSet<>(targetIds).size() != targetIds.size()) {
-            throw new IllegalStateException("All targets must be different");
+        if (spellTargets != null && spellTargets.size() > 1) {
+            // Multi-group: check uniqueness within each group, not across groups (CR 114.6c)
+            int consumed = 0;
+            for (SpellTarget group : spellTargets) {
+                int groupSize = Math.min(group.getMaxTargets(), targetIds.size() - consumed);
+                List<UUID> groupTargets = targetIds.subList(consumed, consumed + groupSize);
+                if (new HashSet<>(groupTargets).size() != groupTargets.size()) {
+                    throw new IllegalStateException("All targets must be different");
+                }
+                consumed += groupSize;
+            }
+        } else {
+            // Single group or no group info: check global uniqueness
+            if (new HashSet<>(targetIds).size() != targetIds.size()) {
+                throw new IllegalStateException("All targets must be different");
+            }
         }
     }
 
