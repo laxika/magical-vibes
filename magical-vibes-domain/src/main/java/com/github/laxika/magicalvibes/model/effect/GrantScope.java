@@ -4,6 +4,7 @@ public enum GrantScope {
     SELF,
     TARGET,
     ENCHANTED_CREATURE,
+    ENCHANTED_PERMANENT,
     EQUIPPED_CREATURE,
     OWN_TAPPED_CREATURES,
     /**

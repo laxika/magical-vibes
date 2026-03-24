@@ -558,6 +558,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
     }
 
+    public void castEnchantment(Player player, int cardIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of(), false, null);
+    }
+
     public void castArtifact(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null);

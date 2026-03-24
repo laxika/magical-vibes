@@ -601,10 +601,10 @@ public class StaticEffectResolutionService {
 
     /**
      * Returns true if the target matches the given creature-centric scope.
-     * Handles ENCHANTED_CREATURE, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES.
+     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES.
      */
     private boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.EQUIPPED_CREATURE) {
+        if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.ENCHANTED_PERMANENT || scope == GrantScope.EQUIPPED_CREATURE) {
             return context.source().isAttached()
                     && context.source().getAttachedTo().equals(context.target().getId())
                     && matchesStaticFilter(context.target(), filter);

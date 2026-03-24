@@ -611,7 +611,17 @@ public class SpellCastingService {
             payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, 0);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
             StackEntry entry;
-            if (!targetIds.isEmpty()) {
+            if (!targetIds.isEmpty() && card.isAura()) {
+                // Aura with ETB targeting (e.g. New Horizons): first target is the aura attachment,
+                // remaining targets are for ETB effects
+                UUID auraTarget = targetIds.getFirst();
+                List<UUID> etbTargets = targetIds.size() > 1
+                        ? new ArrayList<>(targetIds.subList(1, targetIds.size())) : List.of();
+                entry = new StackEntry(
+                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        List.of(), stackX, auraTarget, null, Map.of(), null, List.of(), etbTargets
+                );
+            } else if (!targetIds.isEmpty()) {
                 // Multi-target creature (e.g. Burning Sun's Avatar ETB with multiple targets)
                 entry = new StackEntry(
                         cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
