@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -151,6 +152,7 @@ public class LibrarySearchResolutionService {
 
         // Build APNAP-ordered queue: active player first, then others in turn order
         gameData.pendingEachPlayerBasicLandSearchQueue.clear();
+        gameData.pendingEachPlayerBasicLandSearchTapped = false;
         UUID activePlayerId = gameData.activePlayerId;
         gameData.pendingEachPlayerBasicLandSearchQueue.add(activePlayerId);
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -164,10 +166,46 @@ public class LibrarySearchResolutionService {
     }
 
     /**
+     * Each opponent may search their library for a basic land card, put it onto the battlefield
+     * tapped, then shuffle. Opponents search in APNAP order. Used by Old-Growth Dryads.
+     */
+    @HandlesEffect(EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect.class)
+    void resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped(
+            GameData gameData, StackEntry entry,
+            EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect effect) {
+        UUID controllerId = entry.getControllerId();
+
+        // Build APNAP-ordered queue of opponents only (skip the controller)
+        gameData.pendingEachPlayerBasicLandSearchQueue.clear();
+        gameData.pendingEachPlayerBasicLandSearchTapped = true;
+        UUID activePlayerId = gameData.activePlayerId;
+        // Add active player first if they are an opponent
+        if (!activePlayerId.equals(controllerId)) {
+            gameData.pendingEachPlayerBasicLandSearchQueue.add(activePlayerId);
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId) && !playerId.equals(controllerId)) {
+                gameData.pendingEachPlayerBasicLandSearchQueue.add(playerId);
+            }
+        }
+
+        // Start the first opponent's search
+        startNextEachPlayerBasicLandSearch(gameData);
+    }
+
+    /**
      * Starts the next pending "each player searches for a basic land" search from the queue.
      * Returns true if a search was initiated, false if the queue is empty.
+     * Respects {@code pendingEachPlayerBasicLandSearchTapped} for the destination.
      */
     boolean startNextEachPlayerBasicLandSearch(GameData gameData) {
+        LibrarySearchDestination destination = gameData.pendingEachPlayerBasicLandSearchTapped
+                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                : LibrarySearchDestination.BATTLEFIELD;
+        String prompt = gameData.pendingEachPlayerBasicLandSearchTapped
+                ? "You may search your library for a basic land card and put it onto the battlefield tapped."
+                : "Search your library for a basic land card and put it onto the battlefield.";
+
         while (!gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) {
             UUID nextPlayerId = gameData.pendingEachPlayerBasicLandSearchQueue.pollFirst();
             boolean started = performLibrarySearch(
@@ -175,10 +213,10 @@ public class LibrarySearchResolutionService {
                     nextPlayerId,
                     card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC),
                     "basic land cards",
-                    "Search your library for a basic land card and put it onto the battlefield.",
+                    prompt,
                     false,
                     true,
-                    LibrarySearchDestination.BATTLEFIELD
+                    destination
             );
             if (started) {
                 return true;

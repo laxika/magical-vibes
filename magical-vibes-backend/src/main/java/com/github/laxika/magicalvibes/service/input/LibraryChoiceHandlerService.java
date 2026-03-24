@@ -841,10 +841,18 @@ public class LibraryChoiceHandlerService {
     /**
      * If a pending "each player searches for a basic land to battlefield" queue is non-empty,
      * starts the next player's library search and returns true. Otherwise returns false.
-     * Used by Field of Ruin.
+     * Respects {@code pendingEachPlayerBasicLandSearchTapped} for the destination.
+     * Used by Field of Ruin, Old-Growth Dryads.
      */
     private boolean startPendingEachPlayerBasicLandSearch(GameData gameData) {
         if (gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) return false;
+
+        LibrarySearchDestination destination = gameData.pendingEachPlayerBasicLandSearchTapped
+                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                : LibrarySearchDestination.BATTLEFIELD;
+        String prompt = gameData.pendingEachPlayerBasicLandSearchTapped
+                ? "You may search your library for a basic land card and put it onto the battlefield tapped."
+                : "Search your library for a basic land card and put it onto the battlefield.";
 
         while (!gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) {
             UUID nextPlayerId = gameData.pendingEachPlayerBasicLandSearchQueue.pollFirst();
@@ -868,11 +876,10 @@ public class LibraryChoiceHandlerService {
                 continue;
             }
 
-            String prompt = "Search your library for a basic land card and put it onto the battlefield.";
             LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(basicLands))
                     .reveals(false)
                     .canFailToFind(true)
-                    .destination(LibrarySearchDestination.BATTLEFIELD)
+                    .destination(destination)
                     .build();
 
             gameData.interaction.beginLibrarySearch(params);

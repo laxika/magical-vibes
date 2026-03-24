@@ -169,6 +169,8 @@ public class GameData {
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     /** Queue of player IDs still needing to search for a basic land for an "each player searches" effect (APNAP order). */
     public final Deque<UUID> pendingEachPlayerBasicLandSearchQueue = new ArrayDeque<>();
+    /** When true, lands found via pendingEachPlayerBasicLandSearchQueue enter the battlefield tapped. */
+    public boolean pendingEachPlayerBasicLandSearchTapped;
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
     public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
@@ -837,6 +839,7 @@ public class GameData {
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
         copy.pendingEachPlayerBasicLandSearchQueue.addAll(this.pendingEachPlayerBasicLandSearchQueue);
+        copy.pendingEachPlayerBasicLandSearchTapped = this.pendingEachPlayerBasicLandSearchTapped;
 
         // --- Combat damage assignment state ---
         this.combatDamagePlayerAssignments.forEach((k, v) ->

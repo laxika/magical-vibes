@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
@@ -837,6 +838,96 @@ class LibrarySearchResolutionServiceTest {
             boolean result = service.startNextEachPlayerBasicLandSearch(gd);
 
             assertThat(result).isFalse();
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Uses BATTLEFIELD_TAPPED destination when tapped flag is set")
+        void usesBattlefieldTappedDestination() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
+            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
+            gd.pendingEachPlayerBasicLandSearchTapped = true;
+
+            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+
+            assertThat(result).isTrue();
+            assertThat(gd.interaction.librarySearch().destination())
+                    .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
+        }
+
+        @Test
+        @DisplayName("Uses BATTLEFIELD destination when tapped flag is false")
+        void usesBattlefieldDestination() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
+            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
+            gd.pendingEachPlayerBasicLandSearchTapped = false;
+
+            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+
+            assertThat(result).isTrue();
+            assertThat(gd.interaction.librarySearch().destination())
+                    .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
+        }
+    }
+
+    // =========================================================================
+    // resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped (Old-Growth Dryads)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped")
+    class ResolveEachOpponentMaySearch {
+
+        private EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect effect;
+
+        @BeforeEach
+        void init() {
+            effect = new EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect();
+        }
+
+        private StackEntry entry() {
+            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Old-Growth Dryads"),
+                    player1Id, "Old-Growth Dryads", List.of(effect), 0, null, null);
+        }
+
+        @Test
+        @DisplayName("Queues only opponents, not controller")
+        void queuesOnlyOpponents() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
+            gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
+
+            service.resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped(gd, entry(), effect);
+
+            // Only opponent (player2) should be prompted, not the controller (player1)
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Sets tapped flag to true")
+        void setsTappedFlag() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
+
+            service.resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped(gd, entry(), effect);
+
+            assertThat(gd.pendingEachPlayerBasicLandSearchTapped).isTrue();
+            assertThat(gd.interaction.librarySearch().destination())
+                    .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
+        }
+
+        @Test
+        @DisplayName("No search when opponent has no basic lands")
+        void noSearchWhenNoBasicLands() {
+            gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
+
+            service.resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped(gd, entry(), effect);
+
+            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
         }
     }
