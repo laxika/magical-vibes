@@ -100,8 +100,8 @@ class MyrPropagatorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Source leaving battlefield before resolution creates no token")
-    void sourceLeftBattlefieldNoToken() {
+    @DisplayName("Source leaving battlefield before resolution still creates token via last-known info")
+    void sourceLeftBattlefieldStillCreatesToken() {
         addPropagatorReady(player1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -114,9 +114,10 @@ class MyrPropagatorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // No token should be created since source left the battlefield
+        // Per CR 608.2b, abilities resolve even if the source left the zone;
+        // the token copy uses last-known information of the source.
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Myr Propagator") && p.getCard().isToken());
+                .anyMatch(p -> p.getCard().getName().equals("Myr Propagator") && p.getCard().isToken());
     }
 
     // ===== Helpers =====

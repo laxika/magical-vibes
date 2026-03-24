@@ -170,8 +170,8 @@ class MishraSelfReplicatorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Source leaving battlefield before resolution creates no token")
-    void sourceLeftBattlefieldNoToken() {
+    @DisplayName("Source leaving battlefield before resolution still creates token via last-known info")
+    void sourceLeftBattlefieldStillCreatesToken() {
         harness.addToBattlefield(player1, new MishraSelfReplicator());
         harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -185,8 +185,9 @@ class MishraSelfReplicatorTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve triggered ability
 
-        // No token should be created since source left the battlefield
-        assertThat(findToken(player1)).isNull();
+        // Per CR 608.2b, abilities resolve even if the source left the zone;
+        // the token copy uses last-known information of the source.
+        assertThat(findToken(player1)).isNotNull();
     }
 
     // ===== Helpers =====

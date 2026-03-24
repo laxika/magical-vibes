@@ -159,11 +159,12 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         ));
         harness.setHand(player1, List.of(new GrowingRitesOfItlimoc()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities(); // resolve enchantment
         harness.passBothPriorities(); // resolve ETB
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
 
         // Decline to choose (-1 = fail to find)
         gs.handleLibraryCardChosen(gd, player1, -1);
@@ -293,8 +294,9 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
 
         int itlimocIdx = indexOf(player1, itlimoc);
         harness.activateAbility(player1, itlimocIdx, 0, null, null);
-        harness.passBothPriorities();
 
+        // Mana abilities resolve immediately without using the stack (CR 605.3a),
+        // so no passBothPriorities() needed — and doing so would drain the pool.
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isGreaterThanOrEqualTo(1);
     }
 
@@ -308,8 +310,8 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
 
         int itlimocIdx = indexOf(player1, itlimoc);
         harness.activateAbility(player1, itlimocIdx, 1, null, null);
-        harness.passBothPriorities();
 
+        // Mana abilities resolve immediately without using the stack (CR 605.3a).
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isGreaterThanOrEqualTo(3);
     }
 
