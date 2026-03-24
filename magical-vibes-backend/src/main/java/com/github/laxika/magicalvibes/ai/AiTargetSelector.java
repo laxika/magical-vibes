@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -30,6 +32,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +58,8 @@ class AiTargetSelector {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
 
         // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
-        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
+        // Use base-mode targeting since AI never kicks spells
+        Set<TargetType> allowedTargets = computeBaseAllowedTargets(card);
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
             return opponentId;
         }
@@ -166,6 +170,39 @@ class AiTargetSelector {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Computes allowed target types using only the base (un-kicked) mode of effects.
+     * AI never kicks spells, so this prevents including target types that are only
+     * valid for the kicked mode (e.g. Fight with Fire's kicked mode can target players,
+     * but the base mode only targets creatures).
+     */
+    Set<TargetType> computeBaseAllowedTargets(Card card) {
+        Set<TargetType> result = EnumSet.noneOf(TargetType.class);
+        if (card.isAura()) {
+            if (card.isEnchantPlayer()) {
+                result.add(TargetType.PLAYER);
+            } else {
+                result.add(TargetType.PERMANENT);
+            }
+        }
+        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
+            CardEffect effectToCheck = e;
+            if (e instanceof ReplacementConditionalEffect replacement) {
+                effectToCheck = replacement.baseEffect();
+            }
+            if (effectToCheck.canTargetPlayer()) result.add(TargetType.PLAYER);
+            if (effectToCheck.canTargetPermanent()) result.add(TargetType.PERMANENT);
+            if (effectToCheck.canTargetSpell()) result.add(TargetType.SPELL_ON_STACK);
+            if (effectToCheck.canTargetGraveyard()) result.add(TargetType.GRAVEYARD);
+            if (effectToCheck.canTargetExile()) result.add(TargetType.EXILE);
+        }
+        for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
+            if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
+        }
+        return result;
     }
 
     private UUID chooseDestroyTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {
@@ -291,37 +328,55 @@ class AiTargetSelector {
     }
 
     /**
-     * Builds a damage assignment map for divided damage spells (e.g. Ignite Disorder).
+     * Builds a damage assignment map for divided damage spells (e.g. Ignite Disorder, Fight with Fire kicked).
      * Distributes damage to maximize creature kills on the opponent's battlefield.
+     * For "any targets" effects, dumps remaining damage on the opponent player.
      * Returns null if no valid targets exist.
      */
     Map<UUID, Integer> buildDamageAssignments(GameData gameData, Card card, UUID aiPlayerId) {
-        DealDividedDamageAmongTargetCreaturesEffect dividedEffect = card.getEffects(EffectSlot.SPELL).stream()
+        DealDividedDamageAmongTargetCreaturesEffect creaturesEffect = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(e -> e instanceof DealDividedDamageAmongTargetCreaturesEffect)
                 .map(DealDividedDamageAmongTargetCreaturesEffect.class::cast)
                 .findFirst()
                 .orElse(null);
 
-        if (dividedEffect == null) {
+        DealDividedDamageAmongAnyTargetsEffect anyTargetEffect = findDividedDamageAnyTargetsEffect(card);
+
+        if (creaturesEffect == null && anyTargetEffect == null) {
             // X-damage divided among attacking creatures — only relevant during combat
             return null;
         }
 
-        int totalDamage = dividedEffect.totalDamage();
-        int maxTargets = Math.max(1, card.getMaxTargets());
+        int totalDamage;
+        boolean canTargetPlayers;
+        int maxTargets;
+        if (creaturesEffect != null) {
+            totalDamage = creaturesEffect.totalDamage();
+            canTargetPlayers = false;
+            maxTargets = Math.max(1, card.getMaxTargets());
+        } else {
+            totalDamage = anyTargetEffect.totalDamage();
+            canTargetPlayers = true;
+            // "any number of targets" — no creature target limit
+            maxTargets = Integer.MAX_VALUE;
+        }
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
 
         // Find valid creature targets on opponent's battlefield
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         List<Permanent> validTargets = new ArrayList<>();
-
         for (Permanent p : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
             if (gameQueryService.isCreature(gameData, p) && isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
                 validTargets.add(p);
             }
         }
 
-        if (validTargets.isEmpty()) {
+        if (validTargets.isEmpty() && !canTargetPlayers) {
             return null;
+        }
+
+        if (validTargets.isEmpty() && canTargetPlayers) {
+            // No creatures to kill — send all damage to the opponent
+            return Map.of(opponentId, totalDamage);
         }
 
         // Sort by lethal damage needed (ascending) to maximize kills
@@ -344,16 +399,37 @@ class AiTargetSelector {
             remaining -= dmg;
         }
 
-        // Dump remaining damage on the last assigned target
-        if (remaining > 0 && !assignments.isEmpty()) {
-            UUID lastKey = null;
-            for (UUID key : assignments.keySet()) {
-                lastKey = key;
+        // Dump remaining damage on the opponent (if allowed) or the last assigned target
+        if (remaining > 0) {
+            if (canTargetPlayers) {
+                assignments.put(opponentId, remaining);
+            } else if (!assignments.isEmpty()) {
+                UUID lastKey = null;
+                for (UUID key : assignments.keySet()) {
+                    lastKey = key;
+                }
+                assignments.merge(lastKey, remaining, Integer::sum);
             }
-            assignments.merge(lastKey, remaining, Integer::sum);
         }
 
         return assignments;
+    }
+
+    /**
+     * Searches for a DealDividedDamageAmongAnyTargetsEffect in the card's spell effects,
+     * including inside KickerReplacementEffect wrappers.
+     */
+    private DealDividedDamageAmongAnyTargetsEffect findDividedDamageAnyTargetsEffect(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
+                return anyTarget;
+            }
+            if (effect instanceof ReplacementConditionalEffect replacement
+                    && replacement.upgradedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
+                return anyTarget;
+            }
+        }
+        return null;
     }
 
     private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield, UUID aiPlayerId) {

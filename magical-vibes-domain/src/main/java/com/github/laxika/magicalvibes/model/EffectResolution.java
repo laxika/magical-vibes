@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
@@ -138,6 +139,7 @@ public final class EffectResolution {
         return effects.stream()
                 .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
                         || e instanceof DealDividedDamageAmongTargetCreaturesEffect
+                        || e instanceof DealDividedDamageAmongAnyTargetsEffect
                         || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
     }
 
@@ -188,6 +190,7 @@ public final class EffectResolution {
                 .flatMap(a -> a.getEffects().stream())
                 .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
                         || e instanceof DealDividedDamageAmongTargetCreaturesEffect
+                        || e instanceof DealDividedDamageAmongAnyTargetsEffect
                         || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
         return inSpell || inAbility;
     }

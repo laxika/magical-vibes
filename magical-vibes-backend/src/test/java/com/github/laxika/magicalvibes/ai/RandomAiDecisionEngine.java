@@ -332,7 +332,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<UUID> validTargets = new ArrayList<>();
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
 
-        Set<TargetType> allowed = EffectResolution.computeAllowedTargets(card);
+        // Use base-mode targeting since AI never kicks spells
+        Set<TargetType> allowed = targetSelector.computeBaseAllowedTargets(card);
 
         // Add players as targets if allowed, respecting player relation predicates
         if (allowed.contains(TargetType.PLAYER)) {

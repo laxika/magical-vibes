@@ -10,38 +10,56 @@ import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 
 class AiTargetSelectorTest {
 
@@ -318,5 +336,253 @@ class AiTargetSelectorTest {
         List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
 
         assertThat(results).isEmpty();
+    }
+
+    // =====================================================================
+    // Mockito-based tests for buildDamageAssignments, computeBaseAllowedTargets,
+    // and EffectResolution.needsDamageDistribution
+    // =====================================================================
+
+    @Nested
+    @DisplayName("buildDamageAssignments (unit)")
+    class BuildDamageAssignmentsUnit {
+
+        private GameQueryService mockGqs;
+        private TargetValidationService mockTvs;
+        private AiTargetSelector unitSelector;
+        private GameData unitGd;
+        private UUID aiId;
+        private UUID opponentId;
+
+        @BeforeEach
+        void setUp() {
+            mockGqs = mock(GameQueryService.class);
+            mockTvs = mock(TargetValidationService.class);
+            unitSelector = new AiTargetSelector(mockGqs, mockTvs);
+
+            aiId = UUID.randomUUID();
+            opponentId = UUID.randomUUID();
+            unitGd = new GameData(UUID.randomUUID(), "test", aiId, "AI");
+            unitGd.orderedPlayerIds.add(aiId);
+            unitGd.orderedPlayerIds.add(opponentId);
+            unitGd.playerIds.add(aiId);
+            unitGd.playerIds.add(opponentId);
+            unitGd.playerBattlefields.put(aiId, Collections.synchronizedList(new ArrayList<>()));
+            unitGd.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>()));
+
+            // Default: all effect-level target validations pass
+            lenient().when(mockTvs.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+        }
+
+        private Permanent addCreature(UUID owner, String name, int toughness) {
+            Card card = new Card();
+            card.setName(name);
+            card.setType(CardType.CREATURE);
+            Permanent perm = new Permanent(card);
+            unitGd.playerBattlefields.get(owner).add(perm);
+            lenient().when(mockGqs.isCreature(unitGd, perm)).thenReturn(true);
+            lenient().when(mockGqs.getEffectiveToughness(unitGd, perm)).thenReturn(toughness);
+            return perm;
+        }
+
+        @Test
+        @DisplayName("Returns null for spell with no divided damage effect")
+        void returnsNullForNonDividedDamageSpell() {
+            Card bolt = new Card();
+            bolt.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+
+            assertThat(unitSelector.buildDamageAssignments(unitGd, bolt, aiId)).isNull();
+        }
+
+        @Test
+        @DisplayName("Distributes creature-only divided damage to opponent's creatures")
+        void distributesCreatureOnlyDividedDamage() {
+            addCreature(opponentId, "Bear", 2);
+
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.target(1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+
+            Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.values().stream().mapToInt(Integer::intValue).sum()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Returns null for creature-only divided damage when no valid creatures")
+        void returnsNullForCreatureOnlyWithNoTargets() {
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.target(1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+
+            assertThat(unitSelector.buildDamageAssignments(unitGd, spell, aiId)).isNull();
+        }
+
+        @Test
+        @DisplayName("Handles DealDividedDamageAmongAnyTargetsEffect inside KickerReplacementEffect")
+        void handlesAnyTargetDividedDamageFromKicker() {
+            addCreature(opponentId, "Bear", 2);
+
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+                    new DealDamageToTargetCreatureEffect(5),
+                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+
+            Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.values().stream().mapToInt(Integer::intValue).sum()).isEqualTo(10);
+        }
+
+        @Test
+        @DisplayName("Any-target divided damage sends remaining damage to opponent player")
+        void anyTargetDumpsRemainingOnOpponent() {
+            addCreature(opponentId, "Bear", 2); // needs 2 lethal, remaining 8 → opponent
+
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+
+            Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
+
+            assertThat(result).containsEntry(opponentId, 8);
+        }
+
+        @Test
+        @DisplayName("Any-target divided damage targets opponent when no creatures exist")
+        void anyTargetTargetsOpponentWhenNoCreatures() {
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+
+            Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
+
+            assertThat(result).isNotNull().hasSize(1);
+            assertThat(result).containsEntry(opponentId, 10);
+        }
+
+        @Test
+        @DisplayName("Any-target divided damage kills multiple creatures then dumps remainder on opponent")
+        void anyTargetKillsMultipleCreaturesThenDumpsOnOpponent() {
+            addCreature(opponentId, "Goblin", 1);  // 1 lethal
+            addCreature(opponentId, "Bear", 2);    // 2 lethal → remaining 7 on opponent
+
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+
+            Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.values().stream().mapToInt(Integer::intValue).sum()).isEqualTo(10);
+            assertThat(result).containsEntry(opponentId, 7);
+        }
+    }
+
+    // ===== computeBaseAllowedTargets =====
+
+    @Nested
+    @DisplayName("computeBaseAllowedTargets (unit)")
+    class ComputeBaseAllowedTargetsUnit {
+
+        private AiTargetSelector unitSelector;
+
+        @BeforeEach
+        void setUp() {
+            unitSelector = new AiTargetSelector(
+                    mock(GameQueryService.class), mock(TargetValidationService.class));
+        }
+
+        @Test
+        @DisplayName("KickerReplacementEffect uses only base effect targeting")
+        void kickerReplacementUsesBaseOnly() {
+            // Base: creature only (canTargetPermanent=true, canTargetPlayer=false)
+            // Kicked: any targets (canTargetPermanent=true, canTargetPlayer=true)
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+                    new DealDamageToTargetCreatureEffect(5),
+                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+
+            Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
+
+            assertThat(allowed).contains(TargetType.PERMANENT);
+            assertThat(allowed).doesNotContain(TargetType.PLAYER);
+        }
+
+        @Test
+        @DisplayName("Non-wrapped any-target effect includes both PERMANENT and PLAYER")
+        void nonWrappedAnyTargetIncludesBoth() {
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+
+            Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
+
+            assertThat(allowed).contains(TargetType.PERMANENT);
+            assertThat(allowed).contains(TargetType.PLAYER);
+        }
+
+        @Test
+        @DisplayName("Creature-only effect includes only PERMANENT")
+        void creatureOnlyIncludesPermanent() {
+            Card spell = new Card();
+            spell.setType(CardType.SORCERY);
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+
+            Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
+
+            assertThat(allowed).contains(TargetType.PERMANENT);
+            assertThat(allowed).doesNotContain(TargetType.PLAYER);
+        }
+    }
+
+    // ===== EffectResolution.needsDamageDistribution =====
+
+    @Nested
+    @DisplayName("needsDamageDistribution (unit)")
+    class NeedsDamageDistributionUnit {
+
+        @Test
+        @DisplayName("Returns true for DealDividedDamageAmongTargetCreaturesEffect")
+        void trueForCreatureOnlyDividedDamage() {
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+
+            assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns true for direct DealDividedDamageAmongAnyTargetsEffect")
+        void trueForDirectAnyTargetDividedDamage() {
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(5));
+
+            assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns false for regular damage spell")
+        void falseForRegularDamageSpell() {
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+
+            assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false when effect is wrapped in KickerReplacementEffect")
+        void falseForWrappedKickerEffect() {
+            // The DealDividedDamageAmongAnyTargetsEffect is inside a KickerReplacementEffect,
+            // so needsDamageDistribution should return false (the wrapper type doesn't match)
+            Card spell = new Card();
+            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+                    new DealDamageToTargetCreatureEffect(5),
+                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+
+            assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
+        }
     }
 }
