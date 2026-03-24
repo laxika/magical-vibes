@@ -24,7 +24,9 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -1170,6 +1172,117 @@ class LibraryRevealResolutionServiceTest {
             assertThat(gd.pendingMayAbilities.getFirst().description())
                     .contains("Put").contains("Lightning Bolt").contains("bottom");
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any(Permanent.class));
+        }
+    }
+
+    // =========================================================================
+    // resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard (remainingToBottomRandom)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveLookAtTopXCards with remainingToBottomRandom")
+    class ResolveLookAtTopXCardsRemainingToBottomRandom {
+
+        private LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect createBottomRandomEffect(CardPredicate predicate) {
+            return new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(predicate, null, true);
+        }
+
+        @Test
+        @DisplayName("Empty library does nothing")
+        void emptyLibraryDoesNothing() {
+            var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                    player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
+
+            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+
+            assertThat(gd.interaction.awaitingInputType()).isNull();
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("library is empty")));
+        }
+
+        @Test
+        @DisplayName("X=0 reveals zero cards and does nothing")
+        void xZeroDoesNothing() {
+            gd.playerDecks.get(player1Id).add(createCard("Some Card"));
+
+            var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                    player1Id, "Gishath's triggered ability", List.of(effect), 0, null, null);
+
+            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+
+            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(1); // untouched
+        }
+
+        @Test
+        @DisplayName("No matching cards puts all on bottom immediately")
+        void noMatchingCardsPutsAllOnBottom() {
+            Card land = createCard("Forest", CardType.LAND);
+            Card instant = createCard("Shock", CardType.INSTANT);
+            gd.playerDecks.get(player1Id).add(land);
+            gd.playerDecks.get(player1Id).add(instant);
+
+            when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+
+            var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                    player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
+
+            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+
+            assertThat(gd.interaction.awaitingInputType()).isNull();
+            // Cards should be back on the bottom of the library
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("no eligible cards")));
+        }
+
+        @Test
+        @DisplayName("Matching cards enter LIBRARY_REVEAL_CHOICE state with randomRemainingToBottom")
+        void matchingCardsEnterRevealChoiceState() {
+            stubCardViewFactory();
+            Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
+            Card land = createCard("Forest", CardType.LAND);
+            Card instant = createCard("Shock", CardType.INSTANT);
+            gd.playerDecks.get(player1Id).add(dino);
+            gd.playerDecks.get(player1Id).add(land);
+            gd.playerDecks.get(player1Id).add(instant);
+
+            when(gameQueryService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
+            when(gameQueryService.matchesCardPredicate(eq(land), any(), any(), any(), any())).thenReturn(false);
+            when(gameQueryService.matchesCardPredicate(eq(instant), any(), any(), any(), any())).thenReturn(false);
+
+            var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                    player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
+
+            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+            assertThat(gd.interaction.libraryRevealChoiceContext()).isNotNull();
+            assertThat(gd.interaction.libraryRevealChoiceContext().randomRemainingToBottom()).isTrue();
+            assertThat(gd.interaction.libraryRevealChoiceContext().validCardIds()).containsExactly(dino.getId());
+            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+        }
+
+        @Test
+        @DisplayName("Reveals fewer cards when library is smaller than X")
+        void fewerCardsThanX() {
+            stubCardViewFactory();
+            Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
+            gd.playerDecks.get(player1Id).add(dino);
+
+            when(gameQueryService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
+
+            var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                    player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
+
+            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+
+            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+            // Only 1 card was in library, so only 1 revealed
+            assertThat(gd.interaction.libraryRevealChoiceContext().allCards()).hasSize(1);
         }
     }
 }

@@ -73,10 +73,17 @@ public sealed interface InteractionContext permits
 
     record LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
                                boolean remainingToGraveyard, boolean selectedToHand,
-                               boolean reorderRemainingToBottom) implements InteractionContext {
+                               boolean reorderRemainingToBottom,
+                               boolean randomRemainingToBottom) implements InteractionContext {
 
         public LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds, boolean remainingToGraveyard) {
-            this(playerId, allCards, validCardIds, remainingToGraveyard, false, false);
+            this(playerId, allCards, validCardIds, remainingToGraveyard, false, false, false);
+        }
+
+        public LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
+                                   boolean remainingToGraveyard, boolean selectedToHand,
+                                   boolean reorderRemainingToBottom) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand, reorderRemainingToBottom, false);
         }
     }
 

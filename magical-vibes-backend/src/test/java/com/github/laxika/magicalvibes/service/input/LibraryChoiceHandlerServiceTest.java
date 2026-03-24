@@ -293,4 +293,59 @@ class LibraryChoiceHandlerServiceTest {
                     .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
     }
+
+    // =========================================================================
+    // handleLibraryRevealChoice — randomRemainingToBottom
+    // =========================================================================
+
+    @Nested
+    @DisplayName("handleLibraryRevealChoice with randomRemainingToBottom")
+    class HandleLibraryRevealChoiceRandomBottom {
+
+        @Test
+        @DisplayName("Selected cards go to battlefield, rest go to bottom of library (not graveyard)")
+        void selectedToBattlefieldRestToBottom() {
+            Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
+            Card land = createCard("Forest", CardType.LAND);
+            Card instant = createCard("Shock", CardType.INSTANT);
+
+            List<Card> allCards = List.of(dino, land, instant);
+            Set<UUID> validIds = Set.of(dino.getId());
+
+            gd.interaction.beginLibraryRevealChoiceRandomBottom(player1Id, new ArrayList<>(allCards), new java.util.HashSet<>(validIds));
+            when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+            service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
+
+            // Dino should have been put onto battlefield
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+
+            // Remaining cards should be on bottom of library (not in graveyard)
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Choosing zero puts all cards on bottom of library")
+        void choosingZeroPutsAllOnBottom() {
+            Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
+            Card land = createCard("Forest", CardType.LAND);
+
+            List<Card> allCards = List.of(dino, land);
+            Set<UUID> validIds = Set.of(dino.getId());
+
+            gd.interaction.beginLibraryRevealChoiceRandomBottom(player1Id, new ArrayList<>(allCards), new java.util.HashSet<>(validIds));
+
+            service.handleLibraryRevealChoice(gd, player1, List.of());
+
+            // Nothing put onto battlefield
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+
+            // All cards on bottom of library
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s ->
+                    s.contains("bottom of their library") && s.contains("random order")));
+        }
+    }
 }

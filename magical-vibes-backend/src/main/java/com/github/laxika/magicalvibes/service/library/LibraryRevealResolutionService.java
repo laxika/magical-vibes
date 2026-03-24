@@ -955,25 +955,29 @@ public class LibraryRevealResolutionService {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         int xValue = entry.getXValue();
+        boolean toBottomRandom = effect.remainingToBottomRandom();
 
         int count = Math.min(xValue, deck.size());
         if (count <= 0) {
             String logMsg = entry.getCard().getName() + ": " + playerName
-                    + (deck.isEmpty() ? "'s library is empty." : " looks at 0 cards (X is 0).");
+                    + (deck.isEmpty() ? "'s library is empty."
+                    : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).");
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             return;
         }
 
         List<Card> revealedCards = takeTopCards(deck, count);
 
-        String logMsg = playerName + " looks at the top " + pluralCards(count) + " of their library.";
+        String logMsg = toBottomRandom
+                ? playerName + " reveals the top " + pluralCards(count) + " of their library."
+                : playerName + " looks at the top " + pluralCards(count) + " of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
 
         // Filter eligible cards using predicates
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : revealedCards) {
             if (effect.alwaysEligiblePredicate() != null
-                    && gameQueryService.matchesCardPredicate(card, effect.alwaysEligiblePredicate(), null)) {
+                    && gameQueryService.matchesCardPredicate(card, effect.alwaysEligiblePredicate(), null, gameData, controllerId)) {
                 eligibleCards.add(card);
             } else if (effect.mvCappedEligiblePredicate() != null
                     && card.getManaValue() <= xValue
@@ -983,12 +987,20 @@ public class LibraryRevealResolutionService {
         }
 
         if (eligibleCards.isEmpty()) {
-            // No eligible cards — put all into graveyard
-            for (Card card : revealedCards) {
-                gameData.playerGraveyards.get(controllerId).add(card);
+            if (toBottomRandom) {
+                // No eligible cards — put all on bottom in random order
+                Collections.shuffle(revealedCards);
+                deck.addAll(revealedCards);
+                String noEligibleLog = playerName + " finds no eligible cards. All cards are put on the bottom of their library in a random order.";
+                gameBroadcastService.logAndBroadcast(gameData, noEligibleLog);
+            } else {
+                // No eligible cards — put all into graveyard
+                for (Card card : revealedCards) {
+                    gameData.playerGraveyards.get(controllerId).add(card);
+                }
+                String noEligibleLog = playerName + " finds no eligible cards. All cards are put into their graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, noEligibleLog);
             }
-            String noEligibleLog = playerName + " finds no eligible cards. All cards are put into their graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, noEligibleLog);
             return;
         }
 
@@ -998,13 +1010,19 @@ public class LibraryRevealResolutionService {
             validCardIds.add(card.getId());
         }
 
-        gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds, true);
+        if (toBottomRandom) {
+            gameData.interaction.beginLibraryRevealChoiceRandomBottom(controllerId, revealedCards, validCardIds);
+        } else {
+            gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds, true);
+        }
 
+        String prompt = toBottomRandom
+                ? "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library in a random order."
+                : "Choose any number of eligible cards to put onto the battlefield. The rest go to your graveyard.";
         List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
         sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
-                cardIds, cardViews, eligibleCards.size(),
-                "Choose any number of eligible cards to put onto the battlefield. The rest go to your graveyard."
+                cardIds, cardViews, eligibleCards.size(), prompt
         ));
 
         log.info("Game {} - {} resolving {} with X={}, {} revealed, {} eligible",

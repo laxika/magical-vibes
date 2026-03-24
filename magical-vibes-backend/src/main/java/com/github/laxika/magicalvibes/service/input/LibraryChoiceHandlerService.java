@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -980,6 +981,20 @@ public class LibraryChoiceHandlerService {
             } else {
                 String names = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
                 String logEntry = playerName + " puts " + names + " onto the battlefield. The rest are put into their graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            }
+        } else if (libraryRevealChoice.randomRemainingToBottom()) {
+            // Shuffle remaining cards and put them on the bottom of the library (Gishath, etc.)
+            Collections.shuffle(remainingCards);
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            deck.addAll(remainingCards);
+
+            if (selectedCards.isEmpty()) {
+                String logEntry = playerName + " puts no cards onto the battlefield. The rest are put on the bottom of their library in a random order.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            } else {
+                String names = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+                String logEntry = playerName + " puts " + names + " onto the battlefield. The rest are put on the bottom of their library in a random order.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             }
         } else {

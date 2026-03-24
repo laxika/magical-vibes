@@ -551,6 +551,13 @@ public class InteractionState {
                 remainingToGraveyard, selectedToHand, reorderRemainingToBottom);
     }
 
+    public void beginLibraryRevealChoiceRandomBottom(UUID playerId, List<Card> allCards, Set<UUID> validCardIds) {
+        this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
+        this.libraryView.setReveal(playerId, allCards, validCardIds);
+        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds,
+                false, false, false, true);
+    }
+
     public void clearLibraryRevealChoice() {
         this.libraryView.clearReveal();
     }

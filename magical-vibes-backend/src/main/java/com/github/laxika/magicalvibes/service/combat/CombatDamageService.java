@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
@@ -667,7 +668,8 @@ public class CombatDamageService {
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry se;
                 if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect
-                        || effect instanceof DealDamageToEachCreatureDamagedPlayerControlsEffect) {
+                        || effect instanceof DealDamageToEachCreatureDamagedPlayerControlsEffect
+                        || effect instanceof LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), damageDealt, defenderId, null);
                 } else if (effect instanceof PutCountersOnSourceEffect

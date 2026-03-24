@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 /**
  * Looks at the top X cards of the controller's library (X from the spell's X value),
  * lets the controller choose any number of eligible cards to put onto the battlefield,
- * and puts the rest into the graveyard.
+ * and puts the rest into the graveyard (or bottom of library in random order).
  *
  * <p>Eligibility is determined by two predicates:
  * <ul>
@@ -20,16 +20,26 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>Examples:
  * <ul>
  *   <li>Kamahl's Druidic Vow: {@code alwaysEligible = CardTypePredicate(LAND)},
- *       {@code mvCapped = CardAllOfPredicate(CardSupertypePredicate(LEGENDARY), CardIsPermanentPredicate())}</li>
- *   <li>Genesis Wave: {@code alwaysEligible = null},
- *       {@code mvCapped = CardIsPermanentPredicate()}</li>
+ *       {@code mvCapped = CardAllOfPredicate(CardSupertypePredicate(LEGENDARY), CardIsPermanentPredicate())},
+ *       {@code remainingToBottomRandom = false}</li>
+ *   <li>Gishath, Sun's Avatar: {@code alwaysEligible = CardAllOfPredicate(CREATURE, DINOSAUR)},
+ *       {@code mvCapped = null}, {@code remainingToBottomRandom = true}</li>
  * </ul>
  *
  * @param alwaysEligiblePredicate cards matching this are eligible regardless of mana value (nullable)
  * @param mvCappedEligiblePredicate cards matching this are eligible only if MV &le; X (nullable)
+ * @param remainingToBottomRandom if true, remaining cards go to the bottom of library in random order;
+ *                                if false, remaining cards go to the graveyard
  */
 public record LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
         CardPredicate alwaysEligiblePredicate,
-        CardPredicate mvCappedEligiblePredicate
+        CardPredicate mvCappedEligiblePredicate,
+        boolean remainingToBottomRandom
 ) implements CardEffect {
+
+    public LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
+            CardPredicate alwaysEligiblePredicate,
+            CardPredicate mvCappedEligiblePredicate) {
+        this(alwaysEligiblePredicate, mvCappedEligiblePredicate, false);
+    }
 }

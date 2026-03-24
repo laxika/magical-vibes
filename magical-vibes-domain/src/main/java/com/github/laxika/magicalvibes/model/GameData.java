@@ -964,11 +964,18 @@ public class GameData {
                             .destination(ls.destination())
                             .filterCardTypes(ls.filterCardTypes())
                             .build());
-            case InteractionContext.LibraryRevealChoice lrc ->
-                    targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
-                            lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                            lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null,
-                            lrc.remainingToGraveyard());
+            case InteractionContext.LibraryRevealChoice lrc -> {
+                    if (lrc.randomRemainingToBottom()) {
+                        targetInteraction.beginLibraryRevealChoiceRandomBottom(lrc.playerId(),
+                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
+                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null);
+                    } else {
+                        targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
+                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
+                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null,
+                                lrc.remainingToGraveyard(), lrc.selectedToHand(), lrc.reorderRemainingToBottom());
+                    }
+                }
             case InteractionContext.HandTopBottomChoice htbc ->
                     targetInteraction.beginHandTopBottomChoice(htbc.playerId(),
                             htbc.cards() != null ? new ArrayList<>(htbc.cards()) : null);
