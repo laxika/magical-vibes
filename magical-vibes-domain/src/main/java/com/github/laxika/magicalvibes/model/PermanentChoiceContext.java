@@ -128,4 +128,9 @@ public sealed interface PermanentChoiceContext {
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
     record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) implements PermanentChoiceContext {}
 
+    /** Explore trigger that needs to target a creature an opponent controls
+     *  (e.g. Lurking Chupacabra: "Whenever a creature you control explores, target creature
+     *  an opponent controls gets -2/-2 until end of turn."). */
+    record ExploreTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
 }

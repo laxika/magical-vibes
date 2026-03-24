@@ -106,5 +106,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when one or more creatures the controller controls are declared as attackers,
      *  while this card is in the controller's graveyard.  The attacker count is passed via
      *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
-    GRAVEYARD_ON_ALLY_CREATURES_ATTACK
+    GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+    /** Triggers whenever a creature controlled by the same player explores.
+     *  Fired from {@code LibraryRevealResolutionService} (land branch) and
+     *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
+    ON_ALLY_CREATURE_EXPLORES
 }

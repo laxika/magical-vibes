@@ -450,6 +450,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ATTACK` | This creature attacks |
 | `ON_ALLY_CREATURES_ATTACK` | One or more creatures the controller controls attack (fires once per combat, not per creature). Scans all controller's permanents after attackers declared |
 | `GRAVEYARD_ON_ALLY_CREATURES_ATTACK` | Like ON_ALLY_CREATURES_ATTACK but fires from the controller's graveyard. The attacker count is passed via xValue. Supports `MinimumAttackersConditionalEffect` wrapper for "N or more creatures" conditions. Used by Warcry Phoenix |
+| `ON_ALLY_CREATURE_EXPLORES` | Whenever a creature you control explores. Fires after the explore process completes (land into hand, or +1/+1 counter and may-graveyard choice). Supports targeted effects (e.g. BoostTargetCreatureEffect) via `pendingExploreTriggerTargets` queue — targets restricted to opponent's creatures. Used by Lurking Chupacabra |
 | `ON_BLOCK` | This creature blocks |
 | `ON_BECOMES_BLOCKED` | This creature becomes blocked. Register effects with `TriggerMode.PER_BLOCKER` to fire once per blocker |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player |

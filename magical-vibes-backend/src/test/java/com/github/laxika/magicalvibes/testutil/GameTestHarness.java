@@ -269,7 +269,7 @@ public class GameTestHarness {
                 new MillResolutionService(graveyardService, gameBroadcastService, gameQueryService, permanentControlResolutionService),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 librarySearchResolutionService,
-                new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, battlefieldEntryService, exileService),
+                new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, battlefieldEntryService, exileService, triggerCollectionService),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService),
                 exileResolutionService,
@@ -343,6 +343,7 @@ public class GameTestHarness {
                 sessionManager, gameBroadcastService, turnProgressionService, battlefieldEntryService, playerInputService);
         MayMiscHandlerService mayMiscHandlerService = new MayMiscHandlerService(
                 inputCompletionService, gameQueryService, drawService, gameBroadcastService, mulliganService, playerInputService, turnProgressionService, battlefieldEntryService, sessionManager);
+        mayMiscHandlerService.setTriggerCollectionService(triggerCollectionService);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
                 gameQueryService, gameBroadcastService, playerInputService, turnProgressionService, effectResolutionService, destructionResolutionService, graveyardReturnResolutionService);

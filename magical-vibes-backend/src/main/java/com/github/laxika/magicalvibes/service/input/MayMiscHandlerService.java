@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.MulliganService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -27,6 +28,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,6 +51,15 @@ public class MayMiscHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final SessionManager sessionManager;
+    // @Lazy to break circular dependency:
+    // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
+    @Autowired @Lazy
+    private TriggerCollectionService triggerCollectionService;
+
+    /** Setter for manual (non-Spring) construction (tests, AI simulator). */
+    public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
+        this.triggerCollectionService = triggerCollectionService;
+    }
 
     public void handleEquipmentAttachChoice(GameData gameData, Player player, boolean accepted,
                                              UUID equipId, UUID targetId) {
@@ -257,6 +269,14 @@ public class MayMiscHandlerService {
             String logEntry = player.getUsername() + " leaves the revealed card on top of their library.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} leaves revealed card on top (explore)", gameData.id, player.getUsername());
+        }
+
+        // Explore is complete — check for "whenever a creature you control explores" triggers
+        triggerCollectionService.checkExploreTriggers(gameData, controllerId);
+
+        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextExploreTriggerTarget(gameData);
+            return;
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

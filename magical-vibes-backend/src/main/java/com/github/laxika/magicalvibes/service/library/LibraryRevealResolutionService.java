@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.library;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.Card;
@@ -70,6 +71,7 @@ public class LibraryRevealResolutionService {
     private final CardViewFactory cardViewFactory;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Reveals the top card of the target player's library to all players without removing it.
@@ -1043,6 +1045,8 @@ public class LibraryRevealResolutionService {
                     playerName + " puts " + topCard.getName() + " into their hand.");
             log.info("Game {} - {} explores, reveals land {} — to hand",
                     gameData.id, sourceName, topCard.getName());
+            // Explore is complete — check for "whenever a creature you control explores" triggers
+            triggerCollectionService.checkExploreTriggers(gameData, controllerId);
         } else {
             // Not a land — put a +1/+1 counter on the exploring creature
             Permanent source = entry.getSourcePermanentId() != null

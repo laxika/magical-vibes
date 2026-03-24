@@ -692,6 +692,45 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextSagaChapterGraveyardTarget(gameData);
     }
 
+    // ── Explore triggers ──────────────────────────────────────────────
+
+    /**
+     * Scans the exploring creature's controller's battlefield for permanents
+     * with {@link EffectSlot#ON_ALLY_CREATURE_EXPLORES} effects and queues
+     * them for target selection or directly onto the stack.
+     */
+    public void checkExploreTriggers(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                if (effect.canTargetPermanent()) {
+                    gameData.pendingExploreTriggerTargets.add(
+                            new PermanentChoiceContext.ExploreTriggerTarget(
+                                    perm.getCard(), controllerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(effect))
+                    ));
+                }
+                log.info("Game {} - {} explore trigger queued", gameData.id, perm.getCard().getName());
+            }
+        }
+    }
+
+    public void processNextExploreTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextExploreTriggerTarget(gameData);
+    }
+
     // ── Internal dispatch ──────────────────────────────────────────────
 
     private void dispatchSlot(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot, TriggerContext ctx) {

@@ -146,6 +146,37 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleExploreTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.ExploreTriggerTarget ett) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ett.sourceCard(),
+                ett.controllerId(),
+                ett.sourceCard().getName() + "'s ability",
+                new ArrayList<>(ett.effects()),
+                permanentId,
+                ett.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, permanentId);
+        String logEntry = ett.sourceCard().getName() + "'s explore trigger targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} explore trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
+
+        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextExploreTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleMayAbilityTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.MayAbilityTriggerTarget mat) {
         // CR 603.5 — resolution-time target selection: the target was chosen during
         // resolution of a MayEffect on the stack.  Set it on the pending entry and

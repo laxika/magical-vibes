@@ -105,6 +105,13 @@ public class StackResolutionService {
             }
         }
 
+        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextExploreTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         if (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {

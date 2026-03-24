@@ -167,6 +167,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has ON_OPENING_HAND_REVEAL MayEffect(EachOpponentMillsEffect(7)) |
 | ETB explore | `b/BrazenBuccaneers.java` | ON_ENTER_BATTLEFIELD ExploreEffect() — reveal top card; land → hand, non-land → +1/+1 counter + may put to graveyard |
 | Activated: exile from opponent GY + explore | `d/DeadeyeTracker.java` | Tap + {1}{B}: ExileTargetCardsFromOpponentGraveyardEffect(2) + ExploreEffect — exile two target cards from opponent's graveyard, then this creature explores. Uses `activateAbilityWithGraveyardTargets` for multi-target graveyard activated abilities |
+| Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `pendingExploreTriggerTargets` queue for target selection |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |

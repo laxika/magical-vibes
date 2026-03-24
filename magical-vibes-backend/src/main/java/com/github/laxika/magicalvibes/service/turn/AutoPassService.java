@@ -90,6 +90,11 @@ public class AutoPassService {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
 
+        // Process any pending explore targeted triggers
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingExploreTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextExploreTriggerTarget(gameData);
+        }
+
         // Process any pending life-gain targeted triggers
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingLifeGainTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);

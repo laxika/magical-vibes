@@ -473,6 +473,43 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextExploreTriggerTarget(GameData gameData) {
+        while (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+            PermanentChoiceContext.ExploreTriggerTarget pending = gameData.pendingExploreTriggerTargets.peekFirst();
+
+            // Collect valid targets: only creatures controlled by opponents
+            List<UUID> validTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                if (pid.equals(pending.controllerId())) continue; // skip controller — opponent only
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (!gameQueryService.isCreature(gameData, p)) continue;
+                    validTargets.add(p.getId());
+                }
+            }
+
+            if (validTargets.isEmpty()) {
+                gameData.pendingExploreTriggerTargets.removeFirst();
+                String logEntry = pending.sourceCard().getName() + "'s explore trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} explore trigger skipped (no valid creature targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pendingExploreTriggerTargets.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
+                    pending.sourceCard().getName() + "'s ability — Choose target creature an opponent controls.");
+
+            String logEntry = pending.sourceCard().getName() + "'s explore trigger — choose target creature.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} explore trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     /**
      * Collects valid creature targets for a saga chapter, applying any target predicate
      * declared by the chapter's effects and any chapter-level target filters.
