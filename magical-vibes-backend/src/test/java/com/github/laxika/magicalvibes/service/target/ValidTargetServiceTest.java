@@ -3,18 +3,30 @@ package com.github.laxika.magicalvibes.service.target;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -26,6 +38,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,11 +50,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -1364,6 +1382,144 @@ class ValidTargetServiceTest {
                     gameData, spell, player1Id, null);
 
             assertThat(response.validPermanentIds()).containsExactlyInAnyOrder(creature1.getId(), creature2.getId());
+        }
+    }
+
+    // =====================================================================
+    // computeValidGraveyardTargets: type filtering
+    // =====================================================================
+
+    @Nested
+    @DisplayName("computeValidGraveyardTargets type filtering")
+    class GraveyardTypeFiltering {
+
+        private Card gyCreature;
+        private Card gyInstant;
+        private Card gySorcery;
+        private Card gyArtifact;
+        private Card gyEnchantment;
+        private Card gyBasicLand;
+
+        @BeforeEach
+        void setUpGraveyard() {
+            gyCreature = makeGraveyardCard("GY Creature", CardType.CREATURE);
+            gyInstant = makeGraveyardCard("GY Instant", CardType.INSTANT);
+            gySorcery = makeGraveyardCard("GY Sorcery", CardType.SORCERY);
+            gyArtifact = makeGraveyardCard("GY Artifact", CardType.ARTIFACT);
+            gyEnchantment = makeGraveyardCard("GY Enchantment", CardType.ENCHANTMENT);
+            gyBasicLand = makeGraveyardCard("GY Basic Land", CardType.LAND);
+            gyBasicLand.setSupertypes(Set.of(CardSupertype.BASIC));
+
+            List<Card> opponentGraveyard = new ArrayList<>(List.of(
+                    gyCreature, gyInstant, gySorcery, gyArtifact, gyEnchantment, gyBasicLand));
+            gameData.playerGraveyards.put(player2Id, opponentGraveyard);
+            gameData.playerGraveyards.put(player1Id, new ArrayList<>());
+
+            // Stub matchesCardPredicate for ExileTargetCardFromGraveyardAndImprintOnSourceEffect tests
+            lenient().when(gameQueryService.matchesCardPredicate(any(Card.class), any(CardPredicate.class), any()))
+                    .thenAnswer(inv -> {
+                        Card c = inv.getArgument(0);
+                        CardPredicate p = inv.getArgument(1);
+                        if (p instanceof CardTypePredicate tp) return c.hasType(tp.cardType());
+                        return true;
+                    });
+        }
+
+        private Card makeGraveyardCard(String name, CardType type) {
+            Card card = new Card();
+            card.setName(name);
+            card.setType(type);
+            return card;
+        }
+
+        private Set<UUID> allGraveyardIds() {
+            return Set.of(gyCreature.getId(), gyInstant.getId(), gySorcery.getId(),
+                    gyArtifact.getId(), gyEnchantment.getId(), gyBasicLand.getId());
+        }
+
+        static Stream<Arguments> graveyardEffectFilterCases() {
+            return Stream.of(
+                    Arguments.of(
+                            "PutCreatureFromOpponentGraveyard filters to creatures only",
+                            new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(),
+                            Set.of("GY Creature")
+                    ),
+                    Arguments.of(
+                            "CastTargetInstantOrSorceryFromGraveyard filters to instants and sorceries",
+                            new CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope.OPPONENT_GRAVEYARD, false),
+                            Set.of("GY Instant", "GY Sorcery")
+                    ),
+                    Arguments.of(
+                            "ExileTargetCardFromGraveyard(CREATURE) filters to creatures only",
+                            new ExileTargetCardFromGraveyardEffect(CardType.CREATURE),
+                            Set.of("GY Creature")
+                    ),
+                    Arguments.of(
+                            "ExileTargetCardFromGraveyard(null) allows all card types",
+                            new ExileTargetCardFromGraveyardEffect(null),
+                            Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment", "GY Basic Land")
+                    ),
+                    Arguments.of(
+                            "GrantFlashbackToTargetGraveyardCard filters to matching card types",
+                            new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)),
+                            Set.of("GY Instant", "GY Sorcery")
+                    ),
+                    Arguments.of(
+                            "ExileTargetCardFromGraveyardAndImprint(ARTIFACT) filters to artifacts only",
+                            new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(new CardTypePredicate(CardType.ARTIFACT)),
+                            Set.of("GY Artifact")
+                    ),
+                    Arguments.of(
+                            "PutCardFromOpponentGraveyard filters to artifacts and creatures",
+                            new PutCardFromOpponentGraveyardOntoBattlefieldEffect(),
+                            Set.of("GY Creature", "GY Artifact")
+                    ),
+                    Arguments.of(
+                            "ExileTargetGraveyardCardAndSameName excludes basic lands",
+                            new ExileTargetGraveyardCardAndSameNameFromZonesEffect(),
+                            Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment")
+                    ),
+                    Arguments.of(
+                            "ExileGraveyardCardWithConditionalBonus allows all card types",
+                            new ExileGraveyardCardWithConditionalBonusEffect(3, 1, 1),
+                            Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment", "GY Basic Land")
+                    )
+            );
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("graveyardEffectFilterCases")
+        @DisplayName("spell graveyard targets filtered by effect type")
+        void spellGraveyardTargets_filteredByEffectType(String description, CardEffect effect, Set<String> expectedNames) {
+            Card spell = createCard();
+            spell.addEffect(EffectSlot.SPELL, effect);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, null);
+
+            // Map result IDs back to names for assertion clarity
+            Set<String> resultNames = response.validGraveyardCardIds().stream()
+                    .map(id -> gameData.playerGraveyards.values().stream()
+                            .flatMap(List::stream)
+                            .filter(c -> c.getId().equals(id))
+                            .findFirst().map(Card::getName).orElse("unknown"))
+                    .collect(Collectors.toSet());
+            assertThat(resultNames).isEqualTo(expectedNames);
+        }
+
+        @Test
+        @DisplayName("spell graveyard targets empty when no cards match filter")
+        void spellGraveyardTargets_emptyWhenNoMatch() {
+            // Only non-creature cards in graveyard
+            gameData.playerGraveyards.put(player2Id, new ArrayList<>(List.of(gyInstant, gyBasicLand)));
+
+            Card spell = createCard();
+            spell.addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, null);
+
+            assertThat(response.validGraveyardCardIds()).isEmpty();
         }
     }
 }

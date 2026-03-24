@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,9 +11,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -233,6 +242,28 @@ class AiTargetSelector {
                         ? GraveyardSearchScope.ALL_GRAVEYARDS
                         : GraveyardSearchScope.OPPONENT_GRAVEYARD;
                 candidates = getGraveyardCandidates(gameData, scope, aiPlayerId, opponentId);
+
+                // Apply card-type filters matching what GraveyardTargetValidators enforces
+                if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
+                    candidates = candidates.stream().filter(c -> c.hasType(CardType.CREATURE)).toList();
+                } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
+                    candidates = candidates.stream()
+                            .filter(c -> c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY)).toList();
+                } else if (effect instanceof ExileTargetCardFromGraveyardEffect e && e.requiredType() != null) {
+                    candidates = candidates.stream().filter(c -> c.hasType(e.requiredType())).toList();
+                } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
+                    candidates = candidates.stream()
+                            .filter(c -> e.cardTypes().stream().anyMatch(c::hasType)).toList();
+                } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
+                    candidates = candidates.stream()
+                            .filter(c -> gameQueryService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
+                } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
+                    candidates = candidates.stream()
+                            .filter(c -> c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE)).toList();
+                } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
+                    candidates = candidates.stream()
+                            .filter(c -> !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC))).toList();
+                }
             }
 
             if (!candidates.isEmpty()) {

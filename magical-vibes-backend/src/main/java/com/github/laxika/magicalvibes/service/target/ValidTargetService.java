@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -14,8 +15,15 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -481,6 +489,7 @@ public class ValidTargetService {
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+                        if (!matchesGraveyardEffectTypeFilter(effect, c, card.getId())) continue;
                         validIds.add(c.getId());
                     }
                 }
@@ -516,7 +525,7 @@ public class ValidTargetService {
                         : gameData.orderedPlayerIds.stream().filter(id -> !id.equals(controllerId)).toList();
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-                        if (!excludeIds.contains(c.getId())) {
+                        if (!excludeIds.contains(c.getId()) && matchesGraveyardEffectTypeFilter(effect, c, null)) {
                             validIds.add(c.getId());
                         }
                     }
@@ -525,6 +534,29 @@ public class ValidTargetService {
             }
         }
         return validIds;
+    }
+
+    /**
+     * Checks whether a graveyard card matches the type restriction imposed by the given effect.
+     * Mirrors the validation in {@link com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators}.
+     */
+    private boolean matchesGraveyardEffectTypeFilter(CardEffect effect, Card c, UUID sourceCardId) {
+        if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
+            return c.hasType(CardType.CREATURE);
+        } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
+            return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
+        } else if (effect instanceof ExileTargetCardFromGraveyardEffect e && e.requiredType() != null) {
+            return c.hasType(e.requiredType());
+        } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
+            return e.cardTypes().stream().anyMatch(c::hasType);
+        } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
+            return gameQueryService.matchesCardPredicate(c, e.filter(), sourceCardId);
+        } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
+            return c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE);
+        } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
+            return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
+        }
+        return true;
     }
 
     /**
