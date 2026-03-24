@@ -76,6 +76,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -250,10 +252,13 @@ public class DamageResolutionService {
         int baseDamage = effect.usesXValue() ? entry.getXValue() : effect.damage();
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage, entry);
 
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
         Predicate<Permanent> creatureFilter = effect.filter() == null
                 ? p -> gameQueryService.isCreature(gameData, p)
                 : p -> gameQueryService.isCreature(gameData, p)
-                        && gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter());
+                        && gameQueryService.matchesPermanentPredicate(p, effect.filter(), filterContext);
 
         damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter);
 
