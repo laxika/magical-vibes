@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -236,6 +237,24 @@ public class StepTriggerService {
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} matching permanents >= {})",
                                 gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
                     }
+                } else if (effect instanceof SurveilEffect) {
+                    // Surveil is part of a compound triggered ability (e.g. "surveil 1, then if...").
+                    // Group ALL upkeep effects into a single stack entry so they resolve sequentially.
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            activePlayerId,
+                            perm.getCard().getName() + "'s upkeep ability",
+                            new ArrayList<>(upkeepEffects),
+                            (UUID) null,
+                            perm.getId()
+                    ));
+
+                    String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} upkeep trigger pushed onto stack (surveil compound)",
+                            gameData.id, perm.getCard().getName());
+                    break; // All effects grouped into one entry
                 } else if (effect instanceof WinGameIfCreaturesInGraveyardEffect winEffect) {
                     // Intervening-if: only trigger if condition is met
                     List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);

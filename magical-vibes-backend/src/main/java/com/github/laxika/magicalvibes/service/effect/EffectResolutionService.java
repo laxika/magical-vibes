@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
@@ -249,6 +250,21 @@ public class EffectResolutionService {
             case ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck -> {
                 int lifeTotal = gameData.playerLifeTotals.getOrDefault(entry.getControllerId(), 20);
                 yield lifeTotal <= lifeCheck.lifeThreshold();
+            }
+            case ControllerGraveyardCardThresholdConditionalEffect graveCheck -> {
+                List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
+                int count = 0;
+                if (graveyard != null) {
+                    for (Card card : graveyard) {
+                        if (card.isToken()) continue;
+                        if (graveCheck.filter() == null
+                                || gameQueryService.matchesCardPredicate(card, graveCheck.filter(),
+                                        null, gameData, entry.getControllerId())) {
+                            count++;
+                        }
+                    }
+                }
+                yield count >= graveCheck.threshold();
             }
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());

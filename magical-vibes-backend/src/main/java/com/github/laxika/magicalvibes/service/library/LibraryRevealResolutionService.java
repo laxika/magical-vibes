@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTra
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
@@ -127,6 +128,44 @@ public class LibraryRevealResolutionService {
                 controllerId,
                 List.of(effect),
                 sourceName + " — Reveal " + topCard.getName() + "?",
+                null,
+                null,
+                entry.getSourcePermanentId()
+        ));
+    }
+
+    /**
+     * Surveil N — look at the top N cards of your library, then put any number into
+     * your graveyard and the rest back on top in any order.
+     *
+     * <p>For surveil 1 (the only currently supported count), this queues a may-ability
+     * asking "Put [card name] into your graveyard?" If accepted, the card goes to the
+     * graveyard; otherwise it stays on top. Used by Search for Azcanta.
+     */
+    @HandlesEffect(SurveilEffect.class)
+    void resolveSurveil(GameData gameData, StackEntry entry, SurveilEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty (" + sourceName + " surveil).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+
+        String logEntry = playerName + " surveils 1 (" + sourceName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} surveils 1, top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
+
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(),
+                controllerId,
+                List.of(effect),
+                sourceName + " — Put " + topCard.getName() + " into your graveyard?",
                 null,
                 null,
                 entry.getSourcePermanentId()

@@ -49,6 +49,10 @@ public class InputCompletionService {
             }
 
             if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
+                // resolveEffectsFrom may have queued new may-abilities — present the next one
+                if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+                    playerInputService.processNextMayAbility(gameData);
+                }
                 return;
             }
 

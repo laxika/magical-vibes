@@ -253,6 +253,27 @@ public class MayMiscHandlerService {
         }
     }
 
+    public void handleSurveilMayGraveyardChoice(GameData gameData, Player player, boolean accepted) {
+        UUID controllerId = player.getId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (accepted && !deck.isEmpty()) {
+            Card topCard = deck.removeFirst();
+            gameData.playerGraveyards.get(controllerId).add(topCard);
+            String logEntry = player.getUsername() + " puts " + topCard.getName()
+                    + " into their graveyard (surveil).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} puts {} into graveyard (surveil)",
+                    gameData.id, player.getUsername(), topCard.getName());
+        } else {
+            String logEntry = player.getUsername() + " leaves the card on top of their library (surveil).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} leaves card on top (surveil)", gameData.id, player.getUsername());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleExploreMayGraveyardChoice(GameData gameData, Player player, boolean accepted) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);

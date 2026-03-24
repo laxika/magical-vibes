@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
@@ -141,6 +142,14 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof RevealTopCardMayPlayFreeOrExileEffect);
         if (isPlayFromLibraryOrExile) {
             mayCastHandlerService.handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Surveil — may put top card into graveyard (e.g. Search for Azcanta)
+        boolean isSurveil = ability.effects().stream()
+                .anyMatch(e -> e instanceof SurveilEffect);
+        if (isSurveil) {
+            mayMiscHandlerService.handleSurveilMayGraveyardChoice(gameData, player, accepted);
             return;
         }
 
