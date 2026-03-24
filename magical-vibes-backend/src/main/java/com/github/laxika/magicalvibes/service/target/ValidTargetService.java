@@ -190,6 +190,17 @@ public class ValidTargetService {
     }
 
     /**
+     * Full permanent-target validation for a spell — the same logic used by
+     * {@link #computeValidTargetsForSpell} (and therefore the frontend UI).
+     * Includes protection/hexproof/shroud, the spell's TargetFilter, and the
+     * "any target = creature/planeswalker/player" restriction.
+     */
+    public boolean isValidSpellPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId) {
+        boolean isMultiTarget = card.getMaxTargets() > 1;
+        return isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, null);
+    }
+
+    /**
      * Checks whether a permanent can legally be targeted by a spell cast by the given controller.
      * Evaluates shroud, hexproof, CantBeTargetOfSpellsOrAbilities, protection from color,
      * protection from card types, cant-be-targeted-by-spell-color, and the spell's TargetFilter.

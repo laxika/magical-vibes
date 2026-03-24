@@ -138,8 +138,9 @@ class AiTargetSelector {
     }
 
     boolean isValidPermanentTarget(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {
-        // Use the same protection/hexproof/shroud/target-filter checks as the UI
-        if (!validTargetService.canPermanentBeTargetedBySpell(gameData, target, card, aiPlayerId)) {
+        // Use the same full validation as the frontend UI (protection, hexproof, shroud,
+        // target filter, and "any target" creature/planeswalker restriction)
+        if (!validTargetService.isValidSpellPermanentTarget(gameData, card, target, aiPlayerId)) {
             return false;
         }
         // Run the same @ValidatesTarget validators that spell casting uses

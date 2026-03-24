@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -135,5 +138,51 @@ class AiTargetSelectorTest {
 
         assertThat(targets).hasSize(1);
         assertThat(targets.getFirst().getCard().getName()).isEqualTo("Elite Vanguard");
+    }
+
+    // ===== "any target" spells: isValidPermanentTarget =====
+
+    @Test
+    @DisplayName("Rejects non-creature artifact for 'any target' damage spell")
+    void rejectsArtifactForAnyTargetSpell() {
+        // Elaborate Firecannon is a non-creature artifact — not a valid target for "any target" damage
+        Permanent artifact = harness.addToBattlefieldAndReturn(human, new ElaborateFirecannon());
+
+        WizardsLightning spell = new WizardsLightning();
+        assertThat(targetSelector.isValidPermanentTarget(gd, spell, artifact, aiPlayer.getId()))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("Rejects land for 'any target' damage spell")
+    void rejectsLandForAnyTargetSpell() {
+        Permanent land = harness.addToBattlefieldAndReturn(human, new Island());
+
+        WizardsLightning spell = new WizardsLightning();
+        assertThat(targetSelector.isValidPermanentTarget(gd, spell, land, aiPlayer.getId()))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("Accepts creature for 'any target' damage spell")
+    void acceptsCreatureForAnyTargetSpell() {
+        Permanent creature = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+        WizardsLightning spell = new WizardsLightning();
+        assertThat(targetSelector.isValidPermanentTarget(gd, spell, creature, aiPlayer.getId()))
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("chooseTarget picks creature, not non-creature permanent, for 'any target' spell")
+    void chooseTargetSkipsNonCreatureForAnyTargetSpell() {
+        // Opponent has a land and a creature — AI should only target the creature
+        harness.addToBattlefield(human, new Island());
+        Permanent bears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+        WizardsLightning spell = new WizardsLightning();
+        UUID targetId = targetSelector.chooseTarget(gd, spell, aiPlayer.getId());
+
+        assertThat(targetId).isEqualTo(bears.getId());
     }
 }
