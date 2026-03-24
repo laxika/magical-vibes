@@ -158,6 +158,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB may exile until leaves (O-ring) | `l/LeoninRelicWarder.java` | MayEffect(ExileTargetPermanentUntilSourceLeavesEffect) + PermanentPredicateTargetFilter(AnyOf(artifact, enchantment)). Exiled card returns when source leaves battlefield |
 | ETB may exile + return at end step (flicker) | `s/SentinelOfThePearlTrident.java` | MayEffect(ExileTargetPermanentAndReturnAtEndStepEffect) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, PermanentIsHistoricPredicate)). Flash creature that flickers own historic permanent |
 | ETB may rummage (discard then draw) | `k/KeldonRaider.java` | MayEffect(DiscardAndDrawCardEffect()) — may discard a card, if you do draw a card |
+| ETB draw + random discard + conditional counters | `r/RowdyCrew.java` | DrawAndRandomDiscardWithSharedTypeCountersEffect(3, 2, 2) — draw N, discard M at random, +1/+1 counters if discards share a card type |
 | ETB discard (targeted) | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB discard (raid conditional) | `d/DeadeyeTormentor.java` | RaidConditionalEffect(TargetPlayerDiscardsEffect(1)) + PlayerPredicateTargetFilter(OPPONENT). Raid = intervening-if checked at trigger and resolution time |
 | ETB discard (each opponent) | `l/LilianasSpecter.java` | EachOpponentDiscardsEffect — no targeting, all opponents discard |

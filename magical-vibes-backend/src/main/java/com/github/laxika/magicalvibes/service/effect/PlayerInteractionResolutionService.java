@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawAndRandomDiscardWithSharedTypeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageLootEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
@@ -740,6 +741,73 @@ public class PlayerInteractionResolutionService {
         gameData.discardCausedByOpponent = effect.causedByOpponent();
         UUID playerId = effect.causedByOpponent() ? entry.getTargetId() : entry.getControllerId();
         resolveRandomDiscardCards(gameData, playerId, entry.getCard().getName(), effect.amount());
+    }
+
+    @HandlesEffect(DrawAndRandomDiscardWithSharedTypeCountersEffect.class)
+    private void resolveDrawAndRandomDiscardWithSharedTypeCounters(GameData gameData, StackEntry entry,
+                                                                    DrawAndRandomDiscardWithSharedTypeCountersEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        // Step 1: Draw cards
+        applyDrawCards(gameData, controllerId, effect.drawAmount());
+
+        // Step 2: Discard cards at random, tracking what was discarded
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        List<Card> discardedCards = new ArrayList<>();
+        gameData.discardCausedByOpponent = false;
+
+        for (int i = 0; i < effect.discardAmount(); i++) {
+            if (hand == null || hand.isEmpty()) break;
+            int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
+            Card discarded = hand.remove(randomIndex);
+            discardedCards.add(discarded);
+            graveyardService.addCardToGraveyard(gameData, controllerId, discarded);
+            String logEntry = playerName + " discards " + discarded.getName() + " at random.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
+            triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
+        }
+
+        // Process any pending self-discard triggers
+        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        }
+
+        // Step 3: Check if discarded cards share at least one card type
+        if (discardedCards.size() >= 2 && sharesCardType(discardedCards)) {
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (sourcePermanentId != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
+                    source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.counterAmount());
+                    String logEntry = sourceName + " gets " + effect.counterAmount()
+                            + " +1/+1 counter" + (effect.counterAmount() != 1 ? "s" : "")
+                            + " (discarded cards share a card type).";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} gets {} +1/+1 counters (shared card type)", gameData.id, sourceName, effect.counterAmount());
+                }
+            }
+        } else if (discardedCards.size() >= 2) {
+            String logEntry = sourceName + "'s discarded cards do not share a card type — no counters.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} discarded cards do not share a card type", gameData.id, sourceName);
+        }
+    }
+
+    private boolean sharesCardType(List<Card> cards) {
+        if (cards.size() < 2) return false;
+        Card first = cards.get(0);
+        Card second = cards.get(1);
+        // Check if any card type of the first card matches any card type of the second card
+        if (first.getType() == second.getType()) return true;
+        if (first.getAdditionalTypes().contains(second.getType())) return true;
+        if (second.getAdditionalTypes().contains(first.getType())) return true;
+        for (CardType additionalType : first.getAdditionalTypes()) {
+            if (second.getAdditionalTypes().contains(additionalType)) return true;
+        }
+        return false;
     }
 
     @HandlesEffect(TargetPlayerRandomDiscardOrControllerDrawsEffect.class)
