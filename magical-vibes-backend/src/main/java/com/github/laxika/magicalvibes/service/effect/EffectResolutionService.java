@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEff
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.HasNontokenSubtypeAttackerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
@@ -241,6 +242,8 @@ public class EffectResolutionService {
                     isAttackingAlone(gameData, entry);
             case MinimumAttackersConditionalEffect mac ->
                     entry.getXValue() >= mac.minimumAttackers();
+            case HasNontokenSubtypeAttackerConditionalEffect hnsac ->
+                    hasNontokenSubtypeAttacker(gameData, entry, hnsac);
             case RaidConditionalEffect ignored ->
                     gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
             case ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck -> {
@@ -415,5 +418,16 @@ public class EffectResolutionService {
         if (battlefield == null) return false;
         long attackingCount = battlefield.stream().filter(Permanent::isAttacking).count();
         return attackingCount == 1;
+    }
+
+    private boolean hasNontokenSubtypeAttacker(GameData gameData, StackEntry entry,
+                                               HasNontokenSubtypeAttackerConditionalEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .filter(Permanent::isAttacking)
+                .filter(p -> !p.getCard().isToken())
+                .anyMatch(p -> GameQueryService.permanentHasSubtype(p, effect.requiredSubtype()));
     }
 }

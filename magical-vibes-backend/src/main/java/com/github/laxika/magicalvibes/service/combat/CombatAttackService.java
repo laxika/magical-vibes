@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.HasNontokenSubtypeAttackerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
@@ -365,26 +366,46 @@ public class CombatAttackService {
         // removed before resolution still count, tokens entering attacking after don't).
         for (Permanent perm : battlefield) {
             List<CardEffect> allyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK);
-            if (!allyAttackEffects.isEmpty()) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        playerId,
-                        perm.getCard().getName() + "'s attack trigger",
-                        new ArrayList<>(allyAttackEffects),
-                        attackerIndices.size(),
-                        null,
-                        perm.getId(),
-                        null,
-                        null,
-                        null,
-                        null
-                ));
-                String triggerLog = perm.getCard().getName() + "'s attack ability triggers.";
-                gameData.gameLog.add(triggerLog);
-                log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
-                        gameData.id, perm.getCard().getName(), attackerIndices.size());
+            if (allyAttackEffects.isEmpty()) continue;
+
+            // Pre-filter HasNontokenSubtypeAttackerConditionalEffect — skip if no
+            // nontoken creature of the required subtype is among the attackers.
+            List<CardEffect> filteredEffects = new ArrayList<>();
+            for (CardEffect effect : allyAttackEffects) {
+                if (effect instanceof HasNontokenSubtypeAttackerConditionalEffect hnsac) {
+                    boolean hasMatch = battlefield.stream()
+                            .filter(Permanent::isAttacking)
+                            .filter(p -> !p.getCard().isToken())
+                            .anyMatch(p -> GameQueryService.permanentHasSubtype(p, hnsac.requiredSubtype()));
+                    if (!hasMatch) {
+                        log.info("Game {} - {} attack trigger skipped (no nontoken {} among attackers)",
+                                gameData.id, perm.getCard().getName(),
+                                hnsac.requiredSubtype().name().toLowerCase());
+                        continue;
+                    }
+                }
+                filteredEffects.add(effect);
             }
+            if (filteredEffects.isEmpty()) continue;
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    playerId,
+                    perm.getCard().getName() + "'s attack trigger",
+                    filteredEffects,
+                    attackerIndices.size(),
+                    null,
+                    perm.getId(),
+                    null,
+                    null,
+                    null,
+                    null
+            ));
+            String triggerLog = perm.getCard().getName() + "'s attack ability triggers.";
+            gameData.gameLog.add(triggerLog);
+            log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
+                    gameData.id, perm.getCard().getName(), attackerIndices.size());
         }
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers
