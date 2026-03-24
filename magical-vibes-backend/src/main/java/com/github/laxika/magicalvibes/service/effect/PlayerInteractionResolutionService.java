@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToExileEffect;
@@ -1236,6 +1237,19 @@ public class PlayerInteractionResolutionService {
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);
+    }
+
+    @HandlesEffect(AwardAnyColorManaWithInstantSorceryCopyEffect.class)
+    private void resolveAwardAnyColorManaWithCopy(GameData gameData, StackEntry entry, AwardAnyColorManaWithInstantSorceryCopyEffect effect) {
+        ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(entry.getControllerId(), false, effect.amount());
+        gameData.interaction.beginColorChoice(entry.getControllerId(), null, null, choiceContext);
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        sessionManager.sendToPlayer(entry.getControllerId(), new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+        // Register delayed trigger: copy next instant/sorcery spell cast with this mana
+        gameData.pendingNextInstantSorceryCopyCount.merge(entry.getControllerId(), 1, Integer::sum);
+
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        log.info("Game {} - Awaiting {} to choose a mana color (with spell copy trigger)", gameData.id, playerName);
     }
 
     @HandlesEffect(AwardAnyColorManaEffect.class)

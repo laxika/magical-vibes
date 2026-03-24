@@ -130,6 +130,9 @@ public class TurnCleanupService {
                 manaPool.drainNonPersistent();
             }
         }
+
+        // Clear pending one-shot spell copy triggers (Primal Wellspring) since their mana drained
+        gameData.pendingNextInstantSorceryCopyCount.clear();
     }
 
     /**

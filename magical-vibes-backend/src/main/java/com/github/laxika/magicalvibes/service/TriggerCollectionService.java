@@ -157,6 +157,42 @@ public class TriggerCollectionService {
             }
         }
 
+        // Primal Wellspring delayed mana trigger: copy next instant/sorcery (one-shot)
+        Integer pendingCopies = gameData.pendingNextInstantSorceryCopyCount.get(castingPlayerId);
+        if (pendingCopies != null && pendingCopies > 0
+                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                StackEntry snapshot = new StackEntry(spellEntry);
+                CopyControllerCastSpellEffect copyEffect =
+                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        "Copy " + spellCard.getName() + " (Primal Wellspring)",
+                        new ArrayList<>(List.of(copyEffect))
+                ));
+                // Decrement — one-shot trigger
+                int remaining = pendingCopies - 1;
+                if (remaining <= 0) {
+                    gameData.pendingNextInstantSorceryCopyCount.remove(castingPlayerId);
+                } else {
+                    gameData.pendingNextInstantSorceryCopyCount.put(castingPlayerId, remaining);
+                }
+                String logMsg = spellCard.getName() + " is copied (Primal Wellspring).";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                log.info("Game {} - {} spell-copy trigger queued for {} (Primal Wellspring)",
+                        gameData.id, spellCard.getName(), castingPlayerId);
+            }
+        }
+
         // "Until end of turn, whenever you cast an instant or sorcery spell, copy it"
         // (e.g. The Mirari Conjecture chapter III)
         if (gameData.playersWithSpellCopyUntilEndOfTurn.contains(castingPlayerId)

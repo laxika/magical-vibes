@@ -264,6 +264,11 @@ public class GameData {
      *  (e.g. The Mirari Conjecture chapter III). Cleared at end of turn. */
     public final Set<UUID> playersWithSpellCopyUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Pending one-shot spell copy triggers from mana abilities (e.g. Primal Wellspring).
+     *  Each value tracks how many copies are pending for that player.
+     *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
+    public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
+
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -879,6 +884,9 @@ public class GameData {
 
         // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
         copy.playersWithSpellCopyUntilEndOfTurn.addAll(this.playersWithSpellCopyUntilEndOfTurn);
+
+        // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
+        copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;

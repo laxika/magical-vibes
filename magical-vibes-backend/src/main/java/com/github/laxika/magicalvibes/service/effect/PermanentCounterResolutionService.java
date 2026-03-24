@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersAndTransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
@@ -266,42 +268,83 @@ public class PermanentCounterResolutionService {
         };
 
         if (currentCount >= effect.threshold()) {
-            // Remove all counters of that type
-            switch (effect.counterType()) {
-                case CHARGE -> self.setChargeCounters(0);
-                case HATCHLING -> self.setHatchlingCounters(0);
-                case SLIME -> self.setSlimeCounters(0);
-                case STUDY -> self.setStudyCounters(0);
-                case WISH -> self.setWishCounters(0);
-                case PLUS_ONE_PLUS_ONE -> self.setPlusOnePlusOneCounters(0);
-                case MINUS_ONE_MINUS_ONE -> self.setMinusOneMinusOneCounters(0);
-                default -> throw new IllegalStateException("Unsupported counter type: " + effect.counterType());
-            }
-
-            String removeLog = "All " + counterName + " counters removed from " + self.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, removeLog);
-            log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
-
-            // Transform
-            Card originalCard = self.getOriginalCard();
-            if (!self.isTransformed()) {
-                Card backFace = originalCard.getBackFaceCard();
-                if (backFace != null) {
-                    String frontName = self.getCard().getName();
-                    self.setCard(backFace);
-                    self.setTransformed(true);
-                    String transformLog = frontName + " transforms into " + backFace.getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, transformLog);
-                    log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
-                }
+            if (effect.optional()) {
+                // "you may remove those counters and transform it" — put may ability on the stack
+                gameData.queueMayAbility(
+                        entry.getCard(),
+                        entry.getControllerId(),
+                        new MayEffect(
+                                new RemoveCountersAndTransformSelfEffect(effect.counterType()),
+                                "Remove counters and transform?"
+                        ),
+                        null,
+                        selfId
+                );
             } else {
-                String backName = self.getCard().getName();
-                self.setCard(originalCard);
-                self.setTransformed(false);
-                String transformLog = backName + " transforms into " + originalCard.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, transformLog);
-                log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+                removeCountersAndTransform(gameData, self, effect.counterType(), counterName);
             }
+        }
+    }
+
+    @HandlesEffect(RemoveCountersAndTransformSelfEffect.class)
+    private void resolveRemoveCountersAndTransformSelf(GameData gameData, StackEntry entry,
+                                                        RemoveCountersAndTransformSelfEffect effect) {
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
+        if (self == null) {
+            return;
+        }
+
+        String counterName = switch (effect.counterType()) {
+            case CHARGE -> "charge";
+            case HATCHLING -> "hatchling";
+            case SLIME -> "slime";
+            case STUDY -> "study";
+            case WISH -> "wish";
+            case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case MINUS_ONE_MINUS_ONE -> "-1/-1";
+            default -> throw new IllegalStateException("Unsupported counter type: " + effect.counterType());
+        };
+
+        removeCountersAndTransform(gameData, self, effect.counterType(), counterName);
+    }
+
+    private void removeCountersAndTransform(GameData gameData, Permanent self, CounterType counterType, String counterName) {
+        // Remove all counters of that type
+        switch (counterType) {
+            case CHARGE -> self.setChargeCounters(0);
+            case HATCHLING -> self.setHatchlingCounters(0);
+            case SLIME -> self.setSlimeCounters(0);
+            case STUDY -> self.setStudyCounters(0);
+            case WISH -> self.setWishCounters(0);
+            case PLUS_ONE_PLUS_ONE -> self.setPlusOnePlusOneCounters(0);
+            case MINUS_ONE_MINUS_ONE -> self.setMinusOneMinusOneCounters(0);
+            default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
+        }
+
+        String removeLog = "All " + counterName + " counters removed from " + self.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, removeLog);
+        log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
+
+        // Transform
+        Card originalCard = self.getOriginalCard();
+        if (!self.isTransformed()) {
+            Card backFace = originalCard.getBackFaceCard();
+            if (backFace != null) {
+                String frontName = self.getCard().getName();
+                self.setCard(backFace);
+                self.setTransformed(true);
+                String transformLog = frontName + " transforms into " + backFace.getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
+            }
+        } else {
+            String backName = self.getCard().getName();
+            self.setCard(originalCard);
+            self.setTransformed(false);
+            String transformLog = backName + " transforms into " + originalCard.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, transformLog);
+            log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
         }
     }
 

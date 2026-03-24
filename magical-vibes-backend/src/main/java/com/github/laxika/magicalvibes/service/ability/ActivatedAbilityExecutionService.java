@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanent
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
@@ -337,6 +338,14 @@ public class ActivatedAbilityExecutionService {
                     sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} creatures)", gameData.id, player.getUsername(), chosenSubtype);
                 }
+            } else if (effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect aacse) {
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aacse.amount());
+                gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+                // Register delayed trigger: copy next instant/sorcery spell cast with this mana
+                gameData.pendingNextInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
+                log.info("Game {} - Awaiting {} to choose a mana color (with spell copy trigger)", gameData.id, player.getUsername());
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
                 ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aace.amount());
                 gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
