@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "XLN", collectorNumber = "65")
 @CardRegistration(set = "DOM", collectorNumber = "60")
 public class Opt extends Card {
 
