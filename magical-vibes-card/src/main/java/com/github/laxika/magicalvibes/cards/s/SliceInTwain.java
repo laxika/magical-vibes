@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "127")
+@CardRegistration(set = "XLN", collectorNumber = "207")
 public class SliceInTwain extends Card {
 
     public SliceInTwain() {
