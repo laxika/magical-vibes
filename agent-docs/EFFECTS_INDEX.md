@@ -453,6 +453,7 @@ Pass `null` as filter to allow any card.
 | `DrawXCardsEffect` | `()` | controller draws X cards (reads X from stack entry xValue; non-targeting) |
 | `DrawXCardsForTargetPlayerEffect` | `()` | target player draws X cards (reads X from stack entry xValue; targets player) |
 | `DrawCardsEqualToChargeCountersOnSourceEffect` | `()` | draw cards equal to charge counters on source (reads snapshotted count from xValue) |
+| `DrawCardsEqualToControlledCreatureCountEffect` | `()` | draw cards equal to the number of creatures controller controls (counted at resolution time) |
 | `DrawAndLoseLifePerSubtypeEffect` | `(CardSubtype subtype)` | draw cards and lose life for each permanent of subtype you control |
 | `DrawAndDiscardCardEffect` | `(int drawAmount, int discardAmount)` | draw N then discard N cards (loot). Convenience ctor: `()` defaults to `(1, 1)`. Commonly wrapped in MayEffect for "you may draw a card. If you do, discard a card." |
 | `DrawAndRandomDiscardWithSharedTypeCountersEffect` | `(int drawAmount, int discardAmount, int counterAmount)` | draw N cards, then discard M at random. If the discarded cards share at least one card type, put counterAmount +1/+1 counters on the source permanent. Used by Rowdy Crew (draw 3, discard 2, 2 counters) |

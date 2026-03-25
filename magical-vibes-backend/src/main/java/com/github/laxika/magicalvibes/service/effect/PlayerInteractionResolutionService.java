@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndRandomDiscardWithShare
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageLootEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipTwoCoinsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawXCardsEffect;
@@ -348,6 +349,38 @@ public class PlayerInteractionResolutionService {
         String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " from " + entry.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} draws {} from {}", gameData.id, playerName, count, entry.getCard().getName());
+    }
+
+    @HandlesEffect(DrawCardsEqualToControlledCreatureCountEffect.class)
+    private void resolveDrawCardsEqualToControlledCreatureCount(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String cardName = entry.getCard().getName();
+
+        int count = 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm)) {
+                    count++;
+                }
+            }
+        }
+
+        if (count <= 0) {
+            String logEntry = playerName + " draws 0 cards from " + cardName + " (no creatures).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} draws 0 from {} (no creatures)", gameData.id, playerName, cardName);
+            return;
+        }
+
+        for (int i = 0; i < count; i++) {
+            drawService.resolveDrawCard(gameData, controllerId);
+        }
+
+        String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " from " + cardName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} draws {} from {}", gameData.id, playerName, count, cardName);
     }
 
     @HandlesEffect(DiscardCardEffect.class)
