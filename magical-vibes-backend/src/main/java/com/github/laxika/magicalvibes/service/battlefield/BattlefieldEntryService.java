@@ -520,6 +520,10 @@ public class BattlefieldEntryService {
                         if (e instanceof KickedConditionalEffect kce) {
                             return kicked ? kce.wrapped() : null;
                         }
+                        // "Gain life equal to that creature's toughness" — resolve toughness at trigger time
+                        if (e instanceof GainLifeEqualToToughnessEffect) {
+                            return new GainLifeEffect(card.getToughness());
+                        }
                         return e;
                     })
                     .filter(Objects::nonNull)
