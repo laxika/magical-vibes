@@ -802,7 +802,9 @@ public class TriggerCollectionService {
                             perm.getCard(),
                             controllerId,
                             perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect))
+                            new ArrayList<>(List.of(effect)),
+                            null,
+                            perm.getId()
                     ));
                 }
                 log.info("Game {} - {} explore trigger queued", gameData.id, perm.getCard().getName());
