@@ -10,7 +10,6 @@ public class SunCrownedHunters extends Card {
 
     public SunCrownedHunters() {
         // Enrage — Whenever this creature is dealt damage, it deals 3 damage to target opponent or planeswalker.
-        addEffect(EffectSlot.ON_DEALT_DAMAGE, new DealDamag
-                eToTargetOpponentOrPlaneswalkerEffect(3));
+        addEffect(EffectSlot.ON_DEALT_DAMAGE, new DealDamageToTargetOpponentOrPlaneswalkerEffect(3));
     }
 }
