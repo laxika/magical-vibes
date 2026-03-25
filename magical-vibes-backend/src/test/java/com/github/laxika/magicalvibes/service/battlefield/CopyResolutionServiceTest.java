@@ -46,6 +46,7 @@ class CopyResolutionServiceTest {
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private ValidTargetService validTargetService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private CloneService cloneService;
 
     @InjectMocks private CopyResolutionService service;
 

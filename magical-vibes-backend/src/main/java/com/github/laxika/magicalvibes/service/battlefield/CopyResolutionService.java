@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
@@ -32,6 +33,7 @@ public class CopyResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final ValidTargetService validTargetService;
     private final GameQueryService gameQueryService;
+    private final CloneService cloneService;
 
     @HandlesEffect(CopySpellEffect.class)
     void resolveCopySpell(GameData gameData, StackEntry entry) {
@@ -213,6 +215,40 @@ public class CopyResolutionService {
         ));
         log.info("Game {} - {} become-copy may choice queued for target {}",
                 gameData.id, entry.getCard().getName(), targetPerm.getCard().getName());
+    }
+
+    @HandlesEffect(BecomeCopyOfTargetCreatureUntilEndOfTurnEffect.class)
+    void resolveBecomeCopyOfTargetCreatureUntilEndOfTurn(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) return;
+
+        Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
+        if (targetPerm == null) {
+            log.info("Game {} - Become-copy-until-end-of-turn target no longer exists", gameData.id);
+            return;
+        }
+
+        // Find the source permanent
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent == null) {
+            log.info("Game {} - Become-copy-until-end-of-turn source no longer on battlefield", gameData.id);
+            return;
+        }
+
+        // Save the current card for end-of-turn revert (only if not already a temporary copy this turn)
+        if (!sourcePermanent.isCopyUntilEndOfTurn()) {
+            sourcePermanent.setPreCopyCard(sourcePermanent.getCard());
+        }
+
+        String originalName = sourcePermanent.getCard().getName();
+        cloneService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
+        sourcePermanent.setCopyUntilEndOfTurn(true);
+
+        String targetName = targetPerm.getCard().getName();
+        String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} becomes a copy of {} until end of turn", gameData.id, originalName, targetName);
     }
 
     private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetId) {

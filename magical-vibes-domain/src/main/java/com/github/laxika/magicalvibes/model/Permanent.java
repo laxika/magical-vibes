@@ -144,6 +144,13 @@ public class Permanent {
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
+    /** When true, this permanent is a temporary copy (until end of turn) of another creature.
+     *  At the cleanup step, the card reverts to {@link #preCopyCard}.
+     *  Used by Tilonalli's Skinshifter and similar shapeshifters. */
+    @Setter private boolean copyUntilEndOfTurn;
+    /** The card to revert to when the temporary copy effect ends.
+     *  Only non-null when {@link #copyUntilEndOfTurn} is true. */
+    @Setter private Card preCopyCard;
     /** Activated abilities granted until the controller's next turn begins
      *  (e.g. Song of Freyalise "{T}: Add one mana of any color.").
      *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
@@ -261,6 +268,8 @@ public class Permanent {
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.kicked = source.kicked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
+        this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
+        this.preCopyCard = source.preCopyCard;
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
         this.animatedUntilNextTurn = source.animatedUntilNextTurn;
         this.untilNextTurnAnimatedPower = source.untilNextTurnAnimatedPower;
@@ -452,6 +461,11 @@ public class Permanent {
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.temporaryActivatedAbilities.clear();
+        if (this.copyUntilEndOfTurn && this.preCopyCard != null) {
+            this.card = this.preCopyCard;
+            this.copyUntilEndOfTurn = false;
+            this.preCopyCard = null;
+        }
     }
 
     /**

@@ -274,7 +274,7 @@ public class GameTestHarness {
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlResolutionService),
                 exileResolutionService,
-                new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService),
+                new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService, cloneService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 graveyardReturnResolutionService,
                 new ExileReturnResolutionService(gameQueryService, gameBroadcastService),
