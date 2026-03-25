@@ -68,7 +68,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Choose both Dinosaur creatures
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(dino1.getId(), dino2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(dino1.getId(), dino2.getId()));
 
         // Both Dinosaurs should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -98,7 +98,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Choose nothing
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         // No new creatures on battlefield (only Gishath itself)
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -125,7 +125,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         // Bears should not be selectable
         assertThatThrownBy(() ->
-                harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId())))
+                harness.handleMultipleCardsChosen(player1, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -179,7 +179,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(dino.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(dino.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Colossal Dreadmaw"));
@@ -241,7 +241,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose only dino1
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(dino1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(dino1.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Colossal Dreadmaw"));

@@ -103,7 +103,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Select all matching cards to exile
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
         // Both Grizzly Bears should be exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -133,7 +133,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears1.getId());
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
@@ -158,7 +158,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears1.getId());
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears"))
@@ -186,7 +186,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears1.getId());
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId(), bears3.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId(), bears3.getId()));
 
         // All 3 copies should be exiled
         long exiledCount = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -223,7 +223,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only the targeted card is in the graveyard — select it
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // Bears exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -260,7 +260,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only select the one from graveyard — leave hand and library copies
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId()));
 
         // Only 1 card exiled
         long exiledCount = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -302,7 +302,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Select zero cards
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         // No cards exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -333,7 +333,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // Bears exiled from player1's graveyard
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -371,7 +371,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -393,7 +393,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // Log should mention shuffle
         assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
@@ -415,7 +415,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears1.getId());
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 2 cards"));
     }

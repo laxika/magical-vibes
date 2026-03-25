@@ -69,7 +69,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent selects no cards to deny
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
@@ -97,7 +97,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent denies Grizzly Bears
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(card1.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(card1.getId()));
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"))
@@ -125,7 +125,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent denies all three cards
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(card1.getId(), card2.getId(), card3.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(card1.getId(), card2.getId(), card3.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
@@ -178,7 +178,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         // Choice is presented (opponent has exactly 3 life, can pay for one)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(card1.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(card1.getId()));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -207,7 +207,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
 
         // Opponent tries to deny two cards (would cost 6 life but only has 5)
         assertThatThrownBy(() ->
-                harness.handleMultipleGraveyardCardsChosen(player2, List.of(card1.getId(), card2.getId())))
+                harness.handleMultipleCardsChosen(player2, List.of(card1.getId(), card2.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -246,7 +246,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Opponent denies none
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -268,7 +268,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent makes choice
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sword-Point Diplomacy"));

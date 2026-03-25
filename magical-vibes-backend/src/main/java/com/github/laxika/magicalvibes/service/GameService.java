@@ -478,7 +478,7 @@ public class GameService {
         }
     }
 
-    public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
+    public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
@@ -490,7 +490,7 @@ public class GameService {
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
                 exileResolutionService.handleMirrorOfFateChoice(gameData, player, cardIds);
             } else {
-                graveyardChoiceHandlerService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);
+                graveyardChoiceHandlerService.handleMultipleCardsChosen(gameData, player, cardIds);
             }
         }
     }

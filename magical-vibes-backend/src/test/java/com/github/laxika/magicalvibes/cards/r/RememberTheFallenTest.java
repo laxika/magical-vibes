@@ -48,7 +48,7 @@ class RememberTheFallenTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -100,7 +100,7 @@ class RememberTheFallenTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1);
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -153,7 +153,7 @@ class RememberTheFallenTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 2);
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -193,7 +193,7 @@ class RememberTheFallenTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))

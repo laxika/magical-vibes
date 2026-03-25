@@ -256,7 +256,7 @@ public class GraveyardChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    public void handleMultipleGraveyardCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
+    public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_GRAVEYARD_CHOICE)) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }

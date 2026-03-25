@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequ
 import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
@@ -494,14 +494,14 @@ class AiChoiceHandler {
 
     // ===== Multi-Graveyard Choice =====
 
-    void handleMultiGraveyardChoice(GameData gameData) {
+    void handleMultiCardChoice(GameData gameData) {
         // Knowledge Pool cast choice
         if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
             InteractionContext.KnowledgePoolCastChoice kpc = gameData.interaction.knowledgePoolCastChoiceContext();
             if (kpc != null && aiPlayerId.equals(kpc.playerId())) {
                 List<UUID> chosen = kpc.validCardIds().stream().limit(1).toList();
                 log.info("AI: Choosing card from Knowledge Pool in game {}", gameId);
-                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -512,7 +512,7 @@ class AiChoiceHandler {
             if (mfc != null && aiPlayerId.equals(mfc.playerId())) {
                 List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
                 log.info("AI: Choosing {} exiled cards for Mirror of Fate in game {}", chosen.size(), gameId);
-                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -523,7 +523,7 @@ class AiChoiceHandler {
             if (mzec != null && aiPlayerId.equals(mzec.playerId())) {
                 List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
                 log.info("AI: Exiling {} cards named \"{}\" in game {}", chosen.size(), mzec.cardName(), gameId);
-                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -543,7 +543,7 @@ class AiChoiceHandler {
                     chosen = new ArrayList<>(lrc.validCardIds());
                     log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), gameId);
                 }
-                send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -567,7 +567,7 @@ class AiChoiceHandler {
         List<UUID> chosen = validIds.stream().limit(maxCount).toList();
 
         log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), gameId);
-        send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
+        send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
     }
 
     // ===== Hand Top/Bottom Choice =====

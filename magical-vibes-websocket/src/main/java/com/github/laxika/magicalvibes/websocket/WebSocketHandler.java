@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
@@ -116,7 +116,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case GRAVEYARD_CARD_CHOSEN -> messageHandler.handleGraveyardCardChosen(connection, objectMapper.treeToValue(jsonNode, GraveyardCardChosenRequest.class));
                 case PERMANENT_CHOSEN -> messageHandler.handlePermanentChosen(connection, objectMapper.treeToValue(jsonNode, PermanentChosenRequest.class));
                 case MULTIPLE_PERMANENTS_CHOSEN -> messageHandler.handleMultiplePermanentsChosen(connection, objectMapper.treeToValue(jsonNode, MultiplePermanentsChosenRequest.class));
-                case MULTIPLE_GRAVEYARD_CARDS_CHOSEN -> messageHandler.handleMultipleGraveyardCardsChosen(connection, objectMapper.treeToValue(jsonNode, MultipleGraveyardCardsChosenRequest.class));
+                case MULTIPLE_CARDS_CHOSEN -> messageHandler.handleMultipleCardsChosen(connection, objectMapper.treeToValue(jsonNode, MultipleCardsChosenRequest.class));
                 case CHOSEN_FROM_LIST -> messageHandler.handleListChoice(connection, objectMapper.treeToValue(jsonNode, ChosenFromListRequest.class));
                 case MAY_ABILITY_CHOSEN -> messageHandler.handleMayAbilityChosen(connection, objectMapper.treeToValue(jsonNode, MayAbilityChosenRequest.class));
                 case SCRY_COMPLETED -> messageHandler.handleScryCompleted(connection, objectMapper.treeToValue(jsonNode, ScryCompletedRequest.class));

@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMe
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
@@ -355,7 +355,7 @@ public class ReconnectionService {
                         }
                     }
                 }
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
                         validCardIds, cardViews, mgc.maxCount(),
                         "Exile up to " + mgc.maxCount() + " cards from graveyards."));
             }
@@ -391,7 +391,7 @@ public class ReconnectionService {
                         .map(cardViewFactory::create)
                         .toList();
                 List<UUID> cardIds = new ArrayList<>(lrc.validCardIds());
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
                         cardIds, cardViews, cardIds.size(),
                         "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."
                 ));
@@ -440,7 +440,7 @@ public class ReconnectionService {
                         cardViews.add(cardViewFactory.create(card));
                     }
                 }
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
                         validCardIds, cardViews, mzec.maxCount(),
                         "Choose any number of cards named \"" + mzec.cardName() + "\" to exile."));
             }
@@ -488,7 +488,7 @@ public class ReconnectionService {
                         }
                     }
                 }
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
                         validCardIds, cardViews, 1,
                         "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
             }
@@ -502,7 +502,7 @@ public class ReconnectionService {
                         .filter(c -> mfc.validCardIds().contains(c.getId()))
                         .map(cardViewFactory::create)
                         .toList();
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsFromGraveyardsMessage(
+                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
                         validCardIds, cardViews, mfc.maxCount(),
                         "Choose up to seven face-up exiled cards you own to put on top of your library."));
             }

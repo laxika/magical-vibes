@@ -709,21 +709,21 @@ public class GameSimulator {
                 var mgc = gd.interaction.multiGraveyardChoiceContext();
                 if (mgc != null && mgc.validCardIds() != null && !mgc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mgc.validCardIds().stream().limit(mgc.maxCount()).toList();
-                    gameService.handleMultipleGraveyardCardsChosen(gd, player, chosen);
+                    gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
             case MULTI_ZONE_EXILE_CHOICE -> {
                 var mzec = gd.interaction.multiZoneExileChoiceContext();
                 if (mzec != null && mzec.validCardIds() != null && !mzec.validCardIds().isEmpty()) {
                     List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
-                    gameService.handleMultipleGraveyardCardsChosen(gd, player, chosen);
+                    gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
             case MIRROR_OF_FATE_CHOICE -> {
                 var mfc = gd.interaction.mirrorOfFateChoiceContext();
                 if (mfc != null && mfc.validCardIds() != null && !mfc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
-                    gameService.handleMultipleGraveyardCardsChosen(gd, player, chosen);
+                    gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
@@ -767,10 +767,10 @@ public class GameSimulator {
                 if (lrc != null && lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
                     if (lrc.lifeCostPerSelection() > 0) {
                         // Punisher reveal (e.g. Sword-Point Diplomacy): deny nothing (don't pay life)
-                        gameService.handleMultipleGraveyardCardsChosen(gd, player, List.of());
+                        gameService.handleMultipleCardsChosen(gd, player, List.of());
                     } else {
                         // Normal library reveal: choose all valid cards
-                        gameService.handleMultipleGraveyardCardsChosen(gd, player, new ArrayList<>(lrc.validCardIds()));
+                        gameService.handleMultipleCardsChosen(gd, player, new ArrayList<>(lrc.validCardIds()));
                     }
                 }
             }

@@ -68,7 +68,7 @@ class GenesisWaveTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Select all three cards (creature MV 2, land MV 0, artifact MV 1 — all <= 3)
-        harness.handleMultipleGraveyardCardsChosen(player1,
+        harness.handleMultipleCardsChosen(player1,
                 List.of(bears.getId(), forest.getId(), spellbomb.getId()));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -94,7 +94,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only bears should be selectable; select it
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Blaze (sorcery) should be in graveyard
@@ -120,7 +120,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Forest and Bears are eligible, Demon (MV 6) is not
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(forest.getId(), bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), bears.getId()));
 
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -145,7 +145,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only select bears, not forest
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         // Forest was not selected — goes to graveyard
@@ -170,7 +170,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Select nothing
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Forest");
@@ -216,7 +216,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 6);
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(demon.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(demon.getId()));
 
         // Resolve ETB triggered ability (PutCountersOnSourceEffect)
         harness.passBothPriorities();
@@ -249,7 +249,7 @@ class GenesisWaveTest extends BaseCardTest {
         // Should reveal the 1 card and prompt
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

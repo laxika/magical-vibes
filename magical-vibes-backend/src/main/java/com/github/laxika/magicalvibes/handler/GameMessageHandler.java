@@ -31,7 +31,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
@@ -631,7 +631,7 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
-    public void handleMultipleGraveyardCardsChosen(Connection connection, MultipleGraveyardCardsChosenRequest request) throws Exception {
+    public void handleMultipleCardsChosen(Connection connection, MultipleCardsChosenRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
@@ -645,7 +645,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.handleMultipleGraveyardCardsChosen(gameData, player, request.cardIds());
+            gameService.handleMultipleCardsChosen(gameData, player, request.cardIds());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

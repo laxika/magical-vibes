@@ -817,8 +817,8 @@ public class GameTestHarness {
         gameService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
     }
 
-    public void handleMultipleGraveyardCardsChosen(Player player, List<UUID> cardIds) {
-        gameService.handleMultipleGraveyardCardsChosen(gameData, player, cardIds);
+    public void handleMultipleCardsChosen(Player player, List<UUID> cardIds) {
+        gameService.handleMultipleCardsChosen(gameData, player, cardIds);
     }
 
     public UUID getPermanentId(Player player, String cardName) {

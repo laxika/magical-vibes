@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilit
 import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleGraveyardCardsChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
@@ -75,7 +75,7 @@ public interface MessageHandler {
 
     void handleMultiplePermanentsChosen(Connection connection, MultiplePermanentsChosenRequest request) throws Exception;
 
-    void handleMultipleGraveyardCardsChosen(Connection connection, MultipleGraveyardCardsChosenRequest request) throws Exception;
+    void handleMultipleCardsChosen(Connection connection, MultipleCardsChosenRequest request) throws Exception;
 
     void handleListChoice(Connection connection, ChosenFromListRequest request) throws Exception;
 

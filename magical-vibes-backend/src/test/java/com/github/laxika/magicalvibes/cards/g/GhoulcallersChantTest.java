@@ -48,7 +48,7 @@ class GhoulcallersChantTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Llanowar Elves");
@@ -101,7 +101,7 @@ class GhoulcallersChantTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1);
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Diregraf Ghoul");
@@ -151,7 +151,7 @@ class GhoulcallersChantTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ghoulcaller's Chant");

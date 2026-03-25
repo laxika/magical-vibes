@@ -207,7 +207,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Select the Counsel of the Soratami from graveyard
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(counsel.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
         harness.passBothPriorities(); // resolve ETB trigger → queues may-cast
 
         // Accept the may-cast
@@ -240,7 +240,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Select Shock from opponent's graveyard
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities(); // resolve ETB trigger → queues may-cast
 
         // Accept the may-cast
@@ -271,7 +271,7 @@ class ChancellorOfTheSpiresTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities(); // resolve ETB trigger → queues may-cast
 
         // Decline the may-cast
@@ -327,7 +327,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Select Shock
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
 
         // Remove Shock from graveyard before ETB trigger resolves
         gd.playerGraveyards.get(player2.getId()).clear();

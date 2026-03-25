@@ -95,7 +95,7 @@ class GaeasBlessingTest extends BaseCardTest {
 
         // Select both cards
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         // Resolve
         harness.passBothPriorities();
@@ -128,7 +128,7 @@ class GaeasBlessingTest extends BaseCardTest {
 
         // Select both cards
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
 

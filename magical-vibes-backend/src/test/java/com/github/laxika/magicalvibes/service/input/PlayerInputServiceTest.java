@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyard
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
@@ -377,7 +377,7 @@ class PlayerInputServiceTest {
         }
 
         @Test
-        @DisplayName("Sends ChooseMultipleCardsFromGraveyardsMessage")
+        @DisplayName("Sends ChooseMultipleCardsMessage")
         void sendsMessage() {
             UUID cardId = UUID.randomUUID();
             CardView cardView = mock(CardView.class);
@@ -385,7 +385,7 @@ class PlayerInputServiceTest {
             svc.beginMultiGraveyardChoice(gd, PLAYER1_ID, List.of(cardId), List.of(cardView), 5, "Choose");
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsFromGraveyardsMessage msg = (ChooseMultipleCardsFromGraveyardsMessage) messageCaptor.getValue();
+            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
             assertThat(msg.cardIds()).containsExactly(cardId);
             assertThat(msg.maxCount()).isEqualTo(5);
         }
@@ -827,7 +827,7 @@ class PlayerInputServiceTest {
             svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card1, card2), PLAYER2_ID, "Bear");
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsFromGraveyardsMessage msg = (ChooseMultipleCardsFromGraveyardsMessage) messageCaptor.getValue();
+            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
             assertThat(msg.maxCount()).isEqualTo(2);
             assertThat(msg.cards()).containsExactly(view1, view2);
             assertThat(msg.prompt()).contains("Bear");
@@ -1027,7 +1027,7 @@ class PlayerInputServiceTest {
             svc.sendKnowledgePoolCastChoice(gd, PLAYER1_ID, List.of(cardId), List.of(cardView));
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsFromGraveyardsMessage msg = (ChooseMultipleCardsFromGraveyardsMessage) messageCaptor.getValue();
+            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
             assertThat(msg.maxCount()).isEqualTo(1);
             assertThat(msg.prompt()).contains("Knowledge Pool");
         }
@@ -1050,7 +1050,7 @@ class PlayerInputServiceTest {
             svc.sendMirrorOfFateChoice(gd, PLAYER1_ID, List.of(cardId), List.of(cardView), 7);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsFromGraveyardsMessage msg = (ChooseMultipleCardsFromGraveyardsMessage) messageCaptor.getValue();
+            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
             assertThat(msg.maxCount()).isEqualTo(7);
             assertThat(msg.prompt()).contains("seven");
         }

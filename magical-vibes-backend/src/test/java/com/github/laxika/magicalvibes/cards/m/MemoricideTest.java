@@ -113,7 +113,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
 
         // Select all matching cards to exile
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId()));
 
         // Grizzly Bears should be exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -142,7 +142,7 @@ class MemoricideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "Grizzly Bears");
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -165,7 +165,7 @@ class MemoricideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "Grizzly Bears");
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -193,7 +193,7 @@ class MemoricideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "Grizzly Bears");
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId(), bears3.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId(), bears3.getId()));
 
         // All 3 copies should be exiled
         long exiledCount = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -270,7 +270,7 @@ class MemoricideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "Grizzly Bears");
-        harness.handleMultipleGraveyardCardsChosen(player1, bearsIds);
+        harness.handleMultipleCardsChosen(player1, bearsIds);
 
         // All Grizzly Bears exiled, only Peek should remain
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -303,7 +303,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
 
         // Only select the one from hand — leave graveyard and library copies
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId()));
 
         // Only 1 card exiled
         long exiledCount = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -347,7 +347,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
 
         // Select zero cards
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         // No cards exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -379,7 +379,7 @@ class MemoricideTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
 
         harness.handleListChoice(player1, "Grizzly Bears");
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // Grizzly Bears exiled from player1's hand
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -438,7 +438,7 @@ class MemoricideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "Grizzly Bears");
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 1 card"));
     }

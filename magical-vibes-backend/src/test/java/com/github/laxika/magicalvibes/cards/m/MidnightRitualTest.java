@@ -96,7 +96,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0, 2);
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
         // Spell is now on the stack
         assertThat(gd.stack).hasSize(1);
@@ -125,7 +125,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0, 2);
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
         harness.passBothPriorities(); // resolve the spell
 
         // Both creatures exiled from graveyard; only Midnight Ritual remains (sorcery goes to graveyard)
@@ -158,7 +158,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4); // X=1
 
         harness.castSorcery(player1, 0, 1);
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
@@ -279,7 +279,7 @@ class MidnightRitualTest extends BaseCardTest {
         List<UUID> allIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
         assertThat(allIds).hasSize(3);
 
-        harness.handleMultipleGraveyardCardsChosen(player1, allIds);
+        harness.handleMultipleCardsChosen(player1, allIds);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -304,7 +304,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0, 2);
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
         // Remove one target from graveyard before resolution (simulating opponent interaction)
         gd.playerGraveyards.get(player1.getId()).removeIf(c -> c.getId().equals(bears1.getId()));
@@ -331,7 +331,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castSorcery(player1, 0, 2);
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
         // Remove all targets from graveyard before resolution
         gd.playerGraveyards.get(player1.getId()).clear();
@@ -358,7 +358,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
 
         // Try to select 3 cards when max is 2
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player1,
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
                 List.of(bears1.getId(), bears2.getId(), bears3.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Too many");
@@ -375,7 +375,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1);
 
         UUID fakeId = UUID.randomUUID();
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player1, List.of(fakeId)))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(fakeId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card");
     }
@@ -392,7 +392,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
 
         // Try to select the same card twice
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player1,
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
                 List.of(bears1.getId(), bears1.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Duplicate");
@@ -408,7 +408,7 @@ class MidnightRitualTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1);
 
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player2, List.of(bears.getId())))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn");
     }
@@ -427,7 +427,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
 
         // Choosing only 1 card when X=2 is not allowed — card says "X target" not "up to X target"
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears1.getId())))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(bears1.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must choose exactly 2 targets");
     }
@@ -464,7 +464,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castSorcery(player1, 0, 1);
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         // Midnight Ritual should be in the graveyard

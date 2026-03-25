@@ -105,7 +105,7 @@ class RooftopPercherTest extends BaseCardTest {
                 + gd.playerGraveyards.get(player2.getId()).size();
 
         // Select targets → ability goes on stack
-        harness.handleMultipleGraveyardCardsChosen(player1, chosenIds);
+        harness.handleMultipleCardsChosen(player1, chosenIds);
         harness.passBothPriorities(); // resolve ETB → exile + life gain
 
         // Total graveyard cards reduced by 2
@@ -147,7 +147,7 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).containsAll(p2GraveyardIds);
 
         // Exile both → ability goes on stack
-        harness.handleMultipleGraveyardCardsChosen(player1, p2GraveyardIds);
+        harness.handleMultipleCardsChosen(player1, p2GraveyardIds);
         harness.passBothPriorities(); // resolve ETB → exile + life gain
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -168,7 +168,7 @@ class RooftopPercherTest extends BaseCardTest {
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
 
         // Choose only one card → ability goes on stack
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(validIds.getFirst()));
+        harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
         harness.passBothPriorities(); // resolve ETB → exile + life gain
 
         int totalExiled = gd.getPlayerExiledCards(player1.getId()).size()
@@ -191,7 +191,7 @@ class RooftopPercherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → target prompt
 
         // Choose 0 targets (allowed by "up to") → ability goes on stack with no targets
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities(); // resolve ETB → life gain only
 
         // No cards exiled
@@ -295,7 +295,7 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(allIds).hasSize(3);
 
         // Try to select all 3 (max is 2)
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player1, allIds))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, allIds))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Too many");
     }
@@ -311,7 +311,7 @@ class RooftopPercherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → target prompt
 
         UUID fakeId = UUID.randomUUID();
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player1, List.of(fakeId)))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(fakeId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card");
     }
@@ -328,7 +328,7 @@ class RooftopPercherTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
 
-        assertThatThrownBy(() -> harness.handleMultipleGraveyardCardsChosen(player2, List.of()))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn");
     }

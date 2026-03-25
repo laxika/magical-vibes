@@ -72,7 +72,7 @@ class SoulSalvageTest extends BaseCardTest {
 
         // Select both creatures
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -111,7 +111,7 @@ class SoulSalvageTest extends BaseCardTest {
 
         // Select only one creature
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(validIds.getFirst()));
+        harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
 
@@ -133,7 +133,7 @@ class SoulSalvageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select zero targets
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.passBothPriorities();
 

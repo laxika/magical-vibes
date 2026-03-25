@@ -720,7 +720,7 @@ public class SpellCastingService {
                     battlefieldEntryService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
                             entryType, pileSeparationEffect.filter(),
                             pileSeparationEffect.maxTargets(), filteredSpellEffects);
-                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                    return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards in any graveyard — put spell on stack with 0 targets
                 gameData.stack.add(new StackEntry(
@@ -741,7 +741,7 @@ public class SpellCastingService {
                     battlefieldEntryService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
                             targetGraveyardOwner, card, entryType, shuffleGraveyardCardsEffect.filter(),
                             shuffleGraveyardCardsEffect.maxTargets(), filteredSpellEffects);
-                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                    return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards in target player's graveyard — put spell on stack with 0 targets
                 gameData.stack.add(new StackEntry(
@@ -757,7 +757,7 @@ public class SpellCastingService {
                     battlefieldEntryService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardToHandEffect.filter(),
                             graveyardToHandEffect.maxTargets(), filteredSpellEffects);
-                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                    return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards — put spell on stack with 0 targets (fizzles on resolution)
                 gameData.stack.add(new StackEntry(
@@ -772,7 +772,7 @@ public class SpellCastingService {
                 if (matchingCount > 0) {
                     battlefieldEntryService.handleAnyNumberGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardToTopEffect.filter());
-                    return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                    return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards — put spell on stack with 0 targets (still draws, etc.)
                 gameData.stack.add(new StackEntry(
@@ -1334,7 +1334,7 @@ public class SpellCastingService {
                         targetGraveyardOwner, card, entryType, shuffleGraveyardCardsEffect.filter(),
                         shuffleGraveyardCardsEffect.maxTargets(), spellEffects);
                 gameData.graveyardTargetOperation.flashback = true;
-                return; // finishSpellCast handled in handleMultipleGraveyardCardsChosen
+                return; // finishSpellCast handled in handleMultipleCardsChosen
             }
             // No matching cards — put on stack with 0 targets
             StackEntry stackEntry = new StackEntry(

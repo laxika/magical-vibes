@@ -117,7 +117,7 @@ class DarkBargainTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose card0 and card1 for hand
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId(), card1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
 
         // Hand should contain the two chosen cards
         assertThat(gd.playerHands.get(player1.getId())).contains(card0, card1);
@@ -146,7 +146,7 @@ class DarkBargainTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose card1 and card2 for hand
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card1.getId(), card2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card1.getId(), card2.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(card1, card2);
         List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
@@ -169,7 +169,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId(), card1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
     }
@@ -190,7 +190,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId(), card1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -219,7 +219,7 @@ class DarkBargainTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
 
         // Make the choice, which resumes effect resolution including the damage
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId(), card1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
     }
@@ -328,7 +328,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId(), card1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
 
         assertThat(gd.gameLog).anyMatch(log ->
                 log.contains("puts 2 cards into their hand") && log.contains("graveyard"));

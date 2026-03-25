@@ -70,7 +70,7 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         // Choose the creature from graveyard
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // Triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY

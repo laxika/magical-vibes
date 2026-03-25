@@ -77,7 +77,7 @@ class FranticSalvageTest extends BaseCardTest {
 
         // Select both artifacts
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -112,7 +112,7 @@ class FranticSalvageTest extends BaseCardTest {
 
         // Select only one artifact
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(validIds.getFirst()));
+        harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
 
@@ -139,7 +139,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         // Select zero targets
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -238,7 +238,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
 

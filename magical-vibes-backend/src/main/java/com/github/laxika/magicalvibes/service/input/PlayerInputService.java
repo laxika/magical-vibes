@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyard
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
@@ -108,7 +108,7 @@ public class PlayerInputService {
 
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
         gameData.interaction.beginMultiGraveyardChoice(playerId, new HashSet<>(validCardIds), maxCount);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount, prompt));
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultipleCardsMessage(validCardIds, cardViews, maxCount, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
@@ -298,7 +298,7 @@ public class PlayerInputService {
         int maxCount = matchingCards.size();
 
         gameData.interaction.beginMultiZoneExileChoice(choosingPlayerId, new HashSet<>(validCardIds), maxCount, targetPlayerId, choosingPlayerId, cardName);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseMultipleCardsFromGraveyardsMessage(
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseMultipleCardsMessage(
                 validCardIds, cardViews, maxCount,
                 "Choose any number of cards named \"" + cardName + "\" to exile."));
 
@@ -363,7 +363,7 @@ public class PlayerInputService {
 
     public void sendKnowledgePoolCastChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews) {
         sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
-                new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, 1,
+                new ChooseMultipleCardsMessage(validCardIds, cardViews, 1,
                         "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -372,7 +372,7 @@ public class PlayerInputService {
 
     public void sendMirrorOfFateChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount) {
         sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
-                new ChooseMultipleCardsFromGraveyardsMessage(validCardIds, cardViews, maxCount,
+                new ChooseMultipleCardsMessage(validCardIds, cardViews, maxCount,
                         "Choose up to seven face-up exiled cards you own to put on top of your library."));
 
         String playerName = gameData.playerIdToName.get(playerId);

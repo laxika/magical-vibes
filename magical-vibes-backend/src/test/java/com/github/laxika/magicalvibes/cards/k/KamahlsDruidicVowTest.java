@@ -112,7 +112,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Choose the forest
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(forest.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Forest"));
@@ -130,7 +130,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Choose Arvad
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(arvad.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(arvad.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Arvad the Cursed"));
@@ -150,7 +150,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         // Only forest should be selectable, not Arvad
         assertThatThrownBy(() ->
-                harness.handleMultipleGraveyardCardsChosen(player1, List.of(arvad.getId())))
+                harness.handleMultipleCardsChosen(player1, List.of(arvad.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -168,7 +168,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         // Bears should not be selectable
         assertThatThrownBy(() ->
-                harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId())))
+                harness.handleMultipleCardsChosen(player1, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -184,7 +184,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Shock should not be selectable
         assertThatThrownBy(() ->
-                harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId())))
+                harness.handleMultipleCardsChosen(player1, List.of(shock.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -203,7 +203,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose both forest and arvad
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(forest.getId(), arvad.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), arvad.getId()));
 
         // Forest and Arvad should be on battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -230,7 +230,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose nothing
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         // All three should be in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -311,7 +311,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Choose the forest
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(forest.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Forest"));

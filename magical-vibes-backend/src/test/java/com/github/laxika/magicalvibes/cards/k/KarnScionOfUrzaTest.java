@@ -117,7 +117,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Opponent (player2) chooses Grizzly Bears for the controller's hand
-            harness.handleMultipleGraveyardCardsChosen(player2, List.of(bears.getId()));
+            harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
 
             // Grizzly Bears should be in controller's hand
             assertThat(gd.playerHands.get(player1.getId()))
@@ -142,7 +142,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Opponent chooses Forest for the controller's hand
-            harness.handleMultipleGraveyardCardsChosen(player2, List.of(forest.getId()));
+            harness.handleMultipleCardsChosen(player2, List.of(forest.getId()));
 
             // Forest in controller's hand
             assertThat(gd.playerHands.get(player1.getId()))
@@ -234,7 +234,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
             // Controller chooses Grizzly Bears
-            harness.handleMultipleGraveyardCardsChosen(player1, List.of(card1.getId()));
+            harness.handleMultipleCardsChosen(player1, List.of(card1.getId()));
 
             // Grizzly Bears in hand
             assertThat(gd.playerHands.get(player1.getId()))
@@ -363,7 +363,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         // +1: reveal Grizzly Bears and Forest, opponent chooses bears for hand
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
 
         // Forest should be exiled with silver counter
         assertThat(gd.exiledCardsWithSilverCounters).contains(forest.getId());

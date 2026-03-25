@@ -115,7 +115,7 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose the single card
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(exiledBears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(exiledBears.getId()));
 
         // No reorder step needed for single card — library should have the card on top
         List<Card> library = gd.playerDecks.get(player1.getId());
@@ -154,7 +154,7 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose both exiled cards
-        harness.handleMultipleGraveyardCardsChosen(player1,
+        harness.handleMultipleCardsChosen(player1,
                 List.of(exiledBears.getId(), exiledElves.getId()));
 
         // Should be awaiting library reorder (player chooses the order)
@@ -198,7 +198,7 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose nothing
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         // Library should be empty (all was exiled, nothing chosen)
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -254,7 +254,7 @@ class MirrorOfFateTest extends BaseCardTest {
 
         // Choose 7 of the 10
         List<UUID> chosen = exiledCards.stream().limit(7).map(Card::getId).toList();
-        harness.handleMultipleGraveyardCardsChosen(player1, chosen);
+        harness.handleMultipleCardsChosen(player1, chosen);
 
         // Should be awaiting library reorder for the 7 cards
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);

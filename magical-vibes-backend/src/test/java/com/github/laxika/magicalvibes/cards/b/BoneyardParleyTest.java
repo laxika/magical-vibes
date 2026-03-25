@@ -125,7 +125,7 @@ class BoneyardParleyTest extends BaseCardTest {
 
         // Step 2: Select all 3 creatures as targets
         List<UUID> allTargets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, allTargets);
+        harness.handleMultipleCardsChosen(player1, allTargets);
 
         // Spell should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -144,7 +144,7 @@ class BoneyardParleyTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
 
         // Step 4: Opponent puts bears1 in Pile 1, rest in Pile 2
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(bears1.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(bears1.getId()));
 
         // Controller (player1) should be prompted to choose a pile
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
@@ -178,11 +178,11 @@ class BoneyardParleyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, targets);
+        harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
         // Opponent puts bears in Pile 1, elves in Pile 2
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
 
         // Controller chooses Pile 2 (elves)
         harness.handleMayAbilityChosen(player1, false);
@@ -209,11 +209,11 @@ class BoneyardParleyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, targets);
+        harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
         // Opponent puts everything in Pile 1 (Pile 2 is empty)
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(bears.getId(), elves.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(bears.getId(), elves.getId()));
 
         // Controller chooses Pile 1 (both creatures)
         harness.handleMayAbilityChosen(player1, true);
@@ -235,11 +235,11 @@ class BoneyardParleyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, targets);
+        harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
         // Opponent puts nothing in Pile 1 (all in Pile 2)
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         // Controller chooses Pile 2 (both creatures)
         harness.handleMayAbilityChosen(player1, false);
@@ -262,7 +262,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select only bears
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         // Only bears should be exiled; elves should still be in graveyard
@@ -270,7 +270,7 @@ class BoneyardParleyTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Opponent separates the single card (Pile 1 = bears, Pile 2 = empty)
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
 
         // Controller chooses Pile 1
         harness.handleMayAbilityChosen(player1, true);
@@ -288,11 +288,11 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castSorcery(player1, 0, 0);
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(opponentCreature.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCreature.getId()));
         harness.passBothPriorities();
 
         // Opponent separates: 1 card in Pile 1
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(opponentCreature.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(opponentCreature.getId()));
 
         // Controller chooses Pile 1
         harness.handleMayAbilityChosen(player1, true);
@@ -319,11 +319,11 @@ class BoneyardParleyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, targets);
+        harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
         // Opponent puts myCreature in Pile 1, opponentCreature in Pile 2
-        harness.handleMultipleGraveyardCardsChosen(player2, List.of(myCreature.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(myCreature.getId()));
 
         // Controller chooses Pile 1 (myCreature to battlefield)
         harness.handleMayAbilityChosen(player1, true);
@@ -346,7 +346,7 @@ class BoneyardParleyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, targets);
+        harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles") && log.contains("Grizzly Bears"));

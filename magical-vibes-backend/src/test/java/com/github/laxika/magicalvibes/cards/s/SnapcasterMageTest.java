@@ -79,7 +79,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Choose Shock as target
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
@@ -101,7 +101,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities(); // resolve ETB trigger → grant flashback
 
         // Now cast Shock from graveyard with granted flashback
@@ -126,7 +126,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
 
         harness.castFlashback(player1, 0, creature.getId());
@@ -194,7 +194,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose Shock
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
 
         // Remove Shock from graveyard before ETB trigger resolves
         gd.playerGraveyards.get(player1.getId()).clear();

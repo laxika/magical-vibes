@@ -91,7 +91,7 @@ class LeadTheStampedeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose both creature cards
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(elves.getId(), bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(elves.getId(), bears.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -125,7 +125,7 @@ class LeadTheStampedeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose only one creature
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(elves.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getName))
@@ -153,7 +153,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         // Choose no creatures (empty list)
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
@@ -237,7 +237,7 @@ class LeadTheStampedeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose all five creature cards
-        harness.handleMultipleGraveyardCardsChosen(player1,
+        harness.handleMultipleCardsChosen(player1,
                 List.of(elves1.getId(), elves2.getId(), bears1.getId(), bears2.getId(), bears3.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);

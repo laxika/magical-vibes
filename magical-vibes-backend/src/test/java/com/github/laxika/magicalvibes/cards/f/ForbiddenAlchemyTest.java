@@ -106,7 +106,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose card1 (Shock) for hand
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card1.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card1.getId()));
 
         // Hand should contain the chosen card
         assertThat(gd.playerHands.get(player1.getId())).contains(card1);
@@ -135,7 +135,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(card0);
         List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
@@ -161,7 +161,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
     }
@@ -183,7 +183,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
         // Library should be empty (we only put 4 cards in it, all were taken)
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -232,7 +232,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
         // Choose cardA for hand
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(cardA.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(cardA.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(cardA);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(cardB);
@@ -277,7 +277,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(card0);
         List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
@@ -303,7 +303,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
         // Should NOT be in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -345,7 +345,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(card0.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
         assertThat(gd.gameLog).anyMatch(log ->
                 log.contains("puts one card into their hand") && log.contains("graveyard"));

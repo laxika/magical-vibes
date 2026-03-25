@@ -97,7 +97,7 @@ class MemorysJourneyTest extends BaseCardTest {
 
         // Select both cards
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -131,7 +131,7 @@ class MemorysJourneyTest extends BaseCardTest {
 
         // Select only one card
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(validIds.getFirst()));
+        harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
 
@@ -154,7 +154,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
 
         // Select zero targets
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -186,7 +186,7 @@ class MemorysJourneyTest extends BaseCardTest {
 
         // Select both
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
 
@@ -269,7 +269,7 @@ class MemorysJourneyTest extends BaseCardTest {
 
         // Select both
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell on stack with flashback flag
         assertThat(gd.stack).hasSize(1);
@@ -302,7 +302,7 @@ class MemorysJourneyTest extends BaseCardTest {
         assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
 
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
 
@@ -358,7 +358,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
 
         List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
-        harness.handleMultipleGraveyardCardsChosen(player1, validIds);
+        harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
 

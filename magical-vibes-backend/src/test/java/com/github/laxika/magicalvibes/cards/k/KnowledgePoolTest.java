@@ -164,7 +164,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve KP trigger
 
         // Choose the Grizzly Bears from the pool
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // The chosen card should be on the stack
         assertThat(gd.stack).anyMatch(se -> se.getCard().getId().equals(bears.getId()));
@@ -190,7 +190,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve KP trigger
 
         // Decline by passing empty list
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         // Pool should have grown by 1 (the exiled original spell)
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore + 1);
@@ -219,7 +219,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve KP trigger
 
         // Choose a card from the pool
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(nonlandCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(nonlandCard.getId()));
 
         // The replacement spell should be on the stack, but NO new KP trigger
         // (KP trigger only fires for cast-from-hand)
@@ -346,7 +346,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve KP trigger
 
         // Choose the Grizzly Bears
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // Bears should be on the stack as a creature spell
         assertThat(gd.stack).anyMatch(se ->
@@ -378,7 +378,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve KP trigger
 
         // Choose Shock from pool
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
 
         // Should be waiting for target selection (permanent choice)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);

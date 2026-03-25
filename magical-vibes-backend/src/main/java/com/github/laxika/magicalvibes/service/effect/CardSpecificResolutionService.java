@@ -35,7 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryRe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -297,7 +297,7 @@ public class CardSpecificResolutionService {
 
         List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
                 cardIds, cardViews, eligibleCards.size(),
                 "Choose any number of permanent cards with mana value " + xValue + " or less to put onto the battlefield."
         ));

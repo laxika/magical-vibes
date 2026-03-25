@@ -41,7 +41,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMe
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsFromGraveyardsMessage;
+import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ScryMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -419,7 +419,7 @@ public class LibraryRevealResolutionService {
 
         List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
                 cardIds, cardViews, eligibleCards.size(),
                 "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."
         ));
@@ -502,7 +502,7 @@ public class LibraryRevealResolutionService {
         String handWord = toHandCount == 1 ? "one" : String.valueOf(toHandCount);
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
                 cardIds, cardViews, toHandCount,
                 "Look at the top " + count + " cards of your library. Put " + handWord + " into your hand. The rest are put into your graveyard."
         ));
@@ -597,7 +597,7 @@ public class LibraryRevealResolutionService {
 
             List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
-            sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+            sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
                     cardIds, cardViews, matchingCards.size(),
                     "You may reveal any number of " + description + "s and put them into your hand."
             ));
@@ -1035,7 +1035,7 @@ public class LibraryRevealResolutionService {
 
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(opponentId, new ChooseMultipleCardsFromGraveyardsMessage(
+        sessionManager.sendToPlayer(opponentId, new ChooseMultipleCardsMessage(
                 cardIds, cardViews, topCards.size(),
                 "Choose cards to deny (you pay " + effect.lifeCost() + " life for each). Unselected cards go to opponent's hand."));
 
@@ -1126,7 +1126,7 @@ public class LibraryRevealResolutionService {
                 : "Choose any number of eligible cards to put onto the battlefield. The rest go to your graveyard.";
         List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsFromGraveyardsMessage(
+        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
                 cardIds, cardViews, eligibleCards.size(), prompt
         ));
 

@@ -90,7 +90,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
 
         // Select the instant from graveyard
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
 
         // Triggered ability should be on the stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -141,7 +141,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
 
         // Select the instant
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(shock.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
 
         // Only Shock returned, Divination still in graveyard
@@ -186,7 +186,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → chapter II triggers
 
         // Select the sorcery from graveyard
-        harness.handleMultipleGraveyardCardsChosen(player1, List.of(divination.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(divination.getId()));
         harness.passBothPriorities(); // resolve chapter II
 
         // Divination should be in hand

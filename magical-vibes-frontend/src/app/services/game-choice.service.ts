@@ -3,7 +3,7 @@ import {
   WebsocketService, Game, MessageType, Card, Permanent,
   ChooseCardFromHandNotification, ChooseFromListNotification, MayAbilityNotification,
   ChoosePermanentNotification, ChooseMultiplePermanentsNotification,
-  ChooseMultipleCardsFromGraveyardsNotification, ScryNotification, ReorderLibraryCardsNotification,
+  ChooseMultipleCardsNotification, ScryNotification, ReorderLibraryCardsNotification,
   ChooseCardFromLibraryNotification, RevealHandNotification,
   ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification,
   ChooseHandTopBottomNotification, CombatDamageAssignmentNotification,
@@ -190,7 +190,7 @@ export class GameChoiceService {
     this.multiPermanentChoicePrompt = msg.prompt;
   }
 
-  handleChooseMultipleCardsFromGraveyards(msg: ChooseMultipleCardsFromGraveyardsNotification): void {
+  handleChooseMultipleCards(msg: ChooseMultipleCardsNotification): void {
     this.choosingGraveyardCards = true;
     this.multiGraveyardCards = msg.cards;
     this.graveyardChoiceCardIds = msg.cardIds;
@@ -394,7 +394,7 @@ export class GameChoiceService {
   confirmGraveyardCardChoice(): void {
     if (!this.choosingGraveyardCards) return;
     this.websocketService.send({
-      type: MessageType.MULTIPLE_GRAVEYARD_CARDS_CHOSEN,
+      type: MessageType.MULTIPLE_CARDS_CHOSEN,
       cardIds: Array.from(this.graveyardChoiceSelectedIds())
     });
     this.choosingGraveyardCards = false;

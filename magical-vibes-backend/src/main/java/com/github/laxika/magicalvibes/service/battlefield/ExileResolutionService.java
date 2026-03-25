@@ -718,7 +718,7 @@ public class ExileResolutionService {
 
     /**
      * Handles the player's Knowledge Pool cast choice.
-     * Called from GameService.handleMultipleGraveyardCardsChosen dispatch.
+     * Called from GameService.handleMultipleCardsChosen dispatch.
      */
     public void handleKnowledgePoolCastChoice(GameData gameData, com.github.laxika.magicalvibes.model.Player player, List<UUID> cardIds) {
         UUID playerId = player.getId();
@@ -963,7 +963,7 @@ public class ExileResolutionService {
 
     /**
      * Handles the player's Mirror of Fate exiled card choice.
-     * Called from GameService.handleMultipleGraveyardCardsChosen dispatch.
+     * Called from GameService.handleMultipleCardsChosen dispatch.
      */
     public void handleMirrorOfFateChoice(GameData gameData, Player player, List<UUID> cardIds) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MIRROR_OF_FATE_CHOICE)) {
