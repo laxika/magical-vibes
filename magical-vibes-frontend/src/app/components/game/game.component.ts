@@ -67,6 +67,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.declaringAttackers.set(false);
     this.declaringBlockers.set(false);
     this.attackTaxPerCreature.set(0);
+    this.mustAttackWithAtLeastOne.set(false);
     this.availableAttackerIndices.set(new Set());
     this.mustAttackIndices.set(new Set());
     this.availableBlockerIndices.set(new Set());
@@ -602,6 +603,7 @@ export class GameComponent implements OnInit, OnDestroy {
   gameOverWinner = signal<string | null>(null);
   gameOverWinnerId = signal<string | null>(null);
   showSurrenderConfirm = signal(false);
+  mustAttackWithAtLeastOne = signal(false);
 
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
     this.declaringAttackers.set(true);
@@ -611,6 +613,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.availableAttackTargets.set(msg.availableTargets || []);
     this.attackerTargetAssignments.set(new Map());
     this.attackTaxPerCreature.set(msg.taxPerCreature || 0);
+    this.mustAttackWithAtLeastOne.set(msg.mustAttackWithAtLeastOne || false);
   }
 
   private handleAvailableBlockers(msg: AvailableBlockersNotification): void {
@@ -693,6 +696,8 @@ export class GameComponent implements OnInit, OnDestroy {
   confirmAttackers(): void {
     const g = this.game();
     if (!g) return;
+    // Prevent empty declaration when forced to attack (e.g. Trove of Temptation)
+    if (this.mustAttackWithAtLeastOne() && this.selectedAttackerIndices().size === 0) return;
     // Build attackTargets map if there are non-player targets (planeswalkers)
     const targets = this.availableAttackTargets();
     const hasPlaneswalkersTarget = targets.some(t => !t.isPlayer);
@@ -715,6 +720,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.availableAttackTargets.set([]);
     this.attackerTargetAssignments.set(new Map());
     this.attackTaxPerCreature.set(0);
+    this.mustAttackWithAtLeastOne.set(false);
   }
 
   canBlock(index: number): boolean {

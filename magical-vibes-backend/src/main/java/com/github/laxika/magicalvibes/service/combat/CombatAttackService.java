@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEf
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -131,9 +132,10 @@ public class CombatAttackService {
         List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
         List<AttackTarget> availableTargets = buildAvailableTargets(gameData, activeId);
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, activeId);
+        boolean mustAttackWithAtLeastOne = isOpponentForcedToAttack(gameData, activeId);
         gameData.interaction.beginAttackerDeclaration(activeId);
         sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, activeId),
-                new AvailableAttackersMessage(attackable, mustAttack, availableTargets, taxPerCreature));
+                new AvailableAttackersMessage(attackable, mustAttack, availableTargets, taxPerCreature, mustAttackWithAtLeastOne));
     }
 
     /**
@@ -168,6 +170,11 @@ public class CombatAttackService {
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
+
+        // Validate "must attack with at least one creature" (e.g. Trove of Temptation)
+        if (attackerIndices.isEmpty() && !attackable.isEmpty() && isOpponentForcedToAttack(gameData, playerId)) {
+            throw new IllegalStateException("Must attack with at least one creature");
+        }
 
         // Empty declaration is always valid — no tax or target validation needed
         if (attackerIndices.isEmpty()) {
@@ -694,6 +701,35 @@ public class CombatAttackService {
             }
             throw new IllegalStateException("Attack declaration satisfies too few attack requirements");
         }
+    }
+
+    /**
+     * Returns true if an opponent controls a permanent with
+     * {@link OpponentsMustAttackControllerEffect}, forcing this player to attack
+     * with at least one creature each combat if able. Respects attack tax exemption
+     * (CR 508.1d — the player is not required to pay optional attack costs).
+     */
+    public boolean isOpponentForcedToAttack(GameData gameData, UUID playerId) {
+        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        if (taxPerCreature > 0) {
+            return false;
+        }
+        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+            return false;
+        }
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(playerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsMustAttackControllerEffect) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

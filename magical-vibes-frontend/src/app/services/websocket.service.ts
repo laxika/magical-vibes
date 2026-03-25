@@ -357,6 +357,7 @@ export interface AvailableAttackersNotification {
   mustAttackIndices: number[];
   availableTargets: AttackTarget[];
   taxPerCreature: number;
+  mustAttackWithAtLeastOne: boolean;
 }
 
 export interface AvailableBlockersNotification {

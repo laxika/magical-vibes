@@ -77,7 +77,8 @@ public class ReconnectionService {
                     List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);
                     List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, playerId, attackable);
                     int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
-                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId), taxPerCreature));
+                    boolean mustAttackWithAtLeastOne = combatService.isOpponentForcedToAttack(gameData, playerId);
+                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId), taxPerCreature, mustAttackWithAtLeastOne));
                 }
             }
             case BLOCKER_DECLARATION -> {
@@ -211,7 +212,8 @@ public class ReconnectionService {
                     List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, playerId);
                     List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, playerId, attackable);
                     int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
-                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId), taxPerCreature));
+                    boolean mustAttackWithAtLeastOne = combatService.isOpponentForcedToAttack(gameData, playerId);
+                    sessionManager.sendToPlayer(playerId, new AvailableAttackersMessage(attackable, mustAttack, combatService.buildAvailableTargets(gameData, playerId), taxPerCreature, mustAttackWithAtLeastOne));
                 }
             }
             case InteractionContext.BlockerDeclaration bd -> {

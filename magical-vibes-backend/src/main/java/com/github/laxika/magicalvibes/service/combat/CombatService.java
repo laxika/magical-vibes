@@ -57,6 +57,10 @@ public class CombatService {
         return combatAttackService.buildAvailableTargets(gameData, activePlayerId);
     }
 
+    public boolean isOpponentForcedToAttack(GameData gameData, UUID playerId) {
+        return combatAttackService.isOpponentForcedToAttack(gameData, playerId);
+    }
+
     public void handleDeclareAttackersStep(GameData gameData) {
         combatAttackService.handleDeclareAttackersStep(gameData);
     }

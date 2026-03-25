@@ -871,6 +871,7 @@ Pass `null` as filter to allow any card.
 | `CanAttackAsThoughNoDefenderEffect` | `()` | this creature can attack as though it didn't have defender (static, typically wrapped in MetalcraftConditionalEffect) |
 | `MustAttackEffect` | `()` | this creature must attack each turn if able (static) |
 | `MustAttackThisTurnEffect` | `(boolean forceAttackController)` | target creature must attack this turn if able (one-shot, sets transient flag, cleared at end of turn). If forceAttackController=true, also sets mustAttackTargetId to ability controller (e.g. Alluring Siren "attacks you"). If false, creature may attack any legal target (e.g. Incite "attacks this turn if able"). |
+| `OpponentsMustAttackControllerEffect` | `()` | each opponent must attack the controller (or a planeswalker the controller controls) with at least one creature each combat if able (static). Unlike MustAttackEffect, does NOT force every creature to attack — only requires at least one attacker. Respects CR 508.1d (no attack tax payment required). Used by Trove of Temptation |
 | `MustBeBlockedByAllCreaturesEffect` | `()` | all creatures able to block this must do so (static, Lure-style) |
 | `MustBeBlockedIfAbleEffect` | `()` | at least one creature must block this if able (static, Gaea's Protector-style) |
 | `MustBeBlockedIfAbleThisTurnEffect` | `()` | target creature must be blocked this turn if able (one-shot, sets transient flag, cleared at end of turn). Unlike MustBeBlockedIfAbleEffect which is static, this is for spells like Emergent Growth |
