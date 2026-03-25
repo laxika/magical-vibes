@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCard
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
@@ -141,6 +142,25 @@ public class KeywordGrantResolutionService {
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains {} (legendary conditional)", gameData.id, target.getCard().getName(), effect.keyword());
+    }
+
+    @HandlesEffect(GrantKeywordToTargetIfSubtypeEffect.class)
+    private void resolveGrantKeywordToTargetIfSubtype(GameData gameData, StackEntry entry,
+                                                      GrantKeywordToTargetIfSubtypeEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        if (!target.getCard().getSubtypes().contains(effect.subtype())) {
+            return;
+        }
+
+        target.getGrantedKeywords().add(effect.keyword());
+        String keywordName = effect.keyword().name().charAt(0) + effect.keyword().name().substring(1).toLowerCase().replace('_', ' ');
+        String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains {} (subtype conditional)", gameData.id, target.getCard().getName(), effect.keyword());
     }
 
     @HandlesEffect(GrantChosenKeywordToTargetEffect.class)
