@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffec
 import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifePerMatchingPermanentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPlayerLifeToHalfStartingEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetPlayerLifeToSpecificValueEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
@@ -441,6 +442,21 @@ public class LifeResolutionService {
         if (targetPlayerId == null) return; // "up to one target" — player chose no target
         int currentLife = gameData.getLife(targetPlayerId);
         int newLife = GameData.STARTING_LIFE_TOTAL / 2;
+
+        if (applySetLifeTotal(gameData, targetPlayerId, newLife)) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + "'s life total becomes " + newLife + " (was " + currentLife + ").");
+            log.info("Game {} - {}'s life set to {} (was {})", gameData.id, playerName, newLife, currentLife);
+        }
+    }
+
+    @HandlesEffect(SetTargetPlayerLifeToSpecificValueEffect.class)
+    private void resolveSetTargetPlayerLifeToSpecificValue(GameData gameData, StackEntry entry, SetTargetPlayerLifeToSpecificValueEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null) return;
+        int currentLife = gameData.getLife(targetPlayerId);
+        int newLife = effect.targetLifeTotal();
 
         if (applySetLifeTotal(gameData, targetPlayerId, newLife)) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
