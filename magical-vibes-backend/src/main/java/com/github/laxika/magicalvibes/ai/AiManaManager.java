@@ -225,16 +225,16 @@ public class AiManaManager {
         }
     }
 
-    int calculateMaxAffordableX(Card card, ManaPool pool) {
+    int calculateMaxAffordableX(Card card, ManaPool pool, int costModifier) {
         ManaCost cost = new ManaCost(card.getManaCost());
         if (card.getXColorRestriction() != null) {
-            return cost.calculateMaxX(pool, card.getXColorRestriction(), 0);
+            return cost.calculateMaxX(pool, card.getXColorRestriction(), costModifier);
         }
-        return cost.calculateMaxX(pool);
+        return Math.max(0, cost.calculateMaxX(pool) - costModifier);
     }
 
-    int calculateSmartX(GameData gameData, Card card, UUID targetId, ManaPool virtualPool) {
-        int maxX = calculateMaxAffordableX(card, virtualPool);
+    int calculateSmartX(GameData gameData, Card card, UUID targetId, ManaPool virtualPool, int costModifier) {
+        int maxX = calculateMaxAffordableX(card, virtualPool, costModifier);
         if (maxX <= 0) {
             return 0;
         }

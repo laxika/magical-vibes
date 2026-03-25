@@ -562,6 +562,96 @@ class EasyAiDecisionEngineTest {
         assertThat(request.damageAssignments()).containsEntry(creature2.getId(), 2);
     }
 
+    // ===== X-spell cost modifier handling =====
+
+    @Test
+    @DisplayName("Easy AI reduces X value when cost modifier is present")
+    void reducesXValueWithCostModifier() throws Exception {
+        // X-cost sorcery: {X}{B}{B}
+        Card xSpell = new Card();
+        xSpell.setName("Test X Spell");
+        xSpell.setType(CardType.SORCERY);
+        xSpell.setManaCost("{X}{B}{B}");
+        gd.playerHands.get(aiPlayer.getId()).add(xSpell);
+
+        // 4 black mana → without modifier maxX=2, with modifier +1 maxX=1
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.BLACK, 4);
+
+        // Cost modifier +1 (e.g. Thalia on opponent's battlefield)
+        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(1);
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        // maxX should be 1 (4 total - 2 for BB - 1 for modifier = 1), so X must be 1
+        assertThat(request.xValue()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Easy AI does not cast X-spell when cost modifier makes X=0")
+    void doesNotCastXSpellWhenCostModifierMakesXZero() throws Exception {
+        // X-cost sorcery: {X}{B}{B}
+        Card xSpell = new Card();
+        xSpell.setName("Test X Spell");
+        xSpell.setType(CardType.SORCERY);
+        xSpell.setManaCost("{X}{B}{B}");
+        gd.playerHands.get(aiPlayer.getId()).add(xSpell);
+
+        // 4 black mana → without modifier maxX=2, with modifier +2 maxX=0
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.BLACK, 4);
+
+        // Cost modifier +2 — no X value is affordable
+        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(2);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // Should NOT attempt to cast — maxX is 0
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI casts X-spell at full X when no cost modifier is present")
+    void castsXSpellAtFullXWithNoCostModifier() throws Exception {
+        // X-cost sorcery: {X}{B}{B}
+        Card xSpell = new Card();
+        xSpell.setName("Test X Spell");
+        xSpell.setType(CardType.SORCERY);
+        xSpell.setManaCost("{X}{B}{B}");
+        gd.playerHands.get(aiPlayer.getId()).add(xSpell);
+
+        // 4 black mana → maxX=2
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.BLACK, 4);
+
+        // No cost modifier
+        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(0);
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+        verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
+
+        PlayCardRequest request = captor.getValue();
+        // maxX should be 2, smartX clamps to target toughness but no target → full maxX
+        assertThat(request.xValue()).isEqualTo(2);
+    }
+
     // ===== Attack tax handling =====
 
     @Test

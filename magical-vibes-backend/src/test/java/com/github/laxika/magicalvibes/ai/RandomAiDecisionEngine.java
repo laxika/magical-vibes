@@ -211,7 +211,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
             if (castCost.hasX() && xValue == null) {
-                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
+                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
                 if (maxX <= 0) {
                     continue;

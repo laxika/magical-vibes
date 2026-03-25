@@ -167,6 +167,7 @@ public class GameSimulator {
 
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
     private final AiManaManager manaManager;
     private final GameRegistry gameRegistry;
     private final BoardEvaluator boardEvaluator;
@@ -188,7 +189,7 @@ public class GameSimulator {
         this.manaManager = new AiManaManager(sharedQueryService);
         PlayerInputService playerInputService = new PlayerInputService(noOpSession, cardViewFactory);
         ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
-        GameBroadcastService gameBroadcastService = new GameBroadcastService(
+        this.gameBroadcastService = new GameBroadcastService(
                 noOpSession, cardViewFactory, permanentViewFactory, stackEntryViewFactory, gameQueryService, validTargetService);
         DraftRegistry draftRegistry = new DraftRegistry();
         this.gameRegistry = new GameRegistry();
@@ -895,11 +896,12 @@ public class GameSimulator {
 
     private int calculateSmartX(GameData gd, Card card, UUID targetId, ManaPool virtualPool) {
         ManaCost cost = new ManaCost(card.getManaCost());
+        int costModifier = gameBroadcastService.getCastCostModifier(gd, gd.activePlayerId, card);
         int maxX;
         if (card.getXColorRestriction() != null) {
-            maxX = cost.calculateMaxX(virtualPool, card.getXColorRestriction(), 0);
+            maxX = cost.calculateMaxX(virtualPool, card.getXColorRestriction(), costModifier);
         } else {
-            maxX = cost.calculateMaxX(virtualPool);
+            maxX = Math.max(0, cost.calculateMaxX(virtualPool) - costModifier);
         }
         if (maxX <= 0) {
             return 0;

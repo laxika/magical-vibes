@@ -869,4 +869,32 @@ class HardAiDecisionEngineTest {
 
         assertThat(gd.stack).isEmpty();
     }
+
+    // ===== X-spell cost modifier handling =====
+
+    @Test
+    @DisplayName("Hard AI skips Entrancing Melody when cost modifier makes only target unaffordable")
+    void skipsEntrancingMelodyWhenCostModifierMakesTargetUnaffordable() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerIslands(player1, 4); // 4U total; Entrancing Melody {X}{U}{U} → without modifier maxX=2
+
+        // Thalia on opponent's battlefield: +1 cost → maxX=1
+        Permanent thalia = new Permanent(new com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben());
+        thalia.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(thalia);
+
+        // MV=2 creature — needs X=2 but maxX=1 with Thalia → unaffordable
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Without the fix, AI would compute maxX=2 (ignoring modifier) and try to steal Bears,
+        // which would fail server-side validation. With the fix, AI sees maxX=1 and skips.
+        assertThat(gd.stack).isEmpty();
+    }
 }

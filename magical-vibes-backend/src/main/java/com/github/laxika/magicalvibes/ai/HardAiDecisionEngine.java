@@ -217,9 +217,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 ManaCost castCost = new ManaCost(card.getManaCost());
                 Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
                 UUID mctsTargetId = pc.targetId();
+                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 if (castCost.hasX() && xValue == null) {
                     if (hasPermanentManaValueEqualsXTarget(card)) {
-                        int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
+                        int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                         if (maxX <= 0) {
                             return false;
                         }
@@ -234,7 +235,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         mctsTargetId = chosen.getId();
                         xValue = chosen.getCard().getManaValue();
                     } else {
-                        int smartX = manaManager.calculateSmartX(gameData, card, mctsTargetId, virtualPool);
+                        int smartX = manaManager.calculateSmartX(gameData, card, mctsTargetId, virtualPool, costModifier);
                         smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
                         if (smartX <= 0) {
                             return false;
@@ -370,9 +371,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
-                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
+                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 if (maxX <= 0) {
                     return false;
                 }
@@ -387,7 +389,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 targetId = chosen.getId();
                 xValue = chosen.getCard().getManaValue();
             } else {
-                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
+                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool, costModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
                 if (smartX <= 0) {
                     return false;
@@ -558,9 +560,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
+        int instantCostModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
-                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool);
+                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);
                 if (maxX <= 0) return false;
                 List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
                         gameData, card, aiPlayer.getId(), maxX);
@@ -571,7 +574,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 targetId = chosen.getId();
                 xValue = chosen.getCard().getManaValue();
             } else {
-                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool);
+                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool, instantCostModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
                 if (smartX <= 0) return false;
                 xValue = smartX;
