@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
+import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
 import com.github.laxika.magicalvibes.ai.CombatSimulator;
 import com.github.laxika.magicalvibes.ai.SpellEvaluator;
@@ -26,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -167,6 +167,7 @@ public class GameSimulator {
 
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final AiManaManager manaManager;
     private final GameRegistry gameRegistry;
     private final BoardEvaluator boardEvaluator;
     private final SpellEvaluator spellEvaluator;
@@ -184,6 +185,7 @@ public class GameSimulator {
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
 
         this.gameQueryService = sharedQueryService;
+        this.manaManager = new AiManaManager(sharedQueryService);
         PlayerInputService playerInputService = new PlayerInputService(noOpSession, cardViewFactory);
         ValidTargetService validTargetService = new ValidTargetService(gameQueryService);
         GameBroadcastService gameBroadcastService = new GameBroadcastService(
@@ -388,7 +390,7 @@ public class GameSimulator {
                 // Enumerate castable spells
                 List<Card> hand = gd.playerHands.get(playerId);
                 if (hand != null) {
-                    ManaPool virtualPool = buildVirtualManaPool(gd, playerId);
+                    ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
                     for (int i = 0; i < hand.size(); i++) {
                         Card card = hand.get(i);
                         if (card.hasType(CardType.LAND)) continue;
@@ -828,43 +830,6 @@ public class GameSimulator {
             }
         }
         return combatSimulator.findBestBlockers(gd, playerId, attackerIndices, blockerIndices);
-    }
-
-    private ManaPool buildVirtualManaPool(GameData gd, UUID playerId) {
-        ManaPool virtual = new ManaPool();
-        ManaPool current = gd.playerManaPools.get(playerId);
-        if (current != null) {
-            for (ManaColor color : ManaColor.values()) {
-                virtual.add(color, current.get(color));
-                virtual.addCreatureMana(color, current.getCreatureMana(color));
-            }
-        }
-        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
-        for (Permanent perm : battlefield) {
-            if (perm.isTapped()) continue;
-            boolean isCreature = gameQueryService.isCreature(gd, perm);
-            if (isCreature && perm.isSummoningSick()
-                    && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
-            // Check for land type overrides (e.g. Evil Presence making a Plains into a Swamp)
-            ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gd, perm);
-            if (overriddenColor != null) {
-                virtual.add(overriddenColor, 1);
-                if (isCreature) virtual.addCreatureMana(overriddenColor, 1);
-            } else {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof AwardManaEffect me) {
-                        virtual.add(me.color(), me.amount());
-                        if (isCreature) virtual.addCreatureMana(me.color(), me.amount());
-                    } else if (effect instanceof AwardAnyColorManaEffect) {
-                        virtual.add(ManaColor.COLORLESS);
-                        if (isCreature) virtual.addCreatureMana(ManaColor.COLORLESS, 1);
-                    } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                        virtual.add(ManaColor.COLORLESS);
-                    }
-                }
-            }
-        }
-        return virtual;
     }
 
     private void tapLandsForCard(GameData gd, UUID playerId, Card card, int xValue) {

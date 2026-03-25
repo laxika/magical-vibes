@@ -23,15 +23,15 @@ import java.util.function.IntConsumer;
  * Shared mana management logic for AI: virtual mana pool calculation,
  * land tapping, and X-cost spell management.
  */
-class AiManaManager {
+public class AiManaManager {
 
     private final GameQueryService gameQueryService;
 
-    AiManaManager(GameQueryService gameQueryService) {
+    public AiManaManager(GameQueryService gameQueryService) {
         this.gameQueryService = gameQueryService;
     }
 
-    ManaPool buildVirtualManaPool(GameData gameData, UUID aiPlayerId) {
+    public ManaPool buildVirtualManaPool(GameData gameData, UUID aiPlayerId) {
         ManaPool virtual = new ManaPool();
 
         ManaPool current = gameData.playerManaPools.get(aiPlayerId);
