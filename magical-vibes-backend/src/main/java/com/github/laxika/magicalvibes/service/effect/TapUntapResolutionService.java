@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffe
 import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedUntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
@@ -226,6 +227,28 @@ public class TapUntapResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
+    @HandlesEffect(RemoveTargetFromCombatEffect.class)
+    private void resolveRemoveTargetFromCombat(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        if (target.isAttacking()) {
+            target.setAttacking(false);
+            target.setAttackTarget(null);
+        }
+        if (target.isBlocking()) {
+            target.setBlocking(false);
+            target.getBlockingTargets().clear();
+            target.getBlockingTargetIds().clear();
+        }
+
+        String logEntry = entry.getCard().getName() + " removes " + target.getCard().getName() + " from combat.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} removes {} from combat", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 
     @HandlesEffect(UntapSelfEffect.class)

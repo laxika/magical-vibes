@@ -898,6 +898,7 @@ Pass `null` as filter to allow any card.
 | `TapSelfEffect` | `()` | tap this permanent as an effect (not cost); can be activated even when already tapped |
 | `UntapSelfEffect` | `()` | untap this permanent |
 | `UntapAttackedCreaturesEffect` | `()` | untap creatures that attacked this turn (end of combat) |
+| `RemoveTargetFromCombatEffect` | `()` | removes target permanent from combat (clears attacking/blocking state); combine with `UntapTargetPermanentEffect` for Maze of Ith / Spires of Orazca style effects |
 | `TapCreaturesEffect` | `(Set<TargetFilter> filters)` | tap all creatures matching filters |
 | `DoesntUntapDuringUntapStepEffect` | `()` | this permanent doesn't untap during untap step (static) |
 | `MayNotUntapDuringUntapStepEffect` | `()` | controller may choose not to untap this permanent during untap step (static); prompts player via may-ability system |
