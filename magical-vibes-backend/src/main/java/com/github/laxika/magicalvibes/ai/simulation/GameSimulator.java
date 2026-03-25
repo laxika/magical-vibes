@@ -351,7 +351,7 @@ public class GameSimulator {
                 gameQueryService, gameBroadcastService, playerInputService, turnProgressionService, effectResolutionService, destructionResolutionService, graveyardReturnResolutionService);
         LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
                 noOpSession, gameQueryService, graveyardService, warpWorldService, battlefieldEntryService, legendRuleService, stateBasedActionService, gameBroadcastService,
-                cardViewFactory, turnProgressionService, playerInputService, effectResolutionService, exileService);
+                cardViewFactory, turnProgressionService, playerInputService, effectResolutionService, exileService, triggerCollectionService);
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 gameBroadcastService, stateBasedActionService, playerInputService, turnProgressionService, effectResolutionService);
         ReconnectionService reconnectionService = new ReconnectionService(

@@ -33,6 +33,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
+import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -308,6 +310,27 @@ public class SpellCastTriggerCollectorService {
         }
         log.info("Game {} - {} cast-from-graveyard trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = SunbirdsInvocationTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleSunbirdsInvocationCast(TriggerMatchContext match,
+            SunbirdsInvocationTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.castFromHand()) return false;
+
+        int manaValue = sc.spellCard().getManaValue();
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new SunbirdsInvocationRevealAndCastEffect(manaValue)))
+        ));
+
+        log.info("Game {} - Sunbird's Invocation trigger queued (mana value {})",
+                match.gameData().id, manaValue);
         return true;
     }
 

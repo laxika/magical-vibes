@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
@@ -12,15 +14,22 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -62,6 +71,7 @@ public class LibraryChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
     private final ExileService exileService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.SCRY)) {
@@ -326,6 +336,13 @@ public class LibraryChoiceHandlerService {
         if (reorderRemainingToBottom || reorderRemainingToTop) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
+            }
+
+            // Sunbird's Invocation: cast chosen card without paying, rest to bottom in random order
+            if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING) {
+                handleCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
+                        searchCards, sourceCards, deck);
+                return;
             }
 
             Card chosenCard = null;
@@ -696,6 +713,7 @@ public class LibraryChoiceHandlerService {
                 case TOP_OF_LIBRARY -> "on top of their library";
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
+                case CAST_WITHOUT_PAYING -> throw new IllegalStateException("CAST_WITHOUT_PAYING should be handled earlier");
             };
             String logEntry;
             if (targetPlayerId != null) {
@@ -1235,6 +1253,134 @@ public class LibraryChoiceHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+
+    /**
+     * Handles the player's choice from a Sunbird's Invocation (or similar) "cast without paying"
+     * reveal. If a card is chosen, it is cast without paying its mana cost; remaining revealed
+     * cards go to the bottom of the library in a random order.
+     */
+    private void handleCastWithoutPayingChoice(GameData gameData, Player player, int cardIndex,
+                                                boolean canFailToFind, List<Card> searchCards,
+                                                List<Card> sourceCards, List<Card> deck) {
+        UUID playerId = player.getId();
+        String playerName = player.getUsername();
+
+        Card chosenCard = null;
+        if (cardIndex == -1) {
+            if (!canFailToFind) {
+                throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+        } else {
+            if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+                throw new IllegalStateException("Invalid card index: " + cardIndex);
+            }
+            chosenCard = searchCards.get(cardIndex);
+            // Remove chosen card from sourceCards
+            for (int i = 0; i < sourceCards.size(); i++) {
+                if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
+                    sourceCards.remove(i);
+                    break;
+                }
+            }
+        }
+
+        // Put remaining cards on the bottom of the library in a random order
+        if (!sourceCards.isEmpty()) {
+            Collections.shuffle(sourceCards);
+            deck.addAll(sourceCards);
+            log.info("Game {} - {} remaining revealed cards shuffled to bottom of library",
+                    gameData.id, sourceCards.size());
+        }
+
+        if (chosenCard == null) {
+            String logEntry = playerName + " declines to cast a spell.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines Sunbird's Invocation cast", gameData.id, playerName);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
+        // Cast the chosen card without paying its mana cost
+        StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
+        List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getEffects(EffectSlot.SPELL));
+
+        if (EffectResolution.needsTarget(chosenCard)) {
+            Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(chosenCard);
+            List<UUID> validTargets = new ArrayList<>();
+
+            if (allowedTargets.contains(TargetType.PERMANENT)) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                validTargets.add(p.getId());
+                            }
+                        } else if (gameQueryService.isCreature(gameData, p)) {
+                            validTargets.add(p.getId());
+                        }
+                    }
+                }
+            }
+
+            if (allowedTargets.contains(TargetType.PLAYER)) {
+                validTargets.addAll(gameData.orderedPlayerIds);
+            }
+
+            if (validTargets.isEmpty()) {
+                // No valid targets — card goes to graveyard
+                graveyardService.addCardToGraveyard(gameData, playerId, chosenCard);
+                String logEntry = chosenCard.getName() + " has no valid targets and is put into the graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} cast-without-paying has no valid targets", gameData.id, chosenCard.getName());
+                turnProgressionService.resolveAutoPass(gameData);
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.LibraryCastSpellTarget(chosenCard, playerId, spellEffects, spellType));
+            playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
+                    "Choose a target for " + chosenCard.getName() + ".");
+
+            String logEntry = playerName + " casts " + chosenCard.getName()
+                    + " without paying its mana cost — choosing target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} casts {} (Sunbird's Invocation), choosing target",
+                    gameData.id, playerName, chosenCard.getName());
+            return;
+        }
+
+        // Non-targeted spell — put directly on stack
+        gameData.stack.add(new StackEntry(
+                spellType, chosenCard, playerId, chosenCard.getName(),
+                spellEffects, 0, (UUID) null, null
+        ));
+
+        gameData.recordSpellCast(playerId, chosenCard);
+        gameData.priorityPassedBy.clear();
+
+        String logEntry = playerName + " casts " + chosenCard.getName() + " without paying its mana cost.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} casts {} (Sunbird's Invocation) without paying mana",
+                gameData.id, playerName, chosenCard.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    private static StackEntryType mapCardTypeToSpellType(Card card) {
+        return switch (card.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            default -> StackEntryType.SORCERY_SPELL;
+        };
     }
 
 }

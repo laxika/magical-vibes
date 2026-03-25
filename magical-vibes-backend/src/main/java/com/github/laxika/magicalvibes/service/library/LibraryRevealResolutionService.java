@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOpponentPaysLifeOrToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsTypeToHandRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
@@ -1191,6 +1192,76 @@ public class LibraryRevealResolutionService {
             log.info("Game {} - {} explores, reveals non-land {} — +1/+1 counter, may graveyard",
                     gameData.id, sourceName, topCard.getName());
         }
+    }
+
+    /**
+     * Reveals the top X cards of the controller's library (where X = triggering spell's mana value),
+     * lets the controller cast a spell with mana value X or less without paying its mana cost,
+     * then puts the rest on the bottom in a random order. Used by Sunbird's Invocation.
+     */
+    @HandlesEffect(SunbirdsInvocationRevealAndCastEffect.class)
+    void resolveSunbirdsInvocationRevealAndCast(GameData gameData, StackEntry entry,
+                                                 SunbirdsInvocationRevealAndCastEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+        int manaValue = effect.manaValue();
+
+        if (manaValue <= 0 || deck.isEmpty()) {
+            String logMsg = manaValue <= 0
+                    ? sourceName + ": spell has mana value 0 — no cards revealed."
+                    : sourceName + ": " + playerName + "'s library is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        int count = Math.min(manaValue, deck.size());
+        List<Card> topCards = takeTopCards(deck, count);
+
+        // Reveal all cards
+        String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        String revealLog = playerName + " reveals " + revealedNames + " (" + sourceName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        log.info("Game {} - {} reveals {} cards for Sunbird's Invocation (MV {})",
+                gameData.id, playerName, count, manaValue);
+
+        // Filter to non-land cards with mana value ≤ X
+        List<Card> castable = topCards.stream()
+                .filter(c -> !c.hasType(CardType.LAND))
+                .filter(c -> c.getManaValue() <= manaValue)
+                .toList();
+
+        if (castable.isEmpty()) {
+            // No castable cards — put all to bottom in random order
+            Collections.shuffle(topCards);
+            deck.addAll(topCards);
+            String noMatchLog = sourceName + " — no castable cards found. Cards are put on the bottom in a random order.";
+            gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
+            log.info("Game {} - Sunbird's Invocation: no castable cards, {} to bottom", gameData.id, count);
+            return;
+        }
+
+        // Present choice to controller
+        String prompt = "You may cast a spell with mana value " + manaValue
+                + " or less from among the revealed cards without paying its mana cost.";
+
+        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, castable)
+                .reveals(true)
+                .canFailToFind(true)
+                .sourceCards(new ArrayList<>(topCards))
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .prompt(prompt)
+                .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING)
+                .build());
+
+        List<CardView> cardViews = castable.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                prompt,
+                true
+        ));
     }
 
     // =========================================================================
