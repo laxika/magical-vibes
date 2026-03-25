@@ -824,11 +824,20 @@ public class TriggerCollectionService {
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature, Permanent dyingPermanent) {
         List<CardEffect> deathEffects = dyingCard.getEffects(EffectSlot.ON_DEATH);
-        if (deathEffects.isEmpty()) return;
+
+        // Include temporarily granted ON_DEATH effects (e.g. from Verdant Rebirth)
+        List<CardEffect> temporaryDeathEffects = dyingPermanent != null
+                ? dyingPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH) : List.of();
+
+        if (deathEffects.isEmpty() && temporaryDeathEffects.isEmpty()) return;
 
         var ctx = new TriggerContext.SelfDeath(dyingCard, controllerId, wasCreature, dyingPermanent);
         Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
         for (CardEffect effect : deathEffects) {
+            var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
+            registry.dispatch(match, EffectSlot.ON_DEATH, effect, ctx);
+        }
+        for (CardEffect effect : temporaryDeathEffects) {
             var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
             registry.dispatch(match, EffectSlot.ON_DEATH, effect, ctx);
         }

@@ -65,7 +65,7 @@ public class TurnCleanupService {
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
                     || p.isMustAttackThisTurn() || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
                     || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()
-                    || p.isCopyUntilEndOfTurn()) {
+                    || p.isCopyUntilEndOfTurn() || !p.getTemporaryTriggeredEffects().isEmpty()) {
                 p.resetModifiers();
                 p.setDamagePreventionShield(0);
                 p.setRegenerationShield(0);

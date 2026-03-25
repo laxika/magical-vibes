@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -370,6 +371,24 @@ public class KeywordGrantResolutionService {
         String logEntry = entry.getCard().getName() + " grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} grants damage bounce to {} creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    @HandlesEffect(GrantEffectToTargetUntilEndOfTurnEffect.class)
+    private void resolveGrantEffectToTarget(GameData gameData, StackEntry entry,
+                                             GrantEffectToTargetUntilEndOfTurnEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
+            return;
+        }
+
+        target.addTemporaryTriggeredEffect(effect.slot(), effect.grantedEffect());
+
+        String logEntry = entry.getCard().getName() + " grants a temporary " + effect.slot().name()
+                + " ability to " + target.getCard().getName() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} grants temporary {} effect to {}", gameData.id,
+                entry.getCard().getName(), effect.slot().name(), target.getCard().getName());
     }
 
     @HandlesEffect(GrantActivatedAbilityEffect.class)

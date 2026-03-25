@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOn
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnOneOfEachSubtypeFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -1469,6 +1470,28 @@ public class GraveyardReturnResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} returns {} from graveyard to {}'s hand",
                 gameData.id, entry.getCard().getName(), creatureCard.getName(), ownerName);
+    }
+
+    @HandlesEffect(ReturnSourceCardFromGraveyardToOwnerHandEffect.class)
+    private void resolveReturnSourceCardFromGraveyardToOwnerHand(GameData gameData, StackEntry entry) {
+        UUID cardId = entry.getCard().getId();
+        Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
+        if (sourceCard == null) {
+            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
+            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            log.info("Game {} - {} return-to-hand trigger fizzles (card {} not in graveyard)",
+                    gameData.id, entry.getCard().getName(), cardId);
+            return;
+        }
+
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+        permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+        gameData.playerHands.get(ownerId).add(sourceCard);
+
+        String ownerName = gameData.playerIdToName.get(ownerId);
+        String logEntry = sourceCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} returns from graveyard to {}'s hand", gameData.id, sourceCard.getName(), ownerName);
     }
 
     /**

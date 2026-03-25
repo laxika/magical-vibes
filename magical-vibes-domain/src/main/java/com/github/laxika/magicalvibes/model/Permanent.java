@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -47,6 +51,11 @@ public class Permanent {
     /** If true, this creature has "Whenever this creature deals damage to an opponent, you may return target creature
      *  that player controls to its owner's hand" until end of turn (e.g. Arm with Aether). Cleared at end of turn. */
     @Setter private boolean hasDamageToOpponentCreatureBounce;
+    /** Triggered effects temporarily granted by one-shot effects until end of turn
+     *  (e.g. Verdant Rebirth granting ON_DEATH → ReturnSourceCardFromGraveyardToOwnerHandEffect).
+     *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
+     *  Cleared every turn by {@link #resetModifiers()}. */
+    private final Map<EffectSlot, List<CardEffect>> temporaryTriggeredEffects = new EnumMap<>(EffectSlot.class);
     @Setter private boolean powerToughnessSwitched;
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
@@ -217,6 +226,8 @@ public class Permanent {
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
+        source.temporaryTriggeredEffects.forEach((slot, effects) ->
+                this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
         this.powerToughnessSwitched = source.powerToughnessSwitched;
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
@@ -430,6 +441,14 @@ public class Permanent {
                 || untilNextTurnKeywords.contains(keyword);
     }
 
+    public void addTemporaryTriggeredEffect(EffectSlot slot, CardEffect effect) {
+        temporaryTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+    }
+
+    public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
+        return temporaryTriggeredEffects.getOrDefault(slot, List.of());
+    }
+
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
@@ -445,6 +464,7 @@ public class Permanent {
         this.cantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;
+        this.temporaryTriggeredEffects.clear();
         this.animatedUntilEndOfTurn = false;
         this.animatedPower = 0;
         this.animatedToughness = 0;
