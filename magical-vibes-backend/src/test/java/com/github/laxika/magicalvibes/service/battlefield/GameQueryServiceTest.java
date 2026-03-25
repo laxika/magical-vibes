@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -2806,6 +2809,110 @@ class GameQueryServiceTest {
             Permanent myr = addPermanent(player1Id, myrCard);
 
             assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
+        }
+    }
+
+    // ===== getOverriddenLandManaColor =====
+
+    @Nested
+    @DisplayName("getOverriddenLandManaColor")
+    class GetOverriddenLandManaColor {
+
+        @Test
+        @DisplayName("returns null when land has no aura attached")
+        void returnsNull_noAura() {
+            Permanent land = addPermanent(player1Id, createLand("Plains"));
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isNull();
+        }
+
+        @Test
+        @DisplayName("returns BLACK when Evil Presence (Swamp type) is attached")
+        void returnsBlack_evilPresenceAttached() {
+            Permanent land = addPermanent(player1Id, createLand("Plains"));
+
+            Card evilPresence = createAura("Evil Presence",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
+            Permanent aura = addPermanent(player1Id, evilPresence);
+            aura.setAttachedTo(land.getId());
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.BLACK);
+        }
+
+        @Test
+        @DisplayName("returns correct color for each basic land subtype override")
+        void returnsCorrectColor_forEachBasicSubtype() {
+            Permanent land = addPermanent(player1Id, createLand("Forest"));
+
+            Card aura = createAura("Type Changer",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.ISLAND));
+            Permanent auraPerm = addPermanent(player1Id, aura);
+            auraPerm.setAttachedTo(land.getId());
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.BLUE);
+
+            // Replace with Mountain
+            aura = createAura("Type Changer 2",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.MOUNTAIN));
+            Permanent auraPerm2 = addPermanent(player1Id, aura);
+            auraPerm.setAttachedTo(null); // detach old
+            auraPerm2.setAttachedTo(land.getId());
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.RED);
+        }
+
+        @Test
+        @DisplayName("returns chosen subtype color for EnchantedPermanentBecomesChosenTypeEffect")
+        void returnsChosenColor_convincingMirage() {
+            Permanent land = addPermanent(player1Id, createLand("Mountain"));
+
+            Card mirage = createAura("Convincing Mirage",
+                    new EnchantedPermanentBecomesChosenTypeEffect());
+            Permanent auraPerm = addPermanent(player1Id, mirage);
+            auraPerm.setAttachedTo(land.getId());
+            auraPerm.setChosenSubtype(CardSubtype.PLAINS);
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.WHITE);
+        }
+
+        @Test
+        @DisplayName("returns null for EnchantedPermanentBecomesChosenTypeEffect with no chosen subtype")
+        void returnsNull_chosenTypeButNoSubtypeChosen() {
+            Permanent land = addPermanent(player1Id, createLand("Mountain"));
+
+            Card mirage = createAura("Convincing Mirage",
+                    new EnchantedPermanentBecomesChosenTypeEffect());
+            Permanent auraPerm = addPermanent(player1Id, mirage);
+            auraPerm.setAttachedTo(land.getId());
+            // chosenSubtype not set
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isNull();
+        }
+
+        @Test
+        @DisplayName("detects aura on opponent's battlefield attached to player's land")
+        void detectsOpponentAura_attachedToPlayersLand() {
+            Permanent land = addPermanent(player1Id, createLand("Forest"));
+
+            Card evilPresence = createAura("Evil Presence",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
+            Permanent aura = addPermanent(player2Id, evilPresence);
+            aura.setAttachedTo(land.getId());
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.BLACK);
+        }
+
+        @Test
+        @DisplayName("returns null when aura is attached to a different permanent")
+        void returnsNull_auraAttachedToDifferentPermanent() {
+            Permanent land = addPermanent(player1Id, createLand("Plains"));
+            Permanent otherLand = addPermanent(player1Id, createLand("Forest"));
+
+            Card evilPresence = createAura("Evil Presence",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
+            Permanent aura = addPermanent(player1Id, evilPresence);
+            aura.setAttachedTo(otherLand.getId());
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isNull();
+            assertThat(gqs.getOverriddenLandManaColor(gd, otherLand)).isEqualTo(ManaColor.BLACK);
         }
     }
 }

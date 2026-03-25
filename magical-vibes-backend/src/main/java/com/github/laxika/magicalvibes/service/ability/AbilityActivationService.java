@@ -46,8 +46,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
@@ -1523,24 +1521,7 @@ public class AbilityActivationService {
     }
 
     private ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (p.isAttached() && p.getAttachedTo().equals(permanent.getId())) {
-                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof EnchantedPermanentBecomesTypeEffect landTypeEffect) {
-                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
-                                    landTypeEffect.subtype());
-                        }
-                        if (effect instanceof EnchantedPermanentBecomesChosenTypeEffect
-                                && p.getChosenSubtype() != null) {
-                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
-                                    p.getChosenSubtype());
-                        }
-                    }
-                }
-            }
-        }
-        return null;
+        return gameQueryService.getOverriddenLandManaColor(gameData, permanent);
     }
 
     public boolean isManaAbilityAt(GameData gameData, UUID playerId, int permanentIndex, Integer abilityIndex) {

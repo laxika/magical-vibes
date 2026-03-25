@@ -845,15 +845,22 @@ public class GameSimulator {
             boolean isCreature = gameQueryService.isCreature(gd, perm);
             if (isCreature && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof AwardManaEffect me) {
-                    virtual.add(me.color(), me.amount());
-                    if (isCreature) virtual.addCreatureMana(me.color(), me.amount());
-                } else if (effect instanceof AwardAnyColorManaEffect) {
-                    virtual.add(ManaColor.COLORLESS);
-                    if (isCreature) virtual.addCreatureMana(ManaColor.COLORLESS, 1);
-                } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                    virtual.add(ManaColor.COLORLESS);
+            // Check for land type overrides (e.g. Evil Presence making a Plains into a Swamp)
+            ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gd, perm);
+            if (overriddenColor != null) {
+                virtual.add(overriddenColor, 1);
+                if (isCreature) virtual.addCreatureMana(overriddenColor, 1);
+            } else {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof AwardManaEffect me) {
+                        virtual.add(me.color(), me.amount());
+                        if (isCreature) virtual.addCreatureMana(me.color(), me.amount());
+                    } else if (effect instanceof AwardAnyColorManaEffect) {
+                        virtual.add(ManaColor.COLORLESS);
+                        if (isCreature) virtual.addCreatureMana(ManaColor.COLORLESS, 1);
+                    } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                        virtual.add(ManaColor.COLORLESS);
+                    }
                 }
             }
         }

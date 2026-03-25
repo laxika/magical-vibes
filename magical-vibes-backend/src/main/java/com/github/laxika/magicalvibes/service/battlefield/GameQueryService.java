@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -17,6 +18,8 @@ import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
@@ -2335,5 +2338,31 @@ public class GameQueryService {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns the overridden mana color for a land whose type has been changed
+     * by an aura (e.g. Evil Presence, Convincing Mirage), or {@code null} if
+     * the land's type has not been overridden.
+     */
+    public ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                if (p.isAttached() && p.getAttachedTo().equals(permanent.getId())) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof EnchantedPermanentBecomesTypeEffect landTypeEffect) {
+                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
+                                    landTypeEffect.subtype());
+                        }
+                        if (effect instanceof EnchantedPermanentBecomesChosenTypeEffect
+                                && p.getChosenSubtype() != null) {
+                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
+                                    p.getChosenSubtype());
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

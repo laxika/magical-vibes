@@ -56,20 +56,29 @@ class AiManaManager {
                 if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof AwardManaEffect manaEffect) {
-                        virtual.add(manaEffect.color(), manaEffect.amount());
-                        if (isCreature) {
-                            virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                // Check for land type overrides (e.g. Evil Presence making a Plains into a Swamp)
+                ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gameData, perm);
+                if (overriddenColor != null) {
+                    virtual.add(overriddenColor, 1);
+                    if (isCreature) {
+                        virtual.addCreatureMana(overriddenColor, 1);
+                    }
+                } else {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
+                        if (effect instanceof AwardManaEffect manaEffect) {
+                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            if (isCreature) {
+                                virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                            }
+                        } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                            virtual.add(ManaColor.COLORLESS, aace.amount());
+                            if (isCreature) {
+                                virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
+                            }
+                        } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                            // AI treats this as colorless for virtual pool estimation
+                            virtual.add(ManaColor.COLORLESS);
                         }
-                    } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                        virtual.add(ManaColor.COLORLESS, aace.amount());
-                        if (isCreature) {
-                            virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
-                        }
-                    } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                        // AI treats this as colorless for virtual pool estimation
-                        virtual.add(ManaColor.COLORLESS);
                     }
                 }
             }
