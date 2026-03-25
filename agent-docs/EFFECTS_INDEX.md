@@ -129,6 +129,7 @@ Effects in the `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` sl
 |--------|-------------|--------|
 | `DealDamageToAnyTargetEffect` | `(int damage, boolean cantRegenerate)` | deal N damage to any target |
 | `DealDamageEqualToSourcePowerToAnyTargetEffect` | `()` | deal damage equal to source permanent's power to any target (uses effective power at resolution) |
+| `DealDamageEqualToSourceToughnessToTargetCreatureEffect` | `()` | deal damage equal to source permanent's toughness to target creature (uses effective toughness at resolution) |
 | `SourceFightsTargetCreatureEffect` | `()` | source permanent and target creature deal damage to each other equal to their respective powers (fight mechanic). Both use effective power at resolution |
 | `PackHuntEffect` | `(CardSubtype creatureSubtype)` | pack hunt: tap all untapped creatures of given subtype controller controls, each deals damage equal to its power to target creature, target creature deals its power divided evenly among those creatures. Uses effective power at resolution |
 | `DealDamageToTargetAndTheirCreaturesEffect` | `(int damage)` | deal N damage to target player or planeswalker AND each creature that player or that planeswalker's controller controls (e.g. Chandra Nalaar ultimate) |

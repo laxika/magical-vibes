@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -964,6 +965,32 @@ public class GameQueryService {
             int sourcePower = getEffectivePower(gameData, sourcePermanent);
             int targetToughness = getEffectiveToughness(gameData, permanent);
             return targetToughness < sourcePower;
+        }
+        if (predicate instanceof PermanentInCombatWithSourcePredicate) {
+            if (gameData == null || sourceCardId == null) {
+                return false;
+            }
+            // Find the source permanent by its card ID
+            Permanent sourcePermanent = null;
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield != null) {
+                    for (Permanent p : battlefield) {
+                        if (p.getOriginalCard().getId().equals(sourceCardId)) {
+                            sourcePermanent = p;
+                            break;
+                        }
+                    }
+                }
+                if (sourcePermanent != null) break;
+            }
+            if (sourcePermanent == null) return false;
+            // Target is blocking source
+            if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(sourcePermanent.getId())) {
+                return true;
+            }
+            // Source is blocking target
+            return sourcePermanent.isBlocking() && sourcePermanent.getBlockingTargetIds().contains(permanent.getId());
         }
         if (predicate instanceof PermanentHasSameNameAsSourcePredicate) {
             if (gameData == null || sourceCardId == null) {

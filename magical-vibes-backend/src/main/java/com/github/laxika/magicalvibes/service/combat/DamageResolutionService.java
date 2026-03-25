@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourceToughnessToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -1023,6 +1024,26 @@ public class DamageResolutionService {
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link DealDamageEqualToSourceToughnessToTargetCreatureEffect} — deals damage equal to the source
+     * permanent's toughness to a target creature. Does nothing if the source is no longer on the battlefield or has
+     * zero or negative toughness.
+     */
+    @HandlesEffect(DealDamageEqualToSourceToughnessToTargetCreatureEffect.class)
+    void resolveDealDamageEqualToSourceToughnessToTargetCreature(GameData gameData, StackEntry entry) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) return;
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) return;
+
+        int toughness = gameQueryService.getEffectiveToughness(gameData, source);
+        if (toughness <= 0) return;
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, toughness, entry);
+        resolveCreatureTargetDamage(gameData, entry, rawDamage);
     }
 
     /**
