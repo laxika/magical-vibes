@@ -8,8 +8,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -33,6 +36,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -157,6 +161,103 @@ class AiTargetSelector {
             return opponentId;
         }
 
+        return null;
+    }
+
+    /**
+     * Selects targets for multi-target spells (cards with more than one SpellTarget group).
+     * Returns a list of target UUIDs (one per satisfied target group), or null if
+     * mandatory targets cannot be satisfied.
+     */
+    List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId) {
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
+        List<SpellTarget> spellTargets = card.getSpellTargets();
+        List<UUID> result = new ArrayList<>();
+        Set<UUID> alreadyChosen = new HashSet<>();
+
+        for (SpellTarget st : spellTargets) {
+            List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
+
+            boolean wantsPlayer = groupEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+            boolean wantsPermanent = groupEffects.stream().anyMatch(CardEffect::canTargetPermanent)
+                    || st.getFilter() != null;
+
+            UUID chosen = null;
+
+            if (wantsPlayer && !wantsPermanent) {
+                chosen = pickPlayerTargetForGroup(gameData, aiPlayerId, opponentId, groupEffects);
+            } else if (wantsPermanent) {
+                chosen = pickPermanentTargetForGroup(gameData, card, aiPlayerId, opponentId, st, alreadyChosen);
+            }
+
+            if (chosen != null) {
+                result.add(chosen);
+                alreadyChosen.add(chosen);
+            } else if (st.getMinTargets() > 0) {
+                return null; // Mandatory target cannot be satisfied
+            }
+        }
+
+        return result.isEmpty() ? null : result;
+    }
+
+    /**
+     * Returns all effects on the card that are mapped to the given target group index.
+     */
+    private List<CardEffect> findEffectsForTargetGroup(Card card, int targetIndex) {
+        List<CardEffect> result = new ArrayList<>();
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (card.getEffectTargetIndex(effect) == targetIndex) {
+                result.add(effect);
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (card.getEffectTargetIndex(effect) == targetIndex) {
+                result.add(effect);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Picks a player target for a multi-target group. Targets self for beneficial effects
+     * (e.g. ExtraTurnEffect), opponent for harmful effects.
+     */
+    private UUID pickPlayerTargetForGroup(GameData gameData, UUID aiPlayerId, UUID opponentId,
+                                           List<CardEffect> effects) {
+        boolean isBeneficial = effects.stream().anyMatch(ExtraTurnEffect.class::isInstance);
+
+        UUID preferred = isBeneficial ? aiPlayerId : opponentId;
+        UUID fallback = isBeneficial ? opponentId : aiPlayerId;
+
+        if (preferred != null && !gameQueryService.playerHasShroud(gameData, preferred)
+                && (isBeneficial || !gameQueryService.playerHasHexproof(gameData, preferred))) {
+            return preferred;
+        }
+        if (fallback != null && !gameQueryService.playerHasShroud(gameData, fallback)
+                && (!isBeneficial || !gameQueryService.playerHasHexproof(gameData, fallback))) {
+            return fallback;
+        }
+        return null;
+    }
+
+    /**
+     * Picks a permanent target for a specific multi-target group, using the group's filter.
+     * Searches opponent's battlefield first (more likely target for harmful effects).
+     */
+    private UUID pickPermanentTargetForGroup(GameData gameData, Card card, UUID aiPlayerId,
+                                              UUID opponentId, SpellTarget st, Set<UUID> alreadyChosen) {
+        TargetFilter groupFilter = st.getFilter();
+        for (UUID playerId : new UUID[]{opponentId, aiPlayerId}) {
+            if (playerId == null) continue;
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (alreadyChosen.contains(p.getId())) continue;
+                if (!validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter)) {
+                    continue;
+                }
+                return p.getId();
+            }
+        }
         return null;
     }
 

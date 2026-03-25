@@ -163,7 +163,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Determine target if needed (skip for modal and damage distribution spells)
             UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-            if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
+            List<UUID> multiTargetIds = null;
+            boolean isMultiTarget = card.getSpellTargets().size() > 1;
+            if (isMultiTarget && modalPlan == null) {
+                multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+                if (multiTargetIds == null) {
+                    continue; // Can't satisfy mandatory targets, try next spell
+                }
+            } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
                 targetId = pickRandomTarget(gameData, card);
                 if (targetId == null) {
                     continue; // No valid target, try next spell
@@ -247,8 +254,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
             final UUID finalSacrificePermanentId = sacrificePermanentId;
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
+            final List<UUID> finalMultiTargetIds = multiTargetIds;
             send(() -> messageHandler.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
 
             if (hand.size() >= handSizeBefore) {
                 log.warn("Random AI: PlayCard failed silently in game {}", gameId);

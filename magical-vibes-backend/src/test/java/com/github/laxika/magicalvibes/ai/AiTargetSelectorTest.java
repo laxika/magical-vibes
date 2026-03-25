@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
+import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -657,6 +660,139 @@ class AiTargetSelectorTest {
                     new DealDividedDamageAmongAnyTargetsEffect(10)));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
+        }
+    }
+
+    // ===== chooseMultiTargets =====
+
+    @Nested
+    @DisplayName("chooseMultiTargets")
+    class ChooseMultiTargetsTests {
+
+        @Test
+        @DisplayName("Karn's Temporal Sundering: picks self for extra turn + opponent's nonland permanent")
+        void karnsTemporalSunderingPicksSelfAndOpponentPermanent() {
+            GrizzlyBears oppCreature = new GrizzlyBears();
+            harness.addToBattlefield(human, oppCreature);
+
+            KarnsTemporalSundering card = new KarnsTemporalSundering();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            assertThat(targets).isNotNull();
+            assertThat(targets).hasSize(2);
+            // First target: AI player (beneficial extra turn)
+            assertThat(targets.get(0)).isEqualTo(aiPlayer.getId());
+            // Second target: opponent's creature
+            Permanent oppPerm = gd.playerBattlefields.get(human.getId()).getFirst();
+            assertThat(targets.get(1)).isEqualTo(oppPerm.getId());
+        }
+
+        @Test
+        @DisplayName("Karn's Temporal Sundering: returns player only when no nonland permanents exist")
+        void karnsTemporalSunderingOptionalSecondTarget() {
+            // No nonland permanents on either battlefield
+            KarnsTemporalSundering card = new KarnsTemporalSundering();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            // Second target is optional (min=0), so should still succeed with just the player
+            assertThat(targets).isNotNull();
+            assertThat(targets).hasSize(1);
+            assertThat(targets.get(0)).isEqualTo(aiPlayer.getId());
+        }
+
+        @Test
+        @DisplayName("Karn's Temporal Sundering: skips lands for second target")
+        void karnsTemporalSunderingSkipsLands() {
+            // Only a land on the battlefield — not a valid nonland permanent target
+            harness.addToBattlefield(human, new Island());
+
+            KarnsTemporalSundering card = new KarnsTemporalSundering();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            assertThat(targets).isNotNull();
+            assertThat(targets).hasSize(1); // Only player, no valid nonland permanent
+            assertThat(targets.get(0)).isEqualTo(aiPlayer.getId());
+        }
+
+        @Test
+        @DisplayName("Pounce: picks own creature and opponent's creature for fight")
+        void pouncePicksOwnAndOpponentCreature() {
+            EliteVanguard ownCreature = new EliteVanguard();
+            harness.addToBattlefield(aiPlayer, ownCreature);
+            GrizzlyBears oppCreature = new GrizzlyBears();
+            harness.addToBattlefield(human, oppCreature);
+
+            Pounce card = new Pounce();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            assertThat(targets).isNotNull();
+            assertThat(targets).hasSize(2);
+            // First target: own creature (ControlledPermanentPredicateTargetFilter)
+            Permanent ownPerm = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                    .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
+                    .findFirst().orElseThrow();
+            assertThat(targets.get(0)).isEqualTo(ownPerm.getId());
+            // Second target: opponent's creature
+            Permanent oppPerm = gd.playerBattlefields.get(human.getId()).stream()
+                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                    .findFirst().orElseThrow();
+            assertThat(targets.get(1)).isEqualTo(oppPerm.getId());
+        }
+
+        @Test
+        @DisplayName("Pounce: returns null when AI has no creature to fight with")
+        void pounceReturnsNullWithoutOwnCreature() {
+            // Only opponent has a creature — first target (creature you control) can't be satisfied
+            harness.addToBattlefield(human, new GrizzlyBears());
+
+            Pounce card = new Pounce();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            assertThat(targets).isNull();
+        }
+
+        @Test
+        @DisplayName("Pounce: returns null when opponent has no creature to fight")
+        void pounceReturnsNullWithoutOpponentCreature() {
+            // Only AI has a creature — second target (creature you don't control) can't be satisfied
+            harness.addToBattlefield(aiPlayer, new EliteVanguard());
+
+            Pounce card = new Pounce();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            assertThat(targets).isNull();
+        }
+
+        @Test
+        @DisplayName("Skulduggery: picks own creature for buff and opponent's creature for debuff")
+        void skulduggeryPicksBothTargets() {
+            EliteVanguard ownCreature = new EliteVanguard();
+            harness.addToBattlefield(aiPlayer, ownCreature);
+            GrizzlyBears oppCreature = new GrizzlyBears();
+            harness.addToBattlefield(human, oppCreature);
+
+            Skulduggery card = new Skulduggery();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            assertThat(targets).isNotNull();
+            assertThat(targets).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("Does not reuse the same target across groups")
+        void doesNotReuseSameTarget() {
+            // Only one creature on each side — targets must be distinct
+            EliteVanguard ownCreature = new EliteVanguard();
+            harness.addToBattlefield(aiPlayer, ownCreature);
+            GrizzlyBears oppCreature = new GrizzlyBears();
+            harness.addToBattlefield(human, oppCreature);
+
+            Pounce card = new Pounce();
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, card, aiPlayer.getId());
+
+            assertThat(targets).isNotNull();
+            assertThat(targets).hasSize(2);
+            assertThat(targets.get(0)).isNotEqualTo(targets.get(1));
         }
     }
 }

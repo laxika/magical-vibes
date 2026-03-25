@@ -133,7 +133,14 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         // Determine target if needed (skip for modal and damage distribution spells)
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
+        List<UUID> multiTargetIds = null;
+        boolean isMultiTarget = card.getSpellTargets().size() > 1;
+        if (isMultiTarget && modalPlan == null) {
+            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+            if (multiTargetIds == null) {
+                return false;
+            }
+        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) {
                 return false;
@@ -191,8 +198,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
         final UUID finalSacrificePermanentId = sacrificePermanentId;
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
+        final List<UUID> finalMultiTargetIds = multiTargetIds;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {
@@ -246,7 +254,12 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
+        List<UUID> multiTargetIds = null;
+        boolean isMultiTarget = card.getSpellTargets().size() > 1;
+        if (isMultiTarget && modalPlan == null) {
+            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+            if (multiTargetIds == null) return false;
+        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;
         }
@@ -291,8 +304,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
         final UUID finalSacrificePermanentId = sacrificePermanentId;
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
+        final List<UUID> finalMultiTargetIds = multiTargetIds;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, null, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
         if (hand.size() >= handSizeBefore) {
             log.warn("AI: Instant cast failed silently in game {}", gameId);
             return false;

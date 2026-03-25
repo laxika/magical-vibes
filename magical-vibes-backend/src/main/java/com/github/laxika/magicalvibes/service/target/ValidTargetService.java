@@ -209,6 +209,15 @@ public class ValidTargetService {
     }
 
     /**
+     * Validates a permanent as a target for a specific position in a multi-target spell.
+     * Uses the given positionFilter instead of the card's global targetFilter, so each
+     * target group's filter is checked independently.
+     */
+    public boolean isValidMultiTargetPermanent(GameData gameData, Card card, Permanent perm, UUID controllerId, TargetFilter positionFilter) {
+        return isValidPermanentTarget(gameData, card, perm, controllerId, true, positionFilter);
+    }
+
+    /**
      * Checks whether a permanent can legally be targeted by a spell cast by the given controller.
      * Evaluates shroud, hexproof, CantBeTargetOfSpellsOrAbilities, protection from color,
      * protection from card types, cant-be-targeted-by-spell-color, and the spell's TargetFilter.
