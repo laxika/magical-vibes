@@ -30,6 +30,7 @@ public record PermanentView(
         int wishCounters,
         int loreCounters,
         int aimCounters,
+        int landmarkCounters,
         UUID attackTargetId,
         int markedDamage,
         boolean transformed

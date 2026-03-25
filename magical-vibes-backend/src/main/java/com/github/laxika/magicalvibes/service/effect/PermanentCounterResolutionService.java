@@ -239,6 +239,7 @@ public class PermanentCounterResolutionService {
         String counterName = switch (effect.counterType()) {
             case CHARGE -> { self.setChargeCounters(self.getChargeCounters() + 1); yield "charge"; }
             case HATCHLING -> { self.setHatchlingCounters(self.getHatchlingCounters() + 1); yield "hatchling"; }
+            case LANDMARK -> { self.setLandmarkCounters(self.getLandmarkCounters() + 1); yield "landmark"; }
             case SLIME -> { self.setSlimeCounters(self.getSlimeCounters() + 1); yield "slime"; }
             case STUDY -> { self.setStudyCounters(self.getStudyCounters() + 1); yield "study"; }
             case WISH -> { self.setWishCounters(self.getWishCounters() + 1); yield "wish"; }
@@ -260,6 +261,7 @@ public class PermanentCounterResolutionService {
         int currentCount = switch (effect.counterType()) {
             case CHARGE -> self.getChargeCounters();
             case HATCHLING -> self.getHatchlingCounters();
+            case LANDMARK -> self.getLandmarkCounters();
             case SLIME -> self.getSlimeCounters();
             case STUDY -> self.getStudyCounters();
             case WISH -> self.getWishCounters();
@@ -283,6 +285,11 @@ public class PermanentCounterResolutionService {
                 );
             } else {
                 removeCountersAndTransform(gameData, self, effect.counterType(), counterName);
+                // Append on-transform effects to the resolving entry so they are picked up
+                // by the EffectResolutionService's for-loop (e.g. Treasure Map creates tokens)
+                if (!effect.onTransformEffects().isEmpty()) {
+                    entry.getEffectsToResolve().addAll(effect.onTransformEffects());
+                }
             }
         }
     }
@@ -299,6 +306,7 @@ public class PermanentCounterResolutionService {
         String counterName = switch (effect.counterType()) {
             case CHARGE -> "charge";
             case HATCHLING -> "hatchling";
+            case LANDMARK -> "landmark";
             case SLIME -> "slime";
             case STUDY -> "study";
             case WISH -> "wish";
@@ -315,6 +323,7 @@ public class PermanentCounterResolutionService {
         switch (counterType) {
             case CHARGE -> self.setChargeCounters(0);
             case HATCHLING -> self.setHatchlingCounters(0);
+            case LANDMARK -> self.setLandmarkCounters(0);
             case SLIME -> self.setSlimeCounters(0);
             case STUDY -> self.setStudyCounters(0);
             case WISH -> self.setWishCounters(0);

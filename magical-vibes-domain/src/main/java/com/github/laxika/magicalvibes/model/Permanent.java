@@ -70,6 +70,7 @@ public class Permanent {
     @Setter private int wishCounters;
     @Setter private int loreCounters;
     @Setter private int aimCounters;
+    @Setter private int landmarkCounters;
     @Setter private int loyaltyActivationsThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).

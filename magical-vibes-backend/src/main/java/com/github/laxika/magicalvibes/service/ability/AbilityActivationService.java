@@ -778,6 +778,7 @@ public class AbilityActivationService {
                 case AIM -> permanent.getAimCounters();
                 case CHARGE -> permanent.getChargeCounters();
                 case HATCHLING -> permanent.getHatchlingCounters();
+                case LANDMARK -> permanent.getLandmarkCounters();
                 case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
                 case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
                 case SLIME -> permanent.getSlimeCounters();

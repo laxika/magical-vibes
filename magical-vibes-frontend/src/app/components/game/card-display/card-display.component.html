@@ -93,4 +93,7 @@
 @if (!preview && permanent && permanent.aimCounters > 0) {
   <div class="card-charge-badge">Aim x{{ permanent.aimCounters }}</div>
 }
+@if (!preview && permanent && permanent.landmarkCounters > 0) {
+  <div class="card-charge-badge">Landmark x{{ permanent.landmarkCounters }}</div>
+}
 <ng-content></ng-content>
