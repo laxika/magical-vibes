@@ -318,6 +318,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Attachment self-buff | `c/ChampionOfTheFlame.java` | STATIC BoostSelfPerAttachmentEffect(2, 2, true, true) — +2/+2 for each Aura and Equipment attached. Use BoostSelfPerEquipmentAttachedEffect for Equipment-only (Goblin Gaveleer) |
 | Tribal combat trigger (subtype counter lord) | `r/RakishHeir.java` | ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER PutCountersOnDamageDealerEffect(1,1,1, PermanentHasSubtypePredicate(VAMPIRE)) — when a Vampire you control deals combat damage to a player, put +1/+1 counter on it |
 | Choose subtype + grant to own | `x/Xenograft.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC GrantChosenSubtypeToOwnCreaturesEffect |
+| Choose subtype + lord boost + cast draw | `v/VanquishersBanner.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC BoostCreaturesOfChosenSubtypeEffect(1,1) + ON_CONTROLLER_CASTS_SPELL ChosenSubtypeSpellCastTriggerEffect(DrawCardEffect) — choose type on enter, +1/+1 to own creatures of that type, draw on casting creature of that type |
 | Shared-type pump | `c/CoatOfArms.java` | STATIC BoostBySharedCreatureTypeEffect |
 | Can't block | `s/SpinelessThug.java` | STATIC CantBlockEffect |
 | Must attack | `b/BloodrockCyclops.java` | STATIC MustAttackEffect |

@@ -26,7 +26,12 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -184,6 +189,33 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = ChosenSubtypeSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleChosenSubtypeSpellCastTrigger(TriggerMatchContext match,
+            ChosenSubtypeSpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        CardSubtype chosenSubtype = match.permanent().getChosenSubtype();
+        if (chosenSubtype == null) return false;
+
+        // Must be a creature spell of the chosen type
+        if (!gameQueryService.matchesCardPredicate(sc.spellCard(),
+                new CardAllOfPredicate(List.of(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new CardSubtypePredicate(chosenSubtype)
+                )), null, match.gameData(), sc.castingPlayerId())) return false;
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(trigger.resolvedEffects())
+        ));
+
+        log.info("Game {} - {} chosen-subtype spell-cast trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)

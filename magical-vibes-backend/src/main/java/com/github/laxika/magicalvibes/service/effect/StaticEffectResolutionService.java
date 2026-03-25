@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockedByMinCreaturesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledCardTypeEffect;
@@ -449,6 +450,20 @@ public class StaticEffectResolutionService {
                     || target.getTransientColors().contains(chosenColor);
         }
         if (colorMatch) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
+        }
+    }
+
+    @HandlesStaticEffect(BoostCreaturesOfChosenSubtypeEffect.class)
+    private void resolveBoostCreaturesOfChosenSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var boost = (BoostCreaturesOfChosenSubtypeEffect) effect;
+        CardSubtype chosenSubtype = context.source().getChosenSubtype();
+        if (chosenSubtype == null) return;
+        if (!context.targetOnSameBattlefield()) return;
+        Permanent target = context.target();
+        if (!gameQueryService.isCreature(context.gameData(), target)) return;
+        if (permanentHasSubtype(target, chosenSubtype)) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
         }
