@@ -936,6 +936,12 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        // Sword-Point Diplomacy: opponent chose which cards to deny (paying life)
+        if (gameData.pendingSwordPointControllerId != null) {
+            handleSwordPointDiplomacyChoice(gameData, allRevealedCards, cardIds);
+            return;
+        }
+
         // Separate selected cards from the rest
         Set<UUID> selectedIds = new HashSet<>(cardIds);
         List<Card> selectedCards = new ArrayList<>();
@@ -1162,7 +1168,75 @@ public class LibraryChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    private void handleSwordPointDiplomacyChoice(GameData gameData, List<Card> allRevealedCards,
+                                                   List<UUID> selectedCardIds) {
+        UUID controllerId = gameData.pendingSwordPointControllerId;
+        int lifeCost = gameData.pendingSwordPointLifeCost;
+        gameData.pendingSwordPointControllerId = null;
+        gameData.pendingSwordPointLifeCost = 0;
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        // Determine the opponent (the player who made the choice)
+        UUID opponentId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst()
+                .orElseThrow();
+        String opponentName = gameData.playerIdToName.get(opponentId);
+
+        // Validate opponent can afford to pay for all selected cards
+        int totalLifeCost = selectedCardIds.size() * lifeCost;
+        int opponentLife = gameData.playerLifeTotals.get(opponentId);
+        if (totalLifeCost > opponentLife) {
+            throw new IllegalStateException("Not enough life to pay for " + selectedCardIds.size()
+                    + " cards (need " + totalLifeCost + ", have " + opponentLife + ")");
+        }
+
+        // Separate selected (denied) cards from unselected (to hand)
+        Set<UUID> deniedIds = new HashSet<>(selectedCardIds);
+        List<Card> toHand = new ArrayList<>();
+        List<Card> toExile = new ArrayList<>();
+        for (Card card : allRevealedCards) {
+            if (deniedIds.contains(card.getId())) {
+                toExile.add(card);
+            } else {
+                toHand.add(card);
+            }
+        }
+
+        // Opponent pays life for each denied card
+        if (!toExile.isEmpty()) {
+            gameData.playerLifeTotals.merge(opponentId, -totalLifeCost, Integer::sum);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    opponentName + " pays " + totalLifeCost + " life to deny "
+                            + toExile.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("") + ".");
+        }
+
+        // Cards not denied go to controller's hand
+        for (Card card : toHand) {
+            gameData.addCardToHand(controllerId, card);
+        }
+        if (!toHand.isEmpty()) {
+            String handNames = toHand.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " puts " + handNames + " into their hand.");
+        }
+
+        // Denied cards are exiled
+        for (Card card : toExile) {
+            exileService.exileCard(gameData, controllerId, card);
+        }
+        if (!toExile.isEmpty()) {
+            String exileNames = toExile.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " exiles " + exileNames + ".");
+        }
+
+        log.info("Game {} - Sword-Point Diplomacy resolved: {} to hand, {} exiled ({} paid {} life)",
+                gameData.id, toHand.size(), toExile.size(), opponentName, totalLifeCost);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
 }
-
-
-

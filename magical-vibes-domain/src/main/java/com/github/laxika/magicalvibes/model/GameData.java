@@ -83,6 +83,10 @@ public class GameData {
     public UUID pendingKarnScionControllerId;
     /** Tracks whether a LIBRARY_REVEAL_CHOICE is for Karn Scion -1 (return from exile). */
     public boolean pendingKarnScionReturnFromExile;
+    /** Tracks the controller ID during a pending Sword-Point Diplomacy opponent reveal choice. */
+    public UUID pendingSwordPointControllerId;
+    /** Tracks the life cost per card during a pending Sword-Point Diplomacy opponent reveal choice. */
+    public int pendingSwordPointLifeCost;
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
@@ -718,6 +722,8 @@ public class GameData {
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.pendingKarnScionControllerId = this.pendingKarnScionControllerId;
         copy.pendingKarnScionReturnFromExile = this.pendingKarnScionReturnFromExile;
+        copy.pendingSwordPointControllerId = this.pendingSwordPointControllerId;
+        copy.pendingSwordPointLifeCost = this.pendingSwordPointLifeCost;
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) ->

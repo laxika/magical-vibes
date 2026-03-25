@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOpponentPaysLifeOrToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsTypeToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
@@ -975,6 +976,69 @@ public class LibraryRevealResolutionService {
 
         log.info("Game {} - {} resolving {} — {} to hand, {} to graveyard",
                 gameData.id, playerName, cardName, toHand.size(), toGraveyard.size());
+    }
+
+    /**
+     * Reveals the top N cards of the controller's library. For each card, any opponent
+     * may pay X life to prevent it from going to the controller's hand. Cards not paid
+     * for go to hand; cards paid for are exiled.
+     *
+     * <p>Used by Sword-Point Diplomacy (count=3, lifeCost=3).
+     */
+    @HandlesEffect(RevealTopCardsOpponentPaysLifeOrToHandEffect.class)
+    void resolveRevealTopCardsOpponentPaysLifeOrToHand(
+            GameData gameData,
+            StackEntry entry,
+            RevealTopCardsOpponentPaysLifeOrToHandEffect effect
+    ) {
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count());
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+        String cardName = entry.getCard().getName();
+
+        // Broadcast the reveal with all card names
+        String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+
+        // If the opponent doesn't have enough life to pay for even one card, all go to hand
+        UUID opponentId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst()
+                .orElseThrow();
+        int opponentLife = gameData.playerLifeTotals.get(opponentId);
+
+        if (opponentLife < effect.lifeCost()) {
+            // Opponent can't afford to pay for even one card
+            for (Card card : topCards) {
+                gameData.addCardToHand(controllerId, card);
+            }
+            String handNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " puts " + handNames + " into their hand.");
+            log.info("Game {} - {} resolving {} — all {} cards to hand (opponent can't afford to pay)",
+                    gameData.id, playerName, cardName, topCards.size());
+            return;
+        }
+
+        // Store context for the choice handler
+        gameData.pendingSwordPointControllerId = controllerId;
+        gameData.pendingSwordPointLifeCost = effect.lifeCost();
+
+        // Present all revealed cards to the opponent — they select which ones to exile (paying life each)
+        Set<UUID> validIds = new HashSet<>();
+        for (Card card : topCards) {
+            validIds.add(card.getId());
+        }
+        gameData.interaction.beginLibraryRevealChoice(opponentId, new ArrayList<>(topCards), validIds,
+                false, true, false);
+
+        gameBroadcastService.broadcastGameState(gameData);
+
+        log.info("Game {} - {} reveals {} cards for {}, opponent must choose which to deny",
+                gameData.id, playerName, topCards.size(), cardName);
     }
 
     /**
