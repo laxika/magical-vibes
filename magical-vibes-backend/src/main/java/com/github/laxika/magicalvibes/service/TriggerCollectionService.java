@@ -402,7 +402,7 @@ public class TriggerCollectionService {
             }
         }
 
-        if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
+        if (!gameData.pendingSpellTargetTriggers.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             processNextSpellTargetTrigger(gameData);
         }
     }
