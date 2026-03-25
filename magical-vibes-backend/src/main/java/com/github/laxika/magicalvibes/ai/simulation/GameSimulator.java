@@ -765,7 +765,13 @@ public class GameSimulator {
             case LIBRARY_REVEAL_CHOICE -> {
                 var lrc = gd.interaction.libraryRevealChoiceContext();
                 if (lrc != null && lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
-                    gameService.handleLibraryCardChosen(gd, player, 0);
+                    if (lrc.lifeCostPerSelection() > 0) {
+                        // Punisher reveal (e.g. Sword-Point Diplomacy): deny nothing (don't pay life)
+                        gameService.handleMultipleGraveyardCardsChosen(gd, player, List.of());
+                    } else {
+                        // Normal library reveal: choose all valid cards
+                        gameService.handleMultipleGraveyardCardsChosen(gd, player, new ArrayList<>(lrc.validCardIds()));
+                    }
                 }
             }
             default -> {

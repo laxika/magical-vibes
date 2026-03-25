@@ -1023,19 +1023,21 @@ public class LibraryRevealResolutionService {
             return;
         }
 
-        // Store context for the choice handler
-        gameData.pendingSwordPointControllerId = controllerId;
-        gameData.pendingSwordPointLifeCost = effect.lifeCost();
-
         // Present all revealed cards to the opponent — they select which ones to exile (paying life each)
         Set<UUID> validIds = new HashSet<>();
         for (Card card : topCards) {
             validIds.add(card.getId());
         }
         gameData.interaction.beginLibraryRevealChoice(opponentId, new ArrayList<>(topCards), validIds,
-                false, true, false);
+                false, true, false, effect.lifeCost(), controllerId);
 
         gameBroadcastService.broadcastGameState(gameData);
+
+        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
+        List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
+        sessionManager.sendToPlayer(opponentId, new ChooseMultipleCardsFromGraveyardsMessage(
+                cardIds, cardViews, topCards.size(),
+                "Choose cards to deny (you pay " + effect.lifeCost() + " life for each). Unselected cards go to opponent's hand."));
 
         log.info("Game {} - {} reveals {} cards for {}, opponent must choose which to deny",
                 gameData.id, playerName, topCards.size(), cardName);

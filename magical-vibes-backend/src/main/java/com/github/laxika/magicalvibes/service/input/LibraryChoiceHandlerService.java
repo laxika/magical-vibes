@@ -936,9 +936,10 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        // Sword-Point Diplomacy: opponent chose which cards to deny (paying life)
-        if (gameData.pendingSwordPointControllerId != null) {
-            handleSwordPointDiplomacyChoice(gameData, allRevealedCards, cardIds);
+        // Punisher reveal (Sword-Point Diplomacy etc.): opponent chose which cards to deny (paying life)
+        if (libraryRevealChoice.lifeCostPerSelection() > 0 && libraryRevealChoice.beneficiaryPlayerId() != null) {
+            handlePunisherRevealChoice(gameData, allRevealedCards, cardIds,
+                    libraryRevealChoice.beneficiaryPlayerId(), libraryRevealChoice.lifeCostPerSelection());
             return;
         }
 
@@ -1168,12 +1169,9 @@ public class LibraryChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleSwordPointDiplomacyChoice(GameData gameData, List<Card> allRevealedCards,
-                                                   List<UUID> selectedCardIds) {
-        UUID controllerId = gameData.pendingSwordPointControllerId;
-        int lifeCost = gameData.pendingSwordPointLifeCost;
-        gameData.pendingSwordPointControllerId = null;
-        gameData.pendingSwordPointLifeCost = 0;
+    private void handlePunisherRevealChoice(GameData gameData, List<Card> allRevealedCards,
+                                              List<UUID> selectedCardIds,
+                                              UUID controllerId, int lifeCost) {
 
         String controllerName = gameData.playerIdToName.get(controllerId);
 
@@ -1232,7 +1230,7 @@ public class LibraryChoiceHandlerService {
                     controllerName + " exiles " + exileNames + ".");
         }
 
-        log.info("Game {} - Sword-Point Diplomacy resolved: {} to hand, {} exiled ({} paid {} life)",
+        log.info("Game {} - Punisher reveal resolved: {} to hand, {} exiled ({} paid {} life)",
                 gameData.id, toHand.size(), toExile.size(), opponentName, totalLifeCost);
 
         stateBasedActionService.performStateBasedActions(gameData);

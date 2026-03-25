@@ -528,12 +528,21 @@ class AiChoiceHandler {
             return;
         }
 
-        // Library reveal choice (Lead the Stampede, Commune with Nature, etc.)
+        // Library reveal choice (Lead the Stampede, Commune with Nature, Sword-Point Diplomacy, etc.)
         if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
             InteractionContext.LibraryRevealChoice lrc = gameData.interaction.libraryRevealChoiceContext();
             if (lrc != null && aiPlayerId.equals(lrc.playerId())) {
-                List<UUID> chosen = new ArrayList<>(lrc.validCardIds());
-                log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), gameId);
+                List<UUID> chosen;
+                if (lrc.lifeCostPerSelection() > 0) {
+                    // Punisher reveal (e.g. Sword-Point Diplomacy): selecting cards costs life.
+                    // AI denies nothing to avoid paying life.
+                    chosen = List.of();
+                    log.info("AI: Denying 0 revealed cards (punisher reveal, {} life each) in game {}",
+                            lrc.lifeCostPerSelection(), gameId);
+                } else {
+                    chosen = new ArrayList<>(lrc.validCardIds());
+                    log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), gameId);
+                }
                 send(() -> messageHandler.handleMultipleGraveyardCardsChosen(selfConnection, new MultipleGraveyardCardsChosenRequest(chosen)));
             }
             return;

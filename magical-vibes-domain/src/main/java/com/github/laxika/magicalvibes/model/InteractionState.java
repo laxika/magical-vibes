@@ -556,11 +556,22 @@ public class InteractionState {
                 remainingToGraveyard, selectedToHand, reorderRemainingToBottom);
     }
 
+    public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
+                                          boolean remainingToGraveyard, boolean selectedToHand,
+                                          boolean reorderRemainingToBottom,
+                                          int lifeCostPerSelection, UUID beneficiaryPlayerId) {
+        this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
+        this.libraryView.setReveal(playerId, allCards, validCardIds);
+        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds,
+                remainingToGraveyard, selectedToHand, reorderRemainingToBottom, false,
+                lifeCostPerSelection, beneficiaryPlayerId);
+    }
+
     public void beginLibraryRevealChoiceRandomBottom(UUID playerId, List<Card> allCards, Set<UUID> validCardIds) {
         this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
         this.libraryView.setReveal(playerId, allCards, validCardIds);
         this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds,
-                false, false, false, true);
+                false, false, false, true, 0, null);
     }
 
     public void clearLibraryRevealChoice() {
