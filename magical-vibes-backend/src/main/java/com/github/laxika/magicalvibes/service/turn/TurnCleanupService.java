@@ -95,6 +95,12 @@ public class TurnCleanupService {
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
 
+        // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
+        for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
+            gameData.exilePlayPermissions.remove(cardId);
+        }
+        gameData.exilePlayPermissionsExpireEndOfTurn.clear();
+
         // Clear persistent mana tracking so the next drain empties pools fully
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);

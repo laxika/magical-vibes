@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackW
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAllWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastNonlandThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
@@ -1059,6 +1060,42 @@ public class ExileResolutionService {
      * When {@code trackWithSource} is true, also tracks the exiled card in
      * {@code permanentExiledCards} under the source permanent (e.g. Rona, Disciple of Gix).
      */
+    /**
+     * Exiles the top card of the controller's library. If it's a nonland card,
+     * the controller may cast it this turn (paying its mana cost).
+     * The play permission expires at end of turn.
+     * Used by Vance's Blasting Cannons.
+     */
+    @HandlesEffect(ExileTopCardMayCastNonlandThisTurnEffect.class)
+    void resolveExileTopCardMayCastNonlandThisTurn(GameData gameData, StackEntry entry,
+                                                    ExileTopCardMayCastNonlandThisTurnEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logEntry = controllerName + "'s library is empty — nothing to exile.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.removeFirst();
+        exileService.exileCard(gameData, controllerId, topCard);
+
+        boolean isNonland = !topCard.hasType(CardType.LAND);
+        if (isNonland) {
+            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        }
+
+        String castNote = isNonland ? " (may cast this turn)" : "";
+        String logEntry = controllerName + " exiles " + topCard.getName()
+                + " from the top of their library" + castNote + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} exiles {} from library top (nonland={})",
+                gameData.id, controllerName, topCard.getName(), isNonland);
+    }
+
     @HandlesEffect(ExileTopCardOfOwnLibraryEffect.class)
     void resolveExileTopCardOfOwnLibrary(GameData gameData, StackEntry entry,
                                          ExileTopCardOfOwnLibraryEffect effect) {

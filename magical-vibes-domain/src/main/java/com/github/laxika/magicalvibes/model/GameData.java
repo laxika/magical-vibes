@@ -282,6 +282,9 @@ public class GameData {
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
+    /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
+     *  Cleared during cleanup step — matching entries are also removed from {@link #exilePlayPermissions}. */
+    public final Set<UUID> exilePlayPermissionsExpireEndOfTurn = ConcurrentHashMap.newKeySet();
     /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
     public UUID knowledgePoolSourcePermanentId;
 
@@ -889,6 +892,7 @@ public class GameData {
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
+        copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
 
         // --- Search tax payments (Leonin Arbiter) ---

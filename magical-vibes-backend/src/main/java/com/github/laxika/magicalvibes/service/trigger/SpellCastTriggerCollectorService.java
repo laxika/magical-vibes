@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffe
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
@@ -215,6 +216,38 @@ public class SpellCastTriggerCollectorService {
 
         log.info("Game {} - {} chosen-subtype spell-cast trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = NthSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleNthSpellCastTrigger(TriggerMatchContext match, NthSpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        int spellsCast = match.gameData().getSpellsCastThisTurnCount(sc.castingPlayerId());
+        if (spellsCast != trigger.spellNumber()) return false;
+
+        List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
+
+        if (match.rawEffect() instanceof MayEffect may) {
+            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    resolved,
+                    match.permanent().getCard().getName() + " — " + may.prompt(),
+                    null,
+                    null,
+                    match.permanent().getId()));
+        } else {
+            StackEntry entry = selfTarget
+                    ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                        match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId())
+                    : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                        match.permanent().getCard().getName() + "'s ability", resolved);
+            match.gameData().stack.add(entry);
+        }
+
+        log.info("Game {} - {} Nth-spell-cast trigger fired (spell #{})",
+                match.gameData().id, match.permanent().getCard().getName(), trigger.spellNumber());
         return true;
     }
 
