@@ -268,7 +268,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Verify the spell was actually cast — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 if (hand.size() >= handSizeBefore) {
-                    log.warn("AI (Hard/MCTS): PlayCard failed silently in game {}", gameId);
+                    Card failedCard = hand.size() > cardIndex ? hand.get(cardIndex) : null;
+                    ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
+                    log.warn("AI (Hard/MCTS): PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
+                            gameId, failedCard != null ? failedCard.getName() : "?", cardIndex,
+                            gameData.currentStep, aiPlayer.getId().equals(gameData.activePlayerId),
+                            gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
+                            gameData.priorityPassedBy);
                     return false;
                 }
                 return true;
@@ -407,7 +413,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         if (hand.size() >= handSizeBefore) {
-            log.warn("AI (Hard): PlayCard failed silently in game {}", gameId);
+            Card failedCard = hand.size() > cardIndex ? hand.get(cardIndex) : null;
+            ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
+            log.warn("AI (Hard): PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
+                    gameId, failedCard != null ? failedCard.getName() : "?", cardIndex,
+                    gameData.currentStep, aiPlayer.getId().equals(gameData.activePlayerId),
+                    gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
+                    gameData.priorityPassedBy);
             return false;
         }
         return true;

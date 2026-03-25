@@ -259,7 +259,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
 
             if (hand.size() >= handSizeBefore) {
-                log.warn("Random AI: PlayCard failed silently in game {}", gameId);
+                ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
+                log.warn("Random AI: PlayCard failed silently in game {}. Card='{}' index={} step={} activePlayer={} isActive={} stackEmpty={} actualPool={} virtualPool={} priorityPassed={}",
+                        gameId, card.getName(), cardIndex, gameData.currentStep,
+                        gameData.activePlayerId, aiPlayer.getId().equals(gameData.activePlayerId),
+                        gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
+                        virtualPool.toMap(), gameData.priorityPassedBy);
                 continue; // Try next spell
             }
             return true;

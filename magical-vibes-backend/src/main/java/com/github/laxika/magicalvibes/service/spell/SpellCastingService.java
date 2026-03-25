@@ -276,6 +276,13 @@ public class SpellCastingService {
             } else if (hasSacrificeForCostReduction) {
                 // Allow — sacrifice cost reduction will be validated during casting
             } else {
+                // Diagnostic: log why this card was not in the playable list
+                ManaPool diagPool = gameData.playerManaPools.get(playerId);
+                log.warn("Game {} - Card '{}' at index {} not playable. Step={}, activePlayer={}, isActive={}, stackEmpty={}, pool={}, playableIndices={}, hand={}",
+                        gameData.id, cardCheck.getName(), cardIndex, gameData.currentStep,
+                        gameData.activePlayerId, playerId.equals(gameData.activePlayerId),
+                        gameData.stack.isEmpty(), diagPool != null ? diagPool.toMap() : "null",
+                        playable, handCheck.stream().map(c -> c.getName()).toList());
                 throw new IllegalStateException("Card is not playable");
             }
         }
