@@ -1,4 +1,4 @@
-import { Component, Input, HostBinding, OnInit, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, Input, HostBinding, OnInit, OnChanges, AfterViewChecked, SimpleChanges, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
@@ -15,7 +15,7 @@ import { formatEnumName, formatKeywords } from '../../../utils/format-utils';
   styleUrl: './card-display.component.css',
   host: { 'class': 'card' }
 })
-export class CardDisplayComponent implements OnInit, OnChanges {
+export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked {
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
   @Input() preview = false;
@@ -23,6 +23,14 @@ export class CardDisplayComponent implements OnInit, OnChanges {
   formatKeywords = formatKeywords;
   artUrl = signal<string | null>(null);
   watermarkUrl = signal<string | null>(null);
+
+  @ViewChild('textBox') textBoxRef?: ElementRef<HTMLDivElement>;
+
+  private static readonly MAX_FONT_SIZE = 11;
+  private static readonly MIN_FONT_SIZE = 7;
+  private static readonly FONT_STEP = 0.5;
+  private static readonly FLAVOR_REDUCTION = 2;
+  private lastTextFingerprint = '';
 
   private scryfallImageService = inject(ScryfallImageService);
   private scryfallCardDataService = inject(ScryfallCardDataService);
@@ -198,17 +206,30 @@ export class CardDisplayComponent implements OnInit, OnChanges {
     return this.scryfallData?.rarity ?? null;
   }
 
-  get textBoxFontSize(): string {
-    let total = '';
-    if (this.card.cardText) total += this.card.cardText;
-    if (this.effectiveKeywords.length > 0) total += this.formatKeywords(this.effectiveKeywords);
-    if (this.flavorText) total += this.flavorText;
-    const len = total.length;
-    if (len <= 50) return '11px';
-    if (len <= 90) return '10.5px';
-    if (len <= 140) return '10px';
-    if (len <= 200) return '9.5px';
-    return '9px';
+  ngAfterViewChecked(): void {
+    this.fitTextToBox();
+  }
+
+  private fitTextToBox(): void {
+    const el = this.textBoxRef?.nativeElement;
+    if (!el) return;
+
+    const fp = (this.card.cardText ?? '') + '|' +
+      this.formatKeywords(this.effectiveKeywords) + '|' +
+      (this.flavorText ?? '');
+    if (fp === this.lastTextFingerprint) return;
+    this.lastTextFingerprint = fp;
+
+    const flavorEl = el.querySelector('.card-flavor-text') as HTMLElement | null;
+    let size = CardDisplayComponent.MAX_FONT_SIZE;
+
+    while (size >= CardDisplayComponent.MIN_FONT_SIZE) {
+      el.style.fontSize = size + 'px';
+      if (flavorEl) flavorEl.style.fontSize = (size - CardDisplayComponent.FLAVOR_REDUCTION) + 'px';
+
+      if (el.scrollHeight <= el.clientHeight) break;
+      size -= CardDisplayComponent.FONT_STEP;
+    }
   }
 
   get setSymbolUrl(): string | null {

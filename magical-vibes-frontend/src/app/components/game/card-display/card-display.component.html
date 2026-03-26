@@ -33,7 +33,7 @@
       <span class="rarity-diamond" [attr.data-rarity]="rarity">&#9670;</span>
     }
   </div>
-  <div class="text-box" [style.font-size]="textBoxFontSize">
+  <div class="text-box" #textBox>
     @if (watermarkUrl()) {
       <img class="watermark" [src]="watermarkUrl()" alt="" />
     }

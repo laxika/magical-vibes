@@ -194,6 +194,7 @@ img.card-art {
   overflow: hidden;
   position: relative;
   min-height: 0;
+  font-size: 11px;
 }
 
 .text-box .card-text {
