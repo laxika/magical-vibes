@@ -913,7 +913,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private readonly attackingCreatureFilter = (p: Permanent) => isPermanentCreature(p) && p.attacking;
 
-  onMyBattlefieldCardClick(index: number): void {
+  onMyBattlefieldCardClick(index: number, event?: MouseEvent): void {
     const perm = this.myBattlefield[index];
     if (this.clickResolver.tryResolveClick(perm, this.attackingCreatureFilter)) return;
     if (this.choice.targeting.convoking) {
@@ -954,6 +954,9 @@ export class GameComponent implements OnInit, OnDestroy {
       this.selectBlocker(index);
     } else {
       this.choice.targeting.tapPermanent(index);
+      if (this.choice.targeting.choosingAbility) {
+        event?.stopPropagation();
+      }
     }
   }
 

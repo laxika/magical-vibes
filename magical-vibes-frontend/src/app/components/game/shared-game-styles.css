@@ -294,6 +294,11 @@
   opacity: 0.9;
 }
 
+.lands-row:has(.ability-popup) {
+  position: relative;
+  z-index: 1000;
+}
+
 .lands-row .card {
   transform: scale(0.9);
 }

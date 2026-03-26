@@ -512,7 +512,7 @@
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                 [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
-                (click)="onMyBattlefieldCardClick(ip.originalIndex)"
+                (click)="onMyBattlefieldCardClick(ip.originalIndex, $event)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()" />
               @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
@@ -554,7 +554,7 @@
                         [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                         [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
-                        (click)="onMyBattlefieldCardClick(ip.originalIndex)"
+                        (click)="onMyBattlefieldCardClick(ip.originalIndex, $event)"
                         (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                         (mouseleave)="onCardHoverEnd()" />
                       @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
@@ -592,7 +592,7 @@
                   [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
                   [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
                   [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(item.perm.id)"
-                  (click)="onMyBattlefieldCardClick(item.originalIndex)"
+                  (click)="onMyBattlefieldCardClick(item.originalIndex, $event)"
                   (mouseenter)="onCardHover(item.perm.card, item.perm)"
                   (mouseleave)="onCardHoverEnd()" />
               @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === item.originalIndex) {
