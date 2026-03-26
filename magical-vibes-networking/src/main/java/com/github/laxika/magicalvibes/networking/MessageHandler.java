@@ -109,6 +109,8 @@ public interface MessageHandler {
 
     void handleLeaveGame(Connection connection) throws Exception;
 
+    void handleLeaveDraft(Connection connection) throws Exception;
+
     void handleTimeout(Connection connection);
 
     void handleError(Connection connection, String message) throws Exception;

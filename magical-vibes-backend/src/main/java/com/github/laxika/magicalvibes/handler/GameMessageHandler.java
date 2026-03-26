@@ -1039,6 +1039,37 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
+    public void handleLeaveDraft(Connection connection) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        DraftData draftData = draftRegistry.getDraftForPlayer(player.getId());
+        if (draftData != null) {
+            // Only allow leaving if the draft tournament is in progress or finished
+            if (draftData.status == DraftStatus.TOURNAMENT || draftData.status == DraftStatus.FINISHED) {
+                draftData.playerIds.remove(player.getId());
+
+                // If no human players remain, clean up the draft
+                boolean hasHumanPlayers = draftData.playerIds.stream()
+                        .anyMatch(id -> !draftData.aiPlayerIds.contains(id));
+                if (!hasHumanPlayers) {
+                    draftRegistry.remove(draftData.id);
+                }
+            }
+        }
+
+        // Mark player as back in the lobby
+        sessionManager.clearInGame(connection.getId());
+
+        var games = lobbyService.listRunningGames();
+        var response = new com.github.laxika.magicalvibes.networking.message.LobbyGamesResponse(games);
+        connection.sendMessage(objectMapper.writeValueAsString(response));
+    }
+
+    @Override
     public void handleError(Connection connection, String message) throws Exception {
         if (!connection.isOpen()) {
             log.debug("Suppressed error for closed connection {}: {}", connection.getId(), message);

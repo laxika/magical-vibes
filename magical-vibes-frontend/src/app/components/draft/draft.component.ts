@@ -342,6 +342,9 @@ export class DraftComponent implements OnInit, OnDestroy {
   // ===== Tournament =====
 
   backToHome() {
+    this.websocketService.send({ type: MessageType.LEAVE_DRAFT });
+    this.websocketService.activeDraftId = null;
+    this.websocketService.inDraft = false;
     this.router.navigate(['/home']);
   }
 

@@ -89,6 +89,7 @@ public enum MessageType {
     SCRY_COMPLETED,
     SURRENDER,
     LEAVE_GAME,
+    LEAVE_DRAFT,
     LOBBY_GAMES_RESPONSE,
     GAME_REMOVED
 }
