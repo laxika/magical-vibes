@@ -77,7 +77,9 @@ export enum MessageType {
   LEAVE_GAME = 'LEAVE_GAME',
   LEAVE_DRAFT = 'LEAVE_DRAFT',
   LOBBY_GAMES_RESPONSE = 'LOBBY_GAMES_RESPONSE',
-  GAME_REMOVED = 'GAME_REMOVED'
+  GAME_REMOVED = 'GAME_REMOVED',
+  SAVE_DECK = 'SAVE_DECK',
+  SAVE_DECK_RESPONSE = 'SAVE_DECK_RESPONSE'
 }
 
 export enum GameStatus {
@@ -578,6 +580,11 @@ export interface CardListResponse {
   cards: BrowseCardInfo[];
 }
 
+export interface SaveDeckResponse {
+  type: MessageType;
+  deck: DeckInfo;
+}
+
 export interface ValidTargetsResponse {
   type: MessageType;
   validPermanentIds: string[];
@@ -588,7 +595,7 @@ export interface ValidTargetsResponse {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseFromListNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse | ValidTargetsResponse;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseFromListNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse | ValidTargetsResponse | SaveDeckResponse;
 
 export interface User {
   userId: string;

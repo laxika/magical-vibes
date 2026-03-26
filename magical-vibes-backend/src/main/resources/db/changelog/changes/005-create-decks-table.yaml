@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-decks-table
+      author: magical-vibes
+      changes:
+        - createTable:
+            tableName: decks
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deck_json
+                  type: TEXT
+                  constraints:
+                    nullable: false

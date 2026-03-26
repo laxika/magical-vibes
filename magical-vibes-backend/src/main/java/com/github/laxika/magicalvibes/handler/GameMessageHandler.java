@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
+import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
@@ -57,6 +59,7 @@ import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.DraftService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.CardBrowserService;
+import com.github.laxika.magicalvibes.service.DeckService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 
@@ -87,6 +90,7 @@ public class GameMessageHandler implements MessageHandler {
     private final DraftRegistry draftRegistry;
     private final CardBrowserService cardBrowserService;
     private final ValidTargetService validTargetService;
+    private final DeckService deckService;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
@@ -99,7 +103,8 @@ public class GameMessageHandler implements MessageHandler {
             DraftService draftService,
             DraftRegistry draftRegistry,
             CardBrowserService cardBrowserService,
-            ValidTargetService validTargetService) {
+            ValidTargetService validTargetService,
+            DeckService deckService) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.gameBroadcastService = gameBroadcastService;
@@ -112,6 +117,7 @@ public class GameMessageHandler implements MessageHandler {
         this.draftRegistry = draftRegistry;
         this.cardBrowserService = cardBrowserService;
         this.validTargetService = validTargetService;
+        this.deckService = deckService;
     }
 
     @Override
@@ -891,6 +897,23 @@ public class GameMessageHandler implements MessageHandler {
         var cards = cardBrowserService.getCardsForSet(request.setCode());
         CardListResponse response = new CardListResponse(request.setCode(), cards);
         connection.sendMessage(objectMapper.writeValueAsString(response));
+    }
+
+    @Override
+    public void handleSaveDeck(Connection connection, SaveDeckRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        try {
+            SaveDeckResponse response = deckService.saveDeck(player.getId(), request);
+            connection.sendMessage(objectMapper.writeValueAsString(response));
+        } catch (Exception e) {
+            log.error("Error saving deck", e);
+            handleError(connection, "Failed to save deck: " + e.getMessage());
+        }
     }
 
     @Override

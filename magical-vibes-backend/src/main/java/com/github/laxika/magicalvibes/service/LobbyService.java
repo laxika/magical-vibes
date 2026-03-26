@@ -32,6 +32,7 @@ public class LobbyService {
 
     private final GameRegistry gameRegistry;
     private final GameBroadcastService gameBroadcastService;
+    private final DeckService deckService;
 
     public GameResult createGame(String gameName, Player player, String deckId) {
         UUID gameId = UUID.randomUUID();
@@ -82,8 +83,13 @@ public class LobbyService {
     private void initializeGame(GameData gameData) {
         for (UUID playerId : gameData.playerIds) {
             String deckId = gameData.playerDeckChoices.get(playerId);
-            PrebuiltDeck prebuiltDeck = PrebuiltDeck.findById(deckId);
-            List<Card> deck = prebuiltDeck.buildDeck();
+            List<Card> deck;
+            if (deckService.isCustomDeck(deckId)) {
+                deck = deckService.buildCustomDeck(deckId);
+            } else {
+                PrebuiltDeck prebuiltDeck = PrebuiltDeck.findById(deckId);
+                deck = prebuiltDeck.buildDeck();
+            }
 
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
@@ -107,10 +113,15 @@ public class LobbyService {
 
         gameData.gameLog.add("Game started!");
         for (UUID playerId : gameData.orderedPlayerIds) {
-            String deckId = gameData.playerDeckChoices.get(playerId);
-            PrebuiltDeck prebuiltDeck = PrebuiltDeck.findById(deckId);
+            String deckIdForLog = gameData.playerDeckChoices.get(playerId);
+            String deckName;
+            if (deckService.isCustomDeck(deckIdForLog)) {
+                deckName = "a custom deck";
+            } else {
+                deckName = PrebuiltDeck.findById(deckIdForLog).getName();
+            }
             String playerName = gameData.playerIdToName.get(playerId);
-            gameData.gameLog.add(playerName + " is playing with " + prebuiltDeck.getName() + ".");
+            gameData.gameLog.add(playerName + " is playing with " + deckName + ".");
         }
 
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);

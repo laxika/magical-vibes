@@ -91,5 +91,7 @@ public enum MessageType {
     LEAVE_GAME,
     LEAVE_DRAFT,
     LOBBY_GAMES_RESPONSE,
-    GAME_REMOVED
+    GAME_REMOVED,
+    SAVE_DECK,
+    SAVE_DECK_RESPONSE
 }

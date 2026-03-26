@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class LoginService {
 
     private final UserRepository userRepository;
     private final LobbyService lobbyService;
+    private final DeckService deckService;
 
     // TODO: Implement password hashing with BCrypt for production use
     @Transactional(readOnly = true)
@@ -42,10 +44,14 @@ public class LoginService {
             // Fetch available games
             var games = lobbyService.listRunningGames();
 
-            // Build available decks list
-            List<DeckInfo> decks = Arrays.stream(PrebuiltDeck.values())
+            // Build available decks list (custom decks first, then prebuilt)
+            List<DeckInfo> customDecks = deckService.getCustomDecksForUser(user.getId());
+            List<DeckInfo> prebuiltDecks = Arrays.stream(PrebuiltDeck.values())
                     .map(d -> new DeckInfo(d.getId(), d.getName()))
                     .toList();
+            List<DeckInfo> decks = new ArrayList<>();
+            decks.addAll(customDecks);
+            decks.addAll(prebuiltDecks);
 
             // Build available sets list
             List<SetInfo> sets = Arrays.stream(CardSet.values())

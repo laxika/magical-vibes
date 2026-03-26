@@ -1,0 +1,185 @@
+<div class="builder-container">
+  <div class="builder-content">
+    <header>
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">Back to Lobby</button>
+        <h1>Deck Builder</h1>
+      </div>
+    </header>
+
+    <!-- Card Browser (top area) -->
+    <div class="browser-section">
+      <div class="controls-bar">
+        <div class="control-group">
+          <label for="setSelect">Set</label>
+          <select id="setSelect" [ngModel]="selectedSetCode()" (ngModelChange)="onSetChange($event)">
+            @for (set of availableSets; track set.code) {
+              <option [value]="set.code">{{ set.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="control-group search-group">
+          <label for="searchInput">Search</label>
+          <input
+            type="text"
+            id="searchInput"
+            [(ngModel)]="searchQuery"
+            placeholder="Search by name..."
+          />
+        </div>
+
+        <div class="control-group">
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+            <option value="all">All Cards</option>
+            <option value="implemented">Implemented</option>
+            <option value="not-implemented">Not Implemented</option>
+          </select>
+        </div>
+
+        <div class="control-group view-toggle">
+          <button
+            class="toggle-btn"
+            [class.active]="viewMode() === 'list'"
+            (click)="viewMode.set('list')"
+          >List</button>
+          <button
+            class="toggle-btn"
+            [class.active]="viewMode() === 'card'"
+            (click)="viewMode.set('card')"
+          >Cards</button>
+        </div>
+      </div>
+
+      <div class="stats-bar">
+        <span>Total: {{ totalCount() }}</span>
+        <span>Implemented: {{ implementedCount() }} / {{ totalCount() }}</span>
+        <span>Showing: {{ filteredCount() }}</span>
+      </div>
+
+      @if (loading()) {
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Loading cards...</span>
+        </div>
+      } @else if (viewMode() === 'list') {
+        <div class="list-view">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-number sortable" (click)="toggleSort('number')">#{{ sortIndicator('number') }}</th>
+                <th class="col-name sortable" (click)="toggleSort('name')">Name{{ sortIndicator('name') }}</th>
+                <th class="col-cost">Cost</th>
+                <th class="col-type">Type</th>
+                <th class="col-status sortable" (click)="toggleSort('implemented')">Impl{{ sortIndicator('implemented') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (card of filteredCards(); track card.collectorNumber) {
+                <tr
+                  [class.implemented]="card.implemented"
+                  [class.not-implemented]="!card.implemented"
+                  [class.clickable]="card.implemented"
+                  (click)="addCardToDeck(card)"
+                >
+                  <td class="col-number">#{{ card.collectorNumber }}</td>
+                  <td class="col-name">{{ card.name }}</td>
+                  <td class="col-cost" [innerHTML]="renderManaCost(card.manaCost)"></td>
+                  <td class="col-type">{{ card.typeLine }}</td>
+                  <td class="col-status">
+                    @if (card.implemented) {
+                      <span class="status-yes">Yes</span>
+                    } @else {
+                      <span class="status-no">No</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="card-view">
+          @for (card of filteredCards(); track card.collectorNumber) {
+            <div
+              class="card-item"
+              [class.not-implemented-card]="!card.implemented"
+              [class.clickable-card]="card.implemented"
+              (click)="addCardToDeck(card)"
+            >
+              <app-card-display [card]="toCard(card)" [preview]="true" />
+              @if (!card.implemented) {
+                <div class="not-implemented-overlay">
+                  <span>Not Implemented</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Deck Browser (bottom area) -->
+    <div class="deck-section">
+      <div class="deck-header">
+        <h2>Deck ({{ deckCardCount() }} cards)</h2>
+        <button
+          class="btn-save"
+          (click)="openSavePopup()"
+          [disabled]="deckEntries().length === 0"
+        >Save Deck</button>
+      </div>
+
+      @if (deckEntries().length === 0) {
+        <div class="deck-empty">
+          <p>Click cards above to add them to your deck.</p>
+        </div>
+      } @else {
+        <div class="deck-card-view">
+          @for (entry of deckEntries(); track entry.cardInfo.setCode + entry.cardInfo.collectorNumber) {
+            <div class="deck-card-item" (click)="removeCardFromDeck($index)">
+              <app-card-display [card]="toCard(entry.cardInfo)" [preview]="true" />
+              @if (entry.count > 1) {
+                <div class="deck-count-badge">{{ entry.count }}x</div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Save Popup -->
+  @if (showSavePopup()) {
+    <div class="popup-overlay" (click)="closeSavePopup()">
+      <div class="popup" (click)="$event.stopPropagation()">
+        <h3>Save Deck</h3>
+        <div class="popup-form">
+          <label for="deckNameInput">Deck Name</label>
+          <input
+            type="text"
+            id="deckNameInput"
+            [(ngModel)]="deckName"
+            placeholder="Enter deck name..."
+            (keydown.enter)="saveDeck()"
+          />
+        </div>
+        <div class="popup-actions">
+          <button class="btn-cancel" (click)="closeSavePopup()">Cancel</button>
+          <button
+            class="btn-confirm"
+            (click)="saveDeck()"
+            [disabled]="!deckName().trim() || saving()"
+          >
+            @if (saving()) {
+              Saving...
+            } @else {
+              Save
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

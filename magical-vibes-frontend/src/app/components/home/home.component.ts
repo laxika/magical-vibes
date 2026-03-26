@@ -180,6 +180,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/cards']);
   }
 
+  createDeck() {
+    this.router.navigate(['/deck-builder']);
+  }
+
   startTutorial() {
     this.router.navigate(['/tutorial']);
   }
