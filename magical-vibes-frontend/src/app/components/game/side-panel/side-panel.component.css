@@ -852,6 +852,7 @@
 .graveyard-tab-cards .card.graveyard-card {
   margin-bottom: -200px;
   transform: none;
+  isolation: isolate;
 }
 
 .graveyard-tab-cards .card.graveyard-card:last-child {
