@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -76,15 +75,10 @@ public class StateBasedActionService {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
+        // CR 704.5a — player with 0 or less life loses the game
         // CR 704.5c — player with ten or more poison counters loses the game
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-            if (poison >= 10) {
-                gameOutcomeService.checkWinCondition(gameData);
-                if (gameData.status == GameStatus.FINISHED) {
-                    return;
-                }
-            }
+        if (gameOutcomeService.checkWinCondition(gameData)) {
+            return;
         }
 
         // CR 714.4 — Saga with lore counters >= final chapter is sacrificed

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -94,5 +95,21 @@ class BloodTitheTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(-1);
         // Controller gains 3 life (the full amount lost, not capped)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
+    }
+
+    @Test
+    @DisplayName("Opponent losing life to 0 or below ends the game via state-based actions")
+    void lifeLossToZeroEndsGame() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 3);
+        harness.setHand(player1, List.of(new BloodTithe()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        // CR 704.5a — opponent at 0 life loses the game
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
