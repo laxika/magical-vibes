@@ -101,6 +101,7 @@
   border-radius: 3px;
   text-transform: uppercase;
   font-family: var(--font-display);
+  z-index: 10;
 }
 
 .attacking-badge {

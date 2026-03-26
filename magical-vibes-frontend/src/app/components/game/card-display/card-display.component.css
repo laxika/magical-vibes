@@ -366,9 +366,6 @@ img.card-art {
 }
 
 /* ── Token layout ── */
-:host(.token-card) {
-  overflow: hidden;
-}
 
 .token-art {
   position: absolute;
@@ -387,6 +384,7 @@ img.card-art {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.15);
+  border-radius: 1px;
 }
 
 .token-name-bar {
