@@ -315,7 +315,7 @@
 .player-menu {
   position: absolute;
   top: 50%;
-  left: calc(100% + 4px);
+  right: calc(100% + 4px);
   transform: translateY(-50%);
   z-index: 100;
   background: var(--gradient-parchment);

@@ -74,6 +74,26 @@ export class SidePanelComponent {
   activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
   showPlayerMenu = signal(false);
 
+  // Opponent is always shown on the left, my player on the right
+  get opponentPlayerIndex(): number { return 1 - this.myPlayerIndex; }
+
+  get opponentBadgeIsActive(): boolean { return this.opponentPlayerIndex === 0 ? this.isActivePlayer0 : this.isActivePlayer1; }
+  get opponentBadgeHoldsPriority(): boolean { return this.opponentPlayerIndex === 0 ? this.holdsPriority0 : this.holdsPriority1; }
+  get opponentBadgeLifeTotal(): number { return this.opponentPlayerIndex === 0 ? this.lifeTotal0 : this.lifeTotal1; }
+  get opponentBadgePoisonCounters(): number { return this.opponentPlayerIndex === 0 ? this.poisonCounters0 : this.poisonCounters1; }
+  get opponentBadgePlayerId(): string { return this.opponentPlayerIndex === 0 ? this.playerId0 : this.playerId1; }
+  get opponentBadgeHandSize(): number { return this.opponentPlayerIndex === 0 ? this.player1HandSize : this.player2HandSize; }
+  get opponentBadgeDeckSize(): number { return this.opponentPlayerIndex === 0 ? this.player1DeckSize : this.player2DeckSize; }
+
+  get myBadgeName(): string { return this.myPlayerIndex === 0 ? this.player1Name : this.player2Name; }
+  get myBadgeIsActive(): boolean { return this.myPlayerIndex === 0 ? this.isActivePlayer0 : this.isActivePlayer1; }
+  get myBadgeHoldsPriority(): boolean { return this.myPlayerIndex === 0 ? this.holdsPriority0 : this.holdsPriority1; }
+  get myBadgeLifeTotal(): number { return this.myPlayerIndex === 0 ? this.lifeTotal0 : this.lifeTotal1; }
+  get myBadgePoisonCounters(): number { return this.myPlayerIndex === 0 ? this.poisonCounters0 : this.poisonCounters1; }
+  get myBadgePlayerId(): string { return this.myPlayerIndex === 0 ? this.playerId0 : this.playerId1; }
+  get myBadgeHandSize(): number { return this.myPlayerIndex === 0 ? this.player1HandSize : this.player2HandSize; }
+  get myBadgeDeckSize(): number { return this.myPlayerIndex === 0 ? this.player1DeckSize : this.player2DeckSize; }
+
   switchToStackTab(): void {
     this.activeTab.set('stack');
   }

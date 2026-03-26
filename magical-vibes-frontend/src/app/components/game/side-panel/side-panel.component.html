@@ -25,38 +25,33 @@
 
         <div class="turn-info">
           <div class="player-badge-wrapper">
-            <div class="player-badge" [class.active]="isActivePlayer0" [class.inactive]="!isActivePlayer0" [class.has-priority]="holdsPriority0" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(playerId0)" [class.stack-targeted]="isStackTargetPlayer(0)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(playerId0) || choice.choosablePlayerIds().has(playerId0))" (click)="onPlayerBadgeClick($event, 0)">
-              {{ player1Name }}
-              <span class="life-total">Life: {{ lifeTotal0 }}</span>
-              @if (poisonCounters0 > 0) {
-                <span class="poison-total">Poison: {{ poisonCounters0 }}</span>
+            <div class="player-badge" [class.active]="opponentBadgeIsActive" [class.inactive]="!opponentBadgeIsActive" [class.has-priority]="opponentBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(opponentBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(opponentPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(opponentBadgePlayerId) || choice.choosablePlayerIds().has(opponentBadgePlayerId))" (click)="onPlayerBadgeClick($event, opponentPlayerIndex)">
+              {{ opponentPlayerName }}
+              <span class="life-total">Life: {{ opponentBadgeLifeTotal }}</span>
+              @if (opponentBadgePoisonCounters > 0) {
+                <span class="poison-total">Poison: {{ opponentBadgePoisonCounters }}</span>
               }
-              <span class="hand-size">Hand: {{ player1HandSize }}</span>
-              <span class="deck-size">Deck: {{ player1DeckSize }}</span>
-              <span class="priority-indicator" [class.hidden]="!holdsPriority0">Priority</span>
+              <span class="hand-size">Hand: {{ opponentBadgeHandSize }}</span>
+              <span class="deck-size">Deck: {{ opponentBadgeDeckSize }}</span>
+              <span class="priority-indicator" [class.hidden]="!opponentBadgeHoldsPriority">Priority</span>
             </div>
-            @if (showPlayerMenu() && myPlayerIndex === 0) {
-              <div class="player-menu" (click)="$event.stopPropagation()">
-                <button class="player-menu-btn player-menu-surrender" (click)="onSurrenderClick()">Surrender</button>
-              </div>
-            }
           </div>
           <div class="turn-center">
             <span class="turn-number">Turn {{ turnNumber }}</span>
             <span class="vs-label">VS</span>
           </div>
           <div class="player-badge-wrapper">
-            <div class="player-badge" [class.active]="isActivePlayer1" [class.inactive]="!isActivePlayer1" [class.has-priority]="holdsPriority1" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(playerId1)" [class.stack-targeted]="isStackTargetPlayer(1)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(playerId1) || choice.choosablePlayerIds().has(playerId1))" (click)="onPlayerBadgeClick($event, 1)">
-              {{ player2Name }}
-              <span class="life-total">Life: {{ lifeTotal1 }}</span>
-              @if (poisonCounters1 > 0) {
-                <span class="poison-total">Poison: {{ poisonCounters1 }}</span>
+            <div class="player-badge" [class.active]="myBadgeIsActive" [class.inactive]="!myBadgeIsActive" [class.has-priority]="myBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(myBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(myPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(myBadgePlayerId) || choice.choosablePlayerIds().has(myBadgePlayerId))" (click)="onPlayerBadgeClick($event, myPlayerIndex)">
+              {{ myBadgeName }}
+              <span class="life-total">Life: {{ myBadgeLifeTotal }}</span>
+              @if (myBadgePoisonCounters > 0) {
+                <span class="poison-total">Poison: {{ myBadgePoisonCounters }}</span>
               }
-              <span class="hand-size">Hand: {{ player2HandSize }}</span>
-              <span class="deck-size">Deck: {{ player2DeckSize }}</span>
-              <span class="priority-indicator" [class.hidden]="!holdsPriority1">Priority</span>
+              <span class="hand-size">Hand: {{ myBadgeHandSize }}</span>
+              <span class="deck-size">Deck: {{ myBadgeDeckSize }}</span>
+              <span class="priority-indicator" [class.hidden]="!myBadgeHoldsPriority">Priority</span>
             </div>
-            @if (showPlayerMenu() && myPlayerIndex === 1) {
+            @if (showPlayerMenu()) {
               <div class="player-menu" (click)="$event.stopPropagation()">
                 <button class="player-menu-btn player-menu-surrender" (click)="onSurrenderClick()">Surrender</button>
               </div>
