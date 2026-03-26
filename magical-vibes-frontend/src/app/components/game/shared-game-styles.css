@@ -309,6 +309,10 @@
   align-items: center;
 }
 
+.permanent-stack:has(.ability-popup) {
+  z-index: 1000;
+}
+
 .permanent-stack > .card.attached-aura {
   margin-bottom: -190px;
   margin-left: 50px;

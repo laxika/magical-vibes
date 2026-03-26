@@ -1,4 +1,4 @@
-<div class="game-container">
+<div class="game-container" (click)="choice.targeting.choosingAbility && choice.targeting.cancelAbilityChoice()">
   <div class="game-layout">
     <div class="game-area">
   @if (game()?.status === GameStatus.MULLIGAN) {
