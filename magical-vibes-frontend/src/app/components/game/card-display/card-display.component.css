@@ -92,15 +92,11 @@
 /* Art box */
 .card-art {
   height: 86px;
-  margin: 2px 3px;
-  border-radius: 2px;
   background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
 
 img.card-art {
-  width: calc(100% - 6px);
   object-fit: cover;
   display: block;
 }
