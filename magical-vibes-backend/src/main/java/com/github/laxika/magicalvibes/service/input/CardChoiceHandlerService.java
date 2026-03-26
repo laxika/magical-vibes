@@ -163,6 +163,7 @@ public class CardChoiceHandlerService {
         int remainingDiscards = gameData.interaction.decrementDiscardRemainingCount();
 
         if (remainingDiscards > 0 && !hand.isEmpty()) {
+            gameBroadcastService.broadcastGameState(gameData);
             playerInputService.beginDiscardChoice(gameData, playerId);
         } else {
             gameData.interaction.clearAwaitingInput();
@@ -273,6 +274,7 @@ public class CardChoiceHandlerService {
         int remainingExiles = gameData.interaction.decrementDiscardRemainingCount();
 
         if (remainingExiles > 0 && !hand.isEmpty()) {
+            gameBroadcastService.broadcastGameState(gameData);
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId);
         } else {
             gameData.interaction.clearAwaitingInput();
