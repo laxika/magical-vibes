@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -27,7 +28,7 @@ public class GameOutcomeService {
                               SessionManager sessionManager,
                               GameRegistry gameRegistry,
                               DraftRegistry draftRegistry,
-                              DraftService draftService) {
+                              @Lazy DraftService draftService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.sessionManager = sessionManager;
