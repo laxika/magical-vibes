@@ -138,15 +138,19 @@ public class DraftService {
     List<Card> generateBoosterPack(String setCode) {
         CardSet cardSet = findCardSet(setCode);
 
-        // Partition printings by rarity (excluding basic lands)
+        // Partition printings by rarity
         List<CardPrinting> commons = new ArrayList<>();
         List<CardPrinting> uncommons = new ArrayList<>();
         List<CardPrinting> rares = new ArrayList<>();
         List<CardPrinting> mythics = new ArrayList<>();
+        List<CardPrinting> basicLands = new ArrayList<>();
 
         for (CardPrinting printing : cardSet.getPrintings()) {
             Card test = printing.createCard();
-            if (test.getSupertypes().contains(CardSupertype.BASIC)) continue;
+            if (test.getSupertypes().contains(CardSupertype.BASIC)) {
+                basicLands.add(printing);
+                continue;
+            }
 
             String rarity = ScryfallOracleLoader.getRarity(setCode, printing.collectorNumber());
             if (rarity == null) {
@@ -177,8 +181,13 @@ public class DraftService {
         // 3 Uncommons
         addRandomCards(pack, uncommons, 3);
 
-        // Fill remaining slots with Commons (typically 11)
-        addRandomCards(pack, commons, CARDS_PER_PACK - pack.size());
+        // 10 Commons
+        addRandomCards(pack, commons, 10);
+
+        // 1 Basic Land
+        if (!basicLands.isEmpty()) {
+            pack.add(pickRandom(basicLands).createCard());
+        }
 
         return pack;
     }
