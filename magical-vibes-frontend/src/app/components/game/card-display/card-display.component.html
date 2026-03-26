@@ -37,6 +37,9 @@
     @if (watermarkUrl()) {
       <img class="watermark" [src]="watermarkUrl()" alt="" />
     }
+    @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
+      <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
+    }
     @if (card.cardText) {
       <div class="card-text" [innerHTML]="formattedCardText"></div>
     }
@@ -46,9 +49,6 @@
     @if (flavorText) {
       <div class="flavor-separator"></div>
       <div class="card-flavor-text">{{ flavorText }}</div>
-    }
-    @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
-      <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
     }
     @if (displayLoyalty != null) {
       <div class="card-loyalty">{{ displayLoyalty }}</div>
