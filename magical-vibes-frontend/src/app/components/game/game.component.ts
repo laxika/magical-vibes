@@ -120,6 +120,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(s => s.unsubscribe());
+    this.websocketService.pendingGameInputMessage = null;
   }
 
   private processGameMessage(message: WebSocketMessage): void {
