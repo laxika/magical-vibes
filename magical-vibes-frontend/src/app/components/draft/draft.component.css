@@ -72,7 +72,7 @@
 
 .draft-phase {
   height: calc(100vh - 40px);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .draft-layout {
@@ -93,15 +93,21 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 165px);
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, 198px);
+  gap: 12px;
 }
 
 .draft-card-wrapper {
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
   border-radius: 6px;
-  width: fit-content;
+  width: 198px;
+  height: 277px;
+}
+
+.draft-card-wrapper app-card-display {
+  transform: scale(1.2);
+  transform-origin: top left;
 }
 
 .draft-card-wrapper:hover:not(.disabled) {
@@ -411,8 +417,8 @@
 
 .build-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 165px);
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, 198px);
+  gap: 12px;
 }
 
 .build-card-wrapper {
@@ -420,7 +426,13 @@
   transition: transform 0.15s, box-shadow 0.15s;
   border-radius: 6px;
   position: relative;
-  width: fit-content;
+  width: 198px;
+  height: 277px;
+}
+
+.build-card-wrapper app-card-display {
+  transform: scale(1.2);
+  transform-origin: top left;
 }
 
 .build-card-wrapper:hover:not(.disabled) {

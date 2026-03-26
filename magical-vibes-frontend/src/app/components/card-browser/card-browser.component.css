@@ -318,16 +318,21 @@ tbody tr.not-implemented {
 
 .card-view {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 171px);
+  grid-template-columns: repeat(auto-fill, 239px);
   gap: 15px;
   justify-content: center;
 }
 
 .card-item {
   position: relative;
-  width: 171px;
-  height: 237px;
+  width: 239px;
+  height: 332px;
   transition: transform 0.15s;
+}
+
+.card-item app-card-display {
+  transform: scale(1.4);
+  transform-origin: top left;
 }
 
 .card-item:hover {
