@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromHandConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -519,6 +520,11 @@ public class BattlefieldEntryService {
                         // (intervening-if — MTG Rule 603.4: ability doesn't trigger if condition not met)
                         if (e instanceof KickedConditionalEffect kce) {
                             return kicked ? kce.wrapped() : null;
+                        }
+                        // Unwrap cast-from-hand conditional: only fire if cast from hand
+                        // (intervening-if — MTG Rule 603.4: e.g. "When this enters, if you cast it from your hand, [effect]")
+                        if (e instanceof CastFromHandConditionalEffect cfhce) {
+                            return wasCastFromHand ? cfhce.wrapped() : null;
                         }
                         // "Gain life equal to that creature's toughness" — resolve toughness at trigger time
                         if (e instanceof GainLifeEqualToToughnessEffect) {
