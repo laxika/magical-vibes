@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -139,16 +140,18 @@ class AdantoVanguardTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can activate at exactly 4 life")
+    @DisplayName("Activation at exactly 4 life is accepted but player loses before ability resolves (CR 704.5a)")
     void canActivateAtExactlyFourLife() {
         Permanent vanguard = addCreatureReady(player1, new AdantoVanguard());
         harness.setLife(player1, 4);
 
+        // Activation is accepted (4 >= 4), life cost is paid, but SBAs fire immediately
+        // and the player loses at 0 life before the ability resolves (CR 704.3 / 704.5a)
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
-        assertThat(vanguard.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(vanguard.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     // ===== Helper methods =====

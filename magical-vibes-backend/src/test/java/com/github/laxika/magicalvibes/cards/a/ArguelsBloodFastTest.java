@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -130,20 +131,24 @@ class ArguelsBloodFastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can activate with exactly 2 life")
+    @DisplayName("Activation at exactly 2 life is accepted but player loses before ability resolves (CR 704.5a)")
     void canActivateWithExactly2Life() {
         addEnchantmentReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 2);
 
+        int handBefore = gd.playerHands.get(player1.getId()).size();
         Card cardInLibrary = new GrizzlyBears();
         gd.playerDecks.get(player1.getId()).add(0, cardInLibrary);
 
+        // Activation is accepted (2 >= 2), life cost is paid, but SBAs fire immediately
+        // and the player loses at 0 life before the ability resolves (CR 704.3 / 704.5a)
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     // ===== Upkeep trigger: transform at 5 or less life =====

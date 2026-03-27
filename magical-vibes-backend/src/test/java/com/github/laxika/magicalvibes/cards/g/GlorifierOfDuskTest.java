@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -112,16 +113,18 @@ class GlorifierOfDuskTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can activate at exactly 2 life")
+    @DisplayName("Activation at exactly 2 life is accepted but player loses before ability resolves (CR 704.5a)")
     void canActivateAtExactlyTwoLife() {
         Permanent glorifier = addCreatureReady(player1, new GlorifierOfDusk());
         harness.setLife(player1, 2);
 
+        // Activation is accepted (2 >= 2), life cost is paid, but SBAs fire immediately
+        // and the player loses at 0 life before the ability resolves (CR 704.3 / 704.5a)
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
     }
 
     // ===== End of turn cleanup =====
