@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionSe
 import com.github.laxika.magicalvibes.service.library.MillResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.DeckService;
 import com.github.laxika.magicalvibes.service.LobbyService;
 import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -366,7 +367,7 @@ public class GameTestHarness {
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService,
                 exileResolutionService, gameOutcomeService);
-        lobbyService = new LobbyService(gameRegistry, gameBroadcastService, null);
+        lobbyService = new LobbyService(gameRegistry, gameBroadcastService, new DeckService(null, null));
 
         // Create the MessageHandler (GameMessageHandler) for AI tests
         messageHandler = new GameMessageHandler(
