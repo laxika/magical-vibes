@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -104,7 +105,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
             int score = scoreCard(gameData, card);
-            castableSpells.add(new int[]{i, score});
+            if (score > 0) {
+                castableSpells.add(new int[]{i, score});
+            }
         }
 
         if (castableSpells.isEmpty()) {
@@ -237,7 +240,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             if (EffectResolution.needsSpellTarget(card)) continue; // Can't target spells on stack
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
             int score = scoreCard(gameData, card);
-            castableInstants.add(new int[]{i, score});
+            if (score > 0) {
+                castableInstants.add(new int[]{i, score});
+            }
         }
 
         if (castableInstants.isEmpty()) {
@@ -337,6 +342,26 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             if (card.getKeywords().contains(Keyword.VIGILANCE)) score += 5;
         } else if (card.hasType(CardType.ENCHANTMENT)) {
             score += 20;
+        }
+
+        // Mass damage spells are only beneficial if they kill more opponent creatures than our own
+        for (var effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof MassDamageEffect aoe) {
+                UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+                List<Permanent> oppField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+                List<Permanent> aiField = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+                long oppKilled = oppField.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p)
+                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoe.damage())
+                        .count();
+                long aiKilled = aiField.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p)
+                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoe.damage())
+                        .count();
+                if (oppKilled <= aiKilled) {
+                    return 0;
+                }
+            }
         }
 
         return score;

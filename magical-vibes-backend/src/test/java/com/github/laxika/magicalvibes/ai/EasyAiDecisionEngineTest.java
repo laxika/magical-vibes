@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.Connection;
@@ -781,6 +782,108 @@ class EasyAiDecisionEngineTest {
         assertThat(request.exileGraveyardCardIndices()).hasSize(3);
         // Should pick indices 1, 3, 4 (the creature indices, skipping instants at 0 and 2)
         assertThat(request.exileGraveyardCardIndices()).containsExactly(1, 3, 4);
+    }
+
+    // ===== Mass damage spell evaluation =====
+
+    @Test
+    @DisplayName("Easy AI does not cast mass damage spell when no creatures are on the battlefield")
+    void doesNotCastMassDamageWithNoCreatures() throws Exception {
+        Card pyroclasm = new Card();
+        pyroclasm.setName("Pyroclasm");
+        pyroclasm.setType(CardType.SORCERY);
+        pyroclasm.setManaCost("{1}{R}");
+        pyroclasm.addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+        gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI does not cast mass damage spell when it kills equal numbers of creatures on each side")
+    void doesNotCastMassDamageOnEvenTrade() throws Exception {
+        Card pyroclasm = new Card();
+        pyroclasm.setName("Pyroclasm");
+        pyroclasm.setType(CardType.SORCERY);
+        pyroclasm.setManaCost("{1}{R}");
+        pyroclasm.addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+        gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
+
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+
+        Card oppCard = new Card();
+        oppCard.setName("Opp 2/2");
+        oppCard.setType(CardType.CREATURE);
+        oppCard.setPower(2);
+        oppCard.setToughness(2);
+        Permanent oppCreature = new Permanent(oppCard);
+        gd.playerBattlefields.get(opponentId).add(oppCreature);
+
+        Card aiCard = new Card();
+        aiCard.setName("AI 2/2");
+        aiCard.setType(CardType.CREATURE);
+        aiCard.setPower(2);
+        aiCard.setToughness(2);
+        Permanent aiCreature = new Permanent(aiCard);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(aiCreature);
+
+        when(gameQueryService.isCreature(gd, oppCreature)).thenReturn(true);
+        when(gameQueryService.isCreature(gd, aiCreature)).thenReturn(true);
+        when(gameQueryService.getEffectiveToughness(gd, oppCreature)).thenReturn(2);
+        when(gameQueryService.getEffectiveToughness(gd, aiCreature)).thenReturn(2);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI casts mass damage spell when it kills more opponent creatures than own")
+    void castsMassDamageWhenKillsMoreOpponentCreatures() throws Exception {
+        Card pyroclasm = new Card();
+        pyroclasm.setName("Pyroclasm");
+        pyroclasm.setType(CardType.SORCERY);
+        pyroclasm.setManaCost("{1}{R}");
+        pyroclasm.addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+        gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
+
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+
+        Card oppCard = new Card();
+        oppCard.setName("Opp 2/2");
+        oppCard.setType(CardType.CREATURE);
+        oppCard.setPower(2);
+        oppCard.setToughness(2);
+        Permanent oppCreature = new Permanent(oppCard);
+        gd.playerBattlefields.get(opponentId).add(oppCreature);
+
+        when(gameQueryService.isCreature(gd, oppCreature)).thenReturn(true);
+        when(gameQueryService.getEffectiveToughness(gd, oppCreature)).thenReturn(2);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.RED, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        Mockito.doAnswer(inv -> {
+            gd.playerHands.get(aiPlayer.getId()).removeFirst();
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        verify(messageHandler).handlePlayCard(any(), any());
     }
 
     // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) — harness-based =====
