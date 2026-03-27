@@ -310,4 +310,86 @@ class CombatSimulatorTest {
         // Should not assign any blockers (phantom warrior can't be blocked)
         assertThat(blockers).isEmpty();
     }
+
+    // ===== Temporarily stolen creatures =====
+
+    @Test
+    @DisplayName("Stolen creature has zero creature score in combat info")
+    void stolenCreatureHasZeroCombatScore() {
+        Permanent serraAngel = new Permanent(new SerraAngel());
+        serraAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(serraAngel);
+
+        // Mark as stolen until end of turn (as Act of Treason would do)
+        gd.untilEndOfTurnStolenCreatures.add(serraAngel.getId());
+
+        CombatSimulator.CreatureInfo stolenInfo = simulator.buildCreatureInfo(
+                gd, serraAngel, 0, player1.getId(), player2.getId());
+
+        assertThat(stolenInfo.creatureScore()).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Non-stolen creature has positive creature score in combat info")
+    void ownedCreatureHasPositiveCombatScore() {
+        Permanent serraAngel = new Permanent(new SerraAngel());
+        serraAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(serraAngel);
+
+        // NOT in stolen set — normal owned creature
+        CombatSimulator.CreatureInfo ownedInfo = simulator.buildCreatureInfo(
+                gd, serraAngel, 0, player1.getId(), player2.getId());
+
+        assertThat(ownedInfo.creatureScore()).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Stolen creature that dies in combat does not count toward AI creature loss")
+    void stolenCreatureDeathHasNoCombatCost() {
+        // Stolen 2/2 attacks, opponent's 4/4 flying blocks and kills it
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        gd.untilEndOfTurnStolenCreatures.add(bears.getId());
+
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(airElemental);
+
+        CombatSimulator.CreatureInfo stolenAttacker = simulator.buildCreatureInfo(
+                gd, bears, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo blocker = simulator.buildCreatureInfo(
+                gd, airElemental, 0, player2.getId(), player1.getId());
+
+        // Stolen bears blocked by 4/4 — bears dies, AE survives
+        CombatSimulator.CombatOutcome outcome = simulator.simulateCombat(
+                gd, List.of(stolenAttacker), List.of(blocker), 20);
+
+        // Stolen creature dying does not incur any AI loss value
+        assertThat(outcome.aiCreaturesLostValue()).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("AI attacks with stolen creature even when it would be held back if owned")
+    void attacksWithStolenCreatureWhenOwnedCreatureWouldHoldBack() {
+        // AI steals opponent's Serra Angel (4/4 flying+vigilance, higher score than AirElemental)
+        Permanent serraAngel = new Permanent(new SerraAngel());
+        serraAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(serraAngel);
+        gd.untilEndOfTurnStolenCreatures.add(serraAngel.getId());
+
+        // Opponent has Air Elemental (4/4 flying) — slightly lower score than Serra Angel
+        // This means: without the fix, the opponent would block SA with AE and the trade
+        // would look unfavorable (SA score > AE score), causing the AI to not attack.
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(airElemental);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        // With the fix: stolen SA has score 0, opponent won't sacrifice their AE to block
+        // a worthless attacker, so SA attacks unblocked for 4 damage — clearly worth attacking
+        assertThat(attackers).containsExactly(0);
+    }
 }

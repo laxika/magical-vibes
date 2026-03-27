@@ -644,6 +644,14 @@ public class CombatSimulator {
                 || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
                 || hasLandwalkAgainstDefender(gameData, perm, defenderBattlefield);
 
+        // Temporarily stolen creatures (e.g. via Act of Treason) have no permanent value to the
+        // controller — they will be returned at end of turn regardless. Treat their combat loss
+        // value as 0 so the AI doesn't incorrectly avoid attacking with them out of fear of
+        // "losing" a creature that was never truly theirs to keep.
+        boolean isStolenUntilEndOfTurn = gameData.untilEndOfTurnStolenCreatures.contains(perm.getId());
+        double score = isStolenUntilEndOfTurn ? 0
+                : boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId);
+
         return new CreatureInfo(
                 index,
                 perm.getId(),
@@ -665,7 +673,7 @@ public class CombatSimulator {
                 gameQueryService.isArtifact(perm),
                 gameQueryService.hasKeyword(gameData, perm, Keyword.INFECT),
                 perm.getCard().getColor(),
-                boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId)
+                score
         );
     }
 
