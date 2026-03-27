@@ -789,6 +789,17 @@
   border: 1px solid #f59e0b;
 }
 
+.combat-damage-target.needs-more-damage {
+  border: 1px solid #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.target-min-damage {
+  color: #ef4444;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
 .target-name {
   flex: 1;
   color: #e2e8f0;

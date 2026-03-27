@@ -117,14 +117,23 @@ export class DamageChoiceService {
     if (!this.combatDamageIsTrample) return true;
     // Trample: each blocker must receive at least lethal damage
     for (const target of this.combatDamageTargets) {
-      if (target.isPlayer) continue;
-      const lethal = this.combatDamageIsDeathtouch
-        ? Math.max(0, 1 - target.currentDamage)
-        : target.toughness - target.currentDamage;
-      const assigned = this.combatDamageAssignments.get(target.id) ?? 0;
-      if (assigned < lethal) return false;
+      if (this.isTargetMissingLethalDamage(target)) return false;
     }
     return true;
+  }
+
+  getLethalRequiredForTarget(target: CombatDamageTargetView): number {
+    if (target.isPlayer) return 0;
+    return this.combatDamageIsDeathtouch
+      ? Math.max(0, 1 - target.currentDamage)
+      : target.toughness - target.currentDamage;
+  }
+
+  isTargetMissingLethalDamage(target: CombatDamageTargetView): boolean {
+    if (!this.combatDamageIsTrample || target.isPlayer) return false;
+    const lethal = this.getLethalRequiredForTarget(target);
+    const assigned = this.combatDamageAssignments.get(target.id) ?? 0;
+    return assigned < lethal;
   }
 
   assignCombatDamage(targetId: string): void {

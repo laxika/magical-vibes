@@ -317,10 +317,14 @@
         </div>
         <div class="combat-damage-targets">
           @for (target of choice.damage.combatDamageTargets; track target.id) {
-            <div class="combat-damage-target" [class.is-player]="target.isPlayer">
+            <div class="combat-damage-target" [class.is-player]="target.isPlayer"
+              [class.needs-more-damage]="choice.damage.isTargetMissingLethalDamage(target)">
               <span class="target-name">{{ target.name }}</span>
               @if (!target.isPlayer) {
                 <span class="target-toughness">({{ target.toughness - target.currentDamage }} remaining toughness)</span>
+              }
+              @if (choice.damage.combatDamageIsTrample && !target.isPlayer) {
+                <span class="target-min-damage">min: {{ choice.damage.getLethalRequiredForTarget(target) }}</span>
               }
               <div class="damage-controls">
                 <button class="btn-damage" (click)="choice.damage.unassignCombatDamage(target.id)"
