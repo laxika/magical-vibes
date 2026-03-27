@@ -366,13 +366,13 @@ public class GameTestHarness {
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService,
                 exileResolutionService, gameOutcomeService);
-        lobbyService = new LobbyService(gameRegistry, gameBroadcastService);
+        lobbyService = new LobbyService(gameRegistry, gameBroadcastService, null);
 
         // Create the MessageHandler (GameMessageHandler) for AI tests
         messageHandler = new GameMessageHandler(
                 null, gameService, gameBroadcastService, lobbyService, gameRegistry,
                 sessionManager, new JacksonConfig().objectMapper(),
-                null, null, draftRegistry, null, validTargetService);
+                null, null, draftRegistry, null, validTargetService, null);
 
         player1 = new Player(UUID.randomUUID(), "Alice");
         player2 = new Player(UUID.randomUUID(), "Bob");
