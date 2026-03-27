@@ -147,6 +147,7 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
+  vertical-align: top;
 }
 
 .permanent-stack > .card.attached-aura {
