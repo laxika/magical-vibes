@@ -297,7 +297,9 @@ public class CombatSimulator {
             double bestBlockValue = Double.NEGATIVE_INFINITY;
 
             for (CreatureInfo blocker : available) {
-                double blockValue = evaluateBlock(attacker, blocker);
+                double blockValue = attacker.trample
+                        ? evaluateTrampleBlock(attacker, blocker)
+                        : evaluateBlock(attacker, blocker);
                 if (blockValue > bestBlockValue) {
                     bestBlockValue = blockValue;
                     bestBlocker = blocker;
@@ -308,8 +310,43 @@ public class CombatSimulator {
             if (bestBlocker != null && (bestBlockValue > 0 || lethalIncoming)) {
                 assignments.add(new int[]{bestBlocker.index, attacker.index});
                 blockerUsed[bestBlocker.index] = true;
-                totalIncoming -= attacker.power;
-                lethalIncoming = totalIncoming >= aiLife;
+
+                if (attacker.trample) {
+                    // With trample, excess damage beyond blocker toughness still reaches the player
+                    int trampleExcess = Math.max(0, attacker.power - bestBlocker.toughness);
+                    totalIncoming -= (attacker.power - trampleExcess);
+                    lethalIncoming = totalIncoming >= aiLife;
+
+                    // While trample excess is still lethal, keep adding blockers to reduce it
+                    while (trampleExcess > 0 && lethalIncoming) {
+                        List<CreatureInfo> stillAvailable = blockerInfos.stream()
+                                .filter(b -> !blockerUsed[b.index])
+                                .filter(b -> canBlock(gameData, b, attacker))
+                                .toList();
+
+                        if (stillAvailable.isEmpty()) break;
+
+                        // Pick the blocker that reduces the most trample damage (highest min(excess, toughness)),
+                        // breaking ties by preferring the least valuable blocker
+                        final int currentExcess = trampleExcess;
+                        CreatureInfo bestAdditional = stillAvailable.stream()
+                                .max(Comparator.comparingInt((CreatureInfo b) -> Math.min(currentExcess, b.toughness))
+                                        .thenComparingDouble(b -> -b.creatureScore))
+                                .orElse(null);
+
+                        if (bestAdditional == null) break;
+
+                        int reduction = Math.min(trampleExcess, bestAdditional.toughness);
+                        assignments.add(new int[]{bestAdditional.index, attacker.index});
+                        blockerUsed[bestAdditional.index] = true;
+                        trampleExcess -= reduction;
+                        totalIncoming -= reduction;
+                        lethalIncoming = totalIncoming >= aiLife;
+                    }
+                } else {
+                    totalIncoming -= attacker.power;
+                    lethalIncoming = totalIncoming >= aiLife;
+                }
             }
         }
 
@@ -553,6 +590,31 @@ public class CombatSimulator {
 
         // Blocker dies, attacker lives — bad unless chump blocking
         return -blocker.creatureScore + attacker.power * 0.5;
+    }
+
+    /**
+     * Evaluates blocking a trample attacker. Unlike evaluateBlock, this factors in how much
+     * trample damage the blocker's toughness prevents, preferring high-toughness blockers
+     * even when they can't kill the attacker.
+     */
+    private double evaluateTrampleBlock(CreatureInfo attacker, CreatureInfo blocker) {
+        boolean blockerKillsAttacker = blocker.power >= attacker.toughness && !attacker.indestructible;
+        boolean attackerKillsBlocker = attacker.power >= blocker.toughness && !blocker.indestructible;
+
+        if (blockerKillsAttacker) {
+            if (!attackerKillsBlocker) {
+                // Kill attacker and blocker survives — best outcome, no trample at all
+                return attacker.creatureScore + 10;
+            }
+            // Both die — trade evaluation
+            return attacker.creatureScore - blocker.creatureScore;
+        }
+
+        // Attacker survives with trample: value is based on how much trample damage is prevented.
+        // The blocker's toughness is how much of the attacker's power it absorbs.
+        int tramplePrevented = Math.min(attacker.power, blocker.toughness);
+        double cost = attackerKillsBlocker ? blocker.creatureScore : 0;
+        return tramplePrevented * 0.8 - cost;
     }
 
     private double evaluateDefenderBlock(CreatureInfo attacker, CreatureInfo blocker) {
