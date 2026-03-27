@@ -2,9 +2,13 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -159,5 +163,76 @@ class GameSimulatorTest {
 
         double score = simulator.evaluate(gd, player1.getId());
         assertThat(score).isLessThan(0.5);
+    }
+
+    // ===== Aura targeting =====
+
+    private void setUpMainPhase(Player activePlayer) {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(activePlayer);
+        gd.stack.clear();
+    }
+
+    @Test
+    @DisplayName("Beneficial aura targets own creature, not opponent's")
+    void beneficialAuraTargetsOwnCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new ArmoredAscension()));
+        harness.addMana(player1, ManaColor.WHITE, 5); // 4W
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId().equals(ownCreature.getId()));
+    }
+
+    @Test
+    @DisplayName("Beneficial aura picks own creature with highest toughness")
+    void beneficialAuraPicksHighestToughnessOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2
+        Permanent serraAngel = harness.addToBattlefieldAndReturn(player1, new SerraAngel()); // 4/4
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new ArmoredAscension()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId().equals(serraAngel.getId()));
+    }
+
+    @Test
+    @DisplayName("Beneficial aura generates no PlayCard action when AI has no creatures")
+    void beneficialAuraNoActionWhenNoOwnCreatures() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new ArmoredAscension()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).noneMatch(a -> a instanceof SimulationAction.PlayCard);
+    }
+
+    @Test
+    @DisplayName("Detrimental aura targets opponent's creature, not own")
+    void detrimentalAuraTargetsOpponentCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Pacifism()));
+        harness.addMana(player1, ManaColor.WHITE, 2); // 1W
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId().equals(opponentCreature.getId()));
     }
 }

@@ -25,7 +25,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCre
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -930,6 +933,28 @@ public class GameSimulator {
         // Handle graveyard targeting (e.g. Unburial Rites, Gruesome Encore)
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
             return findBestGraveyardTarget(gd, card, playerId, opponentId);
+        }
+
+        // Handle auras — beneficial auras target own creatures, detrimental target opponent's
+        if (card.isAura()) {
+            boolean isBeneficial = false;
+            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+                if ((effect instanceof StaticBoostEffect boost
+                        && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE))
+                        || (effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
+                    isBeneficial = true;
+                    break;
+                }
+            }
+            if (isBeneficial) {
+                return gd.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .filter(p -> gameQueryService.isCreature(gd, p))
+                        .filter(p -> passesTargetFilter(gd, card, p, playerId))
+                        .max(Comparator.comparingInt(p -> gameQueryService.getEffectiveToughness(gd, p)))
+                        .map(Permanent::getId)
+                        .orElse(null);
+            }
+            // Detrimental aura — fall through to opponent's battlefield targeting below
         }
 
         List<Permanent> oppBattlefield = gd.playerBattlefields.getOrDefault(opponentId, List.of());
