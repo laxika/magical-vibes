@@ -9,6 +9,16 @@
 - If you need to implement a new card, then start by checking that a version of it (from a different set) was already implemented. If that's the case then add the `@CardRegistration` annotation for the new printing but do nothing else (do not run/check tests, etc).
 - If unit tests exists for the service classes that you need to extend, then make sure that you create unit tests as well for the new features you add to those services.
 
+## Documentation
+
+Check the agent-docs folder for more info on the following:
+- EFFECTS_INDEX.md — Complete lookup table of all 210 effects with constructor signatures, organized by category (damage, destruction, bounce, life, etc.). Always check here before creating a new effect.
+- ACTIVATED_ABILITY_GUIDE.md — All ActivatedAbility constructor overloads with "use this when" guidance, EffectSlot reference (all 28 slots with when each fires), TargetFilter types, PermanentPredicate/StackEntryPredicate compositions,
+  and cost effects.
+- CARD_PATTERN_INDEX.md — One reference card per archetype (burn spell, ETB creature, pain land, lord, aura, equipment, etc.). Start here to find a similar existing card to base your implementation on.
+- CARD_IMPLEMENTATION_PLAYBOOK.md — Step-by-step workflow for adding cards, canonical patterns, targeting checklist, and anti-patterns.
+- TEST_RECIPES.md — Standard test skeletons for card tests using GameTestHarness.
+
 ## Architecture
 
 Gradle multi-module project: a collectible card game with WebSocket-based real-time multiplayer.
