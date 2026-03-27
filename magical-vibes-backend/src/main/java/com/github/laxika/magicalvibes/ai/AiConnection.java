@@ -83,7 +83,13 @@ public class AiConnection implements Connection {
     @Override
     public void close() {
         open.set(false);
-        executor.shutdownNow();
+        // Use shutdown() rather than shutdownNow() to avoid setting the interrupt flag on the
+        // calling thread. When close() is triggered by a GAME_OVER message the calling thread
+        // may be the AI's own executor thread, and interrupting it would corrupt subsequent
+        // blocking operations (e.g. WebSocket sends to human players in broadcastTournamentUpdate).
+        // Any already-queued tasks will exit immediately because AiDecisionEngine.handleMessage
+        // checks gameData.status == FINISHED at the top.
+        executor.shutdown();
     }
 
     public void scheduleInitialAction(Runnable action) {
