@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.w.WallOfFrost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -367,6 +369,145 @@ class CombatSimulatorTest {
 
         // Stolen creature dying does not incur any AI loss value
         assertThat(outcome.aiCreaturesLostValue()).isEqualTo(0.0);
+    }
+
+    // ===== Trample multi-blocking =====
+
+    @Test
+    @DisplayName("Trample: both blockers assigned when a single blocker leaves lethal trample excess")
+    void trampleMultiBlockToPreventLethalDamage() {
+        // Colossal Dreadmaw: 6/6 Trample
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        dreadmaw.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        // AI is at 4 life with two 2/2 blockers.
+        // One 2/2 alone: 6-2=4 trample damage = exactly lethal.
+        // Both 2/2s: 6-2-2=2 trample damage = non-lethal — AI survives.
+        gd.playerLifeTotals.put(player1.getId(), 4);
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<int[]> blockers = simulator.findBestBlockers(gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        // Both 2/2s must block to prevent lethal trample damage
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0); // both assigned to the Dreadmaw
+    }
+
+    @Test
+    @DisplayName("Trample: high-toughness blocker stops all trample, no second blocker needed even at high life")
+    void trampleWallAbsorbsAllNonLethalSituation() {
+        // Colossal Dreadmaw: 6/6 Trample
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        dreadmaw.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        // AI at 20 life (not in lethal danger). Wall of Frost (0/7) has positive evaluateTrampleBlock
+        // value since it survives (toughness 7 > power 6) and absorbs all trample damage.
+        // Grizzly Bears (2/2) would die and has a net-negative blocking value — not worth assigning.
+        Permanent wall = new Permanent(new WallOfFrost());
+        wall.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(wall);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockers(gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        // Wall of Frost (index 0) alone absorbs all 6 damage — trample excess is zero,
+        // so the second blocker (Bears) must not be sacrificed needlessly
+        assertThat(blockers).hasSize(1);
+        assertThat(blockers.get(0)[0]).isEqualTo(0); // Wall of Frost
+    }
+
+    @Test
+    @DisplayName("Trample: high-toughness blocker absorbs all trample damage, second blocker not needed")
+    void trampleHighToughnessBlockerAbsorbsAllDamage() {
+        // Colossal Dreadmaw: 6/6 Trample
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        dreadmaw.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        // AI has 3 life — Dreadmaw is lethal if not properly blocked
+        gd.playerLifeTotals.put(player1.getId(), 3);
+
+        // Grizzly Bears (2/2) at index 0: absorbs only 2 of 6 damage, 4 trample still lethal
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // Wall of Frost (0/7) at index 1: toughness exceeds Dreadmaw's power, absorbs all 6 damage
+        Permanent wall = new Permanent(new WallOfFrost());
+        wall.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(wall);
+
+        List<int[]> blockers = simulator.findBestBlockers(gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        // Wall of Frost (index 1) should be selected as the sole blocker — its toughness (7) exceeds
+        // the Dreadmaw's power (6), so zero damage tramples through and the Bears are preserved
+        assertThat(blockers).hasSize(1);
+        assertThat(blockers.get(0)[0]).isEqualTo(1); // Wall of Frost
+        assertThat(blockers.get(0)[1]).isEqualTo(0); // blocks Dreadmaw
+    }
+
+    @Test
+    @DisplayName("Trample: multi-blocking stops once trample excess drops below lethal")
+    void trampleMultiBlockStopsWhenSubLethal() {
+        // Colossal Dreadmaw: 6/6 Trample
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        dreadmaw.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        // AI at 3 life with three 2/2 blockers.
+        // After two blockers: 6-2-2=2 trample — sub-lethal vs 3 life, so the third is spared.
+        gd.playerLifeTotals.put(player1.getId(), 3);
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+        }
+
+        List<int[]> blockers = simulator.findBestBlockers(gd, player1.getId(), List.of(0), List.of(0, 1, 2));
+
+        // Exactly two blockers: enough to reduce trample to 2 (non-lethal vs 3 life)
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Trample: all available blockers assigned when each additional one is still needed to survive")
+    void trampleAllBlockersAssignedWhenEachIsRequiredToSurvive() {
+        // Colossal Dreadmaw: 6/6 Trample
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        dreadmaw.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        // AI at 2 life with three 2/2 blockers.
+        // After one: 4 trample ≥ 2 life → lethal, add second.
+        // After two: 2 trample ≥ 2 life → lethal, add third.
+        // After three: 0 trample → safe.
+        gd.playerLifeTotals.put(player1.getId(), 2);
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+        }
+
+        List<int[]> blockers = simulator.findBestBlockers(gd, player1.getId(), List.of(0), List.of(0, 1, 2));
+
+        // All three blockers must be assigned to eliminate all trample damage
+        assertThat(blockers).hasSize(3);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
     }
 
     @Test
