@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -99,7 +100,7 @@ public class AiManaManager {
                     }
                 } else {
                     // Check activated mana abilities (dual lands, pain lands, utility lands)
-                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature);
+                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm);
                 }
             }
         }
@@ -112,11 +113,16 @@ public class AiManaManager {
      * For permanents with multiple free-tap mana abilities (e.g. dual lands),
      * all possible colors are added but the total is corrected via flexibleOvercount
      * since the permanent can only be tapped once.
+     *
+     * @param permanent the permanent on the battlefield (null for hypothetical card evaluation)
      */
-    private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature) {
+    private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent) {
         int manaAbilityCount = 0;
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
             if (!isFreeTapManaAbility(ability)) {
+                continue;
+            }
+            if (!canPayChargeCounterCost(ability, permanent)) {
                 continue;
             }
             manaAbilityCount++;
@@ -151,6 +157,24 @@ public class AiManaManager {
                 && ability.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect);
     }
 
+    /**
+     * Returns true if the permanent can pay any charge counter costs required by the ability.
+     * If permanent is null (hypothetical card evaluation), assumes costs can be paid.
+     */
+    private static boolean canPayChargeCounterCost(ActivatedAbility ability, Permanent permanent) {
+        if (permanent == null) {
+            return true;
+        }
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof RemoveChargeCountersFromSourceCost cost) {
+                if (permanent.getChargeCounters() < cost.count()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
@@ -180,7 +204,7 @@ public class AiManaManager {
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool);
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm);
                 if (abilityIndex == null) {
                     continue;
                 }
@@ -229,7 +253,7 @@ public class AiManaManager {
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool);
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm);
                 if (abilityIndex == null) {
                     continue;
                 }
@@ -281,7 +305,7 @@ public class AiManaManager {
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool);
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm);
                 if (abilityIndex == null) {
                     continue;
                 }
@@ -360,7 +384,7 @@ public class AiManaManager {
                 }
             }
         } else {
-            addActivatedManaAbilitiesToVirtualPool(card, pool, false);
+            addActivatedManaAbilitiesToVirtualPool(card, pool, false, null);
         }
     }
 
@@ -405,10 +429,10 @@ public class AiManaManager {
 
     /**
      * Chooses the best activated mana ability index for a permanent, prioritizing
-     * colors needed for the spell's colored costs. Returns null if no free-tap
-     * mana ability exists.
+     * colors needed for the spell's colored costs. Returns null if no usable free-tap
+     * mana ability exists (including when charge counter costs cannot be paid).
      */
-    private static Integer chooseBestManaAbilityIndex(Card card, ManaCost cost, ManaPool currentPool) {
+    private static Integer chooseBestManaAbilityIndex(Card card, ManaCost cost, ManaPool currentPool, Permanent permanent) {
         List<ActivatedAbility> abilities = card.getActivatedAbilities();
         Integer bestIndex = null;
         int bestScore = -1;
@@ -416,6 +440,9 @@ public class AiManaManager {
         for (int j = 0; j < abilities.size(); j++) {
             ActivatedAbility ability = abilities.get(j);
             if (!isFreeTapManaAbility(ability)) {
+                continue;
+            }
+            if (!canPayChargeCounterCost(ability, permanent)) {
                 continue;
             }
 

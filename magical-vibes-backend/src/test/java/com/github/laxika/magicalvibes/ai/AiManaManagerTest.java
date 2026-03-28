@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCre
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -159,6 +160,30 @@ class AiManaManagerTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        return perm;
+    }
+
+    private static Card createChargeCounterManaArtifact(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        // Tap + remove a charge counter: add one mana of any color (like Sphere of the Suns)
+        card.addActivatedAbility(new ActivatedAbility(
+                true, null,
+                List.of(new RemoveChargeCountersFromSourceCost(1), new AwardAnyColorManaEffect()),
+                "{T}, Remove a charge counter: Add one mana of any color."));
+        return card;
+    }
+
+    private Permanent addUntappedChargeCounterArtifact(String name, int chargeCounters) {
+        Card card = createChargeCounterManaArtifact(name);
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        perm.setChargeCounters(chargeCounters);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
         lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
         return perm;
@@ -492,6 +517,47 @@ class AiManaManagerTest {
             assertThat(pool.get(ManaColor.RED)).isEqualTo(2);
             assertThat(pool.getCreatureMana(ManaColor.RED)).isEqualTo(2);
         }
+
+        @Test
+        @DisplayName("includes charge counter mana ability when permanent has enough counters")
+        void includesChargeCounterAbilityWithCounters() {
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 3);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("excludes charge counter mana ability when permanent has zero counters")
+        void excludesChargeCounterAbilityWithZeroCounters() {
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("charge counter artifact with exactly 1 counter is included")
+        void chargeCounterArtifactWithExactlyOneCounter() {
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 1);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("mix of lands and depleted charge counter artifact only counts lands")
+        void mixOfLandsAndDepletedArtifact() {
+            addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+            addUntappedLand("Mountain", ManaColor.RED);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.COLORLESS)).isZero();
+            assertThat(pool.getTotal()).isEqualTo(2);
+        }
     }
 
     // ── isFreeTapManaAbility ────────────────────────────────────────
@@ -724,6 +790,52 @@ class AiManaManagerTest {
             verify(action).tap(eq(0), any());
             verify(action, never()).tap(eq(1), any());
         }
+
+        @Test
+        @DisplayName("skips charge counter ability with zero counters during tapping")
+        void skipsDepletedChargeCounterAbility() {
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
+
+            verify(action, never()).tap(any(int.class), any());
+        }
+
+        @Test
+        @DisplayName("taps charge counter ability when permanent has enough counters")
+        void tapsChargeCounterAbilityWithCounters() {
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 2);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+                return null;
+            }).when(action).tap(eq(0), eq(0));
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
+
+            verify(action).tap(0, 0);
+        }
+
+        @Test
+        @DisplayName("skips depleted artifact and taps land instead")
+        void skipsDepletedArtifactTapsLandInstead() {
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+            addUntappedLand("Forest", ManaColor.GREEN);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+                return null;
+            }).when(action).tap(eq(1), eq(null));
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
+
+            // Sphere at index 0 should be skipped, Forest at index 1 tapped
+            verify(action, never()).tap(eq(0), any());
+            verify(action).tap(1, null);
+        }
     }
 
     // ── tapCreaturesForCost ─────────────────────────────────────────
@@ -942,6 +1054,28 @@ class AiManaManagerTest {
             verify(action).tap(eq(0), any());
             verify(action, never()).tap(eq(1), any());
             verify(action, never()).tap(eq(2), any());
+        }
+
+        @Test
+        @DisplayName("skips depleted charge counter artifact for X spell")
+        void skipsDepletedChargeCounterArtifactForXSpell() {
+            addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
+            addUntappedLand("Mountain", ManaColor.RED);
+
+            Card xSpell = new Card();
+            xSpell.setManaCost("{X}{R}");
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
+                return null;
+            }).when(action).tap(eq(1), eq(null));
+
+            manager.tapLandsForXSpell(gd, player1Id, xSpell, 0, 0, action);
+
+            // Sphere at index 0 skipped, Mountain at index 1 tapped
+            verify(action, never()).tap(eq(0), any());
+            verify(action).tap(1, null);
         }
     }
 
@@ -1263,6 +1397,19 @@ class AiManaManagerTest {
             manager.addCardManaToPool(card, pool);
 
             assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("includes charge counter mana ability for hypothetical card evaluation")
+        void includesChargeCounterAbilityForHypotheticalEvaluation() {
+            // addCardManaToPool is used for hypothetical evaluation (no permanent),
+            // so charge counter costs should be assumed payable
+            Card card = createChargeCounterManaArtifact("Sphere of the Suns");
+            ManaPool pool = new ManaPool();
+
+            manager.addCardManaToPool(card, pool);
+
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
         }
     }
 
