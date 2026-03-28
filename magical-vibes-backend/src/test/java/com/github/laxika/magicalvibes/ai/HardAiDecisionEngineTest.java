@@ -499,6 +499,39 @@ class HardAiDecisionEngineTest {
             assertThat(request.damageAssignments()).isNotNull();
             assertThat(request.damageAssignments()).containsEntry(creature.getId(), 3);
         }
+
+        @Test
+        @DisplayName("Hard AI does not cast spell when mana tapping triggers awaiting input")
+        void doesNotCastSpellWhenManaTappingTriggersAwaitingInput() throws Exception {
+            Card creature = new Card();
+            creature.setName("Test Knight");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{W}");
+            creature.setPower(2);
+            creature.setToughness(2);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+
+            // Add an untapped Plains so AI needs to tap it for mana
+            Permanent land = new Permanent(new Plains());
+            land.setSummoningSick(false);
+            mockGd.playerBattlefields.get(mockAiPlayer.getId()).add(land);
+
+            // Allow tapping flow to proceed
+            when(mockGameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
+
+            // Simulate mana ability triggering awaiting input (e.g. Treasure color choice)
+            Mockito.doAnswer(inv -> {
+                mockGd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                return null;
+            }).when(mockMessageHandler).handleTapPermanent(any(), any());
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            // AI should have tapped but NOT cast the spell or passed priority
+            verify(mockMessageHandler).handleTapPermanent(any(), any());
+            verify(mockMessageHandler, never()).handlePlayCard(any(), any());
+            verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+        }
     }
 
     // ===== Modal spell handling (ChooseOneEffect) =====

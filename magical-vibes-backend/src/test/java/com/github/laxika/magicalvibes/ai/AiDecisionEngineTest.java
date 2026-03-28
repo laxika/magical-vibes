@@ -2197,4 +2197,45 @@ class AiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Berserkers of Blood Ridge");
     }
+
+    // ===== tapManaForSpell awaiting input =====
+
+    @Test
+    @DisplayName("tapManaForSpell returns false when mana pool already has enough")
+    void tapManaForSpellReturnsFalseWhenPoolSufficient() {
+        giveAiPriority();
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+
+        Card bears = new GrizzlyBears();
+        boolean result = ai.tapManaForSpell(gd, bears, null);
+
+        assertThat(result).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("tapManaForSpell returns false after normal land tapping")
+    void tapManaForSpellReturnsFalseAfterNormalTapping() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, Forest.class);
+        addUntappedLand(aiPlayer, Forest.class);
+
+        Card bears = new GrizzlyBears();
+        boolean result = ai.tapManaForSpell(gd, bears, null);
+
+        assertThat(result).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("tapManaForSpell returns false for card with no mana cost")
+    void tapManaForSpellReturnsFalseForNoManaCost() {
+        giveAiPriority();
+
+        Card land = new Plains();
+        boolean result = ai.tapManaForSpell(gd, land, null);
+
+        assertThat(result).isFalse();
+    }
 }

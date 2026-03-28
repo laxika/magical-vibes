@@ -255,7 +255,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 }
                 log.info("AI (Hard/MCTS): Casting {}{} in game {}", card.getName(),
                         xValue != null ? " (X=" + xValue + ")" : "", gameId);
-                tapManaForSpell(gameData, card, xValue);
+                if (tapManaForSpell(gameData, card, xValue)) {
+                    return true; // Mana ability triggered a pending choice; will resume after it resolves
+                }
                 int handSizeBefore = hand.size();
                 final int cardIndex = pc.handIndex();
                 final UUID targetId = modalPlan != null ? modalPlan.targetId() : (EffectResolution.needsDamageDistribution(card) ? null : mctsTargetId);
@@ -401,7 +403,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
-        tapManaForSpell(gameData, card, xValue);
+        if (tapManaForSpell(gameData, card, xValue)) {
+            return true; // Mana ability triggered a pending choice; will resume after it resolves
+        }
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final int cardIndex = best.index;
@@ -584,7 +588,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): Casting instant {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", value), gameId);
-        tapManaForSpell(gameData, card, xValue);
+        if (tapManaForSpell(gameData, card, xValue)) {
+            return true; // Mana ability triggered a pending choice; will resume after it resolves
+        }
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;

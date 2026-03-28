@@ -668,15 +668,19 @@ public abstract class AiDecisionEngine {
      * Taps lands (and creature-mana producers if needed) to pay for the given spell
      * before sending a PlayCardRequest. Must be called before handlePlayCard so the
      * actual mana pool satisfies the playability check in SpellCastingService.
+     *
+     * @return true if the game is now awaiting input (e.g. a Treasure token triggered
+     *         a color choice), meaning the caller should abort the spell cast and let
+     *         the choice handler resolve first.
      */
-    protected void tapManaForSpell(GameData gameData, Card card, Integer xValue) {
-        if (card.getManaCost() == null) return;
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue) {
+        if (card.getManaCost() == null) return false;
         int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
         AiManaManager.ManaTapAction tap = manaTapAction();
 
         if (card.isRequiresCreatureMana()) {
             manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
-            return;
+            return gameData.interaction.isAwaitingInput();
         }
 
         ManaCost cost = new ManaCost(card.getManaCost());
@@ -685,6 +689,7 @@ public abstract class AiDecisionEngine {
         } else {
             manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
         }
+        return gameData.interaction.isAwaitingInput();
     }
 
     protected AiManaManager.ManaTapAction manaTapAction() {

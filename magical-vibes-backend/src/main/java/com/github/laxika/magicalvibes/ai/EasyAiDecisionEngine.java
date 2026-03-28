@@ -195,7 +195,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        tapManaForSpell(gameData, card, xValue);
+        if (tapManaForSpell(gameData, card, xValue)) {
+            return true; // Mana ability triggered a pending choice; will resume after it resolves
+        }
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
@@ -310,7 +312,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        tapManaForSpell(gameData, card, xValue);
+        if (tapManaForSpell(gameData, card, xValue)) {
+            return true; // Mana ability triggered a pending choice; will resume after it resolves
+        }
         int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;

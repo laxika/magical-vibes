@@ -247,7 +247,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
-            tapManaForSpell(gameData, card, xValue);
+            if (tapManaForSpell(gameData, card, xValue)) {
+                return true; // Mana ability triggered a pending choice; will resume after it resolves
+            }
             int handSizeBefore = hand.size();
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;

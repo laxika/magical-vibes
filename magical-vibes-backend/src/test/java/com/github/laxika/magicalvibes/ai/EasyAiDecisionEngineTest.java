@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -1091,5 +1093,75 @@ class EasyAiDecisionEngineTest {
 
         // Without forced attack, AI should choose zero attackers (unfavorable trade)
         assertThat(captor.getValue().attackerIndices()).isEmpty();
+    }
+
+    // ===== tapManaForSpell awaiting input (mana ability triggers color choice) =====
+
+    @Test
+    @DisplayName("Easy AI does not cast spell when mana tapping triggers awaiting input")
+    void doesNotCastSpellWhenManaTappingTriggersAwaitingInput() throws Exception {
+        Card creature = new Card();
+        creature.setName("Test Knight");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{W}");
+        creature.setPower(2);
+        creature.setToughness(2);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        // Add an untapped Plains to the battlefield so AI needs to tap it for mana
+        Permanent land = new Permanent(new Plains());
+        land.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(land);
+
+        // Allow tapping flow to proceed
+        when(gameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
+
+        // Simulate mana ability triggering awaiting input (e.g. Treasure color choice)
+        Mockito.doAnswer(inv -> {
+            gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+            return null;
+        }).when(messageHandler).handleTapPermanent(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        // AI should have tapped the land but NOT cast the spell or passed priority
+        verify(messageHandler).handleTapPermanent(any(), any());
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler, never()).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI does not cast instant when mana tapping triggers awaiting input")
+    void doesNotCastInstantWhenManaTappingTriggersAwaitingInput() throws Exception {
+        // Use opponent's turn so the instant-casting path is used
+        gd.currentStep = TurnStep.END_STEP;
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+        gd.activePlayerId = opponentId;
+        gd.stack.clear();
+        // Opponent has already passed priority, so AI holds priority
+        gd.priorityPassedBy.add(opponentId);
+
+        Card instant = new Card();
+        instant.setName("Test Bolt");
+        instant.setType(CardType.INSTANT);
+        instant.setManaCost("{W}");
+        gd.playerHands.get(aiPlayer.getId()).add(instant);
+
+        Permanent land = new Permanent(new Plains());
+        land.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(land);
+
+        when(gameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
+
+        Mockito.doAnswer(inv -> {
+            gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+            return null;
+        }).when(messageHandler).handleTapPermanent(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        verify(messageHandler).handleTapPermanent(any(), any());
+        verify(messageHandler, never()).handlePlayCard(any(), any());
+        verify(messageHandler, never()).handlePassPriority(any(), any());
     }
 }
