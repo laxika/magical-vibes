@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -58,6 +59,119 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
         this.mctsEngine = new MCTSEngine(new GameSimulator(gameQueryService));
+    }
+
+    // ===== Smart Land Selection =====
+
+    /**
+     * When multiple lands are in hand, picks the land that maximizes the total
+     * value of castable spells this turn. Ties are broken by color coverage —
+     * how many colored mana requirements in hand the land helps satisfy.
+     */
+    @Override
+    protected boolean tryPlayLand(GameData gameData) {
+        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(aiPlayer.getId(), 0);
+        if (landsPlayed > 0) {
+            return false;
+        }
+
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (hand == null) {
+            return false;
+        }
+
+        // Collect all land indices in hand
+        List<Integer> landIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).hasType(CardType.LAND)) {
+                landIndices.add(i);
+            }
+        }
+
+        if (landIndices.isEmpty()) {
+            return false;
+        }
+
+        // If only one land, play it directly
+        if (landIndices.size() == 1) {
+            return super.tryPlayLand(gameData);
+        }
+
+        // Multiple lands: evaluate which one enables the most valuable spells
+        ManaPool basePool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        // Collect non-land spells for evaluation
+        List<Card> spells = new ArrayList<>();
+        for (Card card : hand) {
+            if (!card.hasType(CardType.LAND) && card.getManaCost() != null) {
+                spells.add(card);
+            }
+        }
+
+        int bestLandIndex = landIndices.getFirst();
+        double bestSpellValue = -1;
+        int bestColorCoverage = -1;
+
+        for (int landIdx : landIndices) {
+            Card landCard = hand.get(landIdx);
+
+            // Build hypothetical pool with this land's mana added
+            ManaPool hypotheticalPool = new ManaPool(basePool);
+            manaManager.addCardManaToPool(landCard, hypotheticalPool);
+
+            // Primary score: total value of castable spells
+            double spellValue = 0;
+            for (Card spell : spells) {
+                if (isSpellCastable(gameData, spell, hypotheticalPool)) {
+                    spellValue += spellEvaluator.estimateSpellValue(gameData, spell, aiPlayer.getId());
+                }
+            }
+
+            // Tiebreaker: how many colored requirements in hand this land helps satisfy
+            int colorCoverage = computeColorCoverage(landCard, basePool, spells);
+
+            if (spellValue > bestSpellValue
+                    || (spellValue == bestSpellValue && colorCoverage > bestColorCoverage)) {
+                bestSpellValue = spellValue;
+                bestColorCoverage = colorCoverage;
+                bestLandIndex = landIdx;
+            }
+        }
+
+        log.info("AI (Hard): Playing land {} (best of {} options, spell value={}, coverage={}) in game {}",
+                hand.get(bestLandIndex).getName(), landIndices.size(),
+                String.format("%.1f", bestSpellValue), bestColorCoverage, gameId);
+        int handSizeBefore = hand.size();
+        final int idx = bestLandIndex;
+        send(() -> messageHandler.handlePlayCard(selfConnection,
+                new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+        if (hand.size() >= handSizeBefore) {
+            log.warn("AI: Land play failed silently in game {}", gameId);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Counts how many colored mana requirements across all spells in hand
+     * this land card helps satisfy beyond what the current pool provides.
+     */
+    private int computeColorCoverage(Card landCard, ManaPool currentPool, List<Card> spells) {
+        Set<ManaColor> producedColors = manaManager.getProducedColors(landCard);
+        int coverage = 0;
+        for (Card spell : spells) {
+            ManaCost cost = new ManaCost(spell.getManaCost());
+            for (Map.Entry<ManaColor, Integer> entry : cost.getColoredCosts().entrySet()) {
+                if (producedColors.contains(entry.getKey())) {
+                    int needed = entry.getValue();
+                    int have = currentPool.get(entry.getKey());
+                    if (have < needed) {
+                        coverage += (needed - have);
+                    }
+                }
+            }
+        }
+        return coverage;
     }
 
     // ===== Priority / Main Phase =====

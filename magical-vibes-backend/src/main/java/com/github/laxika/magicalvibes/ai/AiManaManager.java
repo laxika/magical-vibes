@@ -18,8 +18,11 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -330,6 +333,54 @@ public class AiManaManager {
         }
 
         return maxX;
+    }
+
+    /**
+     * Adds the mana that a card would produce if it were an untapped permanent
+     * on the battlefield. Used by the Hard AI to compare different land play options.
+     */
+    public void addCardManaToPool(Card card, ManaPool pool) {
+        if (hasOnTapManaEffects(card)) {
+            for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
+                if (effect instanceof AwardManaEffect manaEffect) {
+                    pool.add(manaEffect.color(), manaEffect.amount());
+                } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                    pool.add(ManaColor.COLORLESS, aace.amount());
+                } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                    pool.add(ManaColor.COLORLESS);
+                }
+            }
+        } else {
+            addActivatedManaAbilitiesToVirtualPool(card, pool, false);
+        }
+    }
+
+    /**
+     * Returns the set of mana colors that a card can produce via tap or
+     * activated mana abilities. Used for color coverage tiebreaking when
+     * choosing which land to play.
+     */
+    public Set<ManaColor> getProducedColors(Card card) {
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
+            if (effect instanceof AwardManaEffect manaEffect) {
+                colors.add(manaEffect.color());
+            } else if (effect instanceof AwardAnyColorManaEffect) {
+                Collections.addAll(colors, ManaColor.values());
+            }
+        }
+        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            if (isFreeTapManaAbility(ability)) {
+                for (CardEffect effect : ability.getEffects()) {
+                    if (effect instanceof AwardManaEffect manaEffect) {
+                        colors.add(manaEffect.color());
+                    } else if (effect instanceof AwardAnyColorManaEffect) {
+                        Collections.addAll(colors, ManaColor.values());
+                    }
+                }
+            }
+        }
+        return colors;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

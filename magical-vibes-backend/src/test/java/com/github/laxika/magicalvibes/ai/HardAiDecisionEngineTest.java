@@ -966,4 +966,66 @@ class HardAiDecisionEngineTest {
                 .count();
         assertThat(attackingCount).isGreaterThanOrEqualTo(1);
     }
+
+    // ===== Smart land selection =====
+
+    @Test
+    @DisplayName("Hard AI plays the land that enables casting a spell in hand")
+    void playsLandThatEnablesSpellCasting() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // AI has 1 colorless mana available from an untapped Mountain
+        Permanent mountain = new Permanent(new Mountain());
+        mountain.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(mountain);
+
+        // Hand: Forest, Plains, and Grizzly Bears ({1}{G})
+        // Forest should be chosen because it enables casting Grizzly Bears
+        Card forest = new com.github.laxika.magicalvibes.cards.f.Forest();
+        Card plains = new Plains();
+        Card bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(forest, plains, bears));
+
+        // First GAME_STATE: AI plays the best land
+        ai.handleMessage("GAME_STATE", "");
+
+        // Forest should be on the battlefield (not Plains)
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Forest"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+
+        // Second GAME_STATE: AI casts the now-enabled spell
+        harness.clearPriorityPassed();
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hard AI prefers land with better color coverage when no spell is immediately castable")
+    void prefersLandWithBetterColorCoverage() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // No mana on battlefield — neither land alone enables a 2-cost spell
+        // Hand: Forest, Plains, Serra Angel ({3}{W}{W})
+        // Plains should be chosen because Serra Angel needs {W}{W}
+        Card forest = new com.github.laxika.magicalvibes.cards.f.Forest();
+        Card plains = new Plains();
+        Card angel = new SerraAngel();
+        harness.setHand(player1, List.of(forest, plains, angel));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Neither land alone enables Serra Angel, so AI should choose based on coverage.
+        // Plains matches Serra Angel's {W}{W} requirement, Forest matches nothing.
+        // The Plains should have been played — verify it's on the battlefield.
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Forest"));
+    }
 }
