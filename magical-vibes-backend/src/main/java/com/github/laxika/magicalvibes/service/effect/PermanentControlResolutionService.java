@@ -1202,7 +1202,7 @@ public class PermanentControlResolutionService {
             }
 
             // Copy keywords
-            if (sourceCard.getKeywords() != null) {
+            if (sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) {
                 tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
             }
 
@@ -1265,7 +1265,7 @@ public class PermanentControlResolutionService {
             tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
             // Copy keywords
-            if (sourceCard.getKeywords() != null) {
+            if (sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) {
                 tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
             }
 
