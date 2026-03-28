@@ -993,4 +993,103 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).isEmpty();
         }
     }
+
+    // ===== Forced attack (Trove of Temptation) =====
+
+    @Test
+    @DisplayName("Easy AI attacks with at least one creature when forced by opponent effect")
+    void attacksWithAtLeastOneWhenForcedByOpponentEffect() throws Exception {
+        gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+
+        // AI has a 2/2
+        Permanent creature = new Permanent(new Card());
+        creature.getCard().setName("Bear");
+        creature.getCard().setType(CardType.CREATURE);
+        creature.getCard().setPower(2);
+        creature.getCard().setToughness(2);
+        creature.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
+
+        // Opponent has a 5/5 blocker — AI would normally choose not to attack
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+        Permanent blocker = new Permanent(new Card());
+        blocker.getCard().setName("Big Blocker");
+        blocker.getCard().setType(CardType.CREATURE);
+        blocker.getCard().setPower(5);
+        blocker.getCard().setToughness(5);
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(opponentId).add(blocker);
+
+        when(combatAttackService.getAttackableCreatureIndices(gd, aiPlayer.getId()))
+                .thenReturn(List.of(0));
+        when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
+                .thenReturn(List.of());
+        when(combatAttackService.isOpponentForcedToAttack(gd, aiPlayer.getId()))
+                .thenReturn(true);
+        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+                .thenReturn(0);
+        when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
+        when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
+        when(gameQueryService.canBlock(gd, blocker)).thenReturn(true);
+        when(gameQueryService.canBlockAttacker(eq(gd), eq(blocker), any(), any())).thenReturn(true);
+        when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
+        when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
+
+        createEngine().handleMessage("AVAILABLE_ATTACKERS", "");
+
+        ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
+        verify(messageHandler).handleDeclareAttackers(eq(selfConnection), captor.capture());
+
+        // Must declare at least one attacker despite unfavorable board
+        assertThat(captor.getValue().attackerIndices()).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Easy AI can declare zero attackers when not forced by opponent effect")
+    void canDeclareZeroAttackersWhenNotForced() throws Exception {
+        gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+
+        // AI has a 2/2 but strong opponent blocker — Easy AI should choose not to attack
+        Permanent creature = new Permanent(new Card());
+        creature.getCard().setName("Bear");
+        creature.getCard().setType(CardType.CREATURE);
+        creature.getCard().setPower(2);
+        creature.getCard().setToughness(2);
+        creature.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
+
+        UUID opponentId = gd.orderedPlayerIds.get(1);
+        Permanent blocker = new Permanent(new Card());
+        blocker.getCard().setName("Big Blocker");
+        blocker.getCard().setType(CardType.CREATURE);
+        blocker.getCard().setPower(5);
+        blocker.getCard().setToughness(5);
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(opponentId).add(blocker);
+
+        when(combatAttackService.getAttackableCreatureIndices(gd, aiPlayer.getId()))
+                .thenReturn(List.of(0));
+        when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
+                .thenReturn(List.of());
+        when(combatAttackService.isOpponentForcedToAttack(gd, aiPlayer.getId()))
+                .thenReturn(false);
+        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+                .thenReturn(0);
+        when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
+        when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
+        when(gameQueryService.canBlock(gd, blocker)).thenReturn(true);
+        when(gameQueryService.canBlockAttacker(eq(gd), eq(blocker), any(), any())).thenReturn(true);
+        when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
+        when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
+
+        createEngine().handleMessage("AVAILABLE_ATTACKERS", "");
+
+        ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
+        verify(messageHandler).handleDeclareAttackers(eq(selfConnection), captor.capture());
+
+        // Without forced attack, AI should choose zero attackers (unfavorable trade)
+        assertThat(captor.getValue().attackerIndices()).isEmpty();
+    }
 }

@@ -428,6 +428,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
+        // Ensure at least one attacker when forced (e.g. Trove of Temptation)
+        attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
+
         // Cap attackers to what we can afford given attack tax, and tap mana to pay
         attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
 

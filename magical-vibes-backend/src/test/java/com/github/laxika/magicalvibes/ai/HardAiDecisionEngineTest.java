@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
@@ -896,5 +897,40 @@ class HardAiDecisionEngineTest {
         // Without the fix, AI would compute maxX=2 (ignoring modifier) and try to steal Bears,
         // which would fail server-side validation. With the fix, AI sees maxX=1 and skips.
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Forced attack (Trove of Temptation) =====
+
+    @Test
+    @DisplayName("Hard AI attacks with at least one creature when Trove of Temptation forces attack")
+    void attacksWithAtLeastOneWhenForcedByTroveOfTemptation() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+        // Opponent controls Trove of Temptation
+        Permanent trove = new Permanent(new TroveOfTemptation());
+        trove.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(trove);
+
+        // AI has a 2/2 and opponent has a 4/4 blocker — simulator would normally skip attacking
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(airElemental);
+
+        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+        // Must attack with at least one creature despite the unfavorable board
+        long attackingCount = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isAttacking)
+                .count();
+        assertThat(attackingCount).isGreaterThanOrEqualTo(1);
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -36,18 +37,21 @@ public class AutoPassService {
     private final TriggerCollectionService triggerCollectionService;
     private final StackResolutionService stackResolutionService;
     private final StepTriggerService stepTriggerService;
+    private final CombatAttackService combatAttackService;
 
     public AutoPassService(
             GameQueryService gameQueryService,
             GameBroadcastService gameBroadcastService,
             TriggerCollectionService triggerCollectionService,
             StackResolutionService stackResolutionService,
-            StepTriggerService stepTriggerService) {
+            StepTriggerService stepTriggerService,
+            CombatAttackService combatAttackService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
         this.stackResolutionService = stackResolutionService;
         this.stepTriggerService = stepTriggerService;
+        this.combatAttackService = combatAttackService;
     }
 
     /**
@@ -147,6 +151,18 @@ public class AutoPassService {
                 return;
             }
 
+            // Never auto-pass the active player through DECLARE_ATTACKERS when
+            // an opponent's effect forces them to attack (e.g. Trove of Temptation)
+            // and attackers have not yet been declared this combat.
+            if (gameData.currentStep == TurnStep.DECLARE_ATTACKERS
+                    && priorityHolder.equals(gameData.activePlayerId)
+                    && !hasAttackingCreatures(gameData, priorityHolder)
+                    && combatAttackService.isOpponentForcedToAttack(gameData, priorityHolder)
+                    && !combatAttackService.getAttackableCreatureIndices(gameData, priorityHolder).isEmpty()) {
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+
             // Check if current step is in the priority holder's auto-stop set
             java.util.Set<TurnStep> stopSteps = gameData.playerAutoStopSteps.get(priorityHolder);
             if (stopSteps != null && stopSteps.contains(gameData.currentStep)) {
@@ -211,6 +227,18 @@ public class AutoPassService {
             // Auto-pass for this player
             gameData.priorityPassedBy.add(stackPriorityHolder);
         }
+    }
+
+    /**
+     * Checks whether the given player has any creatures currently declared as attackers.
+     */
+    private boolean hasAttackingCreatures(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent p : battlefield) {
+            if (p.isAttacking()) return true;
+        }
+        return false;
     }
 
     /**

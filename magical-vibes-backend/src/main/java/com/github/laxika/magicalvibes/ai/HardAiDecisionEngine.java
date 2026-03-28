@@ -627,6 +627,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (bestAction instanceof SimulationAction.DeclareAttackers da) {
                 // Ensure must-attack creatures are included in the MCTS result
                 List<Integer> attackerIndices = enforceMustAttack(da.attackerIndices(), mustAttackIndices);
+                // Ensure at least one attacker when forced (e.g. Trove of Temptation)
+                attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
                 // Cap attackers to what we can afford given attack tax, and tap mana to pay
                 attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
                 log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
@@ -647,6 +649,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                               List<Integer> mustAttackIndices) {
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
                 gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
+
+        // Ensure at least one attacker when forced (e.g. Trove of Temptation)
+        attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
 
         // Cap attackers to what we can afford given attack tax, and tap mana to pay
         attackerIndices = prepareAttackersForTax(gameData, attackerIndices);

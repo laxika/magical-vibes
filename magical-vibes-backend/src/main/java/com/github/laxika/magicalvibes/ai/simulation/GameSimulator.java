@@ -307,7 +307,7 @@ public class GameSimulator {
                 gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService, stateTriggerService, exileService);
         UntapStepService untapStepService = new UntapStepService(gameQueryService, gameBroadcastService);
         StepTriggerService stepTriggerService = new StepTriggerService(drawService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, battlefieldEntryService, triggerCollectionService);
-        AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService, stepTriggerService);
+        AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService, stepTriggerService, combatAttackService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
@@ -435,8 +435,12 @@ public class GameSimulator {
                 List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gd, playerId, availableIndices);
                 // Use CombatSimulator to find best attackers, then also offer empty/must-only attack
                 List<Integer> bestAttackers = combatSimulator.findBestAttackers(gd, playerId, availableIndices, mustAttackIndices);
-                if (mustAttackIndices.isEmpty()) {
+                boolean forcedToAttack = combatAttackService.isOpponentForcedToAttack(gd, playerId);
+                if (mustAttackIndices.isEmpty() && !forcedToAttack) {
                     actions.add(new SimulationAction.DeclareAttackers(List.of())); // no attack
+                } else if (mustAttackIndices.isEmpty() && forcedToAttack) {
+                    // Forced to attack with at least one — offer the first available
+                    actions.add(new SimulationAction.DeclareAttackers(List.of(availableIndices.getFirst())));
                 } else {
                     // Must-attack creatures must always be included
                     actions.add(new SimulationAction.DeclareAttackers(mustAttackIndices));
@@ -656,6 +660,11 @@ public class GameSimulator {
                 }
                 List<Integer> mustAttack = combatAttackService.getMustAttackIndices(gd, pid, available);
                 List<Integer> attackers = combatSimulator.findBestAttackers(gd, pid, available, mustAttack);
+                // Ensure at least one attacker when forced (e.g. Trove of Temptation)
+                if (attackers.isEmpty() && !available.isEmpty()
+                        && combatAttackService.isOpponentForcedToAttack(gd, pid)) {
+                    attackers = List.of(available.getFirst());
+                }
                 gameService.declareAttackers(gd, player, attackers, null);
             }
             case BLOCKER_DECLARATION -> {

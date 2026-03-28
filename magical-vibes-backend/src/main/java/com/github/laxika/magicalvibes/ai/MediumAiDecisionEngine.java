@@ -372,6 +372,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
                 gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
 
+        // Ensure at least one attacker when forced (e.g. Trove of Temptation)
+        attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
+
         // Cap attackers to what we can afford given attack tax, and tap mana to pay
         attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
 

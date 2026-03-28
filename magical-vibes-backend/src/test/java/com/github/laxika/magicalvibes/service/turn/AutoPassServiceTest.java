@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,6 +53,12 @@ class AutoPassServiceTest {
 
     @Mock
     private StackResolutionService stackResolutionService;
+
+    @Mock
+    private StepTriggerService stepTriggerService;
+
+    @Mock
+    private CombatAttackService combatAttackService;
 
     @InjectMocks
     private AutoPassService sut;
@@ -264,6 +271,99 @@ class AutoPassServiceTest {
             sut.resolveAutoPass(gd, ignored -> {});
 
             verify(gameBroadcastService).broadcastGameState(gd);
+        }
+
+        @Test
+        @DisplayName("Stops at declare attackers when opponent forces attack and creatures available")
+        void stopsAtDeclareAttackersWhenForcedToAttack() {
+            gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+            gd.activePlayerId = player1Id;
+
+            // Player1 has an untapped creature that can attack
+            Permanent creature = createPermanent();
+            creature.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(creature);
+
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(combatAttackService.isOpponentForcedToAttack(gd, player1Id)).thenReturn(true);
+            when(combatAttackService.getAttackableCreatureIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            // Should stop — active player must declare attackers
+            verify(gameBroadcastService).broadcastGameState(gd);
+            assertThat(gd.priorityPassedBy).doesNotContain(player1Id);
+        }
+
+        @Test
+        @DisplayName("Auto-passes declare attackers when not forced to attack")
+        void autoPassesDeclareAttackersWhenNotForced() {
+            gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+            gd.activePlayerId = player1Id;
+
+            Permanent creature = createPermanent();
+            creature.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(creature);
+
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
+            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+            when(combatAttackService.isOpponentForcedToAttack(gd, player1Id)).thenReturn(false);
+
+            boolean[] advanceCalled = {false};
+            sut.resolveAutoPass(gd, ignored -> {
+                advanceCalled[0] = true;
+                ignored.status = GameStatus.FINISHED;
+            });
+
+            assertThat(advanceCalled[0]).isTrue();
+        }
+
+        @Test
+        @DisplayName("Auto-passes declare attackers when forced but attackers already declared")
+        void autoPassesDeclareAttackersWhenForcedButAttackersDeclared() {
+            gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+            gd.activePlayerId = player1Id;
+
+            // Player1 has a creature that is already attacking
+            Permanent creature = createPermanent();
+            creature.setSummoningSick(false);
+            creature.setAttacking(true);
+            gd.playerBattlefields.get(player1Id).add(creature);
+
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
+            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+
+            boolean[] advanceCalled = {false};
+            sut.resolveAutoPass(gd, ignored -> {
+                advanceCalled[0] = true;
+                ignored.status = GameStatus.FINISHED;
+            });
+
+            // Should auto-pass because attackers are already declared
+            assertThat(advanceCalled[0]).isTrue();
+        }
+
+        @Test
+        @DisplayName("Auto-passes declare attackers when forced but no attackable creatures")
+        void autoPassesDeclareAttackersWhenForcedButNoAttackableCreatures() {
+            gd.currentStep = TurnStep.DECLARE_ATTACKERS;
+            gd.activePlayerId = player1Id;
+
+            // No creatures on battlefield
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
+            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+            when(combatAttackService.isOpponentForcedToAttack(gd, player1Id)).thenReturn(true);
+            when(combatAttackService.getAttackableCreatureIndices(gd, player1Id)).thenReturn(List.of());
+
+            boolean[] advanceCalled = {false};
+            sut.resolveAutoPass(gd, ignored -> {
+                advanceCalled[0] = true;
+                ignored.status = GameStatus.FINISHED;
+            });
+
+            // Should auto-pass because no creatures can attack (CR 508.1d)
+            assertThat(advanceCalled[0]).isTrue();
         }
 
         @Test

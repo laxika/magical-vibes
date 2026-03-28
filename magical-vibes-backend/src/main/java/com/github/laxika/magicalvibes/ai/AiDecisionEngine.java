@@ -266,6 +266,20 @@ public abstract class AiDecisionEngine {
     }
 
     /**
+     * Ensures the attacker list is non-empty when an opponent's effect forces
+     * the player to attack with at least one creature (e.g. Trove of Temptation).
+     * If the list is empty and the player is forced, picks the first available attacker.
+     */
+    protected List<Integer> enforceMustAttackWithAtLeastOne(GameData gameData, List<Integer> attackerIndices,
+                                                            List<Integer> availableIndices) {
+        if (!attackerIndices.isEmpty() || availableIndices.isEmpty()) return attackerIndices;
+        if (!combatAttackService.isOpponentForcedToAttack(gameData, aiPlayer.getId())) return attackerIndices;
+        List<Integer> forced = new ArrayList<>(attackerIndices);
+        forced.add(availableIndices.getFirst());
+        return forced;
+    }
+
+    /**
      * Returns the maximum number of attackers the AI can afford given the current
      * attack tax (e.g. Windborn Muse / Ghostly Prison). Returns {@link Integer#MAX_VALUE}
      * if there is no attack tax.

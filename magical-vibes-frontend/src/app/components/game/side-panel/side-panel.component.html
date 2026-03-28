@@ -141,6 +141,9 @@
       @if (attackTaxPerCreature > 0) {
         <div class="attack-tax-banner">Each attacker costs {{ '{' + attackTaxPerCreature + '}' }} mana. Tap lands to pay.</div>
       }
+      @if (mustAttackWithAtLeastOne) {
+        <div class="attack-tax-banner">You must attack with at least one creature.</div>
+      }
       <button class="btn-pass btn-pass-orange" (click)="confirmAttackers.emit()">Confirm Attackers</button>
     } @else if (declaringBlockers) {
       <button class="btn-pass btn-pass-blue" (click)="confirmBlockers.emit()">Confirm Blockers</button>
