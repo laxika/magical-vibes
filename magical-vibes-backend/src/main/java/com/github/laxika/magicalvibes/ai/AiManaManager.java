@@ -191,6 +191,9 @@ public class AiManaManager {
             if (cost.canPay(currentPool, costModifier)) {
                 return;
             }
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
         }
     }
 
@@ -235,6 +238,9 @@ public class AiManaManager {
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             if (cost.canPayCreatureOnly(currentPool, costModifier)) {
+                return;
+            }
+            if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
@@ -290,6 +296,9 @@ public class AiManaManager {
                 canPayNow = cost.canPay(currentPool, xValue + costModifier);
             }
             if (canPayNow) {
+                return;
+            }
+            if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }

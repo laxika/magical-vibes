@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -702,6 +703,27 @@ class AiManaManagerTest {
 
             verify(action, never()).tap(any(int.class), any());
         }
+
+        @Test
+        @DisplayName("stops tapping when awaiting input is triggered by a mana ability")
+        void stopsWhenAwaitingInput() {
+            // Two lands: first tap triggers a color choice (sets awaiting input),
+            // second land should NOT be tapped
+            addUntappedLand("Forest 1", ManaColor.GREEN);
+            addUntappedLand("Forest 2", ManaColor.GREEN);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            // First tap simulates a mana ability that triggers awaiting input (e.g. Drover of the Mighty)
+            lenient().doAnswer(invocation -> {
+                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                return null;
+            }).when(action).tap(eq(0), any());
+
+            manager.tapLandsForCost(gd, player1Id, "{1}{G}", 0, action);
+
+            verify(action).tap(eq(0), any());
+            verify(action, never()).tap(eq(1), any());
+        }
     }
 
     // ── tapCreaturesForCost ─────────────────────────────────────────
@@ -803,6 +825,25 @@ class AiManaManagerTest {
 
             verify(action, never()).tap(any(int.class), any());
         }
+
+        @Test
+        @DisplayName("stops tapping when awaiting input is triggered by a mana ability")
+        void stopsWhenAwaitingInput() {
+            // Two mana creatures: first tap triggers a color choice, second should NOT be tapped
+            addUntappedCreature("Drover 1", ManaColor.GREEN);
+            addUntappedCreature("Drover 2", ManaColor.GREEN);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                return null;
+            }).when(action).tap(eq(0), any());
+
+            manager.tapCreaturesForCost(gd, player1Id, "{1}{G}", 0, action);
+
+            verify(action).tap(eq(0), any());
+            verify(action, never()).tap(eq(1), any());
+        }
     }
 
     // ── tapLandsForXSpell ───────────────────────────────────────────
@@ -877,6 +918,30 @@ class AiManaManagerTest {
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 1, 0, action);
 
             verify(action, never()).tap(any(int.class), any());
+        }
+
+        @Test
+        @DisplayName("stops tapping when awaiting input is triggered by a mana ability")
+        void stopsWhenAwaitingInput() {
+            // Three lands needed for {X}{R} with X=2, but first tap triggers awaiting input
+            addUntappedLand("Mountain 1", ManaColor.RED);
+            addUntappedLand("Mountain 2", ManaColor.RED);
+            addUntappedLand("Mountain 3", ManaColor.RED);
+
+            Card xSpell = new Card();
+            xSpell.setManaCost("{X}{R}");
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                return null;
+            }).when(action).tap(eq(0), any());
+
+            manager.tapLandsForXSpell(gd, player1Id, xSpell, 2, 0, action);
+
+            verify(action).tap(eq(0), any());
+            verify(action, never()).tap(eq(1), any());
+            verify(action, never()).tap(eq(2), any());
         }
     }
 
