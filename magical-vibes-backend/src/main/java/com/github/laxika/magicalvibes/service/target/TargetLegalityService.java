@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
@@ -45,6 +46,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -238,6 +240,17 @@ public class TargetLegalityService {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && !gameData.playerIds.contains(targetId)) {
             return Optional.of("Invalid target");
+        }
+
+        if (needsTarget) {
+            Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
+
+            if (target != null && !allowedTargets.contains(TargetType.PERMANENT)) {
+                return Optional.of("This spell can only target players");
+            }
+            if (target == null && gameData.playerIds.contains(targetId) && !allowedTargets.contains(TargetType.PLAYER)) {
+                return Optional.of("This spell cannot target players");
+            }
         }
 
         if (target != null && needsTarget) {

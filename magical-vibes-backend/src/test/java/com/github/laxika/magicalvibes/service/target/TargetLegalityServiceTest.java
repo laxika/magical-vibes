@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -491,6 +493,81 @@ class TargetLegalityServiceTest {
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("has hexproof and can't be targeted");
+        }
+
+        @Test
+        @DisplayName("throws when player-only spell targets a permanent")
+        void throwsWhenPlayerOnlySpellTargetsPermanent() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = new Card();
+            spell.setName("Traumatize");
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost("{3}{U}{U}");
+            spell.setColor(CardColor.BLUE);
+            spell.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("This spell can only target players");
+        }
+
+        @Test
+        @DisplayName("passes when player-only spell targets a player")
+        void passesWhenPlayerOnlySpellTargetsPlayer() {
+            Card spell = new Card();
+            spell.setName("Traumatize");
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost("{3}{U}{U}");
+            spell.setColor(CardColor.BLUE);
+            spell.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
+
+            sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id);
+        }
+
+        @Test
+        @DisplayName("throws when permanent-only spell targets a player")
+        void throwsWhenPermanentOnlySpellTargetsPlayer() {
+            Card spell = new Card();
+            spell.setName("Destroy");
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{B}");
+            spell.setColor(CardColor.BLACK);
+            spell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+
+            assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("This spell cannot target players");
+        }
+
+        @Test
+        @DisplayName("passes when permanent-only spell targets a permanent")
+        void passesWhenPermanentOnlySpellTargetsPermanent() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = new Card();
+            spell.setName("Destroy");
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{B}");
+            spell.setColor(CardColor.BLACK);
+            spell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+
+            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id);
+        }
+
+        @Test
+        @DisplayName("passes when any-target spell targets a permanent")
+        void passesWhenAnyTargetSpellTargetsPermanent() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = createTargetingSpell("Lightning Bolt", CardColor.RED);
+
+            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id);
+        }
+
+        @Test
+        @DisplayName("passes when any-target spell targets a player")
+        void passesWhenAnyTargetSpellTargetsPlayer() {
+            Card spell = createTargetingSpell("Lightning Bolt", CardColor.RED);
+
+            sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id);
         }
     }
 
