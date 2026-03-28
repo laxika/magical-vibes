@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,12 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCre
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.function.IntConsumer;
 
 /**
  * Shared mana management logic for AI: virtual mana pool calculation,
@@ -29,6 +32,16 @@ public class AiManaManager {
 
     public AiManaManager(GameQueryService gameQueryService) {
         this.gameQueryService = gameQueryService;
+    }
+
+    /**
+     * Callback for tapping a permanent for mana. When abilityIndex is null,
+     * uses the basic tapPermanent path (for ON_TAP effects). When non-null,
+     * activates the specific activated ability at that index.
+     */
+    @FunctionalInterface
+    public interface ManaTapAction {
+        void tap(int permanentIndex, Integer abilityIndex);
     }
 
     public ManaPool buildVirtualManaPool(GameData gameData, UUID aiPlayerId) {
@@ -63,7 +76,8 @@ public class AiManaManager {
                     if (isCreature) {
                         virtual.addCreatureMana(overriddenColor, 1);
                     }
-                } else {
+                } else if (hasOnTapManaEffects(perm.getCard())) {
+                    // Basic lands and permanents with ON_TAP mana effects
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
                             virtual.add(manaEffect.color(), manaEffect.amount());
@@ -80,6 +94,9 @@ public class AiManaManager {
                             virtual.add(ManaColor.COLORLESS);
                         }
                     }
+                } else {
+                    // Check activated mana abilities (dual lands, pain lands, utility lands)
+                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature);
                 }
             }
         }
@@ -87,7 +104,51 @@ public class AiManaManager {
         return virtual;
     }
 
-    void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, IntConsumer tapPermanent) {
+    /**
+     * Adds mana from activated mana abilities to the virtual pool.
+     * For permanents with multiple free-tap mana abilities (e.g. dual lands),
+     * all possible colors are added but the total is corrected via flexibleOvercount
+     * since the permanent can only be tapped once.
+     */
+    private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature) {
+        int manaAbilityCount = 0;
+        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            if (!isFreeTapManaAbility(ability)) {
+                continue;
+            }
+            manaAbilityCount++;
+            for (CardEffect effect : ability.getEffects()) {
+                if (effect instanceof AwardManaEffect manaEffect) {
+                    virtual.add(manaEffect.color(), manaEffect.amount());
+                    if (isCreature) {
+                        virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                    }
+                } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                    virtual.add(ManaColor.COLORLESS, aace.amount());
+                    if (isCreature) {
+                        virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
+                    }
+                }
+            }
+        }
+        // Each permanent can only be tapped once, but we added mana for all abilities.
+        // Track the over-count so canPay uses the correct effective total.
+        if (manaAbilityCount > 1) {
+            virtual.addFlexibleOvercount(manaAbilityCount - 1);
+        }
+    }
+
+    /**
+     * Returns true if an activated ability is a free tap-based mana ability:
+     * requires tap, has no mana cost, and produces mana.
+     */
+    public static boolean isFreeTapManaAbility(ActivatedAbility ability) {
+        return ability.isRequiresTap()
+                && ability.getManaCost() == null
+                && ability.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect);
+    }
+
+    void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
@@ -113,13 +174,15 @@ public class AiManaManager {
                 continue;
             }
 
-            boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
-            if (!producesMana) {
-                continue;
+            if (hasOnTapManaEffects(perm.getCard())) {
+                action.tap(i, null);
+            } else {
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool);
+                if (abilityIndex == null) {
+                    continue;
+                }
+                action.tap(i, abilityIndex);
             }
-
-            tapPermanent.accept(i);
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             if (cost.canPay(currentPool, costModifier)) {
@@ -128,7 +191,7 @@ public class AiManaManager {
         }
     }
 
-    void tapCreaturesForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, IntConsumer tapPermanent) {
+    void tapCreaturesForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
@@ -157,13 +220,15 @@ public class AiManaManager {
                 continue;
             }
 
-            boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
-            if (!producesMana) {
-                continue;
+            if (hasOnTapManaEffects(perm.getCard())) {
+                action.tap(i, null);
+            } else {
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool);
+                if (abilityIndex == null) {
+                    continue;
+                }
+                action.tap(i, abilityIndex);
             }
-
-            tapPermanent.accept(i);
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             if (cost.canPayCreatureOnly(currentPool, costModifier)) {
@@ -172,7 +237,7 @@ public class AiManaManager {
         }
     }
 
-    void tapLandsForXSpell(GameData gameData, UUID aiPlayerId, Card card, int xValue, int costModifier, IntConsumer tapPermanent) {
+    void tapLandsForXSpell(GameData gameData, UUID aiPlayerId, Card card, int xValue, int costModifier, ManaTapAction action) {
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
@@ -204,13 +269,15 @@ public class AiManaManager {
                 continue;
             }
 
-            boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
-            if (!producesMana) {
-                continue;
+            if (hasOnTapManaEffects(perm.getCard())) {
+                action.tap(i, null);
+            } else {
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool);
+                if (abilityIndex == null) {
+                    continue;
+                }
+                action.tap(i, abilityIndex);
             }
-
-            tapPermanent.accept(i);
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             boolean canPayNow;
@@ -263,5 +330,70 @@ public class AiManaManager {
         }
 
         return maxX;
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Returns true if the card has ON_TAP mana-producing effects (basic lands, mana creatures like Llanowar Elves).
+     */
+    private static boolean hasOnTapManaEffects(Card card) {
+        return card.getEffects(EffectSlot.ON_TAP).stream()
+                .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect
+                        || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
+    }
+
+    /**
+     * Chooses the best activated mana ability index for a permanent, prioritizing
+     * colors needed for the spell's colored costs. Returns null if no free-tap
+     * mana ability exists.
+     */
+    private static Integer chooseBestManaAbilityIndex(Card card, ManaCost cost, ManaPool currentPool) {
+        List<ActivatedAbility> abilities = card.getActivatedAbilities();
+        Integer bestIndex = null;
+        int bestScore = -1;
+
+        for (int j = 0; j < abilities.size(); j++) {
+            ActivatedAbility ability = abilities.get(j);
+            if (!isFreeTapManaAbility(ability)) {
+                continue;
+            }
+
+            int score = scoreManaAbility(ability, cost, currentPool);
+            if (score > bestScore) {
+                bestScore = score;
+                bestIndex = j;
+            }
+        }
+        return bestIndex;
+    }
+
+    /**
+     * Scores a mana ability based on how useful its produced color is for the current spell.
+     * Higher score = more useful. Prioritizes colors needed for colored costs,
+     * prefers abilities without side effects (e.g. pain land damage).
+     */
+    private static int scoreManaAbility(ActivatedAbility ability, ManaCost cost, ManaPool currentPool) {
+        boolean hasSideEffects = ability.getEffects().stream()
+                .anyMatch(e -> e instanceof DealDamageToControllerEffect);
+        Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
+
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof AwardManaEffect award) {
+                ManaColor color = award.color();
+                int needed = coloredCosts.getOrDefault(color, 0);
+                int have = currentPool.get(color);
+                if (needed > have) {
+                    // This color is needed for a colored cost we can't yet pay
+                    return hasSideEffects ? 15 : 20;
+                }
+                // Can contribute to generic costs
+                return hasSideEffects ? 1 : 5;
+            }
+            if (effect instanceof AwardAnyColorManaEffect) {
+                return hasSideEffects ? 1 : 5;
+            }
+        }
+        return 0;
     }
 }

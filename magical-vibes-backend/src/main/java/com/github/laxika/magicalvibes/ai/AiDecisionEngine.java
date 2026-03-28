@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
+import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -43,7 +44,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.IntConsumer;
 
 /**
  * Abstract base class for all AI difficulty levels. Provides message dispatch,
@@ -298,7 +298,7 @@ public abstract class AiDecisionEngine {
         // Tap lands to put enough mana in the pool to pay the tax
         int totalTax = taxPerCreature * capped.size();
         String taxCostStr = "{" + totalTax + "}";
-        manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, tapPermanentAction());
+        manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, manaTapAction());
         return capped;
     }
 
@@ -658,7 +658,7 @@ public abstract class AiDecisionEngine {
     protected void tapManaForSpell(GameData gameData, Card card, Integer xValue) {
         if (card.getManaCost() == null) return;
         int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
-        IntConsumer tap = tapPermanentAction();
+        AiManaManager.ManaTapAction tap = manaTapAction();
 
         if (card.isRequiresCreatureMana()) {
             manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
@@ -673,8 +673,15 @@ public abstract class AiDecisionEngine {
         }
     }
 
-    protected IntConsumer tapPermanentAction() {
-        return idx -> send(() -> messageHandler.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
+    protected AiManaManager.ManaTapAction manaTapAction() {
+        return (idx, abilityIndex) -> {
+            if (abilityIndex != null) {
+                send(() -> messageHandler.handleActivateAbility(selfConnection,
+                        new ActivateAbilityRequest(idx, abilityIndex, null, null, null, null, null)));
+            } else {
+                send(() -> messageHandler.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
+            }
+        };
     }
 
     protected void send(MessageHandlerAction action) {

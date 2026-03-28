@@ -846,10 +846,10 @@ public class GameSimulator {
         if (card.getManaCost() == null) return;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool currentPool = gd.playerManaPools.get(playerId);
+        Player player = new Player(playerId, "sim");
 
         if (card.isRequiresCreatureMana()) {
             if (cost.canPayCreatureOnly(currentPool)) return;
-            Player player = new Player(playerId, "sim");
             List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
             for (int i = 0; i < battlefield.size(); i++) {
                 Permanent perm = battlefield.get(i);
@@ -857,10 +857,7 @@ public class GameSimulator {
                 if (!gameQueryService.isCreature(gd, perm)) continue;
                 if (perm.isSummoningSick()
                         && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
-                boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                        .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
-                if (!producesMana) continue;
-                gameService.tapPermanent(gd, player, i);
+                if (!tapOrActivateMana(gd, player, perm, i, cost, currentPool)) continue;
                 currentPool = gd.playerManaPools.get(playerId);
                 if (cost.canPayCreatureOnly(currentPool)) return;
             }
@@ -875,17 +872,13 @@ public class GameSimulator {
         }
         if (alreadyPaid) return;
 
-        Player player = new Player(playerId, "sim");
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent perm = battlefield.get(i);
             if (perm.isTapped()) continue;
             if (gameQueryService.isCreature(gd, perm) && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
-            boolean producesMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
-            if (!producesMana) continue;
-            gameService.tapPermanent(gd, player, i);
+            if (!tapOrActivateMana(gd, player, perm, i, cost, currentPool)) continue;
             currentPool = gd.playerManaPools.get(playerId);
             boolean canPayNow;
             if (cost.hasX() && card.getXColorRestriction() != null) {
@@ -895,6 +888,50 @@ public class GameSimulator {
             }
             if (canPayNow) return;
         }
+    }
+
+    /**
+     * Taps a permanent for mana or activates its mana ability in simulation.
+     * Returns true if the permanent was tapped, false if it has no mana production.
+     */
+    private boolean tapOrActivateMana(GameData gd, Player player, Permanent perm, int index, ManaCost cost, ManaPool currentPool) {
+        boolean hasOnTapMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
+        if (hasOnTapMana) {
+            gameService.tapPermanent(gd, player, index);
+            return true;
+        }
+        // Check activated mana abilities (dual lands, pain lands, etc.)
+        var abilities = perm.getCard().getActivatedAbilities();
+        Integer bestIndex = null;
+        int bestScore = -1;
+        for (int j = 0; j < abilities.size(); j++) {
+            if (!AiManaManager.isFreeTapManaAbility(abilities.get(j))) continue;
+            int score = scoreAbilityForSim(abilities.get(j), cost, currentPool);
+            if (score > bestScore) {
+                bestScore = score;
+                bestIndex = j;
+            }
+        }
+        if (bestIndex == null) return false;
+        gameService.activateAbility(gd, player, index, bestIndex, null, null, null);
+        return true;
+    }
+
+    private int scoreAbilityForSim(com.github.laxika.magicalvibes.model.ActivatedAbility ability, ManaCost cost, ManaPool pool) {
+        boolean hasSideEffects = ability.getEffects().stream()
+                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect);
+        var coloredCosts = cost.getColoredCosts();
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof AwardManaEffect award) {
+                int needed = coloredCosts.getOrDefault(award.color(), 0);
+                int have = pool.get(award.color());
+                if (needed > have) return hasSideEffects ? 15 : 20;
+                return hasSideEffects ? 1 : 5;
+            }
+            if (effect instanceof AwardAnyColorManaEffect) return hasSideEffects ? 1 : 5;
+        }
+        return 0;
     }
 
     private int calculateSmartX(GameData gd, Card card, UUID targetId, ManaPool virtualPool) {

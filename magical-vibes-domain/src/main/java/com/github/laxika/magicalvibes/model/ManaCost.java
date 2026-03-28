@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,14 @@ public class ManaCost {
 
     public boolean hasX() {
         return hasX;
+    }
+
+    /**
+     * Returns an unmodifiable view of the colored mana requirements.
+     * Used by AI mana management to determine which colors are needed.
+     */
+    public Map<ManaColor, Integer> getColoredCosts() {
+        return Collections.unmodifiableMap(coloredCosts);
     }
 
     public int getManaValue() {
@@ -150,7 +159,7 @@ public class ManaCost {
             }
         }
 
-        int remaining = pool.getTotal();
+        int remaining = pool.getTotal() - pool.getFlexibleOvercount();
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             remaining -= entry.getValue();
         }
@@ -313,7 +322,7 @@ public class ManaCost {
             }
         }
 
-        int remaining = pool.getTotal();
+        int remaining = pool.getTotal() - pool.getFlexibleOvercount();
         for (int count : coloredCosts.values()) {
             remaining -= count;
         }

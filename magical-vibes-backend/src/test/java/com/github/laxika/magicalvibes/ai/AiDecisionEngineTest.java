@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.r.RootboundCrag;
+import com.github.laxika.magicalvibes.cards.s.SunpetalGrove;
+import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -125,6 +129,20 @@ class AiDecisionEngineTest {
             Permanent mountain = new Permanent(new Mountain());
             mountain.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(mountain);
+        }
+    }
+
+    /**
+     * Adds a single untapped land of the given card class to a player's battlefield.
+     */
+    private Permanent addUntappedLand(Player player, Class<? extends Card> cardClass) {
+        try {
+            Permanent perm = new Permanent(cardClass.getDeclaredConstructor().newInstance());
+            perm.setSummoningSick(false);
+            gd.playerBattlefields.get(player.getId()).add(perm);
+            return perm;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -1873,6 +1891,310 @@ class AiDecisionEngineTest {
 
         assertThat(gd.stack).isEmpty();
     }
+
+    // ===== Dual land mana — virtual pool estimation =====
+
+    @Test
+    @DisplayName("Virtual pool includes mana from Rootbound Crag")
+    void virtualPoolIncludesDualLandMana() {
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
+        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+
+        assertThat(pool.get(ManaColor.RED)).isGreaterThanOrEqualTo(1);
+        assertThat(pool.get(ManaColor.GREEN)).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Virtual pool total is correct for two Rootbound Crags (no over-count)")
+    void virtualPoolTotalCorrectForTwoDualLands() {
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
+        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(2);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(2);
+        // Effective total = getTotal() - flexibleOvercount = 4 - 2 = 2 (correct for 2 lands)
+        assertThat(pool.getTotal() - pool.getFlexibleOvercount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Virtual pool correctly mixes basic and dual lands")
+    void virtualPoolMixesBasicAndDualLands() {
+        addUntappedLand(aiPlayer, Mountain.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
+        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(2); // Mountain + Crag
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1); // Crag only
+        assertThat(pool.getTotal() - pool.getFlexibleOvercount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Virtual pool handles pain lands (three activated abilities)")
+    void virtualPoolHandlesPainLands() {
+        addUntappedLand(aiPlayer, YavimayaCoast.class);
+
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
+        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+
+        // Yavimaya Coast: {C}, {G}+damage, {U}+damage
+        assertThat(pool.get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(1);
+        assertThat(pool.get(ManaColor.GREEN)).isGreaterThanOrEqualTo(1);
+        assertThat(pool.get(ManaColor.BLUE)).isGreaterThanOrEqualTo(1);
+        // Only 1 land, effective total must be 1
+        assertThat(pool.getTotal() - pool.getFlexibleOvercount()).isEqualTo(1);
+    }
+
+    // ===== Dual land mana — casting spells =====
+
+    @Test
+    @DisplayName("AI casts Goblin Piker ({1}{R}) with two Rootbound Crags")
+    void castsGoblinPikerWithTwoRootboundCrags() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        harness.setHand(aiPlayer, List.of(new GoblinPiker()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
+    }
+
+    @Test
+    @DisplayName("AI casts Grizzly Bears ({1}{G}) with two Rootbound Crags")
+    void castsGrizzlyBearsWithTwoRootboundCrags() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("AI casts Goblin Piker ({1}{R}) with one Mountain and one Rootbound Crag")
+    void castsWithMixedBasicAndDualLands() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, Mountain.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        harness.setHand(aiPlayer, List.of(new GoblinPiker()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
+    }
+
+    @Test
+    @DisplayName("AI casts Grizzly Bears ({1}{G}) with Mountain and Rootbound Crag using intelligent color choice")
+    void castsGreenSpellWithMountainAndCragChoosingGreenFromCrag() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, Mountain.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast: Rootbound Crag produces {G}, Mountain produces {R} for generic
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("AI does not cast a 3-mana spell with only two dual lands")
+    void doesNotCastThreeCostWithTwoDualLands() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        // Awakener Druid costs {2}{G} = 3 mana, but we only have 2 lands
+        harness.setHand(aiPlayer, List.of(new AwakenerDruid()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI casts with single Rootbound Crag for {R} spell — not enough for {1}{R}")
+    void castsOneRedManaSpellWithSingleCrag() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        harness.setHand(aiPlayer, List.of(new GoblinPiker())); // costs {1}{R} = 2 mana
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Only 1 land = 1 mana, can't cast {1}{R}
+        assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Dual land mana — intelligent color selection =====
+
+    @Test
+    @DisplayName("AI taps dual land for needed color and basic land for generic")
+    void tapsCorrectColorsWithMixedLands() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, Forest.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        harness.setHand(aiPlayer, List.of(new GoblinPiker()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
+        // Both lands should be tapped
+        long tappedCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
+                .filter(Permanent::isTapped).count();
+        assertThat(tappedCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("AI prefers colorless over pain ability when color not needed")
+    void prefersPainlessAbilityForGenericCosts() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, Forest.class);
+        addUntappedLand(aiPlayer, YavimayaCoast.class);
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        int lifeBefore = gd.playerLifeTotals.get(aiPlayer.getId());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+        // AI should not have taken pain land damage (used {C} ability for generic)
+        int lifeAfter = gd.playerLifeTotals.get(aiPlayer.getId());
+        assertThat(lifeAfter).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("AI uses pain ability when needed for colored cost")
+    void usesPainAbilityWhenColorIsNeeded() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, YavimayaCoast.class);
+        addUntappedLand(aiPlayer, YavimayaCoast.class);
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        int lifeBefore = gd.playerLifeTotals.get(aiPlayer.getId());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+        // AI should take exactly 1 damage (one pain tap for {G}, one {C} tap)
+        int lifeAfter = gd.playerLifeTotals.get(aiPlayer.getId());
+        assertThat(lifeAfter).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("AI casts with multiple different dual lands")
+    void castsWithMultipleDifferentDualLands() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, SunpetalGrove.class);
+
+        harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("AI taps both lands correctly for two-color needs")
+    void tapsBothLandsForTwoColorNeeds() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, Forest.class);
+
+        harness.setHand(aiPlayer, List.of(new GoblinPiker()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
+    }
+
+    // ===== Dual land mana — edge cases =====
+
+    @Test
+    @DisplayName("Tapped dual land does not contribute to virtual pool")
+    void tappedDualLandNotInVirtualPool() {
+        Permanent crag = addUntappedLand(aiPlayer, RootboundCrag.class);
+        crag.tap();
+
+        AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
+        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(0);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("AI can still use basic lands alongside dual lands")
+    void basicLandsStillWorkAlongsideDualLands() {
+        giveAiPriority();
+        addUntappedLand(aiPlayer, Mountain.class);
+        addUntappedLand(aiPlayer, Mountain.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        // Berserkers of Blood Ridge costs {3}{R}{R} — needs 5 mana
+        // With 3 lands we can't afford it
+        harness.setHand(aiPlayer, List.of(new BerserkersOfBloodRidge()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI correctly rejects unaffordable spell with many dual lands")
+    void rejectsUnaffordableSpellWithDualLands() {
+        giveAiPriority();
+        for (int i = 0; i < 4; i++) {
+            addUntappedLand(aiPlayer, RootboundCrag.class);
+        }
+
+        harness.setHand(aiPlayer, List.of(new BerserkersOfBloodRidge()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI casts affordable spell with enough dual lands")
+    void castsAffordableSpellWithEnoughDualLands() {
+        giveAiPriority();
+        for (int i = 0; i < 5; i++) {
+            addUntappedLand(aiPlayer, RootboundCrag.class);
+        }
+
+        harness.setHand(aiPlayer, List.of(new BerserkersOfBloodRidge()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Berserkers of Blood Ridge");
+    }
 }
-
-
