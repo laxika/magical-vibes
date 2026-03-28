@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -243,13 +244,21 @@ public class TargetLegalityService {
         }
 
         if (needsTarget) {
-            Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
+            // Skip target-type validation for modal spells: their modes have already been
+            // unwrapped by SpellCastingService and the mode-specific effects/filters handle
+            // validation downstream.  computeAllowedTargets(card) uses the raw (unresolved)
+            // ChooseOneEffect which doesn't expose inner target types.
+            boolean isModal = card.getEffects(EffectSlot.SPELL).stream()
+                    .anyMatch(ChooseOneEffect.class::isInstance);
+            if (!isModal) {
+                Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
 
-            if (target != null && !allowedTargets.contains(TargetType.PERMANENT)) {
-                return Optional.of("This spell can only target players");
-            }
-            if (target == null && gameData.playerIds.contains(targetId) && !allowedTargets.contains(TargetType.PLAYER)) {
-                return Optional.of("This spell cannot target players");
+                if (target != null && !allowedTargets.contains(TargetType.PERMANENT)) {
+                    return Optional.of("This spell can only target players");
+                }
+                if (target == null && gameData.playerIds.contains(targetId) && !allowedTargets.contains(TargetType.PLAYER)) {
+                    return Optional.of("This spell cannot target players");
+                }
             }
         }
 

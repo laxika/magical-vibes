@@ -100,7 +100,7 @@ class RighteousnessTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid target permanent");
+                .hasMessageContaining("This spell cannot target players");
     }
 
     @Test

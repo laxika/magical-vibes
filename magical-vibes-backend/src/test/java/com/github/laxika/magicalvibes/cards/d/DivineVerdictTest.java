@@ -111,7 +111,7 @@ class DivineVerdictTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid target permanent");
+                .hasMessageContaining("This spell cannot target players");
     }
 
     // ===== Resolving =====

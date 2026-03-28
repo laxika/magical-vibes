@@ -17,9 +17,14 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -143,6 +148,19 @@ class TargetLegalityServiceTest {
         card.setManaCost("{R}");
         card.setColor(color);
         card.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        return card;
+    }
+
+    private static Card createModalSpell(String name, CardColor color, CardEffect mode1Effect, CardEffect mode2Effect) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.INSTANT);
+        card.setManaCost("{1}");
+        card.setColor(color);
+        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Mode 1", mode1Effect),
+                new ChooseOneEffect.ChooseOneOption("Mode 2", mode2Effect)
+        )));
         return card;
     }
 
@@ -568,6 +586,36 @@ class TargetLegalityServiceTest {
             Card spell = createTargetingSpell("Lightning Bolt", CardColor.RED);
 
             sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id);
+        }
+
+        @Test
+        @DisplayName("passes when modal spell with permanent-targeting mode targets a permanent")
+        void passesWhenModalSpellWithPermanentModeTargetsPermanent() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = createModalSpell("Crushing Canopy", CardColor.GREEN,
+                    new DestroyTargetPermanentEffect(), new DestroyTargetPermanentEffect());
+
+            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id, true);
+        }
+
+        @Test
+        @DisplayName("passes when modal spell with player-targeting mode targets a player")
+        void passesWhenModalSpellWithPlayerModeTargetsPlayer() {
+            Card spell = createModalSpell("Modal Burn", CardColor.RED,
+                    new DestroyTargetPermanentEffect(), new DealDamageToTargetPlayerEffect(3));
+
+            sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id, true);
+        }
+
+        @Test
+        @DisplayName("passes when modal spell with counter mode targets a permanent")
+        void passesWhenModalSpellWithCounterAndBounceModeTargetsPermanent() {
+            Permanent target = addPermanent(player2Id, createCreature("Artifact Creature", CardColor.BLUE));
+            Card spell = createModalSpell("Steel Sabotage", CardColor.BLUE,
+                    new CounterSpellEffect(), new ReturnTargetPermanentToHandEffect());
+
+            // Bounce mode: needsTarget=true, targeting a permanent
+            sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id, true);
         }
     }
 
