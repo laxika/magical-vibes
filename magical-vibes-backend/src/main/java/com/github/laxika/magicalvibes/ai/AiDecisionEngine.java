@@ -368,8 +368,16 @@ public abstract class AiDecisionEngine {
      * can be paid from the given mana pool.
      */
     protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool) {
+        return canAffordSpell(gameData, card, virtualPool, 0);
+    }
+
+    /**
+     * Checks if the card's mana cost (including cost modifiers and an extra cost such as
+     * targeting tax) can be paid from the given mana pool.
+     */
+    protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool, int extraCost) {
         ManaCost cost = new ManaCost(card.getManaCost());
-        int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + extraCost;
         if (cost.hasX()) {
             if (!cost.canPay(virtualPool, Math.max(0, 1 + modifier))) return false;
         } else {
@@ -379,6 +387,15 @@ public abstract class AiDecisionEngine {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Computes the targeting tax for a spell based on the chosen target(s).
+     * Effects like Kopala, Warden of Waves increase the cost of spells that
+     * target permanents with certain subtypes.
+     */
+    protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
+        return gameBroadcastService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
     }
 
     /**
@@ -674,8 +691,12 @@ public abstract class AiDecisionEngine {
      *         the choice handler resolve first.
      */
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue) {
+        return tapManaForSpell(gameData, card, xValue, 0);
+    }
+
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
         if (card.getManaCost() == null) return false;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         AiManaManager.ManaTapAction tap = manaTapAction();
 
         if (card.isRequiresCreatureMana()) {

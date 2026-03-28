@@ -177,6 +177,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
+            // Check targeting tax (e.g. Kopala, Warden of Waves)
+            int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
+            if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+                continue; // Can't afford with targeting tax, try next spell
+            }
+
             // Determine exile graveyard card index if needed (single card exile)
             Integer exileGraveyardCardIndex = null;
             ExileCardFromGraveyardCost exileCost = findExileGraveyardCost(card);
@@ -211,7 +217,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
             if (castCost.hasX() && xValue == null) {
-                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
                 if (maxX <= 0) {
@@ -247,7 +253,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             log.info("Random AI: Casting {}{} in game {}", card.getName(),
                     xValue != null ? " (X=" + xValue + ")" : "", gameId);
-            if (tapManaForSpell(gameData, card, xValue)) {
+            if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
                 return true; // Mana ability triggered a pending choice; will resume after it resolves
             }
             int handSizeBefore = hand.size();

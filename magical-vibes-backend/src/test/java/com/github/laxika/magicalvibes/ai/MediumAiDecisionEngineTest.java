@@ -869,4 +869,68 @@ class MediumAiDecisionEngineTest {
         assertThat(attackingCount).isGreaterThanOrEqualTo(1);
     }
 
+    // ===== Targeting tax handling =====
+
+    @Test
+    @DisplayName("Medium AI does not cast Pacifism when targeting tax makes it unaffordable")
+    void doesNotCastPacifismWhenTargetingTaxMakesUnaffordable() {
+        giveAiPriority();
+        giveAiPlains(2); // Only 2 mana — Pacifism costs {1}{W} but Kopala adds {2}
+
+        Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+        kopala.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(kopala);
+
+        harness.setHand(aiPlayer, List.of(new Pacifism()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should NOT cast — can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Pacifism when it can afford targeting tax")
+    void castsPacifismWhenCanAffordTargetingTax() {
+        giveAiPriority();
+        giveAiPlains(4); // 4 mana — enough for {1}{W} + {2} tax
+
+        Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+        kopala.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(kopala);
+
+        harness.setHand(aiPlayer, List.of(new Pacifism()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast instant when targeting tax makes it unaffordable")
+    void doesNotCastInstantWhenTargetingTaxMakesUnaffordable() {
+        // Set up as opponent's turn, beginning of combat — good timing for REMOVAL instants
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+
+        giveAiMountains(1); // Only 1 mana — Lightning Bolt costs {R} but Kopala adds {2}
+
+        Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+        kopala.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(kopala);
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.l.LightningBolt()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

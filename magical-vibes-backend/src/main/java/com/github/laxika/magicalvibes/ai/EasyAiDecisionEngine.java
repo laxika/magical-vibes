@@ -150,6 +150,12 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Check targeting tax (e.g. Kopala, Warden of Waves)
+        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
+        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+            return false;
+        }
+
         // Select sacrifice target if the spell has a sacrifice cost
         UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
@@ -164,7 +170,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // Calculate X value (for modal spells, xValue is the mode index)
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 // X must match the target permanent's mana value — use max affordable X
@@ -195,7 +201,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        if (tapManaForSpell(gameData, card, xValue)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         int handSizeBefore = hand.size();
@@ -278,6 +284,12 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             if (targetId == null) return false;
         }
 
+        // Check targeting tax (e.g. Kopala, Warden of Waves)
+        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
+        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+            return false;
+        }
+
         UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
         List<Integer> exileGraveyardCardIndices = null;
@@ -289,7 +301,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int instantCostModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        int instantCostModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);
@@ -312,7 +324,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Casting instant {}{} in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "", gameId);
-        if (tapManaForSpell(gameData, card, xValue)) {
+        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         int handSizeBefore = hand.size();

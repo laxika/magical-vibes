@@ -1164,4 +1164,121 @@ class EasyAiDecisionEngineTest {
         verify(messageHandler, never()).handlePlayCard(any(), any());
         verify(messageHandler, never()).handlePassPriority(any(), any());
     }
+
+    // ===== Targeting tax handling — harness-based =====
+
+    @Nested
+    @DisplayName("Targeting tax (Kopala, Warden of Waves)")
+    class TargetingTaxTests {
+
+        private GameTestHarness testHarness;
+        private Player human;
+        private Player aiTestPlayer;
+        private GameData testGd;
+        private EasyAiDecisionEngine easyAi;
+
+        @BeforeEach
+        void setUpHarness() {
+            testHarness = new GameTestHarness();
+            human = testHarness.getPlayer1();
+            aiTestPlayer = testHarness.getPlayer2();
+            testGd = testHarness.getGameData();
+            testHarness.skipMulligan();
+            testHarness.clearMessages();
+
+            FakeConnection aiConn = new FakeConnection("ai-easy-test");
+            testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
+            easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
+                    testHarness.getMessageHandler(), testHarness.getGameQueryService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
+                    testHarness.getTargetValidationService());
+            easyAi.setSelfConnection(aiConn);
+        }
+
+        private void giveAiPriorityLocal() {
+            testHarness.forceActivePlayer(aiTestPlayer);
+            testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testGd.interaction.setAwaitingInput(null);
+            testGd.stack.clear();
+        }
+
+        private void giveAiPlainsLocal(int count) {
+            for (int i = 0; i < count; i++) {
+                Permanent plains = new Permanent(new Plains());
+                plains.setSummoningSick(false);
+                testGd.playerBattlefields.get(aiTestPlayer.getId()).add(plains);
+            }
+        }
+
+        private void giveAiMountainsLocal(int count) {
+            for (int i = 0; i < count; i++) {
+                Permanent mountain = new Permanent(new com.github.laxika.magicalvibes.cards.m.Mountain());
+                mountain.setSummoningSick(false);
+                testGd.playerBattlefields.get(aiTestPlayer.getId()).add(mountain);
+            }
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Pacifism when targeting tax makes it unaffordable")
+        void doesNotCastPacifismWhenTargetingTaxMakesUnaffordable() {
+            giveAiPriorityLocal();
+            giveAiPlainsLocal(2); // Only 2 mana — Pacifism costs {1}{W} but Kopala adds {2}
+
+            Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+            kopala.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(kopala);
+
+            testHarness.setHand(aiTestPlayer, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            // Should NOT cast — can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
+            assertThat(testGd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Easy AI casts Pacifism when it can afford targeting tax")
+        void castsPacifismWhenCanAffordTargetingTax() {
+            giveAiPriorityLocal();
+            giveAiPlainsLocal(4); // 4 mana — enough for {1}{W} + {2} tax
+
+            Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+            kopala.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(kopala);
+
+            testHarness.setHand(aiTestPlayer, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast instant when targeting tax makes it unaffordable")
+        void doesNotCastInstantWhenTargetingTaxMakesUnaffordable() {
+            // Set up on opponent's turn outside main phase so tryCastInstant is triggered
+            testHarness.forceActivePlayer(human);
+            testHarness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testGd.interaction.setAwaitingInput(null);
+            testGd.stack.clear();
+
+            giveAiMountainsLocal(1); // Only 1 mana — Bolt costs {R} but Kopala adds {2}
+
+            Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+            kopala.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(kopala);
+
+            testHarness.setHand(aiTestPlayer, List.of(new com.github.laxika.magicalvibes.cards.l.LightningBolt()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
+            assertThat(testGd.stack).isEmpty();
+        }
+    }
 }

@@ -1028,4 +1028,88 @@ class HardAiDecisionEngineTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Forest"));
     }
+
+    // ===== Targeting tax handling =====
+
+    private void givePlayerPlains(Player player, int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent plains = new Permanent(new Plains());
+            plains.setSummoningSick(false);
+            gd.playerBattlefields.get(player.getId()).add(plains);
+        }
+    }
+
+    private void givePlayerMountains(Player player, int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(player.getId()).add(mountain);
+        }
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast Pacifism when targeting tax makes it unaffordable")
+    void doesNotCastPacifismWhenTargetingTaxMakesUnaffordable() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerPlains(player1, 2); // Only 2 mana — Pacifism costs {1}{W} but Kopala adds {2}
+
+        Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+        kopala.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(kopala);
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should NOT cast — can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI casts Pacifism when it can afford targeting tax")
+    void castsPacifismWhenCanAffordTargetingTax() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerPlains(player1, 4); // 4 mana — enough for {1}{W} + {2} tax
+
+        Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+        kopala.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(kopala);
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast instant when targeting tax makes it unaffordable")
+    void doesNotCastInstantWhenTargetingTaxMakesUnaffordable() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Set up as opponent's turn, beginning of combat — good timing for REMOVAL instants
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        givePlayerMountains(player1, 1); // Only 1 mana — Lightning Bolt costs {R} but Kopala adds {2}
+
+        Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
+        kopala.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(kopala);
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.l.LightningBolt()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
+        assertThat(gd.stack).isEmpty();
+    }
 }
