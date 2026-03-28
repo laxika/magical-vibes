@@ -809,14 +809,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        List<int[]> assignments = combatSimulator.findBestBlockers(
+        List<int[]> assignments = combatSimulator.findBestBlockersExhaustive(
                 gameData, aiPlayer.getId(), attackerIndices, blockerIndices);
 
         List<BlockerAssignment> blockerAssignments = assignments.stream()
                 .map(a -> new BlockerAssignment(a[0], a[1]))
                 .toList();
 
-        log.info("AI (Hard): Declaring {} blockers in game {}", blockerAssignments.size(), gameId);
+        log.info("AI (Hard): Declaring {} blockers (exhaustive search) in game {}", blockerAssignments.size(), gameId);
         sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
     }
 

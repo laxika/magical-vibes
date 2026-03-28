@@ -3,16 +3,22 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.g.GaeasProtector;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
+import com.github.laxika.magicalvibes.cards.p.PrizedUnicorn;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.w.WallOfFrost;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+
+import java.util.EnumSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -532,5 +538,625 @@ class CombatSimulatorTest {
         // With the fix: stolen SA has score 0, opponent won't sacrifice their AE to block
         // a worthless attacker, so SA attacks unblocked for 4 damage — clearly worth attacking
         assertThat(attackers).containsExactly(0);
+    }
+
+    // ===== Exhaustive blocker search =====
+
+    @Test
+    @DisplayName("Exhaustive: double-block kills attacker that single blocker cannot")
+    void exhaustiveDoubleBlockKillsLargeAttacker() {
+        // Opponent attacks with Craw Wurm (6/4)
+        Permanent crawWurm = new Permanent(new CrawWurm());
+        crawWurm.setSummoningSick(false);
+        crawWurm.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(crawWurm);
+
+        // AI has three 2/2 creatures — no single one can kill a 6/4,
+        // but two together have 4 power = exactly lethal vs 4 toughness
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+        }
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1, 2));
+
+        // Exhaustive search should find that two bears double-blocking kills the 6/4
+        // (combined 4 power >= 4 toughness). Two bears die but the Craw Wurm also dies.
+        assertThat(blockers).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0); // all assigned to Craw Wurm
+    }
+
+    @Test
+    @DisplayName("Exhaustive: favorable block still works (single blocker kills attacker)")
+    void exhaustiveSingleFavorableBlock() {
+        // Opponent attacks with 2/2
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // AI has a 4/4 Air Elemental
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(airElemental);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // AE should block bears (kills bears and survives)
+        assertThat(blockers).hasSize(1);
+        assertThat(blockers.get(0)[0]).isEqualTo(0);
+        assertThat(blockers.get(0)[1]).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: no blocks when all trades are unfavorable and not lethal")
+    void exhaustiveNoBlocksWhenUnfavorable() {
+        // Opponent attacks with 4/4 Air Elemental
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        airElemental.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(airElemental);
+
+        // AI has a 2/2 bears — blocking loses the bears and doesn't kill AE
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // AI at 20 life, not threatened
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Should not chump-block when at safe life
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: assigns blockers optimally across two attackers")
+    void exhaustiveOptimalAssignmentAcrossMultipleAttackers() {
+        // Opponent attacks with two creatures:
+        // Index 0: Grizzly Bears (2/2)
+        // Index 1: Craw Wurm (6/4)
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        Permanent crawWurm = new Permanent(new CrawWurm());
+        crawWurm.setSummoningSick(false);
+        crawWurm.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(crawWurm);
+
+        // AI has: Air Elemental (4/4 flying, idx 0), and two 2/2 bears (idx 1, 2)
+        // AE can't block ground creatures (it has flying but ground creatures can't block flyers)
+        // Wait, flying creatures CAN block ground creatures. Let me reconsider.
+        // Actually, flying creatures can block any creature. Only ground creatures can't block flyers.
+        // So AE can block bears (kills them and survives) or Craw Wurm.
+        // Best strategy: AE blocks bears (kills and survives), two bears double-block Craw Wurm (trade)
+        Permanent aiAirElemental = new Permanent(new AirElemental());
+        aiAirElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiAirElemental);
+
+        Permanent aiBears1 = new Permanent(new GrizzlyBears());
+        aiBears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears1);
+
+        Permanent aiBears2 = new Permanent(new GrizzlyBears());
+        aiBears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0, 1), List.of(0, 1, 2));
+
+        // Should assign all three blockers — killing both attackers while keeping AE alive
+        // AE (idx 0) blocks Bears (attacker idx 0)
+        // Bears 1+2 (idx 1,2) double-block Craw Wurm (attacker idx 1)
+        assertThat(blockers).hasSize(3);
+
+        // AE blocks the bears
+        assertThat(blockers.stream().filter(b -> b[0] == 0).findFirst().orElseThrow()[1])
+                .isEqualTo(0); // AE -> Bears
+
+        // Both AI bears block the Craw Wurm
+        List<int[]> crawWurmBlockers = blockers.stream().filter(b -> b[1] == 1).toList();
+        assertThat(crawWurmBlockers).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: chump blocks to survive lethal")
+    void exhaustiveChumpBlocksLethal() {
+        // Opponent attacks with Craw Wurm (6/4)
+        Permanent crawWurm = new Permanent(new CrawWurm());
+        crawWurm.setSummoningSick(false);
+        crawWurm.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(crawWurm);
+
+        // AI at 5 life with one 2/2 bears
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Must chump-block to avoid lethal (6 damage > 5 life)
+        assertThat(blockers).hasSize(1);
+        assertThat(blockers.get(0)[1]).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: menace attacker needs 2+ blockers")
+    void exhaustiveMenaceRequiresTwoBlockers() {
+        // Opponent attacks with a 3/3 menace creature
+        Permanent menaceCreature = new Permanent(new GrizzlyBears());
+        menaceCreature.getCard().setPower(3);
+        menaceCreature.getCard().setToughness(3);
+        menaceCreature.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        menaceCreature.setSummoningSick(false);
+        menaceCreature.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(menaceCreature);
+
+        // AI has only one 2/2 — can't block a menace creature alone
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Single blocker can't block menace — should assign nothing
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: menace attacker blocked by two creatures")
+    void exhaustiveMenaceBlockedByPair() {
+        // Opponent attacks with a 3/3 menace creature
+        Permanent menaceCreature = new Permanent(new GrizzlyBears());
+        menaceCreature.getCard().setPower(3);
+        menaceCreature.getCard().setToughness(3);
+        menaceCreature.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        menaceCreature.setSummoningSick(false);
+        menaceCreature.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(menaceCreature);
+
+        // AI at low life with two 2/2 bears
+        gd.playerLifeTotals.put(player1.getId(), 3);
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        // Two bears should double-block the menace creature (3 damage is lethal)
+        // Combined 4 power kills the 3/3, and blocking prevents 3 lethal damage
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: trample double-block to prevent lethal")
+    void exhaustiveTrampleDoubleBlock() {
+        // Same scenario as greedy trample test — verify exhaustive also handles it
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        dreadmaw.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        gd.playerLifeTotals.put(player1.getId(), 4);
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        // Both needed: 6-2-2=2 trample (non-lethal vs 4 life)
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: unblockable creature not assigned blockers")
+    void exhaustiveUnblockableNotBlocked() {
+        Permanent phantom = new Permanent(new PhantomWarrior());
+        phantom.setSummoningSick(false);
+        phantom.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(phantom);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: empty attackers or blockers returns empty")
+    void exhaustiveEmptyInputsReturnEmpty() {
+        assertThat(simulator.findBestBlockersExhaustive(gd, player1.getId(), List.of(), List.of(0))).isEmpty();
+        assertThat(simulator.findBestBlockersExhaustive(gd, player1.getId(), List.of(0), List.of())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: first strike attacker kills blocker before it deals damage")
+    void exhaustiveFirstStrikeAttackerKillsBlocker() {
+        // Opponent attacks with a 3/3 first strike creature
+        Permanent fsAttacker = new Permanent(new GrizzlyBears());
+        fsAttacker.getCard().setPower(3);
+        fsAttacker.getCard().setToughness(3);
+        fsAttacker.getCard().setKeywords(EnumSet.of(Keyword.FIRST_STRIKE));
+        fsAttacker.setSummoningSick(false);
+        fsAttacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(fsAttacker);
+
+        // AI has a 2/2 — it dies to FS before dealing damage, attacker survives.
+        // This is a bad trade: AI loses blocker and attacker lives.
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // At 20 life, not threatened — should avoid the unfavorable block
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: blocker with first strike kills attacker before regular damage")
+    void exhaustiveFirstStrikeBlockerKillsAttacker() {
+        // Opponent attacks with a 2/2
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // AI has Youthful Knight (2/1 first strike) — FS deals 2 damage killing 2/2
+        // before the 2/2 can deal its 2 damage back, so the knight survives
+        Permanent knight = new Permanent(new YouthfulKnight());
+        knight.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(knight);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Should block — knight kills bears via FS and survives
+        assertThat(blockers).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: indestructible attacker cannot be killed — blocker sacrificed for nothing")
+    void exhaustiveIndestructibleAttackerSurvives() {
+        // Opponent attacks with a 5/5 indestructible creature
+        Permanent indestructible = new Permanent(new GrizzlyBears());
+        indestructible.getCard().setPower(5);
+        indestructible.getCard().setToughness(5);
+        indestructible.getCard().setKeywords(EnumSet.of(Keyword.INDESTRUCTIBLE));
+        indestructible.setSummoningSick(false);
+        indestructible.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(indestructible);
+
+        // AI has a 4/4 flying (high creature value) — attacker kills it (5 >= 4 toughness)
+        // but attacker is indestructible so we gain nothing. Losing a valuable flyer
+        // to prevent 5 damage at 20 life is a bad trade.
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(airElemental);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Should not block — losing AE (score ~22) to prevent 5 damage (score 10) is bad
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: indestructible blocker blocks freely without dying")
+    void exhaustiveIndestructibleBlockerSurvives() {
+        // Opponent attacks with Craw Wurm (6/4)
+        Permanent crawWurm = new Permanent(new CrawWurm());
+        crawWurm.setSummoningSick(false);
+        crawWurm.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(crawWurm);
+
+        // AI has a 1/1 indestructible creature — blocks without dying, prevents 6 damage
+        Permanent indestructible = new Permanent(new GrizzlyBears());
+        indestructible.getCard().setPower(1);
+        indestructible.getCard().setToughness(1);
+        indestructible.getCard().setKeywords(EnumSet.of(Keyword.INDESTRUCTIBLE));
+        indestructible.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(indestructible);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Should block — indestructible blocker prevents 6 damage risk-free
+        assertThat(blockers).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: infect attacker deals poison, not life damage")
+    void exhaustiveInfectAttackerDealsPoisonWhenUnblocked() {
+        // Opponent attacks with a 3/3 infect creature
+        Permanent infectCreature = new Permanent(new GrizzlyBears());
+        infectCreature.getCard().setPower(3);
+        infectCreature.getCard().setToughness(3);
+        infectCreature.getCard().setKeywords(EnumSet.of(Keyword.INFECT));
+        infectCreature.setSummoningSick(false);
+        infectCreature.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(infectCreature);
+
+        // AI at 20 life but already has 8 poison — 3 more would be lethal (10 total)
+        gd.playerPoisonCounters.put(player1.getId(), 8);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Must chump-block to avoid lethal poison (8+3 >= 10)
+        assertThat(blockers).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: flying attacker cannot be blocked by ground creature")
+    void exhaustiveFlyingEvasion() {
+        // Opponent attacks with Air Elemental (4/4 flying)
+        Permanent flyer = new Permanent(new AirElemental());
+        flyer.setSummoningSick(false);
+        flyer.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(flyer);
+
+        // AI has only a ground 2/2 — cannot block flying
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // Even at 1 life, bears can't block a flyer
+        gd.playerLifeTotals.put(player1.getId(), 1);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: lure forces all blockers onto lure attacker")
+    void exhaustiveLureForcesBlocking() {
+        // Opponent attacks with Prized Unicorn (2/2 lure) and a 2/2 bears
+        Permanent unicorn = new Permanent(new PrizedUnicorn());
+        unicorn.setSummoningSick(false);
+        unicorn.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(unicorn);
+
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // AI has two 2/2 bears — both must block the unicorn (lure)
+        Permanent aiBears1 = new Permanent(new GrizzlyBears());
+        aiBears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears1);
+        Permanent aiBears2 = new Permanent(new GrizzlyBears());
+        aiBears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0, 1), List.of(0, 1));
+
+        // Both AI bears forced onto the unicorn; none left for the opposing bears
+        // All assignments should target the unicorn (attacker index 0)
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: must-block-if-able forces at least one blocker")
+    void exhaustiveMustBlockIfAble() {
+        // Opponent attacks with Gaea's Protector (4/2 must-block-if-able) and a 2/2
+        Permanent protector = new Permanent(new GaeasProtector());
+        protector.setSummoningSick(false);
+        protector.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(protector);
+
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // AI has two 2/2 bears — one must block the protector
+        Permanent aiBears1 = new Permanent(new GrizzlyBears());
+        aiBears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears1);
+        Permanent aiBears2 = new Permanent(new GrizzlyBears());
+        aiBears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0, 1), List.of(0, 1));
+
+        // At least one blocker must be assigned to the protector
+        boolean protectorBlocked = blockers.stream().anyMatch(b -> b[1] == 0);
+        assertThat(protectorBlocked).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: one blocker picks the best attacker to block among multiple")
+    void exhaustiveOneBlockerPicksBestTarget() {
+        // Opponent attacks with a 2/2 (index 0) and a 1/1 (index 1)
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        Permanent opp1_1 = new Permanent(new GrizzlyBears());
+        opp1_1.getCard().setPower(1);
+        opp1_1.getCard().setToughness(1);
+        opp1_1.setSummoningSick(false);
+        opp1_1.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(opp1_1);
+
+        // AI has a 4/4 — should block the larger threat (2/2) since it kills both and survives
+        Permanent airElemental = new Permanent(new AirElemental());
+        airElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(airElemental);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0, 1), List.of(0));
+
+        // AE should block the 2/2 (higher value target — more damage prevented, attacker killed)
+        assertThat(blockers).hasSize(1);
+        assertThat(blockers.get(0)[1]).isEqualTo(0); // blocks the 2/2
+    }
+
+    @Test
+    @DisplayName("Exhaustive: even trade 2/2 vs 2/2 is taken")
+    void exhaustiveEvenTradeTaken() {
+        // Opponent attacks with 2/2
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // AI has 2/2 — both die, but the trade prevents 2 damage
+        Permanent aiBears = new Permanent(new GrizzlyBears());
+        aiBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Even trade: both 2/2s die. The scoring should favor this over taking 2 damage
+        // because killing their creature + preventing 2 damage outweighs losing our creature
+        assertThat(blockers).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: lifelink blocker contributes to defender score")
+    void exhaustiveLifelinkBlocker() {
+        // Opponent attacks with 2/2
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // AI has a 2/2 lifelink creature — trade is enhanced by lifelink gaining life
+        Permanent lifelinkCreature = new Permanent(new GrizzlyBears());
+        lifelinkCreature.getCard().setKeywords(EnumSet.of(Keyword.LIFELINK));
+        lifelinkCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(lifelinkCreature);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Should block — lifelink makes the trade more favorable
+        assertThat(blockers).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: trample with high-toughness blocker absorbs all damage")
+    void exhaustiveTrampleWallAbsorbsAll() {
+        // Colossal Dreadmaw: 6/6 Trample
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        dreadmaw.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        // AI has Wall of Frost (0/7) and Grizzly Bears (2/2)
+        // Wall absorbs all 6 trample damage (toughness 7 > power 6), bears should be preserved
+        Permanent wall = new Permanent(new WallOfFrost());
+        wall.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(wall);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        // Only Wall of Frost needed — bears should be preserved
+        assertThat(blockers).hasSize(1);
+        assertThat(blockers.get(0)[0]).isEqualTo(0); // Wall of Frost
+    }
+
+    @Test
+    @DisplayName("Exhaustive: falls back to greedy when search space is too large")
+    void exhaustiveFallsBackToGreedyForLargeSearchSpace() {
+        // Create a scenario with many attackers and blockers to exceed MAX_BLOCKER_SEARCH_SPACE
+        // 15 attackers and 15 blockers: (15+1)^15 ≈ 10^18 >> 2M limit
+        for (int i = 0; i < 15; i++) {
+            Permanent attacker = new Permanent(new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            gd.playerBattlefields.get(player2.getId()).add(attacker);
+
+            Permanent blocker = new Permanent(new GrizzlyBears());
+            blocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(blocker);
+        }
+
+        List<Integer> attackerIndices = new ArrayList<>();
+        List<Integer> blockerIndices = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            attackerIndices.add(i);
+            blockerIndices.add(i);
+        }
+
+        // Should not throw or hang — falls back to greedy and returns a valid result
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), attackerIndices, blockerIndices);
+
+        // Greedy fallback should produce even trades (2/2 vs 2/2)
+        assertThat(blockers).isNotNull();
+        assertThat(blockers.size()).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: double-block preferred over two single chump blocks")
+    void exhaustiveDoubleBlockPreferredOverSingleChumps() {
+        // Opponent attacks with Craw Wurm (6/4) and a 2/2
+        Permanent crawWurm = new Permanent(new CrawWurm());
+        crawWurm.setSummoningSick(false);
+        crawWurm.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(crawWurm);
+
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        oppBears.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // AI has two 2/2 bears at low life
+        gd.playerLifeTotals.put(player1.getId(), 7);
+        Permanent aiBears1 = new Permanent(new GrizzlyBears());
+        aiBears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears1);
+        Permanent aiBears2 = new Permanent(new GrizzlyBears());
+        aiBears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0, 1), List.of(0, 1));
+
+        // Double-blocking the Craw Wurm (killing it) is better than chump-blocking each 1:1
+        // because killing the 6/4 removes more value than chump-blocking both
+        long crawWurmBlockerCount = blockers.stream().filter(b -> b[1] == 0).count();
+        assertThat(crawWurmBlockerCount).isEqualTo(2);
     }
 }

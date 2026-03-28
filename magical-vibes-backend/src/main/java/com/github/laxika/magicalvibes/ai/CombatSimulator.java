@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import java.util.UUID;
 public class CombatSimulator {
 
     private static final int MAX_ATTACKER_SUBSET_BITS = 12;
+    private static final long MAX_BLOCKER_SEARCH_SPACE = 2_000_000L;
 
     private final GameQueryService gameQueryService;
     private final BoardEvaluator boardEvaluator;
@@ -351,6 +353,313 @@ public class CombatSimulator {
         }
 
         return assignments;
+    }
+
+    /**
+     * Finds optimal blocker assignments by exhaustively searching all legal combinations
+     * when the search space is manageable. Falls back to the greedy heuristic for
+     * large combat scenarios. Handles lure and must-block-if-able constraints first,
+     * then optimizes remaining free blockers via enumeration.
+     */
+    public List<int[]> findBestBlockersExhaustive(GameData gameData, UUID aiPlayerId,
+                                                   List<Integer> attackerIndices,
+                                                   List<Integer> availableBlockerIndices) {
+        if (attackerIndices.isEmpty() || availableBlockerIndices.isEmpty()) {
+            return List.of();
+        }
+
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        int aiLife = gameData.getLife(aiPlayerId);
+        int aiPoison = gameData.playerPoisonCounters.getOrDefault(aiPlayerId, 0);
+
+        List<CreatureInfo> attackerInfos = new ArrayList<>();
+        for (int idx : attackerIndices) {
+            attackerInfos.add(buildCreatureInfo(gameData, oppBattlefield.get(idx), idx, opponentId, aiPlayerId, aiBattlefield));
+        }
+        attackerInfos.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
+
+        List<CreatureInfo> blockerInfos = new ArrayList<>();
+        for (int idx : availableBlockerIndices) {
+            blockerInfos.add(buildCreatureInfo(gameData, aiBattlefield.get(idx), idx, aiPlayerId, opponentId));
+        }
+
+        // Per-attacker blocker lists (forced assignments from constraint phases)
+        List<List<CreatureInfo>> forcedAssignments = new ArrayList<>();
+        for (int i = 0; i < attackerInfos.size(); i++) {
+            forcedAssignments.add(new ArrayList<>());
+        }
+        boolean[] blockerUsed = new boolean[aiBattlefield.size()];
+
+        // Phase 1: Lure — any blocker that can block a lure attacker must do so
+        for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            CreatureInfo lureAttacker = attackerInfos.get(ai);
+            if (!hasLureEffect(gameData, lureAttacker.perm)) continue;
+            for (CreatureInfo blocker : blockerInfos) {
+                if (blockerUsed[blocker.index]) continue;
+                if (!canBlock(gameData, blocker, lureAttacker)) continue;
+                forcedAssignments.get(ai).add(blocker);
+                blockerUsed[blocker.index] = true;
+            }
+        }
+
+        // Phase 1b: Must-block-if-able — at least one blocker per such attacker
+        for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            CreatureInfo mustBlockAttacker = attackerInfos.get(ai);
+            if (!hasMustBeBlockedIfAbleEffect(gameData, mustBlockAttacker.perm)) continue;
+            if (!forcedAssignments.get(ai).isEmpty()) continue;
+
+            CreatureInfo bestBlocker = null;
+            double bestValue = Double.NEGATIVE_INFINITY;
+            for (CreatureInfo blocker : blockerInfos) {
+                if (blockerUsed[blocker.index]) continue;
+                if (!canBlock(gameData, blocker, mustBlockAttacker)) continue;
+                double value = evaluateBlock(mustBlockAttacker, blocker);
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestBlocker = blocker;
+                }
+            }
+            if (bestBlocker != null) {
+                forcedAssignments.get(ai).add(bestBlocker);
+                blockerUsed[bestBlocker.index] = true;
+            }
+        }
+
+        // Collect free blockers that have at least one legal target
+        List<CreatureInfo> freeBlockers = new ArrayList<>();
+        List<List<Integer>> legalTargets = new ArrayList<>();
+        for (CreatureInfo blocker : blockerInfos) {
+            if (blockerUsed[blocker.index]) continue;
+            List<Integer> targets = new ArrayList<>();
+            for (int ai = 0; ai < attackerInfos.size(); ai++) {
+                CreatureInfo attacker = attackerInfos.get(ai);
+                if (!attacker.cantBeBlocked && canBlock(gameData, blocker, attacker)) {
+                    targets.add(ai);
+                }
+            }
+            if (!targets.isEmpty()) {
+                freeBlockers.add(blocker);
+                legalTargets.add(targets);
+            }
+        }
+
+        if (freeBlockers.isEmpty()) {
+            return convertToAssignmentList(attackerInfos, forcedAssignments);
+        }
+
+        // Check search space; fall back to greedy if too large
+        long searchSpace = 1;
+        for (List<Integer> targets : legalTargets) {
+            searchSpace *= (targets.size() + 1);
+            if (searchSpace > MAX_BLOCKER_SEARCH_SPACE) {
+                return findBestBlockers(gameData, aiPlayerId, attackerIndices, availableBlockerIndices);
+            }
+        }
+
+        // Exhaustive enumeration with mixed-radix counter
+        // choices[i] = 0 means "don't block", 1..k means block legalTargets[i][choices[i]-1]
+        int n = freeBlockers.size();
+        int[] choices = new int[n];
+        int[] bestChoices = new int[n];
+        int[] forcedSizes = new int[attackerInfos.size()];
+        for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            forcedSizes[ai] = forcedAssignments.get(ai).size();
+        }
+
+        double bestScore = Double.NEGATIVE_INFINITY;
+
+        do {
+            // Add free blocker choices to the assignment map
+            for (int bi = 0; bi < n; bi++) {
+                if (choices[bi] > 0) {
+                    int ai = legalTargets.get(bi).get(choices[bi] - 1);
+                    forcedAssignments.get(ai).add(freeBlockers.get(bi));
+                }
+            }
+
+            double score = evaluateDefenderCombat(attackerInfos, forcedAssignments, aiLife, aiPoison);
+            if (score > bestScore) {
+                bestScore = score;
+                System.arraycopy(choices, 0, bestChoices, 0, n);
+            }
+
+            // Reset lists back to forced-only
+            for (int ai = 0; ai < attackerInfos.size(); ai++) {
+                List<CreatureInfo> list = forcedAssignments.get(ai);
+                while (list.size() > forcedSizes[ai]) {
+                    list.removeLast();
+                }
+            }
+        } while (incrementMixedRadix(choices, legalTargets));
+
+        // Apply best choices
+        for (int bi = 0; bi < n; bi++) {
+            if (bestChoices[bi] > 0) {
+                int ai = legalTargets.get(bi).get(bestChoices[bi] - 1);
+                forcedAssignments.get(ai).add(freeBlockers.get(bi));
+            }
+        }
+
+        return convertToAssignmentList(attackerInfos, forcedAssignments);
+    }
+
+    /**
+     * Evaluates a specific set of blocker assignments from the defender's perspective.
+     * Higher score = better for the defender.
+     */
+    double evaluateDefenderCombat(List<CreatureInfo> attackerInfos,
+                                          List<List<CreatureInfo>> blockAssignments,
+                                          int aiLife, int aiPoison) {
+        double defenderLifeLost = 0;
+        double defenderPoisonGained = 0;
+        double defenderLifeGained = 0;
+        double defenderCreaturesLostValue = 0;
+        double attackerCreaturesLostValue = 0;
+
+        for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            CreatureInfo attacker = attackerInfos.get(ai);
+            List<CreatureInfo> blockers = blockAssignments.get(ai);
+
+            // Menace requires 2+ blockers; fewer means effectively unblocked
+            if (attacker.menace && blockers.size() < 2) {
+                blockers = List.of();
+            }
+
+            if (blockers.isEmpty()) {
+                if (attacker.infect) {
+                    defenderPoisonGained += attacker.power;
+                } else {
+                    defenderLifeLost += attacker.power;
+                }
+                continue;
+            }
+
+            // Defender controls damage assignment order — sacrifice cheapest first
+            List<CreatureInfo> orderedBlockers = new ArrayList<>(blockers);
+            orderedBlockers.sort(Comparator.comparingDouble(CreatureInfo::creatureScore));
+
+            int attackerDamageReceived = 0;
+            boolean attackerDead = false;
+            boolean attackerDealtFirstStrike = attacker.firstStrike || attacker.doubleStrike;
+
+            // === First strike phase ===
+            if (attackerDealtFirstStrike) {
+                int remaining = attacker.power;
+                for (CreatureInfo blocker : orderedBlockers) {
+                    if (remaining <= 0) break;
+                    if (!blocker.indestructible) {
+                        int dmg = Math.min(remaining, blocker.toughness);
+                        if (dmg >= blocker.toughness) {
+                            defenderCreaturesLostValue += blocker.creatureScore;
+                        }
+                        remaining -= dmg;
+                    } else {
+                        remaining -= blocker.toughness;
+                    }
+                }
+                if (attacker.trample && remaining > 0) {
+                    if (attacker.infect) {
+                        defenderPoisonGained += remaining;
+                    } else {
+                        defenderLifeLost += remaining;
+                    }
+                }
+            }
+
+            // Blockers with first strike deal damage to attacker
+            for (CreatureInfo blocker : orderedBlockers) {
+                if (blocker.firstStrike || blocker.doubleStrike) {
+                    attackerDamageReceived += blocker.power;
+                    if (blocker.lifelink) {
+                        defenderLifeGained += blocker.power;
+                    }
+                }
+            }
+
+            if (attackerDamageReceived >= attacker.toughness && !attacker.indestructible) {
+                attackerDead = true;
+                attackerCreaturesLostValue += attacker.creatureScore;
+            }
+
+            // === Regular damage phase ===
+            if (!attackerDead && !(attacker.firstStrike && !attacker.doubleStrike)) {
+                int remaining = attacker.power;
+                for (CreatureInfo blocker : orderedBlockers) {
+                    if (remaining <= 0) break;
+                    if (!blocker.indestructible) {
+                        int dmg = Math.min(remaining, blocker.toughness);
+                        // Only count blocker death here if attacker didn't have first strike
+                        if (dmg >= blocker.toughness && !attackerDealtFirstStrike) {
+                            defenderCreaturesLostValue += blocker.creatureScore;
+                        }
+                        remaining -= dmg;
+                    } else {
+                        remaining -= blocker.toughness;
+                    }
+                }
+                if (attacker.trample && remaining > 0) {
+                    if (attacker.infect) {
+                        defenderPoisonGained += remaining;
+                    } else {
+                        defenderLifeLost += remaining;
+                    }
+                }
+            }
+
+            // Regular blocker damage to attacker
+            if (!attackerDead) {
+                int totalRegularBlockerDmg = 0;
+                for (CreatureInfo blocker : orderedBlockers) {
+                    if (!blocker.firstStrike || blocker.doubleStrike) {
+                        totalRegularBlockerDmg += blocker.power;
+                        if (blocker.lifelink && !(blocker.firstStrike || blocker.doubleStrike)) {
+                            defenderLifeGained += blocker.power;
+                        }
+                    }
+                }
+                if (totalRegularBlockerDmg + attackerDamageReceived >= attacker.toughness
+                        && !attacker.indestructible) {
+                    attackerCreaturesLostValue += attacker.creatureScore;
+                }
+            }
+        }
+
+        double score = attackerCreaturesLostValue
+                - defenderCreaturesLostValue
+                - defenderLifeLost * 2.0
+                - defenderPoisonGained * 4.0
+                + defenderLifeGained * 0.5;
+
+        // Heavy penalty when blocking still results in lethal damage
+        if (defenderLifeLost >= aiLife || defenderPoisonGained + aiPoison >= 10) {
+            score -= 1000;
+        }
+
+        return score;
+    }
+
+    private List<int[]> convertToAssignmentList(List<CreatureInfo> attackerInfos,
+                                                 List<List<CreatureInfo>> blockAssignments) {
+        List<int[]> result = new ArrayList<>();
+        for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            for (CreatureInfo blocker : blockAssignments.get(ai)) {
+                result.add(new int[]{blocker.index, attackerInfos.get(ai).index});
+            }
+        }
+        return result;
+    }
+
+    private static boolean incrementMixedRadix(int[] choices, List<List<Integer>> legalTargets) {
+        for (int i = choices.length - 1; i >= 0; i--) {
+            choices[i]++;
+            if (choices[i] <= legalTargets.get(i).size()) {
+                return true;
+            }
+            choices[i] = 0;
+        }
+        return false;
     }
 
     private boolean hasLureEffect(GameData gameData, Permanent attacker) {
