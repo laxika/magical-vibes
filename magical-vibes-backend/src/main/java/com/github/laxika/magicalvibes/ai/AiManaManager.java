@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -142,6 +143,16 @@ public class AiManaManager {
                     virtual.add(ManaColor.COLORLESS, aace.amount());
                     if (isCreature) {
                         virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
+                    }
+                } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
+                    if (permanent != null) {
+                        int count = permanent.getChargeCounters();
+                        if (count > 0) {
+                            virtual.add(ManaColor.COLORLESS, count);
+                            if (isCreature) {
+                                virtual.addCreatureMana(ManaColor.COLORLESS, count);
+                            }
+                        }
                     }
                 }
             }
@@ -438,6 +449,8 @@ public class AiManaManager {
                         colors.add(manaEffect.color());
                     } else if (effect instanceof AwardAnyColorManaEffect) {
                         Collections.addAll(colors, ManaColor.values());
+                    } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
+                        colors.add(ManaColor.COLORLESS);
                     }
                 }
             }
@@ -511,6 +524,10 @@ public class AiManaManager {
                 return hasSideEffects ? 1 : 5;
             }
             if (effect instanceof AwardAnyColorManaEffect) {
+                return hasSideEffects ? 1 : 5;
+            }
+            if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
+                // Colorless mana - can contribute to generic costs
                 return hasSideEffects ? 1 : 5;
             }
         }

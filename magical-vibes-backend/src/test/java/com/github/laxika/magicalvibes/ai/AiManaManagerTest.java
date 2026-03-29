@@ -14,12 +14,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -181,6 +183,30 @@ class AiManaManagerTest {
 
     private Permanent addUntappedChargeCounterArtifact(String name, int chargeCounters) {
         Card card = createChargeCounterManaArtifact(name);
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        perm.setChargeCounters(chargeCounters);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+        lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        return perm;
+    }
+
+    private static Card createChargeCounterColorlessManaArtifact(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        // Tap, Sacrifice: Add {C} for each charge counter (like Shrine of Boundless Growth)
+        card.addActivatedAbility(new ActivatedAbility(
+                true, null,
+                List.of(new SacrificeSelfCost(), new AddColorlessManaPerChargeCounterOnSourceEffect()),
+                "{T}, Sacrifice: Add {C} for each charge counter."));
+        return card;
+    }
+
+    private Permanent addUntappedChargeCounterColorlessManaArtifact(String name, int chargeCounters) {
+        Card card = createChargeCounterColorlessManaArtifact(name);
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         perm.setChargeCounters(chargeCounters);
@@ -581,6 +607,36 @@ class AiManaManagerTest {
             assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
             assertThat(pool.get(ManaColor.COLORLESS)).isZero();
             assertThat(pool.getTotal()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("includes colorless mana per charge counter ability with counters")
+        void includesColorlessManaPerChargeCounterWithCounters() {
+            addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 3);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("excludes colorless mana per charge counter ability with zero counters")
+        void excludesColorlessManaPerChargeCounterWithZeroCounters() {
+            addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 0);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("colorless mana per charge counter combines with land mana")
+        void colorlessManaPerChargeCounterCombinesWithLands() {
+            addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 2);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(2);
+            assertThat(pool.getTotal()).isEqualTo(3);
         }
 
         @Test
@@ -1750,6 +1806,16 @@ class AiManaManagerTest {
             Set<ManaColor> colors = manager.getProducedColors(card);
 
             assertThat(colors).containsExactlyInAnyOrder(ManaColor.COLORLESS, ManaColor.RED, ManaColor.GREEN);
+        }
+
+        @Test
+        @DisplayName("colorless mana per charge counter ability returns colorless")
+        void colorlessManaPerChargeCounterReturnsColorless() {
+            Card card = createChargeCounterColorlessManaArtifact("Shrine of Boundless Growth");
+
+            Set<ManaColor> colors = manager.getProducedColors(card);
+
+            assertThat(colors).containsExactly(ManaColor.COLORLESS);
         }
     }
 }
