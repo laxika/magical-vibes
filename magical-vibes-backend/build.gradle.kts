@@ -19,3 +19,13 @@ dependencies {
 
 group = "com.magicalvibes"
 version = "1.0.0-SNAPSHOT"
+
+val copyFrontend = tasks.register<Copy>("copyFrontend") {
+    dependsOn(":magical-vibes-frontend:buildAngular")
+    from(project(":magical-vibes-frontend").file("dist/magical-vibes-frontend/browser"))
+    into(layout.buildDirectory.dir("resources/main/static"))
+}
+
+tasks.named("processResources") {
+    dependsOn(copyFrontend)
+}

@@ -607,7 +607,7 @@ export interface User {
 })
 export class WebsocketService {
 
-  private readonly WS_URL = 'ws://localhost:8080/ws/login';
+  private readonly WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/login`;
   private ws: WebSocket | null = null;
   private messages = new Subject<WebSocketMessage>();
   private disconnected = new Subject<void>();
