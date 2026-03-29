@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -228,6 +229,11 @@ public class AiManaManager {
             return;
         }
 
+        // Track initial awaiting input so we only bail when a mana ability triggers
+        // a NEW input prompt (e.g. color choice), not when we're already awaiting
+        // input for something else (e.g. ATTACKER_DECLARATION during attack tax payment).
+        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent perm = battlefield.get(i);
             if (perm.isTapped()) {
@@ -255,7 +261,7 @@ public class AiManaManager {
             if (cost.canPay(currentPool, costModifier)) {
                 return;
             }
-            if (gameData.interaction.isAwaitingInput()) {
+            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
                 return;
             }
         }
@@ -273,6 +279,8 @@ public class AiManaManager {
         if (battlefield == null) {
             return;
         }
+
+        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
 
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent perm = battlefield.get(i);
@@ -304,7 +312,7 @@ public class AiManaManager {
             if (cost.canPayCreatureOnly(currentPool, costModifier)) {
                 return;
             }
-            if (gameData.interaction.isAwaitingInput()) {
+            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
                 return;
             }
         }
@@ -328,6 +336,8 @@ public class AiManaManager {
         if (battlefield == null) {
             return;
         }
+
+        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
 
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent perm = battlefield.get(i);
@@ -362,7 +372,7 @@ public class AiManaManager {
             if (canPayNow) {
                 return;
             }
-            if (gameData.interaction.isAwaitingInput()) {
+            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
                 return;
             }
         }

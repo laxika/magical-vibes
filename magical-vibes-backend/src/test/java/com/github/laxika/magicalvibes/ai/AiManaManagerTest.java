@@ -1011,6 +1011,55 @@ class AiManaManagerTest {
         }
 
         @Test
+        @DisplayName("continues tapping when ATTACKER_DECLARATION is already set (attack tax payment)")
+        void continuesTappingDuringAttackerDeclaration() {
+            // Simulate the attack tax scenario: game is already awaiting ATTACKER_DECLARATION
+            // and the AI needs to tap multiple lands to pay the tax.
+            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+            addUntappedLand("Island 1", ManaColor.BLUE);
+            addUntappedLand("Island 2", ManaColor.BLUE);
+            addUntappedLand("Island 3", ManaColor.BLUE);
+            addUntappedLand("Island 4", ManaColor.BLUE);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.BLUE, 1);
+                return null;
+            }).when(action).tap(any(int.class), any());
+
+            manager.tapLandsForCost(gd, player1Id, "{4}", 0, action);
+
+            // All 4 lands should be tapped to pay the {4} cost
+            verify(action).tap(eq(0), any());
+            verify(action).tap(eq(1), any());
+            verify(action).tap(eq(2), any());
+            verify(action).tap(eq(3), any());
+        }
+
+        @Test
+        @DisplayName("stops tapping when awaiting input changes during ATTACKER_DECLARATION")
+        void stopsWhenAwaitingInputChangesDuringAttackerDeclaration() {
+            // Game is already awaiting ATTACKER_DECLARATION, but a mana ability
+            // triggers a COLOR_CHOICE — should bail out.
+            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+            addUntappedLand("Land 1", ManaColor.BLUE);
+            addUntappedLand("Land 2", ManaColor.BLUE);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                return null;
+            }).when(action).tap(eq(0), any());
+
+            manager.tapLandsForCost(gd, player1Id, "{2}", 0, action);
+
+            verify(action).tap(eq(0), any());
+            verify(action, never()).tap(eq(1), any());
+        }
+
+        @Test
         @DisplayName("skips charge counter ability with zero counters during tapping")
         void skipsDepletedChargeCounterAbility() {
             addUntappedChargeCounterArtifact("Sphere of the Suns", 0);
@@ -1212,6 +1261,27 @@ class AiManaManagerTest {
             verify(action).tap(eq(0), any());
             verify(action, never()).tap(eq(1), any());
         }
+
+        @Test
+        @DisplayName("continues tapping when ATTACKER_DECLARATION is already set (attack tax payment)")
+        void continuesTappingDuringAttackerDeclaration() {
+            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+            addUntappedCreature("Elf 1", ManaColor.GREEN);
+            addUntappedCreature("Elf 2", ManaColor.GREEN);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).addCreatureMana(ManaColor.GREEN, 1);
+                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+                return null;
+            }).when(action).tap(any(int.class), any());
+
+            manager.tapCreaturesForCost(gd, player1Id, "{G}{G}", 0, action);
+
+            verify(action).tap(eq(0), any());
+            verify(action).tap(eq(1), any());
+        }
     }
 
     // ── tapLandsForXSpell ───────────────────────────────────────────
@@ -1310,6 +1380,32 @@ class AiManaManagerTest {
             verify(action).tap(eq(0), any());
             verify(action, never()).tap(eq(1), any());
             verify(action, never()).tap(eq(2), any());
+        }
+
+        @Test
+        @DisplayName("continues tapping when ATTACKER_DECLARATION is already set (attack tax payment)")
+        void continuesTappingDuringAttackerDeclaration() {
+            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+            addUntappedLand("Mountain 1", ManaColor.RED);
+            addUntappedLand("Mountain 2", ManaColor.RED);
+            addUntappedLand("Mountain 3", ManaColor.RED);
+
+            Card xSpell = new Card();
+            xSpell.setManaCost("{X}{R}");
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
+                return null;
+            }).when(action).tap(any(int.class), any());
+
+            // xValue=2, so total cost is {2}{R} = 3 mana
+            manager.tapLandsForXSpell(gd, player1Id, xSpell, 2, 0, action);
+
+            verify(action).tap(eq(0), any());
+            verify(action).tap(eq(1), any());
+            verify(action).tap(eq(2), any());
         }
 
         @Test
