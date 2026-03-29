@@ -377,7 +377,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Add permanents as targets (unless it only targets players)
-        if (!allowed.contains(TargetType.PLAYER) || allowed.contains(TargetType.PERMANENT) || card.isAura()) {
+        if (!card.isEnchantPlayer() && (!allowed.contains(TargetType.PLAYER) || allowed.contains(TargetType.PERMANENT) || card.isAura())) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> field = gameData.playerBattlefields.getOrDefault(playerId, List.of());
                 for (Permanent p : field) {
