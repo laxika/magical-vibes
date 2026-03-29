@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -100,7 +102,7 @@ public class AiManaManager {
                     }
                 } else {
                     // Check activated mana abilities (dual lands, pain lands, utility lands)
-                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm);
+                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm, gameData, aiPlayerId);
                 }
             }
         }
@@ -116,13 +118,17 @@ public class AiManaManager {
      *
      * @param permanent the permanent on the battlefield (null for hypothetical card evaluation)
      */
-    private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent) {
+    private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent,
+                                                        GameData gameData, UUID playerId) {
         int manaAbilityCount = 0;
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
             if (!isFreeTapManaAbility(ability)) {
                 continue;
             }
             if (!canPayChargeCounterCost(ability, permanent)) {
+                continue;
+            }
+            if (!canMeetTimingRestriction(ability, gameData, playerId, permanent)) {
                 continue;
             }
             manaAbilityCount++;
@@ -155,6 +161,29 @@ public class AiManaManager {
         return ability.isRequiresTap()
                 && ability.getManaCost() == null
                 && ability.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect);
+    }
+
+    /**
+     * Returns true if the ability's timing restriction is met. If gameData or permanent is null
+     * (hypothetical card evaluation), assumes the restriction can be met.
+     */
+    private boolean canMeetTimingRestriction(ActivatedAbility ability, GameData gameData, UUID playerId, Permanent permanent) {
+        if (ability.getTimingRestriction() == null || gameData == null) {
+            return true;
+        }
+        return switch (ability.getTimingRestriction()) {
+            case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, playerId);
+            case MORBID -> gameQueryService.isMorbidMet(gameData);
+            case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)
+                    && gameData.currentStep == TurnStep.UPKEEP;
+            case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();
+            case ONLY_WHILE_CREATURE -> permanent != null && gameQueryService.isCreature(gameData, permanent);
+            case POWER_4_OR_GREATER -> permanent != null && gameQueryService.getEffectivePower(gameData, permanent) >= 4;
+            case RAID -> gameData.playersDeclaredAttackersThisTurn.contains(playerId);
+            case SORCERY_SPEED -> playerId.equals(gameData.activePlayerId)
+                    && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                    && gameData.stack.isEmpty();
+        };
     }
 
     /**
@@ -204,7 +233,7 @@ public class AiManaManager {
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm);
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm, gameData, aiPlayerId);
                 if (abilityIndex == null) {
                     continue;
                 }
@@ -253,7 +282,7 @@ public class AiManaManager {
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm);
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm, gameData, aiPlayerId);
                 if (abilityIndex == null) {
                     continue;
                 }
@@ -305,7 +334,7 @@ public class AiManaManager {
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm);
+                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm, gameData, aiPlayerId);
                 if (abilityIndex == null) {
                     continue;
                 }
@@ -384,7 +413,7 @@ public class AiManaManager {
                 }
             }
         } else {
-            addActivatedManaAbilitiesToVirtualPool(card, pool, false, null);
+            addActivatedManaAbilitiesToVirtualPool(card, pool, false, null, null, null);
         }
     }
 
@@ -432,7 +461,8 @@ public class AiManaManager {
      * colors needed for the spell's colored costs. Returns null if no usable free-tap
      * mana ability exists (including when charge counter costs cannot be paid).
      */
-    private static Integer chooseBestManaAbilityIndex(Card card, ManaCost cost, ManaPool currentPool, Permanent permanent) {
+    private Integer chooseBestManaAbilityIndex(Card card, ManaCost cost, ManaPool currentPool, Permanent permanent,
+                                                GameData gameData, UUID playerId) {
         List<ActivatedAbility> abilities = card.getActivatedAbilities();
         Integer bestIndex = null;
         int bestScore = -1;
@@ -443,6 +473,9 @@ public class AiManaManager {
                 continue;
             }
             if (!canPayChargeCounterCost(ability, permanent)) {
+                continue;
+            }
+            if (!canMeetTimingRestriction(ability, gameData, playerId, permanent)) {
                 continue;
             }
 

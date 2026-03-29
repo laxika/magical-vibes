@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -182,6 +184,28 @@ class AiManaManagerTest {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         perm.setChargeCounters(chargeCounters);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+        lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        return perm;
+    }
+
+    private static Card createMetalcraftManaArtifact(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        card.addActivatedAbility(new ActivatedAbility(
+                true, null, List.of(new AwardAnyColorManaEffect()),
+                "Metalcraft — {T}: Add one mana of any color.",
+                ActivationTimingRestriction.METALCRAFT));
+        return card;
+    }
+
+    private Permanent addUntappedMetalcraftArtifact(String name) {
+        Card card = createMetalcraftManaArtifact(name);
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
@@ -558,6 +582,145 @@ class AiManaManagerTest {
             assertThat(pool.get(ManaColor.COLORLESS)).isZero();
             assertThat(pool.getTotal()).isEqualTo(2);
         }
+
+        @Test
+        @DisplayName("excludes Metalcraft mana ability when player controls fewer than 3 artifacts")
+        void excludesMetalcraftAbilityWithoutEnoughArtifacts() {
+            addUntappedMetalcraftArtifact("Mox Opal");
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("includes Metalcraft mana ability when player controls 3 or more artifacts")
+        void includesMetalcraftAbilityWithEnoughArtifacts() {
+            addUntappedMetalcraftArtifact("Mox Opal");
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("mix of lands and Metalcraft artifact without Metalcraft only counts lands")
+        void mixOfLandsAndMetalcraftArtifactWithoutMetalcraft() {
+            addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedMetalcraftArtifact("Mox Opal");
+            addUntappedLand("Mountain", ManaColor.RED);
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.COLORLESS)).isZero();
+            assertThat(pool.getTotal()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Metalcraft artifact with Metalcraft met adds mana alongside lands")
+        void metalcraftArtifactWithMetalcraftMetAddsAlongsideLands() {
+            addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedMetalcraftArtifact("Mox Opal");
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(pool.getTotal()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("excludes Morbid mana ability when no creature died this turn")
+        void excludesMorbidAbilityWithoutCreatureDeath() {
+            Card card = new Card();
+            card.setName("Morbid Rock");
+            card.setType(CardType.ARTIFACT);
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.BLACK)),
+                    "Morbid — {T}: Add {B}.",
+                    ActivationTimingRestriction.MORBID));
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.isMorbidMet(gd)).thenReturn(false);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("includes Morbid mana ability when a creature died this turn")
+        void includesMorbidAbilityWithCreatureDeath() {
+            Card card = new Card();
+            card.setName("Morbid Rock");
+            card.setType(CardType.ARTIFACT);
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.BLACK)),
+                    "Morbid — {T}: Add {B}.",
+                    ActivationTimingRestriction.MORBID));
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            when(gameQueryService.isMorbidMet(gd)).thenReturn(true);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("excludes sorcery-speed mana ability during opponent's turn")
+        void excludesSorcerySpeedAbilityDuringOpponentTurn() {
+            UUID opponentId = UUID.randomUUID();
+            Card card = new Card();
+            card.setName("Sorcery Land");
+            card.setType(CardType.LAND);
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.RED)),
+                    "{T}: Add {R}. Activate only as a sorcery.",
+                    ActivationTimingRestriction.SORCERY_SPEED));
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            gd.activePlayerId = opponentId;
+            gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("includes sorcery-speed mana ability during own main phase with empty stack")
+        void includesSorcerySpeedAbilityDuringOwnMainPhase() {
+            Card card = new Card();
+            card.setName("Sorcery Land");
+            card.setType(CardType.LAND);
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.RED)),
+                    "{T}: Add {R}. Activate only as a sorcery.",
+                    ActivationTimingRestriction.SORCERY_SPEED));
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+            gd.activePlayerId = player1Id;
+            gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+        }
     }
 
     // ── isFreeTapManaAbility ────────────────────────────────────────
@@ -836,6 +999,43 @@ class AiManaManagerTest {
             verify(action, never()).tap(eq(0), any());
             verify(action).tap(1, null);
         }
+
+        @Test
+        @DisplayName("skips Metalcraft mana ability without Metalcraft and taps land instead")
+        void skipsMetalcraftAbilityWithoutMetalcraftTapsLandInstead() {
+            addUntappedMetalcraftArtifact("Mox Opal");
+            addUntappedLand("Forest", ManaColor.GREEN);
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+                return null;
+            }).when(action).tap(eq(1), eq(null));
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
+
+            // Mox Opal at index 0 should be skipped, Forest at index 1 tapped
+            verify(action, never()).tap(eq(0), any());
+            verify(action).tap(1, null);
+        }
+
+        @Test
+        @DisplayName("taps Metalcraft mana ability when Metalcraft is met")
+        void tapsMetalcraftAbilityWhenMetalcraftMet() {
+            addUntappedMetalcraftArtifact("Mox Opal");
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+                return null;
+            }).when(action).tap(eq(0), eq(0));
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
+
+            verify(action).tap(0, 0);
+        }
     }
 
     // ── tapCreaturesForCost ─────────────────────────────────────────
@@ -1074,6 +1274,29 @@ class AiManaManagerTest {
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 0, 0, action);
 
             // Sphere at index 0 skipped, Mountain at index 1 tapped
+            verify(action, never()).tap(eq(0), any());
+            verify(action).tap(1, null);
+        }
+
+        @Test
+        @DisplayName("skips Metalcraft mana ability without Metalcraft for X spell")
+        void skipsMetalcraftAbilityWithoutMetalcraftForXSpell() {
+            addUntappedMetalcraftArtifact("Mox Opal");
+            addUntappedLand("Mountain", ManaColor.RED);
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+
+            Card xSpell = new Card();
+            xSpell.setManaCost("{X}{R}");
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
+                return null;
+            }).when(action).tap(eq(1), eq(null));
+
+            manager.tapLandsForXSpell(gd, player1Id, xSpell, 0, 0, action);
+
+            // Mox Opal at index 0 skipped, Mountain at index 1 tapped
             verify(action, never()).tap(eq(0), any());
             verify(action).tap(1, null);
         }
@@ -1405,6 +1628,19 @@ class AiManaManagerTest {
             // addCardManaToPool is used for hypothetical evaluation (no permanent),
             // so charge counter costs should be assumed payable
             Card card = createChargeCounterManaArtifact("Sphere of the Suns");
+            ManaPool pool = new ManaPool();
+
+            manager.addCardManaToPool(card, pool);
+
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("includes Metalcraft mana ability for hypothetical card evaluation")
+        void includesMetalcraftAbilityForHypotheticalEvaluation() {
+            // addCardManaToPool is used for hypothetical evaluation (no game state),
+            // so timing restrictions should be assumed met
+            Card card = createMetalcraftManaArtifact("Mox Opal");
             ManaPool pool = new ManaPool();
 
             manager.addCardManaToPool(card, pool);
