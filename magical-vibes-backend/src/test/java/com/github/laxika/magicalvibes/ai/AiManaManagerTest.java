@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
@@ -409,7 +410,7 @@ class AiManaManagerTest {
         void dualLandAddsFlexibleOvercount() {
             addUntappedDualLand("Rootbound Crag", ManaColor.RED, ManaColor.GREEN);
 
-            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
             assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
             assertThat(pool.getFlexibleOvercount()).isEqualTo(1);
@@ -449,7 +450,7 @@ class AiManaManagerTest {
             when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
             when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
 
-            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
             // 3 abilities, so flexible overcount = 3 - 1 = 2
             assertThat(pool.getFlexibleOvercount()).isEqualTo(2);
             assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -1738,7 +1739,7 @@ class AiManaManagerTest {
         @DisplayName("adds activated mana abilities for lands without ON_TAP effects")
         void addsActivatedAbilities() {
             Card card = createDualLand("Rootbound Crag", ManaColor.RED, ManaColor.GREEN);
-            ManaPool pool = new ManaPool();
+            VirtualManaPool pool = new VirtualManaPool();
 
             manager.addCardManaToPool(card, pool);
 

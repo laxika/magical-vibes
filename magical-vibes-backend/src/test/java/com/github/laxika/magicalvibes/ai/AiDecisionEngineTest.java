@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -1586,6 +1587,23 @@ class AiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("getMaxAffordableAttackers accounts for dual land flexible overcount")
+    void maxAffordableAttackersDualLands() {
+        // Baird imposes {1} per attacker tax
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // 2 Rootbound Crags = 2 actual mana (each produces R or G, but only 1 per land)
+        // Virtual pool total would be 4 (R+G per land) but effective is 2
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+        addUntappedLand(aiPlayer, RootboundCrag.class);
+
+        // Should be 2, not 4 (which would be wrong without the flexibleOvercount correction)
+        assertThat(ai.getMaxAffordableAttackers(gd)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("prepareAttackersForTax caps attackers to affordable count")
     void prepareAttackersForTaxCapsAttackers() {
         Permanent baird = new Permanent(new BairdStewardOfArgive());
@@ -1913,12 +1931,12 @@ class AiDecisionEngineTest {
         addUntappedLand(aiPlayer, RootboundCrag.class);
 
         AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
-        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+        VirtualManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         assertThat(pool.get(ManaColor.RED)).isEqualTo(2);
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(2);
-        // Effective total = getTotal() - flexibleOvercount = 4 - 2 = 2 (correct for 2 lands)
-        assertThat(pool.getTotal() - pool.getFlexibleOvercount()).isEqualTo(2);
+        // Effective total = 2 (correct for 2 lands, each producing R or G but only 1 per land)
+        assertThat(pool.getTotal()).isEqualTo(2);
     }
 
     @Test
@@ -1928,11 +1946,11 @@ class AiDecisionEngineTest {
         addUntappedLand(aiPlayer, RootboundCrag.class);
 
         AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
-        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+        VirtualManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         assertThat(pool.get(ManaColor.RED)).isEqualTo(2); // Mountain + Crag
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1); // Crag only
-        assertThat(pool.getTotal() - pool.getFlexibleOvercount()).isEqualTo(2);
+        assertThat(pool.getTotal()).isEqualTo(2);
     }
 
     @Test
@@ -1941,14 +1959,14 @@ class AiDecisionEngineTest {
         addUntappedLand(aiPlayer, YavimayaCoast.class);
 
         AiManaManager manaManager = new AiManaManager(harness.getGameQueryService());
-        ManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
+        VirtualManaPool pool = manaManager.buildVirtualManaPool(gd, aiPlayer.getId());
 
         // Yavimaya Coast: {C}, {G}+damage, {U}+damage
         assertThat(pool.get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(1);
         assertThat(pool.get(ManaColor.GREEN)).isGreaterThanOrEqualTo(1);
         assertThat(pool.get(ManaColor.BLUE)).isGreaterThanOrEqualTo(1);
         // Only 1 land, effective total must be 1
-        assertThat(pool.getTotal() - pool.getFlexibleOvercount()).isEqualTo(1);
+        assertThat(pool.getTotal()).isEqualTo(1);
     }
 
     // ===== Dual land mana — casting spells =====

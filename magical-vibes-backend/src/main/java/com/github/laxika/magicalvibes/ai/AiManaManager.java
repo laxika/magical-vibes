@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
@@ -52,8 +53,8 @@ public class AiManaManager {
         void tap(int permanentIndex, Integer abilityIndex);
     }
 
-    public ManaPool buildVirtualManaPool(GameData gameData, UUID aiPlayerId) {
-        ManaPool virtual = new ManaPool();
+    public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID aiPlayerId) {
+        VirtualManaPool virtual = new VirtualManaPool();
 
         ManaPool current = gameData.playerManaPools.get(aiPlayerId);
         if (current != null) {
@@ -159,9 +160,9 @@ public class AiManaManager {
             }
         }
         // Each permanent can only be tapped once, but we added mana for all abilities.
-        // Track the over-count so canPay uses the correct effective total.
-        if (manaAbilityCount > 1) {
-            virtual.addFlexibleOvercount(manaAbilityCount - 1);
+        // Track the over-count so getTotal() returns the correct effective total.
+        if (manaAbilityCount > 1 && virtual instanceof VirtualManaPool vmp) {
+            vmp.addFlexibleOvercount(manaAbilityCount - 1);
         }
     }
 

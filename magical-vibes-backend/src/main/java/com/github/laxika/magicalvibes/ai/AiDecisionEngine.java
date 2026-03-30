@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPred
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -289,7 +290,7 @@ public abstract class AiDecisionEngine {
         if (taxPerCreature <= 0) {
             return Integer.MAX_VALUE;
         }
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        VirtualManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
         return virtualPool.getTotal() / taxPerCreature;
     }
 

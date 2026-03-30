@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
@@ -98,7 +99,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Multiple lands: evaluate which one enables the most valuable spells
-        ManaPool basePool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        VirtualManaPool basePool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
         // Collect non-land spells for evaluation
         List<Card> spells = new ArrayList<>();
@@ -116,7 +117,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             Card landCard = hand.get(landIdx);
 
             // Build hypothetical pool with this land's mana added
-            ManaPool hypotheticalPool = new ManaPool(basePool);
+            VirtualManaPool hypotheticalPool = new VirtualManaPool(basePool);
             manaManager.addCardManaToPool(landCard, hypotheticalPool);
 
             // Primary score: total value of castable spells

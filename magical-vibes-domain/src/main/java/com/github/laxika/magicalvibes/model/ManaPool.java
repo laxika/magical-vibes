@@ -19,13 +19,6 @@ public class ManaPool {
     private int instantSorceryOnlyColorless;
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeCreatureMana = new HashMap<>();
-    /**
-     * Tracks over-counted mana in virtual pools built by the AI.
-     * Dual lands add all their possible colors to the pool (e.g. R+G for Rootbound Crag)
-     * but the land can only be tapped once, so total is inflated by (colors-1) per dual land.
-     * This field stores the cumulative over-count so canPay checks use (getTotal() - flexibleOvercount).
-     */
-    private int flexibleOvercount;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -47,7 +40,6 @@ public class ManaPool {
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
-        this.flexibleOvercount = source.flexibleOvercount;
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeCreatureMana.entrySet()) {
             subtypeCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
@@ -276,14 +268,6 @@ public class ManaPool {
 
     public int getPersistentMana(ManaColor color) {
         return persistentMana.getOrDefault(color, 0);
-    }
-
-    public int getFlexibleOvercount() {
-        return flexibleOvercount;
-    }
-
-    public void addFlexibleOvercount(int amount) {
-        flexibleOvercount += amount;
     }
 
     public Map<String, Integer> toMap() {

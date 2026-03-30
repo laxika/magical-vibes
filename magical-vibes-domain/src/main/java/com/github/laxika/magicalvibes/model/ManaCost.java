@@ -159,7 +159,7 @@ public class ManaCost {
             }
         }
 
-        int remaining = pool.getTotal() - pool.getFlexibleOvercount();
+        int remaining = pool.getTotal();
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             remaining -= entry.getValue();
         }
@@ -322,7 +322,7 @@ public class ManaCost {
             }
         }
 
-        int remaining = pool.getTotal() - pool.getFlexibleOvercount();
+        int remaining = pool.getTotal();
         for (int count : coloredCosts.values()) {
             remaining -= count;
         }
