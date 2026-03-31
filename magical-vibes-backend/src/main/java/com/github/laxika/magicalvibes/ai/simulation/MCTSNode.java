@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -67,5 +68,21 @@ class MCTSNode {
 
     boolean isLeaf() {
         return children.isEmpty();
+    }
+
+    /**
+     * Returns the sequence of actions from the root to this node.
+     * Used by IS-MCTS to replay the tree path on each determinized state,
+     * ensuring the simulation state is synchronized with the tree position.
+     */
+    List<SimulationAction> pathFromRoot() {
+        List<SimulationAction> path = new ArrayList<>();
+        MCTSNode node = this;
+        while (node.parent != null) {
+            path.add(node.action);
+            node = node.parent;
+        }
+        Collections.reverse(path);
+        return path;
     }
 }

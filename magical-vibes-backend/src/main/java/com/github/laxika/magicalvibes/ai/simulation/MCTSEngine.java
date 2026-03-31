@@ -28,8 +28,8 @@ import java.util.UUID;
 public class MCTSEngine {
 
     private static final double EXPLORATION_CONSTANT = 1.41; // √2
-    private static final int DEFAULT_ROLLOUT_DEPTH = 6;
-    private static final long TIME_BUDGET_MS = 900;
+    private static final int DEFAULT_ROLLOUT_DEPTH = 20;
+    private static final long TIME_BUDGET_MS = 1200;
 
     private final GameSimulator simulator;
     private final Determinizer determinizer;
@@ -73,15 +73,23 @@ public class MCTSEngine {
                 // 2. SELECT: Traverse tree using UCB1
                 MCTSNode node = select(root);
 
-                // 3. EXPAND: If untried actions remain, expand one
+                // 3. REPLAY: Apply all actions along the tree path to synchronize
+                //    the determinized state with the selected node's position.
+                //    Without this, deeper tree nodes would evaluate from the wrong state.
+                for (SimulationAction pathAction : node.pathFromRoot()) {
+                    simulator.applyAction(simState, aiPlayerId, pathAction);
+                    if (simulator.isTerminal(simState)) break;
+                }
+
+                // 4. EXPAND: If untried actions remain, expand one
                 if (!node.untriedActions.isEmpty() && !simulator.isTerminal(simState)) {
                     node = expand(node, simState, aiPlayerId);
                 }
 
-                // 4. ROLLOUT: Play out using heuristic policy
+                // 5. ROLLOUT: Play out using heuristic policy
                 double reward = rollout(simState, aiPlayerId, node, deadline);
 
-                // 5. BACKPROPAGATE: Update visit counts and rewards
+                // 6. BACKPROPAGATE: Update visit counts and rewards
                 backpropagate(node, reward);
             } catch (Exception e) {
                 log.trace("MCTS simulation {} failed: {}", i, e.getMessage());

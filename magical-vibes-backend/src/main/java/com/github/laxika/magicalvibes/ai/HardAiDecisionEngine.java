@@ -291,8 +291,16 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             castableCount++;
         }
 
-        // If 0-1 options, use evaluator-based logic (no need for MCTS)
-        if (castableCount <= 1) {
+        if (castableCount == 0) {
+            return false;
+        }
+
+        // In postcombat main with only 1 option, use evaluator (no sequencing benefit).
+        // In precombat main, always use MCTS even with 1 option: the rollout spans through
+        // combat, so it can evaluate "cast removal now to clear a blocker before attacking"
+        // vs "pass to combat and cast postcombat".
+        boolean isPrecombat = gameData.currentStep == TurnStep.PRECOMBAT_MAIN;
+        if (castableCount == 1 && !isPrecombat) {
             return tryCastSpell(gameData);
         }
 
