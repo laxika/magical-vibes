@@ -1,16 +1,20 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -24,6 +28,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -36,9 +41,13 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -908,6 +917,186 @@ class AiTargetSelectorTest {
             UUID target = targetSelector.chooseSpellTarget(gd, negate, aiPlayer.getId());
 
             assertThat(target).isNull();
+        }
+    }
+
+    // ===== chooseAbilityTarget =====
+
+    @Nested
+    @DisplayName("chooseAbilityTarget")
+    class ChooseAbilityTarget {
+
+        @Test
+        @DisplayName("Damage ability targets opponent's killable creature over bigger creature")
+        void damageAbilityPrefersKillableCreature() {
+            // Opponent has a 1/1 and a 4/4 — ability deals 1, should prefer 1/1
+            Permanent elves = harness.addToBattlefieldAndReturn(human, new LlanowarElves());
+            harness.addToBattlefield(human, new AirElemental());
+
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    "{T}: Deal 1 damage to any target.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(elves.getId());
+        }
+
+        @Test
+        @DisplayName("Damage ability targets highest-power creature when none are killable")
+        void damageAbilityTargetsHighestPowerWhenNoneKillable() {
+            // Both creatures have toughness > 1, so neither is killable by 1 damage
+            harness.addToBattlefield(human, new GrizzlyBears()); // 2/2
+            Permanent angel = harness.addToBattlefieldAndReturn(human, new SerraAngel()); // 4/4
+
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
+
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    "{T}: Deal 1 damage to any target.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            // Should pick the highest-power creature (Serra Angel 4/4)
+            assertThat(target).isEqualTo(angel.getId());
+        }
+
+        @Test
+        @DisplayName("Damage ability falls back to opponent face when no creatures")
+        void damageAbilityFallsBackToFace() {
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    "{T}: Deal 1 damage to any target.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(human.getId());
+        }
+
+        @Test
+        @DisplayName("Beneficial ability targets own best creature")
+        void beneficialAbilityTargetsOwnBestCreature() {
+            Permanent elves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves()); // 1/1
+            Permanent bears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears()); // 2/2
+
+            // Source is separate from target candidates
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
+
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new BoostTargetCreatureEffect(2, 2)),
+                    "{T}: Target creature gets +2/+2 until end of turn.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            // Should pick the best creature (GrizzlyBears 2+2=4 > LlanowarElves 1+1=2)
+            assertThat(target).isEqualTo(bears.getId());
+        }
+
+        @Test
+        @DisplayName("Beneficial ability does not target source permanent itself")
+        void beneficialAbilityExcludesSourceFromTargets() {
+            // Only creature on battlefield is the source — no valid targets
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new BoostTargetCreatureEffect(2, 2)),
+                    "{T}: Target creature gets +2/+2 until end of turn.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isNull();
+        }
+
+        @Test
+        @DisplayName("Regenerate ability targets own best creature")
+        void regenerateTargetsOwnBestCreature() {
+            harness.addToBattlefield(aiPlayer, new LlanowarElves());
+            Permanent bears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
+
+            ActivatedAbility ability = new ActivatedAbility(false, "{G}",
+                    List.of(new RegenerateEffect(true)),
+                    "{G}: Regenerate target creature.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(bears.getId());
+        }
+
+        @Test
+        @DisplayName("Returns null when no valid target exists for damage ability")
+        void returnsNullWhenNoValidTargetForDamage() {
+            // creature-only damage ability with no opponent creatures
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new DealDamageToTargetCreatureEffect(1)),
+                    "{T}: Deal 1 damage to target creature.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            // No opponent creatures and creature-only damage can't target player
+            assertThat(target).isNull();
+        }
+
+        @Test
+        @DisplayName("Does not target hexproof opponent creature with harmful ability")
+        void doesNotTargetHexproofCreature() {
+            // Thrun has hexproof — should not be targetable by opponent's abilities
+            Permanent thrun = harness.addToBattlefieldAndReturn(human,
+                    new com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll());
+
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new DealDamageToAnyTargetEffect(1)),
+                    "{T}: Deal 1 damage to any target.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            // Should fall back to opponent face, not target hexproof Thrun
+            assertThat(target).isNotEqualTo(thrun.getId());
+            assertThat(target).isEqualTo(human.getId());
+        }
+
+        @Test
+        @DisplayName("GrantKeyword with TARGET scope is classified as beneficial")
+        void grantKeywordTargetIsBeneficial() {
+            Permanent ownCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
+
+            // Opponent also has a creature — but beneficial should target own
+            harness.addToBattlefield(human, new LlanowarElves());
+
+            ActivatedAbility ability = new ActivatedAbility(false, null,
+                    List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                    "Target creature gains flying until end of turn.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            assertThat(target).isEqualTo(ownCreature.getId());
+        }
+
+        @Test
+        @DisplayName("Cost effects do not affect beneficial/harmful classification")
+        void costEffectsDoNotAffectClassification() {
+            // Sacrifice self cost + damage ability — should still be classified as harmful
+            Permanent oppCreature = harness.addToBattlefieldAndReturn(human, new LlanowarElves());
+            Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+
+            ActivatedAbility ability = new ActivatedAbility(false, null,
+                    List.of(new SacrificeSelfCost(), new DealDamageToAnyTargetEffect(1)),
+                    "Sacrifice: deal 1 damage to any target.");
+
+            UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);
+
+            // Should target opponent's creature (harmful classification)
+            assertThat(target).isEqualTo(oppCreature.getId());
         }
     }
 }

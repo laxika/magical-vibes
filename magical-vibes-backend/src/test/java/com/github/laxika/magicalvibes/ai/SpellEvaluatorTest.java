@@ -10,11 +10,24 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -214,5 +227,160 @@ class SpellEvaluatorTest {
         double largeTargetValue = spellEvaluator.estimateSpellValue(gd, new ActOfTreason(), player1.getId());
 
         assertThat(largeTargetValue).isGreaterThan(smallTargetValue);
+    }
+
+    // ===== evaluateAbilityEffects =====
+
+    @Test
+    @DisplayName("BoostSelfEffect scores power*2 + toughness")
+    void boostSelfEffectScoring() {
+        // {R}: +1/+0 (Shivan Dragon style)
+        double value = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new BoostSelfEffect(1, 0)), player1.getId());
+        assertThat(value).isEqualTo(2.0); // 1*2.0 + 0
+
+        // +2/+2 pump
+        double bigPump = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new BoostSelfEffect(2, 2)), player1.getId());
+        assertThat(bigPump).isEqualTo(6.0); // 2*2.0 + 2
+    }
+
+    @Test
+    @DisplayName("RegenerateEffect scores 4.0")
+    void regenerateEffectScoring() {
+        double value = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new RegenerateEffect()), player1.getId());
+        assertThat(value).isEqualTo(4.0);
+    }
+
+    @Test
+    @DisplayName("ScryEffect scores count * 2.0")
+    void scryEffectScoring() {
+        double scry1 = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new ScryEffect(1)), player1.getId());
+        assertThat(scry1).isEqualTo(2.0);
+
+        double scry3 = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new ScryEffect(3)), player1.getId());
+        assertThat(scry3).isEqualTo(6.0);
+    }
+
+    @Test
+    @DisplayName("PutPlusOnePlusOneCounterOnEachOwnCreatureEffect scales with creature count")
+    void counterOnEachCreatureScalesWithCount() {
+        // No creatures: value should be 0
+        double noCreatures = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new PutPlusOnePlusOneCounterOnEachOwnCreatureEffect(1)), player1.getId());
+        assertThat(noCreatures).isEqualTo(0.0);
+
+        // Add 3 creatures
+        for (int i = 0; i < 3; i++) {
+            Permanent creature = new Permanent(new GrizzlyBears());
+            creature.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(creature);
+        }
+
+        double withCreatures = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new PutPlusOnePlusOneCounterOnEachOwnCreatureEffect(1)), player1.getId());
+        assertThat(withCreatures).isEqualTo(10.5); // 3 * 1 * 3.5
+    }
+
+    @Test
+    @DisplayName("PutPlusOnePlusOneCounterOnTargetCreatureEffect scores count * 3.5")
+    void counterOnTargetCreatureScoring() {
+        double value = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)), player1.getId());
+        assertThat(value).isEqualTo(7.0); // 2 * 3.5
+    }
+
+    @Test
+    @DisplayName("TapTargetPermanentEffect scores based on opponent creature value")
+    void tapTargetPermanentScoring() {
+        // No opponent creatures: value should be 0
+        double noCreatures = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+        assertThat(noCreatures).isEqualTo(0.0);
+
+        // Add opponent creature
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(angel);
+
+        double withCreature = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+        assertThat(withCreature).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("CostEffect instances are skipped in ability evaluation")
+    void costEffectsAreSkipped() {
+        // SacrificeSelfCost + DealDamage — only damage should be scored
+        List<CardEffect> effects = List.of(
+                new SacrificeSelfCost(),
+                new DealDamageToAnyTargetEffect(1));
+
+        double value = spellEvaluator.evaluateAbilityEffects(gd, effects, player1.getId());
+
+        // Should only include the damage value, not the cost
+        // DealDamageToAnyTargetEffect(1) → falls through to evaluateSingleEffect → face damage = 1*1.5
+        assertThat(value).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Pay life cost is not scored as a positive effect")
+    void payLifeCostNotScoredPositively() {
+        // PayLifeCost + DrawCard — only draw should be scored
+        List<CardEffect> effects = List.of(
+                new PayLifeCost(2),
+                new DrawCardEffect());
+
+        double withCost = spellEvaluator.evaluateAbilityEffects(gd, effects, player1.getId());
+
+        // DrawCardEffect falls through to evaluateSingleEffect
+        double drawOnly = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new DrawCardEffect()), player1.getId());
+
+        // Value should be the same whether or not the cost is present (costs are skipped)
+        assertThat(withCost).isEqualTo(drawOnly);
+    }
+
+    @Test
+    @DisplayName("Multiple non-cost effects are summed")
+    void multipleEffectsAreSummed() {
+        double boostOnly = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new BoostSelfEffect(1, 0)), player1.getId());
+        double regenOnly = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new RegenerateEffect()), player1.getId());
+
+        double combined = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new BoostSelfEffect(1, 0), new RegenerateEffect()), player1.getId());
+
+        assertThat(combined).isEqualTo(boostOnly + regenOnly);
+    }
+
+    @Test
+    @DisplayName("TapTargetPermanent ignores already tapped creatures")
+    void tapTargetIgnoresTappedCreatures() {
+        // One untapped, one tapped
+        Permanent untapped = new Permanent(new GrizzlyBears());
+        untapped.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(untapped);
+
+        Permanent tapped = new Permanent(new SerraAngel());
+        tapped.setSummoningSick(false);
+        tapped.tap();
+        gd.playerBattlefields.get(player2.getId()).add(tapped);
+
+        double value = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+
+        // Value should be based on the untapped 2/2, not the tapped 4/4
+        // Remove the tapped creature and check only the untapped one gives the same result
+        gd.playerBattlefields.get(player2.getId()).remove(tapped);
+        double untappedOnly = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+
+        // The bigger creature is tapped, so the value should be based on the small untapped one
+        assertThat(value).isEqualTo(untappedOnly);
     }
 }
