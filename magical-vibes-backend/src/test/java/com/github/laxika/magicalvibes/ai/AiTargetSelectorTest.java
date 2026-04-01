@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -82,7 +84,7 @@ class AiTargetSelectorTest {
         harness.skipMulligan();
 
         targetSelector = new AiTargetSelector(
-                harness.getGameQueryService(), harness.getTargetValidationService());
+                harness.getGameQueryService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
     }
 
     // ===== findValidPermanentTargetsForManaValueX =====
@@ -362,7 +364,7 @@ class AiTargetSelectorTest {
         void setUp() {
             mockGqs = mock(GameQueryService.class);
             mockTvs = mock(TargetValidationService.class);
-            unitSelector = new AiTargetSelector(mockGqs, mockTvs);
+            unitSelector = new AiTargetSelector(mockGqs, mockTvs, null);
 
             aiId = UUID.randomUUID();
             opponentId = UUID.randomUUID();
@@ -502,7 +504,7 @@ class AiTargetSelectorTest {
         void setUp() {
             mockGqs = mock(GameQueryService.class);
             mockTvs = mock(TargetValidationService.class);
-            unitSelector = new AiTargetSelector(mockGqs, mockTvs);
+            unitSelector = new AiTargetSelector(mockGqs, mockTvs, null);
 
             aiId = UUID.randomUUID();
             opponentId = UUID.randomUUID();
@@ -569,7 +571,7 @@ class AiTargetSelectorTest {
         @BeforeEach
         void setUp() {
             unitSelector = new AiTargetSelector(
-                    mock(GameQueryService.class), mock(TargetValidationService.class));
+                    mock(GameQueryService.class), mock(TargetValidationService.class), null);
         }
 
         @Test
@@ -793,6 +795,117 @@ class AiTargetSelectorTest {
             assertThat(targets).isNotNull();
             assertThat(targets).hasSize(2);
             assertThat(targets.get(0)).isNotEqualTo(targets.get(1));
+        }
+    }
+
+    // ===== chooseSpellTarget =====
+
+    @Nested
+    @DisplayName("chooseSpellTarget")
+    class ChooseSpellTarget {
+
+        @Test
+        @DisplayName("Selects opponent creature spell on the stack for Cancel")
+        void selectsOpponentCreatureSpellForCancel() {
+            com.github.laxika.magicalvibes.cards.c.Cancel cancel =
+                    new com.github.laxika.magicalvibes.cards.c.Cancel();
+
+            GrizzlyBears bears = new GrizzlyBears();
+            StackEntry creatureSpell = new StackEntry(bears, human.getId());
+            gd.stack.add(creatureSpell);
+
+            UUID target = targetSelector.chooseSpellTarget(gd, cancel, aiPlayer.getId());
+
+            assertThat(target).isEqualTo(bears.getId());
+        }
+
+        @Test
+        @DisplayName("Returns null when stack is empty")
+        void returnsNullForEmptyStack() {
+            com.github.laxika.magicalvibes.cards.c.Cancel cancel =
+                    new com.github.laxika.magicalvibes.cards.c.Cancel();
+
+            UUID target = targetSelector.chooseSpellTarget(gd, cancel, aiPlayer.getId());
+
+            assertThat(target).isNull();
+        }
+
+        @Test
+        @DisplayName("Does not target AI's own spells")
+        void doesNotTargetOwnSpells() {
+            com.github.laxika.magicalvibes.cards.c.Cancel cancel =
+                    new com.github.laxika.magicalvibes.cards.c.Cancel();
+
+            GrizzlyBears bears = new GrizzlyBears();
+            StackEntry ownSpell = new StackEntry(bears, aiPlayer.getId());
+            gd.stack.add(ownSpell);
+
+            UUID target = targetSelector.chooseSpellTarget(gd, cancel, aiPlayer.getId());
+
+            assertThat(target).isNull();
+        }
+
+        @Test
+        @DisplayName("Picks highest-value spell when multiple spells on stack")
+        void picksHighestValueSpell() {
+            com.github.laxika.magicalvibes.cards.c.Cancel cancel =
+                    new com.github.laxika.magicalvibes.cards.c.Cancel();
+
+            GrizzlyBears bears = new GrizzlyBears(); // MV=2
+            SerraAngel angel = new SerraAngel(); // MV=5
+            gd.stack.add(new StackEntry(bears, human.getId()));
+            gd.stack.add(new StackEntry(angel, human.getId()));
+
+            UUID target = targetSelector.chooseSpellTarget(gd, cancel, aiPlayer.getId());
+
+            assertThat(target).isEqualTo(angel.getId());
+        }
+
+        @Test
+        @DisplayName("Essence Scatter only targets creature spells")
+        void essenceScatterOnlyTargetsCreatureSpells() {
+            com.github.laxika.magicalvibes.cards.e.EssenceScatter scatter =
+                    new com.github.laxika.magicalvibes.cards.e.EssenceScatter();
+
+            // Sorcery spell on the stack
+            WizardsLightning bolt = new WizardsLightning();
+            StackEntry sorcerySpell = new StackEntry(
+                    com.github.laxika.magicalvibes.model.StackEntryType.INSTANT_SPELL,
+                    bolt, human.getId(), "Wizard's Lightning",
+                    bolt.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL), 0);
+            gd.stack.add(sorcerySpell);
+
+            UUID target = targetSelector.chooseSpellTarget(gd, scatter, aiPlayer.getId());
+
+            assertThat(target).isNull();
+        }
+
+        @Test
+        @DisplayName("Essence Scatter targets creature spell when present")
+        void essenceScatterTargetsCreatureSpell() {
+            com.github.laxika.magicalvibes.cards.e.EssenceScatter scatter =
+                    new com.github.laxika.magicalvibes.cards.e.EssenceScatter();
+
+            GrizzlyBears bears = new GrizzlyBears();
+            gd.stack.add(new StackEntry(bears, human.getId()));
+
+            UUID target = targetSelector.chooseSpellTarget(gd, scatter, aiPlayer.getId());
+
+            assertThat(target).isEqualTo(bears.getId());
+        }
+
+        @Test
+        @DisplayName("Negate does not target creature spells")
+        void negateDoesNotTargetCreatureSpells() {
+            com.github.laxika.magicalvibes.cards.n.Negate negate =
+                    new com.github.laxika.magicalvibes.cards.n.Negate();
+
+            GrizzlyBears bears = new GrizzlyBears();
+            gd.stack.add(new StackEntry(bears, human.getId()));
+
+            UUID target = targetSelector.chooseSpellTarget(gd, negate, aiPlayer.getId());
+
+            assertThat(target).isNull();
         }
     }
 }

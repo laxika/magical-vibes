@@ -132,7 +132,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine engine = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         assertThat(engine).isNotNull();
     }
 
@@ -146,7 +146,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -178,7 +178,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -222,7 +222,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -255,7 +255,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -293,7 +293,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -325,7 +325,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player2, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -405,7 +405,7 @@ class HardAiDecisionEngineTest {
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
-                    mockTargetValidationService);
+                    mockTargetValidationService, null);
             engine.setSelfConnection(mockConnection);
             return engine;
         }
@@ -544,7 +544,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -573,7 +573,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -613,7 +613,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         // Set up as opponent's turn, end step — good timing for REMOVAL instants
@@ -656,7 +656,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -695,7 +695,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         // Player 2 (human/opponent) controls Baird (tax {1} per attacker)
@@ -738,7 +738,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -777,7 +777,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -819,7 +819,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
         return ai;
     }
@@ -1111,5 +1111,104 @@ class HardAiDecisionEngineTest {
 
         // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
         assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Counterspell Casting =====
+
+    @Test
+    @DisplayName("Hard AI casts Cancel to counter opponent's creature spell")
+    void castsCancelToCounterOpponentCreatureSpell() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Set up as opponent's turn with a spell on the stack
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        // Simulate that the active player (opponent) has already passed priority
+        // after casting their spell, so now AI gets priority to respond
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Put an opponent's creature spell on the stack
+        SerraAngel angel = new SerraAngel();
+        com.github.laxika.magicalvibes.model.StackEntry opponentSpell =
+                new com.github.laxika.magicalvibes.model.StackEntry(angel, player2.getId());
+        gd.stack.add(opponentSpell);
+
+        // Give the AI enough mana for Cancel (1UU)
+        givePlayerIslands(player1, 3);
+
+        // Give the AI Cancel in hand
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.Cancel()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // The AI should cast Cancel targeting the Serra Angel
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+        com.github.laxika.magicalvibes.model.StackEntry cancelOnStack = gd.stack.getLast();
+        assertThat(cancelOnStack.getCard().getName()).isEqualTo("Cancel");
+        assertThat(cancelOnStack.getTargetId()).isEqualTo(angel.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast Cancel when only own spells are on the stack")
+    void doesNotCancelOwnSpells() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // AI is active player and has just cast its own spell
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Put AI's own creature spell on the stack
+        GrizzlyBears bears = new GrizzlyBears();
+        com.github.laxika.magicalvibes.model.StackEntry ownSpell =
+                new com.github.laxika.magicalvibes.model.StackEntry(bears, player1.getId());
+        gd.stack.add(ownSpell);
+
+        givePlayerIslands(player1, 3);
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.Cancel()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Stack should only have the original spell — Cancel should not have been cast
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hard AI does not waste Cancel on a low-value spell")
+    void doesNotWasteCancelOnLowValueSpell() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        // Opponent passed priority after casting
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Put a low-value opponent spell on the stack (Llanowar Elves, MV=1)
+        LlanowarElves elves = new LlanowarElves();
+        com.github.laxika.magicalvibes.cards.c.Cancel cancelCard = new com.github.laxika.magicalvibes.cards.c.Cancel();
+        com.github.laxika.magicalvibes.model.StackEntry lowValueSpell =
+                new com.github.laxika.magicalvibes.model.StackEntry(elves, player2.getId());
+        gd.stack.add(lowValueSpell);
+
+        givePlayerIslands(player1, 3);
+        harness.setHand(player1, List.of(cancelCard));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should NOT waste a 3-mana counterspell on a 1/1 for 1 mana.
+        // After the AI passes priority, both players have passed, stack resolves.
+        // Verify Cancel was not cast by checking the hand still contains it.
+        List<Card> hand = gd.playerHands.get(player1.getId());
+        assertThat(hand).isNotNull();
+        assertThat(hand.stream().anyMatch(c -> c.getName().equals("Cancel"))).isTrue();
     }
 }

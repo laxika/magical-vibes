@@ -104,7 +104,7 @@ class EasyAiDecisionEngineTest {
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
-                targetValidationService);
+                targetValidationService, null);
         engine.setSelfConnection(selfConnection);
         return engine;
     }
@@ -430,7 +430,7 @@ class EasyAiDecisionEngineTest {
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
-                targetValidationService);
+                targetValidationService, null);
         engine.setSelfConnection(selfConnection);
         engine.handleMessage("GAME_STATE", "");
 
@@ -914,7 +914,7 @@ class EasyAiDecisionEngineTest {
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getMessageHandler(), testHarness.getGameQueryService(),
                     testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
-                    testHarness.getTargetValidationService());
+                    testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);
         }
 
@@ -1191,7 +1191,7 @@ class EasyAiDecisionEngineTest {
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getMessageHandler(), testHarness.getGameQueryService(),
                     testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
-                    testHarness.getTargetValidationService());
+                    testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);
         }
 

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,8 +45,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                                 MessageHandler messageHandler, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
                                 GameBroadcastService gameBroadcastService,
-                                TargetValidationService targetValidationService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
+                                TargetValidationService targetValidationService,
+                                TargetLegalityService targetLegalityService) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
     }
 
     // ===== Priority / Main Phase =====

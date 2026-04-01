@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
@@ -31,6 +34,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 import java.util.ArrayList;
@@ -50,11 +54,14 @@ class AiTargetSelector {
 
     private final GameQueryService gameQueryService;
     private final TargetValidationService targetValidationService;
+    private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
 
-    AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService) {
+    AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
+                     TargetLegalityService targetLegalityService) {
         this.gameQueryService = gameQueryService;
         this.targetValidationService = targetValidationService;
+        this.targetLegalityService = targetLegalityService;
         this.validTargetService = new ValidTargetService(gameQueryService);
     }
 
@@ -162,6 +169,67 @@ class AiTargetSelector {
         }
 
         return null;
+    }
+
+    /**
+     * Selects the best spell on the stack to counter. Examines all opponent spells on the stack
+     * and picks the one with the highest mana value (most impactful). Respects the counterspell's
+     * target filter (e.g. Essence Scatter only targets creature spells, Negate only non-creature).
+     * Skips uncounterable spells and the AI's own spells.
+     *
+     * @return the card ID of the targeted spell, or null if no valid target exists
+     */
+    UUID chooseSpellTarget(GameData gameData, Card counterSpell, UUID aiPlayerId) {
+        TargetFilter targetFilter = counterSpell.getTargetFilter();
+        StackEntry bestTarget = null;
+        double bestValue = 0;
+
+        for (StackEntry entry : gameData.stack) {
+            // Skip abilities — counterspells only target spells
+            if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                    || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+                continue;
+            }
+            // Don't counter our own spells
+            if (entry.getControllerId().equals(aiPlayerId)) {
+                continue;
+            }
+            // Skip uncounterable spells
+            if (gameQueryService.isUncounterable(gameData, entry.getCard())) {
+                continue;
+            }
+            // Validate against the counterspell's target filter (e.g. creature-only, non-creature-only)
+            if (targetLegalityService.checkSpellTargetOnStack(gameData, entry.getCard().getId(),
+                    targetFilter, aiPlayerId).isPresent()) {
+                continue;
+            }
+            // Evaluate how valuable this spell is — higher mana value = bigger threat
+            double value = evaluateSpellOnStack(gameData, entry, aiPlayerId);
+            if (value > bestValue) {
+                bestValue = value;
+                bestTarget = entry;
+            }
+        }
+
+        return bestTarget != null ? bestTarget.getCard().getId() : null;
+    }
+
+    /**
+     * Evaluates how valuable/threatening a spell on the stack is. Used to decide which
+     * spell is most worth countering. Creatures are scored by their combat stats plus
+     * mana value, non-creature spells by mana value as a proxy for impact.
+     */
+    private double evaluateSpellOnStack(GameData gameData, StackEntry entry, UUID aiPlayerId) {
+        Card card = entry.getCard();
+        double manaValueScore = card.getManaValue() * 3.0;
+
+        if (entry.getEntryType() == StackEntryType.CREATURE_SPELL) {
+            int power = card.getPower() != null ? card.getPower() : 0;
+            int toughness = card.getToughness() != null ? card.getToughness() : 0;
+            return manaValueScore + power * 3.0 + toughness * 1.5;
+        }
+
+        return manaValueScore;
     }
 
     /**

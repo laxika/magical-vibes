@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,6 +28,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,8 +57,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                 MessageHandler messageHandler, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
                                 GameBroadcastService gameBroadcastService,
-                                TargetValidationService targetValidationService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
+                                TargetValidationService targetValidationService,
+                                TargetLegalityService targetLegalityService) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
         BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -251,19 +255,27 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (Card card : hand) {
             if (!card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
-            if (EffectResolution.needsSpellTarget(card)) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
-            double baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
+            InstantCategory category = InstantCategoryClassifier.classify(card);
+
+            double baseValue;
+            if (category == InstantCategory.COUNTERSPELL) {
+                // Counterspells have no board value when nothing is on the stack,
+                // but holding mana for them is valuable — estimate based on the
+                // counterspell's own mana cost as a proxy for expected threat neutralization.
+                baseValue = card.getManaValue() * 4.0;
+            } else {
+                baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
+            }
             if (baseValue <= 0) continue;
 
-            InstantCategory category = InstantCategoryClassifier.classify(card);
             double multiplier = switch (category) {
                 case REMOVAL -> 1.3;       // Removal in combat is very strong
                 case COMBAT_TRICK -> 1.5;  // Combat tricks create blowouts
                 case CARD_ADVANTAGE -> 1.1; // Slightly better to hold for end step
                 case BURN_TO_FACE -> 1.0;   // Same value whenever cast
-                case COUNTERSPELL -> 0;     // AI can't use these yet
+                case COUNTERSPELL -> 1.2;  // Holding counterspell mana is strong
                 case OTHER -> 0.8;          // Slight discount for unknown timing
             };
 
@@ -594,11 +606,24 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             Card card = hand.get(i);
             if (!card.hasType(CardType.INSTANT)) continue;
             if (card.getManaCost() == null) continue;
-            if (EffectResolution.needsSpellTarget(card)) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
             InstantCategory category = InstantCategoryClassifier.classify(card);
             if (!isGoodTimingForHard(category, step, isOpponentsTurn)) continue;
+
+            // Counterspells need a valid target on the stack
+            if (category == InstantCategory.COUNTERSPELL) {
+                UUID spellTargetId = targetSelector.chooseSpellTarget(gameData, card, aiPlayer.getId());
+                if (spellTargetId == null) continue;
+                double baseValue = evaluateCounterspellValue(gameData, card, spellTargetId);
+                if (baseValue <= 0) continue;
+                double timingMultiplier = getTimingMultiplier(category, step, isOpponentsTurn);
+                double adjustedValue = baseValue * timingMultiplier;
+                if (adjustedValue >= 5.0) {
+                    candidates.add(new TimedCandidate(i, adjustedValue));
+                }
+                continue;
+            }
 
             double baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
             if (baseValue <= 0) continue;
@@ -635,7 +660,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             case CARD_ADVANTAGE -> isOpponentsTurn && step == TurnStep.END_STEP;
             case COMBAT_TRICK -> !isOpponentsTurn
                     && (step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE);
-            case COUNTERSPELL -> false; // AI can't target spells on the stack yet
+            case COUNTERSPELL -> true; // Always ready — actual filtering is done by target selection
             case OTHER -> step == TurnStep.PRECOMBAT_MAIN || step == TurnStep.POSTCOMBAT_MAIN
                     || (isOpponentsTurn && step == TurnStep.END_STEP);
         };
@@ -659,9 +684,43 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             case CARD_ADVANTAGE -> 1.1;
             case BURN_TO_FACE -> 1.0;
-            case COUNTERSPELL -> 0;
+            case COUNTERSPELL -> 1.3; // Countering a spell is very high value
             case OTHER -> 0.9;
         };
+    }
+
+    /**
+     * Evaluates the value of countering a specific spell on the stack.
+     * High-value spells (big creatures, board wipes, removal) are worth more to counter.
+     * Applies a minimum threshold: don't waste a counterspell on a low-impact spell
+     * unless the AI is at low life (then even cheap spells become worth countering).
+     */
+    private double evaluateCounterspellValue(GameData gameData, Card counterSpell, UUID spellTargetId) {
+        for (StackEntry entry : gameData.stack) {
+            if (entry.getCard().getId().equals(spellTargetId)) {
+                Card targetCard = entry.getCard();
+
+                // Don't waste a counterspell on a spell that costs less than the counterspell itself,
+                // unless the AI is at critically low life. We want mana-efficient exchanges.
+                int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayer.getId(), 20);
+                int counterManaValue = counterSpell.getManaValue();
+                if (aiLife > 5 && targetCard.getManaValue() < counterManaValue) {
+                    return 0;
+                }
+
+                double value = targetCard.getManaValue() * 5.0;
+
+                // Creatures are valued by stats + mana value
+                if (entry.getEntryType() == StackEntryType.CREATURE_SPELL) {
+                    int power = targetCard.getPower() != null ? targetCard.getPower() : 0;
+                    int toughness = targetCard.getToughness() != null ? targetCard.getToughness() : 0;
+                    value += power * 3.0 + toughness * 1.5;
+                }
+
+                return value;
+            }
+        }
+        return 0;
     }
 
     /**
@@ -690,6 +749,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return false;
+        } else if (modalPlan == null && EffectResolution.needsSpellTarget(card)) {
+            // Counterspells target a spell on the stack
+            targetId = targetSelector.chooseSpellTarget(gameData, card, aiPlayer.getId());
+            if (targetId == null) return false;
         } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;

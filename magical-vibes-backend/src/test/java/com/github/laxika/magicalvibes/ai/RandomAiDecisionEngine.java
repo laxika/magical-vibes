@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +67,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                            MessageHandler messageHandler, GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
                            GameBroadcastService gameBroadcastService,
-                           TargetValidationService targetValidationService, Random rng) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService);
+                           TargetValidationService targetValidationService,
+                           TargetLegalityService targetLegalityService, Random rng) {
+        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
         this.rng = rng;
     }
 

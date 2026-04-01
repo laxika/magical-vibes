@@ -84,7 +84,7 @@ class MediumAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new MediumAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService());
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
     }
 
@@ -449,7 +449,7 @@ class MediumAiDecisionEngineTest {
             MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
-                    mockTargetValidationService);
+                    mockTargetValidationService, null);
             engine.setSelfConnection(mockConnection);
             return engine;
         }

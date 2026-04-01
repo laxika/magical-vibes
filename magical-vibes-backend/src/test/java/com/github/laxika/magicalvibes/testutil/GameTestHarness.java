@@ -153,6 +153,7 @@ public class GameTestHarness {
     private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final TargetValidationService targetValidationService;
+    private final TargetLegalityService targetLegalityService;
     private final MessageHandler messageHandler;
     private final LobbyService lobbyService;
     private final GameData gameData;
@@ -252,8 +253,8 @@ public class GameTestHarness {
         for (Object bean : validatorBeans) {
             scanTargetValidators(bean, targetValidatorRegistry);
         }
-        TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
-        battlefieldEntryService.setTargetLegalityService(targetLegalityService);
+        this.targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
+        battlefieldEntryService.setTargetLegalityService(this.targetLegalityService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
         DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
         ExileResolutionService exileResolutionService = new ExileResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService, exileService);
@@ -1000,6 +1001,10 @@ public class GameTestHarness {
 
     public TargetValidationService getTargetValidationService() {
         return targetValidationService;
+    }
+
+    public TargetLegalityService getTargetLegalityService() {
+        return targetLegalityService;
     }
 
     public LegendRuleService getLegendRuleService() {
