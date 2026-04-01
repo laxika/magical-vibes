@@ -1394,4 +1394,404 @@ class HardAiDecisionEngineTest {
             assertThat(engine.testShouldKeepHand(gd)).isTrue();
         }
     }
+
+    // ===== Activated Ability Usage =====
+
+    @Test
+    @DisplayName("Hard AI activates Prodigal Pyromancer's tap ability to deal damage to opponent creature")
+    void activatesProdigalPyromancerTapAbility() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Set up as opponent's turn, end step — good timing for "any time" abilities
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // AI has Prodigal Pyromancer ({T}: deal 1 damage to any target)
+        Permanent pyromancer = new Permanent(new com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(pyromancer);
+
+        // Opponent has a 1/1 creature that can be killed
+        Permanent oppElves = new Permanent(new LlanowarElves());
+        oppElves.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppElves);
+
+        // Empty hand so AI doesn't try casting spells
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Pyromancer should have been tapped and ability put on the stack
+        assertThat(pyromancer.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(oppElves.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate tap ability on summoning-sick creature")
+    void doesNotActivateTapAbilityOnSummoningSickCreature() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // Summoning-sick Prodigal Pyromancer
+        Permanent pyromancer = new Permanent(new com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer());
+        pyromancer.setSummoningSick(true);
+        gd.playerBattlefields.get(player1.getId()).add(pyromancer);
+
+        Permanent oppCreature = new Permanent(new LlanowarElves());
+        oppCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should not activate — creature is summoning sick
+        assertThat(pyromancer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI activates Prodigal Pyromancer targeting opponent face when no killable creature")
+    void activatesPyromancerTargetingOpponentFace() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // Prodigal Pyromancer untapped
+        Permanent pyromancer = new Permanent(new com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(pyromancer);
+
+        // No opponent creatures — should target opponent face
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(pyromancer.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI activates Shivan Dragon pump ability only during combat")
+    void activatesShivanDragonPumpOnlyDuringCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Declare blockers step — good timing for pump
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // Shivan Dragon with {R} available for pump
+        Permanent dragon = new Permanent(new com.github.laxika.magicalvibes.cards.s.ShivanDragon());
+        dragon.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(dragon);
+
+        // One untapped Mountain for mana
+        Permanent mountain = new Permanent(new Mountain());
+        mountain.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(mountain);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should activate pump during combat
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate pump ability during precombat main phase")
+    void doesNotActivatePumpDuringMain() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Precombat main — not a good time for pump
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        Permanent dragon = new Permanent(new com.github.laxika.magicalvibes.cards.s.ShivanDragon());
+        dragon.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(dragon);
+
+        Permanent mountain = new Permanent(new Mountain());
+        mountain.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(mountain);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should NOT pump during main phase — waste of mana
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI activates Thrun regenerate ability during combat")
+    void activatesThrunRegenerateDuringCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Declare blockers — good timing for regenerate
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // Thrun the Last Troll ({1}{G}: Regenerate)
+        Permanent thrun = new Permanent(new com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll());
+        thrun.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(thrun);
+
+        // Two lands for {1}{G}
+        Permanent forest = new Permanent(new Forest());
+        forest.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(forest);
+
+        Permanent forest2 = new Permanent(new Forest());
+        forest2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(forest2);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should activate regenerate during combat
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate regenerate during precombat main")
+    void doesNotActivateRegenerateDuringMain() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        Permanent thrun = new Permanent(new com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll());
+        thrun.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(thrun);
+
+        Permanent forest = new Permanent(new Forest());
+        forest.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(forest);
+
+        Permanent forest2 = new Permanent(new Forest());
+        forest2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(forest2);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should NOT activate regenerate during main — save mana for casting
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate ability when it cannot afford the mana cost")
+    void doesNotActivateAbilityWithInsufficientMana() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // Thrun needs {1}{G} but we have no mana
+        Permanent thrun = new Permanent(new com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll());
+        thrun.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(thrun);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should not activate — can't afford {1}{G}
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate Mogg Fanatic sacrifice when its value exceeds damage value")
+    void doesNotSacrificeMoggFanaticWhenNotWorthIt() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // Mogg Fanatic (1/1, sacrifice: deal 1 damage to any target)
+        Permanent mogg = new Permanent(new com.github.laxika.magicalvibes.cards.m.MoggFanatic());
+        mogg.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(mogg);
+
+        // Opponent has a 5/5 creature — 1 damage won't kill it, sacrifice not worth it
+        Permanent bigCreature = new Permanent(new AirElemental());
+        bigCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bigCreature);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Cost of sacrificing the 1/1 should exceed value of dealing 1 to opponent face
+        // or dealing 1 to a 4/4 creature (can't kill it)
+        // The sacrifice cost (~creature score of 1/1) should make value negative
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate pay-life ability when life is too low")
+    void doesNotPayLifeWhenLifeTooLow() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // AI at 2 life — paying 2 would kill it
+        gd.playerLifeTotals.put(player1.getId(), 2);
+
+        // Glorifier of Dusk (Pay 2 life: gain flying/vigilance)
+        Permanent glorifier = new Permanent(new com.github.laxika.magicalvibes.cards.g.GlorifierOfDusk());
+        glorifier.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(glorifier);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should not activate — life cost check: life <= amount means can't pay
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate ability on already tapped permanent")
+    void doesNotActivateTapAbilityOnTappedPermanent() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // Already-tapped Prodigal Pyromancer
+        Permanent pyromancer = new Permanent(new com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        pyromancer.tap();
+        gd.playerBattlefields.get(player1.getId()).add(pyromancer);
+
+        Permanent oppCreature = new Permanent(new LlanowarElves());
+        oppCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should not activate — permanent is already tapped
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI prefers killing a creature over pinging opponent face")
+    void prefersKillingCreatureOverFaceDamage() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // Prodigal Pyromancer
+        Permanent pyromancer = new Permanent(new com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(pyromancer);
+
+        // Opponent has a 1/1 that can be killed by 1 damage
+        Permanent elves = new Permanent(new LlanowarElves());
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(elves);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should target the 1/1 creature (killable) rather than opponent's face
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(elves.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI skips mana abilities and does not put them on the stack")
+    void skipsManaAbilitiesDuringAbilityActivation() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // Llanowar Elves has a mana ability ({T}: Add {G})
+        Permanent elves = new Permanent(new LlanowarElves());
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(elves);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // The mana ability should be skipped — nothing on the stack
+        assertThat(gd.stack).isEmpty();
+        // Elves should NOT be tapped (mana ability was not attempted)
+        assertThat(elves.isTapped()).isFalse();
+    }
 }

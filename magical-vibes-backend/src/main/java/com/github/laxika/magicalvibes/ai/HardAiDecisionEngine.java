@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -18,9 +20,23 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -207,6 +223,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // Try casting instants with timing evaluation
         if (tryCastInstantWithTimingEvaluation(gameData)) {
+            return;
+        }
+
+        // Try activated abilities on controlled permanents
+        if (tryActivateAbility(gameData)) {
             return;
         }
 
@@ -920,6 +941,329 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             log.warn("AI (Hard): Instant cast failed silently in game {}", gameId);
             return false;
         }
+        return true;
+    }
+
+    // ===== Activated Abilities =====
+
+    /**
+     * Tries to activate the best non-mana activated ability on any controlled permanent.
+     * Checks timing restrictions, costs, targeting, and evaluates expected value.
+     * Skips mana abilities (handled by AiManaManager) and loyalty abilities (complex).
+     * Uses timing awareness to only activate combat-oriented abilities during combat
+     * and card-draw abilities at end of opponent's turn.
+     */
+    private boolean tryActivateAbility(GameData gameData) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        if (battlefield.isEmpty()) return false;
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        record AbilityCandidate(int permanentIndex, int abilityIndex, ActivatedAbility ability,
+                                Permanent permanent, double value, UUID targetId) {}
+
+        List<AbilityCandidate> candidates = new ArrayList<>();
+
+        for (int permIdx = 0; permIdx < battlefield.size(); permIdx++) {
+            Permanent permanent = battlefield.get(permIdx);
+
+            // Build the full ability list matching AbilityActivationService's logic
+            List<ActivatedAbility> abilities = buildEffectiveAbilityList(gameData, permanent);
+
+            for (int abilIdx = 0; abilIdx < abilities.size(); abilIdx++) {
+                ActivatedAbility ability = abilities.get(abilIdx);
+
+                // Skip mana abilities (already handled by AiManaManager)
+                if (isManaAbility(ability)) continue;
+
+                // Skip loyalty abilities (complex planeswalker rules)
+                if (ability.getLoyaltyCost() != null) continue;
+
+                // Skip spell-targeting abilities (counterspell-type, too complex for v1)
+                if (ability.isNeedsSpellTarget()) continue;
+
+                // Skip multi-target abilities (rare for activated abilities)
+                if (ability.isMultiTarget()) continue;
+
+                // Basic activation checks
+                if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
+
+                // Timing-awareness: skip pump abilities outside combat, draw abilities outside end step
+                if (!isGoodTimingForAbility(gameData, ability)) continue;
+
+                // Evaluate value
+                double value = spellEvaluator.evaluateAbilityEffects(
+                        gameData, ability.getEffects(), aiPlayer.getId());
+                value -= evaluateAbilityCosts(gameData, ability, permanent);
+                if (value <= 0) continue;
+
+                // Find target if needed
+                UUID targetId = null;
+                if (ability.isNeedsTarget()) {
+                    targetId = targetSelector.chooseAbilityTarget(
+                            gameData, ability, aiPlayer.getId(), permanent);
+                    if (targetId == null) continue;
+                }
+
+                candidates.add(new AbilityCandidate(permIdx, abilIdx, ability,
+                        permanent, value, targetId));
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+
+        candidates.sort(Comparator.comparingDouble(AbilityCandidate::value).reversed());
+        AbilityCandidate best = candidates.getFirst();
+
+        // Tap mana for the ability cost
+        if (best.ability().getManaCost() != null) {
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
+                    best.ability().getManaCost(), 0, manaTapAction());
+            if (gameData.interaction.isAwaitingInput()) {
+                return true; // Mana ability triggered a pending choice
+            }
+        }
+
+        log.info("AI (Hard): Activating ability {} on {} (value={}) in game {}",
+                best.abilityIndex(), best.permanent().getCard().getName(),
+                String.format("%.1f", best.value()), gameId);
+
+        final int permIdx = best.permanentIndex();
+        final int abilIdx = best.abilityIndex();
+        final UUID finalTargetId = best.targetId();
+        send(() -> messageHandler.handleActivateAbility(selfConnection,
+                new ActivateAbilityRequest(permIdx, abilIdx, null, finalTargetId, null, null, null)));
+        return true;
+    }
+
+    /**
+     * Builds the complete list of activated abilities for a permanent, matching the
+     * same logic as AbilityActivationService. Includes the permanent's own abilities,
+     * abilities granted by static effects, and temporary abilities.
+     */
+    private List<ActivatedAbility> buildEffectiveAbilityList(GameData gameData, Permanent permanent) {
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+        List<ActivatedAbility> abilities;
+        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
+        } else {
+            abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
+            abilities.addAll(staticBonus.grantedActivatedAbilities());
+        }
+        abilities.addAll(permanent.getTemporaryActivatedAbilities());
+        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        return abilities;
+    }
+
+    /**
+     * Returns true if an activated ability is a mana ability per CR 605.1a:
+     * no target, no spell target, no loyalty cost, and has at least one mana-producing effect.
+     */
+    private static boolean isManaAbility(ActivatedAbility ability) {
+        if (ability.isNeedsTarget() || ability.isNeedsSpellTarget() || ability.getLoyaltyCost() != null) {
+            return false;
+        }
+        List<CardEffect> nonCostEffects = ability.getEffects().stream()
+                .filter(e -> !(e instanceof CostEffect))
+                .toList();
+        return !nonCostEffects.isEmpty() && nonCostEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
+    }
+
+    /**
+     * Checks whether an activated ability can be activated: tap state, summoning sickness,
+     * Arrest, timing restriction, per-turn limit, mana affordability, and cost effects.
+     */
+    private boolean canActivateAbility(GameData gameData, Permanent permanent,
+                                       ActivatedAbility ability, int abilityIndex,
+                                       ManaPool virtualPool) {
+        // Tap check
+        if (ability.isRequiresTap()) {
+            if (permanent.isTapped()) return false;
+            if (permanent.isSummoningSick()
+                    && gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
+                return false;
+            }
+        }
+
+        // Arrest check (enchanted creature can't activate abilities)
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent,
+                EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            return false;
+        }
+
+        // Timing restriction
+        if (!canMeetAbilityTimingRestriction(gameData, ability, permanent)) return false;
+
+        // Per-turn activation limit
+        if (isAbilityActivationLimitReached(gameData, permanent, abilityIndex, ability)) return false;
+
+        // Required subtype count (e.g., "Activate only if you control five or more Vampires")
+        if (ability.getRequiredControlledSubtype() != null) {
+            int count = gameQueryService.countControlledSubtypePermanents(
+                    gameData, aiPlayer.getId(), ability.getRequiredControlledSubtype());
+            if (count < ability.getRequiredControlledSubtypeCount()) return false;
+        }
+
+        // Mana affordability
+        if (ability.getManaCost() != null) {
+            ManaCost cost = new ManaCost(ability.getManaCost());
+            if (!cost.canPay(virtualPool, 0)) return false;
+        }
+
+        // Cost effects payability
+        return canPayAbilityCostEffects(gameData, ability, permanent);
+    }
+
+    /**
+     * Checks if the ability's timing restriction is met.
+     */
+    private boolean canMeetAbilityTimingRestriction(GameData gameData, ActivatedAbility ability,
+                                                    Permanent permanent) {
+        ActivationTimingRestriction restriction = ability.getTimingRestriction();
+        if (restriction == null) return true;
+
+        return switch (restriction) {
+            case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, aiPlayer.getId());
+            case MORBID -> gameQueryService.isMorbidMet(gameData);
+            case ONLY_DURING_YOUR_UPKEEP -> aiPlayer.getId().equals(gameData.activePlayerId)
+                    && gameData.currentStep == TurnStep.UPKEEP;
+            case ONLY_WHILE_ATTACKING -> permanent.isAttacking();
+            case ONLY_WHILE_CREATURE -> gameQueryService.isCreature(gameData, permanent);
+            case POWER_4_OR_GREATER -> gameQueryService.getEffectivePower(gameData, permanent) >= 4;
+            case RAID -> gameData.playersDeclaredAttackersThisTurn.contains(aiPlayer.getId());
+            case SORCERY_SPEED -> aiPlayer.getId().equals(gameData.activePlayerId)
+                    && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                    || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                    && gameData.stack.isEmpty();
+        };
+    }
+
+    /**
+     * Returns true if the per-turn activation limit has been reached for this ability.
+     */
+    private boolean isAbilityActivationLimitReached(GameData gameData, Permanent permanent,
+                                                    int abilityIndex, ActivatedAbility ability) {
+        if (ability.getMaxActivationsPerTurn() == null) return false;
+        Map<Integer, Integer> counts = gameData.activatedAbilityUsesThisTurn.get(permanent.getId());
+        int current = counts != null ? counts.getOrDefault(abilityIndex, 0) : 0;
+        return current >= ability.getMaxActivationsPerTurn();
+    }
+
+    /**
+     * Checks whether the non-mana costs of an activated ability can be paid
+     * (sacrifice, life, charge counters, etc.).
+     */
+    private boolean canPayAbilityCostEffects(GameData gameData, ActivatedAbility ability,
+                                             Permanent permanent) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof SacrificeCreatureCost sacCost) {
+                boolean hasCreature = battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .anyMatch(p -> !sacCost.excludeSelf() || !p.getId().equals(permanent.getId()));
+                if (!hasCreature) return false;
+            } else if (effect instanceof SacrificeArtifactCost) {
+                boolean hasArtifact = battlefield.stream()
+                        .anyMatch(p -> gameQueryService.isArtifact(gameData, p));
+                if (!hasArtifact) return false;
+            } else if (effect instanceof SacrificePermanentCost sacCost) {
+                boolean hasMatch = battlefield.stream()
+                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
+                if (!hasMatch) return false;
+            } else if (effect instanceof PayLifeCost lifeCost) {
+                int life = gameData.getLife(aiPlayer.getId());
+                if (life <= lifeCost.amount()) return false;
+            } else if (effect instanceof RemoveChargeCountersFromSourceCost counterCost) {
+                if (permanent.getChargeCounters() < counterCost.count()) return false;
+            } else if (effect instanceof RemoveCounterFromSourceCost counterCost) {
+                int available = switch (counterCost.counterType()) {
+                    case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
+                    case CHARGE -> permanent.getChargeCounters();
+                    default -> 0;
+                };
+                if (available < counterCost.count()) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Estimates the cost of an ability's additional costs as a score deduction.
+     * Higher cost means the ability needs higher effect value to be worth activating.
+     */
+    private double evaluateAbilityCosts(GameData gameData, ActivatedAbility ability,
+                                        Permanent permanent) {
+        double cost = 0;
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        BoardEvaluator boardEval = new BoardEvaluator(gameQueryService);
+
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof SacrificeSelfCost) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    cost += boardEval.creatureScore(gameData, permanent, aiPlayer.getId(), opponentId);
+                } else {
+                    cost += permanent.getCard().getManaValue() * 3.0;
+                }
+            } else if (effect instanceof SacrificeCreatureCost) {
+                // Deduct the value of the weakest creature we'd sacrifice
+                List<Permanent> creatures = gameData.playerBattlefields
+                        .getOrDefault(aiPlayer.getId(), List.of()).stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .toList();
+                double weakest = creatures.stream()
+                        .mapToDouble(p -> boardEval.creatureScore(gameData, p, aiPlayer.getId(), opponentId))
+                        .min()
+                        .orElse(0);
+                cost += weakest;
+            } else if (effect instanceof PayLifeCost lifeCost) {
+                cost += lifeCost.amount() * 1.5;
+            } else if (effect instanceof RemoveChargeCountersFromSourceCost counterCost) {
+                cost += counterCost.count();
+            }
+        }
+        return cost;
+    }
+
+    /**
+     * Determines whether the current game state is a good time to activate an ability
+     * based on its effects. Pump abilities are best during combat, card draw is best
+     * at opponent's end step, and most other abilities are fine at any priority.
+     */
+    private boolean isGoodTimingForAbility(GameData gameData, ActivatedAbility ability) {
+        List<CardEffect> nonCostEffects = ability.getEffects().stream()
+                .filter(e -> !(e instanceof CostEffect))
+                .toList();
+
+        boolean isPump = nonCostEffects.stream().anyMatch(e ->
+                e instanceof BoostSelfEffect || e instanceof BoostTargetCreatureEffect);
+        boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof DrawCardEffect);
+        boolean isRegen = nonCostEffects.stream().anyMatch(e -> e instanceof RegenerateEffect);
+
+        TurnStep step = gameData.currentStep;
+        boolean isOpponentsTurn = !aiPlayer.getId().equals(gameData.activePlayerId);
+
+        // Pump abilities: only during combat (declare blockers or combat damage)
+        if (isPump) {
+            return step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE;
+        }
+
+        // Card draw abilities: opponent's end step (to keep mana open)
+        if (isDraw && !isRegen) {
+            return isOpponentsTurn && step == TurnStep.END_STEP;
+        }
+
+        // Regenerate: keep available — activate preemptively is fine at most times
+        // but avoid main phase when we could be casting spells instead
+        if (isRegen) {
+            return step == TurnStep.DECLARE_BLOCKERS
+                    || step == TurnStep.COMBAT_DAMAGE
+                    || step == TurnStep.DECLARE_ATTACKERS;
+        }
+
+        // Sorcery-speed abilities are already gated by canMeetAbilityTimingRestriction
+        // Everything else (damage, tap, tokens, etc.) can be used at any priority
         return true;
     }
 

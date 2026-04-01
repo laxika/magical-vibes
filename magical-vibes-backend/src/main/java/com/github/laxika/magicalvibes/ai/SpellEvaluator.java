@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -36,9 +38,14 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -58,6 +65,65 @@ public class SpellEvaluator {
     public SpellEvaluator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
         this.gameQueryService = gameQueryService;
         this.boardEvaluator = boardEvaluator;
+    }
+
+    /**
+     * Evaluates the value of activating an ability by scoring its non-cost effects.
+     * Uses the same evaluation logic as spell effects, plus ability-specific effects
+     * like BoostSelfEffect and RegenerateEffect.
+     */
+    public double evaluateAbilityEffects(GameData gameData, List<CardEffect> effects, UUID aiPlayerId) {
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+
+        double value = 0;
+        for (CardEffect effect : effects) {
+            if (effect instanceof CostEffect) continue;
+            value += evaluateAbilityEffect(gameData, effect, aiPlayerId, opponentId,
+                    aiBattlefield, oppBattlefield);
+        }
+        return value;
+    }
+
+    private double evaluateAbilityEffect(GameData gameData, CardEffect effect,
+                                         UUID aiPlayerId, UUID opponentId,
+                                         List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
+        // Self-pump (e.g. Shivan Dragon's {R}: +1/+0)
+        if (effect instanceof BoostSelfEffect boost) {
+            return boost.powerBoost() * 2.0 + boost.toughnessBoost();
+        }
+        // Regenerate (shield from destruction)
+        if (effect instanceof RegenerateEffect) {
+            return 4.0;
+        }
+        // Scry
+        if (effect instanceof ScryEffect scry) {
+            return scry.count() * 2.0;
+        }
+        // +1/+1 counters on all own creatures
+        if (effect instanceof PutPlusOnePlusOneCounterOnEachOwnCreatureEffect counters) {
+            long creatureCount = aiBattlefield.stream()
+                    .filter(p -> gameQueryService.isCreature(gameData, p))
+                    .count();
+            return creatureCount * counters.count() * 3.5;
+        }
+        // +1/+1 counter on target creature
+        if (effect instanceof PutPlusOnePlusOneCounterOnTargetCreatureEffect counters) {
+            return counters.count() * 3.5;
+        }
+        // Tap target permanent
+        if (effect instanceof TapTargetPermanentEffect) {
+            double bestTapValue = oppBattlefield.stream()
+                    .filter(p -> gameQueryService.isCreature(gameData, p) && !p.isTapped())
+                    .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId) * 0.3)
+                    .max()
+                    .orElse(0);
+            return bestTapValue;
+        }
+        // Fall through to the standard effect evaluation
+        return evaluateSingleEffect(gameData, null, effect, aiPlayerId, opponentId,
+                aiBattlefield, oppBattlefield);
     }
 
     /**
@@ -432,7 +498,7 @@ public class SpellEvaluator {
      * a virtual mana pool from the current pool + all untapped mana sources.
      */
     private int estimateMaxX(GameData gameData, Card card, UUID playerId) {
-        if (card.getManaCost() == null) return 0;
+        if (card == null || card.getManaCost() == null) return 0;
         ManaCost cost = new ManaCost(card.getManaCost());
         if (!cost.hasX()) return 0;
 

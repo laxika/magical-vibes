@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -12,10 +13,20 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -626,5 +637,146 @@ class AiTargetSelector {
         }
 
         return candidates.getFirst().getId();
+    }
+
+    // ===== Activated Ability Targeting =====
+
+    /**
+     * Selects the best target for an activated ability. Determines whether the ability
+     * is beneficial (targets own permanents) or harmful (targets opponent's permanents)
+     * based on its non-cost effects, then finds the best valid target.
+     *
+     * @return the target UUID, or null if no valid target exists
+     */
+    UUID chooseAbilityTarget(GameData gameData, ActivatedAbility ability, UUID aiPlayerId, Permanent source) {
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
+        List<CardEffect> nonCostEffects = ability.getEffects().stream()
+                .filter(e -> !(e instanceof CostEffect))
+                .toList();
+
+        boolean canTargetPlayer = nonCostEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+        boolean canTargetPermanent = nonCostEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+
+        // Classify: is this ability beneficial to the target or harmful?
+        boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
+                (e instanceof BoostTargetCreatureEffect boost && boost.powerBoost() >= 0)
+                        || e instanceof RegenerateEffect
+                        || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGET));
+
+        if (canTargetPermanent) {
+            if (isBeneficial) {
+                // Target own best creature
+                UUID target = findBestOwnCreatureTarget(gameData, ability, aiPlayerId, source);
+                if (target != null) return target;
+            } else {
+                // Target opponent's best creature (for damage, destruction, bounce, tap, etc.)
+                UUID target = findBestOpponentTarget(gameData, ability, aiPlayerId, opponentId, nonCostEffects, source);
+                if (target != null) return target;
+            }
+        }
+
+        // For "any target" damage, fall back to opponent's face
+        if (canTargetPlayer) {
+            if (opponentId != null
+                    && !gameQueryService.playerHasShroud(gameData, opponentId)
+                    && !gameQueryService.playerHasHexproof(gameData, opponentId)) {
+                return opponentId;
+            }
+        }
+
+        return null;
+    }
+
+    private UUID findBestOwnCreatureTarget(GameData gameData, ActivatedAbility ability,
+                                           UUID aiPlayerId, Permanent source) {
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        return ownBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> !p.getId().equals(source.getId())) // Self-targeting is handled separately
+                .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
+                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
+                        + gameQueryService.getEffectiveToughness(gameData, p)))
+                .map(Permanent::getId)
+                .orElse(null);
+    }
+
+    private UUID findBestOpponentTarget(GameData gameData, ActivatedAbility ability,
+                                        UUID aiPlayerId, UUID opponentId,
+                                        List<CardEffect> effects, Permanent source) {
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+
+        // For damage abilities, prefer creatures we can kill
+        for (CardEffect effect : effects) {
+            final int damage;
+            if (effect instanceof DealDamageToAnyTargetEffect dmg) damage = dmg.damage();
+            else if (effect instanceof DealDamageToTargetCreatureEffect dmg) damage = dmg.damage();
+            else damage = 0;
+
+            if (damage > 0) {
+                // First try to find a creature we can kill
+                UUID killTarget = oppBattlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
+                        .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) - p.getMarkedDamage() <= damage)
+                        .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
+                        .map(Permanent::getId)
+                        .orElse(null);
+                if (killTarget != null) return killTarget;
+            }
+        }
+
+        // General case: target opponent's highest-value creature
+        return oppBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
+                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
+                .map(Permanent::getId)
+                .orElse(null);
+    }
+
+    /**
+     * Simplified target validation for activated abilities. Checks the ability's
+     * TargetFilter, hexproof, shroud, and protection. The server performs full
+     * validation, so this is a best-effort pre-filter.
+     */
+    private boolean isValidAbilityPermanentTarget(GameData gameData, ActivatedAbility ability,
+                                                  Permanent target, UUID aiPlayerId, Permanent source) {
+        // Hexproof check
+        UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetController != null && !targetController.equals(aiPlayerId)) {
+            if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.HEXPROOF)) {
+                return false;
+            }
+            if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.SHROUD)) {
+                return false;
+            }
+        }
+        if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.SHROUD)) {
+            return false;
+        }
+
+        // TargetFilter check
+        TargetFilter filter = ability.getTargetFilter();
+        if (filter != null) {
+            FilterContext ctx = FilterContext.of(gameData)
+                    .withSourceControllerId(aiPlayerId)
+                    .withSourceCardId(source.getCard().getId());
+            if (filter instanceof PermanentPredicateTargetFilter ppf) {
+                if (!gameQueryService.matchesPermanentPredicate(target, ppf.predicate(), ctx)) {
+                    return false;
+                }
+            } else if (filter instanceof ControlledPermanentPredicateTargetFilter cpf) {
+                if (!targetController.equals(aiPlayerId)) return false;
+                if (!gameQueryService.matchesPermanentPredicate(target, cpf.predicate(), ctx)) {
+                    return false;
+                }
+            } else if (filter instanceof OwnedPermanentPredicateTargetFilter opf) {
+                if (!gameQueryService.matchesPermanentPredicate(target, opf.predicate(), ctx)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }
