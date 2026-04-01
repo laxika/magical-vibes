@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import tools.jackson.databind.ObjectMapper;
@@ -39,6 +40,7 @@ import static org.assertj.core.api.Assertions.fail;
  *
  * <p>Disabled by default; enable manually to run.</p>
  */
+@Tag("scryfall")
 @EnabledIfSystemProperty(named = "runAiStress", matches = "true")
 class AiVsAiStressTest {
 

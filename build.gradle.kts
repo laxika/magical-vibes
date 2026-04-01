@@ -38,7 +38,11 @@ subprojects {
         }
 
         tasks.withType<Test> {
-            useJUnitPlatform()
+            useJUnitPlatform {
+                if (System.getenv("CI") != null) {
+                    excludeTags("scryfall")
+                }
+            }
             maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
             jvmArgs("-Xmx1g")
             forkEvery = 250
