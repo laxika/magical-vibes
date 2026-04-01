@@ -25,7 +25,7 @@ jobs:
       - name: Cache Scryfall oracle data
         uses: actions/cache@v4
         with:
-          path: scryfall-cache
+          path: magical-vibes-backend/scryfall-cache
           key: scryfall-cache-${{ hashFiles('magical-vibes-card/src/main/java/**/CardSet.java') }}
           restore-keys: |
             scryfall-cache-
