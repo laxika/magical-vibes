@@ -8,8 +8,12 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -1212,6 +1216,98 @@ class HardAiDecisionEngineTest {
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).isNotNull();
         assertThat(hand.stream().anyMatch(c -> c.getName().equals("Cancel"))).isTrue();
+    }
+
+    // ===== Multi-spell awareness =====
+
+    private void givePlayerForests(Player player, int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(player.getId()).add(forest);
+        }
+    }
+
+    @Test
+    @DisplayName("Hard AI casts sorceries when total multi-spell value exceeds instant held value")
+    void castsMultipleSorceriesInsteadOfHoldingForInstant() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Give AI 4 green mana — enough for two 2-drop creatures
+        givePlayerForests(player1, 4);
+
+        // Hand: two Grizzly Bears ({1}{G} each, value ~7 each, total ~14)
+        // and a Shock ({R} instant, value ~3, held value ~4)
+        // Total sorcery value ~14 should beat instant held value ~4.
+        // With old logic (single best sorcery = ~7), the comparison was closer.
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1); // For Shock to be castable
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast a sorcery-speed creature (not hold all mana for Shock)
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hard AI casts sorcery while reserving mana for instant when both fit")
+    void castsSorceryAndReservesManaForInstant() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Give AI 4 mana (3 green + 1 red) — enough for one 2-drop + keep 2 for instant
+        givePlayerForests(player1, 3);
+        givePlayerMountains(player1, 1);
+
+        // Hand: Grizzly Bears ({1}{G}, 2 mana) + Lightning Bolt ({R} instant, 1 mana)
+        // With 4 total mana, AI can cast Bears (2 mana) and still afford Bolt (1 mana)
+        // Even though Bolt's held value might beat single Bears value with the 0.8 factor,
+        // the AI should still cast Bears because it can do both.
+        Card bears = new GrizzlyBears();
+        Card bolt = new LightningBolt();
+        harness.setHand(player1, List.of(bears, bolt));
+
+        // Put an opponent creature so Lightning Bolt has a target worth holding for
+        Permanent oppCreature = new Permanent(new EliteVanguard());
+        oppCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast the creature (it can still afford the instant later)
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hard AI holds mana for instant when only a single low-value sorcery is available")
+    void holdsForInstantWhenSingleLowValueSorcery() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Give AI 3 mana (1 green + 2 red)
+        givePlayerForests(player1, 1);
+        givePlayerMountains(player1, 2);
+
+        // Hand: EliteVanguard ({W}, low value creature that can't even be cast because no white mana)
+        // + Lightning Bolt ({R} instant, 3 damage — high held value ~4.5*1.3 ≈ 5.9)
+        // Since the only sorcery-speed option is not castable, AI should pass
+        // (falls through to instant timing, but it's own main phase so non-counterspell
+        // instants are not cast at this timing)
+        harness.setHand(player1, List.of(new EliteVanguard(), new LightningBolt()));
+
+        // Put an opponent creature so Lightning Bolt has removal value
+        Permanent oppCreature = new Permanent(new GrizzlyBears());
+        oppCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // No sorcery should be cast (EliteVanguard needs white), and Lightning Bolt
+        // should be held for opponent's turn
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== Color-aware mulligan =====
