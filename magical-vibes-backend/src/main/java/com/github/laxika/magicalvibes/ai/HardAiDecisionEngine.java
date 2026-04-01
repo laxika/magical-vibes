@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -956,14 +957,29 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (landCount == 0 && mulliganCount < 2) return false;
         if (landCount > 5) return false;
 
+        // Collect all mana colors producible by lands in hand
+        Set<ManaColor> availableColors = EnumSet.noneOf(ManaColor.class);
+        for (Card card : hand) {
+            if (card.hasType(CardType.LAND)) {
+                availableColors.addAll(manaManager.getProducedColors(card));
+            }
+        }
+
         double handScore = 0;
         for (Card card : hand) {
             if (card.hasType(CardType.LAND)) {
                 handScore += 1.5;
                 continue;
             }
+
+            // Check if the spell's colored requirements can be met by available lands
+            boolean colorCastable = isColorCastable(card, availableColors);
+
             int mv = card.getManaValue();
-            if (mv <= landCount + 1) {
+            if (!colorCastable) {
+                // Spell requires colors our lands can't produce — nearly dead card
+                handScore += 0.25;
+            } else if (mv <= landCount + 1) {
                 handScore += 3.0;
             } else if (mv <= landCount + 3) {
                 handScore += 1.5;
@@ -974,5 +990,21 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         double threshold = 12.0 - mulliganCount * 3.0;
         return handScore >= threshold;
+    }
+
+    /**
+     * Returns true if all colored mana requirements of the spell can be produced
+     * by the given set of available colors. Colorless and generic costs are always
+     * satisfiable. Phyrexian mana is ignored since it can be paid with life.
+     */
+    private boolean isColorCastable(Card spell, Set<ManaColor> availableColors) {
+        if (spell.getManaCost() == null || spell.getManaCost().isEmpty()) return true;
+        ManaCost cost = new ManaCost(spell.getManaCost());
+        for (ManaColor required : cost.getColoredCosts().keySet()) {
+            if (!availableColors.contains(required)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

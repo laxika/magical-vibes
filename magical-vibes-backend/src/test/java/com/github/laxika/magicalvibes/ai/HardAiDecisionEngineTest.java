@@ -1213,4 +1213,89 @@ class HardAiDecisionEngineTest {
         assertThat(hand).isNotNull();
         assertThat(hand.stream().anyMatch(c -> c.getName().equals("Cancel"))).isTrue();
     }
+
+    // ===== Color-aware mulligan =====
+
+    @Nested
+    @DisplayName("Color-aware mulligan decisions")
+    class ColorAwareMulligan {
+
+        /**
+         * Thin subclass to expose the protected shouldKeepHand for direct testing.
+         */
+        private class TestableMulliganEngine extends HardAiDecisionEngine {
+            TestableMulliganEngine(Player player) {
+                super(gd.id, player, harness.getGameRegistry(),
+                        harness.getMessageHandler(), harness.getGameQueryService(),
+                        harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                        harness.getTargetValidationService(), harness.getTargetLegalityService());
+            }
+
+            boolean testShouldKeepHand(GameData gameData) {
+                return shouldKeepHand(gameData);
+            }
+        }
+
+        @Test
+        @DisplayName("Mulligans hand with mountains and only blue spells")
+        void mulligansWhenLandsDoNotMatchSpellColors() {
+            // 3 Mountains + 4 blue spells — no way to cast anything
+            harness.setHand(player1, List.of(
+                    new Mountain(), new Mountain(), new Mountain(),
+                    new AirElemental(), new AirElemental(), new AirElemental(), new AirElemental()
+            ));
+            gd.mulliganCounts.put(player1.getId(), 0);
+
+            TestableMulliganEngine engine = new TestableMulliganEngine(player1);
+            assertThat(engine.testShouldKeepHand(gd)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Keeps hand when lands match spell colors")
+        void keepsHandWhenLandsMatchSpellColors() {
+            // 3 Islands + 2 cheap blue spells + 2 medium blue spells
+            // Score: 3*1.5 + 2*3.0 + 2*1.5 = 4.5 + 6.0 + 3.0 = 13.5 >= 12.0
+            harness.setHand(player1, List.of(
+                    new Island(), new Island(), new Island(),
+                    new SteelSabotage(), new SteelSabotage(),
+                    new AirElemental(), new AirElemental()
+            ));
+            gd.mulliganCounts.put(player1.getId(), 0);
+
+            TestableMulliganEngine engine = new TestableMulliganEngine(player1);
+            assertThat(engine.testShouldKeepHand(gd)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Keeps hand when at least some spells are color-castable")
+        void keepsHandWhenSomeSpellsAreCastable() {
+            // 3 Mountains + mix of red and blue spells
+            harness.setHand(player1, List.of(
+                    new Mountain(), new Mountain(), new Mountain(),
+                    new Slagstorm(), new Slagstorm(),
+                    new AirElemental(), new AirElemental()
+            ));
+            gd.mulliganCounts.put(player1.getId(), 0);
+
+            TestableMulliganEngine engine = new TestableMulliganEngine(player1);
+            // Slagstorms score normally (3.0 each), AirElementals score 0.25 each
+            // Score: 3*1.5 + 2*3.0 + 2*0.25 = 4.5 + 6.0 + 0.5 = 11.0 < 12.0 threshold
+            // This hand should be mulliganed — the blue spells drag the score down
+            assertThat(engine.testShouldKeepHand(gd)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Keeps color-mismatched hand after 3 mulligans")
+        void keepsAfterThreeMulligansRegardlessOfColors() {
+            // Even with total color mismatch, 3+ mulligans = always keep
+            harness.setHand(player1, List.of(
+                    new Mountain(), new Mountain(),
+                    new AirElemental(), new AirElemental()
+            ));
+            gd.mulliganCounts.put(player1.getId(), 3);
+
+            TestableMulliganEngine engine = new TestableMulliganEngine(player1);
+            assertThat(engine.testShouldKeepHand(gd)).isTrue();
+        }
+    }
 }
