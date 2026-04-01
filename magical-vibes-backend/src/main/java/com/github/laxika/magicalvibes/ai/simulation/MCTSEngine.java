@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 /**
  * Information Set Monte Carlo Tree Search (IS-MCTS) engine.
@@ -30,6 +28,23 @@ public class MCTSEngine {
     private static final double EXPLORATION_CONSTANT = 1.41; // √2
     private static final int DEFAULT_ROLLOUT_DEPTH = 20;
     private static final long TIME_BUDGET_MS = 1200;
+
+    /**
+     * Softmax temperature for rollout action selection.
+     * Lower values → more greedy (exploit heuristic knowledge),
+     * higher values → more uniform (explore diverse lines).
+     * With typical spell values ranging 0–30, a temperature of 6.0 means:
+     * - A 6-point advantage → ~2.7x more likely to be selected
+     * - A 12-point advantage → ~7.4x more likely
+     */
+    private static final double ROLLOUT_TEMPERATURE = 6.0;
+
+    /**
+     * Epsilon for epsilon-greedy exploration during rollouts.
+     * With this probability, a uniformly random action is chosen instead of
+     * softmax sampling. Ensures even unusual plays get some exploration.
+     */
+    private static final double EPSILON = 0.05;
 
     private final GameSimulator simulator;
     private final Determinizer determinizer;
@@ -86,8 +101,8 @@ public class MCTSEngine {
                     node = expand(node, simState, aiPlayerId);
                 }
 
-                // 5. ROLLOUT: Play out using heuristic policy
-                double reward = rollout(simState, aiPlayerId, node, deadline);
+                // 5. ROLLOUT: Play out using softmax/epsilon-greedy heuristic policy
+                double reward = rollout(simState, aiPlayerId, node, deadline, rng);
 
                 // 6. BACKPROPAGATE: Update visit counts and rewards
                 backpropagate(node, reward);
@@ -148,22 +163,18 @@ public class MCTSEngine {
     }
 
     /**
-     * ROLLOUT phase: From the current state, play out using heuristic policy
-     * for a limited number of moves, then evaluate.
+     * ROLLOUT phase: From the current state, play out using softmax/epsilon-greedy
+     * heuristic policy for a limited number of moves, then evaluate.
      */
-    private double rollout(GameData simState, UUID aiPlayerId, MCTSNode node, long deadline) {
-        // Apply remaining actions from root to this node
-        // (In IS-MCTS with determinization, the state is already partially played out during expand)
-
+    private double rollout(GameData simState, UUID aiPlayerId, MCTSNode node, long deadline, Random rng) {
         for (int depth = 0; depth < DEFAULT_ROLLOUT_DEPTH; depth++) {
             if (System.currentTimeMillis() > deadline) break;
             if (simulator.isTerminal(simState)) break;
 
-            // Get legal actions and pick using heuristic
             List<SimulationAction> actions = simulator.getLegalActions(simState, aiPlayerId);
             if (actions.isEmpty()) break;
 
-            SimulationAction action = selectRolloutAction(simState, actions, aiPlayerId);
+            SimulationAction action = selectRolloutAction(simState, actions, aiPlayerId, rng);
             try {
                 simulator.applyAction(simState, aiPlayerId, action);
             } catch (Exception e) {
@@ -175,55 +186,97 @@ public class MCTSEngine {
     }
 
     /**
-     * Heuristic rollout policy — much stronger than random.
-     * Uses SpellEvaluator and CombatSimulator to pick good actions.
+     * Softmax/epsilon-greedy rollout policy.
+     * <p>
+     * With probability {@link #EPSILON}, picks a uniformly random action (pure exploration).
+     * Otherwise, scores every legal action with domain heuristics and samples via
+     * softmax-weighted distribution (controlled by {@link #ROLLOUT_TEMPERATURE}).
+     * <p>
+     * This is strictly better than the old greedy policy because it lets MCTS discover
+     * non-obvious lines (e.g. "cast a weak cantrip now → draw removal → win")
+     * while still strongly preferring high-value plays most of the time.
      */
-    private SimulationAction selectRolloutAction(GameData simState, List<SimulationAction> actions,
-                                                  UUID aiPlayerId) {
-        // If there's only one option, take it
+    SimulationAction selectRolloutAction(GameData simState, List<SimulationAction> actions,
+                                                  UUID aiPlayerId, Random rng) {
         if (actions.size() == 1) return actions.getFirst();
 
-        // For spell casting, pick highest value
-        SimulationAction bestSpell = null;
-        double bestSpellValue = Double.NEGATIVE_INFINITY;
+        // Epsilon-greedy: with small probability, pick a uniformly random action
+        if (rng.nextDouble() < EPSILON) {
+            return actions.get(rng.nextInt(actions.size()));
+        }
 
-        for (SimulationAction action : actions) {
-            if (action instanceof SimulationAction.PlayCard pc) {
-                List<Card> hand = simState.playerHands.get(aiPlayerId);
-                if (hand != null && pc.handIndex() < hand.size()) {
-                    Card card = hand.get(pc.handIndex());
-                    double value = simulator.getSpellEvaluator().estimateSpellValue(simState, card, aiPlayerId);
-                    if (value > bestSpellValue) {
-                        bestSpellValue = value;
-                        bestSpell = action;
-                    }
-                }
+        // Score each action using domain heuristics
+        double[] scores = new double[actions.size()];
+        for (int i = 0; i < actions.size(); i++) {
+            scores[i] = scoreRolloutAction(simState, actions.get(i), aiPlayerId);
+        }
+
+        // Select via softmax-weighted sampling
+        return softmaxSelect(actions, scores, rng);
+    }
+
+    /**
+     * Scores a single action for the softmax rollout policy.
+     * Higher scores → more likely to be selected.
+     */
+    double scoreRolloutAction(GameData simState, SimulationAction action, UUID aiPlayerId) {
+        if (action instanceof SimulationAction.PlayCard pc) {
+            List<Card> hand = simState.playerHands.get(aiPlayerId);
+            if (hand != null && pc.handIndex() < hand.size()) {
+                Card card = hand.get(pc.handIndex());
+                double value = simulator.getSpellEvaluator().estimateSpellValue(simState, card, aiPlayerId);
+                // Floor at 0.1 so even weak/situational spells have some chance of being explored
+                return Math.max(value, 0.1);
+            }
+            return 0.1;
+        }
+        if (action instanceof SimulationAction.DeclareAttackers da) {
+            return da.attackerIndices().isEmpty() ? 0.5 : 5.0;
+        }
+        if (action instanceof SimulationAction.DeclareBlockers db) {
+            return db.blockerAssignments().isEmpty() ? 0.5 : 5.0;
+        }
+        if (action instanceof SimulationAction.ActivateAbility) {
+            return 3.0;
+        }
+        if (action instanceof SimulationAction.MayAbilityChoice mac) {
+            return mac.accept() ? 2.0 : 0.5;
+        }
+        if (action instanceof SimulationAction.PassPriority) {
+            return 0.1;
+        }
+        // ChooseCard, ChoosePermanent, ChooseColor — neutral
+        return 1.0;
+    }
+
+    /**
+     * Samples an action from a softmax distribution over the given scores.
+     * Uses the standard numerical stability trick of subtracting the max score
+     * before exponentiating to avoid overflow.
+     */
+    SimulationAction softmaxSelect(List<SimulationAction> actions, double[] scores, Random rng) {
+        double maxScore = IntStream.range(0, scores.length)
+                .mapToDouble(i -> scores[i])
+                .max()
+                .orElse(0);
+
+        double[] weights = new double[actions.size()];
+        double totalWeight = 0;
+        for (int i = 0; i < scores.length; i++) {
+            weights[i] = Math.exp((scores[i] - maxScore) / ROLLOUT_TEMPERATURE);
+            totalWeight += weights[i];
+        }
+
+        double roll = rng.nextDouble() * totalWeight;
+        double cumulative = 0;
+        for (int i = 0; i < weights.length; i++) {
+            cumulative += weights[i];
+            if (roll <= cumulative) {
+                return actions.get(i);
             }
         }
 
-        if (bestSpell != null && bestSpellValue > 0) {
-            return bestSpell;
-        }
-
-        // For attacker declarations, prefer the non-empty one (the CombatSimulator result)
-        for (SimulationAction action : actions) {
-            if (action instanceof SimulationAction.DeclareAttackers da && !da.attackerIndices().isEmpty()) {
-                return action;
-            }
-        }
-
-        // For blocker declarations, prefer the non-empty one
-        for (SimulationAction action : actions) {
-            if (action instanceof SimulationAction.DeclareBlockers db && !db.blockerAssignments().isEmpty()) {
-                return action;
-            }
-        }
-
-        // Default: pass priority or first available
-        for (SimulationAction action : actions) {
-            if (action instanceof SimulationAction.PassPriority) return action;
-        }
-        return actions.getFirst();
+        return actions.getLast();
     }
 
     /**
