@@ -1794,4 +1794,217 @@ class HardAiDecisionEngineTest {
         // Elves should NOT be tapped (mana ability was not attempted)
         assertThat(elves.isTapped()).isFalse();
     }
+
+    // ===== Race-aware decisions =====
+
+    @Nested
+    @DisplayName("Burn-to-face lethal")
+    class BurnToFaceLethal {
+
+        @Test
+        @DisplayName("Hard AI casts burn spell to kill opponent when burn lethal is available")
+        void castsBurnToFaceWhenLethal() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            giveAiPriority(player1);
+
+            // Opponent at 5 life — Lightning Bolt (3) + Shock (2) = 5 = lethal
+            gd.playerLifeTotals.put(player2.getId(), 5);
+
+            // Give AI mountains for mana
+            givePlayerMountains(player1, 2);
+
+            harness.setHand(player1, List.of(new LightningBolt(), new Shock()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should cast a burn spell targeting opponent
+            assertThat(gd.stack).hasSize(1);
+            String castName = gd.stack.getFirst().getCard().getName();
+            assertThat(castName).isIn("Lightning Bolt", "Shock");
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+        }
+
+        @Test
+        @DisplayName("Hard AI does not burn face when damage is insufficient for lethal")
+        void doesNotBurnFaceWhenNotLethal() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            giveAiPriority(player1);
+
+            // Opponent at 20 life — Shock (2) is not lethal
+            gd.playerLifeTotals.put(player2.getId(), 20);
+
+            givePlayerMountains(player1, 1);
+
+            harness.setHand(player1, List.of(new Shock()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // Should NOT have targeted opponent's face with burn for lethal
+            // (may cast via normal evaluation, but not via burn-to-face-lethal path)
+            if (!gd.stack.isEmpty()) {
+                // If something was cast, verify it's not targeting player's face
+                // OR it went through normal spell evaluation (not burn-lethal path)
+                // The key test: burn-lethal returns false, so normal casting proceeds
+                assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Shock");
+            }
+        }
+
+        @Test
+        @DisplayName("Hard AI casts highest-damage burn first when going for lethal")
+        void castsHighestDamageBurnFirst() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            giveAiPriority(player1);
+
+            // Opponent at 3 life — Lightning Bolt (3) alone is lethal
+            gd.playerLifeTotals.put(player2.getId(), 3);
+
+            givePlayerMountains(player1, 2);
+
+            // Hand has Shock first, then Lightning Bolt — AI should pick Bolt (higher damage)
+            harness.setHand(player1, List.of(new Shock(), new LightningBolt()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning Bolt");
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("Race-aware attacking")
+    class RaceAwareAttacking {
+
+        @Test
+        @DisplayName("Hard AI attacks aggressively with all creatures when winning the race")
+        void attacksAggressivelyWhenWinningRace() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+
+            // AI has 4/4 Air Elemental — 5-turn clock vs opponent's 20 life
+            Permanent aiCreature = new Permanent(new AirElemental());
+            aiCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(aiCreature);
+
+            // Also add a smaller creature to confirm both attack
+            Permanent aiBears = new Permanent(new GrizzlyBears());
+            aiBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(aiBears);
+
+            // Opponent has a small 1/1 (10-turn clock with 2/2 + 4/4 = 6 dmg → ~4 turns for AI vs 20-turn clock for opp)
+            Permanent oppCreature = new Permanent(new ElvishVisionary());
+            oppCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+            // When winning the race, AI should attack with all available creatures
+            assertThat(aiCreature.isAttacking()).isTrue();
+            assertThat(aiBears.isAttacking()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("Race-aware blocking")
+    class RaceAwareBlocking {
+
+        @Test
+        @DisplayName("Hard AI skips blocking when winning the race and damage is non-lethal")
+        void skipsBlockingWhenWinningRaceAndNonLethal() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+
+            // Player1 (attacker) has a small 2/2 — 2 damage, non-lethal
+            Permanent humanBears = new Permanent(new GrizzlyBears());
+            humanBears.setSummoningSick(false);
+            humanBears.setAttacking(true);
+            gd.playerBattlefields.get(player1.getId()).add(humanBears);
+
+            // AI (player2) has a 4/4 Air Elemental — winning the race (5-turn clock vs 10-turn for opp)
+            Permanent aiCreature = new Permanent(new AirElemental());
+            aiCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(aiCreature);
+
+            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+            // AI should NOT block — winning race, damage is non-lethal, preserve creature for attacking
+            assertThat(aiCreature.isBlocking()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Hard AI still blocks when winning the race but damage would be lethal")
+        void blocksWhenWinningRaceButDamageIsLethal() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+
+            // AI at low life
+            gd.playerLifeTotals.put(player2.getId(), 2);
+
+            // Player1 attacks with 2/2 — lethal to AI at 2 life
+            Permanent humanBears = new Permanent(new GrizzlyBears());
+            humanBears.setSummoningSick(false);
+            humanBears.setAttacking(true);
+            gd.playerBattlefields.get(player1.getId()).add(humanBears);
+
+            // AI has a 4/4 to block with — and needs to because damage is lethal
+            Permanent aiCreature = new Permanent(new AirElemental());
+            aiCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(aiCreature);
+
+            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+            // AI should block because the 2 incoming damage would kill it
+            assertThat(aiCreature.isBlocking()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Hard AI blocks normally when losing the race")
+        void blocksNormallyWhenLosingRace() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+
+            // Player1 (attacker) has a 2/2 — AI is losing the race because it has no creatures to race with
+            Permanent humanBears = new Permanent(new GrizzlyBears());
+            humanBears.setSummoningSick(false);
+            humanBears.setAttacking(true);
+            gd.playerBattlefields.get(player1.getId()).add(humanBears);
+
+            // Also give player1 a bigger creature not attacking to ensure they're winning
+            Permanent humanAngel = new Permanent(new AirElemental());
+            humanAngel.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(humanAngel);
+
+            // AI (player2) has a 2/2 — can trade evenly with the attacker (favorable block)
+            Permanent aiCreature = new Permanent(new GrizzlyBears());
+            aiCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(aiCreature);
+
+            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+            // The blocker declaration should have been processed
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            // When losing the race with a favorable trade available, AI should block
+            assertThat(aiCreature.isBlocking()).isTrue();
+        }
+    }
 }

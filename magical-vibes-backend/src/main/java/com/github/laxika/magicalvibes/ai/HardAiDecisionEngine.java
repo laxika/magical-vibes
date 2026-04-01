@@ -72,6 +72,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final SpellEvaluator spellEvaluator;
     private final CombatSimulator combatSimulator;
     private final MCTSEngine mctsEngine;
+    private final RaceEvaluator raceEvaluator;
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 MessageHandler messageHandler, GameQueryService gameQueryService,
@@ -84,6 +85,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
         this.mctsEngine = new MCTSEngine(new GameSimulator(gameQueryService));
+        this.raceEvaluator = new RaceEvaluator(gameQueryService);
     }
 
     // ===== Smart Land Selection =====
@@ -213,6 +215,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         if (isMainPhase && isActivePlayer && gameData.stack.isEmpty()) {
             if (tryPlayLand(gameData)) {
+                return;
+            }
+
+            // Before normal spell casting, check if burn spells in hand can deal lethal
+            if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN && tryBurnToFaceLethal(gameData)) {
                 return;
             }
 
@@ -1280,6 +1287,24 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
 
+        // Evaluate race state to adjust aggression
+        RaceEvaluator.RaceState raceState = evaluateRace(gameData);
+
+        // If winning the race, attack with all available creatures — trading is fine
+        // because we'll kill the opponent first. Skip MCTS overhead in this case.
+        if (raceState.aiWinningRace() && !raceState.aiLosingRace()) {
+            log.info("AI (Hard): Winning the race (AI clock={}, opp clock={}), attacking aggressively in game {}",
+                    raceState.aiClock(), raceState.opponentClock(), gameId);
+            List<Integer> attackerIndices = new ArrayList<>(availableIndices);
+            attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
+            attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
+            log.info("AI (Hard): Declaring {} aggressive attackers in game {}", attackerIndices.size(), gameId);
+            final List<Integer> finalAttackerIndices = attackerIndices;
+            send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+                    new DeclareAttackersRequest(finalAttackerIndices, null)));
+            return;
+        }
+
         // If 0-1 attackers, use CombatSimulator (no need for MCTS)
         if (availableIndices.size() <= 1) {
             handleAttackersWithSimulator(gameData, availableIndices, mustAttackIndices);
@@ -1355,6 +1380,44 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        // Evaluate race state to inform blocking strategy
+        RaceEvaluator.RaceState raceState = evaluateRace(gameData);
+
+        if (raceState.aiWinningRace()) {
+            // Winning the race: don't block small damage, preserve creatures for attacking.
+            // Only block if incoming damage is lethal or if we get a favorable trade.
+            int totalIncoming = 0;
+            for (int idx : attackerIndices) {
+                totalIncoming += gameQueryService.getEffectivePower(gameData, opponentBattlefield.get(idx));
+            }
+            int aiLife = gameData.getLife(aiPlayer.getId());
+
+            if (totalIncoming < aiLife) {
+                // Not lethal — skip blocking entirely to keep creatures alive for the race.
+                // Exception: still do mandatory blocks (lure, must-block-if-able) via the simulator.
+                log.info("AI (Hard): Winning race (AI clock={}, opp clock={}), skipping non-lethal block ({} dmg vs {} life) in game {}",
+                        raceState.aiClock(), raceState.opponentClock(), totalIncoming, aiLife, gameId);
+                // Still run exhaustive search to handle mandatory block constraints
+                List<int[]> assignments = combatSimulator.findBestBlockersExhaustive(
+                        gameData, aiPlayer.getId(), attackerIndices, blockerIndices);
+                // Filter to only mandatory blocks (lure/must-block-if-able)
+                List<int[]> mandatoryOnly = filterToMandatoryBlocks(gameData, assignments, opponentBattlefield);
+                List<BlockerAssignment> blockerAssignments = mandatoryOnly.stream()
+                        .map(a -> new BlockerAssignment(a[0], a[1]))
+                        .toList();
+                log.info("AI (Hard): Declaring {} mandatory-only blockers in game {}", blockerAssignments.size(), gameId);
+                sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
+                return;
+            }
+        }
+
+        // Losing the race or neutral — use exhaustive search which already handles
+        // lethal-incoming chump blocking logic via CombatSimulator
+        if (raceState.aiLosingRace()) {
+            log.info("AI (Hard): Losing race (AI clock={}, opp clock={}), blocking defensively in game {}",
+                    raceState.aiClock(), raceState.opponentClock(), gameId);
+        }
+
         List<int[]> assignments = combatSimulator.findBestBlockersExhaustive(
                 gameData, aiPlayer.getId(), attackerIndices, blockerIndices);
 
@@ -1364,6 +1427,45 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Declaring {} blockers (exhaustive search) in game {}", blockerAssignments.size(), gameId);
         sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
+    }
+
+    /**
+     * Filters blocker assignments to only include mandatory blocks: those blocking
+     * attackers with lure ("must be blocked by all creatures") or "must be blocked
+     * if able" effects. Used when winning the race to avoid unnecessary blocking.
+     */
+    private List<int[]> filterToMandatoryBlocks(GameData gameData, List<int[]> assignments,
+                                                 List<Permanent> opponentBattlefield) {
+        List<int[]> mandatory = new ArrayList<>();
+        for (int[] assignment : assignments) {
+            int attackerIdx = assignment[1];
+            Permanent attacker = opponentBattlefield.get(attackerIdx);
+            if (hasMandatoryBlockRequirement(gameData, attacker)) {
+                mandatory.add(assignment);
+            }
+        }
+        return mandatory;
+    }
+
+    /**
+     * Returns true if the attacker has a lure or must-be-blocked-if-able effect.
+     */
+    private boolean hasMandatoryBlockRequirement(GameData gameData, Permanent attacker) {
+        // Check for "must be blocked by all creatures" (Lure effects)
+        boolean hasLure = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect.class::isInstance);
+        if (hasLure) return true;
+        if (gameQueryService.hasAuraWithEffect(gameData, attacker,
+                com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect.class)) {
+            return true;
+        }
+        // Check for "must be blocked if able"
+        if (attacker.isMustBeBlockedThisTurn()) return true;
+        boolean hasMustBlock = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class::isInstance);
+        if (hasMustBlock) return true;
+        return gameQueryService.hasAuraWithEffect(gameData, attacker,
+                com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class);
     }
 
     // ===== Card Choice (discard lowest spell value) =====
@@ -1467,5 +1569,91 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
         return false;
+    }
+
+    // ===== Race Evaluation & Burn-to-Face Lethal =====
+
+    /**
+     * Checks if the AI can deal lethal damage to the opponent right now using only
+     * burn spells in hand. If so, casts burn spells targeting the opponent's face
+     * until they're dead. This is checked before combat — no point attacking if we
+     * can just burn them out.
+     */
+    private boolean tryBurnToFaceLethal(GameData gameData) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (hand == null || hand.isEmpty()) return false;
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        // Collect castable burn spells that can target a player
+        List<Card> castableBurn = new ArrayList<>();
+        for (Card card : hand) {
+            if (card.getManaCost() == null) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+            if (raceEvaluator.getBurnToFaceDamage(card) > 0) {
+                castableBurn.add(card);
+            }
+        }
+
+        if (castableBurn.isEmpty()) return false;
+
+        RaceEvaluator.RaceState raceState = raceEvaluator.evaluate(gameData, aiPlayer.getId(), castableBurn);
+        if (!raceState.burnLethal()) return false;
+
+        // We have lethal burn! Cast the most efficient burn spells (highest damage first)
+        // until the opponent is dead.
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        int opponentLife = gameData.getLife(opponentId);
+
+        castableBurn.sort(Comparator.comparingInt(raceEvaluator::getBurnToFaceDamage).reversed());
+
+        int damageDealt = 0;
+        for (Card burnCard : castableBurn) {
+            if (damageDealt >= opponentLife) break;
+
+            int cardIndex = hand.indexOf(burnCard);
+            if (cardIndex < 0) continue;
+
+            log.info("AI (Hard): Burn-to-face lethal! Casting {} for {} damage in game {}",
+                    burnCard.getName(), raceEvaluator.getBurnToFaceDamage(burnCard), gameId);
+
+            // Cast the burn spell targeting the opponent player
+            if (tapManaForSpell(gameData, burnCard, null, 0)) {
+                return true; // Mana ability triggered a pending choice
+            }
+            int handSizeBefore = hand.size();
+            final int idx = cardIndex;
+            final UUID targetId = opponentId;
+            send(() -> messageHandler.handlePlayCard(selfConnection,
+                    new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+            if (hand.size() >= handSizeBefore) {
+                log.warn("AI (Hard): Burn-to-face lethal cast failed in game {}", gameId);
+                return false;
+            }
+
+            damageDealt += raceEvaluator.getBurnToFaceDamage(burnCard);
+            return true; // Cast one spell at a time; will re-enter handleGameState
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the current race state for use by combat decisions.
+     */
+    private RaceEvaluator.RaceState evaluateRace(GameData gameData) {
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        List<Card> castableBurn = new ArrayList<>();
+        for (Card card : hand) {
+            if (card.getManaCost() == null) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+            if (raceEvaluator.getBurnToFaceDamage(card) > 0) {
+                castableBurn.add(card);
+            }
+        }
+
+        return raceEvaluator.evaluate(gameData, aiPlayer.getId(), castableBurn);
     }
 }
