@@ -239,6 +239,8 @@ public class ScryfallOracleLoader {
             json = Files.readString(cacheFile);
         } else {
             LOG.info("Fetching " + setCode + " from Scryfall API...");
+            // Respect Scryfall rate limits: 50-100ms between requests
+            Thread.sleep(100);
             json = fetchFromScryfall(setCode);
             Files.writeString(cacheFile, json);
             LOG.info("Cached " + setCode + " to: " + cacheFile);
