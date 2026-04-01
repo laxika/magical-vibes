@@ -92,7 +92,9 @@ public abstract class AiDecisionEngine {
         this.gameBroadcastService = gameBroadcastService;
 
         this.manaManager = new AiManaManager(gameQueryService);
-        this.targetSelector = new AiTargetSelector(gameQueryService, targetValidationService, targetLegalityService);
+        BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
+        this.targetSelector = new AiTargetSelector(gameQueryService, targetValidationService,
+                targetLegalityService, boardEvaluator);
         this.choiceHandler = new AiChoiceHandler(gameId, aiPlayer.getId(), gameQueryService, messageHandler);
     }
 

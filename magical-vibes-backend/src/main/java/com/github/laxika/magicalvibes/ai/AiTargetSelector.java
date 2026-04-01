@@ -67,13 +67,20 @@ class AiTargetSelector {
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
+    private final BoardEvaluator boardEvaluator;
 
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
                      TargetLegalityService targetLegalityService) {
+        this(gameQueryService, targetValidationService, targetLegalityService, null);
+    }
+
+    AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
+                     TargetLegalityService targetLegalityService, BoardEvaluator boardEvaluator) {
         this.gameQueryService = gameQueryService;
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
         this.validTargetService = new ValidTargetService(gameQueryService);
+        this.boardEvaluator = boardEvaluator;
     }
 
     UUID chooseTarget(GameData gameData, Card card, UUID aiPlayerId) {
@@ -626,10 +633,17 @@ class AiTargetSelector {
             return null;
         }
 
+        UUID controllerId = !candidates.isEmpty()
+                ? gameQueryService.findPermanentController(gameData, candidates.getFirst().getId())
+                : null;
+        UUID opponentOfController = controllerId != null
+                ? AiUtils.getOpponentId(gameData, controllerId)
+                : null;
+
         // Prefer creature kills when legal, then choose the most threatening one.
         UUID creatureTarget = candidates.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
+                .max(Comparator.comparingDouble(p -> threatScore(gameData, p, controllerId, opponentOfController)))
                 .map(Permanent::getId)
                 .orElse(null);
         if (creatureTarget != null) {
@@ -637,6 +651,17 @@ class AiTargetSelector {
         }
 
         return candidates.getFirst().getId();
+    }
+
+    /**
+     * Returns the contextual threat score for a creature if a BoardEvaluator is available,
+     * otherwise falls back to effective power.
+     */
+    private double threatScore(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
+        if (boardEvaluator != null) {
+            return boardEvaluator.creatureThreatScore(gameData, perm, controllerId, opponentId);
+        }
+        return gameQueryService.getEffectivePower(gameData, perm);
     }
 
     // ===== Activated Ability Targeting =====
@@ -713,23 +738,23 @@ class AiTargetSelector {
             else damage = 0;
 
             if (damage > 0) {
-                // First try to find a creature we can kill
+                // First try to find a creature we can kill — pick the highest-threat one
                 UUID killTarget = oppBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
                         .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) - p.getMarkedDamage() <= damage)
-                        .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
+                        .max(Comparator.comparingDouble(p -> threatScore(gameData, p, opponentId, aiPlayerId)))
                         .map(Permanent::getId)
                         .orElse(null);
                 if (killTarget != null) return killTarget;
             }
         }
 
-        // General case: target opponent's highest-value creature
+        // General case: target opponent's highest-threat creature
         return oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
-                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
+                .max(Comparator.comparingDouble(p -> threatScore(gameData, p, opponentId, aiPlayerId)))
                 .map(Permanent::getId)
                 .orElse(null);
     }

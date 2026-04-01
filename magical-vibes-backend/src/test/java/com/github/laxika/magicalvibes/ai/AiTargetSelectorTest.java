@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
@@ -34,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -1097,6 +1100,89 @@ class AiTargetSelectorTest {
 
             // Should target opponent's creature (harmful classification)
             assertThat(target).isEqualTo(oppCreature.getId());
+        }
+    }
+
+    // ===== Contextual threat targeting =====
+
+    @Nested
+    @DisplayName("Contextual threat targeting (with BoardEvaluator)")
+    class ContextualThreatTargeting {
+
+        private AiTargetSelector threatAwareSelector;
+
+        @BeforeEach
+        void setUp() {
+            BoardEvaluator boardEvaluator = new BoardEvaluator(harness.getGameQueryService());
+            threatAwareSelector = new AiTargetSelector(
+                    harness.getGameQueryService(), harness.getTargetValidationService(),
+                    harness.getTargetLegalityService(), boardEvaluator);
+        }
+
+        @Test
+        @DisplayName("Destroy spell targets lord over bigger vanilla creature")
+        void destroySpellTargetsLordOverVanilla() {
+            // Benalish Marshal: 3/3 lord giving +1/+1 to other creatures
+            Permanent marshal = harness.addToBattlefieldAndReturn(human, new BenalishMarshal());
+            // Add 4 creatures to be pumped by the lord — typical "wide board" scenario
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            // Air Elemental: 4/4 flying — bigger body but no lord effect
+            harness.addToBattlefield(human, new AirElemental());
+
+            // Create a simple destroy-target-creature spell
+            Card destroySpell = new Card();
+            destroySpell.setName("Test Destroy");
+            destroySpell.setType(CardType.INSTANT);
+            destroySpell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+
+            UUID target = threatAwareSelector.chooseTarget(gd, destroySpell, aiPlayer.getId());
+
+            // Should prefer the lord (smaller body but pumping 4 creatures)
+            assertThat(target).isEqualTo(marshal.getId());
+        }
+
+        @Test
+        @DisplayName("Destroy spell targets growth creature over vanilla when no lord present")
+        void destroySpellTargetsGrowthCreatureOverVanilla() {
+            // Bloodcrazed Neonate: 2/1 with "whenever deals combat damage, put a +1/+1 counter"
+            Permanent neonate = harness.addToBattlefieldAndReturn(human, new BloodcrazedNeonate());
+            // GrizzlyBears: 2/2 vanilla
+            harness.addToBattlefield(human, new GrizzlyBears());
+
+            Card destroySpell = new Card();
+            destroySpell.setName("Test Destroy");
+            destroySpell.setType(CardType.INSTANT);
+            destroySpell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+
+            UUID target = threatAwareSelector.chooseTarget(gd, destroySpell, aiPlayer.getId());
+
+            // Growth creature should be prioritized due to scaling threat
+            assertThat(target).isEqualTo(neonate.getId());
+        }
+
+        @Test
+        @DisplayName("Without BoardEvaluator, falls back to raw power for destroy target")
+        void withoutBoardEvaluatorFallsBackToRawPower() {
+            // Same setup as lord test, but using selector without BoardEvaluator
+            harness.addToBattlefield(human, new BenalishMarshal());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            Permanent airElemental = harness.addToBattlefieldAndReturn(human, new AirElemental());
+
+            Card destroySpell = new Card();
+            destroySpell.setName("Test Destroy");
+            destroySpell.setType(CardType.INSTANT);
+            destroySpell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+
+            // Original selector without BoardEvaluator — uses raw power
+            UUID target = targetSelector.chooseTarget(gd, destroySpell, aiPlayer.getId());
+
+            // Should pick Air Elemental (4 power > Marshal's 3 power)
+            assertThat(target).isEqualTo(airElemental.getId());
         }
     }
 }

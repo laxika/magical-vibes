@@ -415,11 +415,11 @@ public class SpellEvaluator {
 
     private double evaluateDamageEffect(GameData gameData, int damage, List<Permanent> oppBattlefield,
                                         UUID opponentId, UUID aiPlayerId) {
-        // Check if we can kill a creature
+        // Check if we can kill a creature — use threat score to value lords/abilities higher
         double bestKillValue = oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) <= damage)
-                .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId))
+                .mapToDouble(p -> boardEvaluator.creatureThreatScore(gameData, p, opponentId, aiPlayerId))
                 .max()
                 .orElse(0);
 
@@ -433,7 +433,7 @@ public class SpellEvaluator {
         return oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) <= damage)
-                .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId))
+                .mapToDouble(p -> boardEvaluator.creatureThreatScore(gameData, p, opponentId, aiPlayerId))
                 .max()
                 .orElse(damage * 1.0);
     }
@@ -488,7 +488,7 @@ public class SpellEvaluator {
                                            UUID controllerId, UUID opponentId) {
         return battlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, controllerId, opponentId))
+                .mapToDouble(p -> boardEvaluator.creatureThreatScore(gameData, p, controllerId, opponentId))
                 .max()
                 .orElse(0);
     }

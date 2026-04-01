@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
+import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -196,5 +199,105 @@ class BoardEvaluatorTest {
 
         // Serra (4/4 with flying +4, vigilance +2) vs Bears (2/2 vanilla)
         assertThat(serraScore).isGreaterThan(bearsScore);
+    }
+
+    // ===== creatureThreatScore =====
+
+    @Nested
+    @DisplayName("creatureThreatScore")
+    class CreatureThreatScore {
+
+        @BeforeEach
+        void clearBoards() {
+            gd.playerBattlefields.get(player1.getId()).clear();
+            gd.playerBattlefields.get(player2.getId()).clear();
+        }
+
+        @Test
+        @DisplayName("Lord pumping allies scores higher threat than vanilla creature with better stats")
+        void lordThreatHigherThanVanilla() {
+            // Benalish Marshal is a 3/3 that gives other creatures you control +1/+1
+            Permanent marshal = harness.addToBattlefieldAndReturn(player1, new BenalishMarshal());
+
+            // Add 4 creatures for the lord to pump — this is the typical "wide board" scenario
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+
+            // Air Elemental is a 4/4 flying — bigger body
+            Permanent airElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+            double marshalThreat = evaluator.creatureThreatScore(gd, marshal, player1.getId(), player2.getId());
+            double airElementalThreat = evaluator.creatureThreatScore(gd, airElemental, player1.getId(), player2.getId());
+
+            // Marshal: base 13.5 + lord bonus (4 creatures * 4.5 = 18) = 31.5
+            // Air Elemental: base 22 + evasion context bonus 6 = 28
+            // The lord's total board impact makes it the higher-threat target
+            assertThat(marshalThreat).isGreaterThan(airElementalThreat);
+        }
+
+        @Test
+        @DisplayName("Lord with no allies has same threat as base creature score")
+        void lordAloneNoExtraBonus() {
+            Permanent marshal = harness.addToBattlefieldAndReturn(player1, new BenalishMarshal());
+
+            double threatScore = evaluator.creatureThreatScore(gd, marshal, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, marshal, player1.getId(), player2.getId());
+
+            // No other creatures to pump, so lord bonus is 0
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+
+        @Test
+        @DisplayName("Flying creature has extra evasion threat when opponent has no flyers or reach")
+        void flyingEvasionBonusWhenUnblockable() {
+            Permanent airElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+            // Player2 has no creatures — can't block flyers
+            double threatScore = evaluator.creatureThreatScore(gd, airElemental, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, airElemental, player1.getId(), player2.getId());
+
+            // Should get evasion context bonus because opponent has no flyers/reach
+            assertThat(threatScore).isGreaterThan(baseScore);
+        }
+
+        @Test
+        @DisplayName("Flying creature gets no extra evasion bonus when opponent has flyers")
+        void flyingNoExtraBonusWhenOpponentHasFlyers() {
+            Permanent airElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+            // Opponent also has a flyer
+            harness.addToBattlefield(player2, new AirElemental());
+
+            double threatScore = evaluator.creatureThreatScore(gd, airElemental, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, airElemental, player1.getId(), player2.getId());
+
+            // Opponent can block flyers, so no evasion context bonus
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+
+        @Test
+        @DisplayName("Growth creature (slith-type) has higher threat than vanilla")
+        void growthCreatureThreat() {
+            // Bloodcrazed Neonate: 2/1, whenever deals combat damage to player put a +1/+1 counter
+            Permanent neonate = harness.addToBattlefieldAndReturn(player1, new BloodcrazedNeonate());
+
+            double threatScore = evaluator.creatureThreatScore(gd, neonate, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, neonate, player1.getId(), player2.getId());
+
+            // Growth bonus should make it higher than base
+            assertThat(threatScore).isGreaterThan(baseScore);
+        }
+
+        @Test
+        @DisplayName("Threat score is always at least as high as base creature score")
+        void threatScoreNeverLowerThanBase() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+            double threatScore = evaluator.creatureThreatScore(gd, bears, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, bears, player1.getId(), player2.getId());
+
+            assertThat(threatScore).isGreaterThanOrEqualTo(baseScore);
+        }
     }
 }

@@ -1,11 +1,25 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
@@ -124,6 +138,130 @@ public class BoardEvaluator {
         score += keywordBonus(gameData, perm, opponentId);
 
         return score;
+    }
+
+    /**
+     * Scores a creature for removal targeting, considering contextual threat beyond raw stats.
+     * A 2/2 lord pumping four creatures is far more dangerous than a vanilla 4/4.
+     */
+    public double creatureThreatScore(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
+        double score = creatureScore(gameData, perm, controllerId, opponentId);
+        score += lordBonus(gameData, perm, controllerId);
+        score += activatedAbilityThreat(perm);
+        score += evasionContextBonus(gameData, perm, controllerId, opponentId);
+        score += growthThreatBonus(perm);
+        return score;
+    }
+
+    /**
+     * Calculates the bonus value of a permanent that acts as a lord/anthem source.
+     * Counts how many allied creatures benefit from each static boost and scores accordingly.
+     */
+    private double lordBonus(GameData gameData, Permanent perm, UUID controllerId) {
+        double bonus = 0;
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
+
+        for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof StaticBoostEffect boost) {
+                GrantScope scope = boost.scope();
+                if (scope != GrantScope.OWN_CREATURES && scope != GrantScope.ALL_OWN_CREATURES
+                        && scope != GrantScope.ALL_CREATURES) {
+                    continue;
+                }
+                int buffedCount = countBuffedCreatures(gameData, perm, controllerBattlefield, boost.filter(), scope);
+                // Use same weights as creatureScore: power*3 + toughness*1.5
+                double perCreatureValue = boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
+                if (boost.grantedKeywords() != null) {
+                    perCreatureValue += boost.grantedKeywords().size() * 3.0;
+                }
+                bonus += buffedCount * perCreatureValue;
+            } else if (effect instanceof GrantKeywordEffect grant) {
+                GrantScope scope = grant.scope();
+                if (scope != GrantScope.OWN_CREATURES && scope != GrantScope.ALL_OWN_CREATURES
+                        && scope != GrantScope.ALL_CREATURES) {
+                    continue;
+                }
+                int buffedCount = countBuffedCreatures(gameData, perm, controllerBattlefield, grant.filter(), scope);
+                double perCreatureValue = grant.keywords().size() * 3.0;
+                bonus += buffedCount * perCreatureValue;
+            }
+        }
+        return bonus;
+    }
+
+    private int countBuffedCreatures(GameData gameData, Permanent source,
+                                     List<Permanent> battlefield,
+                                     com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter,
+                                     GrantScope scope) {
+        int count = 0;
+        FilterContext ctx = FilterContext.of(gameData);
+        for (Permanent p : battlefield) {
+            if (!gameQueryService.isCreature(gameData, p)) continue;
+            // OWN_CREATURES excludes the source itself
+            if (scope == GrantScope.OWN_CREATURES && p.getId().equals(source.getId())) continue;
+            if (filter != null && !gameQueryService.matchesPermanentPredicate(p, filter, ctx)) continue;
+            count++;
+        }
+        return count;
+    }
+
+    /**
+     * Bonus for creatures with dangerous activated abilities (damage, removal, card draw).
+     */
+    private double activatedAbilityThreat(Permanent perm) {
+        double bonus = 0;
+        for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
+            for (CardEffect effect : ability.getEffects()) {
+                if (effect instanceof CostEffect) continue;
+                if (effect instanceof DealDamageToAnyTargetEffect dmg) {
+                    bonus += dmg.damage() * 2.0;
+                } else if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
+                    bonus += dmg.damage() * 2.0;
+                } else if (effect instanceof DestroyTargetPermanentEffect) {
+                    bonus += 8.0;
+                } else if (effect instanceof ExileTargetPermanentEffect) {
+                    bonus += 9.0;
+                } else if (effect instanceof DrawCardEffect draw) {
+                    bonus += draw.amount() * 4.0;
+                }
+            }
+        }
+        return bonus;
+    }
+
+    /**
+     * Extra bonus for evasive creatures when the opponent cannot block them.
+     * A flying attacker is much more threatening when you have no flyers or reach.
+     */
+    private double evasionContextBonus(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
+        double bonus = 0;
+        if (opponentId == null) return 0;
+
+        List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING)) {
+            boolean opponentCanBlockFlyers = opponentBattlefield.stream()
+                    .filter(p -> gameQueryService.isCreature(gameData, p))
+                    .anyMatch(p -> gameQueryService.hasKeyword(gameData, p, Keyword.FLYING)
+                            || gameQueryService.hasKeyword(gameData, p, Keyword.REACH));
+            if (!opponentCanBlockFlyers) {
+                bonus += 6.0;
+            }
+        }
+        return bonus;
+    }
+
+    /**
+     * Bonus for slith-type creatures that grow when they deal combat damage to a player.
+     */
+    private double growthThreatBonus(Permanent perm) {
+        double bonus = 0;
+        for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)) {
+            if (effect instanceof PutCountersOnSourceEffect counters) {
+                bonus += counters.amount() * (counters.powerModifier() + counters.toughnessModifier()) * 3.0;
+            }
+        }
+        return bonus;
     }
 
     /**
