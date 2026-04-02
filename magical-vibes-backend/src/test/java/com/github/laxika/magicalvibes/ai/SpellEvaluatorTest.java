@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -382,5 +386,120 @@ class SpellEvaluatorTest {
 
         // The bigger creature is tapped, so the value should be based on the small untapped one
         assertThat(value).isEqualTo(untappedOnly);
+    }
+
+    // ===== evaluateCardForDiscard =====
+
+    @Test
+    @DisplayName("Discard: lands are highly valued when AI has few mana sources")
+    void discardLandValuedHighWhenRamping() {
+        // AI has only 2 lands on the battlefield — still ramping
+        for (int i = 0; i < 2; i++) {
+            Permanent land = new Permanent(new Forest());
+            gd.playerBattlefields.get(player1.getId()).add(land);
+        }
+
+        List<Card> hand = List.of(new Forest(), new GrizzlyBears());
+        double landValue = spellEvaluator.evaluateCardForDiscard(gd, hand.get(0), hand, player1.getId());
+        double creatureValue = spellEvaluator.evaluateCardForDiscard(gd, hand.get(1), hand, player1.getId());
+
+        // With only 2 mana sources, land should be very valuable to keep
+        assertThat(landValue).isGreaterThan(creatureValue);
+    }
+
+    @Test
+    @DisplayName("Discard: extra lands are low value when AI has many mana sources")
+    void discardExtraLandLowValueWhenManaFlooded() {
+        // AI has 8 lands — way past ramping
+        for (int i = 0; i < 8; i++) {
+            Permanent land = new Permanent(new Forest());
+            gd.playerBattlefields.get(player1.getId()).add(land);
+        }
+
+        List<Card> hand = List.of(new Forest(), new GrizzlyBears());
+        double landValue = spellEvaluator.evaluateCardForDiscard(gd, hand.get(0), hand, player1.getId());
+        double creatureValue = spellEvaluator.evaluateCardForDiscard(gd, hand.get(1), hand, player1.getId());
+
+        // With 8 mana sources, the 2/2 creature should be more valuable than another land
+        assertThat(creatureValue).isGreaterThan(landValue);
+    }
+
+    @Test
+    @DisplayName("Discard: removal valued higher when opponent has big threats")
+    void discardRemovalValuedHigherWithThreats() {
+        // AI has enough mana to cast either
+        for (int i = 0; i < 5; i++) {
+            Permanent land = new Permanent(new Forest());
+            gd.playerBattlefields.get(player1.getId()).add(land);
+        }
+
+        // Opponent has a Serra Angel (big threat)
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(angel);
+
+        Card doomBlade = new DoomBlade();
+        Card bears = new GrizzlyBears();
+        List<Card> hand = List.of(doomBlade, bears);
+
+        double removalValue = spellEvaluator.evaluateCardForDiscard(gd, doomBlade, hand, player1.getId());
+        double creatureValue = spellEvaluator.evaluateCardForDiscard(gd, bears, hand, player1.getId());
+
+        // With a big threat on opponent's board, removal should be valued higher than a 2/2
+        assertThat(removalValue).isGreaterThan(creatureValue);
+    }
+
+    @Test
+    @DisplayName("Discard: redundant copies are valued lower than the first copy")
+    void discardRedundantCopiesLowerValue() {
+        for (int i = 0; i < 5; i++) {
+            Permanent land = new Permanent(new Forest());
+            gd.playerBattlefields.get(player1.getId()).add(land);
+        }
+
+        Card bears1 = new GrizzlyBears();
+        Card bears2 = new GrizzlyBears();
+        Card shock = new Shock();
+
+        // Hand with two copies of Grizzly Bears + a Shock
+        List<Card> handWithDuplicates = List.of(bears1, bears2, shock);
+        double duplicateBearValue = spellEvaluator.evaluateCardForDiscard(gd, bears1, handWithDuplicates, player1.getId());
+
+        // Hand with a single copy of Grizzly Bears + a Shock
+        List<Card> handWithSingle = List.of(bears1, shock);
+        double singleBearValue = spellEvaluator.evaluateCardForDiscard(gd, bears1, handWithSingle, player1.getId());
+
+        // The bear in a hand with duplicates should be worth less than as a single copy
+        assertThat(duplicateBearValue).isLessThan(singleBearValue);
+    }
+
+    @Test
+    @DisplayName("Discard: expensive uncastable spell discounted vs cheap castable spell")
+    void discardExpensiveSpellDiscounted() {
+        // AI has only 2 lands — can cast a 2-drop but not a 5-drop
+        for (int i = 0; i < 2; i++) {
+            Permanent land = new Permanent(new Forest());
+            gd.playerBattlefields.get(player1.getId()).add(land);
+        }
+
+        Card bears = new GrizzlyBears();  // 2 mana
+        Card airElemental = new AirElemental();  // 5 mana
+
+        List<Card> hand = List.of(bears, airElemental);
+
+        double bearsValue = spellEvaluator.evaluateCardForDiscard(gd, bears, hand, player1.getId());
+        double airElementalValue = spellEvaluator.evaluateCardForDiscard(gd, airElemental, hand, player1.getId());
+
+        // Air Elemental is better in a vacuum but the castability penalty
+        // should shrink the gap when we only have 2 lands
+        // (Air Elemental at 5 mana with 2 lands = 3 turns away = 0.8 multiplier)
+        // The Air Elemental may still be valued higher due to its raw stats,
+        // but the gap should be smaller than estimateSpellValue alone
+        double rawBearsValue = spellEvaluator.estimateSpellValue(gd, bears, player1.getId());
+        double rawAirElementalValue = spellEvaluator.estimateSpellValue(gd, airElemental, player1.getId());
+        double rawRatio = rawAirElementalValue / rawBearsValue;
+        double discardRatio = airElementalValue / bearsValue;
+
+        assertThat(discardRatio).isLessThan(rawRatio);
     }
 }

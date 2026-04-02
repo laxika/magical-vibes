@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -532,6 +533,157 @@ public class SpellEvaluator {
             return cost.calculateMaxX(virtualPool, card.getXColorRestriction(), 0);
         }
         return cost.calculateMaxX(virtualPool);
+    }
+
+    /**
+     * Evaluates how valuable a card is to keep in hand given the current board state,
+     * for discard-to-hand-size decisions. Higher score = more worth keeping.
+     *
+     * Unlike estimateSpellValue (which scores "how good is this spell in a vacuum"),
+     * this method adjusts for:
+     * - Removal value: removal is more valuable when opponent has threats
+     * - Land value: lands are more valuable when still ramping, less when flooded
+     * - Redundancy: duplicate cards in hand are worth less (second copy discounted)
+     * - Castability: uncastable cards (too expensive for available mana sources) are worth less
+     */
+    public double evaluateCardForDiscard(GameData gameData, Card card, List<Card> hand, UUID aiPlayerId) {
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+
+        // Lands: value depends on how many mana sources the AI already has
+        if (card.hasType(CardType.LAND)) {
+            return evaluateLandForDiscard(gameData, card, hand, aiPlayerId, aiBattlefield);
+        }
+
+        // Start with base spell value
+        double value = estimateSpellValue(gameData, card, aiPlayerId);
+
+        // Removal bonus: if opponent has threatening creatures, removal is more valuable
+        value += removalContextBonus(gameData, card, opponentId, oppBattlefield, aiPlayerId);
+
+        // Castability penalty: cards we can't cast soon are less valuable to keep
+        value *= castabilityMultiplier(card, aiBattlefield);
+
+        // Redundancy penalty: second+ copy of same card in hand is worth less
+        value *= redundancyMultiplier(card, hand);
+
+        return value;
+    }
+
+    private double evaluateLandForDiscard(GameData gameData, Card card, List<Card> hand,
+                                          UUID aiPlayerId, List<Permanent> aiBattlefield) {
+        long manaSourceCount = aiBattlefield.stream()
+                .filter(p -> p.getCard().hasType(CardType.LAND) || hasOnTapManaEffects(p.getCard()))
+                .count();
+
+        // Count how many lands are already in hand (excluding this one)
+        long landsInHand = hand.stream()
+                .filter(c -> c.hasType(CardType.LAND) && c != card)
+                .count();
+
+        // Still developing mana base (0-4 sources): lands are very valuable
+        if (manaSourceCount <= 4) {
+            return 12.0;
+        }
+
+        // Mid-game (5-6 sources): lands still useful but less critical
+        if (manaSourceCount <= 6) {
+            // Check if hand has expensive spells that need more mana
+            boolean hasExpensiveSpells = hand.stream()
+                    .filter(c -> !c.hasType(CardType.LAND))
+                    .anyMatch(c -> c.getManaValue() > manaSourceCount);
+            return hasExpensiveSpells ? 8.0 : 4.0;
+        }
+
+        // Late game (7+ sources): extra lands are mostly dead draws
+        // But keep at least one land if we have expensive spells
+        if (landsInHand > 0) {
+            // Multiple lands in hand with 7+ mana sources — extra lands are low value
+            return 1.0;
+        }
+        return 2.0;
+    }
+
+    private double removalContextBonus(GameData gameData, Card card, UUID opponentId,
+                                       List<Permanent> oppBattlefield, UUID aiPlayerId) {
+        // Check if this card has removal effects
+        boolean isRemoval = hasRemovalEffects(card);
+        if (!isRemoval) return 0;
+
+        // Score based on the biggest threat the opponent has
+        double bestThreat = oppBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .mapToDouble(p -> boardEvaluator.creatureThreatScore(gameData, p, opponentId, aiPlayerId))
+                .max()
+                .orElse(0);
+
+        // If opponent has big threats, removal is extra valuable
+        if (bestThreat >= 15.0) return 8.0;
+        if (bestThreat >= 10.0) return 4.0;
+        if (bestThreat >= 5.0) return 2.0;
+        return 0;
+    }
+
+    private boolean hasRemovalEffects(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (isRemovalEffect(effect)) return true;
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (isRemovalEffect(effect)) return true;
+        }
+        return false;
+    }
+
+    private boolean isRemovalEffect(CardEffect effect) {
+        if (effect instanceof ChooseOneEffect coe) {
+            return coe.options().stream().anyMatch(o -> isRemovalEffect(o.effect()));
+        }
+        return effect instanceof DestroyTargetPermanentEffect
+                || effect instanceof ExileTargetPermanentEffect
+                || effect instanceof DealDamageToAnyTargetEffect
+                || effect instanceof DealDamageToTargetCreatureEffect
+                || effect instanceof ReturnTargetPermanentToHandEffect
+                || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
+                || effect instanceof GainControlOfTargetPermanentEffect;
+    }
+
+    /**
+     * Returns a multiplier (0.0–1.0) based on how likely we are to cast this card
+     * given our available mana sources. Uncastable cards are discounted.
+     */
+    private double castabilityMultiplier(Card card, List<Permanent> aiBattlefield) {
+        if (card.getManaCost() == null || card.getManaCost().isEmpty()) return 1.0;
+
+        int manaValue = card.getManaValue();
+        long totalMana = aiBattlefield.stream()
+                .filter(p -> p.getCard().hasType(CardType.LAND) || hasOnTapManaEffects(p.getCard()))
+                .count();
+
+        // Can cast right now or next turn (with one more land drop)
+        if (manaValue <= totalMana + 1) return 1.0;
+
+        // 2-3 turns away: still keepable but slightly discounted
+        if (manaValue <= totalMana + 3) return 0.8;
+
+        // 4+ turns away: significantly discounted
+        return 0.5;
+    }
+
+    /**
+     * Returns a multiplier (0.5–1.0) that penalizes redundant copies of the same card.
+     */
+    private double redundancyMultiplier(Card card, List<Card> hand) {
+        long copies = hand.stream()
+                .filter(c -> c.getName() != null && c.getName().equals(card.getName()))
+                .count();
+        // First copy: full value. Second+: 50% value (discard the extra)
+        return copies > 1 ? 0.5 : 1.0;
+    }
+
+    private boolean hasOnTapManaEffects(Card card) {
+        return card.getEffects(EffectSlot.ON_TAP).stream()
+                .anyMatch(ManaProducingEffect.class::isInstance);
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {

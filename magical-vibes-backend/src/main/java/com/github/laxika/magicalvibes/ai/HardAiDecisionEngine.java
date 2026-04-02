@@ -2180,7 +2180,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class);
     }
 
-    // ===== Card Choice (discard lowest spell value) =====
+    // ===== Card Choice (context-aware discard) =====
 
     @Override
     protected void handleCardChoice(GameData gameData) {
@@ -2195,12 +2195,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || validIndices == null || validIndices.isEmpty()) return;
 
+        // Use context-aware evaluation that considers board state, removal needs,
+        // mana development, castability, and redundancy
         int bestIndex = validIndices.stream()
                 .min(Comparator.comparingDouble(i ->
-                        spellEvaluator.estimateSpellValue(gameData, hand.get(i), aiPlayer.getId())))
+                        spellEvaluator.evaluateCardForDiscard(gameData, hand.get(i), hand, aiPlayer.getId())))
                 .orElse(validIndices.iterator().next());
 
-        log.info("AI (Hard): Discarding card at index {} in game {}", bestIndex, gameId);
+        log.info("AI (Hard): Discarding card at index {} ({}) in game {}",
+                bestIndex, hand.get(bestIndex).getName(), gameId);
         send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
     }
 
