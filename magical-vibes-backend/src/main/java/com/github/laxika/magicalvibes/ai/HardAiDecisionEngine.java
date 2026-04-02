@@ -409,7 +409,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.hasType(CardType.INSTANT) || card.hasType(CardType.LAND)) continue;
+            if (isInstantSpeedCard(card) || card.hasType(CardType.LAND)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
@@ -517,7 +517,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.hasType(CardType.INSTANT) || card.hasType(CardType.LAND)) continue;
+            if (isInstantSpeedCard(card) || card.hasType(CardType.LAND)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
             if (classifyCombatRelevance(card) != CombatRelevance.REMOVAL) continue;
@@ -986,11 +986,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private double evaluateBestHeldInstant(GameData gameData, List<Card> hand, ManaPool virtualPool) {
         double bestValue = 0;
         for (Card card : hand) {
-            if (!card.hasType(CardType.INSTANT)) continue;
+            if (!isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
-            InstantCategory category = InstantCategoryClassifier.classify(card);
+            InstantCategory category = card.hasType(CardType.INSTANT)
+                    ? InstantCategoryClassifier.classify(card)
+                    : InstantCategoryClassifier.classifyFlashCreature(card);
 
             double baseValue;
             if (category == InstantCategory.COUNTERSPELL) {
@@ -1009,6 +1011,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 case CARD_ADVANTAGE -> 1.1; // Slightly better to hold for end step
                 case BURN_TO_FACE -> 1.0;   // Same value whenever cast
                 case COUNTERSPELL -> 1.2;  // Holding counterspell mana is strong
+                case FLASH_CREATURE -> 1.2; // Holding for end-of-turn flash is valuable
                 case OTHER -> 0.8;          // Slight discount for unknown timing
             };
 
@@ -1032,7 +1035,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<SpellCandidate> candidates = new ArrayList<>();
 
         for (Card card : hand) {
-            if (card.hasType(CardType.LAND) || card.hasType(CardType.INSTANT)) continue;
+            if (card.hasType(CardType.LAND) || isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
             double value = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
@@ -1072,11 +1075,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         int bestCost = 0;
 
         for (Card card : hand) {
-            if (!card.hasType(CardType.INSTANT)) continue;
+            if (!isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
-            InstantCategory category = InstantCategoryClassifier.classify(card);
+            InstantCategory category = card.hasType(CardType.INSTANT)
+                    ? InstantCategoryClassifier.classify(card)
+                    : InstantCategoryClassifier.classifyFlashCreature(card);
             double baseValue;
             if (category == InstantCategory.COUNTERSPELL) {
                 baseValue = card.getManaValue() * 4.0;
@@ -1091,6 +1096,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 case CARD_ADVANTAGE -> 1.1;
                 case BURN_TO_FACE -> 1.0;
                 case COUNTERSPELL -> 1.2;
+                case FLASH_CREATURE -> 1.2;
                 case OTHER -> 0.8;
             };
 
@@ -1115,10 +1121,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
-        // Count castable spells
+        // Count castable spells (excludes instant-speed cards — those use timing evaluation)
         int castableCount = 0;
         for (Card card : hand) {
-            if (card.hasType(CardType.LAND) || card.hasType(CardType.INSTANT)) continue;
+            if (card.hasType(CardType.LAND) || isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
             castableCount++;
@@ -1280,7 +1286,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
             if (card.hasType(CardType.LAND)) continue;
-            if (card.hasType(CardType.INSTANT)) continue;
+            if (isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
@@ -1411,10 +1417,19 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         return true;
     }
 
+    /**
+     * Returns true if the card can be cast at instant speed — either an actual Instant
+     * or a card with flash (e.g. flash creatures).
+     */
+    private boolean isInstantSpeedCard(Card card) {
+        return card.hasType(CardType.INSTANT) || card.getKeywords().contains(Keyword.FLASH);
+    }
+
     // ===== Instant Casting with Timing Evaluation =====
 
     /**
-     * Tries to cast the best instant using category-based timing with value multipliers.
+     * Tries to cast the best instant-speed card (instants and flash creatures) using
+     * category-based timing with value multipliers.
      * Only casts if the timing-adjusted value exceeds a minimum threshold.
      */
     private boolean tryCastInstantWithTimingEvaluation(GameData gameData) {
@@ -1430,11 +1445,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (!card.hasType(CardType.INSTANT)) continue;
+            if (!isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
-            InstantCategory category = InstantCategoryClassifier.classify(card);
+            InstantCategory category = card.hasType(CardType.INSTANT)
+                    ? InstantCategoryClassifier.classify(card)
+                    : InstantCategoryClassifier.classifyFlashCreature(card);
             if (!isGoodTimingForHard(category, step, isOpponentsTurn)) continue;
 
             // Counterspells need a valid target on the stack
@@ -1487,6 +1504,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             case COMBAT_TRICK -> !isOpponentsTurn
                     && (step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE);
             case COUNTERSPELL -> true; // Always ready — actual filtering is done by target selection
+            case FLASH_CREATURE -> isOpponentsTurn && step == TurnStep.END_STEP; // Dodge sorcery-speed removal
             case OTHER -> step == TurnStep.PRECOMBAT_MAIN || step == TurnStep.POSTCOMBAT_MAIN
                     || (isOpponentsTurn && step == TurnStep.END_STEP);
         };
@@ -1511,6 +1529,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             case CARD_ADVANTAGE -> 1.1;
             case BURN_TO_FACE -> 1.0;
             case COUNTERSPELL -> 1.3; // Countering a spell is very high value
+            case FLASH_CREATURE -> 1.3; // End-of-turn flash is a strong tempo play
             case OTHER -> 0.9;
         };
     }
@@ -1622,7 +1641,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        log.info("AI (Hard): Casting instant {}{} (value={}) in game {}", card.getName(),
+        log.info("AI (Hard): Casting {} at instant speed{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", value), gameId);
         if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
@@ -1638,7 +1657,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         send(() -> messageHandler.handlePlayCard(selfConnection,
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
         if (hand.size() >= handSizeBefore) {
-            log.warn("AI (Hard): Instant cast failed silently in game {}", gameId);
+            log.warn("AI (Hard): Instant-speed cast failed silently in game {}", gameId);
             return false;
         }
         return true;

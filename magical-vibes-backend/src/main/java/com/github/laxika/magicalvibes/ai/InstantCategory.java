@@ -15,6 +15,8 @@ public enum InstantCategory {
     COMBAT_TRICK,
     /** Counters spells on the stack */
     COUNTERSPELL,
+    /** Flash creatures without a more specific ETB category (best cast at opponent's end step) */
+    FLASH_CREATURE,
     /** Anything that doesn't fit the above categories */
     OTHER
 }

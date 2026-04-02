@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -22,9 +24,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEf
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 
 /**
- * Classifies instant cards by their primary role. Scans the card's SPELL
- * effects and returns the first matching category. Priority order ensures
- * counter > removal > combat trick > burn > card advantage > other.
+ * Classifies instant-speed cards by their primary role. For instants, scans the
+ * card's SPELL effects. For flash creatures, scans ON_ENTER_BATTLEFIELD effects.
+ * Returns the first matching category. Priority order ensures
+ * counter > removal > combat trick > burn > card advantage > other/flash_creature.
  */
 public final class InstantCategoryClassifier {
 
@@ -95,5 +98,24 @@ public final class InstantCategoryClassifier {
         if (effect instanceof GainLifeEffect) return InstantCategory.CARD_ADVANTAGE;
 
         return null;
+    }
+
+    /**
+     * Classifies a flash creature by scanning its ON_ENTER_BATTLEFIELD effects.
+     * If the creature has a notable ETB (removal, card draw, etc.), it returns
+     * the corresponding instant category so timing rules match. Otherwise returns
+     * FLASH_CREATURE for generic "cast at end of opponent's turn" handling.
+     */
+    public static InstantCategory classifyFlashCreature(Card card) {
+        if (!card.hasType(CardType.CREATURE) || !card.getKeywords().contains(Keyword.FLASH)) {
+            return InstantCategory.OTHER;
+        }
+
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            InstantCategory cat = classifySingleEffect(effect);
+            if (cat != null) return cat;
+        }
+
+        return InstantCategory.FLASH_CREATURE;
     }
 }

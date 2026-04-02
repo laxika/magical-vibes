@@ -286,6 +286,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             case COMBAT_TRICK -> !isOpponentsTurn
                     && (step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE);
             case COUNTERSPELL -> false; // AI can't target spells on the stack yet
+            case FLASH_CREATURE -> isOpponentsTurn && step == TurnStep.END_STEP;
             case OTHER -> step == TurnStep.PRECOMBAT_MAIN || step == TurnStep.POSTCOMBAT_MAIN
                     || (isOpponentsTurn && step == TurnStep.END_STEP);
         };

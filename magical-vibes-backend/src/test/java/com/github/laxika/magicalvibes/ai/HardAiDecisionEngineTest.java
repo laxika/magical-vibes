@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
+import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -2321,5 +2322,121 @@ class HardAiDecisionEngineTest {
             // AI should NOT cast Grizzly Bears precombat — defer to postcombat
             assertThat(gd.stack).isEmpty();
         }
+    }
+
+    // ===== Flash creature timing =====
+
+    private void giveOpponentPriority(Player opponent) {
+        harness.forceActivePlayer(opponent);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(opponent.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI casts flash creature at opponent's end step")
+    void castsFlashCreatureAtOpponentsEndStep() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Set up as opponent's turn, end step — optimal timing for flash creatures
+        giveOpponentPriority(player2);
+
+        // Give AI 3 white mana for Benalish Knight ({2}{W}, 2/2 first strike flash)
+        givePlayerPlains(player1, 3);
+
+        harness.setHand(player1, List.of(new BenalishKnight()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast the flash creature at end of opponent's turn
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Benalish Knight");
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast flash creature during own main phase")
+    void doesNotCastFlashCreatureDuringOwnMainPhase() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Give AI 3 white mana for Benalish Knight ({2}{W}, 2/2 first strike flash)
+        givePlayerPlains(player1, 3);
+
+        // Only a flash creature in hand — should be held for opponent's end step
+        harness.setHand(player1, List.of(new BenalishKnight()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should not cast — waiting for optimal timing on opponent's turn
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI holds mana for flash creature over low-value sorcery")
+    void holdsManaForFlashCreatureOverLowValueSorcery() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Give AI 3 mana (2 plains + 1 green) — enough for either Bears or Knight but not both
+        givePlayerPlains(player1, 2);
+        givePlayerForests(player1, 1);
+
+        // Hand: Grizzly Bears ({1}{G}, ~7 value) + Benalish Knight ({2}{W}, flash, held ~8*1.2 ≈ 9.6)
+        // Benalish Knight's held value should exceed Bears value × 0.8 factor → hold mana
+        harness.setHand(player1, List.of(new GrizzlyBears(), new BenalishKnight()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should hold mana for the flash creature — stack stays empty
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI casts sorcery while reserving mana for flash creature when both fit")
+    void castsSorceryAndReservesManaForFlashCreature() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        // Use postcombat main — simpler decision path (no MCTS combat evaluation)
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        // Give AI 5 mana (2 green + 3 white) — enough for Bears (2 mana) + Knight (3 mana)
+        givePlayerForests(player1, 2);
+        givePlayerPlains(player1, 3);
+
+        // Hand: Grizzly Bears ({1}{G}, 2 mana) + Benalish Knight ({2}{W}, 3 mana, flash)
+        // With 5 total mana, AI can cast Bears and still afford Knight later
+        harness.setHand(player1, List.of(new GrizzlyBears(), new BenalishKnight()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast the sorcery-speed creature (can still flash in the Knight later)
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hard AI does not cast flash creature at opponent's precombat main")
+    void doesNotCastFlashCreatureAtOpponentsPrecombatMain() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Set up as opponent's turn, precombat main — not a good time for flash creatures
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        givePlayerPlains(player1, 3);
+        harness.setHand(player1, List.of(new BenalishKnight()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should not cast — precombat main is bad timing for FLASH_CREATURE
+        assertThat(gd.stack).isEmpty();
     }
 }
