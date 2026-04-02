@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
@@ -194,7 +195,8 @@ class HardAiDecisionEngineTest {
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        // Use postcombat — Vivisection is non-combat so Hard AI defers it past combat
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
         gd.interaction.setAwaitingInput(null);
@@ -271,7 +273,8 @@ class HardAiDecisionEngineTest {
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        // Use postcombat — non-haste creature deferred past combat by Hard AI
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
         gd.interaction.setAwaitingInput(null);
@@ -2143,6 +2146,180 @@ class HardAiDecisionEngineTest {
             // AI should cast Raging Goblin precombat to attack with it
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Raging Goblin");
+        }
+
+        @Test
+        @DisplayName("Casts removal precombat to clear blocker for significant damage even when not lethal")
+        void castsRemovalPrecombatForSignificantDamageGain() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has three 2/2 attackers
+            for (int i = 0; i < 3; i++) {
+                Permanent bear = new Permanent(new GrizzlyBears());
+                bear.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(bear);
+            }
+
+            // Give AI mana for Eviscerate (3B)
+            for (int i = 0; i < 4; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+
+            // Opponent has one 2/2 blocker and is at 20 life (NOT lethal either way)
+            // With the blocker: 2 bears blocked/through, 1 gets through = ~2-4 damage
+            // Without the blocker: all 3 attack unblocked = 6 damage (gain >= 2)
+            Permanent oppBlocker = new Permanent(new GrizzlyBears());
+            oppBlocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBlocker);
+            gd.playerLifeTotals.put(player2.getId(), 20);
+
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should cast Eviscerate precombat to clear the blocker for extra damage
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Eviscerate");
+        }
+
+        @Test
+        @DisplayName("Defers non-combat sorcery to postcombat main")
+        void defersNonCombatSorceryToPostcombat() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has a 2/2 attacker ready
+            Permanent bear = new Permanent(new GrizzlyBears());
+            bear.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear);
+
+            // Give AI mana for Divination (2U)
+            for (int i = 0; i < 3; i++) {
+                Permanent island = new Permanent(new Island());
+                island.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(island);
+            }
+
+            // No opponent blockers, opponent at 20 life
+            gd.playerLifeTotals.put(player2.getId(), 20);
+
+            // AI has only Divination (sorcery: draw 2) — not combat-relevant
+            harness.setHand(player1, List.of(new Divination()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should NOT cast Divination precombat — it should pass to combat
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Casts non-combat sorcery in postcombat main")
+        void castsNonCombatSorceryPostcombat() {
+            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+            // Give AI mana for Divination (2U)
+            for (int i = 0; i < 3; i++) {
+                Permanent island = new Permanent(new Island());
+                island.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(island);
+            }
+
+            gd.playerLifeTotals.put(player2.getId(), 20);
+
+            // AI has Divination (sorcery: draw 2)
+            harness.setHand(player1, List.of(new Divination()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should cast Divination postcombat
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Divination");
+        }
+
+        @Test
+        @DisplayName("Casts haste creature precombat even when not lethal")
+        void castsHasteCreaturePrecombatNonLethal() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // Mana for Raging Goblin (R)
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(mountain);
+
+            // Opponent at 20 life (definitely not lethal)
+            gd.playerLifeTotals.put(player2.getId(), 20);
+
+            // Raging Goblin (1/1 haste) should be cast precombat to join the attack
+            harness.setHand(player1, List.of(new RagingGoblin()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Raging Goblin");
+        }
+
+        @Test
+        @DisplayName("Casts lord precombat when it meaningfully pumps attackers even if not lethal")
+        void castsLordPrecombatForMeaningfulPump() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has two Goblin Pikers (2/1 Goblins) ready to attack
+            Permanent goblin1 = new Permanent(new GoblinPiker());
+            goblin1.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(goblin1);
+            Permanent goblin2 = new Permanent(new GoblinPiker());
+            goblin2.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(goblin2);
+
+            // Mana for Goblin Chieftain (1RR)
+            for (int i = 0; i < 3; i++) {
+                Permanent mtn = new Permanent(new Mountain());
+                mtn.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(mtn);
+            }
+
+            // Opponent at 20 life (not lethal)
+            // Without lord: 2+2 = 4 damage; with lord (+1/+1 to Goblins): 3+3 = 6 damage
+            // Total boost = 2 (>= 2 threshold)
+            gd.playerLifeTotals.put(player2.getId(), 20);
+
+            harness.setHand(player1, List.of(new GoblinChieftain()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should cast Goblin Chieftain precombat to pump attackers
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Chieftain");
+        }
+
+        @Test
+        @DisplayName("Defers non-haste creature to postcombat main")
+        void defersNonHasteCreatureToPostcombat() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has a 2/2 attacker
+            Permanent bear = new Permanent(new GrizzlyBears());
+            bear.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear);
+
+            // Give AI mana for another Grizzly Bears (1G)
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(forest);
+            Permanent forest2 = new Permanent(new Forest());
+            forest2.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(forest2);
+
+            gd.playerLifeTotals.put(player2.getId(), 20);
+
+            // Non-haste creature — can't attack this turn, no combat benefit
+            harness.setHand(player1, List.of(new GrizzlyBears()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should NOT cast Grizzly Bears precombat — defer to postcombat
+            assertThat(gd.stack).isEmpty();
         }
     }
 }

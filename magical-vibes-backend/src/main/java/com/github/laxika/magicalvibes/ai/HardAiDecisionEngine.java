@@ -241,10 +241,30 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (tryCastPrecombatPrioritySpell(gameData)) {
                     return;
                 }
-            }
 
-            if (tryCastSpellWithInstantAwareness(gameData)) {
-                return;
+                // Broader combat-relevant spells: removal for damage gain (not just lethal),
+                // lords/anthems that meaningfully pump, any haste creature.
+                // Non-combat spells (card draw, non-haste creatures, enchantments) are
+                // deferred to postcombat main where they don't delay the attack.
+                if (tryCastCombatRelevantSpellPrecombat(gameData)) {
+                    return;
+                }
+
+                // If we have potential attackers, defer non-combat spells to postcombat
+                // so we don't waste time before combat. If we have no attackers, combat
+                // is irrelevant and we can cast everything now.
+                if (hasPotentialAttackers(gameData)) {
+                    // Skip general sorcery casting — defer to postcombat
+                } else {
+                    if (tryCastSpellWithInstantAwareness(gameData)) {
+                        return;
+                    }
+                }
+            } else {
+                // Postcombat: cast all remaining spells
+                if (tryCastSpellWithInstantAwareness(gameData)) {
+                    return;
+                }
             }
         }
 
@@ -344,6 +364,140 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return false;
+    }
+
+    /**
+     * Casts the best combat-relevant sorcery-speed spell in precombat main,
+     * even when it does not enable lethal. This covers three categories:
+     * <ul>
+     *   <li><b>Removal</b> — clears a blocker if the damage gain is significant
+     *       (≥ 2 extra damage through)</li>
+     *   <li><b>Pump</b> — lord/anthem creature that boosts existing attackers by
+     *       ≥ 2 total power</li>
+     *   <li><b>Haste creature</b> — any haste creature that can join the attack</li>
+     * </ul>
+     * Non-combat spells (card draw, non-haste creatures, enchantments) are skipped
+     * so they can be cast in postcombat main instead.
+     */
+    private boolean tryCastCombatRelevantSpellPrecombat(GameData gameData) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (hand == null || hand.isEmpty()) return false;
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+
+        // Gather combat state
+        List<Permanent> attackers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            if (perm.isTapped()) continue;
+            if (perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
+            attackers.add(perm);
+        }
+        List<Permanent> blockers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            blockers.add(perm);
+        }
+
+        record PrecombatCandidate(int handIndex, double value, CombatRelevance relevance,
+                                  UUID targetId) {}
+        List<PrecombatCandidate> candidates = new ArrayList<>();
+
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (card.hasType(CardType.INSTANT) || card.hasType(CardType.LAND)) continue;
+            if (card.getManaCost() == null) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+
+            CombatRelevance relevance = classifyCombatRelevance(card);
+            if (relevance == CombatRelevance.NON_COMBAT) continue;
+
+            switch (relevance) {
+                case REMOVAL -> {
+                    if (attackers.isEmpty() || blockers.isEmpty()) break;
+                    int currentUnblockable = estimateUnblockableDamage(gameData, attackers, blockers);
+                    UUID bestBlockerTarget = null;
+                    int bestDamageGain = 0;
+                    for (Permanent blocker : blockers) {
+                        if (!canEffectRemoveCreature(gameData, card, blocker)) continue;
+                        List<Permanent> remaining = new ArrayList<>(blockers);
+                        remaining.removeIf(b -> b.getId().equals(blocker.getId()));
+                        int newUnblockable = estimateUnblockableDamage(gameData, attackers, remaining);
+                        int gain = newUnblockable - currentUnblockable;
+                        if (gain > bestDamageGain) {
+                            bestDamageGain = gain;
+                            bestBlockerTarget = blocker.getId();
+                        }
+                    }
+                    if (bestDamageGain >= 2 && bestBlockerTarget != null) {
+                        double value = spellEvaluator.estimateSpellValue(
+                                gameData, card, aiPlayer.getId());
+                        candidates.add(new PrecombatCandidate(i, value + bestDamageGain,
+                                relevance, bestBlockerTarget));
+                    }
+                }
+                case PUMP -> {
+                    if (attackers.isEmpty()) break;
+                    int totalBoost = 0;
+                    for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof StaticBoostEffect boost && boost.powerBoost() > 0
+                                && (boost.scope() == GrantScope.OWN_CREATURES
+                                    || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
+                            for (Permanent attacker : attackers) {
+                                if (boost.filter() == null
+                                        || gameQueryService.matchesPermanentPredicate(
+                                                gameData, attacker, boost.filter())) {
+                                    totalBoost += boost.powerBoost();
+                                }
+                            }
+                        }
+                    }
+                    if (totalBoost >= 2) {
+                        double value = spellEvaluator.estimateSpellValue(
+                                gameData, card, aiPlayer.getId());
+                        candidates.add(new PrecombatCandidate(i, value, relevance, null));
+                    }
+                }
+                case HASTE_CREATURE -> {
+                    if (card.getPower() != null && card.getPower() >= 1) {
+                        double value = spellEvaluator.estimateSpellValue(
+                                gameData, card, aiPlayer.getId());
+                        candidates.add(new PrecombatCandidate(i, value, relevance, null));
+                    }
+                }
+                default -> { /* NON_COMBAT already skipped above */ }
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+
+        // Respect instant-holding: if the best held instant is worth more than
+        // our combat-relevant spell, check whether we can afford both.
+        double bestInstantHeldValue = evaluateBestHeldInstant(gameData, hand, virtualPool);
+        candidates.sort(Comparator.comparingDouble(PrecombatCandidate::value).reversed());
+        PrecombatCandidate best = candidates.getFirst();
+
+        if (bestInstantHeldValue > best.value * 0.8) {
+            int instantManaCost = getBestHeldInstantManaCost(gameData, hand, virtualPool);
+            Card card = hand.get(best.handIndex);
+            int costModifier = gameBroadcastService.getCastCostModifier(
+                    gameData, aiPlayer.getId(), card);
+            int spellCost = Math.max(0, card.getManaValue() + costModifier);
+            if (spellCost + instantManaCost > virtualPool.getTotal()) {
+                log.info("AI (Hard): Holding mana for instant instead of precombat {} in game {}",
+                        card.getName(), gameId);
+                return false;
+            }
+        }
+
+        log.info("AI (Hard): Casting {} precombat (combat-relevant: {}, value={}) in game {}",
+                hand.get(best.handIndex).getName(), best.relevance,
+                String.format("%.1f", best.value), gameId);
+        return tryCastSpecificSpell(gameData, best.handIndex, best.targetId);
     }
 
     /**
@@ -558,6 +712,23 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return unblockableDamage;
+    }
+
+    /**
+     * Returns true if the AI controls at least one creature that could attack
+     * this turn (untapped, not defender, not summoning sick unless it has haste).
+     * Used to decide whether to defer non-combat spells to postcombat.
+     */
+    private boolean hasPotentialAttackers(GameData gameData) {
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            if (perm.isTapped()) continue;
+            if (perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
+            return true;
+        }
+        return false;
     }
 
     /**
