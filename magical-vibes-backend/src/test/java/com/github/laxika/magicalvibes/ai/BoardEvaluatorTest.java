@@ -201,6 +201,128 @@ class BoardEvaluatorTest {
         assertThat(serraScore).isGreaterThan(bearsScore);
     }
 
+    // ===== creature state adjustments =====
+
+    @Nested
+    @DisplayName("Creature state adjustments")
+    class CreatureStateAdjustments {
+
+        @BeforeEach
+        void clearBoards() {
+            gd.playerBattlefields.get(player1.getId()).clear();
+            gd.playerBattlefields.get(player2.getId()).clear();
+        }
+
+        @Test
+        @DisplayName("Creature with marked damage scores lower than undamaged creature")
+        void markedDamageReducesScore() {
+            Permanent healthy = new Permanent(new GrizzlyBears());
+            healthy.setSummoningSick(false);
+
+            Permanent damaged = new Permanent(new GrizzlyBears());
+            damaged.setSummoningSick(false);
+            damaged.setMarkedDamage(1);
+
+            double healthyScore = evaluator.creatureScore(gd, healthy, player1.getId(), player2.getId());
+            double damagedScore = evaluator.creatureScore(gd, damaged, player1.getId(), player2.getId());
+
+            // Damaged 2/2 with 1 damage = effective 2/1, should score lower
+            assertThat(damagedScore).isLessThan(healthyScore);
+        }
+
+        @Test
+        @DisplayName("Heavily damaged creature scores much lower")
+        void heavilyDamagedCreatureScoresLower() {
+            // Simulate a 4/4 with 3 damage — barely alive
+            Permanent airElemental = new Permanent(new AirElemental());
+            airElemental.setSummoningSick(false);
+            airElemental.setMarkedDamage(3);
+
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+
+            double damagedAeScore = evaluator.creatureScore(gd, airElemental, player1.getId(), player2.getId());
+            double bearsScore = evaluator.creatureScore(gd, bears, player1.getId(), player2.getId());
+
+            // 4/4 with 3 damage → effective 4/1 + flying bonus
+            // Should still be comparable to a 2/2 (not dominating like a healthy 4/4)
+            assertThat(damagedAeScore).isLessThan(
+                    evaluator.creatureScore(gd, new Permanent(new AirElemental()) {{
+                        setSummoningSick(false);
+                    }}, player1.getId(), player2.getId())
+            );
+        }
+
+        @Test
+        @DisplayName("Summoning-sick creature scores lower than one that can attack")
+        void summoningSicknessReducesScore() {
+            Permanent ready = new Permanent(new GrizzlyBears());
+            ready.setSummoningSick(false);
+
+            Permanent sick = new Permanent(new GrizzlyBears());
+            sick.setSummoningSick(true);
+
+            double readyScore = evaluator.creatureScore(gd, ready, player1.getId(), player2.getId());
+            double sickScore = evaluator.creatureScore(gd, sick, player1.getId(), player2.getId());
+
+            assertThat(sickScore).isLessThan(readyScore);
+        }
+
+        @Test
+        @DisplayName("Tapped creature scores lower than untapped creature")
+        void tappedCreatureScoresLower() {
+            Permanent untapped = new Permanent(new GrizzlyBears());
+            untapped.setSummoningSick(false);
+
+            Permanent tapped = new Permanent(new GrizzlyBears());
+            tapped.setSummoningSick(false);
+            tapped.tap();
+
+            double untappedScore = evaluator.creatureScore(gd, untapped, player1.getId(), player2.getId());
+            double tappedScore = evaluator.creatureScore(gd, tapped, player1.getId(), player2.getId());
+
+            assertThat(tappedScore).isLessThan(untappedScore);
+        }
+
+        @Test
+        @DisplayName("Flying worth more when opponent has no flyers or reach")
+        void flyingContextAwareScoring() {
+            Permanent flyer = new Permanent(new AirElemental());
+            flyer.setSummoningSick(false);
+
+            // No opponent creatures — flying is unblockable
+            double unblockableScore = evaluator.creatureScore(gd, flyer, player1.getId(), player2.getId());
+
+            // Add an opponent flyer — flying can now be blocked
+            Permanent oppFlyer = new Permanent(new AirElemental());
+            oppFlyer.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppFlyer);
+
+            double blockableScore = evaluator.creatureScore(gd, flyer, player1.getId(), player2.getId());
+
+            // Unblockable flying should score higher than blockable flying
+            assertThat(unblockableScore).isGreaterThan(blockableScore);
+        }
+
+        @Test
+        @DisplayName("Tapped and summoning-sick penalties stack")
+        void tappedAndSummoningSickStack() {
+            Permanent ready = new Permanent(new GrizzlyBears());
+            ready.setSummoningSick(false);
+
+            Permanent tappedAndSick = new Permanent(new GrizzlyBears());
+            tappedAndSick.setSummoningSick(true);
+            tappedAndSick.tap();
+
+            double readyScore = evaluator.creatureScore(gd, ready, player1.getId(), player2.getId());
+            double penalizedScore = evaluator.creatureScore(gd, tappedAndSick, player1.getId(), player2.getId());
+
+            // Both penalties should apply
+            assertThat(penalizedScore).isLessThan(readyScore);
+            assertThat(readyScore - penalizedScore).isEqualTo(3.5); // -2.0 summoning + -1.5 tapped
+        }
+    }
+
     // ===== creatureThreatScore =====
 
     @Nested
@@ -219,7 +341,8 @@ class BoardEvaluatorTest {
             // Benalish Marshal is a 3/3 that gives other creatures you control +1/+1
             Permanent marshal = harness.addToBattlefieldAndReturn(player1, new BenalishMarshal());
 
-            // Add 4 creatures for the lord to pump — this is the typical "wide board" scenario
+            // Add 5 creatures for the lord to pump — this is the typical "wide board" scenario
+            harness.addToBattlefield(player1, new GrizzlyBears());
             harness.addToBattlefield(player1, new GrizzlyBears());
             harness.addToBattlefield(player1, new GrizzlyBears());
             harness.addToBattlefield(player1, new GrizzlyBears());
@@ -231,9 +354,8 @@ class BoardEvaluatorTest {
             double marshalThreat = evaluator.creatureThreatScore(gd, marshal, player1.getId(), player2.getId());
             double airElementalThreat = evaluator.creatureThreatScore(gd, airElemental, player1.getId(), player2.getId());
 
-            // Marshal: base 13.5 + lord bonus (4 creatures * 4.5 = 18) = 31.5
-            // Air Elemental: base 22 + evasion context bonus 6 = 28
-            // The lord's total board impact makes it the higher-threat target
+            // Marshal lord bonus for 6 other creatures (5 bears + Air Elemental) makes it the higher-threat target
+            // even with flying's enhanced unblockable bonus
             assertThat(marshalThreat).isGreaterThan(airElementalThreat);
         }
 

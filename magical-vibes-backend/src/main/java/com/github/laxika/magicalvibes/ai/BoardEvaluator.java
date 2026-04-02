@@ -128,14 +128,28 @@ public class BoardEvaluator {
     }
 
     /**
-     * Scores a creature permanent based on its effective stats and keywords.
+     * Scores a creature permanent based on its effective stats, keywords, and current state.
+     * Accounts for marked damage, summoning sickness, and tapped status.
      */
     public double creatureScore(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
         int power = gameQueryService.getEffectivePower(gameData, perm);
         int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
 
-        double score = power * 3.0 + toughness * 1.5;
+        // A 4/4 with 3 damage on it is barely a 4/1 — use remaining toughness for scoring
+        int effectiveToughness = Math.max(0, toughness - perm.getMarkedDamage());
+
+        double score = power * 3.0 + effectiveToughness * 1.5;
         score += keywordBonus(gameData, perm, opponentId);
+
+        // Summoning-sick creatures can't attack yet (unless they have haste)
+        if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+            score -= 2.0;
+        }
+
+        // Tapped creatures can't block — discount their defensive value
+        if (perm.isTapped()) {
+            score -= 1.5;
+        }
 
         return score;
     }
@@ -296,7 +310,18 @@ public class BoardEvaluator {
     private double keywordBonus(GameData gameData, Permanent perm, UUID opponentId) {
         double bonus = 0;
 
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING)) bonus += 4;
+        // Flying is worth more when opponent has no flyers or reach (effectively unblockable)
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING)) {
+            if (opponentId != null) {
+                boolean opponentCanBlockFlyers = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .anyMatch(p -> gameQueryService.hasKeyword(gameData, p, Keyword.FLYING)
+                                || gameQueryService.hasKeyword(gameData, p, Keyword.REACH));
+                bonus += opponentCanBlockFlyers ? 4 : 8;
+            } else {
+                bonus += 4;
+            }
+        }
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.FIRST_STRIKE)) bonus += 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE)) bonus += 6;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.TRAMPLE)) bonus += 2;
