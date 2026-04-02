@@ -8,11 +8,16 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
+import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
@@ -22,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -2005,6 +2011,138 @@ class HardAiDecisionEngineTest {
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             // When losing the race with a favorable trade available, AI should block
             assertThat(aiCreature.isBlocking()).isTrue();
+        }
+    }
+
+    // ===== Precombat vs Postcombat Timing =====
+
+    @Nested
+    @DisplayName("Precombat vs Postcombat Timing")
+    class PrecombatPostcombatTiming {
+
+        private HardAiDecisionEngine ai;
+        private FakeConnection aiConn;
+
+        @BeforeEach
+        void setUpAi() {
+            aiConn = new FakeConnection("ai-timing-test");
+            harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+            ai = new HardAiDecisionEngine(
+                    gd.id, player1, harness.getGameRegistry(),
+                    harness.getMessageHandler(), harness.getGameQueryService(),
+                    harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                    harness.getTargetValidationService(), harness.getTargetLegalityService());
+            ai.setSelfConnection(aiConn);
+
+            harness.forceActivePlayer(player1);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            gd.interaction.setAwaitingInput(null);
+            gd.stack.clear();
+        }
+
+        @Test
+        @DisplayName("Casts sorcery removal precombat to clear blocker for lethal attack")
+        void castsRemovalPrecombatForLethal() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has two 2/2 attackers ready
+            Permanent bear1 = new Permanent(new GrizzlyBears());
+            bear1.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear1);
+            Permanent bear2 = new Permanent(new GrizzlyBears());
+            bear2.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear2);
+
+            // Give AI mana for Eviscerate (3B)
+            for (int i = 0; i < 3; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+            Permanent swamp4 = new Permanent(new Swamp());
+            swamp4.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(swamp4);
+
+            // Opponent has one 2/2 blocker and is at 4 life
+            // With the blocker: 1 bear blocked, 1 gets through = 2 damage (not lethal)
+            // Without the blocker: both bears attack = 4 damage = lethal
+            Permanent oppBlocker = new Permanent(new GrizzlyBears());
+            oppBlocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBlocker);
+            gd.playerLifeTotals.put(player2.getId(), 4);
+
+            // AI has Eviscerate (sorcery: destroy target creature)
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should cast Eviscerate precombat to clear the blocker
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Eviscerate");
+        }
+
+        @Test
+        @DisplayName("Casts lord precombat to pump attackers toward lethal")
+        void castsLordPrecombatForLethal() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has two Goblin Pikers (2/1 Goblins) ready to attack
+            Permanent goblin1 = new Permanent(new GoblinPiker());
+            goblin1.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(goblin1);
+            Permanent goblin2 = new Permanent(new GoblinPiker());
+            goblin2.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(goblin2);
+
+            // Mana for Goblin Chieftain (1RR)
+            for (int i = 0; i < 3; i++) {
+                Permanent mountain = new Permanent(new Mountain());
+                mountain.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(mountain);
+            }
+
+            // Opponent at 6 life, no blockers
+            // Without lord: 2+2 = 4 damage (not lethal)
+            // With lord (+1/+1 to Goblins): 3+3 = 6 damage = lethal
+            gd.playerLifeTotals.put(player2.getId(), 6);
+
+            harness.setHand(player1, List.of(new GoblinChieftain()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should cast Goblin Chieftain precombat to pump goblins
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Chieftain");
+        }
+
+        @Test
+        @DisplayName("Casts haste creature precombat when it enables lethal")
+        void castsHasteCreaturePrecombatForLethal() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has one 2/2 attacker
+            Permanent bear = new Permanent(new GrizzlyBears());
+            bear.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear);
+
+            // Mana for Raging Goblin (R)
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(mountain);
+
+            // Opponent at 3 life, no blockers
+            // Without haste creature: bear deals 2 (not lethal)
+            // With Raging Goblin (1/1 haste): 2+1 = 3 = lethal
+            gd.playerLifeTotals.put(player2.getId(), 3);
+
+            harness.setHand(player1, List.of(new RagingGoblin()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should cast Raging Goblin precombat to attack with it
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Raging Goblin");
         }
     }
 }

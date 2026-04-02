@@ -23,18 +23,30 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -218,9 +230,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 return;
             }
 
-            // Before normal spell casting, check if burn spells in hand can deal lethal
-            if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN && tryBurnToFaceLethal(gameData)) {
-                return;
+            if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN) {
+                // Before normal spell casting, check if burn spells in hand can deal lethal
+                if (tryBurnToFaceLethal(gameData)) {
+                    return;
+                }
+
+                // Explicit precombat heuristics: removal to clear blockers for lethal,
+                // lords to pump attackers, haste creatures that can join the attack
+                if (tryCastPrecombatPrioritySpell(gameData)) {
+                    return;
+                }
             }
 
             if (tryCastSpellWithInstantAwareness(gameData)) {
@@ -239,6 +259,508 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
+    }
+
+    // ===== Precombat vs Postcombat Timing =====
+
+    /**
+     * Combat relevance categories for sorcery-speed spells, used to decide
+     * whether to cast a spell precombat or defer to postcombat.
+     */
+    private enum CombatRelevance {
+        /** Removal that clears blockers or steals creatures */
+        REMOVAL,
+        /** Lord/anthem that pumps existing attackers */
+        PUMP,
+        /** Creature with haste that can attack immediately */
+        HASTE_CREATURE,
+        /** Not directly combat-relevant — better cast postcombat */
+        NON_COMBAT
+    }
+
+    /**
+     * Tries to cast a combat-relevant spell before combat using explicit heuristics
+     * that complement MCTS. Checks three scenarios in order:
+     * <ol>
+     *   <li>Removal that clears a blocker for a lethal or near-lethal attack</li>
+     *   <li>Lord/anthem creature that pumps existing attackers toward lethal</li>
+     *   <li>Haste creature whose power pushes the attack to lethal or near-lethal</li>
+     * </ol>
+     */
+    private boolean tryCastPrecombatPrioritySpell(GameData gameData) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (hand == null || hand.isEmpty()) return false;
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        int opponentLife = gameData.getLife(opponentId);
+
+        // Gather attackers: untapped, non-defender, combat-ready creatures
+        List<Permanent> attackers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            if (perm.isTapped()) continue;
+            if (perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
+            attackers.add(perm);
+        }
+
+        // Gather opponent's potential blockers: untapped creatures
+        List<Permanent> blockers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            blockers.add(perm);
+        }
+
+        // Tally castable burn damage for near-lethal checks (attack + burn = lethal)
+        int burnInHand = 0;
+        for (Card card : hand) {
+            if (card.getManaCost() == null) continue;
+            burnInHand += raceEvaluator.getBurnToFaceDamage(card);
+        }
+
+        // 1. Removal that clears a blocker for lethal / near-lethal attack
+        if (!attackers.isEmpty() && !blockers.isEmpty()) {
+            if (tryRemovalForLethal(gameData, hand, virtualPool, attackers, blockers,
+                    opponentLife, burnInHand)) {
+                return true;
+            }
+        }
+
+        // 2. Lord/anthem that pumps existing attackers toward lethal
+        if (!attackers.isEmpty()) {
+            if (tryLordBeforeCombat(gameData, hand, virtualPool, attackers, blockers,
+                    opponentLife, burnInHand)) {
+                return true;
+            }
+        }
+
+        // 3. Haste creature whose power pushes attack to lethal / near-lethal
+        if (tryHasteCreatureBeforeCombat(gameData, hand, virtualPool, attackers, blockers,
+                opponentLife, burnInHand)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if a sorcery-speed removal spell can clear a blocker and enable lethal
+     * (or near-lethal within burn range) combat damage. If so, casts the removal
+     * targeting that specific blocker.
+     */
+    private boolean tryRemovalForLethal(GameData gameData, List<Card> hand, ManaPool virtualPool,
+                                         List<Permanent> attackers, List<Permanent> blockers,
+                                         int opponentLife, int burnInHand) {
+        int currentUnblockable = estimateUnblockableDamage(gameData, attackers, blockers);
+        // Already lethal without removal — just attack, don't waste removal
+        if (currentUnblockable >= opponentLife) return false;
+
+        record RemovalCandidate(int handIndex, Permanent targetBlocker, int damageGain) {}
+        List<RemovalCandidate> candidates = new ArrayList<>();
+
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (card.hasType(CardType.INSTANT) || card.hasType(CardType.LAND)) continue;
+            if (card.getManaCost() == null) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+            if (classifyCombatRelevance(card) != CombatRelevance.REMOVAL) continue;
+
+            for (Permanent blocker : blockers) {
+                if (!canEffectRemoveCreature(gameData, card, blocker)) continue;
+
+                List<Permanent> remainingBlockers = new ArrayList<>(blockers);
+                remainingBlockers.removeIf(b -> b.getId().equals(blocker.getId()));
+                int newUnblockable = estimateUnblockableDamage(gameData, attackers, remainingBlockers);
+                int damageGain = newUnblockable - currentUnblockable;
+
+                // Cast if removal enables lethal (board alone or board + burn)
+                if (newUnblockable >= opponentLife
+                        || newUnblockable + burnInHand >= opponentLife) {
+                    candidates.add(new RemovalCandidate(i, blocker, damageGain));
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+
+        RemovalCandidate best = candidates.stream()
+                .max(Comparator.comparingInt(RemovalCandidate::damageGain))
+                .orElse(null);
+        if (best == null) return false;
+
+        log.info("AI (Hard): Casting removal precombat to clear {} for lethal attack " +
+                        "(damage gain={}) in game {}",
+                best.targetBlocker.getCard().getName(), best.damageGain, gameId);
+
+        return tryCastSpecificSpell(gameData, best.handIndex, best.targetBlocker.getId());
+    }
+
+    /**
+     * Checks if casting a lord/anthem creature precombat would pump existing attackers
+     * enough to enable lethal or near-lethal damage. If so, casts the lord.
+     */
+    private boolean tryLordBeforeCombat(GameData gameData, List<Card> hand, ManaPool virtualPool,
+                                         List<Permanent> attackers, List<Permanent> blockers,
+                                         int opponentLife, int burnInHand) {
+        int currentUnblockable = estimateUnblockableDamage(gameData, attackers, blockers);
+
+        record LordCandidate(int handIndex, int totalPowerBoost) {}
+        List<LordCandidate> candidates = new ArrayList<>();
+
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (!card.hasType(CardType.CREATURE)) continue;
+            if (card.getManaCost() == null) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+
+            // Check for static power boost effects (lord/anthem)
+            int totalBoost = 0;
+            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof StaticBoostEffect boost && boost.powerBoost() > 0
+                        && (boost.scope() == GrantScope.OWN_CREATURES
+                            || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
+                    for (Permanent attacker : attackers) {
+                        if (boost.filter() == null
+                                || gameQueryService.matchesPermanentPredicate(
+                                        gameData, attacker, boost.filter())) {
+                            totalBoost += boost.powerBoost();
+                        }
+                    }
+                }
+            }
+
+            if (totalBoost <= 0) continue;
+
+            // If the lord has haste, its own power also contributes to the attack
+            int lordAttackPower = 0;
+            if (card.getKeywords().contains(Keyword.HASTE)
+                    && card.getPower() != null && card.getPower() > 0) {
+                lordAttackPower = card.getPower();
+            }
+
+            int projectedDamage = currentUnblockable + totalBoost;
+            if (projectedDamage >= opponentLife
+                    || projectedDamage + burnInHand >= opponentLife) {
+                candidates.add(new LordCandidate(i, totalBoost + lordAttackPower));
+            } else if (totalBoost >= 3) {
+                // Significant pump even if not lethal (e.g. +1/+1 to 3+ creatures)
+                candidates.add(new LordCandidate(i, totalBoost + lordAttackPower));
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+
+        LordCandidate best = candidates.stream()
+                .max(Comparator.comparingInt(LordCandidate::totalPowerBoost))
+                .orElse(null);
+        if (best == null) return false;
+
+        log.info("AI (Hard): Casting lord precombat to pump attackers " +
+                "(total boost={}) in game {}", best.totalPowerBoost, gameId);
+
+        return tryCastSpecificSpell(gameData, best.handIndex, null);
+    }
+
+    /**
+     * Checks if a haste creature in hand would push attack damage to lethal or
+     * near-lethal (within burn range). If so, casts it precombat.
+     */
+    private boolean tryHasteCreatureBeforeCombat(GameData gameData, List<Card> hand,
+                                                  ManaPool virtualPool,
+                                                  List<Permanent> attackers,
+                                                  List<Permanent> blockers,
+                                                  int opponentLife, int burnInHand) {
+        int currentUnblockable = estimateUnblockableDamage(gameData, attackers, blockers);
+
+        record HasteCandidate(int handIndex, int power) {}
+        List<HasteCandidate> candidates = new ArrayList<>();
+
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            if (!card.hasType(CardType.CREATURE)) continue;
+            if (!card.getKeywords().contains(Keyword.HASTE)) continue;
+            if (card.getManaCost() == null) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+            if (card.getPower() == null || card.getPower() <= 0) continue;
+
+            int power = card.getPower();
+            // Haste creature's power adds to the attack (opponent may block it,
+            // but it frees up another attacker — net effect ≈ +power to face)
+            int projectedDamage = currentUnblockable + power;
+            if (projectedDamage >= opponentLife
+                    || projectedDamage + burnInHand >= opponentLife) {
+                candidates.add(new HasteCandidate(i, power));
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+
+        HasteCandidate best = candidates.stream()
+                .max(Comparator.comparingInt(HasteCandidate::power))
+                .orElse(null);
+        if (best == null) return false;
+
+        log.info("AI (Hard): Casting haste creature precombat to attack " +
+                "(power={}) in game {}", best.power, gameId);
+
+        return tryCastSpecificSpell(gameData, best.handIndex, null);
+    }
+
+    /**
+     * Estimates how much combat damage would get through to the opponent's face.
+     * Simple model: opponent blocks the strongest attackers first; remaining
+     * attackers deal damage unblocked. Accounts for trample on blocked attackers.
+     */
+    private int estimateUnblockableDamage(GameData gameData,
+                                           List<Permanent> attackers,
+                                           List<Permanent> blockers) {
+        if (attackers.isEmpty()) return 0;
+        if (blockers.isEmpty()) {
+            return attackers.stream()
+                    .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
+                    .sum();
+        }
+
+        // Sort attackers by power descending — opponent blocks strongest first
+        List<Permanent> sortedAttackers = new ArrayList<>(attackers);
+        sortedAttackers.sort(Comparator.comparingInt(
+                (Permanent p) -> gameQueryService.getEffectivePower(gameData, p)).reversed());
+
+        // Sort blockers by toughness descending (assigned to strongest attackers)
+        List<Permanent> sortedBlockers = new ArrayList<>(blockers);
+        sortedBlockers.sort(Comparator.comparingInt(
+                (Permanent p) -> gameQueryService.getEffectiveToughness(gameData, p)).reversed());
+
+        int blockerCount = Math.min(sortedBlockers.size(), sortedAttackers.size());
+        int unblockableDamage = 0;
+
+        // Unblocked attackers deal full damage to face
+        for (int i = blockerCount; i < sortedAttackers.size(); i++) {
+            unblockableDamage += Math.max(0,
+                    gameQueryService.getEffectivePower(gameData, sortedAttackers.get(i)));
+        }
+
+        // Blocked attackers with trample deal excess damage through
+        for (int i = 0; i < blockerCount; i++) {
+            Permanent attacker = sortedAttackers.get(i);
+            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.TRAMPLE)) {
+                int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
+                int blockerToughness = gameQueryService.getEffectiveToughness(
+                        gameData, sortedBlockers.get(i));
+                int trampleDamage = attackerPower - blockerToughness;
+                if (trampleDamage > 0) {
+                    unblockableDamage += trampleDamage;
+                }
+            }
+        }
+
+        return unblockableDamage;
+    }
+
+    /**
+     * Classifies a sorcery-speed spell's combat relevance to determine whether it
+     * should be cast precombat (affects the attack) or can wait until postcombat.
+     */
+    private CombatRelevance classifyCombatRelevance(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
+        }
+
+        if (card.hasType(CardType.CREATURE)) {
+            if (card.getKeywords().contains(Keyword.HASTE)) return CombatRelevance.HASTE_CREATURE;
+
+            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof StaticBoostEffect boost && boost.powerBoost() > 0
+                        && (boost.scope() == GrantScope.OWN_CREATURES
+                            || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
+                    return CombatRelevance.PUMP;
+                }
+            }
+        }
+
+        return CombatRelevance.NON_COMBAT;
+    }
+
+    private boolean isSingleEffectRemoval(CardEffect effect) {
+        if (effect instanceof ChooseOneEffect coe) {
+            for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
+                if (isSingleEffectRemoval(option.effect())) return true;
+            }
+            return false;
+        }
+        return effect instanceof DestroyTargetPermanentEffect
+                || effect instanceof ExileTargetPermanentEffect
+                || effect instanceof ReturnTargetPermanentToHandEffect
+                || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
+                || effect instanceof DealDamageToTargetCreatureEffect
+                || effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect
+                || effect instanceof DealDamageToAnyTargetEffect
+                || effect instanceof GainControlOfTargetPermanentEffect
+                || effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect;
+    }
+
+    /**
+     * Checks whether a removal spell's effects can remove a specific creature.
+     * Accounts for hexproof, shroud, indestructible, and damage vs toughness.
+     */
+    private boolean canEffectRemoveCreature(GameData gameData, Card spell, Permanent creature) {
+        if (gameQueryService.hasKeyword(gameData, creature, Keyword.HEXPROOF)) return false;
+        if (gameQueryService.hasKeyword(gameData, creature, Keyword.SHROUD)) return false;
+
+        for (CardEffect effect : spell.getEffects(EffectSlot.SPELL)) {
+            if (canSingleEffectRemoveCreature(gameData, effect, creature)) return true;
+        }
+        for (CardEffect effect : spell.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (canSingleEffectRemoveCreature(gameData, effect, creature)) return true;
+        }
+        return false;
+    }
+
+    private boolean canSingleEffectRemoveCreature(GameData gameData, CardEffect effect,
+                                                   Permanent creature) {
+        if (effect instanceof ChooseOneEffect coe) {
+            for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
+                if (canSingleEffectRemoveCreature(gameData, option.effect(), creature)) return true;
+            }
+            return false;
+        }
+        if (effect instanceof DestroyTargetPermanentEffect) {
+            return !gameQueryService.hasKeyword(gameData, creature, Keyword.INDESTRUCTIBLE);
+        }
+        if (effect instanceof ExileTargetPermanentEffect) return true;
+        if (effect instanceof ReturnTargetPermanentToHandEffect) return true;
+        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return true;
+        if (effect instanceof GainControlOfTargetPermanentEffect) return true;
+        if (effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect) return true;
+        if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
+            int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
+            return dmg.damage() >= toughness - creature.getMarkedDamage();
+        }
+        if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect dmg) {
+            int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
+            return dmg.damage() >= toughness - creature.getMarkedDamage();
+        }
+        if (effect instanceof DealDamageToAnyTargetEffect dmg) {
+            int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
+            return dmg.damage() >= toughness - creature.getMarkedDamage();
+        }
+        return false;
+    }
+
+    /**
+     * Casts a specific spell from hand. Used by precombat heuristics that have
+     * already decided which spell to cast. Handles targeting, modal spells,
+     * X costs, sacrifice costs, etc.
+     *
+     * @param forcedTargetId if non-null, overrides targetSelector choice
+     */
+    private boolean tryCastSpecificSpell(GameData gameData, int handIndex, UUID forcedTargetId) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        Card card = hand.get(handIndex);
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        // Handle modal spells
+        ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
+        if (modalPlan == null && findChooseOneEffect(card) != null) {
+            return false;
+        }
+
+        // Handle damage distribution
+        Map<UUID, Integer> damageAssignments = null;
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
+            if (damageAssignments == null) return false;
+        }
+
+        // Targeting
+        UUID targetId = forcedTargetId;
+        List<UUID> multiTargetIds = null;
+        boolean isMultiTarget = card.getSpellTargets().size() > 1;
+        if (isMultiTarget && modalPlan == null) {
+            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
+            if (multiTargetIds == null) return false;
+        } else if (targetId == null && modalPlan != null) {
+            targetId = modalPlan.targetId();
+        } else if (targetId == null && !EffectResolution.needsDamageDistribution(card)
+                && (EffectResolution.needsTarget(card) || card.isAura())) {
+            targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
+            if (targetId == null) return false;
+        }
+
+        // Targeting tax
+        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
+        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+            return false;
+        }
+
+        // Sacrifice cost
+        UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
+
+        // Graveyard exile cost
+        List<Integer> exileGraveyardCardIndices = null;
+        if (findExileXGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        } else if (findExileNGraveyardCost(card) != null) {
+            exileGraveyardCardIndices = selectNGraveyardIndicesToExile(
+                    gameData, findExileNGraveyardCost(card));
+        }
+
+        // X value
+        ManaCost castCost = new ManaCost(card.getManaCost());
+        Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
+        int costModifier = gameBroadcastService.getCastCostModifier(
+                gameData, aiPlayer.getId(), card) + targetingTax;
+        if (castCost.hasX() && xValue == null) {
+            if (hasPermanentManaValueEqualsXTarget(card)) {
+                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
+                if (maxX <= 0) return false;
+                List<Permanent> validTargets =
+                        targetSelector.findValidPermanentTargetsForManaValueX(
+                                gameData, card, aiPlayer.getId(), maxX);
+                if (validTargets.isEmpty()) return false;
+                Permanent chosen = validTargets.stream()
+                        .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
+                        .orElse(validTargets.getFirst());
+                targetId = chosen.getId();
+                xValue = chosen.getCard().getManaValue();
+            } else {
+                int smartX = manaManager.calculateSmartX(
+                        gameData, card, targetId, virtualPool, costModifier);
+                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+                if (smartX <= 0) return false;
+                xValue = smartX;
+            }
+        }
+
+        // Cast
+        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
+            return true; // Mana ability triggered a pending choice
+        }
+        int handSizeBefore = hand.size();
+        final int idx = handIndex;
+        final UUID fTargetId = targetId;
+        final Integer fXValue = xValue;
+        final Map<UUID, Integer> fDamageAssignments = damageAssignments;
+        final UUID fSacrificePermanentId = sacrificePermanentId;
+        final List<Integer> fExileIndices = exileGraveyardCardIndices;
+        final List<UUID> fMultiTargetIds = multiTargetIds;
+        send(() -> messageHandler.handlePlayCard(selfConnection,
+                new PlayCardRequest(idx, fXValue, fTargetId, fDamageAssignments,
+                        fMultiTargetIds, null, null, fSacrificePermanentId,
+                        null, null, null, null, null, fExileIndices, null, null, null)));
+        if (hand.size() >= handSizeBefore) {
+            Card failedCard = hand.size() > idx ? hand.get(idx) : null;
+            log.warn("AI (Hard): Precombat priority cast failed for '{}' in game {}",
+                    failedCard != null ? failedCard.getName() : "?", gameId);
+            return false;
+        }
+        return true;
     }
 
     /**
