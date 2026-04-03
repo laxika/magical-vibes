@@ -256,6 +256,14 @@ public class AnimationResolutionService {
         target.setPermanentAnimatedPower(effect.power());
         target.setPermanentAnimatedToughness(effect.toughness());
 
+        for (CardSubtype subtype : effect.grantedSubtypes()) {
+            if (!target.getGrantedSubtypes().contains(subtype)) {
+                target.getGrantedSubtypes().add(subtype);
+            }
+        }
+
+        target.getGrantedKeywords().addAll(effect.grantedKeywords());
+
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             target.setAttachedTo(null);
@@ -264,10 +272,10 @@ public class AnimationResolutionService {
             log.info("Game {} - {} unattached (equipment became creature)", gameData.id, target.getCard().getName());
         }
 
-        String logEntry = target.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness() + " artifact creature.";
+        String logEntry = target.getCard().getName() + " becomes a " + effect.power() + "/" + effect.toughness() + " creature.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} becomes a {}/{} artifact creature permanently", gameData.id, target.getCard().getName(), effect.power(), effect.toughness());
+        log.info("Game {} - {} becomes a {}/{} creature permanently", gameData.id, target.getCard().getName(), effect.power(), effect.toughness());
     }
 
     @HandlesEffect(TransformSelfEffect.class)

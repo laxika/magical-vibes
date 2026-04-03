@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTar
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutXMinusOneMinusOneCountersOnEachCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutXPlusOnePlusOneCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -79,6 +80,22 @@ public class PermanentCounterResolutionService {
         String logEntry = entry.getCard().getName() + " puts " + xValue + " -1/-1 counter(s) on " + count[0] + " creature(s).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts {} -1/-1 counter(s) on {} creature(s)", gameData.id, entry.getCard().getName(), xValue, count[0]);
+    }
+
+    @HandlesEffect(PutXPlusOnePlusOneCountersOnTargetPermanentEffect.class)
+    private void resolvePutXPlusOnePlusOneCountersOnTarget(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+        if (gameQueryService.cantHaveCounters(gameData, target)) {
+            return;
+        }
+
+        int xValue = entry.getXValue();
+        if (xValue > 0) {
+            placeCounterOnPermanent(gameData, entry, target, CounterType.PLUS_ONE_PLUS_ONE, xValue);
+        }
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnEachOtherCreatureEffect.class)
