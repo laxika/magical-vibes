@@ -475,21 +475,49 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         if (candidates.isEmpty()) return false;
 
-        // Respect instant-holding: if the best held instant is worth more than
-        // our combat-relevant spell, check whether we can afford both.
-        double bestInstantHeldValue = evaluateBestHeldInstant(gameData, hand, virtualPool);
+        // Respect instant-holding: compare "cast precombat spell + hold remaining instants"
+        // vs "skip spell and hold all instants". Considers multiple instants, not just the best.
+        List<HeldInstantCandidate> heldInstants = evaluateHeldInstants(gameData, hand, virtualPool);
         candidates.sort(Comparator.comparingDouble(PrecombatCandidate::value).reversed());
         PrecombatCandidate best = candidates.getFirst();
 
-        if (bestInstantHeldValue > best.value * 0.8) {
-            int instantManaCost = getBestHeldInstantManaCost(gameData, hand, virtualPool);
+        if (!heldInstants.isEmpty()) {
             Card card = hand.get(best.handIndex);
             int costModifier = gameBroadcastService.getCastCostModifier(
                     gameData, aiPlayer.getId(), card);
             int spellCost = Math.max(0, card.getManaValue() + costModifier);
-            if (spellCost + instantManaCost > virtualPool.getTotal()) {
-                log.info("AI (Hard): Holding mana for instant instead of precombat {} in game {}",
-                        card.getName(), gameId);
+            int totalMana = virtualPool.getTotal();
+
+            // Value of skipping the spell: greedily fit the most valuable instants
+            double holdOnlyValue = 0;
+            int holdOnlyCost = 0;
+            for (HeldInstantCandidate instant : heldInstants) {
+                if (holdOnlyCost + instant.effectiveCost() <= totalMana) {
+                    holdOnlyCost += instant.effectiveCost();
+                    holdOnlyValue += instant.heldValue();
+                }
+            }
+
+            // Value of casting the spell: spell value + greedily fit instants in remaining mana
+            int manaAfterSpell = totalMana - spellCost;
+            double castPlusHoldValue = best.value;
+            int castPlusHoldCost = 0;
+            for (HeldInstantCandidate instant : heldInstants) {
+                if (castPlusHoldCost + instant.effectiveCost() <= manaAfterSpell) {
+                    castPlusHoldCost += instant.effectiveCost();
+                    castPlusHoldValue += instant.heldValue();
+                }
+            }
+
+            // Discount held instant value by 0.8 (uncertain whether they'll be needed)
+            double adjustedHoldOnly = holdOnlyValue * 0.8;
+            double adjustedCastPlusHold = best.value + (castPlusHoldValue - best.value) * 0.8;
+
+            if (adjustedHoldOnly > adjustedCastPlusHold) {
+                int instantsHeld = (int) heldInstants.stream()
+                        .filter(i -> i.effectiveCost() <= totalMana).count();
+                log.info("AI (Hard): Holding mana for {} instant(s) instead of precombat {} in game {}",
+                        instantsHeld, card.getName(), gameId);
                 return false;
             }
         }
@@ -935,12 +963,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Wraps sorcery-speed casting with "hold up mana" reasoning. Before committing
-     * to sorceries, checks whether keeping mana open for instants would be higher
-     * expected value. Compares the <em>total</em> value of all castable sorcery-speed
-     * spells (not just the single best) against the best held instant. Also checks
-     * whether the AI can cast some sorceries <em>and</em> still hold mana for the
-     * instant (e.g. 6 mana: cast a 3-drop + hold 3 for an instant).
+     * Wraps sorcery-speed casting with "hold up mana" reasoning. Ranks <em>all</em>
+     * castable instants and finds the optimal split between sorceries cast now and
+     * instants held for later. For example, with 7 mana, a 3-cost sorcery, a 2-cost
+     * instant, and a 3-cost counterspell, the AI can reason about casting the sorcery
+     * while holding mana for one instant, or holding all 5 mana for both instants if
+     * their combined value exceeds the sorcery.
      */
     private boolean tryCastSpellWithInstantAwareness(GameData gameData) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
@@ -948,43 +976,82 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
-        // Compute total value of ALL castable sorcery-speed spells this turn
+        // Compute total value of ALL castable sorcery-speed spells (no reservation)
         double totalSorceryValue = estimateTotalCastableValue(gameData, hand, virtualPool, 0);
 
-        // Find best instant's held value (with timing multiplier)
-        double bestInstantHeldValue = evaluateBestHeldInstant(gameData, hand, virtualPool);
+        // Evaluate all held instant candidates ranked by value descending
+        List<HeldInstantCandidate> heldInstants = evaluateHeldInstants(gameData, hand, virtualPool);
 
-        // If holding instant mana is significantly better than ALL sorceries combined,
-        // consider skipping. The 0.8 factor provides a slight bias toward casting now.
-        if (totalSorceryValue > 0 && bestInstantHeldValue > totalSorceryValue * 0.8) {
-            // Before giving up on sorceries entirely, check if we can cast some sorceries
-            // AND still afford the instant (e.g. 6 mana: cast 3-drop + hold 3 for instant)
-            int instantManaCost = getBestHeldInstantManaCost(gameData, hand, virtualPool);
-            double sorceryWithReserve = estimateTotalCastableValue(gameData, hand, virtualPool, instantManaCost);
-            if (sorceryWithReserve > 0) {
-                log.info("AI (Hard): Casting sorceries while reserving {} mana for instant (reserve_value={}, instant_held={}) in game {}",
-                        instantManaCost,
-                        String.format("%.1f", sorceryWithReserve),
-                        String.format("%.1f", bestInstantHeldValue), gameId);
-                return tryCastSpellMCTS(gameData);
-            }
-
-            log.info("AI (Hard): Holding mana for instant (held={}, totalSorcery={}) in game {}",
-                    String.format("%.1f", bestInstantHeldValue),
-                    String.format("%.1f", totalSorceryValue), gameId);
-            return false;
+        if (heldInstants.isEmpty()) {
+            return tryCastSpellMCTS(gameData);
         }
 
-        return tryCastSpellMCTS(gameData);
+        // Find the optimal split between sorceries and held instants.
+        // For each number of instants to hold (1..N), compute:
+        //   combined = sorcery value (with reserved mana) + cumulative instant held value
+        // The instant values are discounted by 0.8 to bias toward casting now (uncertain
+        // whether instants will actually be needed).
+        double bestCombinedValue = totalSorceryValue; // baseline: hold 0 instants
+        int bestReservedMana = 0;
+        int bestInstantsHeld = 0;
+
+        int cumulativeCost = 0;
+        double cumulativeInstantValue = 0;
+
+        for (int i = 0; i < heldInstants.size(); i++) {
+            HeldInstantCandidate instant = heldInstants.get(i);
+            cumulativeCost += instant.effectiveCost();
+            cumulativeInstantValue += instant.heldValue();
+
+            if (cumulativeCost > virtualPool.getTotal()) break;
+
+            double sorceryValueWithReserve = estimateTotalCastableValue(
+                    gameData, hand, virtualPool, cumulativeCost);
+            // Discount held instant value to reflect uncertainty of casting them
+            double combinedValue = sorceryValueWithReserve + cumulativeInstantValue * 0.8;
+
+            if (combinedValue > bestCombinedValue) {
+                bestCombinedValue = combinedValue;
+                bestReservedMana = cumulativeCost;
+                bestInstantsHeld = i + 1;
+            }
+        }
+
+        if (bestInstantsHeld == 0) {
+            return tryCastSpellMCTS(gameData);
+        }
+
+        // Check if we can still cast some sorceries while holding instant mana
+        double sorceryWithReserve = estimateTotalCastableValue(
+                gameData, hand, virtualPool, bestReservedMana);
+        if (sorceryWithReserve > 0) {
+            log.info("AI (Hard): Casting sorceries while reserving {} mana for {} instant(s) "
+                            + "(reserve_value={}, instant_held={}) in game {}",
+                    bestReservedMana, bestInstantsHeld,
+                    String.format("%.1f", sorceryWithReserve),
+                    String.format("%.1f", bestCombinedValue - sorceryWithReserve), gameId);
+            return tryCastSpellMCTS(gameData);
+        }
+
+        log.info("AI (Hard): Holding mana for {} instant(s) (held={}, totalSorcery={}) in game {}",
+                bestInstantsHeld,
+                String.format("%.1f", bestCombinedValue),
+                String.format("%.1f", totalSorceryValue), gameId);
+        return false;
     }
 
+    /** A held instant candidate with its timing-adjusted held value and effective mana cost. */
+    private record HeldInstantCandidate(Card card, double heldValue, int effectiveCost) {}
+
     /**
-     * Evaluates the expected value of holding mana for the best instant in hand.
-     * Applies timing multipliers based on the instant's category to reflect the
-     * value of casting it at the ideal moment later.
+     * Evaluates all castable instants in hand and returns them ranked by held value
+     * descending. Each candidate includes the timing-adjusted held value (with category
+     * multiplier) and the effective mana cost after cost modifiers. Used by both the
+     * main-phase and precombat instant-holding logic to reason about multiple instants.
      */
-    private double evaluateBestHeldInstant(GameData gameData, List<Card> hand, ManaPool virtualPool) {
-        double bestValue = 0;
+    private List<HeldInstantCandidate> evaluateHeldInstants(GameData gameData, List<Card> hand,
+                                                            ManaPool virtualPool) {
+        List<HeldInstantCandidate> candidates = new ArrayList<>();
         for (Card card : hand) {
             if (!isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
@@ -1015,9 +1082,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 case OTHER -> 0.8;          // Slight discount for unknown timing
             };
 
-            bestValue = Math.max(bestValue, baseValue * multiplier);
+            double heldValue = baseValue * multiplier;
+            int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+            int effectiveCost = Math.max(0, card.getManaValue() + modifier);
+            candidates.add(new HeldInstantCandidate(card, heldValue, effectiveCost));
         }
-        return bestValue;
+
+        candidates.sort(Comparator.comparingDouble(HeldInstantCandidate::heldValue).reversed());
+        return candidates;
     }
 
     /**
@@ -1063,52 +1135,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return totalValue;
-    }
-
-    /**
-     * Returns the effective mana cost of the instant with the highest held value
-     * (the one {@link #evaluateBestHeldInstant} would pick). Returns 0 if no
-     * instant is worth holding.
-     */
-    private int getBestHeldInstantManaCost(GameData gameData, List<Card> hand, ManaPool virtualPool) {
-        double bestValue = 0;
-        int bestCost = 0;
-
-        for (Card card : hand) {
-            if (!isInstantSpeedCard(card)) continue;
-            if (card.getManaCost() == null) continue;
-            if (!isSpellCastable(gameData, card, virtualPool)) continue;
-
-            InstantCategory category = card.hasType(CardType.INSTANT)
-                    ? InstantCategoryClassifier.classify(card)
-                    : InstantCategoryClassifier.classifyFlashCreature(card);
-            double baseValue;
-            if (category == InstantCategory.COUNTERSPELL) {
-                baseValue = card.getManaValue() * 4.0;
-            } else {
-                baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
-            }
-            if (baseValue <= 0) continue;
-
-            double multiplier = switch (category) {
-                case REMOVAL -> 1.3;
-                case COMBAT_TRICK -> 1.5;
-                case CARD_ADVANTAGE -> 1.1;
-                case BURN_TO_FACE -> 1.0;
-                case COUNTERSPELL -> 1.2;
-                case FLASH_CREATURE -> 1.2;
-                case OTHER -> 0.8;
-            };
-
-            double heldValue = baseValue * multiplier;
-            if (heldValue > bestValue) {
-                bestValue = heldValue;
-                int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
-                bestCost = Math.max(0, card.getManaValue() + modifier);
-            }
-        }
-
-        return bestCost;
     }
 
     /**

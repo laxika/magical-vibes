@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.n.Negate;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
@@ -1238,6 +1240,14 @@ class HardAiDecisionEngineTest {
         }
     }
 
+    private void givePlayerSwamps(Player player, int count) {
+        for (int i = 0; i < count; i++) {
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(player.getId()).add(swamp);
+        }
+    }
+
     @Test
     @DisplayName("Hard AI casts sorceries when total multi-spell value exceeds instant held value")
     void castsMultipleSorceriesInsteadOfHoldingForInstant() {
@@ -1317,6 +1327,132 @@ class HardAiDecisionEngineTest {
 
         // No sorcery should be cast (EliteVanguard needs white), and Lightning Bolt
         // should be held for opponent's turn
+        assertThat(gd.stack).isEmpty();
+    }
+
+    // ===== Multi-instant holding =====
+
+    @Test
+    @DisplayName("Hard AI holds for two instants when combined held value exceeds cast-one-hold-one")
+    void holdsForMultipleInstantsWhenCombinedValueExceedsSorcery() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // 5 mana: 2 mountains + 3 islands
+        givePlayerMountains(player1, 2);
+        givePlayerIslands(player1, 3);
+
+        // Hand: GoblinPiker ({1}{R}, ~5 value) + Cancel ({1}{U}{U}, held ~14.4) + Negate ({1}{U}, held ~9.6)
+        // Total instant cost = 3 + 2 = 5 = total mana.
+        // Hold both instants: (14.4 + 9.6) * 0.8 = 19.2
+        // Cast GoblinPiker + hold Cancel: ~5 + 14.4 * 0.8 = ~16.5
+        // Holding both wins (19.2 > 16.5), so AI should hold all mana.
+        harness.setHand(player1, List.of(new GoblinPiker(), new Cancel(), new Negate()));
+
+        // Opponent creature for spell evaluation context
+        Permanent oppCreature = new Permanent(new GrizzlyBears());
+        oppCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should hold mana for both counterspells — stack stays empty
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI casts sorcery while reserving mana for multiple instants when all fit")
+    void castsSorceryWhileReservingManaForMultipleInstants() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // 7 mana: 4 forests + 3 islands — enough for Bears (2) + Cancel (3) + Negate (2) = 7
+        givePlayerForests(player1, 4);
+        givePlayerIslands(player1, 3);
+
+        // All fit within 7 mana, so AI should cast the creature and still hold both instants.
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Cancel(), new Negate()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should cast the sorcery-speed creature (can hold both instants with remaining mana)
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hard AI holds for two instants in postcombat main when combined value exceeds sorcery")
+    void holdsForMultipleInstantsInPostcombatMain() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Postcombat main phase setup — tryCastSpellWithInstantAwareness is called directly
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // 5 mana: 2 mountains + 3 islands
+        givePlayerMountains(player1, 2);
+        givePlayerIslands(player1, 3);
+
+        // Hand: GoblinPiker ({1}{R}, ~7.5 value) + Cancel ({1}{U}{U}, held ~14.4) + Negate ({1}{U}, held ~9.6)
+        // Total instant cost = 3 + 2 = 5 = total mana.
+        // Hold both: (14.4 + 9.6) * 0.8 = 19.2
+        // Cast GoblinPiker + hold Cancel: ~7.5 + 14.4 * 0.8 ≈ 19.0
+        // Holding both (19.2) just beats cast+hold-one (~19.0), so AI holds all mana.
+        harness.setHand(player1, List.of(new GoblinPiker(), new Cancel(), new Negate()));
+
+        // Opponent creature for evaluation context (use GrizzlyBears to keep sorcery value moderate)
+        Permanent oppCreature = new Permanent(new GrizzlyBears());
+        oppCreature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should hold mana for both counterspells in postcombat — stack stays empty
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI holds for multiple instants instead of casting precombat removal")
+    void holdsForMultipleInstantsInsteadOfPrecombatRemoval() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Precombat main phase setup
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // AI has an attacker
+        Permanent attacker = new Permanent(new GrizzlyBears()); // 2/2
+        attacker.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+        // Opponent has a blocker
+        Permanent blocker = new Permanent(new EliteVanguard()); // 2/1
+        blocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        // 5 mana: 1 swamp + 4 islands
+        givePlayerSwamps(player1, 1);
+        givePlayerIslands(player1, 4);
+
+        // Hand: Eviscerate ({3}{B}, destroy creature, costs 4) + Cancel ({1}{U}{U}) + Negate ({1}{U})
+        // If Eviscerate is cast (4 mana), only 1 mana left — can't hold Cancel (3) or Negate (2).
+        // If holding instead: Cancel (3) + Negate (2) = 5 mana, both fit.
+        // Held value: (14.4 + 9.6) * 0.8 = 19.2
+        // Cast value: Eviscerate precombat value ≈ 10 (removal + damage gain)
+        // Holding clearly wins.
+        harness.setHand(player1, List.of(new Eviscerate(), new Cancel(), new Negate()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should hold mana for both counterspells instead of removing the blocker
         assertThat(gd.stack).isEmpty();
     }
 
