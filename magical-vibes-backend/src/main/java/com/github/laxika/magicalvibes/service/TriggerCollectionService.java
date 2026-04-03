@@ -791,24 +791,23 @@ public class TriggerCollectionService {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES);
             if (effects == null || effects.isEmpty()) continue;
 
-            for (CardEffect effect : effects) {
-                if (effect.canTargetPermanent()) {
-                    gameData.pendingExploreTriggerTargets.add(
-                            new PermanentChoiceContext.ExploreTriggerTarget(
-                                    perm.getCard(), controllerId, new ArrayList<>(List.of(effect)), perm.getId()));
-                } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
-                            null,
-                            perm.getId()
-                    ));
-                }
-                log.info("Game {} - {} explore trigger queued", gameData.id, perm.getCard().getName());
+            boolean anyTargeting = effects.stream().anyMatch(CardEffect::canTargetPermanent);
+            if (anyTargeting) {
+                gameData.pendingExploreTriggerTargets.add(
+                        new PermanentChoiceContext.ExploreTriggerTarget(
+                                perm.getCard(), controllerId, new ArrayList<>(effects), perm.getId()));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(effects),
+                        null,
+                        perm.getId()
+                ));
             }
+            log.info("Game {} - {} explore trigger queued", gameData.id, perm.getCard().getName());
         }
     }
 
