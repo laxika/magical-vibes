@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndTransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -299,6 +302,9 @@ public class AnimationResolutionService {
             String logEntry = frontName + " transforms into " + backFace.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
+
+            // Fire ON_TRANSFORM_TO_BACK_FACE triggers from the back face card
+            fireTransformToBackFaceTriggers(gameData, self, backFace);
         } else {
             // Transform back to front face
             String backName = self.getCard().getName();
@@ -307,6 +313,31 @@ public class AnimationResolutionService {
             String logEntry = backName + " transforms into " + originalCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+        }
+    }
+
+    /**
+     * Fires triggered abilities from the back face's {@link EffectSlot#ON_TRANSFORM_TO_BACK_FACE}
+     * slot after a permanent transforms into its back face (e.g. Werewolf Ransacker).
+     */
+    private void fireTransformToBackFaceTriggers(GameData gameData, Permanent self, Card backFace) {
+        List<CardEffect> effects = backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, self.getId());
+        if (controllerId == null) {
+            return;
+        }
+
+        for (CardEffect e : effects) {
+            if (e instanceof MayEffect may) {
+                gameData.queueMayAbility(backFace, controllerId, may, null, self.getId());
+                String triggerLog = backFace.getName() + "'s transform ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, backFace.getName());
+            }
         }
     }
 

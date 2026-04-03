@@ -121,5 +121,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  creature's controller's battlefield (not just the targeted creature).
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
-    ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY
+    ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers when this permanent transforms from its front face to its back face.
+     *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
+     *  permanent's card reference is switched to the back face. */
+    ON_TRANSFORM_TO_BACK_FACE
 }

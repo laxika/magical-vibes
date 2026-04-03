@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLos
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
@@ -749,6 +750,37 @@ public class DestructionResolutionService {
         // Deal damage to the land's controller regardless of whether destruction succeeded
         dealNoncombatDamageToPlayer(gameData, landControllerId, effect.damage(),
                 entry.getCard().getName(), entry.getCard().getColor());
+
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves a {@link DestroyTargetPermanentAndDamageControllerIfDestroyedEffect}, destroying the
+     * targeted permanent and dealing noncombat damage to its controller only if the permanent was
+     * actually put into a graveyard (e.g. not indestructible). Used by Werewolf Ransacker.
+     */
+    @HandlesEffect(DestroyTargetPermanentAndDamageControllerIfDestroyedEffect.class)
+    void resolveDestroyTargetPermanentAndDamageControllerIfDestroyed(GameData gameData, StackEntry entry,
+                                                                      DestroyTargetPermanentAndDamageControllerIfDestroyedEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+
+        // Find the controller of the targeted permanent before destruction
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetControllerId == null) {
+            return;
+        }
+
+        // Attempt to destroy the permanent
+        boolean destroyed = tryDestroyAndLog(gameData, target, entry.getCard().getName());
+
+        // Deal damage only if the permanent was actually put into a graveyard
+        if (destroyed) {
+            dealNoncombatDamageToPlayer(gameData, targetControllerId, effect.damage(),
+                    entry.getCard().getName(), entry.getCard().getColor());
+        }
 
         gameOutcomeService.checkWinCondition(gameData);
     }
