@@ -13,14 +13,18 @@ public sealed interface ChoiceContext {
 
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor) implements ChoiceContext {}
 
-    record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype) implements ChoiceContext {
+    record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype, boolean flashbackOnly) implements ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
-            this(playerId, fromCreature, 1, null);
+            this(playerId, fromCreature, 1, null, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount) {
-            this(playerId, fromCreature, amount, null);
+            this(playerId, fromCreature, amount, null, false);
+        }
+
+        public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype) {
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, false);
         }
     }
 

@@ -1264,10 +1264,21 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
         additionalCost += gameBroadcastService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
-        if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
-            throw new IllegalStateException("Not enough mana to pay " + (isGraveyardCast || isGrantedGraveyardCast ? "casting" : "flashback") + " cost");
+        // Per MTG rules, flashback-only mana (e.g. Altar of the Lost) can be spent on any spell
+        // with flashback that is cast from a graveyard, even if not using the flashback ability itself.
+        // It cannot be spent on GraveyardCast-only or Muldrotha-style casts of non-flashback cards.
+        boolean cardHasFlashback = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
+        if (cardHasFlashback) {
+            if (!cost.canPayFlashback(pool, effectiveXValue + additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay flashback cost");
+            }
+            cost.payFlashback(pool, effectiveXValue + additionalCost);
+        } else {
+            if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay casting cost");
+            }
+            cost.pay(pool, effectiveXValue + additionalCost);
         }
-        cost.pay(pool, effectiveXValue + additionalCost);
 
         // Remove card from graveyard
         graveyard.remove(graveyardCardIndex);

@@ -287,6 +287,65 @@ public class ManaCost {
         return remaining >= genericCost + xValue;
     }
 
+    /**
+     * Checks whether the pool (regular + flashback-only mana) has enough to pay.
+     * Flashback-only mana can pay both colored and generic costs of flashback spells.
+     */
+    public boolean canPayFlashback(ManaPool pool, int xValue) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            int available = pool.get(entry.getKey()) + pool.getFlashbackOnlyMana(entry.getKey());
+            if (available < entry.getValue()) {
+                return false;
+            }
+        }
+
+        int remaining = pool.getTotal() + pool.getFlashbackOnlyManaTotal();
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            remaining -= entry.getValue();
+        }
+
+        return remaining >= genericCost + xValue;
+    }
+
+    /**
+     * Pays the mana cost using flashback-only mana first, then regular mana.
+     */
+    public void payFlashback(ManaPool pool, int xValue) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                // Prefer spending flashback-only mana first (more restricted = use first)
+                if (pool.getFlashbackOnlyMana(entry.getKey()) > 0) {
+                    pool.removeFlashbackOnlyMana(entry.getKey(), 1);
+                } else {
+                    pool.remove(entry.getKey());
+                }
+            }
+        }
+
+        int remainingGeneric = genericCost + xValue;
+
+        // Spend flashback-only mana for generic costs first (most restricted)
+        if (remainingGeneric > 0) {
+            int flashbackTotal = pool.getFlashbackOnlyManaTotal();
+            int fromFlashback = Math.min(remainingGeneric, flashbackTotal);
+            if (fromFlashback > 0) {
+                int toRemove = fromFlashback;
+                for (ManaColor color : ManaColor.values()) {
+                    if (toRemove <= 0) break;
+                    int avail = pool.getFlashbackOnlyMana(color);
+                    int removeNow = Math.min(toRemove, avail);
+                    if (removeNow > 0) {
+                        pool.removeFlashbackOnlyMana(color, removeNow);
+                        toRemove -= removeNow;
+                    }
+                }
+                remainingGeneric -= fromFlashback;
+            }
+        }
+
+        payGenericPreferColorless(pool, remainingGeneric);
+    }
+
     public boolean canPay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {

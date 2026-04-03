@@ -17,6 +17,8 @@ public class ManaPool {
     private int restrictedRed;
     private int kickedOnlyGreen;
     private int instantSorceryOnlyColorless;
+    /** Per-color mana that can only be spent to cast spells with flashback from a graveyard (e.g. Altar of the Lost). */
+    private final EnumMap<ManaColor, Integer> flashbackOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeCreatureMana = new HashMap<>();
 
@@ -25,6 +27,7 @@ public class ManaPool {
             pool.put(color, 0);
             creatureMana.put(color, 0);
             persistentMana.put(color, 0);
+            flashbackOnlyMana.put(color, 0);
         }
     }
 
@@ -35,6 +38,7 @@ public class ManaPool {
         pool.putAll(source.pool);
         creatureMana.putAll(source.creatureMana);
         persistentMana.putAll(source.persistentMana);
+        flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
         this.restrictedRed = source.restrictedRed;
@@ -57,6 +61,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
             creatureMana.put(color, 0);
+            flashbackOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
         myrOnlyColorless = 0;
@@ -150,6 +155,27 @@ public class ManaPool {
 
     public void removeKickedOnlyGreen(int amount) {
         kickedOnlyGreen = Math.max(0, kickedOnlyGreen - amount);
+    }
+
+    public void addFlashbackOnlyMana(ManaColor color, int amount) {
+        flashbackOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getFlashbackOnlyMana(ManaColor color) {
+        return flashbackOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getFlashbackOnlyManaTotal() {
+        int total = 0;
+        for (int value : flashbackOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void removeFlashbackOnlyMana(ManaColor color, int amount) {
+        int current = flashbackOnlyMana.getOrDefault(color, 0);
+        flashbackOnlyMana.put(color, Math.max(0, current - amount));
     }
 
     public int getInstantSorceryOnlyColorless() {
@@ -253,6 +279,9 @@ public class ManaPool {
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
+        for (ManaColor color : ManaColor.values()) {
+            flashbackOnlyMana.put(color, 0);
+        }
         subtypeCreatureMana.clear();
     }
 
@@ -283,6 +312,7 @@ public class ManaPool {
             if (color == ManaColor.GREEN) {
                 amount += kickedOnlyGreen;
             }
+            amount += flashbackOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }

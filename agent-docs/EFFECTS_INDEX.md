@@ -1014,6 +1014,7 @@ Pass `null` as filter to allow any card.
 | `AwardArtifactOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast artifact spells or activate abilities of artifacts. Stored in `ManaPool.artifactOnlyColorless`; `ManaCost.canPay/pay` accept `artifactContext=true` to include this mana |
 | `AwardMyrOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast Myr spells or activate abilities of Myr. Stored in `ManaPool.myrOnlyColorless`; `ManaCost.canPay/pay` accept `myrContext=true` to include this mana |
 | `AwardKickedOnlyManaEffect` | `(ManaColor color, int amount)` | add N mana of specified color that can only be spent to cast kicked spells. Stored in `ManaPool.kickedOnlyGreen`; `ManaCost.canPay/pay` accept `kickedOnlyGreenContext=true` to include this mana for both colored and generic costs. Used by Elfhame Druid |
+| `AwardFlashbackOnlyAnyColorManaEffect` | `(int amount)` | add N mana of any color (player chooses) that can only be spent to cast spells with flashback from a graveyard. Stored per-color in `ManaPool.flashbackOnlyMana`; `ManaCost.canPayFlashback/payFlashback` include this mana. Used by Altar of the Lost |
 | `PreventManaDrainEffect` | `()` | players don't lose unspent mana as steps/phases end (static) |
 
 ## Copy / clone

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanent
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
@@ -352,6 +353,12 @@ public class ActivatedAbilityExecutionService {
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
+            } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, fba.amount(), null, true);
+                gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add (flashback only)."));
+                log.info("Game {} - Awaiting {} to choose a flashback-only mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
                 gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
             } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
@@ -505,6 +512,8 @@ public class ActivatedAbilityExecutionService {
                 total += mom.amount();
             } else if (effect instanceof AwardKickedOnlyManaEffect kom) {
                 total += kom.amount();
+            } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
+                total += fba.amount();
             } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(permanent.getCard().getId());

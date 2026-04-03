@@ -170,7 +170,25 @@ public class ChoiceHandlerService {
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.amount();
-        if (ctx.restrictedToCreatureSubtype() != null) {
+        if (ctx.flashbackOnly()) {
+            // "Any combination of colors" — add 1 mana of the chosen color per choice
+            manaPool.addFlashbackOnlyMana(manaColor, 1);
+
+            String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana (flashback only).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} adds one {} flashback-only mana", gameData.id, player.getUsername(), colorName.toLowerCase());
+
+            // If more mana to choose, prompt again for the next color
+            int remaining = amount - 1;
+            if (remaining > 0) {
+                ChoiceContext.ManaColorChoice nextCtx = new ChoiceContext.ManaColorChoice(ctx.playerId(), ctx.fromCreature(), remaining, null, true);
+                gameData.interaction.beginColorChoice(ctx.playerId(), null, null, nextCtx);
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                sessionManager.sendToPlayer(ctx.playerId(), new ChooseFromListMessage(colors, "Choose a color of mana to add (flashback only)."));
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+        } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount);
         } else {
             manaPool.add(manaColor, amount);
@@ -179,10 +197,12 @@ public class ChoiceHandlerService {
             }
         }
 
-        String manaWord = amount == 1 ? "one" : String.valueOf(amount);
-        String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} adds {} {} mana", gameData.id, player.getUsername(), manaWord, colorName.toLowerCase());
+        if (!ctx.flashbackOnly()) {
+            String manaWord = amount == 1 ? "one" : String.valueOf(amount);
+            String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} adds {} {} mana", gameData.id, player.getUsername(), manaWord, colorName.toLowerCase());
+        }
 
         gameData.priorityPassedBy.clear();
         if (!gameData.pendingMayAbilities.isEmpty()) {

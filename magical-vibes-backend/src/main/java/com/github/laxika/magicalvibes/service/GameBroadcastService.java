@@ -603,8 +603,17 @@ public class GameBroadcastService {
             ManaCost cost = new ManaCost(manaCostStr);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = getCastCostModifier(gameData, playerId, card);
-            if (!cost.canPay(pool, additionalCost)) {
-                continue;
+            // Flashback-only mana (e.g. Altar of the Lost) can be spent on any spell with flashback
+            // cast from a graveyard, but not on GraveyardCast-only or Muldrotha-style non-flashback casts.
+            boolean cardHasFlashback = flashback.isPresent() || grantedFlashback || emblemFlashback;
+            if (cardHasFlashback) {
+                if (!cost.canPayFlashback(pool, additionalCost)) {
+                    continue;
+                }
+            } else {
+                if (!cost.canPay(pool, additionalCost)) {
+                    continue;
+                }
             }
 
             // For GraveyardCast with ExileNCardsFromGraveyardCost, check that enough
