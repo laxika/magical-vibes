@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.b.BogWraith;
+import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
+import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Divination;
@@ -2644,6 +2647,198 @@ class HardAiDecisionEngineTest {
             ai.handleMessage("GAME_STATE", "");
 
             // AI should NOT cast Grizzly Bears precombat — defer to postcombat
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    // ===== Evasion-aware damage estimation =====
+
+    @Nested
+    @DisplayName("Evasion-aware damage estimation")
+    class EvasionAwareDamageEstimation {
+
+        private HardAiDecisionEngine ai;
+        private FakeConnection aiConn;
+
+        @BeforeEach
+        void setUpAi() {
+            aiConn = new FakeConnection("ai-evasion-test");
+            harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+            ai = new HardAiDecisionEngine(
+                    gd.id, player1, harness.getGameRegistry(),
+                    harness.getMessageHandler(), harness.getGameQueryService(),
+                    harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                    harness.getTargetValidationService(), harness.getTargetLegalityService());
+            ai.setSelfConnection(aiConn);
+
+            harness.forceActivePlayer(player1);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            gd.interaction.setAwaitingInput(null);
+            gd.stack.clear();
+        }
+
+        @Test
+        @DisplayName("AI skips removal when cant-be-blocked creature already provides lethal damage")
+        void skipsRemovalWhenUnblockableCreatureAlreadyLethal() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has a 2/2 cant-be-blocked attacker (Phantom Warrior)
+            Permanent phantom = new Permanent(new PhantomWarrior());
+            phantom.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(phantom);
+
+            // Give AI mana for Eviscerate (3B)
+            for (int i = 0; i < 4; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+
+            // Opponent has a 2/2 blocker but is at 2 life
+            // Phantom Warrior can't be blocked → 2 damage is already lethal
+            // AI should NOT waste removal on the blocker
+            Permanent oppBlocker = new Permanent(new GrizzlyBears());
+            oppBlocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBlocker);
+            gd.playerLifeTotals.put(player2.getId(), 2);
+
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should NOT cast removal — unblockable attacker already provides lethal
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("AI recognizes flying creature as unblockable when opponent has no flyers or reach")
+        void flyingAttackerRecognizedAsUnblockable() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has a 4/4 flying attacker (Air Elemental)
+            Permanent flyer = new Permanent(new AirElemental());
+            flyer.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(flyer);
+
+            // Give AI mana for Eviscerate (3B)
+            for (int i = 0; i < 4; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+
+            // Opponent has a ground 2/2 blocker (can't block flying) and is at 4 life
+            // Air Elemental can't be blocked by ground creatures → 4 damage is already lethal
+            Permanent oppBlocker = new Permanent(new GrizzlyBears());
+            oppBlocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBlocker);
+            gd.playerLifeTotals.put(player2.getId(), 4);
+
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should NOT cast removal — flying attacker vs ground blocker is already lethal
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("AI correctly casts removal when flying attacker faces opposing flyer")
+        void flyingAttackerBlockedByOpponentFlyer() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has a 4/4 flying attacker
+            Permanent flyer = new Permanent(new AirElemental());
+            flyer.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(flyer);
+
+            // Give AI mana for Eviscerate (3B)
+            for (int i = 0; i < 4; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+
+            // Opponent has a 4/4 flying blocker (CAN block flying) and is at 4 life
+            // Air Elemental CAN be blocked → current unblockable = 0
+            // Removing the blocker → unblockable = 4 = lethal
+            Permanent oppFlyer = new Permanent(new AirElemental());
+            oppFlyer.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppFlyer);
+            gd.playerLifeTotals.put(player2.getId(), 4);
+
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI SHOULD cast removal to clear the flying blocker for lethal
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Eviscerate");
+        }
+
+        @Test
+        @DisplayName("AI recognizes fear creature as unblockable when opponent has no black/artifact creatures")
+        void fearAttackerRecognizedAsUnblockable() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has a 2/2 fear creature (Severed Legion — black, fear)
+            Permanent legion = new Permanent(new SeveredLegion());
+            legion.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(legion);
+
+            // Give AI mana for Eviscerate (3B)
+            for (int i = 0; i < 4; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+
+            // Opponent has a green 2/2 (can't block fear) and is at 2 life
+            Permanent oppBlocker = new Permanent(new GrizzlyBears());
+            oppBlocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBlocker);
+            gd.playerLifeTotals.put(player2.getId(), 2);
+
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should NOT waste removal — fear creature is unblockable vs green creature
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("AI recognizes swampwalk creature as unblockable when opponent controls a swamp")
+        void swampwalkAttackerUnblockableWithSwamp() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has a 3/3 swampwalk creature (Bog Wraith)
+            Permanent bogWraith = new Permanent(new BogWraith());
+            bogWraith.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bogWraith);
+
+            // Give AI mana for Eviscerate (3B)
+            for (int i = 0; i < 4; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+
+            // Opponent has a 2/2 blocker AND a swamp (swampwalk is active)
+            Permanent oppBlocker = new Permanent(new GrizzlyBears());
+            oppBlocker.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBlocker);
+            Permanent oppSwamp = new Permanent(new Swamp());
+            oppSwamp.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppSwamp);
+            gd.playerLifeTotals.put(player2.getId(), 3);
+
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should NOT waste removal — swampwalk makes it unblockable
             assertThat(gd.stack).isEmpty();
         }
     }

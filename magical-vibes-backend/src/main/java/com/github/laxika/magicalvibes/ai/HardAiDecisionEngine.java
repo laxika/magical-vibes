@@ -694,8 +694,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     /**
      * Estimates how much combat damage would get through to the opponent's face.
-     * Simple model: opponent blocks the strongest attackers first; remaining
-     * attackers deal damage unblocked. Accounts for trample on blocked attackers.
+     * Separates attackers into "guaranteed damage" (truly unblockable due to evasion,
+     * protection, fear/intimidate, landwalk, menace with too few legal blockers, etc.)
+     * and "blockable". The greedy blocking simulation only runs on blockable attackers.
      */
     private int estimateUnblockableDamage(GameData gameData,
                                            List<Permanent> attackers,
@@ -707,32 +708,72 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     .sum();
         }
 
+        // Get the full defender battlefield (needed for landwalk checks in canBlockAttacker)
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+
+        // Separate attackers into guaranteed damage vs blockable
+        int guaranteedDamage = 0;
+        List<Permanent> blockableAttackers = new ArrayList<>();
+
+        for (Permanent attacker : attackers) {
+            // Count how many blockers can legally block this attacker
+            int legalBlockerCount = 0;
+            for (Permanent blocker : blockers) {
+                if (gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                    legalBlockerCount++;
+                }
+            }
+
+            boolean hasMenace = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE);
+            int requiredBlockers = hasMenace ? 2 : 1;
+
+            if (legalBlockerCount < requiredBlockers) {
+                // No legal blockers (or not enough for menace) — guaranteed damage
+                guaranteedDamage += Math.max(0, gameQueryService.getEffectivePower(gameData, attacker));
+            } else {
+                blockableAttackers.add(attacker);
+            }
+        }
+
+        if (blockableAttackers.isEmpty()) return guaranteedDamage;
+
+        // Filter blockers to only those that can actually block at least one blockable attacker
+        List<Permanent> relevantBlockers = new ArrayList<>();
+        for (Permanent blocker : blockers) {
+            for (Permanent attacker : blockableAttackers) {
+                if (gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                    relevantBlockers.add(blocker);
+                    break;
+                }
+            }
+        }
+
+        // Greedy blocking simulation on blockable attackers only
         // Sort attackers by power descending — opponent blocks strongest first
-        List<Permanent> sortedAttackers = new ArrayList<>(attackers);
-        sortedAttackers.sort(Comparator.comparingInt(
+        blockableAttackers.sort(Comparator.comparingInt(
                 (Permanent p) -> gameQueryService.getEffectivePower(gameData, p)).reversed());
 
         // Sort blockers by toughness descending (assigned to strongest attackers)
-        List<Permanent> sortedBlockers = new ArrayList<>(blockers);
-        sortedBlockers.sort(Comparator.comparingInt(
+        relevantBlockers.sort(Comparator.comparingInt(
                 (Permanent p) -> gameQueryService.getEffectiveToughness(gameData, p)).reversed());
 
-        int blockerCount = Math.min(sortedBlockers.size(), sortedAttackers.size());
-        int unblockableDamage = 0;
+        int blockerCount = Math.min(relevantBlockers.size(), blockableAttackers.size());
+        int unblockableDamage = guaranteedDamage;
 
         // Unblocked attackers deal full damage to face
-        for (int i = blockerCount; i < sortedAttackers.size(); i++) {
+        for (int i = blockerCount; i < blockableAttackers.size(); i++) {
             unblockableDamage += Math.max(0,
-                    gameQueryService.getEffectivePower(gameData, sortedAttackers.get(i)));
+                    gameQueryService.getEffectivePower(gameData, blockableAttackers.get(i)));
         }
 
         // Blocked attackers with trample deal excess damage through
         for (int i = 0; i < blockerCount; i++) {
-            Permanent attacker = sortedAttackers.get(i);
+            Permanent attacker = blockableAttackers.get(i);
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.TRAMPLE)) {
                 int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
                 int blockerToughness = gameQueryService.getEffectiveToughness(
-                        gameData, sortedBlockers.get(i));
+                        gameData, relevantBlockers.get(i));
                 int trampleDamage = attackerPower - blockerToughness;
                 if (trampleDamage > 0) {
                     unblockableDamage += trampleDamage;

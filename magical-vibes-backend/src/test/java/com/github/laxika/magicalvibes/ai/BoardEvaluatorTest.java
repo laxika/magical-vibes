@@ -1,10 +1,18 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.a.AbattoirGhoul;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
+import com.github.laxika.magicalvibes.cards.b.BlindZealot;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
+import com.github.laxika.magicalvibes.cards.b.BogWraith;
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
+import com.github.laxika.magicalvibes.cards.v.ViashinoRunner;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -420,6 +428,262 @@ class BoardEvaluatorTest {
             double baseScore = evaluator.creatureScore(gd, bears, player1.getId(), player2.getId());
 
             assertThat(threatScore).isGreaterThanOrEqualTo(baseScore);
+        }
+
+        @Test
+        @DisplayName("Cant-be-blocked creature has extra evasion threat")
+        void cantBeBlockedEvasionBonus() {
+            Permanent phantom = harness.addToBattlefieldAndReturn(player1, new PhantomWarrior());
+
+            double threatScore = evaluator.creatureThreatScore(gd, phantom, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, phantom, player1.getId(), player2.getId());
+
+            // Should get evasion context bonus because it can't be blocked
+            assertThat(threatScore).isGreaterThan(baseScore);
+        }
+
+        @Test
+        @DisplayName("Fear creature has extra evasion threat when opponent has no black or artifact creatures")
+        void fearEvasionBonusWhenUnblockable() {
+            // Severed Legion: 2/2 black creature with fear
+            Permanent legion = harness.addToBattlefieldAndReturn(player1, new SeveredLegion());
+
+            // Opponent has only green creatures (can't block fear)
+            harness.addToBattlefield(player2, new GrizzlyBears());
+
+            double threatScore = evaluator.creatureThreatScore(gd, legion, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, legion, player1.getId(), player2.getId());
+
+            // Fear is effectively unblockable vs green creatures → extra evasion bonus
+            assertThat(threatScore).isGreaterThan(baseScore);
+        }
+
+        @Test
+        @DisplayName("Fear creature gets no extra evasion bonus when opponent has black creature")
+        void fearNoExtraBonusWhenOpponentHasBlack() {
+            Permanent legion = harness.addToBattlefieldAndReturn(player1, new SeveredLegion());
+
+            // Opponent has a black creature that can block fear
+            harness.addToBattlefield(player2, new AbattoirGhoul());
+
+            double threatScore = evaluator.creatureThreatScore(gd, legion, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, legion, player1.getId(), player2.getId());
+
+            // Opponent can block fear → no extra evasion bonus
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+
+        @Test
+        @DisplayName("Fear creature gets no extra evasion bonus when opponent has artifact creature")
+        void fearNoExtraBonusWhenOpponentHasArtifact() {
+            Permanent legion = harness.addToBattlefieldAndReturn(player1, new SeveredLegion());
+
+            // Opponent has an artifact creature that can block fear
+            harness.addToBattlefield(player2, new DarksteelMyr());
+
+            double threatScore = evaluator.creatureThreatScore(gd, legion, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, legion, player1.getId(), player2.getId());
+
+            // Artifact creature can block fear → no extra evasion bonus
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+
+        @Test
+        @DisplayName("Intimidate creature has extra evasion threat when opponent has no same-color or artifact creatures")
+        void intimidateEvasionBonusWhenUnblockable() {
+            // Blind Zealot: 2/2 black creature with intimidate
+            Permanent zealot = harness.addToBattlefieldAndReturn(player1, new BlindZealot());
+
+            // Opponent has only green creatures (can't block intimidate from a black creature)
+            harness.addToBattlefield(player2, new GrizzlyBears());
+
+            double threatScore = evaluator.creatureThreatScore(gd, zealot, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, zealot, player1.getId(), player2.getId());
+
+            // Intimidate is effectively unblockable vs different-color creatures → extra evasion bonus
+            assertThat(threatScore).isGreaterThan(baseScore);
+        }
+
+        @Test
+        @DisplayName("Menace creature has extra evasion threat when opponent has 1 or fewer creatures")
+        void menaceEvasionBonusWhenFewBlockers() {
+            // Viashino Runner: 3/2 with menace
+            Permanent arsonist = harness.addToBattlefieldAndReturn(player1, new ViashinoRunner());
+
+            // Opponent has only 1 creature — not enough for menace
+            harness.addToBattlefield(player2, new GrizzlyBears());
+
+            double threatScore = evaluator.creatureThreatScore(gd, arsonist, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, arsonist, player1.getId(), player2.getId());
+
+            // Menace needs 2 blockers, opponent has ≤1 → extra evasion bonus
+            assertThat(threatScore).isGreaterThan(baseScore);
+        }
+
+        @Test
+        @DisplayName("Menace creature gets no extra evasion bonus when opponent has 2+ creatures")
+        void menaceNoExtraBonusWhenEnoughBlockers() {
+            Permanent arsonist = harness.addToBattlefieldAndReturn(player1, new ViashinoRunner());
+
+            // Opponent has 2 creatures — enough to block menace
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+
+            double threatScore = evaluator.creatureThreatScore(gd, arsonist, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, arsonist, player1.getId(), player2.getId());
+
+            // Enough blockers for menace → no extra evasion bonus
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+
+        @Test
+        @DisplayName("Swampwalk creature has extra evasion threat when opponent controls a swamp")
+        void landwalkEvasionBonusWhenOpponentHasMatchingLand() {
+            // Bog Wraith: 3/3 with swampwalk
+            Permanent bogWraith = harness.addToBattlefieldAndReturn(player1, new BogWraith());
+
+            // Opponent controls a swamp → swampwalk makes it unblockable
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(swamp);
+
+            double threatScore = evaluator.creatureThreatScore(gd, bogWraith, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, bogWraith, player1.getId(), player2.getId());
+
+            // Swampwalk is effectively unblockable when opponent has a swamp
+            assertThat(threatScore).isGreaterThan(baseScore);
+        }
+
+        @Test
+        @DisplayName("Swampwalk creature gets no extra evasion bonus when opponent has no swamps")
+        void landwalkNoExtraBonusWhenNoMatchingLand() {
+            Permanent bogWraith = harness.addToBattlefieldAndReturn(player1, new BogWraith());
+
+            // Opponent has no swamps
+            harness.addToBattlefield(player2, new GrizzlyBears());
+
+            double threatScore = evaluator.creatureThreatScore(gd, bogWraith, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, bogWraith, player1.getId(), player2.getId());
+
+            // No matching land → no extra evasion bonus
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+    }
+
+    // ===== Keyword bonus context awareness =====
+
+    @Nested
+    @DisplayName("Context-aware keyword bonuses")
+    class KeywordBonusContext {
+
+        @BeforeEach
+        void clearBoards() {
+            gd.playerBattlefields.get(player1.getId()).clear();
+            gd.playerBattlefields.get(player2.getId()).clear();
+        }
+
+        @Test
+        @DisplayName("Cant-be-blocked creature scores higher than same P/T vanilla")
+        void cantBeBlockedScoresHigher() {
+            // Phantom Warrior: 2/2 cant-be-blocked
+            Permanent phantom = new Permanent(new PhantomWarrior());
+            phantom.setSummoningSick(false);
+
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+
+            double phantomScore = evaluator.creatureScore(gd, phantom, player1.getId(), player2.getId());
+            double bearsScore = evaluator.creatureScore(gd, bears, player1.getId(), player2.getId());
+
+            // Cant-be-blocked should add bonus to keyword score
+            assertThat(phantomScore).isGreaterThan(bearsScore);
+        }
+
+        @Test
+        @DisplayName("Fear creature scores higher when opponent has no black or artifact creatures")
+        void fearContextAwareScoring() {
+            // Severed Legion: 2/2 with fear
+            Permanent legion = new Permanent(new SeveredLegion());
+            legion.setSummoningSick(false);
+
+            // With only green opponent creatures — fear is effectively unblockable
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new GrizzlyBears()));
+            double unblockableScore = evaluator.creatureScore(gd, legion, player1.getId(), player2.getId());
+
+            // Now add a black creature — fear can be blocked
+            gd.playerBattlefields.get(player2.getId()).clear();
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new AbattoirGhoul()));
+            double blockableScore = evaluator.creatureScore(gd, legion, player1.getId(), player2.getId());
+
+            // Fear should score higher when opponent can't block it
+            assertThat(unblockableScore).isGreaterThan(blockableScore);
+        }
+
+        @Test
+        @DisplayName("Intimidate creature scores higher when opponent has no same-color or artifact creatures")
+        void intimidateContextAwareScoring() {
+            // Blind Zealot: 2/2 black creature with intimidate
+            Permanent zealot = new Permanent(new BlindZealot());
+            zealot.setSummoningSick(false);
+
+            // With only green opponent creatures — intimidate (black) is unblockable
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new GrizzlyBears()));
+            double unblockableScore = evaluator.creatureScore(gd, zealot, player1.getId(), player2.getId());
+
+            // Now add an artifact creature — can block intimidate
+            gd.playerBattlefields.get(player2.getId()).clear();
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new DarksteelMyr()));
+            double blockableScore = evaluator.creatureScore(gd, zealot, player1.getId(), player2.getId());
+
+            // Intimidate should score higher when opponent can't block it
+            assertThat(unblockableScore).isGreaterThan(blockableScore);
+        }
+
+        @Test
+        @DisplayName("Menace creature scores higher when opponent has 1 or fewer creatures")
+        void menaceContextAwareScoring() {
+            // Viashino Runner: 3/2 with menace
+            Permanent arsonist = new Permanent(new ViashinoRunner());
+            arsonist.setSummoningSick(false);
+
+            // Opponent has 1 creature — not enough for menace
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new GrizzlyBears()));
+            double fewBlockersScore = evaluator.creatureScore(gd, arsonist, player1.getId(), player2.getId());
+
+            // Opponent has 3 creatures — plenty for menace
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new GrizzlyBears()));
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new GrizzlyBears()));
+            double manyBlockersScore = evaluator.creatureScore(gd, arsonist, player1.getId(), player2.getId());
+
+            // Menace should score higher when opponent can't provide 2 blockers
+            assertThat(fewBlockersScore).isGreaterThan(manyBlockersScore);
+        }
+
+        @Test
+        @DisplayName("Landwalk creature scores higher when opponent has matching land")
+        void landwalkContextAwareScoring() {
+            // Bog Wraith: 3/3 with swampwalk
+            Permanent bogWraith = new Permanent(new BogWraith());
+            bogWraith.setSummoningSick(false);
+
+            // Opponent has a swamp — swampwalk is effectively unblockable
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(swamp);
+            double withSwampScore = evaluator.creatureScore(gd, bogWraith, player1.getId(), player2.getId());
+
+            // Opponent has no swamps
+            gd.playerBattlefields.get(player2.getId()).clear();
+            double withoutSwampScore = evaluator.creatureScore(gd, bogWraith, player1.getId(), player2.getId());
+
+            // Swampwalk should score higher when opponent has a swamp
+            assertThat(withSwampScore).isGreaterThan(withoutSwampScore);
+        }
+
+        private Permanent createReadyCreature(com.github.laxika.magicalvibes.model.Card card) {
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            return perm;
         }
     }
 }

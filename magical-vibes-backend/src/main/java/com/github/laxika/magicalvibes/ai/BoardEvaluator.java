@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -245,23 +246,69 @@ public class BoardEvaluator {
 
     /**
      * Extra bonus for evasive creatures when the opponent cannot block them.
-     * A flying attacker is much more threatening when you have no flyers or reach.
+     * Covers all evasion types: cant-be-blocked, flying, fear, intimidate,
+     * menace (≤1 blocker), and landwalk.
      */
     private double evasionContextBonus(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
-        double bonus = 0;
         if (opponentId == null) return 0;
 
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        List<Permanent> opponentCreatures = opponentBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .toList();
+
+        // Unconditional cant-be-blocked is the strongest form of evasion
+        if (gameQueryService.hasCantBeBlocked(gameData, perm)) {
+            return 8.0;
+        }
+
+        double bonus = 0;
 
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING)) {
-            boolean opponentCanBlockFlyers = opponentBattlefield.stream()
-                    .filter(p -> gameQueryService.isCreature(gameData, p))
+            boolean opponentCanBlockFlyers = opponentCreatures.stream()
                     .anyMatch(p -> gameQueryService.hasKeyword(gameData, p, Keyword.FLYING)
                             || gameQueryService.hasKeyword(gameData, p, Keyword.REACH));
             if (!opponentCanBlockFlyers) {
                 bonus += 6.0;
             }
         }
+
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR)) {
+            boolean opponentCanBlockFear = opponentCreatures.stream()
+                    .anyMatch(p -> gameQueryService.isArtifact(p)
+                            || p.getEffectiveColor() == CardColor.BLACK);
+            if (!opponentCanBlockFear) {
+                bonus += 6.0;
+            }
+        }
+
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE)) {
+            CardColor attackerColor = perm.getEffectiveColor();
+            boolean opponentCanBlockIntimidate = opponentCreatures.stream()
+                    .anyMatch(p -> gameQueryService.isArtifact(p)
+                            || p.getEffectiveColor() == attackerColor);
+            if (!opponentCanBlockIntimidate) {
+                bonus += 6.0;
+            }
+        }
+
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.MENACE)) {
+            // Menace requires 2 blockers — if opponent has ≤1 creature, it's effectively unblockable
+            if (opponentCreatures.size() <= 1) {
+                bonus += 6.0;
+            }
+        }
+
+        // Landwalk: unblockable if opponent has matching land type
+        for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
+            if (gameQueryService.hasKeyword(gameData, perm, entry.getKey())
+                    && opponentBattlefield.stream()
+                            .anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
+                bonus += 6.0;
+                break; // One landwalk is enough for the evasion bonus
+            }
+        }
+
         return bonus;
     }
 
@@ -310,6 +357,11 @@ public class BoardEvaluator {
     private double keywordBonus(GameData gameData, Permanent perm, UUID opponentId) {
         double bonus = 0;
 
+        // Unconditional cant-be-blocked: highly valuable
+        if (gameQueryService.hasCantBeBlocked(gameData, perm)) {
+            bonus += 8;
+        }
+
         // Flying is worth more when opponent has no flyers or reach (effectively unblockable)
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING)) {
             if (opponentId != null) {
@@ -328,33 +380,61 @@ public class BoardEvaluator {
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.VIGILANCE)) bonus += 2;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.LIFELINK)) bonus += 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) bonus += 5;
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.MENACE)) bonus += 2;
+
+        // Menace: worth more when opponent has ≤1 creature (effectively unblockable)
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.MENACE)) {
+            if (opponentId != null) {
+                long opponentCreatureCount = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .count();
+                bonus += opponentCreatureCount <= 1 ? 6 : 2;
+            } else {
+                bonus += 2;
+            }
+        }
+
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)) bonus += 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)) bonus += 3;
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR)) bonus += 2;
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE)) bonus += 2;
+
+        // Fear: worth more when opponent has no black creatures or artifacts
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR)) {
+            if (opponentId != null) {
+                boolean opponentCanBlockFear = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .anyMatch(p -> gameQueryService.isArtifact(p)
+                                || p.getEffectiveColor() == CardColor.BLACK);
+                bonus += opponentCanBlockFear ? 2 : 8;
+            } else {
+                bonus += 2;
+            }
+        }
+
+        // Intimidate: worth more when opponent has no same-color creatures or artifacts
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE)) {
+            if (opponentId != null) {
+                CardColor attackerColor = perm.getEffectiveColor();
+                boolean opponentCanBlockIntimidate = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .anyMatch(p -> gameQueryService.isArtifact(p)
+                                || p.getEffectiveColor() == attackerColor);
+                bonus += opponentCanBlockIntimidate ? 2 : 8;
+            } else {
+                bonus += 2;
+            }
+        }
+
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) bonus -= 3;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) bonus += 1;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.INFECT)) bonus += 4;
 
-        // Landwalk bonuses: check if opponent has matching land type
+        // Landwalk bonuses: effectively unblockable if opponent has matching land type
         if (opponentId != null) {
             List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.FORESTWALK)
-                    && oppBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.FOREST))) {
-                bonus += 2;
-            }
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.MOUNTAINWALK)
-                    && oppBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.MOUNTAIN))) {
-                bonus += 2;
-            }
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.ISLANDWALK)
-                    && oppBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND))) {
-                bonus += 2;
-            }
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.SWAMPWALK)
-                    && oppBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.SWAMP))) {
-                bonus += 2;
+            for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
+                if (gameQueryService.hasKeyword(gameData, perm, entry.getKey())
+                        && oppBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
+                    bonus += 6;
+                }
             }
         }
 
