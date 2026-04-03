@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqual
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.MassFightTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
@@ -1819,6 +1820,79 @@ public class DamageResolutionService {
                 dealDamageAndDestroyIfLethal(gameData, entry, first, damage, second);
             }
         }
+    }
+
+    /**
+     * Resolves {@link MassFightTargetCreatureEffect} — the targeted creature deals damage equal to its power
+     * to each other creature that player controls, then each of those creatures deals damage equal to its
+     * power to the targeted creature. Each creature is the source of its own damage. State-based actions
+     * are not checked between the two damage steps. Used by Alpha Brawl.
+     */
+    @HandlesEffect(MassFightTargetCreatureEffect.class)
+    void resolveMassFightTargetCreature(GameData gameData, StackEntry entry) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) return;
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        // Collect other creatures on the same battlefield
+        List<Permanent> otherCreatures = new ArrayList<>();
+        for (Permanent p : new ArrayList<>(battlefield)) {
+            if (p.getId().equals(target.getId())) continue;
+            if (!gameQueryService.isCreature(gameData, p)) continue;
+            otherCreatures.add(p);
+        }
+
+        // Step 1: Target creature deals damage equal to its power to each other creature
+        int targetPower = gameQueryService.getEffectivePower(gameData, target);
+        if (targetPower > 0) {
+            boolean targetPrevented = gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.isPreventedFromDealingDamage(gameData, target);
+            if (targetPrevented) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        target.getCard().getName() + "'s damage is prevented.");
+            } else {
+                for (Permanent other : otherCreatures) {
+                    if (gameQueryService.isDamagePreventable(gameData)
+                            && gameQueryService.hasProtectionFromSource(gameData, other, target)) {
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                other.getCard().getName() + " has protection — damage from "
+                                        + target.getCard().getName() + " prevented.");
+                        continue;
+                    }
+                    int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
+                    dealDamageAndDestroyIfLethal(gameData, entry, other, damage, target);
+                }
+            }
+        }
+
+        // Step 2: Each other creature deals damage equal to its power to the targeted creature
+        for (Permanent other : otherCreatures) {
+            int otherPower = gameQueryService.getEffectivePower(gameData, other);
+            if (otherPower <= 0) continue;
+
+            if (gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.isPreventedFromDealingDamage(gameData, other)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        other.getCard().getName() + "'s damage is prevented.");
+                continue;
+            }
+            if (gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.hasProtectionFromSource(gameData, target, other)) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        target.getCard().getName() + " has protection — damage from "
+                                + other.getCard().getName() + " prevented.");
+                continue;
+            }
+            int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, entry);
+            dealDamageAndDestroyIfLethal(gameData, entry, target, damage, other);
+        }
+
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /**
