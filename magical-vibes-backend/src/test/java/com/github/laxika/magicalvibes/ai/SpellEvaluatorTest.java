@@ -2,13 +2,19 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HealingGrace;
+import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WallOfFire;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -501,5 +507,214 @@ class SpellEvaluatorTest {
         double discardRatio = airElementalValue / bearsValue;
 
         assertThat(discardRatio).isLessThan(rawRatio);
+    }
+
+    // ===== Defensive pressure multiplier =====
+
+    @Test
+    @DisplayName("Life gain spell value boosted when opponent board damage >= AI life")
+    void lifeGainBoostedUnderLethalPressure() {
+        // Opponent has three 3/3 creatures (9 total damage) — lethal vs 5 life
+        for (int i = 0; i < 3; i++) {
+            Permanent wurm = new Permanent(new CrawWurm()); // 6/4
+            wurm.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(wurm);
+        }
+
+        // AI at 5 life — opponent board damage (18) far exceeds AI life
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double underPressure = spellEvaluator.estimateSpellValue(gd, new HealingGrace(), player1.getId());
+
+        // AI at 20 life — opponent board damage (18) is 90% of life, still significant
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        double moderatePressure = spellEvaluator.estimateSpellValue(gd, new HealingGrace(), player1.getId());
+
+        // Remove opponent creatures — no pressure
+        gd.playerBattlefields.get(player2.getId()).clear();
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        double noPressure = spellEvaluator.estimateSpellValue(gd, new HealingGrace(), player1.getId());
+
+        // Under lethal pressure, life gain should be worth significantly more
+        assertThat(underPressure).isGreaterThan(noPressure);
+        assertThat(underPressure).isGreaterThan(moderatePressure);
+    }
+
+    @Test
+    @DisplayName("Board wipe value boosted under defensive pressure")
+    void boardWipeBoostedUnderPressure() {
+        // Opponent has three 6/4 creatures (18 total damage)
+        for (int i = 0; i < 3; i++) {
+            Permanent wurm = new Permanent(new CrawWurm());
+            wurm.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(wurm);
+        }
+
+        // AI at 5 life — opponent board damage far exceeds AI life
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double underPressure = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // AI at 100 life — opponent board damage is small fraction of life
+        gd.playerLifeTotals.put(player1.getId(), 100);
+        double noPressure = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // Board wipe should be worth more when under pressure (1.5x multiplier)
+        assertThat(underPressure).isGreaterThan(noPressure);
+    }
+
+    @Test
+    @DisplayName("Removal value boosted under defensive pressure")
+    void removalBoostedUnderPressure() {
+        // Opponent has a 6/4 Craw Wurm
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        // AI at 5 life — opponent board damage (6) exceeds AI life
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double underPressure = spellEvaluator.estimateSpellValue(gd, new DoomBlade(), player1.getId());
+
+        // AI at 100 life — no pressure
+        gd.playerLifeTotals.put(player1.getId(), 100);
+        double noPressure = spellEvaluator.estimateSpellValue(gd, new DoomBlade(), player1.getId());
+
+        assertThat(underPressure).isGreaterThan(noPressure);
+    }
+
+    @Test
+    @DisplayName("Creature value boosted under defensive pressure (potential blocker)")
+    void creatureValueBoostedUnderPressure() {
+        // Opponent has a 6/4 Craw Wurm
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        // AI at 5 life — facing lethal
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double underPressure = spellEvaluator.estimateSpellValue(gd, new GrizzlyBears(), player1.getId());
+
+        // AI at 100 life — safe
+        gd.playerLifeTotals.put(player1.getId(), 100);
+        double noPressure = spellEvaluator.estimateSpellValue(gd, new GrizzlyBears(), player1.getId());
+
+        assertThat(underPressure).isGreaterThan(noPressure);
+    }
+
+    @Test
+    @DisplayName("No defensive pressure multiplier when opponent has no creatures")
+    void noPressureWithEmptyBoard() {
+        // No opponent creatures
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double lowLife = spellEvaluator.estimateSpellValue(gd, new GrizzlyBears(), player1.getId());
+
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        double normalLife = spellEvaluator.estimateSpellValue(gd, new GrizzlyBears(), player1.getId());
+
+        // Without opponent creatures, life total should not affect spell evaluation
+        // (no board damage means no defensive pressure)
+        assertThat(lowLife).isEqualTo(normalLife);
+    }
+
+    @Test
+    @DisplayName("No defensive pressure multiplier when board damage is low relative to life")
+    void noPressureWhenSafe() {
+        // Opponent has one 2/2 (2 damage)
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        // AI at 20 life — pressure ratio is 2/20 = 0.1, well below 0.5 threshold
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        double multiplier = spellEvaluator.defensivePressureMultiplier(gd, new HealingGrace(), player1.getId());
+
+        assertThat(multiplier).isEqualTo(1.0);
+    }
+
+    @Test
+    @DisplayName("Non-defensive spell (card draw) gets no pressure boost")
+    void nonDefensiveSpellNoPressureBoost() {
+        // Opponent has three 6/4 creatures — massive pressure
+        for (int i = 0; i < 3; i++) {
+            Permanent wurm = new Permanent(new CrawWurm());
+            wurm.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(wurm);
+        }
+
+        // AI at 5 life — facing lethal
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double multiplier = spellEvaluator.defensivePressureMultiplier(gd, new Divination(), player1.getId());
+
+        // Divination is pure card draw — not a defensive spell, no boost
+        assertThat(multiplier).isEqualTo(1.0);
+    }
+
+    @Test
+    @DisplayName("Defender creatures excluded from opponent board damage calculation")
+    void defenderExcludedFromBoardDamage() {
+        // Opponent has only a Wall of Fire (0/5 defender) — cannot attack
+        Permanent wall = new Permanent(new WallOfFire());
+        wall.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wall);
+
+        // AI at 1 life — but opponent has no attackers (wall has defender)
+        gd.playerLifeTotals.put(player1.getId(), 1);
+        double multiplier = spellEvaluator.defensivePressureMultiplier(gd, new HealingGrace(), player1.getId());
+
+        // No board damage from defenders, so no pressure
+        assertThat(multiplier).isEqualTo(1.0);
+    }
+
+    @Test
+    @DisplayName("Creature with ETB life gain gets life gain pressure multiplier")
+    void creatureWithEtbLifeGainGetsPressureBoost() {
+        // Opponent has a 6/4 Craw Wurm
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        // AI at 5 life — facing lethal
+        gd.playerLifeTotals.put(player1.getId(), 5);
+
+        // InspiringCleric is a creature with ETB "gain 4 life"
+        // It should get the life gain multiplier (3.0x), not just the creature multiplier (1.3x)
+        double clericMultiplier = spellEvaluator.defensivePressureMultiplier(gd, new InspiringCleric(), player1.getId());
+        double bearsMultiplier = spellEvaluator.defensivePressureMultiplier(gd, new GrizzlyBears(), player1.getId());
+
+        assertThat(clericMultiplier).isGreaterThan(bearsMultiplier);
+    }
+
+    @Test
+    @DisplayName("Pressure multiplier scales linearly at intermediate pressure")
+    void pressureMultiplierScalesLinearly() {
+        // Opponent has a 6/4 Craw Wurm (6 damage)
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        // At 8 life: pressure = 6/8 = 0.75 (between 0.5 and 1.0)
+        gd.playerLifeTotals.put(player1.getId(), 8);
+        double intermediatePressure = spellEvaluator.defensivePressureMultiplier(gd, new HealingGrace(), player1.getId());
+
+        // At 5 life: pressure = 6/5 = 1.2 (above 1.0, capped at max)
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double maxPressure = spellEvaluator.defensivePressureMultiplier(gd, new HealingGrace(), player1.getId());
+
+        // Intermediate should be between 1.0 and max
+        assertThat(intermediatePressure).isGreaterThan(1.0);
+        assertThat(intermediatePressure).isLessThan(maxPressure);
+    }
+
+    @Test
+    @DisplayName("Pressure multiplier returns 1.0 when AI life is zero or negative")
+    void pressureMultiplierSafeWithZeroLife() {
+        // Opponent has a creature
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        // AI at 0 life — edge case, should not blow up
+        gd.playerLifeTotals.put(player1.getId(), 0);
+        double multiplier = spellEvaluator.defensivePressureMultiplier(gd, new HealingGrace(), player1.getId());
+
+        assertThat(multiplier).isEqualTo(1.0);
     }
 }

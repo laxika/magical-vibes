@@ -626,9 +626,25 @@ public class CombatSimulator {
             }
         }
 
+        // Scale life loss weight based on proximity to lethal — when damage
+        // represents a large fraction of remaining life, prioritize blocking
+        // over preserving creatures (enables correct chump-blocking decisions).
+        double lifeWeight = 2.0;
+        if (aiLife > 0) {
+            double totalPotentialDamage = 0;
+            for (CreatureInfo attacker : attackerInfos) {
+                totalPotentialDamage += attacker.power;
+            }
+            double lethalRatio = totalPotentialDamage / aiLife;
+            if (lethalRatio >= 0.5) {
+                // At 50% of life: weight = 2.0, at 100%+ (lethal): weight = 5.0
+                lifeWeight = 2.0 + 3.0 * Math.min(1.0, (lethalRatio - 0.5) / 0.5);
+            }
+        }
+
         double score = attackerCreaturesLostValue
                 - defenderCreaturesLostValue
-                - defenderLifeLost * 2.0
+                - defenderLifeLost * lifeWeight
                 - defenderPoisonGained * 4.0
                 + defenderLifeGained * 0.5;
 

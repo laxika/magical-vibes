@@ -160,7 +160,8 @@ public class SpellEvaluator {
 
         if (baseValue <= 0) return baseValue;
 
-        return baseValue * gamePhaseMultiplier(gameData, card, aiPlayerId);
+        return baseValue * gamePhaseMultiplier(gameData, card, aiPlayerId)
+                         * defensivePressureMultiplier(gameData, card, aiPlayerId);
     }
 
     /**
@@ -240,6 +241,70 @@ public class SpellEvaluator {
         }
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream().anyMatch(o -> isBoardWipeEffect(o.effect()));
+        }
+        return false;
+    }
+
+    /**
+     * Returns a multiplier (1.0–3.0) that boosts defensive spells when the AI
+     * is under heavy board pressure. When opponent's board damage >= AI life
+     * (one attack from dead), life gain is boosted up to 3x, board wipes 1.5x,
+     * removal and creatures 1.3x. Scales linearly from 50% pressure to 100%.
+     */
+    double defensivePressureMultiplier(GameData gameData, Card card, UUID aiPlayerId) {
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        int aiLife = gameData.getLife(aiPlayerId);
+        if (aiLife <= 0) return 1.0;
+
+        int opponentBoardDamage = computeOpponentBoardDamage(gameData, opponentId);
+        if (opponentBoardDamage == 0) return 1.0;
+
+        double pressureRatio = (double) opponentBoardDamage / aiLife;
+        if (pressureRatio < 0.5) return 1.0;
+
+        // Determine the maximum multiplier based on spell category
+        double maxMultiplier;
+        if (hasLifeGainEffect(card)) {
+            maxMultiplier = 3.0;
+        } else if (hasBoardWipeEffect(card)) {
+            maxMultiplier = 1.5;
+        } else if (hasRemovalEffects(card) || card.hasType(CardType.CREATURE)) {
+            maxMultiplier = 1.3;
+        } else {
+            return 1.0;
+        }
+
+        // Linear interpolation from 1.0 at 50% pressure to maxMultiplier at 100%+ pressure
+        double t = Math.min(1.0, (pressureRatio - 0.5) / 0.5);
+        return 1.0 + (maxMultiplier - 1.0) * t;
+    }
+
+    private int computeOpponentBoardDamage(GameData gameData, UUID opponentId) {
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        int damage = 0;
+        for (Permanent perm : oppBattlefield) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            int power = gameQueryService.getEffectivePower(gameData, perm);
+            if (power > 0) damage += power;
+        }
+        return damage;
+    }
+
+    private boolean hasLifeGainEffect(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (isLifeGainEffect(effect)) return true;
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (isLifeGainEffect(effect)) return true;
+        }
+        return false;
+    }
+
+    private boolean isLifeGainEffect(CardEffect effect) {
+        if (effect instanceof GainLifeEffect) return true;
+        if (effect instanceof ChooseOneEffect coe) {
+            return coe.options().stream().anyMatch(o -> isLifeGainEffect(o.effect()));
         }
         return false;
     }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GaeasProtector;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OgreResister;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.PrizedUnicorn;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -1160,5 +1161,55 @@ class CombatSimulatorTest {
         // because killing the 6/4 removes more value than chump-blocking both
         long crawWurmBlockerCount = blockers.stream().filter(b -> b[1] == 0).count();
         assertThat(crawWurmBlockerCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: chump blocks when near-lethal even if trade is unfavorable")
+    void exhaustiveChumpBlocksNearLethal() {
+        // Opponent attacks with Ogre Resister (4/3) — too tough for a 2/2 to kill
+        Permanent ogre = new Permanent(new OgreResister());
+        ogre.setSummoningSick(false);
+        ogre.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(ogre);
+
+        // AI at 7 life with one 2/2 bears — not strict lethal (4 < 7) but near-lethal.
+        // Taking 4 damage leaves AI at 3 life — one more attack kills.
+        // The enhanced life weight when near-lethal should make chump-blocking correct
+        // even though the trade is unfavorable (lose a 2/2, don't kill the 4/3).
+        gd.playerLifeTotals.put(player1.getId(), 7);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Should chump-block to preserve life when near-lethal
+        assertThat(blockers).hasSize(1);
+        assertThat(blockers.get(0)[1]).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: no chump block when life is safe despite unfavorable trade")
+    void exhaustiveNoChumpBlockWhenSafe() {
+        // Opponent attacks with Ogre Resister (4/3) — too tough for a 2/2 to kill
+        Permanent ogre = new Permanent(new OgreResister());
+        ogre.setSummoningSick(false);
+        ogre.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(ogre);
+
+        // AI at 20 life with one 2/2 bears — taking 4 damage leaves 16 life, very safe.
+        // Pressure ratio = 4/20 = 0.2 (below 0.5 threshold), so life weight stays at 2.0.
+        // Bears score (9.0) > 4 damage * 2.0 weight (8.0), so don't sacrifice the creature.
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Should NOT chump-block: life is safe, preserve the creature
+        assertThat(blockers).isEmpty();
     }
 }
