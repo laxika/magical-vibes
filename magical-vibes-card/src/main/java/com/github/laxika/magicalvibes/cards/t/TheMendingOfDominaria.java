@@ -43,6 +43,6 @@ public class TheMendingOfDominaria extends Card {
                 .filter(new CardTypePredicate(CardType.LAND))
                 .returnAll(true)
                 .build());
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ShuffleGraveyardIntoLibraryEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ShuffleGraveyardIntoLibraryEffect(false));
     }
 }

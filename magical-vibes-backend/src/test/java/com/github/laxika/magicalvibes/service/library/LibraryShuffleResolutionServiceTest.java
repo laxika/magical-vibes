@@ -134,7 +134,7 @@ class LibraryShuffleResolutionServiceTest {
             gd.playerGraveyards.get(player1Id).addAll(List.of(bear1, bear2));
             int deckSizeBefore = gd.playerDecks.get(player1Id).size();
 
-            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect();
+            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect(true);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Reminisce"),
                     player1Id, "Reminisce", List.of(effect), 0, player1Id, null);
 
@@ -152,7 +152,7 @@ class LibraryShuffleResolutionServiceTest {
         void emptyGraveyardStillShuffles() {
             int deckSizeBefore = gd.playerDecks.get(player1Id).size();
 
-            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect();
+            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect(true);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Reminisce"),
                     player1Id, "Reminisce", List.of(effect), 0, player1Id, null);
 
@@ -171,7 +171,7 @@ class LibraryShuffleResolutionServiceTest {
             gd.playerGraveyards.get(player1Id).addAll(List.of(bear1, bear2));
             int deckSizeBefore = gd.playerDecks.get(player1Id).size();
 
-            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect();
+            ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect(true);
             // Saga chapter / triggered ability: no targetId
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("The Mending of Dominaria"),
                     player1Id, "The Mending of Dominaria's chapter III ability", List.of(effect));

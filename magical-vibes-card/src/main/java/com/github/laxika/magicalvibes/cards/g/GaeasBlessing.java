@@ -13,6 +13,6 @@ public class GaeasBlessing extends Card {
     public GaeasBlessing() {
         addEffect(EffectSlot.SPELL, new ShuffleTargetCardsFromGraveyardIntoLibraryEffect(null, 3));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
-        addEffect(EffectSlot.ON_SELF_MILLED, new ShuffleGraveyardIntoLibraryEffect());
+        addEffect(EffectSlot.ON_SELF_MILLED, new ShuffleGraveyardIntoLibraryEffect(false));
     }
 }

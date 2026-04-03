@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AncestorsChosen extends Card {
 
     public AncestorsChosen() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifePerGraveyardCardEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifePerGraveyardCardEffect(1));
     }
 }

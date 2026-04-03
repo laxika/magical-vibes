@@ -277,21 +277,21 @@ public class LifeResolutionService {
     }
 
     @HandlesEffect(GainLifePerGraveyardCardEffect.class)
-    private void resolveGainLifePerGraveyardCard(GameData gameData, StackEntry entry) {
-        applyGainLifePerGraveyardCard(gameData, entry.getControllerId());
+    private void resolveGainLifePerGraveyardCard(GameData gameData, StackEntry entry, GainLifePerGraveyardCardEffect effect) {
+        applyGainLifePerGraveyardCard(gameData, entry.getControllerId(), effect.lifePerCard());
     }
 
-    private void applyGainLifePerGraveyardCard(GameData gameData, UUID controllerId) {
+    private void applyGainLifePerGraveyardCard(GameData gameData, UUID controllerId, int lifePerCard) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        int amount = graveyard != null ? graveyard.size() : 0;
-        if (amount == 0) {
+        int cardCount = graveyard != null ? graveyard.size() : 0;
+        if (cardCount == 0) {
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = playerName + " has no cards in their graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} has no graveyard cards for life gain", gameData.id, playerName);
             return;
         }
-        applyGainLife(gameData, controllerId, amount);
+        applyGainLife(gameData, controllerId, cardCount * lifePerCard);
     }
 
     @HandlesEffect(GainLifePerCreatureCardInGraveyardEffect.class)

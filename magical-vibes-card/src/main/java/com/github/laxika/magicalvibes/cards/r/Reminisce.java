@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Reminisce extends Card {
 
     public Reminisce() {
-        addEffect(EffectSlot.SPELL, new ShuffleGraveyardIntoLibraryEffect());
+        addEffect(EffectSlot.SPELL, new ShuffleGraveyardIntoLibraryEffect(true));
     }
 }
