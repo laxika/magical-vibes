@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
@@ -38,6 +40,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -1228,6 +1232,190 @@ class HardAiDecisionEngineTest {
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).isNotNull();
         assertThat(hand.stream().anyMatch(c -> c.getName().equals("Cancel"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI values countering a board wipe higher than a vanilla creature of same CMC")
+    void valuesCounteringBoardWipeHigherThanVanillaCreature() {
+        // Give the AI a strong board that the board wipe would destroy
+        Permanent angel1 = new Permanent(new SerraAngel());
+        angel1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel1);
+        Permanent angel2 = new Permanent(new SerraAngel());
+        angel2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel2);
+        Permanent angel3 = new Permanent(new SerraAngel());
+        angel3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel3);
+
+        // Test 1: Opponent casts Wrath of God (board wipe, MV=4)
+        HardAiDecisionEngine ai1 = createHardAi(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        WrathOfGod wrath = new WrathOfGod();
+        StackEntry wrathOnStack = new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
+                wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0);
+        gd.stack.add(wrathOnStack);
+        givePlayerIslands(player1, 3);
+        harness.setHand(player1, List.of(new Cancel()));
+
+        ai1.handleMessage("GAME_STATE", "");
+
+        // AI should counter the board wipe — it threatens its entire board
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+        StackEntry cancelOnStack = gd.stack.getLast();
+        assertThat(cancelOnStack.getCard().getName()).isEqualTo("Cancel");
+    }
+
+    @Test
+    @DisplayName("Hard AI counters removal targeting its best creature")
+    void countersRemovalTargetingBestCreature() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // AI has a valuable creature on the battlefield
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Opponent casts Doom Blade (MV=2) targeting the Angel
+        DoomBlade doomBlade = new DoomBlade();
+        StackEntry removalOnStack = new StackEntry(StackEntryType.INSTANT_SPELL, doomBlade, player2.getId(),
+                doomBlade.getName(), doomBlade.getEffects(EffectSlot.SPELL), 0, angel.getId(), null);
+        gd.stack.add(removalOnStack);
+
+        givePlayerIslands(player1, 3);
+        harness.setHand(player1, List.of(new Cancel()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should counter the removal even though Doom Blade (MV=2) < Cancel (MV=3),
+        // because it's targeting a Serra Angel (high creature value)
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+        StackEntry cancelEntry = gd.stack.getLast();
+        assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
+    }
+
+    @Test
+    @DisplayName("Hard AI saves counterspell when board is strong and opponent casts mediocre creature")
+    void savesCounterspellWhenBoardIsStrongAndThreatIsMediocre() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // AI has a very strong board (3 Serra Angels = high board strength > 30)
+        for (int i = 0; i < 3; i++) {
+            Permanent angel = new Permanent(new SerraAngel());
+            angel.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(angel);
+        }
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Opponent casts a mediocre creature (Grizzly Bears, MV=2, 2/2)
+        GrizzlyBears bears = new GrizzlyBears();
+        StackEntry bearsOnStack = new StackEntry(bears, player2.getId());
+        gd.stack.add(bearsOnStack);
+
+        givePlayerIslands(player1, 3);
+        harness.setHand(player1, List.of(new Cancel()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI should NOT counter a 2/2 when it already has 3 Serra Angels —
+        // save the counterspell for something more threatening
+        List<Card> hand = gd.playerHands.get(player1.getId());
+        assertThat(hand).isNotNull();
+        assertThat(hand.stream().anyMatch(c -> c.getName().equals("Cancel"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI still counters board wipe even when board is strong (reservation bypassed)")
+    void countersHighValueSpellEvenWhenBoardIsStrong() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // AI has a very strong board
+        for (int i = 0; i < 3; i++) {
+            Permanent angel = new Permanent(new SerraAngel());
+            angel.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(angel);
+        }
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Opponent casts Wrath of God — the most threatening spell possible against a big board
+        WrathOfGod wrath = new WrathOfGod();
+        StackEntry wrathOnStack = new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
+                wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0);
+        gd.stack.add(wrathOnStack);
+
+        givePlayerIslands(player1, 3);
+        harness.setHand(player1, List.of(new Cancel()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // AI MUST counter the board wipe — it would destroy all 3 Serra Angels
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+        StackEntry cancelEntry = gd.stack.getLast();
+        assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
+    }
+
+    @Test
+    @DisplayName("Hard AI counters mediocre spell when at low life (reservation bypassed)")
+    void countersAnySpellAtLowLife() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // AI is at critically low life
+        harness.setLife(player1, 4);
+
+        // AI has a strong board
+        for (int i = 0; i < 3; i++) {
+            Permanent angel = new Permanent(new SerraAngel());
+            angel.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(angel);
+        }
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Opponent casts Air Elemental (4/4 flying, MV=5)
+        // Normally might not be countered with a strong board, but at low life AI is desperate
+        AirElemental elemental = new AirElemental();
+        StackEntry spellOnStack = new StackEntry(elemental, player2.getId());
+        gd.stack.add(spellOnStack);
+
+        givePlayerIslands(player1, 3);
+        harness.setHand(player1, List.of(new Cancel()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // At low life, the reservation threshold is bypassed — counter everything
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+        StackEntry cancelEntry = gd.stack.getLast();
+        assertThat(cancelEntry.getCard().getName()).isEqualTo("Cancel");
     }
 
     // ===== Multi-spell awareness =====

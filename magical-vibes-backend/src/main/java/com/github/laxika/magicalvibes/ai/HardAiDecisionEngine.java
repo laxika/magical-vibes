@@ -82,6 +82,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private static final int MCTS_BUDGET = 50000;
 
     private final SpellEvaluator spellEvaluator;
+    private final BoardEvaluator boardEvaluator;
     private final CombatSimulator combatSimulator;
     private final MCTSEngine mctsEngine;
     private final RaceEvaluator raceEvaluator;
@@ -93,7 +94,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
         super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
-        BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
+        this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
         this.mctsEngine = new MCTSEngine(new GameSimulator(gameQueryService));
@@ -1561,31 +1562,61 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Evaluates the value of countering a specific spell on the stack.
-     * High-value spells (big creatures, board wipes, removal) are worth more to counter.
-     * Applies a minimum threshold: don't waste a counterspell on a low-impact spell
-     * unless the AI is at low life (then even cheap spells become worth countering).
+     * Evaluates the value of countering a specific spell on the stack using effect-based
+     * analysis. Instead of a flat mana-value score, runs SpellEvaluator from the opponent's
+     * perspective so that board wipes threatening a full board, removal targeting our best
+     * creature, and powerful ETB effects all score appropriately.
+     *
+     * Also applies a threat reservation threshold: when the AI has a strong board position,
+     * it saves counterspells for high-impact spells rather than wasting them on mediocre threats.
      */
     private double evaluateCounterspellValue(GameData gameData, Card counterSpell, UUID spellTargetId) {
         for (StackEntry entry : gameData.stack) {
             if (entry.getCard().getId().equals(spellTargetId)) {
                 Card targetCard = entry.getCard();
-
-                // Don't waste a counterspell on a spell that costs less than the counterspell itself,
-                // unless the AI is at critically low life. We want mana-efficient exchanges.
                 int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayer.getId(), 20);
                 int counterManaValue = counterSpell.getManaValue();
-                if (aiLife > 5 && targetCard.getManaValue() < counterManaValue) {
+
+                // Evaluate from the opponent's perspective — how much does this spell help them?
+                // Board wipes score huge when the AI has a big board, removal scores high when
+                // the AI has a valuable creature, etc.
+                UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+                double value = spellEvaluator.estimateSpellValue(gameData, targetCard, opponentId);
+
+                // Fallback: if the spell evaluator can't assess the spell (unknown/unhandled
+                // effects), use mana value as a baseline so we still counter expensive mysteries
+                if (value <= 0 && targetCard.getManaValue() > 0) {
+                    value = targetCard.getManaValue() * 3.0;
+                }
+
+                // Mana efficiency gate: don't counter cheap spells unless they have high impact.
+                // A Doom Blade (MV=2) targeting our Serra Angel has high impact and should be
+                // countered even though it costs less than Cancel. But a Llanowar Elves (MV=1)
+                // is low-impact and not worth a 3-mana counter.
+                if (aiLife > 5 && targetCard.getManaValue() < counterManaValue && value < 15.0) {
                     return 0;
                 }
 
-                double value = targetCard.getManaValue() * 5.0;
+                // Threat reservation: when the AI's board is strong, save counterspells for
+                // high-impact spells. A 2/2 vanilla creature isn't worth countering when we
+                // have a dominant board — but a board wipe absolutely is.
+                if (aiLife > 5) {
+                    List<Permanent> aiBattlefield = gameData.playerBattlefields
+                            .getOrDefault(aiPlayer.getId(), List.of());
+                    double aiBoardStrength = aiBattlefield.stream()
+                            .filter(p -> gameQueryService.isCreature(gameData, p))
+                            .mapToDouble(p -> boardEvaluator.creatureScore(
+                                    gameData, p, aiPlayer.getId(), opponentId))
+                            .sum();
 
-                // Creatures are valued by stats + mana value
-                if (entry.getEntryType() == StackEntryType.CREATURE_SPELL) {
-                    int power = targetCard.getPower() != null ? targetCard.getPower() : 0;
-                    int toughness = targetCard.getToughness() != null ? targetCard.getToughness() : 0;
-                    value += power * 3.0 + toughness * 1.5;
+                    // Stronger board = pickier about what to counter.
+                    // At 30+ board strength, require value > 15; scales up with board strength.
+                    if (aiBoardStrength > 30) {
+                        double reservationThreshold = 15.0 + (aiBoardStrength - 30) * 0.3;
+                        if (value < reservationThreshold) {
+                            return 0;
+                        }
+                    }
                 }
 
                 return value;
