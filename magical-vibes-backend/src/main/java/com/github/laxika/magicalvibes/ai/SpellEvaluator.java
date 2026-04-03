@@ -130,30 +130,118 @@ public class SpellEvaluator {
     /**
      * Estimates the value of casting a card. Returns a score where higher is better.
      * Returns 0 or negative for cards that shouldn't be cast.
+     *
+     * Applies game-phase multipliers: early game boosts cheap creatures and tempo,
+     * late game boosts card draw, board wipes, and big finishers.
      */
     public double estimateSpellValue(GameData gameData, Card card, UUID aiPlayerId) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
 
+        double baseValue;
+
         if (card.hasType(CardType.CREATURE)) {
-            return evaluateCreature(gameData, card, aiPlayerId, opponentId);
+            baseValue = evaluateCreature(gameData, card, aiPlayerId, opponentId);
+        } else {
+            // Evaluate by scanning effects across all slots
+            baseValue = 0;
+
+            baseValue += evaluateEffects(gameData, card, card.getEffects(EffectSlot.SPELL),
+                    aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+            baseValue += evaluateEffects(gameData, card, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                    aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+
+            // Aura evaluation
+            if (card.isAura()) {
+                baseValue += evaluateAura(gameData, card, aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+            }
         }
 
-        // Evaluate by scanning effects across all slots
-        double totalValue = 0;
+        if (baseValue <= 0) return baseValue;
 
-        totalValue += evaluateEffects(gameData, card, card.getEffects(EffectSlot.SPELL),
-                aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
-        totalValue += evaluateEffects(gameData, card, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
-                aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+        return baseValue * gamePhaseMultiplier(gameData, card, aiPlayerId);
+    }
 
-        // Aura evaluation
-        if (card.isAura()) {
-            totalValue += evaluateAura(gameData, card, aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+    /**
+     * Returns a multiplier (0.7–1.3) that adjusts a spell's value based on the
+     * current game phase. Early game rewards cheap creatures and tempo plays;
+     * late game rewards card advantage, board wipes, and expensive finishers.
+     */
+    double gamePhaseMultiplier(GameData gameData, Card card, UUID aiPlayerId) {
+        GamePhase phase = GamePhase.determine(gameData, aiPlayerId);
+        if (phase == GamePhase.MID) return 1.0;
+
+        if (phase == GamePhase.EARLY) {
+            // Cheap creatures (mana value 1-3) are premium for board development
+            if (card.hasType(CardType.CREATURE) && card.getManaValue() <= 3) {
+                return 1.3;
+            }
+            // Card draw is weaker — you need board presence, not more cards
+            if (hasCardDrawEffect(card)) {
+                return 0.7;
+            }
+            // Board wipes are rarely good when boards are small
+            if (hasBoardWipeEffect(card)) {
+                return 0.7;
+            }
+            return 1.0;
         }
 
-        return totalValue;
+        // LATE game
+        // Small creatures are outclassed — a 2/2 doesn't matter on a stalled board
+        if (card.hasType(CardType.CREATURE) && card.getManaValue() <= 2) {
+            return 0.7;
+        }
+        // Big finishers are at their best when you have mana to cast them
+        if (card.hasType(CardType.CREATURE) && card.getManaValue() >= 5) {
+            return 1.2;
+        }
+        // Card draw is excellent — find answers and threats
+        if (hasCardDrawEffect(card)) {
+            return 1.3;
+        }
+        // Board wipes are strongest when boards are developed
+        if (hasBoardWipeEffect(card)) {
+            return 1.2;
+        }
+        return 1.0;
+    }
+
+    private boolean hasCardDrawEffect(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (isDrawEffect(effect)) return true;
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (isDrawEffect(effect)) return true;
+        }
+        return false;
+    }
+
+    private boolean isDrawEffect(CardEffect effect) {
+        if (effect instanceof DrawCardEffect) return true;
+        if (effect instanceof ChooseOneEffect coe) {
+            return coe.options().stream().anyMatch(o -> isDrawEffect(o.effect()));
+        }
+        return false;
+    }
+
+    private boolean hasBoardWipeEffect(Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (isBoardWipeEffect(effect)) return true;
+        }
+        return false;
+    }
+
+    private boolean isBoardWipeEffect(CardEffect effect) {
+        if (effect instanceof MassDamageEffect || effect instanceof DestroyAllPermanentsEffect
+                || effect instanceof ReturnCreaturesToOwnersHandEffect) {
+            return true;
+        }
+        if (effect instanceof ChooseOneEffect coe) {
+            return coe.options().stream().anyMatch(o -> isBoardWipeEffect(o.effect()));
+        }
+        return false;
     }
 
     private double evaluateCreature(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {
