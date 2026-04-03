@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;

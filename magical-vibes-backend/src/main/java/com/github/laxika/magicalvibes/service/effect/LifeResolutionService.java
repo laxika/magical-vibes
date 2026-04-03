@@ -55,7 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;

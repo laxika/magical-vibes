@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOf
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;

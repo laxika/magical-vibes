@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllTargetPermanentsEffec
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

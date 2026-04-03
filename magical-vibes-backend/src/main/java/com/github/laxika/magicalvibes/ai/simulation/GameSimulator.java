@@ -81,7 +81,7 @@ import com.github.laxika.magicalvibes.service.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.StateTriggerService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.TargetRedirectionResolutionService;
-import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.turn.TurnResolutionService;

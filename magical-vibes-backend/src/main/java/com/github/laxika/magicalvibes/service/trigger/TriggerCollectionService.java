@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service;
+package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
@@ -24,10 +24,10 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellC
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
-import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

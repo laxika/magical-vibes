@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
