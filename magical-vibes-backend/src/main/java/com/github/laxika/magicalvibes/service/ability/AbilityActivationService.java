@@ -1180,6 +1180,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated while this permanent is a creature");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN) {
+                if (!playerId.equals(gameData.activePlayerId)) {
+                    throw new IllegalStateException("This ability can only be activated during your turn");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
                 if (!playerId.equals(gameData.activePlayerId)) {
                     throw new IllegalStateException("This ability can only be activated during your upkeep");

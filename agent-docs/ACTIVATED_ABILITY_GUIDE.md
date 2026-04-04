@@ -25,6 +25,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | Value | Use when |
 |-------|----------|
 | `SORCERY_SPEED` | Equip abilities, sorcery-speed activated abilities |
+| `ONLY_DURING_YOUR_TURN` | Activate only during your turn (any phase/step, instant speed) |
 | `ONLY_DURING_YOUR_UPKEEP` | Abilities that can only be used during your upkeep |
 | `ONLY_WHILE_ATTACKING` | Activate only if this creature is attacking (checks `permanent.isAttacking()`) |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
@@ -138,7 +139,7 @@ new ActivatedAbility(false, null,
     ActivationTimingRestriction.SORCERY_SPEED)
 ```
 
-Cards: `SpawningPool` (ONLY_WHILE_CREATURE), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED)
+Cards: `SpawningPool` (ONLY_WHILE_CREATURE), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED), `VonaButcherOfMagan` (ONLY_DURING_YOUR_TURN)
 
 **Note:** For abilities that target spells on the stack (e.g. activated counter ability), spell targeting is auto-derived from effects (e.g. `CounterUnlessPaysEffect.canTargetSpell()` returns `true`). Use a `StackEntryPredicateTargetFilter` if target legality is restricted.
 
