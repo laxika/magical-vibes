@@ -131,10 +131,4 @@ class BarrageOgreTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent findPermanent(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(name + " not found"));
-    }
 }

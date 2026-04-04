@@ -187,6 +187,7 @@ public class AiManaManager {
         return switch (ability.getTimingRestriction()) {
             case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, playerId);
             case MORBID -> gameQueryService.isMorbidMet(gameData);
+            case ONLY_DURING_YOUR_TURN -> playerId.equals(gameData.activePlayerId);
             case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();

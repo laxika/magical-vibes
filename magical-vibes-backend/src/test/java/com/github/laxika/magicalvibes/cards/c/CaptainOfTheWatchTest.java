@@ -191,9 +191,4 @@ class CaptainOfTheWatchTest extends BaseCardTest {
                 .orElseThrow(() -> new IllegalStateException("No Soldier token found"));
     }
 
-    private Permanent findPermanent(Player player, String cardName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst().orElseThrow();
-    }
 }

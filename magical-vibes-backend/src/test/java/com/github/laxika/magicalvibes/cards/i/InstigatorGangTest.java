@@ -289,12 +289,6 @@ class InstigatorGangTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-    private Permanent addCreatureReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
@@ -303,9 +297,4 @@ class InstigatorGangTest extends BaseCardTest {
         }
     }
 
-    private Permanent findPermanent(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
-    }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -27,5 +29,18 @@ public abstract class BaseCardTest {
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
+    }
+
+    protected Permanent addCreatureReady(Player player, Card card) {
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    protected Permanent findPermanent(Player player, String name) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(p -> p.getCard().getName().equals(name))
+                .findFirst().orElseThrow();
     }
 }

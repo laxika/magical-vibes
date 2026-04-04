@@ -19,13 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RaptorHatchlingTest extends BaseCardTest {
 
-    private Permanent findPermanent(Player player, String cardName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Permanent not found: " + cardName));
-    }
-
     private Permanent findToken(Player player, String tokenName) {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals(tokenName))

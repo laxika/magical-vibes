@@ -119,12 +119,6 @@ class KarplusanHoundTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-    private Permanent addCreatureReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addPlaneswalker(Player player, Card card) {
         Permanent perm = new Permanent(card);

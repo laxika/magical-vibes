@@ -2092,6 +2092,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         return switch (restriction) {
             case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, aiPlayer.getId());
             case MORBID -> gameQueryService.isMorbidMet(gameData);
+            case ONLY_DURING_YOUR_TURN -> aiPlayer.getId().equals(gameData.activePlayerId);
             case ONLY_DURING_YOUR_UPKEEP -> aiPlayer.getId().equals(gameData.activePlayerId)
                     && gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_WHILE_ATTACKING -> permanent.isAttacking();

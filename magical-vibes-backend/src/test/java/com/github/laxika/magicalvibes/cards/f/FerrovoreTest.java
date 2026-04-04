@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -148,10 +147,4 @@ class FerrovoreTest extends BaseCardTest {
         assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
     }
 
-    private Permanent findPermanent(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(name + " not found"));
-    }
 }

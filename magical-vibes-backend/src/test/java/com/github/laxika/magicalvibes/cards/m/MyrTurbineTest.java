@@ -271,13 +271,6 @@ class MyrTurbineTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent findPermanent(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(name + " not found"));
-    }
-
     private void setAllNotSummoningSick(Player player) {
         gd.playerBattlefields.get(player.getId()).forEach(p -> p.setSummoningSick(false));
     }

@@ -173,11 +173,6 @@ class CivilizedScholarTest extends BaseCardTest {
         return scholar;
     }
 
-    private Permanent findPermanent(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElseThrow();
-    }
 
     private int findCardIndexByType(List<Card> hand, CardType type) {
         for (int i = 0; i < hand.size(); i++) {

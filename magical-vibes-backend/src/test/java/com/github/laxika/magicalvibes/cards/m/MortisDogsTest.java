@@ -147,12 +147,6 @@ class MortisDogsTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent addCreatureReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

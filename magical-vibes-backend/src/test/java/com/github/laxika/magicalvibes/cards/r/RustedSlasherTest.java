@@ -259,10 +259,4 @@ class RustedSlasherTest extends BaseCardTest {
         return perm;
     }
 
-    private Permanent findPermanent(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(name + " not found"));
-    }
 }

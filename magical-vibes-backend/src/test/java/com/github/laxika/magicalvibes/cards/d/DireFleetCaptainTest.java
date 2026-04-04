@@ -139,12 +139,6 @@ class DireFleetCaptainTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-    private Permanent addCreatureReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Card createPirateCard(String name) {
         Card card = new Card() {};

@@ -215,13 +215,6 @@ class PiratesCutlassTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent findPermanent(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Permanent not found: " + name));
-    }
-
     private int findPermanentIndex(Player player, String name) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
         for (int i = 0; i < battlefield.size(); i++) {

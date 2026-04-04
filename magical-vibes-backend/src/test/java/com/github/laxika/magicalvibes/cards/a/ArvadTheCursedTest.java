@@ -129,9 +129,4 @@ class ArvadTheCursedTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent findPermanent(com.github.laxika.magicalvibes.model.Player player, String cardName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst().orElseThrow();
-    }
 }

@@ -112,10 +112,4 @@ class DuskLegionDreadnoughtTest extends BaseCardTest {
         return perm;
     }
 
-    private Permanent addCreatureReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

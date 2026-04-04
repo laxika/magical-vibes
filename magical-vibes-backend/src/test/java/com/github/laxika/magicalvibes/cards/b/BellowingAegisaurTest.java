@@ -20,13 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BellowingAegisaurTest extends BaseCardTest {
 
-    private Permanent findPermanent(Player player, String cardName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Permanent not found: " + cardName));
-    }
-
     // ===== Card properties =====
 
     @Test
