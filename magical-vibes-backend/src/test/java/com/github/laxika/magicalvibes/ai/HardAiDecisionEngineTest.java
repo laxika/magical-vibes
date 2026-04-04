@@ -2942,6 +2942,94 @@ class HardAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
     }
 
+    // ===== Combat trick context-aware evaluation =====
+
+    @Test
+    @DisplayName("Combat trick value is high when pump flips combat from losing to winning")
+    void combatTrickValueHighWhenPumpFlipsCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // AI's 2/2 is attacking, opponent's 4/4 is blocking it
+        Permanent bears = new Permanent(new GrizzlyBears()); // 2/2
+        bears.setSummoningSick(false);
+        bears.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        int bearsIdx = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
+
+        Permanent angel = new Permanent(new SerraAngel()); // 4/4 flying vigilance
+        angel.setSummoningSick(false);
+        angel.setBlocking(true);
+        angel.addBlockingTarget(bearsIdx);
+        angel.addBlockingTargetId(bears.getId());
+        gd.playerBattlefields.get(player2.getId()).add(angel);
+
+        // Giant Growth (+3/+3) should score very high: pump turns 2/2 into 5/5 which
+        // kills the 4/4 blocker AND survives (vs without pump: 2/2 dies, 4/4 lives)
+        Card giantGrowth = new com.github.laxika.magicalvibes.cards.g.GiantGrowth();
+        double value = ai.evaluateCombatTrickInCombat(gd, giantGrowth, false);
+
+        // Should be significantly better than the flat evaluation (3*2.0 + 3 = 9.0)
+        assertThat(value).isGreaterThan(15.0);
+    }
+
+    @Test
+    @DisplayName("Combat trick value reflects face damage on unblocked attacker")
+    void combatTrickValueReflectsFaceDamageOnUnblockedAttacker() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // AI's 2/2 is attacking, no blockers
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        bears.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // Giant Growth on unblocked attacker adds 3 face damage
+        Card giantGrowth = new com.github.laxika.magicalvibes.cards.g.GiantGrowth();
+        double value = ai.evaluateCombatTrickInCombat(gd, giantGrowth, false);
+
+        // Extra face damage (3 * lifeWeight) is valuable but less than flipping a combat
+        assertThat(value).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("Defensive combat trick saves blocker and kills attacker")
+    void defensiveCombatTrickSavesBlockerAndKillsAttacker() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Opponent's 4/4 is attacking, AI's 2/2 is blocking
+        Permanent angel = new Permanent(new SerraAngel()); // 4/4
+        angel.setSummoningSick(false);
+        angel.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(angel);
+        int angelIdx = gd.playerBattlefields.get(player2.getId()).indexOf(angel);
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // 2/2
+        bears.setSummoningSick(false);
+        bears.setBlocking(true);
+        bears.addBlockingTarget(angelIdx);
+        bears.addBlockingTargetId(angel.getId());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        // Giant Growth on our blocker: 5/5 kills 4/4, survives
+        Card giantGrowth = new com.github.laxika.magicalvibes.cards.g.GiantGrowth();
+        double value = ai.evaluateCombatTrickInCombat(gd, giantGrowth, true);
+
+        // Should be very high: saves our creature + kills theirs
+        assertThat(value).isGreaterThan(15.0);
+    }
+
+    @Test
+    @DisplayName("Combat trick returns negative when no combat is happening")
+    void combatTrickReturnsNegativeWhenNoCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // No attackers or blockers — no combat happening
+        Card giantGrowth = new com.github.laxika.magicalvibes.cards.g.GiantGrowth();
+        double value = ai.evaluateCombatTrickInCombat(gd, giantGrowth, false);
+
+        assertThat(value).isEqualTo(-1);
+    }
+
     @Test
     @DisplayName("Hard AI does not cast flash creature at opponent's precombat main")
     void doesNotCastFlashCreatureAtOpponentsPrecombatMain() {

@@ -1541,6 +1541,21 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
+            // Combat tricks during combat get context-aware evaluation
+            if (category == InstantCategory.COMBAT_TRICK
+                    && (step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE)) {
+                double combatValue = evaluateCombatTrickInCombat(gameData, card, isOpponentsTurn);
+                if (combatValue > 0) {
+                    double timingMultiplier = getTimingMultiplier(category, step, isOpponentsTurn);
+                    double adjustedValue = combatValue * timingMultiplier;
+                    if (adjustedValue >= 5.0) {
+                        candidates.add(new TimedCandidate(i, adjustedValue));
+                    }
+                    continue;
+                }
+                // Fall through to flat evaluation if no combat context
+            }
+
             double baseValue = spellEvaluator.estimateSpellValue(gameData, card, aiPlayer.getId());
             if (baseValue <= 0) continue;
 
@@ -1574,8 +1589,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     || step == TurnStep.END_STEP);
             case BURN_TO_FACE -> isOpponentsTurn && step == TurnStep.END_STEP;
             case CARD_ADVANTAGE -> isOpponentsTurn && step == TurnStep.END_STEP;
-            case COMBAT_TRICK -> !isOpponentsTurn
-                    && (step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE);
+            case COMBAT_TRICK -> step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE;
             case COUNTERSPELL -> true; // Always ready — actual filtering is done by target selection
             case FLASH_CREATURE -> isOpponentsTurn && step == TurnStep.END_STEP; // Dodge sorcery-speed removal
             case OTHER -> step == TurnStep.PRECOMBAT_MAIN || step == TurnStep.POSTCOMBAT_MAIN
@@ -1605,6 +1619,136 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             case FLASH_CREATURE -> 1.3; // End-of-turn flash is a strong tempo play
             case OTHER -> 0.9;
         };
+    }
+
+    /**
+     * Evaluates a combat trick by simulating the actual combat matchups with and without the
+     * pump/debuff applied. Instead of the flat powerBoost * 2 + toughnessBoost formula, this
+     * checks whether the trick flips a combat outcome — saving a creature that would die,
+     * killing a creature that would survive, or pushing through lethal damage.
+     *
+     * Returns the best value delta across all potential target creatures, or -1 if no combat
+     * is happening (caller should fall back to flat evaluation).
+     */
+    double evaluateCombatTrickInCombat(GameData gameData, Card card, boolean isOpponentsTurn) {
+        BoostTargetCreatureEffect boost = null;
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof BoostTargetCreatureEffect b) {
+                boost = b;
+                break;
+            }
+        }
+        if (boost == null) return -1;
+
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        List<Permanent> aiBf = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        List<Permanent> oppBf = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+
+        // Determine attacker/defender based on whose turn it is
+        List<Permanent> attackerBf = isOpponentsTurn ? oppBf : aiBf;
+        List<Permanent> defenderBf = isOpponentsTurn ? aiBf : oppBf;
+        UUID attackerId = isOpponentsTurn ? opponentId : aiPlayer.getId();
+        UUID defenderId = isOpponentsTurn ? aiPlayer.getId() : opponentId;
+        int defenderLife = gameData.getLife(defenderId);
+        int defenderPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
+
+        // evaluateDefenderCombat scores from defender's perspective (higher = better for defender)
+        // When AI defends: higher pumped score = better for AI → delta = pumped - normal
+        // When AI attacks: lower pumped score = better for AI → delta = normal - pumped
+        double aiSign = isOpponentsTurn ? 1.0 : -1.0;
+
+        List<Integer> attackerIndices = new ArrayList<>();
+        for (int i = 0; i < attackerBf.size(); i++) {
+            if (attackerBf.get(i).isAttacking()) attackerIndices.add(i);
+        }
+        if (attackerIndices.isEmpty()) return -1;
+
+        boolean isPump = boost.powerBoost() >= 0 && boost.toughnessBoost() >= 0;
+        double bestDelta = 0;
+
+        for (int atkIdx : attackerIndices) {
+            CombatSimulator.CreatureInfo attackerInfo = combatSimulator.buildCreatureInfo(
+                    gameData, attackerBf.get(atkIdx), atkIdx, attackerId, defenderId, defenderBf);
+
+            List<CombatSimulator.CreatureInfo> blockerInfos = new ArrayList<>();
+            for (int blkIdx = 0; blkIdx < defenderBf.size(); blkIdx++) {
+                Permanent blocker = defenderBf.get(blkIdx);
+                if (blocker.isBlocking() && blocker.getBlockingTargets().contains(atkIdx)) {
+                    blockerInfos.add(combatSimulator.buildCreatureInfo(
+                            gameData, blocker, blkIdx, defenderId, attackerId));
+                }
+            }
+
+            // Baseline combat outcome for this matchup
+            double normalScore = combatSimulator.evaluateDefenderCombat(
+                    List.of(attackerInfo), mutableBlockAssignment(blockerInfos), defenderLife, defenderPoison);
+
+            if (isPump) {
+                // Pump our own creature in combat
+                if (!isOpponentsTurn) {
+                    // AI is attacking — pump our attacker
+                    double pumpedScore = combatSimulator.evaluateDefenderCombat(
+                            List.of(withBoost(attackerInfo, boost)),
+                            mutableBlockAssignment(blockerInfos), defenderLife, defenderPoison);
+                    bestDelta = Math.max(bestDelta, aiSign * (pumpedScore - normalScore));
+                } else {
+                    // AI is defending — pump one of our blockers
+                    for (int bi = 0; bi < blockerInfos.size(); bi++) {
+                        List<CombatSimulator.CreatureInfo> pumpedBlockers = new ArrayList<>(blockerInfos);
+                        pumpedBlockers.set(bi, withBoost(blockerInfos.get(bi), boost));
+                        double pumpedScore = combatSimulator.evaluateDefenderCombat(
+                                List.of(attackerInfo), mutableBlockAssignment(pumpedBlockers),
+                                defenderLife, defenderPoison);
+                        bestDelta = Math.max(bestDelta, aiSign * (pumpedScore - normalScore));
+                    }
+                }
+            } else {
+                // Debuff opponent's creature in combat
+                if (!isOpponentsTurn) {
+                    // AI is attacking — debuff a blocker
+                    for (int bi = 0; bi < blockerInfos.size(); bi++) {
+                        List<CombatSimulator.CreatureInfo> debuffedBlockers = new ArrayList<>(blockerInfos);
+                        debuffedBlockers.set(bi, withBoost(blockerInfos.get(bi), boost));
+                        double debuffedScore = combatSimulator.evaluateDefenderCombat(
+                                List.of(attackerInfo), mutableBlockAssignment(debuffedBlockers),
+                                defenderLife, defenderPoison);
+                        bestDelta = Math.max(bestDelta, aiSign * (debuffedScore - normalScore));
+                    }
+                } else {
+                    // AI is defending — debuff the attacker
+                    double debuffedScore = combatSimulator.evaluateDefenderCombat(
+                            List.of(withBoost(attackerInfo, boost)),
+                            mutableBlockAssignment(blockerInfos), defenderLife, defenderPoison);
+                    bestDelta = Math.max(bestDelta, aiSign * (debuffedScore - normalScore));
+                }
+            }
+        }
+
+        return bestDelta > 0 ? bestDelta : -1;
+    }
+
+    /** Creates a CreatureInfo with modified power/toughness from a boost effect. */
+    private CombatSimulator.CreatureInfo withBoost(CombatSimulator.CreatureInfo info,
+                                                    BoostTargetCreatureEffect boost) {
+        return new CombatSimulator.CreatureInfo(
+                info.index(), info.id(), info.perm(),
+                info.power() + boost.powerBoost(),
+                info.toughness() + boost.toughnessBoost(),
+                info.flying(), info.firstStrike(), info.doubleStrike(),
+                info.trample(), info.lifelink(), info.indestructible(),
+                info.menace(), info.fear(), info.intimidate(),
+                info.reach(), info.defender(), info.cantBeBlocked(),
+                info.isArtifact(), info.infect(), info.color(),
+                info.creatureScore()
+        );
+    }
+
+    /** Wraps a blocker list in a mutable assignment list for evaluateDefenderCombat. */
+    private List<List<CombatSimulator.CreatureInfo>> mutableBlockAssignment(
+            List<CombatSimulator.CreatureInfo> blockers) {
+        List<List<CombatSimulator.CreatureInfo>> assignment = new ArrayList<>();
+        assignment.add(new ArrayList<>(blockers));
+        return assignment;
     }
 
     /**
