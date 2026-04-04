@@ -41,7 +41,7 @@ class MCTSEngineTest {
         gd = harness.getGameData();
         harness.skipMulligan();
         simulator = new GameSimulator(harness.getGameQueryService());
-        engine = new MCTSEngine(simulator);
+        engine = new MCTSEngine(simulator, 42L);
     }
 
     @Test
@@ -206,6 +206,9 @@ class MCTSEngineTest {
     @Test
     @DisplayName("Multi-turn lookahead completes within time budget with deeper rollouts")
     void multiTurnLookaheadCompletesInTime() {
+        // Use a non-seeded engine here because this test validates the time budget
+        MCTSEngine timedEngine = new MCTSEngine(simulator);
+
         // Verify that the deeper rollouts (spanning through combat) still complete on time
         Card removalSpell = new Eviscerate();
         Card creatureSpell = new GrizzlyBears();
@@ -222,7 +225,7 @@ class MCTSEngineTest {
         gd.stack.clear();
 
         long start = System.currentTimeMillis();
-        SimulationAction action = engine.search(gd, player1.getId(), 50000);
+        SimulationAction action = timedEngine.search(gd, player1.getId(), 50000);
         long elapsed = System.currentTimeMillis() - start;
 
         assertThat(action).isNotNull();

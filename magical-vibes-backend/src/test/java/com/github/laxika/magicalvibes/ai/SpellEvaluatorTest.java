@@ -2,14 +2,20 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AltarsReap;
+import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
+import com.github.laxika.magicalvibes.cards.b.BloodthroneVampire;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.f.FalkenrathNoble;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingGrace;
 import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
+import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -716,5 +722,244 @@ class SpellEvaluatorTest {
         double multiplier = spellEvaluator.defensivePressureMultiplier(gd, new HealingGrace(), player1.getId());
 
         assertThat(multiplier).isEqualTo(1.0);
+    }
+
+    // ===== Synergy bonus: Sacrifice + Tokens =====
+
+    @Test
+    @DisplayName("Sacrifice spell valued higher when AI controls token creatures")
+    void sacrificeSpellBoostedByTokens() {
+        Card altarsReap = new AltarsReap();
+
+        // AI has only a real creature — sacrifice is costly
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        double withoutTokens = spellEvaluator.estimateSpellValue(gd, altarsReap, player1.getId());
+
+        // Now add a token creature — sacrifice cost is cheaper
+        Card tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        Permanent token = new Permanent(tokenCard);
+        token.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(token);
+        double withTokens = spellEvaluator.estimateSpellValue(gd, altarsReap, player1.getId());
+
+        assertThat(withTokens).isGreaterThan(withoutTokens);
+    }
+
+    @Test
+    @DisplayName("Sacrifice synergy bonus is zero when no tokens are present")
+    void sacrificeSynergyZeroWithoutTokens() {
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> oppBattlefield = gd.playerBattlefields.get(player2.getId());
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        aiBattlefield.add(bears);
+
+        double bonus = spellEvaluator.synergyBonus(gd, new AltarsReap(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        assertThat(bonus).isEqualTo(0.0);
+    }
+
+    // ===== Synergy bonus: Equipment + Evasion =====
+
+    @Test
+    @DisplayName("Equipment valued higher when AI controls evasive creature")
+    void equipmentBoostedByEvasiveCreature() {
+        Card darksteelAxe = new DarksteelAxe();
+
+        // AI has a vanilla creature
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+        double withVanilla = spellEvaluator.estimateSpellValue(gd, darksteelAxe, player1.getId());
+
+        // Replace with a flying creature
+        gd.playerBattlefields.get(player1.getId()).clear();
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel);
+        double withFlyer = spellEvaluator.estimateSpellValue(gd, darksteelAxe, player1.getId());
+
+        assertThat(withFlyer).isGreaterThan(withVanilla);
+    }
+
+    @Test
+    @DisplayName("Equipment evasion bonus is zero when no creatures are evasive")
+    void equipmentEvasionBonusZeroForVanillaCreatures() {
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> oppBattlefield = gd.playerBattlefields.get(player2.getId());
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        aiBattlefield.add(bears);
+
+        double bonus = spellEvaluator.synergyBonus(gd, new DarksteelAxe(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        assertThat(bonus).isEqualTo(0.0);
+    }
+
+    // ===== Synergy bonus: Death trigger + Sacrifice outlet =====
+
+    @Test
+    @DisplayName("Death trigger creature valued higher when AI controls sacrifice outlet")
+    void deathTriggerBoostedBySacOutlet() {
+        Card falkenrath = new FalkenrathNoble();
+
+        double withoutOutlet = spellEvaluator.estimateSpellValue(gd, falkenrath, player1.getId());
+
+        Permanent sacOutlet = new Permanent(new BloodthroneVampire());
+        sacOutlet.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(sacOutlet);
+        double withOutlet = spellEvaluator.estimateSpellValue(gd, falkenrath, player1.getId());
+
+        assertThat(withOutlet).isGreaterThan(withoutOutlet);
+    }
+
+    @Test
+    @DisplayName("Death trigger synergy bonus is zero when no sacrifice outlets exist")
+    void deathTriggerBonusZeroWithoutSacOutlet() {
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> oppBattlefield = gd.playerBattlefields.get(player2.getId());
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        aiBattlefield.add(bears);
+
+        double bonus = spellEvaluator.synergyBonus(gd, new FalkenrathNoble(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        assertThat(bonus).isEqualTo(0.0);
+    }
+
+    // ===== Synergy bonus: Anthem + Wide board =====
+
+    @Test
+    @DisplayName("Anthem creature valued higher with wide board (3+ creatures)")
+    void anthemBoostedByWideBoard() {
+        Card marshal = new BenalishMarshal();
+
+        Permanent bear1 = new Permanent(new GrizzlyBears());
+        bear1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bear1);
+        double narrowBoard = spellEvaluator.estimateSpellValue(gd, marshal, player1.getId());
+
+        for (int i = 0; i < 3; i++) {
+            Permanent bear = new Permanent(new GrizzlyBears());
+            bear.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear);
+        }
+        double wideBoard = spellEvaluator.estimateSpellValue(gd, marshal, player1.getId());
+
+        assertThat(wideBoard).isGreaterThan(narrowBoard);
+    }
+
+    @Test
+    @DisplayName("Anthem synergy bonus is zero with fewer than 3 creatures")
+    void anthemBonusZeroWithNarrowBoard() {
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> oppBattlefield = gd.playerBattlefields.get(player2.getId());
+
+        for (int i = 0; i < 2; i++) {
+            Permanent bear = new Permanent(new GrizzlyBears());
+            bear.setSummoningSick(false);
+            aiBattlefield.add(bear);
+        }
+
+        double bonus = spellEvaluator.synergyBonus(gd, new BenalishMarshal(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        assertThat(bonus).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Anthem synergy bonus scales with board width — 5+ gets more than 3")
+    void anthemBonusScalesWithBoardWidth() {
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> oppBattlefield = gd.playerBattlefields.get(player2.getId());
+
+        for (int i = 0; i < 3; i++) {
+            Permanent bear = new Permanent(new GrizzlyBears());
+            bear.setSummoningSick(false);
+            aiBattlefield.add(bear);
+        }
+        double threeCreatures = spellEvaluator.synergyBonus(gd, new BenalishMarshal(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        for (int i = 0; i < 2; i++) {
+            Permanent bear = new Permanent(new GrizzlyBears());
+            bear.setSummoningSick(false);
+            aiBattlefield.add(bear);
+        }
+        double fiveCreatures = spellEvaluator.synergyBonus(gd, new BenalishMarshal(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        assertThat(fiveCreatures).isGreaterThan(threeCreatures);
+    }
+
+    // ===== Synergy bonus: Token maker + Death triggers =====
+
+    @Test
+    @DisplayName("Token-making spell valued higher when AI controls death trigger creature")
+    void tokenMakerBoostedByDeathTriggers() {
+        Card midnightHaunting = new MidnightHaunting();
+
+        double withoutTriggers = spellEvaluator.estimateSpellValue(gd, midnightHaunting, player1.getId());
+
+        Permanent noble = new Permanent(new FalkenrathNoble());
+        noble.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(noble);
+        double withTriggers = spellEvaluator.estimateSpellValue(gd, midnightHaunting, player1.getId());
+
+        assertThat(withTriggers).isGreaterThan(withoutTriggers);
+    }
+
+    @Test
+    @DisplayName("Token-making spell valued higher when AI controls sacrifice outlet")
+    void tokenMakerBoostedBySacOutlet() {
+        Card midnightHaunting = new MidnightHaunting();
+
+        double withoutOutlet = spellEvaluator.estimateSpellValue(gd, midnightHaunting, player1.getId());
+
+        Permanent sacOutlet = new Permanent(new BloodthroneVampire());
+        sacOutlet.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(sacOutlet);
+        double withOutlet = spellEvaluator.estimateSpellValue(gd, midnightHaunting, player1.getId());
+
+        assertThat(withOutlet).isGreaterThan(withoutOutlet);
+    }
+
+    @Test
+    @DisplayName("Token maker synergy bonus is zero when no death triggers or sac outlets")
+    void tokenMakerBonusZeroWithoutSynergy() {
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> oppBattlefield = gd.playerBattlefields.get(player2.getId());
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        aiBattlefield.add(bears);
+
+        double bonus = spellEvaluator.synergyBonus(gd, new MidnightHaunting(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        assertThat(bonus).isEqualTo(0.0);
+    }
+
+    // ===== Synergy bonus: Non-synergy cards =====
+
+    @Test
+    @DisplayName("Vanilla creature gets zero synergy bonus")
+    void vanillaCreatureNoSynergyBonus() {
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        List<Permanent> oppBattlefield = gd.playerBattlefields.get(player2.getId());
+
+        double bonus = spellEvaluator.synergyBonus(gd, new GrizzlyBears(), player1.getId(),
+                aiBattlefield, oppBattlefield);
+
+        assertThat(bonus).isEqualTo(0.0);
     }
 }

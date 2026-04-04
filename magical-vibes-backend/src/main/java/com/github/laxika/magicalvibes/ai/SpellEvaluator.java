@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -157,6 +161,8 @@ public class SpellEvaluator {
                 baseValue += evaluateAura(gameData, card, aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
             }
         }
+
+        baseValue += synergyBonus(gameData, card, aiPlayerId, aiBattlefield, oppBattlefield);
 
         if (baseValue <= 0) return baseValue;
 
@@ -535,6 +541,208 @@ public class SpellEvaluator {
         }
 
         return 0;
+    }
+
+    // ===== Synergy detection =====
+
+    /**
+     * Adds bonus value when a spell synergizes with the current board or hand state.
+     * Checks 5 common patterns: sacrifice + tokens, equipment + evasion,
+     * death triggers + sacrifice outlets, anthem + wide board, and token makers + death triggers.
+     */
+    double synergyBonus(GameData gameData, Card card, UUID aiPlayerId,
+                        List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
+        double bonus = 0;
+        bonus += sacrificeWithTokensBonus(gameData, card, aiBattlefield);
+        bonus += equipmentWithEvasionBonus(gameData, card, aiBattlefield);
+        bonus += deathTriggerWithSacOutletBonus(gameData, card, aiBattlefield);
+        bonus += anthemWithWideBoardBonus(gameData, card, aiBattlefield);
+        bonus += tokenMakerWithDeathTriggersBonus(gameData, card, aiBattlefield);
+        return bonus;
+    }
+
+    /**
+     * If the spell requires sacrificing a creature and the AI controls expendable tokens,
+     * the sacrifice cost is effectively cheaper. Returns a bonus that partially offsets
+     * the sacrifice penalty.
+     */
+    private double sacrificeWithTokensBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+        boolean hasSacCost = false;
+
+        // Check spell-level sacrifice costs
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof SacrificeCreatureCost) {
+                hasSacCost = true;
+                break;
+            }
+        }
+
+        // Check activated abilities for sacrifice costs
+        if (!hasSacCost) {
+            for (ActivatedAbility ability : card.getActivatedAbilities()) {
+                for (CardEffect effect : ability.getEffects()) {
+                    if (effect instanceof SacrificeCreatureCost || effect instanceof SacrificeSelfCost) {
+                        hasSacCost = true;
+                        break;
+                    }
+                }
+                if (hasSacCost) break;
+            }
+        }
+
+        if (!hasSacCost) return 0;
+
+        // Count expendable token creatures
+        long tokenCount = aiBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p) && p.getCard().isToken())
+                .count();
+
+        if (tokenCount == 0) return 0;
+
+        // Each token makes sacrifice costs cheaper — a 1/1 token has ~4.5 creature score,
+        // so having tokens reduces the effective cost. Cap at 8.0 bonus.
+        return Math.min(tokenCount * 4.0, 8.0);
+    }
+
+    /**
+     * Equipment that grants P/T or keywords is more valuable when the AI controls evasive
+     * creatures (flying, menace, cant-be-blocked, etc.) that can deliver the extra damage.
+     */
+    private double equipmentWithEvasionBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+        if (!card.getSubtypes().contains(CardSubtype.EQUIPMENT)) return 0;
+
+        // Check if this equipment grants a meaningful P/T boost
+        double equipBoost = 0;
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof StaticBoostEffect boost
+                    && boost.scope() == GrantScope.EQUIPPED_CREATURE) {
+                equipBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
+            }
+        }
+        if (equipBoost <= 0) return 0;
+
+        // Check for evasive creatures on the AI's board
+        boolean hasEvasive = aiBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .anyMatch(p -> gameQueryService.hasKeyword(gameData, p, Keyword.FLYING)
+                        || gameQueryService.hasKeyword(gameData, p, Keyword.MENACE)
+                        || gameQueryService.hasKeyword(gameData, p, Keyword.FEAR)
+                        || gameQueryService.hasKeyword(gameData, p, Keyword.INTIMIDATE)
+                        || gameQueryService.hasCantBeBlocked(gameData, p));
+
+        // Equipment on an evasive creature is ~50% more effective
+        return hasEvasive ? equipBoost * 0.5 : 0;
+    }
+
+    /**
+     * A creature with "whenever a creature dies" triggers is more valuable when the AI
+     * already controls sacrifice outlets (activated abilities with SacrificeCreatureCost).
+     */
+    private double deathTriggerWithSacOutletBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+        boolean hasDeathTrigger = !card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).isEmpty()
+                || !card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).isEmpty()
+                || !card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES).isEmpty();
+
+        if (!hasDeathTrigger) return 0;
+
+        // Check if the AI controls a sacrifice outlet
+        boolean hasSacOutlet = aiBattlefield.stream().anyMatch(p -> hasSacrificeAbility(p.getCard()));
+
+        // A death-trigger creature with a sacrifice outlet gets a significant bonus
+        // because deaths can be triggered at will
+        return hasSacOutlet ? 6.0 : 0;
+    }
+
+    /**
+     * Anthem/lord effects are more valuable the wider the board is.
+     * If the AI already controls 3+ creatures, casting a lord/anthem is a bigger swing.
+     */
+    private double anthemWithWideBoardBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+        // Check if this card has an anthem/lord static boost
+        double perCreatureBoost = 0;
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof StaticBoostEffect boost) {
+                GrantScope scope = boost.scope();
+                if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
+                        || scope == GrantScope.ALL_CREATURES) {
+                    perCreatureBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
+                    if (boost.grantedKeywords() != null) {
+                        perCreatureBoost += boost.grantedKeywords().size() * 3.0;
+                    }
+                }
+            } else if (effect instanceof GrantKeywordEffect grant) {
+                GrantScope scope = grant.scope();
+                if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
+                        || scope == GrantScope.ALL_CREATURES) {
+                    perCreatureBoost += grant.keywords().size() * 3.0;
+                }
+            }
+        }
+        if (perCreatureBoost <= 0) return 0;
+
+        long creatureCount = aiBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .count();
+
+        // The lordBonus in BoardEvaluator already counts buffed creatures, but that's
+        // for threat scoring. Here we add extra synergy when the board is wide (3+).
+        // The wider the board, the more the anthem overperforms its base value.
+        if (creatureCount >= 5) return perCreatureBoost * 1.5;
+        if (creatureCount >= 3) return perCreatureBoost * 0.75;
+        return 0;
+    }
+
+    /**
+     * Token-making spells are more valuable when the AI controls permanents with
+     * "whenever a creature dies" or "whenever a creature enters" triggers.
+     */
+    private double tokenMakerWithDeathTriggersBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+        // Check if this card creates creature tokens
+        int tokenCount = 0;
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
+                tokenCount += token.amount();
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
+                tokenCount += token.amount();
+            }
+        }
+        if (tokenCount == 0) return 0;
+
+        double bonus = 0;
+
+        // Check for "creature dies" triggers on the battlefield
+        for (Permanent perm : aiBattlefield) {
+            if (!perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES).isEmpty()
+                    || !perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).isEmpty()
+                    || !perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES).isEmpty()) {
+                bonus += 3.0;
+            }
+            // Sacrifice outlets make tokens doubly useful — both as sac fodder and trigger fuel
+            if (hasSacrificeAbility(perm.getCard())) {
+                bonus += 3.0;
+            }
+        }
+
+        // Scale by number of tokens created
+        return Math.min(bonus * tokenCount, 15.0);
+    }
+
+    /**
+     * Checks whether a card has an activated ability with a sacrifice-creature cost,
+     * indicating it's a sacrifice outlet.
+     */
+    private boolean hasSacrificeAbility(Card card) {
+        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            for (CardEffect effect : ability.getEffects()) {
+                if (effect instanceof SacrificeCreatureCost) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private double evaluateAura(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId,

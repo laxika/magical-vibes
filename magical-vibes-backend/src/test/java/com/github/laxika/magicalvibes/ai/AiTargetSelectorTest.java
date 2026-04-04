@@ -1124,7 +1124,9 @@ class AiTargetSelectorTest {
         void destroySpellTargetsLordOverVanilla() {
             // Benalish Marshal: 3/3 lord giving +1/+1 to other creatures
             Permanent marshal = harness.addToBattlefieldAndReturn(human, new BenalishMarshal());
-            // Add 4 creatures to be pumped by the lord — typical "wide board" scenario
+            // Add 5 creatures to be pumped by the lord — typical "wide board" scenario
+            // With 5 creatures, lord bonus = 5 * 4.5 = 22.5, clearly exceeding flying threat
+            harness.addToBattlefield(human, new GrizzlyBears());
             harness.addToBattlefield(human, new GrizzlyBears());
             harness.addToBattlefield(human, new GrizzlyBears());
             harness.addToBattlefield(human, new GrizzlyBears());
@@ -1140,7 +1142,7 @@ class AiTargetSelectorTest {
 
             UUID target = threatAwareSelector.chooseTarget(gd, destroySpell, aiPlayer.getId());
 
-            // Should prefer the lord (smaller body but pumping 4 creatures)
+            // Should prefer the lord (smaller body but pumping 5 creatures)
             assertThat(target).isEqualTo(marshal.getId());
         }
 

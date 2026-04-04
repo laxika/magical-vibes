@@ -600,6 +600,7 @@ class HardAiDecisionEngineTest {
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
+        ai.setMctsEngine(new MCTSEngine(new GameSimulator(harness.getGameQueryService()), 42L));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -765,6 +766,7 @@ class HardAiDecisionEngineTest {
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
+        ai.setMctsEngine(new MCTSEngine(new GameSimulator(harness.getGameQueryService()), 42L));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -804,6 +806,7 @@ class HardAiDecisionEngineTest {
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
+        ai.setMctsEngine(new MCTSEngine(new GameSimulator(harness.getGameQueryService()), 42L));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -846,6 +849,7 @@ class HardAiDecisionEngineTest {
                 harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
+        ai.setMctsEngine(new MCTSEngine(new GameSimulator(harness.getGameQueryService()), 42L));
         return ai;
     }
 
@@ -2364,6 +2368,7 @@ class HardAiDecisionEngineTest {
                     harness.getCombatAttackService(), harness.getGameBroadcastService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
             ai.setSelfConnection(aiConn);
+            ai.setMctsEngine(new MCTSEngine(new GameSimulator(harness.getGameQueryService()), 42L));
 
             harness.forceActivePlayer(player1);
             harness.clearPriorityPassed();
@@ -2670,6 +2675,7 @@ class HardAiDecisionEngineTest {
                     harness.getCombatAttackService(), harness.getGameBroadcastService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
             ai.setSelfConnection(aiConn);
+            ai.setMctsEngine(new MCTSEngine(new GameSimulator(harness.getGameQueryService()), 42L));
 
             harness.forceActivePlayer(player1);
             harness.clearPriorityPassed();

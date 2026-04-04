@@ -48,10 +48,29 @@ public class MCTSEngine {
 
     private final GameSimulator simulator;
     private final Determinizer determinizer;
+    private final Random rng;
+    private final boolean timeBudgetEnabled;
+    private final int maxBudget;
 
     public MCTSEngine(GameSimulator simulator) {
         this.simulator = simulator;
         this.determinizer = new Determinizer();
+        this.rng = new Random();
+        this.timeBudgetEnabled = true;
+        this.maxBudget = 0; // 0 = no cap, use caller's budget
+    }
+
+    /**
+     * Creates a deterministic MCTS engine for testing.
+     * Uses a seeded Random for reproducible results, disables the time budget,
+     * and caps iterations at 500 so tests complete quickly while still converging.
+     */
+    public MCTSEngine(GameSimulator simulator, long seed) {
+        this.simulator = simulator;
+        this.determinizer = new Determinizer();
+        this.rng = new Random(seed);
+        this.timeBudgetEnabled = false;
+        this.maxBudget = 500;
     }
 
     /**
@@ -72,18 +91,18 @@ public class MCTSEngine {
         }
 
         MCTSNode root = new MCTSNode(null, null, rootActions);
-        Random rng = new Random();
-        long deadline = System.currentTimeMillis() + TIME_BUDGET_MS;
+        long deadline = timeBudgetEnabled ? System.currentTimeMillis() + TIME_BUDGET_MS : Long.MAX_VALUE;
+        int effectiveBudget = maxBudget > 0 ? Math.min(budget, maxBudget) : budget;
 
-        for (int i = 0; i < budget; i++) {
-            if (System.currentTimeMillis() > deadline) {
+        for (int i = 0; i < effectiveBudget; i++) {
+            if (timeBudgetEnabled && System.currentTimeMillis() > deadline) {
                 log.debug("MCTS: Time budget exceeded after {} simulations", i);
                 break;
             }
 
             try {
                 // 1. DETERMINIZE: Create a plausible complete-information state
-                GameData simState = determinizer.determinize(rootState, aiPlayerId, rng);
+                GameData simState = determinizer.determinize(rootState, aiPlayerId, this.rng);
 
                 // 2. SELECT: Traverse tree using UCB1
                 MCTSNode node = select(root);
@@ -102,7 +121,7 @@ public class MCTSEngine {
                 }
 
                 // 5. ROLLOUT: Play out using softmax/epsilon-greedy heuristic policy
-                double reward = rollout(simState, aiPlayerId, node, deadline, rng);
+                double reward = rollout(simState, aiPlayerId, node, deadline, this.rng);
 
                 // 6. BACKPROPAGATE: Update visit counts and rewards
                 backpropagate(node, reward);
@@ -166,9 +185,9 @@ public class MCTSEngine {
      * ROLLOUT phase: From the current state, play out using softmax/epsilon-greedy
      * heuristic policy for a limited number of moves, then evaluate.
      */
-    private double rollout(GameData simState, UUID aiPlayerId, MCTSNode node, long deadline, Random rng) {
+    private double rollout(GameData simState, UUID aiPlayerId, MCTSNode node, long deadline, Random rolloutRng) {
         for (int depth = 0; depth < DEFAULT_ROLLOUT_DEPTH; depth++) {
-            if (System.currentTimeMillis() > deadline) break;
+            if (timeBudgetEnabled && System.currentTimeMillis() > deadline) break;
             if (simulator.isTerminal(simState)) break;
 
             List<SimulationAction> actions = simulator.getLegalActions(simState, aiPlayerId);

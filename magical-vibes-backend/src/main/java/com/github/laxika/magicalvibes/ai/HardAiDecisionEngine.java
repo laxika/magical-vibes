@@ -84,7 +84,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final SpellEvaluator spellEvaluator;
     private final BoardEvaluator boardEvaluator;
     private final CombatSimulator combatSimulator;
-    private final MCTSEngine mctsEngine;
+    private MCTSEngine mctsEngine;
     private final RaceEvaluator raceEvaluator;
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
@@ -99,6 +99,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
         this.mctsEngine = new MCTSEngine(new GameSimulator(gameQueryService));
         this.raceEvaluator = new RaceEvaluator(gameQueryService);
+    }
+
+    /** Package-private setter for injecting a deterministic MCTSEngine in tests. */
+    void setMctsEngine(MCTSEngine mctsEngine) {
+        this.mctsEngine = mctsEngine;
     }
 
     // ===== Smart Land Selection =====
