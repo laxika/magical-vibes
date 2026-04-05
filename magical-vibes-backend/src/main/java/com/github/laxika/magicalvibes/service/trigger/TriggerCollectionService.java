@@ -894,7 +894,7 @@ public class TriggerCollectionService {
         }
     }
 
-    public void checkEquippedCreatureDeathTriggers(GameData gameData, UUID dyingCreatureId, UUID dyingCreatureControllerId) {
+    public void checkEquippedCreatureDeathTriggers(GameData gameData, UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
@@ -908,8 +908,15 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, effect);
-                registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DIES, effect, ctx);
+                CardEffect resolvedEffect = effect;
+                if (effect instanceof SubtypeConditionalEffect filtered) {
+                    if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, dyingCreatureControllerId)) {
+                        continue;
+                    }
+                    resolvedEffect = filtered.wrapped();
+                }
+                var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
+                registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DIES, resolvedEffect, ctx);
             }
         }
     }

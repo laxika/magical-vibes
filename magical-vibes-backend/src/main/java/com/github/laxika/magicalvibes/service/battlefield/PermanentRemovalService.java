@@ -450,7 +450,7 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
                 triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId);
-                triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId);
+                triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
             }
             if (wasArtifact) {
