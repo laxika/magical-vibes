@@ -43,9 +43,9 @@ subprojects {
                     excludeTags("scryfall")
                 }
             }
-            maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
-            jvmArgs("-Xmx1g")
-            forkEvery = 250
+            maxParallelForks = (Runtime.getRuntime().availableProcessors() * 3 / 4).coerceAtLeast(1)
+            jvmArgs("-Xmx1g", "-XX:TieredStopAtLevel=1", "-XX:+UseParallelGC")
+            forkEvery = 2000
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzSeed", "fuzzGames").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
