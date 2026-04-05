@@ -25,9 +25,15 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCre
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -409,6 +415,10 @@ public class GameSimulator {
                         if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
                             continue;
                         }
+                        // Skip cards whose additional costs can't be paid in simulation
+                        if (!canPayAdditionalCosts(gd, playerId, card)) {
+                            continue;
+                        }
                         // For targeted spells, try to find a target
                         UUID targetId = null;
                         if (EffectResolution.needsTarget(card) || card.isAura()) {
@@ -519,8 +529,16 @@ public class GameSimulator {
             synchronized (gd) {
                 switch (action) {
                     case SimulationAction.PlayCard pc -> {
-                        tapLandsForCard(gd, playerId, gd.playerHands.get(playerId).get(pc.handIndex()), pc.xValue());
-                        gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
+                        Card card = gd.playerHands.get(playerId).get(pc.handIndex());
+                        tapLandsForCard(gd, playerId, card, pc.xValue());
+                        List<Integer> exileIndices = computeExileNGraveyardIndices(gd, playerId, card);
+                        UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
+                        if (exileIndices != null || sacrificeId != null) {
+                            gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
+                                    null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices);
+                        } else {
+                            gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
+                        }
                     }
                     case SimulationAction.PassPriority ignored ->
                             gameService.passPriority(gd, player);
@@ -897,6 +915,82 @@ public class GameSimulator {
             }
             if (canPayNow) return;
         }
+    }
+
+    /**
+     * Checks whether the player can pay all additional (non-mana) costs for the card,
+     * including graveyard exile costs and sacrifice costs.
+     */
+    private boolean canPayAdditionalCosts(GameData gd, UUID playerId, Card card) {
+        List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
+        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
+                long matchingCount = graveyard.stream()
+                        .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
+                        .count();
+                if (matchingCount < cost.count()) return false;
+            } else if (effect instanceof ExileCardFromGraveyardCost cost) {
+                boolean hasMatch = graveyard.stream()
+                        .anyMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()));
+                if (!hasMatch) return false;
+            } else if (effect instanceof ExileXCardsFromGraveyardCost) {
+                if (graveyard.isEmpty()) return false;
+            } else if (effect instanceof SacrificeCreatureCost) {
+                if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gd, p))) return false;
+            } else if (effect instanceof SacrificeArtifactCost) {
+                if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gd, p))) return false;
+            } else if (effect instanceof SacrificePermanentCost sacCost) {
+                if (battlefield.stream().noneMatch(p -> gameQueryService.matchesPermanentPredicate(gd, p, sacCost.filter()))) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Computes graveyard card indices to exile for {@link ExileNCardsFromGraveyardCost}.
+     * Returns null if the card has no such cost.
+     */
+    private List<Integer> computeExileNGraveyardIndices(GameData gd, UUID playerId, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
+                List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
+                List<Integer> matchingIndices = new ArrayList<>();
+                for (int i = 0; i < graveyard.size(); i++) {
+                    Card c = graveyard.get(i);
+                    if (cost.requiredType() == null || c.hasType(cost.requiredType())) {
+                        matchingIndices.add(i);
+                    }
+                }
+                if (matchingIndices.size() < cost.count()) return null;
+                return new ArrayList<>(matchingIndices.subList(0, cost.count()));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds the first valid sacrifice target for the card's sacrifice cost.
+     * Returns null if the card has no sacrifice cost.
+     */
+    private UUID computeSacrificeTarget(GameData gd, UUID playerId, Card card) {
+        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof SacrificeCreatureCost) {
+                return battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gd, p))
+                        .findFirst().map(Permanent::getId).orElse(null);
+            } else if (effect instanceof SacrificeArtifactCost) {
+                return battlefield.stream()
+                        .filter(p -> gameQueryService.isArtifact(gd, p))
+                        .findFirst().map(Permanent::getId).orElse(null);
+            } else if (effect instanceof SacrificePermanentCost sacCost) {
+                return battlefield.stream()
+                        .filter(p -> gameQueryService.matchesPermanentPredicate(gd, p, sacCost.filter()))
+                        .findFirst().map(Permanent::getId).orElse(null);
+            }
+        }
+        return null;
     }
 
     /**

@@ -91,6 +91,9 @@ public class GameBroadcastService {
     private final ValidTargetService validTargetService;
 
     public void broadcastGameState(GameData gameData) {
+        // Skip expensive view computation during MCTS simulation (NoOpSessionManager discards the result)
+        if (gameData.simulation) return;
+
         List<String> newLogEntries;
         int logSize = gameData.gameLog.size();
         if (logSize > gameData.lastBroadcastedLogSize) {
