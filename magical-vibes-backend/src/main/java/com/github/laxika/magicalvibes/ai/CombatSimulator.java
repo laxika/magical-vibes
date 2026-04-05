@@ -63,6 +63,19 @@ public class CombatSimulator {
     public List<Integer> findBestAttackers(GameData gameData, UUID aiPlayerId,
                                            List<Integer> availableAttackerIndices,
                                            List<Integer> mustAttackIndices) {
+        return findBestAttackers(gameData, aiPlayerId, availableAttackerIndices,
+                mustAttackIndices, OpponentThreatEstimator.ThreatEstimate.NONE);
+    }
+
+    /**
+     * Finds the best set of attackers, applying a pessimism modifier based on the
+     * opponent's estimated combat trick threat. When the opponent has untapped mana
+     * and cards in hand, attacks that are vulnerable to pump spells are penalized.
+     */
+    public List<Integer> findBestAttackers(GameData gameData, UUID aiPlayerId,
+                                           List<Integer> availableAttackerIndices,
+                                           List<Integer> mustAttackIndices,
+                                           OpponentThreatEstimator.ThreatEstimate threatEstimate) {
         if (availableAttackerIndices.isEmpty()) {
             return List.of();
         }
@@ -154,6 +167,11 @@ public class CombatSimulator {
             // Simulate greedy-optimal blocking by opponent
             CombatOutcome outcome = simulateCombat(gameData, subset, blockerInfos, opponentLife);
             double score = outcome.evaluationDelta();
+
+            // Apply pessimism for opponent's potential combat tricks
+            if (threatEstimate.hasThreat()) {
+                score -= computeAttackTrickRisk(gameData, subset, blockerInfos, threatEstimate);
+            }
 
             if (score > bestScore) {
                 bestScore = score;
@@ -1096,6 +1114,49 @@ public class CombatSimulator {
             }
         }
         return false;
+    }
+
+    // ===== Opponent Trick Risk Estimation =====
+
+    /**
+     * Computes a risk penalty for a set of attackers when the opponent may have
+     * combat tricks. For each blockable attacker, checks whether any legal blocker
+     * — when pumped by the estimated trick — could kill the attacker when it
+     * wouldn't die without the trick. This captures the key scenario: the opponent
+     * blocks only <em>because</em> they have a trick, turning a safe attack into a
+     * creature loss.
+     * <p>
+     * Returns the maximum such vulnerability (the single best target for the
+     * opponent's trick) scaled by trick probability.
+     */
+    double computeAttackTrickRisk(GameData gameData,
+                                  List<CreatureInfo> attackers,
+                                  List<CreatureInfo> blockers,
+                                  OpponentThreatEstimator.ThreatEstimate threat) {
+        if (!threat.hasThreat()) return 0;
+        int pump = threat.estimatedPumpBoost();
+
+        double maxVulnerability = 0;
+
+        for (CreatureInfo attacker : attackers) {
+            if (attacker.cantBeBlocked || attacker.indestructible) continue;
+
+            for (CreatureInfo blocker : blockers) {
+                if (!canBlock(gameData, blocker, attacker)) continue;
+
+                boolean alreadyLethal = blocker.power >= attacker.toughness;
+                boolean pumpedLethal = (blocker.power + pump) >= attacker.toughness;
+
+                if (pumpedLethal && !alreadyLethal) {
+                    // The pump turns a non-lethal block into a lethal one for our attacker.
+                    // This is the creature value at risk if the opponent has a trick.
+                    maxVulnerability = Math.max(maxVulnerability, attacker.creatureScore);
+                    break; // one vulnerable blocker is enough for this attacker
+                }
+            }
+        }
+
+        return maxVulnerability * threat.trickProbability();
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {

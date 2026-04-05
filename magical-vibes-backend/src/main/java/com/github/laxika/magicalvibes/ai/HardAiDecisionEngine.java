@@ -2309,8 +2309,22 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     private void handleAttackersWithSimulator(GameData gameData, List<Integer> availableIndices,
                                               List<Integer> mustAttackIndices) {
+        // Estimate opponent's combat trick threat from their open mana and hand size
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        OpponentThreatEstimator.ThreatEstimate threatEstimate = OpponentThreatEstimator.ThreatEstimate.NONE;
+        if (opponentId != null) {
+            int oppHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
+            ManaPool oppMana = manaManager.buildVirtualManaPool(gameData, opponentId);
+            threatEstimate = OpponentThreatEstimator.estimate(oppHandSize, oppMana);
+            if (threatEstimate.hasThreat()) {
+                log.info("AI (Hard): Opponent threat estimate — prob={}, pump=+{}/+{} in game {}",
+                        String.format("%.0f%%", threatEstimate.trickProbability() * 100),
+                        threatEstimate.estimatedPumpBoost(), threatEstimate.estimatedPumpBoost(), gameId);
+            }
+        }
+
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
-                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
+                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices, threatEstimate);
 
         // Ensure at least one attacker when forced (e.g. Trove of Temptation)
         attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);

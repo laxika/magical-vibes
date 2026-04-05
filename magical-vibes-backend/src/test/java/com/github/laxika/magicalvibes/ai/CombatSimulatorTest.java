@@ -1212,4 +1212,232 @@ class CombatSimulatorTest {
         // Should NOT chump-block: life is safe, preserve the creature
         assertThat(blockers).isEmpty();
     }
+
+    // ===== Opponent trick risk (playing around combat tricks) =====
+
+    @Test
+    @DisplayName("Trick risk: no penalty when opponent has no threat")
+    void trickRiskZeroWhenNoThreat() {
+        Permanent aiBears = new Permanent(new GrizzlyBears());
+        aiBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears);
+
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        CombatSimulator.CreatureInfo attacker = simulator.buildCreatureInfo(
+                gd, aiBears, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo blocker = simulator.buildCreatureInfo(
+                gd, oppBears, 0, player2.getId(), player1.getId());
+
+        double risk = simulator.computeAttackTrickRisk(
+                gd, List.of(attacker), List.of(blocker),
+                OpponentThreatEstimator.ThreatEstimate.NONE);
+
+        assertThat(risk).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Trick risk: positive penalty when attacker is vulnerable to pump")
+    void trickRiskPositiveWhenVulnerableToPump() {
+        // AI 3/3 attacks into opponent's 2/2.
+        // Normally: AI kills blocker, survives. With +3/+3 pump, blocker becomes 5/5:
+        // blocker survives (3 < 5), blocker kills attacker (5 >= 3). Big swing.
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        Permanent opp2_2 = new Permanent(new GrizzlyBears());
+        opp2_2.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp2_2);
+
+        CombatSimulator.CreatureInfo attacker = simulator.buildCreatureInfo(
+                gd, ai3_3, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo blocker = simulator.buildCreatureInfo(
+                gd, opp2_2, 0, player2.getId(), player1.getId());
+
+        // Simulate opponent having a +3/+3 pump at 30% probability
+        var threat = new OpponentThreatEstimator.ThreatEstimate(0.30, 3);
+
+        double risk = simulator.computeAttackTrickRisk(
+                gd, List.of(attacker), List.of(blocker), threat);
+
+        // Risk should be positive and substantial — pump flips a winning combat into a losing one
+        assertThat(risk).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Trick risk: unblockable attacker has no pump vulnerability")
+    void trickRiskZeroForUnblockable() {
+        Permanent phantom = new Permanent(new PhantomWarrior());
+        phantom.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(phantom);
+
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        CombatSimulator.CreatureInfo attacker = simulator.buildCreatureInfo(
+                gd, phantom, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo blocker = simulator.buildCreatureInfo(
+                gd, oppBears, 0, player2.getId(), player1.getId());
+
+        var threat = new OpponentThreatEstimator.ThreatEstimate(0.40, 3);
+
+        double risk = simulator.computeAttackTrickRisk(
+                gd, List.of(attacker), List.of(blocker), threat);
+
+        assertThat(risk).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Trick risk: attacker already losing to blocker has zero vulnerability")
+    void trickRiskZeroWhenAttackerAlreadyLoses() {
+        // AI 2/2 into opponent's 4/4 — attacker already dies, pump doesn't make it worse
+        Permanent aiBears = new Permanent(new GrizzlyBears());
+        aiBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears);
+
+        Permanent oppAE = new Permanent(new AirElemental());
+        oppAE.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppAE);
+
+        CombatSimulator.CreatureInfo attacker = simulator.buildCreatureInfo(
+                gd, aiBears, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo blocker = simulator.buildCreatureInfo(
+                gd, oppAE, 0, player2.getId(), player1.getId());
+
+        var threat = new OpponentThreatEstimator.ThreatEstimate(0.40, 3);
+
+        double risk = simulator.computeAttackTrickRisk(
+                gd, List.of(attacker), List.of(blocker), threat);
+
+        // Attacker dies regardless — pump on blocker doesn't change the outcome
+        assertThat(risk).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Trick risk: high pump flips a clean win into attacker death")
+    void trickRiskHighWhenPumpFlipsCombat() {
+        // AI 5/5 attacks into opponent's 3/3.
+        // Normal: AI kills blocker (5 >= 3), AI survives (3 < 5). Clean win.
+        // With +3/+3: blocker becomes 6/6 — AI dies (6 >= 5), blocker survives (5 < 6).
+        // Complete reversal: from winning to losing.
+        Permanent ai5_5 = new Permanent(new GrizzlyBears());
+        ai5_5.getCard().setPower(5);
+        ai5_5.getCard().setToughness(5);
+        ai5_5.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai5_5);
+
+        Permanent opp3_3 = new Permanent(new GrizzlyBears());
+        opp3_3.getCard().setPower(3);
+        opp3_3.getCard().setToughness(3);
+        opp3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp3_3);
+
+        CombatSimulator.CreatureInfo attacker = simulator.buildCreatureInfo(
+                gd, ai5_5, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo blocker = simulator.buildCreatureInfo(
+                gd, opp3_3, 0, player2.getId(), player1.getId());
+
+        var threat = new OpponentThreatEstimator.ThreatEstimate(0.30, 3);
+
+        double risk = simulator.computeAttackTrickRisk(
+                gd, List.of(attacker), List.of(blocker), threat);
+
+        // Risk should be significant — a 5/5 dying is a big swing
+        assertThat(risk).isGreaterThan(2.0);
+    }
+
+    @Test
+    @DisplayName("Trick risk: higher probability produces higher risk")
+    void trickRiskScalesWithProbability() {
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        Permanent opp2_2 = new Permanent(new GrizzlyBears());
+        opp2_2.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp2_2);
+
+        CombatSimulator.CreatureInfo attacker = simulator.buildCreatureInfo(
+                gd, ai3_3, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo blocker = simulator.buildCreatureInfo(
+                gd, opp2_2, 0, player2.getId(), player1.getId());
+
+        double riskLow = simulator.computeAttackTrickRisk(
+                gd, List.of(attacker), List.of(blocker),
+                new OpponentThreatEstimator.ThreatEstimate(0.10, 3));
+
+        double riskHigh = simulator.computeAttackTrickRisk(
+                gd, List.of(attacker), List.of(blocker),
+                new OpponentThreatEstimator.ThreatEstimate(0.40, 3));
+
+        assertThat(riskHigh).isGreaterThan(riskLow);
+    }
+
+    @Test
+    @DisplayName("Trick risk: lethal attack still chosen despite trick risk")
+    void trickRiskDoesNotPreventLethalAttack() {
+        // Opponent at 4 life, AI has two 2/2 unblockable creatures — lethal
+        gd.playerLifeTotals.put(player2.getId(), 4);
+
+        Permanent phantom1 = new Permanent(new PhantomWarrior());
+        phantom1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(phantom1);
+
+        Permanent phantom2 = new Permanent(new PhantomWarrior());
+        phantom2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(phantom2);
+
+        // Opponent has blockers and high threat — but attackers are unblockable
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        var threat = new OpponentThreatEstimator.ThreatEstimate(0.50, 4);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of(), threat);
+
+        // Lethal shortcut fires before trick risk is applied — must attack with both
+        assertThat(attackers).containsExactlyInAnyOrder(0, 1);
+    }
+
+    @Test
+    @DisplayName("Trick risk: discourages marginal attack into open mana")
+    void trickRiskDiscouragesMarginalAttack() {
+        // AI 3/3 attacks into opponent's 2/3.
+        // Normal: AI kills blocker (3 >= 3), blocker doesn't kill AI (2 < 3). Good attack.
+        // With +3/+3: blocker becomes 5/6, kills attacker (5 >= 3), survives (3 < 6). Bad.
+        // The trick risk penalty should make this attack score negative.
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        Permanent opp2_3 = new Permanent(new GrizzlyBears());
+        opp2_3.getCard().setPower(2);
+        opp2_3.getCard().setToughness(3);
+        opp2_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp2_3);
+
+        // Without threat: AI attacks (good trade — kill their 2/3, survive)
+        List<Integer> attackersNoThreat = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of(),
+                OpponentThreatEstimator.ThreatEstimate.NONE);
+        assertThat(attackersNoThreat).containsExactly(0);
+
+        // With high threat: trick risk should discourage the attack
+        var highThreat = new OpponentThreatEstimator.ThreatEstimate(0.50, 3);
+        List<Integer> attackersWithThreat = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of(), highThreat);
+        assertThat(attackersWithThreat).isEmpty();
+    }
 }
