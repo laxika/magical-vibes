@@ -8,6 +8,7 @@
 - If you create new effects, etc then make sure to update the files in the agent-docs folder.
 - If you need to implement a new card, then start by checking that a version of it (from a different set) was already implemented. If that's the case then add the `@CardRegistration` annotation for the new printing but do nothing else (do not run/check tests, etc).
 - If unit tests exists for the service classes that you need to extend, then make sure that you create unit tests as well for the new features you add to those services.
+- When running the full test suite, always use `run_in_background: true` on the Bash tool call. The tests take over 20 minutes, which exceeds the maximum timeout.
 
 ## Documentation
 
