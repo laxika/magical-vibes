@@ -1200,6 +1200,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (card.hasType(CardType.LAND) || isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
+            // For X spells targeting a creature with MV==X (e.g. Entrancing Melody),
+            // verify valid targets exist for the affordable maxX. Without this check,
+            // MCTS would wastefully simulate the spell when no targets can be hit.
+            if (hasPermanentManaValueEqualsXTarget(card) && new ManaCost(card.getManaCost()).hasX()) {
+                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
+                if (maxX <= 0 || targetSelector.findValidPermanentTargetsForManaValueX(
+                        gameData, card, aiPlayer.getId(), maxX).isEmpty()) {
+                    continue;
+                }
+            }
             castableCount++;
         }
 
