@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -67,6 +68,9 @@ public class Card {
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
+    /** Cached effect-only lists, invalidated on addEffect. */
+    @Getter(AccessLevel.NONE)
+    private Map<EffectSlot, List<CardEffect>> effectCache = new EnumMap<>(EffectSlot.class);
     /** Per-chapter target filters for Saga cards (e.g. "target creature an opponent controls"). */
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, Set<TargetFilter>> sagaChapterTargetFilters = new EnumMap<>(EffectSlot.class);
@@ -219,9 +223,17 @@ public class Card {
     // ── Effect management ───────────────────────────────────────────
 
     public List<CardEffect> getEffects(EffectSlot slot) {
-        return effectRegistrations.getOrDefault(slot, List.of()).stream()
-                .map(EffectRegistration::effect)
-                .toList();
+        List<CardEffect> cached = effectCache.get(slot);
+        if (cached != null) return cached;
+        List<EffectRegistration> regs = effectRegistrations.get(slot);
+        if (regs == null) return List.of();
+        List<CardEffect> effects = new ArrayList<>(regs.size());
+        for (EffectRegistration reg : regs) {
+            effects.add(reg.effect());
+        }
+        List<CardEffect> unmodifiable = Collections.unmodifiableList(effects);
+        effectCache.put(slot, unmodifiable);
+        return unmodifiable;
     }
 
     public List<EffectRegistration> getEffectRegistrations(EffectSlot slot) {
@@ -238,10 +250,12 @@ public class Card {
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect));
+        effectCache.remove(slot);
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect, triggerMode));
+        effectCache.remove(slot);
     }
 
     public void addCastingOption(CastingOption option) {
