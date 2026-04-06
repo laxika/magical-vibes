@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -38,18 +38,33 @@ class MCTSNode {
      * Selects the child with the highest UCB1 value.
      */
     MCTSNode bestChild(double explorationParam) {
-        return children.stream()
-                .max(Comparator.comparingDouble(c -> c.ucb1(explorationParam)))
-                .orElse(null);
+        MCTSNode best = null;
+        double bestValue = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < children.size(); i++) {
+            MCTSNode child = children.get(i);
+            double value = child.ucb1(explorationParam);
+            if (value > bestValue) {
+                bestValue = value;
+                best = child;
+            }
+        }
+        return best;
     }
 
     /**
      * Selects the child with the most visits (used for final move selection).
      */
     MCTSNode mostVisitedChild() {
-        return children.stream()
-                .max(Comparator.comparingInt(c -> c.visits))
-                .orElse(null);
+        MCTSNode best = null;
+        int bestVisits = -1;
+        for (int i = 0; i < children.size(); i++) {
+            MCTSNode child = children.get(i);
+            if (child.visits > bestVisits) {
+                bestVisits = child.visits;
+                best = child;
+            }
+        }
+        return best;
     }
 
     /**
@@ -76,13 +91,12 @@ class MCTSNode {
      * ensuring the simulation state is synchronized with the tree position.
      */
     List<SimulationAction> pathFromRoot() {
-        List<SimulationAction> path = new ArrayList<>();
+        Deque<SimulationAction> path = new ArrayDeque<>();
         MCTSNode node = this;
         while (node.parent != null) {
-            path.add(node.action);
+            path.addFirst(node.action);
             node = node.parent;
         }
-        Collections.reverse(path);
-        return path;
+        return new ArrayList<>(path);
     }
 }

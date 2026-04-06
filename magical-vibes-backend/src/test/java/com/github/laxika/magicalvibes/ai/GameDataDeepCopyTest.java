@@ -45,7 +45,7 @@ class GameDataDeepCopyTest {
         gd.playerLifeTotals.put(player1.getId(), 15);
         gd.playerLifeTotals.put(player2.getId(), 8);
 
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         assertThat(copy.turnNumber).isEqualTo(5);
         assertThat(copy.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
@@ -59,7 +59,7 @@ class GameDataDeepCopyTest {
     void deepCopyIndependentBattlefields() {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         // Verify the copy has the creature
         assertThat(copy.playerBattlefields.get(player1.getId())).hasSize(
@@ -75,7 +75,7 @@ class GameDataDeepCopyTest {
     void deepCopyIndependentPermanents() {
         harness.addToBattlefield(player1, new SerraAngel());
 
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         // Modify the copy's permanent
         Permanent copyPerm = copy.playerBattlefields.get(player1.getId()).getFirst();
@@ -91,7 +91,7 @@ class GameDataDeepCopyTest {
     void deepCopySharesCardReferences() {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         Card origCard = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
         Card copyCard = copy.playerBattlefields.get(player1.getId()).getFirst().getCard();
@@ -105,7 +105,7 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesPermanentIds() {
         harness.addToBattlefield(player1, new SerraAngel());
 
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
         Permanent copyPerm = copy.playerBattlefields.get(player1.getId()).getFirst();
@@ -116,7 +116,7 @@ class GameDataDeepCopyTest {
     @Test
     @DisplayName("Deep copy creates independent hand collections")
     void deepCopyIndependentHands() {
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         int origHandSize = gd.playerHands.get(player1.getId()).size();
         copy.playerHands.get(player1.getId()).clear();
@@ -129,7 +129,7 @@ class GameDataDeepCopyTest {
     void deepCopyIndependentManaPools() {
         harness.addMana(player1, ManaColor.RED, 3);
 
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         assertThat(copy.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
 
@@ -145,7 +145,7 @@ class GameDataDeepCopyTest {
     void deepCopyIndependentLifeTotals() {
         gd.playerLifeTotals.put(player1.getId(), 12);
 
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
         copy.playerLifeTotals.put(player1.getId(), 5);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
@@ -154,7 +154,7 @@ class GameDataDeepCopyTest {
     @Test
     @DisplayName("Deep copy preserves player ordering")
     void deepCopyPreservesPlayerOrder() {
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
 
         assertThat(copy.orderedPlayerIds).containsExactlyElementsOf(gd.orderedPlayerIds);
         assertThat(copy.playerIds).containsExactlyInAnyOrderElementsOf(gd.playerIds);
@@ -164,7 +164,7 @@ class GameDataDeepCopyTest {
     @DisplayName("Deep copy preserves stack entries independently")
     void deepCopyIndependentStack() {
         // The stack is empty after setup, verify copy is also empty
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
         assertThat(copy.stack).isEmpty();
         assertThat(copy.stack).isNotSameAs(gd.stack);
     }

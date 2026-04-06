@@ -152,6 +152,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -174,6 +175,14 @@ import java.util.UUID;
 @Slf4j
 public class GameSimulator {
 
+    /**
+     * Cached service graph. Since all services are stateless (they operate on GameData passed
+     * as parameters), a single GameSimulator instance can be safely reused for the same
+     * GameQueryService. This avoids rebuilding ~50 services every time.
+     */
+    private static volatile WeakReference<GameQueryService> cachedQueryService = new WeakReference<>(null);
+    private static volatile GameSimulator cachedInstance;
+
     private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -183,6 +192,27 @@ public class GameSimulator {
     private final SpellEvaluator spellEvaluator;
     private final CombatSimulator combatSimulator;
     private final CombatAttackService combatAttackService;
+
+    /**
+     * Returns a cached GameSimulator for the given query service, building one if needed.
+     * Thread-safe: uses double-checked locking on the class.
+     */
+    public static GameSimulator forQueryService(GameQueryService sharedQueryService) {
+        GameSimulator cached = cachedInstance;
+        if (cached != null && cachedQueryService.get() == sharedQueryService) {
+            return cached;
+        }
+        synchronized (GameSimulator.class) {
+            cached = cachedInstance;
+            if (cached != null && cachedQueryService.get() == sharedQueryService) {
+                return cached;
+            }
+            cached = new GameSimulator(sharedQueryService);
+            cachedInstance = cached;
+            cachedQueryService = new WeakReference<>(sharedQueryService);
+            return cached;
+        }
+    }
 
     public GameSimulator(GameQueryService sharedQueryService) {
         NoOpSessionManager noOpSession = new NoOpSessionManager();

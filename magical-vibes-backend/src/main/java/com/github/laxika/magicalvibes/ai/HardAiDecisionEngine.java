@@ -97,7 +97,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
-        this.mctsEngine = new MCTSEngine(new GameSimulator(gameQueryService));
+        this.mctsEngine = new MCTSEngine(GameSimulator.forQueryService(gameQueryService));
         this.raceEvaluator = new RaceEvaluator(gameQueryService);
     }
 

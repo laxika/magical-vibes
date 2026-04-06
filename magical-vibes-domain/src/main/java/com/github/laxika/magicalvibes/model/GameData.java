@@ -581,6 +581,8 @@ public class GameData {
 
     /**
      * Creates a deep copy of this game state for AI simulation (MCTS).
+     * Uses plain (non-synchronized) collections for map values since
+     * simulations are single-threaded.
      * <ul>
      *   <li>Card objects are shared (immutable after construction)</li>
      *   <li>Permanent objects are deep-copied (mutable state)</li>
@@ -588,7 +590,7 @@ public class GameData {
      *   <li>Primitive/enum/UUID/String fields are assigned directly</li>
      * </ul>
      */
-    public GameData deepCopy() {
+    public GameData simulationCopy() {
         GameData copy = new GameData(id, gameName, createdByUserId, createdByUsername);
 
         // --- Primitives, enums, UUIDs, Strings ---
@@ -603,7 +605,7 @@ public class GameData {
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
-                copy.colorSourceDamageBonusThisTurn.put(pid, new ConcurrentHashMap<>(colorMap)));
+                copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
         copy.pendingSacrificeSelfToDestroySourceId = this.pendingSacrificeSelfToDestroySourceId;
@@ -624,7 +626,7 @@ public class GameData {
         copy.lastBroadcastedLogSize = this.lastBroadcastedLogSize;
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
-        copy.simulation = this.simulation;
+        copy.simulation = true;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
         copy.pendingForcedSacrificeCount = this.pendingForcedSacrificeCount;
@@ -682,7 +684,7 @@ public class GameData {
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->
-                copy.spellsCastThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+                copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
@@ -692,30 +694,23 @@ public class GameData {
         copy.sourceDependentStolenCreatures.putAll(this.sourceDependentStolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
-        this.combatDamageToPlayersThisTurn.forEach((k, v) -> {
-            Set<UUID> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.combatDamageToPlayersThisTurn.put(k, s);
-        });
+        this.combatDamageToPlayersThisTurn.forEach((k, v) ->
+                copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
-        this.combatDamageSourceSubtypesThisTurn.forEach((k, v) -> {
-            Set<CardSubtype> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.combatDamageSourceSubtypesThisTurn.put(k, s);
-        });
+        this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
+                copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
         copy.pendingDelayedPlusOnePlusOneCounters.putAll(this.pendingDelayedPlusOnePlusOneCounters);
         copy.pendingDelayedCombatDamageLoots.addAll(this.pendingDelayedCombatDamageLoots);
 
         // --- Map<UUID, Set<TurnStep>> ---
-        this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, ConcurrentHashMap.newKeySet()));
-        this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.get(k).addAll(v));
+        this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, new HashSet<>(v)));
 
         // --- Map<UUID, List<Card>> (shared Card refs) ---
-        this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, Collections.synchronizedList(new ArrayList<>(v))));
-        this.playerHands.forEach((k, v) -> copy.playerHands.put(k, Collections.synchronizedList(new ArrayList<>(v))));
-        this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, Collections.synchronizedList(new ArrayList<>(v))));
+        this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, new ArrayList<>(v)));
+        this.playerHands.forEach((k, v) -> copy.playerHands.put(k, new ArrayList<>(v)));
+        this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
         copy.exiledCards.addAll(this.exiledCards);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
@@ -724,8 +719,8 @@ public class GameData {
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) ->
-                copy.playerBattlefields.put(k, Collections.synchronizedList(
-                        v.stream().map(Permanent::new).collect(Collectors.toCollection(ArrayList::new)))));
+                copy.playerBattlefields.put(k,
+                        v.stream().map(Permanent::new).collect(Collectors.toCollection(ArrayList::new))));
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
         this.playerManaPools.forEach((k, v) -> copy.playerManaPools.put(k, new ManaPool(v)));
@@ -738,27 +733,18 @@ public class GameData {
         copyInteractionInto(copy, copiedInteraction);
 
         // --- Map<UUID, Set<UUID>> ---
-        this.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.forEach((k, v) -> {
-            Set<UUID> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, s);
-        });
-        this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) -> {
-            Set<UUID> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, s);
-        });
+        this.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.forEach((k, v) ->
+                copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, new HashSet<>(v)));
+        this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
+                copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
-        this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) -> {
-            Set<UUID> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, s);
-        });
+        this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
+                copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
         copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
 
         // --- Map<UUID, Map<CardColor, Integer>> ---
         this.playerColorDamagePreventionCount.forEach((k, v) ->
-                copy.playerColorDamagePreventionCount.put(k, new ConcurrentHashMap<>(v)));
+                copy.playerColorDamagePreventionCount.put(k, new HashMap<>(v)));
 
         // --- PendingMayAbility list (records with shared Card refs) ---
         copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
@@ -776,11 +762,8 @@ public class GameData {
         copy.pendingDestroyAtEndStep.addAll(this.pendingDestroyAtEndStep);
 
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
-        this.playerSourceDamagePreventionIds.forEach((k, v) -> {
-            Set<UUID> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.playerSourceDamagePreventionIds.put(k, s);
-        });
+        this.playerSourceDamagePreventionIds.forEach((k, v) ->
+                copy.playerSourceDamagePreventionIds.put(k, new HashSet<>(v)));
 
         // --- GraveyardTargetOperationState ---
         copy.graveyardTargetOperation.card = this.graveyardTargetOperation.card;
@@ -820,7 +803,7 @@ public class GameData {
 
         // --- Map<UUID, Map<Integer, Integer>> (activated ability uses) ---
         this.activatedAbilityUsesThisTurn.forEach((k, v) ->
-                copy.activatedAbilityUsesThisTurn.put(k, new ConcurrentHashMap<>(v)));
+                copy.activatedAbilityUsesThisTurn.put(k, new HashMap<>(v)));
 
         // --- Deques ---
         copy.pendingDeathTriggerTargets.addAll(this.pendingDeathTriggerTargets);
@@ -871,16 +854,10 @@ public class GameData {
         copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
 
         // --- Per-player spell/creature color protection (Autumn's Veil style) ---
-        this.playerSpellsCantBeCounteredByColorsThisTurn.forEach((k, v) -> {
-            Set<CardColor> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.playerSpellsCantBeCounteredByColorsThisTurn.put(k, s);
-        });
-        this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) -> {
-            Set<CardColor> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, s);
-        });
+        this.playerSpellsCantBeCounteredByColorsThisTurn.forEach((k, v) ->
+                copy.playerSpellsCantBeCounteredByColorsThisTurn.put(k, new HashSet<>(v)));
+        this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) ->
+                copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
@@ -896,11 +873,8 @@ public class GameData {
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
 
         // --- Search tax payments (Leonin Arbiter) ---
-        this.paidSearchTaxPermanentIds.forEach((k, v) -> {
-            Set<UUID> s = ConcurrentHashMap.newKeySet();
-            s.addAll(v);
-            copy.paidSearchTaxPermanentIds.put(k, s);
-        });
+        this.paidSearchTaxPermanentIds.forEach((k, v) ->
+                copy.paidSearchTaxPermanentIds.put(k, new HashSet<>(v)));
 
         // --- ETB / sacrifice damage assignments ---
         copy.pendingETBDamageAssignments = this.pendingETBDamageAssignments.isEmpty()

@@ -40,8 +40,8 @@ class MCTSEngineTest {
         player2 = harness.getPlayer2();
         gd = harness.getGameData();
         harness.skipMulligan();
-        simulator = new GameSimulator(harness.getGameQueryService());
-        engine = new MCTSEngine(simulator, 42L);
+        simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        engine = new MCTSEngine(simulator, 42L, 500);
     }
 
     @Test
@@ -184,6 +184,9 @@ class MCTSEngineTest {
         // - Cast Bears → Bears on battlefield with summoning sickness → next turn blocked by 3/3 → trade
         // - Pass → nothing happens
         // Eviscerate into Bears is the best plan; requires depth-2 evaluation to see it.
+        // Uses a time-budgeted engine — this 3-way decision needs more iterations to converge reliably.
+        MCTSEngine timedEngine = new MCTSEngine(simulator);
+
         harness.setHand(player1, List.of(new Eviscerate(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -195,7 +198,7 @@ class MCTSEngineTest {
         harness.forceActivePlayer(player1);
         gd.stack.clear();
 
-        SimulationAction action = engine.search(gd, player1.getId(), 5000);
+        SimulationAction action = timedEngine.search(gd, player1.getId(), 50000);
 
         assertThat(action).isInstanceOf(SimulationAction.PlayCard.class);
         SimulationAction.PlayCard playCard = (SimulationAction.PlayCard) action;

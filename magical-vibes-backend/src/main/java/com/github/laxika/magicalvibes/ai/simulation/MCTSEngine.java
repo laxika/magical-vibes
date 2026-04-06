@@ -62,15 +62,17 @@ public class MCTSEngine {
 
     /**
      * Creates a deterministic MCTS engine for testing.
-     * Uses a seeded Random for reproducible results, disables the time budget,
-     * and caps iterations at 500 so tests complete quickly while still converging.
+     * Uses a seeded Random for reproducible results and disables the time budget.
+     *
+     * @param seed      Random seed for reproducibility
+     * @param maxBudget Maximum number of iterations (caps the caller's budget)
      */
-    public MCTSEngine(GameSimulator simulator, long seed) {
+    public MCTSEngine(GameSimulator simulator, long seed, int maxBudget) {
         this.simulator = simulator;
         this.determinizer = new Determinizer();
         this.rng = new Random(seed);
         this.timeBudgetEnabled = false;
-        this.maxBudget = 500;
+        this.maxBudget = maxBudget;
     }
 
     /**

@@ -37,7 +37,7 @@ class GameSimulatorTest {
         player2 = harness.getPlayer2();
         gd = harness.getGameData();
         harness.skipMulligan();
-        simulator = new GameSimulator(harness.getGameQueryService());
+        simulator = GameSimulator.forQueryService(harness.getGameQueryService());
     }
 
     @Test
@@ -126,7 +126,7 @@ class GameSimulatorTest {
         int origBattlefieldSize = gd.playerBattlefields.get(player1.getId()).size();
 
         // Apply action to a copy
-        GameData copy = gd.deepCopy();
+        GameData copy = gd.simulationCopy();
         simulator.applyAction(copy, player1.getId(), new SimulationAction.PlayCard(0, null, 0));
 
         // Original unchanged

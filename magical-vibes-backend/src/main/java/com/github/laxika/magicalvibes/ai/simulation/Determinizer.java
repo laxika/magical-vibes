@@ -26,8 +26,7 @@ public class Determinizer {
      * @return A new GameData with randomized hidden info
      */
     public GameData determinize(GameData gd, UUID aiPlayerId, Random rng) {
-        GameData copy = gd.deepCopy();
-        copy.simulation = true;
+        GameData copy = gd.simulationCopy();
 
         UUID opponentId = null;
         for (UUID id : copy.orderedPlayerIds) {
