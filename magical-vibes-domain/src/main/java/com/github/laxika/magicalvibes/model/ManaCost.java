@@ -33,10 +33,10 @@ public class ManaCost {
                 ManaColor color = ManaColor.fromCode(symbol.substring(0, symbol.length() - 2));
                 phyrexian.merge(color, 1, Integer::sum);
             } else {
-                try {
-                    ManaColor color = ManaColor.fromCode(symbol);
+                ManaColor color = ManaColor.fromCode(symbol);
+                if (color != null) {
                     colored.merge(color, 1, Integer::sum);
-                } catch (IllegalArgumentException e) {
+                } else {
                     generic += Integer.parseInt(symbol);
                 }
             }
