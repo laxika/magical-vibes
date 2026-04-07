@@ -342,16 +342,11 @@ public class GameBroadcastService {
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
 
-        // Count untapped creatures for convoke playability
-        int untappedCreatureCount = 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null) {
-            for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm) && !perm.isTapped()) {
-                    untappedCreatureCount++;
-                }
-            }
-        }
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+
+        // Lazy: only computed if a card with Convoke is found
+        int untappedCreatureCount = -1;
 
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
@@ -366,15 +361,17 @@ public class GameBroadcastService {
                     if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                         playable.add(i);
                     } else {
-                        ManaCost cost = new ManaCost(card.getManaCost());
-                        ManaPool pool = gameData.playerManaPools.get(playerId);
+                        boolean added = false;
+                        ManaCost cost = card.getParsedManaCost();
                         int additionalCost = getCastCostModifier(gameData, playerId, card);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
                         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
                         boolean hasRestrictedRedContext = isArtifact
                                 || card.hasType(CardType.CREATURE);
-                        boolean hasKicker = card.getEffects(EffectSlot.STATIC).stream()
-                                .anyMatch(e -> e instanceof KickerEffect);
+                        boolean hasKicker = false;
+                        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+                            if (e instanceof KickerEffect) { hasKicker = true; break; }
+                        }
                         boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
                         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                                 && pool.getInstantSorceryOnlyColorless() > 0;
@@ -388,20 +385,32 @@ public class GameBroadcastService {
                         }
                         if (canAfford) {
                             playable.add(i);
+                            added = true;
                         } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
                             // Check if castable with convoke: mana pool + untapped creatures >= total cost
+                            if (untappedCreatureCount < 0) {
+                                untappedCreatureCount = 0;
+                                if (battlefield != null) {
+                                    for (Permanent perm : battlefield) {
+                                        if (gameQueryService.isCreature(gameData, perm) && !perm.isTapped()) {
+                                            untappedCreatureCount++;
+                                        }
+                                    }
+                                }
+                            }
                             int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
                             int totalAvailable = pool.getTotal() + convokeCreatures;
                             if (totalAvailable >= cost.getManaValue() + additionalCost) {
                                 playable.add(i);
+                                added = true;
                             }
                         }
-                        if (!playable.contains(i)) {
+                        if (!added) {
                             // Check if castable with sacrifice-for-cost-reduction (e.g. Torgaar)
-                            SacrificeCreaturesForCostReductionEffect sacReduce =
-                                    (SacrificeCreaturesForCostReductionEffect) card.getEffects(EffectSlot.STATIC).stream()
-                                            .filter(SacrificeCreaturesForCostReductionEffect.class::isInstance)
-                                            .findFirst().orElse(null);
+                            SacrificeCreaturesForCostReductionEffect sacReduce = null;
+                            for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+                                if (e instanceof SacrificeCreaturesForCostReductionEffect s) { sacReduce = s; break; }
+                            }
                             if (sacReduce != null) {
                                 int creatureCount = 0;
                                 if (battlefield != null) {
@@ -414,26 +423,29 @@ public class GameBroadcastService {
                                 int maxReduction = creatureCount * sacReduce.reductionPerCreature();
                                 if (cost.canPay(pool, additionalCost - maxReduction)) {
                                     playable.add(i);
+                                    added = true;
                                 }
                             }
                         }
                         // Check if castable with target-subtype cost reduction (e.g. Savage Stomp)
-                        if (!playable.contains(i)) {
-                            ReduceOwnCastCostIfTargetingControlledSubtypeEffect targetReduce =
-                                    (ReduceOwnCastCostIfTargetingControlledSubtypeEffect) card.getEffects(EffectSlot.STATIC).stream()
-                                            .filter(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::isInstance)
-                                            .findFirst().orElse(null);
+                        if (!added) {
+                            ReduceOwnCastCostIfTargetingControlledSubtypeEffect targetReduce = null;
+                            for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+                                if (e instanceof ReduceOwnCastCostIfTargetingControlledSubtypeEffect r) { targetReduce = r; break; }
+                            }
                             if (targetReduce != null && controlsSubtype(gameData, playerId, targetReduce.subtype())) {
                                 if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
                                     playable.add(i);
+                                    added = true;
                                 }
                             }
                         }
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
-                        if (!playable.contains(i) && canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
+                        if (!added && canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
                             playable.add(i);
+                            added = true;
                         }
-                        if (!playable.contains(i) && canAlternateCast(gameData, playerId, card, battlefield)) {
+                        if (!added && canAlternateCast(gameData, playerId, card, battlefield)) {
                             playable.add(i);
                         }
                     }
@@ -702,7 +714,7 @@ public class GameBroadcastService {
                 if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                     playable.add(cardViewFactory.create(card));
                 } else {
-                    ManaCost cost = new ManaCost(card.getManaCost());
+                    ManaCost cost = card.getParsedManaCost();
                     boolean canAfford;
                     if (anyManaTypeIds.contains(card.getId())) {
                         canAfford = cost.canPayAsGeneric(pool);
@@ -791,7 +803,7 @@ public class GameBroadcastService {
         if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard)) {
             playable.add(cardViewFactory.create(topCard));
         } else {
-            ManaCost cost = new ManaCost(topCard.getManaCost());
+            ManaCost cost = topCard.getParsedManaCost();
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = getCastCostModifier(gameData, playerId, topCard);
             boolean canAfford = cost.canPay(pool, additionalCost);

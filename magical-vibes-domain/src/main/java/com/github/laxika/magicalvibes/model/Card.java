@@ -34,7 +34,10 @@ public class Card {
     private final UUID id = UUID.randomUUID();
     @Setter private String name;
     @Setter private CardType type;
-    @Setter private String manaCost;
+    private String manaCost;
+    /** Cached parsed ManaCost, invalidated on setManaCost. */
+    @Getter(AccessLevel.NONE)
+    private ManaCost parsedManaCost;
     @Setter private CardColor color;
     @Setter private List<CardColor> colors = List.of();
 
@@ -289,9 +292,28 @@ public class Card {
         return null;
     }
 
+    public void setManaCost(String manaCost) {
+        this.manaCost = manaCost;
+        this.parsedManaCost = null;
+    }
+
+    /**
+     * Returns a cached parsed {@link ManaCost} for this card's mana cost string.
+     * Returns {@code null} if this card has no mana cost.
+     */
+    public ManaCost getParsedManaCost() {
+        if (manaCost == null) return null;
+        ManaCost cached = parsedManaCost;
+        if (cached == null) {
+            cached = new ManaCost(manaCost);
+            parsedManaCost = cached;
+        }
+        return cached;
+    }
+
     public int getManaValue() {
-        if (manaCost == null) return 0;
-        return new ManaCost(manaCost).getManaValue();
+        ManaCost cost = getParsedManaCost();
+        return cost != null ? cost.getManaValue() : 0;
     }
 
     public boolean hasType(CardType cardType) {
