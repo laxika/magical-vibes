@@ -559,6 +559,126 @@ class HardAiDecisionEngineTest {
         }
     }
 
+    // ===== Curving out (mana efficiency) =====
+
+    @Nested
+    @ExtendWith(MockitoExtension.class)
+    @DisplayName("Curving out mana efficiency")
+    class CurvingOutManaEfficiency {
+
+        @Mock private MessageHandler mockMessageHandler;
+        @Mock private GameQueryService mockGameQueryService;
+        @Mock private CombatAttackService mockCombatAttackService;
+        @Mock private Connection mockConnection;
+        @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
+
+        private GameData mockGd;
+        private Player mockAiPlayer;
+        private GameRegistry mockGameRegistry;
+
+        @BeforeEach
+        void setUpMocks() {
+            UUID gameId = UUID.randomUUID();
+            mockAiPlayer = new Player(UUID.randomUUID(), "AI");
+            Player mockOpponent = new Player(UUID.randomUUID(), "Opponent");
+
+            mockGd = new GameData(gameId, "test", mockAiPlayer.getId(), "AI");
+            mockGd.status = GameStatus.RUNNING;
+            mockGd.currentStep = TurnStep.PRECOMBAT_MAIN;
+            mockGd.activePlayerId = mockAiPlayer.getId();
+            mockGd.orderedPlayerIds.add(mockAiPlayer.getId());
+            mockGd.orderedPlayerIds.add(mockOpponent.getId());
+            mockGd.playerIdToName.put(mockAiPlayer.getId(), "AI");
+            mockGd.playerIdToName.put(mockOpponent.getId(), "Opponent");
+            mockGd.playerHands.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerHands.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerBattlefields.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerBattlefields.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerManaPools.put(mockAiPlayer.getId(), new ManaPool());
+            mockGd.playerManaPools.put(mockOpponent.getId(), new ManaPool());
+            mockGd.playerLifeTotals.put(mockAiPlayer.getId(), 20);
+            mockGd.playerLifeTotals.put(mockOpponent.getId(), 20);
+            mockGd.playerDecks.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerDecks.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerGraveyards.put(mockAiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
+            mockGd.playerGraveyards.put(mockOpponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+
+            mockGameRegistry = new GameRegistry();
+            mockGameRegistry.register(mockGd);
+        }
+
+        private HardAiDecisionEngine createEngine() {
+            Mockito.when(mockGameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            HardAiDecisionEngine engine = new HardAiDecisionEngine(
+                    mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
+                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockTargetValidationService, null);
+            engine.setSelfConnection(mockConnection);
+            return engine;
+        }
+
+        @Test
+        @DisplayName("Hard AI prefers casting two cheaper spells over one expensive spell for better total value")
+        void prefersTwoCheaperSpellsOverOneExpensive() throws Exception {
+            // Big creature: cost 4, value = 3*3.0 + 3*1.5 = 13.5
+            Card bigCreature = new Card();
+            bigCreature.setName("Big Creature");
+            bigCreature.setType(CardType.CREATURE);
+            bigCreature.setManaCost("{3}{G}");
+            bigCreature.setPower(3);
+            bigCreature.setToughness(3);
+
+            // Medium creature: cost 3, value = 2*3.0 + 3*1.5 = 10.5
+            Card mediumCreature = new Card();
+            mediumCreature.setName("Medium Creature");
+            mediumCreature.setType(CardType.CREATURE);
+            mediumCreature.setManaCost("{2}{G}");
+            mediumCreature.setPower(2);
+            mediumCreature.setToughness(3);
+
+            // Small creature: cost 1, value = 2*3.0 + 1*1.5 = 7.5
+            Card smallCreature = new Card();
+            smallCreature.setName("Small Creature");
+            smallCreature.setType(CardType.CREATURE);
+            smallCreature.setManaCost("{G}");
+            smallCreature.setPower(2);
+            smallCreature.setToughness(1);
+
+            // With 4 mana:
+            // Big alone: 13.5 (uses all 4 mana)
+            // Medium + Small: 10.5 + 7.5 = 18.0 (uses 3+1 = 4 mana)
+            // AI should pick Medium first (starting the better sequence)
+            mockGd.playerHands.get(mockAiPlayer.getId()).addAll(List.of(bigCreature, mediumCreature, smallCreature));
+
+            ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
+            pool.add(ManaColor.GREEN, 4);
+
+            Mockito.doAnswer(inv -> {
+                PlayCardRequest req = inv.getArgument(1);
+                mockGd.playerHands.get(mockAiPlayer.getId()).remove(req.cardIndex());
+                return null;
+            }).when(mockMessageHandler).handlePlayCard(any(), any());
+
+            // Force MCTS to fail so the evaluator fallback (tryCastSpell) is exercised
+            HardAiDecisionEngine engine = createEngine();
+            MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
+            Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
+                    .thenThrow(new RuntimeException("MCTS disabled for test"));
+            engine.setMctsEngine(failingMcts);
+
+            engine.handleMessage("GAME_STATE", "");
+
+            ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
+            verify(mockMessageHandler).handlePlayCard(eq(mockConnection), captor.capture());
+
+            // Should cast Medium Creature (index 1) first, not Big Creature (index 0)
+            PlayCardRequest request = captor.getValue();
+            Card castCard = List.of(bigCreature, mediumCreature, smallCreature).get(request.cardIndex());
+            assertThat(castCard.getName()).isEqualTo("Medium Creature");
+        }
+    }
+
     // ===== Modal spell handling (ChooseOneEffect) =====
 
     @Test

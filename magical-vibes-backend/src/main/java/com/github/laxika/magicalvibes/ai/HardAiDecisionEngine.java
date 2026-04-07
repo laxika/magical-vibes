@@ -1364,7 +1364,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
-        record CastCandidate(int index, double value) {}
+        record CastCandidate(int index, double value, int effectiveCost) {}
         List<CastCandidate> candidates = new ArrayList<>();
 
         for (int i = 0; i < hand.size(); i++) {
@@ -1381,7 +1381,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (hasCardDrawEtb(card)) {
                     value += 0.5;
                 }
-                candidates.add(new CastCandidate(i, value));
+                int costMod = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+                int effectiveCost = Math.max(0, card.getManaValue() + costMod);
+                candidates.add(new CastCandidate(i, value, effectiveCost));
             }
         }
 
@@ -1389,8 +1391,42 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return false;
         }
 
+        // "Curve out" logic: instead of always casting the single highest-value
+        // spell, pick the spell that maximizes total sequence value — its own value
+        // plus the greedy value of remaining castable spells within leftover mana.
+        // E.g. with 4 mana: 3-drop(10) + 1-drop(5) = 15 beats 4-drop(12) alone.
         candidates.sort(Comparator.comparingDouble(CastCandidate::value).reversed());
-        CastCandidate best = candidates.getFirst();
+        int totalMana = virtualPool.getTotal();
+
+        CastCandidate best = null;
+        double bestSequenceValue = 0;
+
+        for (int c = 0; c < candidates.size(); c++) {
+            CastCandidate first = candidates.get(c);
+            if (first.effectiveCost() > totalMana) continue;
+
+            int remainingMana = totalMana - first.effectiveCost();
+            double sequenceValue = first.value();
+
+            // Greedily pack remaining spells (already sorted by value desc)
+            for (int r = 0; r < candidates.size(); r++) {
+                if (r == c) continue;
+                CastCandidate other = candidates.get(r);
+                if (other.effectiveCost() <= remainingMana) {
+                    sequenceValue += other.value();
+                    remainingMana -= other.effectiveCost();
+                }
+            }
+
+            if (best == null || sequenceValue > bestSequenceValue) {
+                best = candidates.get(c);
+                bestSequenceValue = sequenceValue;
+            }
+        }
+
+        if (best == null) {
+            return false;
+        }
         Card card = hand.get(best.index);
 
         // Handle modal spells (ChooseOneEffect)
