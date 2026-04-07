@@ -2185,16 +2185,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     cost += permanent.getCard().getManaValue() * 3.0;
                 }
             } else if (effect instanceof SacrificeCreatureCost) {
-                // Deduct the value of the weakest creature we'd sacrifice
+                // Deduct the value of the best sacrifice candidate (cheapest to lose)
                 List<Permanent> creatures = gameData.playerBattlefields
                         .getOrDefault(aiPlayer.getId(), List.of()).stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .toList();
-                double weakest = creatures.stream()
-                        .mapToDouble(p -> boardEval.creatureScore(gameData, p, aiPlayer.getId(), opponentId))
-                        .min()
-                        .orElse(0);
-                cost += weakest;
+                cost += boardEval.bestSacrificeCost(gameData, creatures, aiPlayer.getId(), opponentId);
             } else if (effect instanceof PayLifeCost lifeCost) {
                 cost += lifeCost.amount() * 1.5;
             } else if (effect instanceof RemoveChargeCountersFromSourceCost counterCost) {

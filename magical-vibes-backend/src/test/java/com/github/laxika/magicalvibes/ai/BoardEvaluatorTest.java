@@ -10,11 +10,15 @@ import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.v.ViashinoRunner;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -721,6 +725,139 @@ class BoardEvaluatorTest {
         }
 
         private Permanent createReadyCreature(com.github.laxika.magicalvibes.model.Card card) {
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            return perm;
+        }
+    }
+
+    // ===== Sacrifice cost scoring =====
+
+    @Nested
+    @DisplayName("Sacrifice cost scoring")
+    class SacrificeCostScoring {
+
+        @BeforeEach
+        void clearBoards() {
+            gd.playerBattlefields.get(player1.getId()).clear();
+            gd.playerBattlefields.get(player2.getId()).clear();
+        }
+
+        @Test
+        @DisplayName("Token creature has much lower sacrifice cost than non-token")
+        void tokenCreatureCheapToSacrifice() {
+            Permanent bears = createReadyCreature(new GrizzlyBears());
+
+            Card tokenCard = new Card();
+            tokenCard.setName("Saproling");
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setPower(1);
+            tokenCard.setToughness(1);
+            tokenCard.setToken(true);
+            Permanent token = createReadyCreature(tokenCard);
+
+            double bearsCost = evaluator.sacrificeCost(gd, bears, player1.getId(), player2.getId());
+            double tokenCost = evaluator.sacrificeCost(gd, token, player1.getId(), player2.getId());
+
+            // Token should be much cheaper to sacrifice
+            assertThat(tokenCost).isLessThan(bearsCost * 0.5);
+        }
+
+        @Test
+        @DisplayName("Pacified creature has much lower sacrifice cost")
+        void pacifiedCreatureCheapToSacrifice() {
+            Permanent bears = createReadyCreature(new GrizzlyBears());
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+
+            // Attach a Pacifism aura to the creature
+            Permanent pacifism = new Permanent(new Pacifism());
+            pacifism.setAttachedTo(bears.getId());
+            gd.playerBattlefields.get(player2.getId()).add(pacifism);
+
+            Permanent healthyBears = createReadyCreature(new GrizzlyBears());
+
+            double pacifiedCost = evaluator.sacrificeCost(gd, bears, player1.getId(), player2.getId());
+            double healthyCost = evaluator.sacrificeCost(gd, healthyBears, player1.getId(), player2.getId());
+
+            // Pacified creature should be much cheaper to sacrifice
+            assertThat(pacifiedCost).isLessThan(healthyCost * 0.5);
+        }
+
+        @Test
+        @DisplayName("Creature about to die from damage is near-free to sacrifice")
+        void dyingCreatureNearFreeToSacrifice() {
+            Permanent bears = createReadyCreature(new GrizzlyBears());
+            bears.setMarkedDamage(2); // 2/2 with 2 damage = about to die
+
+            double cost = evaluator.sacrificeCost(gd, bears, player1.getId(), player2.getId());
+
+            assertThat(cost).isEqualTo(0.5);
+        }
+
+        @Test
+        @DisplayName("0-power creature is cheap to sacrifice")
+        void zeroPowerCreatureCheapToSacrifice() {
+            Permanent wall = createReadyCreature(new WallOfWood());
+            Permanent bears = createReadyCreature(new GrizzlyBears());
+
+            double wallCost = evaluator.sacrificeCost(gd, wall, player1.getId(), player2.getId());
+            double bearsCost = evaluator.sacrificeCost(gd, bears, player1.getId(), player2.getId());
+
+            // 0-power creature should be cheaper to sacrifice
+            assertThat(wallCost).isLessThan(bearsCost);
+        }
+
+        @Test
+        @DisplayName("Lord is more expensive to sacrifice than vanilla creature")
+        void lordMoreExpensiveToSacrifice() {
+            // Benalish Marshal: 3/3 that gives +1/+1 to other creatures
+            Permanent marshal = harness.addToBattlefieldAndReturn(player1, new BenalishMarshal());
+
+            // Add some creatures for the lord to pump
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+
+            // Air Elemental is a 4/4 — bigger body but no lord effect
+            Permanent airElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+            double marshalCost = evaluator.sacrificeCost(gd, marshal, player1.getId(), player2.getId());
+            double airElementalCost = evaluator.sacrificeCost(gd, airElemental, player1.getId(), player2.getId());
+
+            // Lord pumping 4 other creatures (3 bears + air elemental) should be more expensive
+            assertThat(marshalCost).isGreaterThan(airElementalCost);
+        }
+
+        @Test
+        @DisplayName("bestSacrificeCost picks the cheapest creature")
+        void bestSacrificeCostPicksCheapest() {
+            Card tokenCard = new Card();
+            tokenCard.setName("Plant");
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setPower(0);
+            tokenCard.setToughness(1);
+            tokenCard.setToken(true);
+            Permanent token = createReadyCreature(tokenCard);
+
+            Permanent airElemental = createReadyCreature(new AirElemental());
+
+            java.util.List<Permanent> creatures = java.util.List.of(airElemental, token);
+
+            double bestCost = evaluator.bestSacrificeCost(gd, creatures, player1.getId(), player2.getId());
+            double tokenCost = evaluator.sacrificeCost(gd, token, player1.getId(), player2.getId());
+
+            // bestSacrificeCost should return the token's cost (the cheapest)
+            assertThat(bestCost).isEqualTo(tokenCost);
+        }
+
+        @Test
+        @DisplayName("bestSacrificeCost returns 0 for empty list")
+        void bestSacrificeCostEmptyList() {
+            double cost = evaluator.bestSacrificeCost(gd, java.util.List.of(), player1.getId(), player2.getId());
+            assertThat(cost).isEqualTo(0.0);
+        }
+
+        private Permanent createReadyCreature(Card card) {
             Permanent perm = new Permanent(card);
             perm.setSummoningSick(false);
             return perm;

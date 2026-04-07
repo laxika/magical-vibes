@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -153,6 +155,56 @@ public class BoardEvaluator {
         }
 
         return score;
+    }
+
+    /**
+     * Returns the sacrifice cost of the cheapest creature to sacrifice from the given list.
+     * Classifies creatures as "expendable" (tokens, pacified, dying, 0-power) vs "valuable"
+     * (lords, real threats) and scores accordingly. Expendable creatures get near-zero cost;
+     * valuable creatures get their full score plus lord bonus.
+     */
+    public double bestSacrificeCost(GameData gameData, List<Permanent> creatures,
+                                     UUID controllerId, UUID opponentId) {
+        return creatures.stream()
+                .mapToDouble(p -> sacrificeCost(gameData, p, controllerId, opponentId))
+                .min()
+                .orElse(0);
+    }
+
+    /**
+     * Computes the cost of sacrificing a specific creature.
+     * Dying creatures are near-free. Tokens, pacified creatures, and 0-power creatures
+     * are cheap. Lords get extra cost reflecting the buff they provide to allies.
+     */
+    double sacrificeCost(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
+        double baseScore = creatureScore(gameData, perm, controllerId, opponentId);
+
+        // Creature about to die from marked damage — essentially free to sacrifice
+        int effectiveToughness = gameQueryService.getEffectiveToughness(gameData, perm)
+                - perm.getMarkedDamage();
+        if (effectiveToughness <= 0) {
+            return 0.5;
+        }
+
+        // Token creatures — expendable sacrifice fodder
+        if (perm.getCard().isToken()) {
+            return baseScore * 0.15;
+        }
+
+        // Pacified creatures (can't attack or block due to aura) — great sacrifice targets
+        if (gameQueryService.hasAuraWithEffect(gameData, perm, EnchantedCreatureCantAttackOrBlockEffect.class)
+                || gameQueryService.hasAuraWithEffect(gameData, perm, EnchantedCreatureCantAttackEffect.class)) {
+            return baseScore * 0.15;
+        }
+
+        // 0-power creatures — minimal offensive value, cheap to sacrifice
+        int power = gameQueryService.getEffectivePower(gameData, perm);
+        if (power <= 0) {
+            return baseScore * 0.3;
+        }
+
+        // Valuable: lord pumping allies — sacrifice cost includes the buff they provide
+        return baseScore + lordBonus(gameData, perm, controllerId);
     }
 
     /**
