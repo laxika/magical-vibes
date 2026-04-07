@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -30,8 +29,7 @@ public class CemeteryReaper extends Card {
                 "{2}{B}",
                 List.of(
                         new ExileTargetCardFromGraveyardEffect(CardType.CREATURE),
-                        new CreateTokenEffect("Zombie", 2, 2, CardColor.BLACK,
-                                List.of(CardSubtype.ZOMBIE), Set.of(), Set.of())
+                        CreateTokenEffect.blackZombie(1)
                 ),
                 "{2}{B}, {T}: Exile target creature card from a graveyard. Create a 2/2 black Zombie creature token."
         ));

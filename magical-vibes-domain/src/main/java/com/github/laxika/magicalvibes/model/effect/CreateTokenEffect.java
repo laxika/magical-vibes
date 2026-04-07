@@ -97,6 +97,24 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(CardType.ARTIFACT, amount, tokenName, 0, 0, null, null, subtypes, Set.of(), Set.of(), false, false, Map.of(), abilities, false, false, false);
     }
 
+    /** 1/1 white Spirit creature token with flying */
+    public static CreateTokenEffect whiteSpirit(int amount) {
+        return new CreateTokenEffect(CardType.CREATURE, amount, "Spirit", 1, 1, CardColor.WHITE, null,
+                List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(), false, false, Map.of(), List.of(), false, false, false);
+    }
+
+    /** 2/2 black Zombie creature token */
+    public static CreateTokenEffect blackZombie(int amount) {
+        return new CreateTokenEffect(CardType.CREATURE, amount, "Zombie", 2, 2, CardColor.BLACK, null,
+                List.of(CardSubtype.ZOMBIE), Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, false);
+    }
+
+    /** 1/1 white Soldier creature token */
+    public static CreateTokenEffect whiteSoldier(int amount) {
+        return new CreateTokenEffect(CardType.CREATURE, amount, "Soldier", 1, 1, CardColor.WHITE, null,
+                List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, false);
+    }
+
     /** Treasure token: colorless artifact with "{T}, Sacrifice this artifact: Add one mana of any color." */
     public static CreateTokenEffect ofTreasureToken(int amount) {
         return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),

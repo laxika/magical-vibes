@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -13,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "244")
 public class MemorialToGlory extends Card {
@@ -27,10 +24,7 @@ public class MemorialToGlory extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{W}",
-                List.of(new SacrificeSelfCost(), new CreateTokenEffect(
-                        2, "Soldier", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.SOLDIER), Set.of(), Set.of()
-                )),
+                List.of(new SacrificeSelfCost(), CreateTokenEffect.whiteSoldier(2)),
                 "{3}{W}, {T}, Sacrifice Memorial to Glory: Create two 1/1 white Soldier creature tokens."
         ));
     }

@@ -260,6 +260,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Tokens
 
 - `CreateTokenEffect(...)` — create tokens (many constructors, see EFFECTS_INDEX.md)
+- `CreateTokenEffect.whiteSpirit(int)` — 1/1 white Spirit creature token with flying
+- `CreateTokenEffect.blackZombie(int)` — 2/2 black Zombie creature token
+- `CreateTokenEffect.whiteSoldier(int)` — 1/1 white Soldier creature token
 - `CreateTokenEffect.ofTreasureToken(int)` — treasure tokens
 - `CreateTokenForEachControlledPermanentEffect(PermanentPredicate, ...)` — token per permanent
 - `CreateTokenForEachOpponentCreatureEffect(...)` — token per opponent creature
