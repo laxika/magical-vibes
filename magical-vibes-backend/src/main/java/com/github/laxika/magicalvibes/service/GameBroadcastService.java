@@ -359,16 +359,9 @@ public class GameBroadcastService {
                 playable.add(i);
             }
             if (card.getManaCost() != null && !spellLimitReached && !cantCastDueToAttack) {
-                if (restrictedSpellTypes.contains(card.getType())
-                        || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
-                if (forbiddenCardNames.contains(card.getName())) continue;
+                if (isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
 
-                boolean isInstantSpeed = card.hasType(CardType.INSTANT)
-                        || card.getKeywords().contains(Keyword.FLASH)
-                        || hasFlashGrantForCard(gameData, playerId, card);
-                boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
-
-                if (canCastTiming) {
+                if (canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                     // Alternative zero cost (e.g. Rooftop Storm for Zombie creature spells)
                     if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                         playable.add(i);
@@ -447,11 +440,8 @@ public class GameBroadcastService {
                 }
             } else if (card.getManaCost() == null && canAlternateCast(gameData, playerId, card, battlefield)) {
                 // Card with no mana cost but has alternate cost (e.g. some future cards)
-                boolean isInstantSpeed = card.hasType(CardType.INSTANT)
-                        || card.getKeywords().contains(Keyword.FLASH)
-                        || hasFlashGrantForCard(gameData, playerId, card);
-                boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
-                if (canCastTiming && !spellLimitReached && !cantCastDueToAttack) {
+                if (canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)
+                        && !spellLimitReached && !cantCastDueToAttack) {
                     playable.add(i);
                 }
             }
@@ -706,16 +696,9 @@ public class GameBroadcastService {
             }
 
             if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
-            if (restrictedSpellTypes.contains(card.getType())
-                    || card.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) continue;
-            if (forbiddenCardNames.contains(card.getName())) continue;
+            if (isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
 
-            boolean isInstantSpeed = card.hasType(CardType.INSTANT)
-                    || card.getKeywords().contains(Keyword.FLASH)
-                    || hasFlashGrantForCard(gameData, playerId, card);
-            boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
-
-            if (canCastTiming) {
+            if (canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                     playable.add(cardViewFactory.create(card));
                 } else {
@@ -796,16 +779,9 @@ public class GameBroadcastService {
         Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
 
         if (spellLimitReached || cantCastDueToAttack) return playable;
-        if (restrictedSpellTypes.contains(topCard.getType())
-                || topCard.getAdditionalTypes().stream().anyMatch(restrictedSpellTypes::contains)) return playable;
-        if (forbiddenCardNames.contains(topCard.getName())) return playable;
+        if (isSpellRestricted(topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
 
-        boolean isInstantSpeed = topCard.hasType(CardType.INSTANT)
-                || topCard.getKeywords().contains(Keyword.FLASH)
-                || hasFlashGrantForCard(gameData, playerId, topCard);
-        boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
-
-        if (!canCastTiming) return playable;
+        if (!canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 
         // Check if spell requires a legal target (MTG rule 601.2c)
         if (EffectResolution.needsSpellCastTarget(topCard) && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
@@ -888,6 +864,22 @@ public class GameBroadcastService {
             }
         }
         return anyManaIds;
+    }
+
+    private boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
+        if (restrictedSpellTypes.contains(card.getType())) return true;
+        for (CardType type : card.getAdditionalTypes()) {
+            if (restrictedSpellTypes.contains(type)) return true;
+        }
+        return forbiddenCardNames.contains(card.getName());
+    }
+
+    private boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
+                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
+        boolean isInstantSpeed = card.hasType(CardType.INSTANT)
+                || card.getKeywords().contains(Keyword.FLASH)
+                || hasFlashGrantForCard(gameData, playerId, card);
+        return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
