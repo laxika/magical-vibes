@@ -316,7 +316,7 @@ public class SpellEvaluator {
     }
 
     private double evaluateCreature(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {
-        double value = boardEvaluator.creatureCardScore(card);
+        double value = boardEvaluator.creatureCardScore(gameData, card, aiPlayerId);
 
         // Add ETB effect value
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
@@ -373,7 +373,7 @@ public class SpellEvaluator {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof GainLifeEffect gain) {
-            return gain.amount() * 0.5;
+            return gain.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof TargetPlayerDiscardsEffect discard) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
@@ -483,12 +483,12 @@ public class SpellEvaluator {
             }
         }
 
-        // Life
+        // Life — scaled by danger level: more valuable when AI is under pressure
         if (effect instanceof GainLifeEffect gain) {
-            return gain.amount() * 0.5;
+            return gain.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof LoseLifeEffect lose) {
-            return -lose.amount() * 0.5;
+            return -lose.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
 
         // Discard
@@ -527,7 +527,7 @@ public class SpellEvaluator {
             int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
             if (estimatedX <= 0) return 0;
             return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId)
-                    + estimatedX * 0.5;
+                    + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof DealXDamageToTargetCreatureEffect) {
             int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
@@ -537,7 +537,7 @@ public class SpellEvaluator {
         if (effect instanceof EachOpponentLosesXLifeAndControllerGainsLifeLostEffect) {
             int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
             if (estimatedX <= 0) return 0;
-            return estimatedX * 1.5 + estimatedX * 0.5; // drain value
+            return estimatedX * 1.5 + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId); // drain value
         }
 
         return 0;
@@ -1045,6 +1045,12 @@ public class SpellEvaluator {
     private boolean hasOnTapManaEffects(Card card) {
         return card.getEffects(EffectSlot.ON_TAP).stream()
                 .anyMatch(ManaProducingEffect.class::isInstance);
+    }
+
+    private double lifeGainMultiplier(GameData gameData, UUID aiPlayerId, UUID opponentId) {
+        int aiLife = gameData.getLife(aiPlayerId);
+        int opponentBoardDamage = computeOpponentBoardDamage(gameData, opponentId);
+        return BoardEvaluator.lifeGainMultiplier(opponentBoardDamage, aiLife);
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {

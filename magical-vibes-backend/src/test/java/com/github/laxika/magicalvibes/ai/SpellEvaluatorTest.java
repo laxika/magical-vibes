@@ -962,4 +962,44 @@ class SpellEvaluatorTest {
 
         assertThat(bonus).isEqualTo(0.0);
     }
+
+    // ===== Life gain danger-level scaling =====
+
+    @Test
+    @DisplayName("Life gain spell base value scales with AI danger level")
+    void lifeGainBaseValueScalesWithDanger() {
+        // Opponent has a 6/4 Craw Wurm (6 damage)
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        // At 5 life: danger = 6/5 = 1.2 → multiplier clamped to 1.2
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double dangerousValue = spellEvaluator.estimateSpellValue(gd, new HealingGrace(), player1.getId());
+
+        // At 20 life: danger = 6/20 = 0.3 → multiplier clamped to 0.3
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        double safeValue = spellEvaluator.estimateSpellValue(gd, new HealingGrace(), player1.getId());
+
+        // Life gain should be worth much more when in danger
+        assertThat(dangerousValue).isGreaterThan(safeValue * 2);
+    }
+
+    @Test
+    @DisplayName("Life gain spell has minimal value when AI is safe with no opponent threats")
+    void lifeGainMinimalWhenSafe() {
+        // No opponent creatures — danger is 0, multiplier floors at 0.3
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        double safeValue = spellEvaluator.estimateSpellValue(gd, new HealingGrace(), player1.getId());
+
+        // Add a threatening opponent creature
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double dangerValue = spellEvaluator.estimateSpellValue(gd, new HealingGrace(), player1.getId());
+
+        // Safe value should be much lower
+        assertThat(safeValue).isLessThan(dangerValue);
+    }
 }

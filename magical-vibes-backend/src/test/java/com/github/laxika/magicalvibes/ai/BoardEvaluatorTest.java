@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.a.AbattoirGhoul;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BaneslayerAngel;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.b.BlindZealot;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -678,6 +680,44 @@ class BoardEvaluatorTest {
 
             // Swampwalk should score higher when opponent has a swamp
             assertThat(withSwampScore).isGreaterThan(withoutSwampScore);
+        }
+
+        @Test
+        @DisplayName("Lifelink creature scores higher when controller is in danger")
+        void lifelinkScalesWithDangerLevel() {
+            // Baneslayer Angel: 5/5 flying, first strike, lifelink
+            Permanent angel = createReadyCreature(new BaneslayerAngel());
+
+            // Opponent has a 6/4 creature threatening the AI
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new CrawWurm()));
+
+            // AI at 5 life — high danger (6/5 = 1.2 multiplier)
+            gd.playerLifeTotals.put(player1.getId(), 5);
+            double dangerScore = evaluator.creatureScore(gd, angel, player1.getId(), player2.getId());
+
+            // AI at 20 life — low danger (6/20 = 0.3 multiplier)
+            gd.playerLifeTotals.put(player1.getId(), 20);
+            double safeScore = evaluator.creatureScore(gd, angel, player1.getId(), player2.getId());
+
+            // Lifelink should be worth more when under pressure
+            assertThat(dangerScore).isGreaterThan(safeScore);
+        }
+
+        @Test
+        @DisplayName("Lifelink creature card score scales with danger for hand evaluation")
+        void lifelinkCardScoreScalesWithDanger() {
+            // Opponent has a 6/4 creature
+            gd.playerBattlefields.get(player2.getId()).add(createReadyCreature(new CrawWurm()));
+
+            // AI at 5 life — high danger
+            gd.playerLifeTotals.put(player1.getId(), 5);
+            double dangerScore = evaluator.creatureCardScore(gd, new BaneslayerAngel(), player1.getId());
+
+            // AI at 20 life — low danger
+            gd.playerLifeTotals.put(player1.getId(), 20);
+            double safeScore = evaluator.creatureCardScore(gd, new BaneslayerAngel(), player1.getId());
+
+            assertThat(dangerScore).isGreaterThan(safeScore);
         }
 
         private Permanent createReadyCreature(com.github.laxika.magicalvibes.model.Card card) {

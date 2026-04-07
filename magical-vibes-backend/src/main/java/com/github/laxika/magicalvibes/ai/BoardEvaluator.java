@@ -140,7 +140,7 @@ public class BoardEvaluator {
         int effectiveToughness = Math.max(0, toughness - perm.getMarkedDamage());
 
         double score = power * 3.0 + effectiveToughness * 1.5;
-        score += keywordBonus(gameData, perm, opponentId);
+        score += keywordBonus(gameData, perm, controllerId, opponentId);
 
         // Summoning-sick creatures can't attack yet (unless they have haste)
         if (perm.isSummoningSick() && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
@@ -327,12 +327,18 @@ public class BoardEvaluator {
 
     /**
      * Scores a creature card (not yet on the battlefield) based on its base stats and keywords.
+     * Context-aware version: scales lifelink value by the AI's danger level.
      */
-    public double creatureCardScore(Card card) {
+    public double creatureCardScore(GameData gameData, Card card, UUID aiPlayerId) {
         int power = card.getPower() != null ? card.getPower() : 0;
         int toughness = card.getToughness() != null ? card.getToughness() : 0;
 
         double score = power * 3.0 + toughness * 1.5;
+
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        int oppBoardDamage = computeOpponentBoardDamage(gameData, opponentId);
+        int aiLife = gameData.getLife(aiPlayerId);
+        double lgMultiplier = lifeGainMultiplier(oppBoardDamage, aiLife);
 
         Set<Keyword> keywords = card.getKeywords();
         if (keywords.contains(Keyword.FLYING)) score += 4;
@@ -340,7 +346,7 @@ public class BoardEvaluator {
         if (keywords.contains(Keyword.DOUBLE_STRIKE)) score += 6;
         if (keywords.contains(Keyword.TRAMPLE)) score += 2;
         if (keywords.contains(Keyword.VIGILANCE)) score += 2;
-        if (keywords.contains(Keyword.LIFELINK)) score += 3;
+        if (keywords.contains(Keyword.LIFELINK)) score += 3 * lgMultiplier;
         if (keywords.contains(Keyword.INDESTRUCTIBLE)) score += 5;
         if (keywords.contains(Keyword.MENACE)) score += 2;
         if (keywords.contains(Keyword.HEXPROOF)) score += 3;
@@ -354,7 +360,7 @@ public class BoardEvaluator {
         return score;
     }
 
-    private double keywordBonus(GameData gameData, Permanent perm, UUID opponentId) {
+    private double keywordBonus(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
         double bonus = 0;
 
         // Unconditional cant-be-blocked: highly valuable
@@ -378,7 +384,11 @@ public class BoardEvaluator {
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE)) bonus += 6;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.TRAMPLE)) bonus += 2;
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.VIGILANCE)) bonus += 2;
-        if (gameQueryService.hasKeyword(gameData, perm, Keyword.LIFELINK)) bonus += 3;
+        if (gameQueryService.hasKeyword(gameData, perm, Keyword.LIFELINK)) {
+            int oppBoardDamage = computeOpponentBoardDamage(gameData, opponentId);
+            int controllerLife = gameData.getLife(controllerId);
+            bonus += 3 * lifeGainMultiplier(oppBoardDamage, controllerLife);
+        }
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) bonus += 5;
 
         // Menace: worth more when opponent has ≤1 creature (effectively unblockable)
@@ -439,6 +449,31 @@ public class BoardEvaluator {
         }
 
         return bonus;
+    }
+
+    /**
+     * Computes the total power of non-defender creatures an opponent controls.
+     */
+    int computeOpponentBoardDamage(GameData gameData, UUID opponentId) {
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        int damage = 0;
+        for (Permanent perm : oppBattlefield) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            int power = gameQueryService.getEffectivePower(gameData, perm);
+            if (power > 0) damage += power;
+        }
+        return damage;
+    }
+
+    /**
+     * Returns a multiplier (0.3–3.0) that scales life gain/loss value by the controller's
+     * danger level. At 20 life with 5 opponent damage, multiplier ≈ 0.3 (life gain is cheap).
+     * At 5 life with 8 damage incoming, multiplier ≈ 1.6 (life gain is very valuable).
+     */
+    static double lifeGainMultiplier(int opponentBoardDamage, int controllerLife) {
+        if (controllerLife <= 0 || opponentBoardDamage <= 0) return 0.3;
+        return Math.max(0.3, Math.min(3.0, (double) opponentBoardDamage / controllerLife));
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {
