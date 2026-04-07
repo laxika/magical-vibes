@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.h.HealingGrace;
 import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
 import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WallOfFire;
@@ -1001,5 +1002,162 @@ class SpellEvaluatorTest {
 
         // Safe value should be much lower
         assertThat(safeValue).isLessThan(dangerValue);
+    }
+
+    // ===== Board wipe survival urgency =====
+
+    @Test
+    @DisplayName("Board wipe gains survival urgency bonus when facing lethal on board")
+    void boardWipeSurvivalUrgencyWhenFacingLethal() {
+        // Opponent has two 6/4 Craw Wurms (12 total damage), AI has one 6/4 Craw Wurm
+        for (int i = 0; i < 2; i++) {
+            Permanent wurm = new Permanent(new CrawWurm());
+            wurm.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(wurm);
+        }
+        Permanent aiWurm = new Permanent(new CrawWurm());
+        aiWurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiWurm);
+
+        // AI at 10 life with 12 damage on board — facing lethal
+        gd.playerLifeTotals.put(player1.getId(), 10);
+        double facingLethal = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // AI at 100 life — not facing lethal, same board state
+        gd.playerLifeTotals.put(player1.getId(), 100);
+        double safe = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // Facing lethal should add the survival urgency bonus (+30)
+        assertThat(facingLethal).isGreaterThan(safe + 20.0);
+    }
+
+    @Test
+    @DisplayName("Board wipe with MassDamageEffect gets survival urgency when facing lethal")
+    void massDamageSurvivalUrgencyWhenFacingLethal() {
+        // Opponent has three 2/2 bears (6 total damage)
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(bears);
+        }
+        // AI has one 2/2 bear
+        Permanent aiBears = new Permanent(new GrizzlyBears());
+        aiBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBears);
+
+        // AI at 5 life with 6 damage on board — facing lethal
+        gd.playerLifeTotals.put(player1.getId(), 5);
+        double facingLethal = spellEvaluator.estimateSpellValue(gd, new Pyroclasm(), player1.getId());
+
+        // AI at 100 life — not facing lethal
+        gd.playerLifeTotals.put(player1.getId(), 100);
+        double safe = spellEvaluator.estimateSpellValue(gd, new Pyroclasm(), player1.getId());
+
+        // Facing lethal should get the survival urgency bonus
+        assertThat(facingLethal).isGreaterThan(safe + 20.0);
+    }
+
+    @Test
+    @DisplayName("No survival urgency when opponent board damage is below AI life")
+    void noSurvivalUrgencyWhenNotFacingLethal() {
+        // Opponent has one 2/2 bear (2 damage)
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        // AI at 20 life — not facing lethal (2 damage < 20 life)
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        double value = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // Value should just be the creature delta, no +30 bonus
+        // One opponent 2/2: creatureScore ≈ 2*3 + 2*1.5 = 9
+        assertThat(value).isLessThan(20.0);
+    }
+
+    // ===== Board wipe rebuild potential =====
+
+    @Test
+    @DisplayName("Board wipe value increases when AI has creatures in hand to replay")
+    void boardWipeRebuildPotentialFromHand() {
+        // Opponent has two 2/2 bears, AI has two 2/2 bears — even board
+        for (int i = 0; i < 2; i++) {
+            Permanent oppBears = new Permanent(new GrizzlyBears());
+            oppBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBears);
+        }
+        for (int i = 0; i < 2; i++) {
+            Permanent aiBears = new Permanent(new GrizzlyBears());
+            aiBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(aiBears);
+        }
+
+        gd.playerLifeTotals.put(player1.getId(), 100); // high life to avoid survival urgency
+
+        // Empty hand — no rebuild potential
+        gd.playerHands.put(player1.getId(), new ArrayList<>());
+        double emptyHand = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // Hand full of creatures — rebuild potential
+        List<Card> creatureHand = new ArrayList<>();
+        creatureHand.add(new SerraAngel()); // 4/4
+        creatureHand.add(new CrawWurm());   // 6/4
+        gd.playerHands.put(player1.getId(), creatureHand);
+        double fullHand = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // Having creatures in hand should make the board wipe more attractive
+        assertThat(fullHand).isGreaterThan(emptyHand);
+    }
+
+    @Test
+    @DisplayName("MassDamage rebuild potential increases value when AI has creatures in hand")
+    void massDamageRebuildPotentialFromHand() {
+        // Opponent has two 2/2, AI has two 2/2 — Pyroclasm kills all
+        for (int i = 0; i < 2; i++) {
+            Permanent oppBears = new Permanent(new GrizzlyBears());
+            oppBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBears);
+        }
+        for (int i = 0; i < 2; i++) {
+            Permanent aiBears = new Permanent(new GrizzlyBears());
+            aiBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(aiBears);
+        }
+
+        gd.playerLifeTotals.put(player1.getId(), 100);
+
+        gd.playerHands.put(player1.getId(), new ArrayList<>());
+        double emptyHand = spellEvaluator.estimateSpellValue(gd, new Pyroclasm(), player1.getId());
+
+        List<Card> creatureHand = new ArrayList<>();
+        creatureHand.add(new CrawWurm());
+        creatureHand.add(new CrawWurm());
+        gd.playerHands.put(player1.getId(), creatureHand);
+        double fullHand = spellEvaluator.estimateSpellValue(gd, new Pyroclasm(), player1.getId());
+
+        assertThat(fullHand).isGreaterThan(emptyHand);
+    }
+
+    @Test
+    @DisplayName("No rebuild potential bonus when AI loses no creatures to wipe")
+    void noRebuildBonusWhenAiLosesNothing() {
+        // Only opponent has creatures — AI loses nothing
+        for (int i = 0; i < 2; i++) {
+            Permanent oppBears = new Permanent(new GrizzlyBears());
+            oppBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppBears);
+        }
+
+        gd.playerLifeTotals.put(player1.getId(), 100);
+
+        gd.playerHands.put(player1.getId(), new ArrayList<>());
+        double emptyHand = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        List<Card> creatureHand = new ArrayList<>();
+        creatureHand.add(new CrawWurm());
+        gd.playerHands.put(player1.getId(), creatureHand);
+        double fullHand = spellEvaluator.estimateSpellValue(gd, new WrathOfGod(), player1.getId());
+
+        // No AI losses means no rebuild discount — value should be the same
+        assertThat(fullHand).isEqualTo(emptyHand);
     }
 }

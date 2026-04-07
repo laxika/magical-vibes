@@ -297,6 +297,14 @@ public class SpellEvaluator {
         return damage;
     }
 
+    private double computeRebuildPotential(GameData gameData, UUID aiPlayerId) {
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayerId, List.of());
+        return hand.stream()
+                .filter(c -> c.hasType(CardType.CREATURE))
+                .mapToDouble(c -> c.getPower() * 3.0 + c.getToughness() * 1.5)
+                .sum();
+    }
+
     private boolean hasLifeGainEffect(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (isLifeGainEffect(effect)) return true;
@@ -815,7 +823,32 @@ public class SpellEvaluator {
                 .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId))
                 .sum();
 
-        return oppLosses - aiLosses;
+        double value = oppLosses - aiLosses;
+
+        // Survival urgency: if facing lethal on board and the wipe removes the threat, add a large bonus
+        int aiLife = gameData.getLife(aiPlayerId);
+        if (aiLife > 0) {
+            int totalOppDamage = computeOpponentBoardDamage(gameData, opponentId);
+            if (totalOppDamage >= aiLife) {
+                int remainingOppDamage = oppBattlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER))
+                        .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) > damage)
+                        .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
+                        .sum();
+                if (remainingOppDamage < aiLife) {
+                    value += 30.0;
+                }
+            }
+        }
+
+        // Rebuild potential: if AI has creatures in hand to replay, the effective cost of wiping is lower
+        if (aiLosses > 0) {
+            double rebuildValue = computeRebuildPotential(gameData, aiPlayerId);
+            value += Math.min(rebuildValue * 0.5, aiLosses * 0.7);
+        }
+
+        return value;
     }
 
     private double evaluateDestroyAllValue(GameData gameData, DestroyAllPermanentsEffect wipe,
@@ -843,7 +876,37 @@ public class SpellEvaluator {
                 })
                 .sum();
 
-        return oppValue - aiValue;
+        double value = oppValue - aiValue;
+
+        // Survival urgency: if facing lethal on board and the wipe removes the threat, add a large bonus
+        int aiLife = gameData.getLife(aiPlayerId);
+        if (aiLife > 0) {
+            int totalOppDamage = computeOpponentBoardDamage(gameData, opponentId);
+            if (totalOppDamage >= aiLife) {
+                int remainingOppDamage = oppBattlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER))
+                        .filter(p -> !gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                        .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
+                        .sum();
+                if (remainingOppDamage < aiLife) {
+                    value += 30.0;
+                }
+            }
+        }
+
+        // Rebuild potential: if AI has creatures in hand to replay, the effective cost of wiping is lower
+        double aiCreatureLosses = aiBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId))
+                .sum();
+        if (aiCreatureLosses > 0) {
+            double rebuildValue = computeRebuildPotential(gameData, aiPlayerId);
+            value += Math.min(rebuildValue * 0.5, aiCreatureLosses * 0.7);
+        }
+
+        return value;
     }
 
     private double bestTargetCreatureValue(GameData gameData, List<Permanent> battlefield,
