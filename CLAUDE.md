@@ -13,11 +13,12 @@
 ## Documentation
 
 Check the agent-docs folder for more info on the following:
-- EFFECTS_QUICK_REFERENCE.md — Compact lookup of all ~210 effects (name + constructor + one-line description), readable in a single pass. **Check this first** when looking for an existing effect.
+- ORACLE_TEXT_EFFECT_MAP.md — Maps oracle text phrases (e.g. "deals N damage to any target") directly to effect classes + slots. **Check this first** to jump from card text to the right effect.
+- EFFECTS_QUICK_REFERENCE.md — Compact lookup of all ~210 effects (name + constructor + one-line description), readable in a single pass. Check when the oracle text map doesn't cover your case.
 - EFFECTS_INDEX.md — Full details for every effect (detailed descriptions, usage notes). Consult when the quick reference isn't enough.
 - ACTIVATED_ABILITY_GUIDE.md — All ActivatedAbility constructor overloads with "use this when" guidance, EffectSlot reference (all 28 slots with when each fires), TargetFilter types, PermanentPredicate/StackEntryPredicate compositions,
   and cost effects.
-- CARD_PATTERN_INDEX.md — One reference card per archetype (burn spell, ETB creature, pain land, lord, aura, equipment, etc.). Start here to find a similar existing card to base your implementation on.
+- CARD_PATTERN_INDEX.md — One reference card per archetype (burn spell, ETB creature, pain land, lord, aura, equipment, etc.) **plus copy-paste card+test templates** for the most common archetypes (pump instant, burn spell, draw spell, destroy spell, ETB creature, counterspell). Start here to find a similar existing card to base your implementation on.
 - CARD_IMPLEMENTATION_PLAYBOOK.md — Step-by-step workflow for adding cards, canonical patterns, targeting checklist, and anti-patterns.
 - TEST_RECIPES.md — Standard test skeletons for card tests using GameTestHarness.
 

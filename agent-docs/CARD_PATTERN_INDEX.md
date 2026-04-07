@@ -560,3 +560,723 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | 3-chapter Saga with "until your next turn" ability grant + counters + keywords | `s/SongOfFreyalise.java` | SAGA_CHAPTER_I/II: GrantActivatedAbilityEffect(mana ability, OWN_CREATURES, null, UNTIL_YOUR_NEXT_TURN). Grants tap-for-any-color ability to all creatures at resolution. Stored in `Permanent.untilNextTurnActivatedAbilities` — survives end-of-turn cleanup, cleared at start of controller's next turn. SAGA_CHAPTER_III: PutPlusOnePlusOneCounterOnEachOwnCreatureEffect + GrantKeywordEffect(VIGILANCE, TRAMPLE, INDESTRUCTIBLE, OWN_CREATURES) |
 | 3-chapter Saga with greatest-power targeting + counters + keyword grant | `t/TriumphOfGerrard.java` | SAGA_CHAPTER_I/II: PutPlusOnePlusOneCounterOnTargetCreatureEffect(1, PermanentHasGreatestPowerAmongControlledCreaturesPredicate()). SAGA_CHAPTER_III: GrantKeywordEffect(FLYING, FIRST_STRIKE, LIFELINK, TARGET, PermanentHasGreatestPowerAmongControlledCreaturesPredicate()). Target predicate on effects restricts saga chapter targets to controller's creatures with greatest power. Predicate extracted in TriggeredAbilityQueueService.collectSagaChapterTargets() via CardEffect.targetPredicate() |
 | 3-chapter Saga with graveyard targeting chapters + spell copy | `t/TheMirariConjecture.java` | SAGA_CHAPTER_I: ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(INSTANT), targetGraveyard=true). SAGA_CHAPTER_II: ReturnCardFromGraveyardEffect(HAND, CardTypePredicate(SORCERY), targetGraveyard=true). Chapters I/II use `canTargetGraveyard()` to trigger saga chapter graveyard target selection mechanism (pendingSagaChapterGraveyardTargets queue + TriggeredAbilityQueueService.processNextSagaChapterGraveyardTarget). SAGA_CHAPTER_III: GrantInstantSorceryCopyUntilEndOfTurnEffect — adds controller to GameData.playersWithSpellCopyUntilEndOfTurn, checked in TriggerCollectionService.checkSpellCastTriggers to create CopyControllerCastSpellEffect copies | — {4}{U} Enchantment — Saga with "I — Return target instant card from your graveyard to your hand. II — Return target sorcery card from your graveyard to your hand. III — Until end of turn, whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy." Introduces engine support for saga chapters that target graveyard cards via new SagaChapterGraveyardTarget queue (PermanentChoiceContext + GameData + TriggeredAbilityQueueService.processNextSagaChapterGraveyardTarget), extending triggerSagaChapter in StackResolutionService and handleSagaLoreCounters in StepTriggerService to detect canTargetGraveyard() effects and route to graveyard targeting. Adds sourcePermanentId/chapterName to GraveyardTargetOperationState for CR 714.4 saga sacrifice SBA compliance. Introduces GrantInstantSorceryCopyUntilEndOfTurnEffect for chapter III (adds controller to GameData.playersWithSpellCopyUntilEndOfTurn, cleared at end of turn) and CopyControllerCastSpellEffect for resolution-time single-copy creation. TriggerCollectionService.checkSpellCastTriggers checks the copy set and creates copy triggers for instant/sorcery spells.)
+
+---
+
+## Copy-paste templates (card + test)
+
+Ready-to-use templates for the most common archetypes. Replace `PLACEHOLDER` values. Each template includes the card class and the full test file.
+
+### Non-targeted pump instant/sorcery
+
+"Creatures you control get +X/+Y until end of turn."
+
+Reference: `c/Charge.java` (instant, +1/+1), `b/BarTheDoor.java` (instant, +0/+4), `i/InspiredCharge.java` (instant, +2/+1)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostAllOwnCreaturesEffect.class);
+        BoostAllOwnCreaturesEffect effect = (BoostAllOwnCreaturesEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        assertThat(effect.powerBoost()).isEqualTo(POWER_BOOST);
+        assertThat(effect.toughnessBoost()).isEqualTo(TOUGHNESS_BOOST);
+    }
+
+    @Test
+    @DisplayName("Casting puts it on the stack as INSTANT_SPELL")  // or SORCERY_SPELL
+    void castingPutsOnStack() {
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);  // or castSorcery
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);  // or SORCERY_SPELL
+        assertThat(entry.getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+    }
+
+    @Test
+    @DisplayName("Resolving boosts all own creatures +POWER_BOOST/+TOUGHNESS_BOOST")
+    void resolvingBoostsAllOwnCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());  // 2/2
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        for (Permanent p : battlefield) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
+                assertThat(p.getPowerModifier()).isEqualTo(POWER_BOOST);
+                assertThat(p.getToughnessModifier()).isEqualTo(TOUGHNESS_BOOST);
+                assertThat(p.getEffectivePower()).isEqualTo(2 + POWER_BOOST);
+                assertThat(p.getEffectiveToughness()).isEqualTo(2 + TOUGHNESS_BOOST);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Does not boost opponent's creatures")
+    void doesNotBoostOpponentCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
+        for (Permanent p : p2Battlefield) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
+                assertThat(p.getPowerModifier()).isEqualTo(0);
+                assertThat(p.getToughnessModifier()).isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Boost resets at cleanup step")
+    void boostResetsAtCleanup() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        for (Permanent p : battlefield) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
+                assertThat(p.getPowerModifier()).isEqualTo(0);
+                assertThat(p.getToughnessModifier()).isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Goes to graveyard after resolving")
+    void goesToGraveyardAfterResolving() {
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("CARD_DISPLAY_NAME"));
+    }
+}
+```
+
+**Placeholders:** `LETTER` (package letter), `SET`/`NUM` (card printing), `CARDNAME` (class name), `CARD_DISPLAY_NAME` (oracle name), `POWER_BOOST`/`TOUGHNESS_BOOST` (integers), `PRIMARY_COLOR` (ManaColor), `TOTAL_MANA` (CMC integer), `castInstant`/`castSorcery` + `INSTANT_SPELL`/`SORCERY_SPELL`.
+
+---
+
+### Targeted burn instant/sorcery
+
+"CARDNAME deals N damage to any target."
+
+Reference: `s/Shock.java` (instant, 2 dmg), `l/LightningBolt.java` (instant, 3 dmg)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(DAMAGE, false));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
+    }
+
+    @Test
+    @DisplayName("Deals DAMAGE damage to target creature")
+    void dealsDamageToCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        // GrizzlyBears is 2/2, so DAMAGE damage should kill it if DAMAGE >= 2
+        // Adjust assertion based on DAMAGE vs target toughness
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Deals DAMAGE damage to target player")
+    void dealsDamageToPlayer() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20 - DAMAGE);
+    }
+
+    @Test
+    @DisplayName("Goes to graveyard after resolving")
+    void goesToGraveyardAfterResolving() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("CARD_DISPLAY_NAME"));
+    }
+
+    @Test
+    @DisplayName("Fizzles when target becomes illegal")
+    void fizzlesWhenTargetRemoved() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `DAMAGE` (integer), `PRIMARY_COLOR`, `TOTAL_MANA`.
+
+---
+
+### Non-targeted draw instant/sorcery
+
+"Draw N cards."
+
+Reference: `c/CounselOfTheSoratami.java` (sorcery, draw 2)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.SPELL, new DrawCardEffect(DRAW_COUNT));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isFalse();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DrawCardEffect.class);
+    }
+
+    @Test
+    @DisplayName("Resolving draws DRAW_COUNT cards")
+    void resolvingDrawsCards() {
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);  // or castSorcery with appropriate args
+        harness.passBothPriorities();
+
+        // Hand = (handSizeBefore - 1 card cast) + DRAW_COUNT drawn
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1 + DRAW_COUNT);
+    }
+
+    @Test
+    @DisplayName("Goes to graveyard after resolving")
+    void goesToGraveyardAfterResolving() {
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("CARD_DISPLAY_NAME"));
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `DRAW_COUNT` (integer), `PRIMARY_COLOR`, `TOTAL_MANA`.
+
+---
+
+### Targeted destroy instant/sorcery
+
+"Destroy target creature."
+
+Reference: `t/Terror.java` (instant, nonblack nonartifact), `m/Murder.java` (instant, any creature)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.predicate.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.target.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(CANT_REGENERATE));
+        setTargetFilter(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate()));
+        // Add additional predicates for "nonblack", "nonartifact", etc. via PermanentAllOfPredicate
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
+    }
+
+    @Test
+    @DisplayName("Destroys target creature")
+    void destroysTargetCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Goes to graveyard after resolving")
+    void goesToGraveyardAfterResolving() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "CARD_DISPLAY_NAME");
+    }
+
+    @Test
+    @DisplayName("Fizzles when target becomes illegal")
+    void fizzlesWhenTargetRemoved() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `CANT_REGENERATE` (boolean), `PRIMARY_COLOR`, `TOTAL_MANA`.
+
+---
+
+### ETB creature (non-targeted effect)
+
+"When CARDNAME enters the battlefield, [effect]."
+
+Reference: `a/AngelOfMercy.java` (ETB gain 3 life), `k/KavuClimber.java` (ETB draw 1)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.EFFECT_CLASS;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EFFECT_CLASS(ARGS));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.EFFECT_CLASS;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct ETB effect")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(EFFECT_CLASS.class);
+    }
+
+    @Test
+    @DisplayName("ETB effect triggers on resolution")
+    void etbEffectTriggers() {
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature
+        harness.passBothPriorities(); // resolve ETB trigger
+
+        // Assert effect happened (life gain, draw, etc.)
+        // CUSTOMIZE THIS ASSERTION
+    }
+
+    @Test
+    @DisplayName("Creature enters the battlefield")
+    void creatureEntersBattlefield() {
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature
+        harness.passBothPriorities(); // resolve ETB trigger
+
+        harness.assertOnBattlefield(player1, "CARD_DISPLAY_NAME");
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `EFFECT_CLASS`, `ARGS`, `PRIMARY_COLOR`, `TOTAL_MANA`.
+
+---
+
+### Pump all own + keyword instant/sorcery
+
+"Creatures you control get +X/+Y and gain [keyword] until end of turn."
+
+Reference: `o/Overrun.java` (+3/+3, trample)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.GrantScope;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.KEYWORD, GrantScope.OWN_CREATURES));
+    }
+}
+```
+
+**Test:** Same structure as the pump instant template above, plus an additional test for keyword:
+
+```java
+    @Test
+    @DisplayName("Grants KEYWORD to all own creatures")
+    void grantsKeyword() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castInstant(player1, 0);  // or castSorcery
+        harness.passBothPriorities();
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        for (Permanent p : battlefield) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
+                assertThat(p.getGrantedKeywords()).contains(Keyword.KEYWORD);
+            }
+        }
+    }
+```
+
+---
+
+### Counter target spell instant
+
+"Counter target spell."
+
+Reference: `c/Cancel.java`
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsSpellCastTarget(card)).isTrue();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
+    }
+
+    @Test
+    @DisplayName("Counters target spell")
+    void countersTargetSpell() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        harness.castInstant(player1, 0, gd.stack.getFirst().getId());
+        harness.passBothPriorities(); // resolve counter
+        harness.passBothPriorities(); // clear stack
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Goes to graveyard after resolving")
+    void goesToGraveyardAfterResolving() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        harness.castInstant(player1, 0, gd.stack.getFirst().getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "CARD_DISPLAY_NAME");
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `PRIMARY_COLOR`, `TOTAL_MANA`.
