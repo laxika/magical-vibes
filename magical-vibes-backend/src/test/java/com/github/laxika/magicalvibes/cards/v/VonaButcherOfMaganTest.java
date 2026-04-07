@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -89,7 +90,7 @@ class VonaButcherOfMaganTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can activate at exactly 7 life")
+    @DisplayName("Can activate at exactly 7 life — pays cost but SBAs end the game at 0 life")
     void canActivateAtExactlySevenLife() {
         Permanent vona = addCreatureReady(player1, new VonaButcherOfMagan());
         harness.setLife(player1, 7);
@@ -98,12 +99,12 @@ class VonaButcherOfMaganTest extends BaseCardTest {
         Permanent bears = findPermanent(player2, "Grizzly Bears");
 
         int vonaIdx = gd.playerBattlefields.get(player1.getId()).indexOf(vona);
+        // Activation succeeds (7 life is enough to pay the cost),
+        // but paying 7 life drops to 0 and SBAs end the game before the ability resolves.
         harness.activateAbility(player1, vonaIdx, null, bears.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test

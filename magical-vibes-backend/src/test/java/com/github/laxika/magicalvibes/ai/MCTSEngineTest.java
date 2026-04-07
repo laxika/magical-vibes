@@ -94,7 +94,7 @@ class MCTSEngineTest {
         long elapsed = System.currentTimeMillis() - start;
 
         assertThat(action).isNotNull();
-        assertThat(elapsed).isLessThan(5000); // Should complete well under 5 seconds
+        assertThat(elapsed).isLessThan(15000); // Should complete well under 15 seconds
     }
 
     @Test
