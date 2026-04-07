@@ -856,13 +856,8 @@ public class TriggerCollectionService {
             List<CardEffect> stackEffects = new ArrayList<>();
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = effect;
-                if (effect instanceof SubtypeConditionalEffect filtered) {
-                    if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, dyingCreatureControllerId)) {
-                        continue;
-                    }
-                    resolvedEffect = filtered.wrapped();
-                }
+                CardEffect resolvedEffect = unwrapSubtypeConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                if (resolvedEffect == null) continue;
 
                 if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
                     var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
@@ -908,13 +903,8 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = effect;
-                if (effect instanceof SubtypeConditionalEffect filtered) {
-                    if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, dyingCreatureControllerId)) {
-                        continue;
-                    }
-                    resolvedEffect = filtered.wrapped();
-                }
+                CardEffect resolvedEffect = unwrapSubtypeConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                if (resolvedEffect == null) continue;
                 var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
                 registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DIES, resolvedEffect, ctx);
             }
@@ -984,13 +974,8 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = effect;
-                if (effect instanceof SubtypeConditionalEffect filtered) {
-                    if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, dyingCreatureControllerId)) {
-                        continue;
-                    }
-                    resolvedEffect = filtered.wrapped();
-                }
+                CardEffect resolvedEffect = unwrapSubtypeConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                if (resolvedEffect == null) continue;
                 var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
                 registry.dispatch(match, EffectSlot.ON_ANY_CREATURE_DIES, resolvedEffect, ctx);
             }
@@ -1085,5 +1070,22 @@ public class TriggerCollectionService {
             var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
             registry.dispatch(match, slot, effect, ctx);
         }
+    }
+
+    /**
+     * Unwraps {@link SubtypeConditionalEffect} if present.
+     * Returns the inner effect if the dying card has the required subtype,
+     * {@code null} if the condition is not met (caller should skip),
+     * or the original effect unchanged if it wasn't wrapped.
+     */
+    CardEffect unwrapSubtypeConditional(CardEffect effect, Card dyingCard,
+                                        GameData gameData, UUID controllerId) {
+        if (effect instanceof SubtypeConditionalEffect filtered) {
+            if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, controllerId)) {
+                return null;
+            }
+            return filtered.wrapped();
+        }
+        return effect;
     }
 }
