@@ -344,6 +344,7 @@ public class GameBroadcastService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         ManaPool pool = gameData.playerManaPools.get(playerId);
+        CostModifierSnapshot costSnapshot = buildCostModifierSnapshot(gameData, playerId);
 
         // Lazy: only computed if a card with Convoke is found
         int untappedCreatureCount = -1;
@@ -363,7 +364,7 @@ public class GameBroadcastService {
                     } else {
                         boolean added = false;
                         ManaCost cost = card.getParsedManaCost();
-                        int additionalCost = getCastCostModifier(gameData, playerId, card);
+                        int additionalCost = getCastCostModifier(gameData, playerId, card, costSnapshot);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
                         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
                         boolean hasRestrictedRedContext = isArtifact
@@ -1153,6 +1154,157 @@ public class GameBroadcastService {
         }
         return false;
     }
+
+    /**
+     * Pre-collects all cost-modifying effects from the battlefield in a single pass,
+     * so that per-card evaluation doesn't re-scan all permanents.
+     */
+    CostModifierSnapshot buildCostModifierSnapshot(GameData gameData, UUID playerId) {
+        List<IncreaseOpponentCastCostEffect> opponentIncreases = new ArrayList<>();
+        int spellCastTaxPerSpell = 0;
+        List<IncreaseSpellCostEffect> predicateIncreases = new ArrayList<>();
+        List<ReduceOwnCastCostForSharedCardTypeWithImprintEffect> imprintReductions = new ArrayList<>();
+        List<Card> imprintSources = new ArrayList<>();
+        List<ReduceOwnCastCostForCardTypeEffect> cardTypeReductions = new ArrayList<>();
+        List<ReduceOwnCastCostForSubtypeEffect> subtypeReductions = new ArrayList<>();
+        List<ReduceCastCostForMatchingSpellsEffect> selfMatchReductions = new ArrayList<>();
+        List<ReduceCastCostForMatchingSpellsEffect> opponentMatchReductions = new ArrayList<>();
+
+        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
+
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            boolean isOwn = pid.equals(playerId);
+            boolean isOpponent = pid.equals(opponentId);
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (isOpponent && effect instanceof IncreaseOpponentCastCostEffect inc) {
+                        opponentIncreases.add(inc);
+                    }
+                    if (effect instanceof IncreaseEachPlayerCastCostPerSpellThisTurnEffect tax) {
+                        spellCastTaxPerSpell += tax.amountPerSpell();
+                    }
+                    if (effect instanceof IncreaseSpellCostEffect inc) {
+                        predicateIncreases.add(inc);
+                    }
+                    if (isOwn) {
+                        if (effect instanceof ReduceOwnCastCostForSharedCardTypeWithImprintEffect red) {
+                            Card imprinted = perm.getCard().getImprintedCard();
+                            if (imprinted != null) {
+                                imprintReductions.add(red);
+                                imprintSources.add(imprinted);
+                            }
+                        }
+                        if (effect instanceof ReduceOwnCastCostForCardTypeEffect red) {
+                            cardTypeReductions.add(red);
+                        }
+                        if (effect instanceof ReduceOwnCastCostForSubtypeEffect red) {
+                            subtypeReductions.add(red);
+                        }
+                        if (effect instanceof ReduceCastCostForMatchingSpellsEffect red
+                                && red.scope() == CostModificationScope.SELF) {
+                            selfMatchReductions.add(red);
+                        }
+                    }
+                    if (!isOwn && effect instanceof ReduceCastCostForMatchingSpellsEffect red
+                            && red.scope() == CostModificationScope.OPPONENT) {
+                        opponentMatchReductions.add(red);
+                    }
+                }
+            }
+        }
+
+        int spellCastTax = spellCastTaxPerSpell > 0
+                ? spellCastTaxPerSpell * gameData.getSpellsCastThisTurnCount(playerId)
+                : 0;
+
+        return new CostModifierSnapshot(
+                opponentIncreases, spellCastTax, predicateIncreases,
+                imprintReductions, imprintSources, cardTypeReductions, subtypeReductions,
+                selfMatchReductions, opponentMatchReductions);
+    }
+
+    int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
+        int increase = 0;
+        for (IncreaseOpponentCastCostEffect inc : snapshot.opponentIncreases) {
+            if (inc.affectedTypes().contains(card.getType())) {
+                increase += inc.amount();
+            }
+        }
+        increase += snapshot.spellCastTax;
+        for (IncreaseSpellCostEffect inc : snapshot.predicateIncreases) {
+            if (gameQueryService.matchesCardPredicate(card, inc.predicate(), null)) {
+                increase += inc.amount();
+            }
+        }
+
+        int reduction = 0;
+        // Card's own self-reduction effects
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect reduceEffect
+                    && anyOpponentControlsAtLeastNMoreCreatures(gameData, playerId, reduceEffect.minimumCreatureDifference())) {
+                reduction += reduceEffect.amount();
+            }
+            if (effect instanceof ReduceOwnCastCostIfMetalcraftEffect metalcraftReduce) {
+                if (gameQueryService.isMetalcraftMet(gameData, playerId)) {
+                    reduction += metalcraftReduce.amount();
+                }
+            }
+            if (effect instanceof ReduceOwnCastCostPerCreatureOnBattlefieldEffect perCreatureReduce) {
+                int totalCreatures = countCreaturesOnAllBattlefields(gameData);
+                reduction += perCreatureReduce.amountPerCreature() * totalCreatures;
+            }
+            if (effect instanceof ReduceOwnCastCostIfControlsSubtypeEffect subtypeReduce) {
+                if (controlsSubtype(gameData, playerId, subtypeReduce.subtype())) {
+                    reduction += subtypeReduce.amount();
+                }
+            }
+        }
+        // Battlefield-based reductions (pre-collected)
+        for (int j = 0; j < snapshot.imprintReductions.size(); j++) {
+            if (sharesCardType(card, snapshot.imprintSources.get(j))) {
+                reduction += snapshot.imprintReductions.get(j).amount();
+            }
+        }
+        for (ReduceOwnCastCostForCardTypeEffect red : snapshot.cardTypeReductions) {
+            if (red.affectedTypes().contains(card.getType())) {
+                reduction += red.amount();
+            }
+        }
+        for (ReduceOwnCastCostForSubtypeEffect red : snapshot.subtypeReductions) {
+            for (CardSubtype subtype : red.affectedSubtypes()) {
+                if (gameQueryService.cardHasSubtype(card, subtype, gameData, playerId)) {
+                    reduction += red.amount();
+                    break;
+                }
+            }
+        }
+        for (ReduceCastCostForMatchingSpellsEffect red : snapshot.selfMatchReductions) {
+            if (gameQueryService.matchesCardPredicate(card, red.predicate(), null)) {
+                reduction += red.amount();
+            }
+        }
+        for (ReduceCastCostForMatchingSpellsEffect red : snapshot.opponentMatchReductions) {
+            if (gameQueryService.matchesCardPredicate(card, red.predicate(), null)) {
+                reduction += red.amount();
+            }
+        }
+
+        return increase - reduction;
+    }
+
+    record CostModifierSnapshot(
+            List<IncreaseOpponentCastCostEffect> opponentIncreases,
+            int spellCastTax,
+            List<IncreaseSpellCostEffect> predicateIncreases,
+            List<ReduceOwnCastCostForSharedCardTypeWithImprintEffect> imprintReductions,
+            List<Card> imprintSources,
+            List<ReduceOwnCastCostForCardTypeEffect> cardTypeReductions,
+            List<ReduceOwnCastCostForSubtypeEffect> subtypeReductions,
+            List<ReduceCastCostForMatchingSpellsEffect> selfMatchReductions,
+            List<ReduceCastCostForMatchingSpellsEffect> opponentMatchReductions
+    ) {}
 
     int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
