@@ -237,16 +237,84 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "copy target instant or sorcery spell" | `CopySpellEffect()` | SPELL | |
 | "enters the battlefield as a copy of any creature on the battlefield" | `CopyPermanentOnEnterEffect(predicate, label)` | ON_ENTER_BATTLEFIELD | Clone |
 
-## Mana cost helpers
+## Mana cost → test `addMana` reference
 
-When adding mana in tests, generic mana can be paid with any color. Use the card's primary color for convenience:
+`ManaColor` enum values: `WHITE` (W), `BLUE` (U), `BLACK` (B), `RED` (R), `GREEN` (G), `COLORLESS` (C).
+
+**Key rule:** Generic mana (the number in a mana cost like `{2}`) can be paid with any color. In tests, pay generic mana using the card's primary color for simplicity — one `addMana` call covers both the generic and colored portions.
+
+### Single-color cards
+
+For a card with one colored symbol, add total CMC of that color:
+
+| Mana cost | `addMana` call | Breakdown |
+|---|---|---|
+| `{W}` | `addMana(player, WHITE, 1)` | 1W |
+| `{U}` | `addMana(player, BLUE, 1)` | 1U |
+| `{B}` | `addMana(player, BLACK, 1)` | 1B |
+| `{R}` | `addMana(player, RED, 1)` | 1R |
+| `{G}` | `addMana(player, GREEN, 1)` | 1G |
+| `{1}{W}` | `addMana(player, WHITE, 2)` | 1 generic + 1W |
+| `{1}{U}` | `addMana(player, BLUE, 2)` | 1 generic + 1U |
+| `{1}{B}` | `addMana(player, BLACK, 2)` | 1 generic + 1B |
+| `{1}{R}` | `addMana(player, RED, 2)` | 1 generic + 1R |
+| `{1}{G}` | `addMana(player, GREEN, 2)` | 1 generic + 1G |
+| `{2}{W}` | `addMana(player, WHITE, 3)` | 2 generic + 1W |
+| `{2}{U}` | `addMana(player, BLUE, 3)` | 2 generic + 1U |
+| `{2}{B}` | `addMana(player, BLACK, 3)` | 2 generic + 1B |
+| `{2}{R}` | `addMana(player, RED, 3)` | 2 generic + 1R |
+| `{2}{G}` | `addMana(player, GREEN, 3)` | 2 generic + 1G |
+| `{3}{W}` | `addMana(player, WHITE, 4)` | 3 generic + 1W |
+| `{4}{B}` | `addMana(player, BLACK, 5)` | 4 generic + 1B |
+| `{W}{W}` | `addMana(player, WHITE, 2)` | 2W |
+| `{U}{U}` | `addMana(player, BLUE, 2)` | 2U |
+| `{B}{B}` | `addMana(player, BLACK, 2)` | 2B |
+| `{R}{R}` | `addMana(player, RED, 2)` | 2R |
+| `{G}{G}` | `addMana(player, GREEN, 2)` | 2G |
+| `{1}{W}{W}` | `addMana(player, WHITE, 3)` | 1 generic + 2W |
+| `{2}{U}{U}` | `addMana(player, BLUE, 4)` | 2 generic + 2U |
+| `{2}{B}{B}` | `addMana(player, BLACK, 4)` | 2 generic + 2B |
+| `{3}{R}{R}` | `addMana(player, RED, 5)` | 3 generic + 2R |
+| `{3}{G}{G}` | `addMana(player, GREEN, 5)` | 3 generic + 2G |
+
+**Pattern:** For `{N}{C}{C}` where C is a single color, use `addMana(player, COLOR, N + coloredCount)`.
+
+### Multi-color cards
+
+For cards with multiple colored symbols, add each color separately. Pay generic mana as COLORLESS:
+
+| Mana cost | `addMana` calls | Breakdown |
+|---|---|---|
+| `{R}{W}` | `addMana(player, RED, 1); addMana(player, WHITE, 1)` | 1R + 1W |
+| `{U}{B}` | `addMana(player, BLUE, 1); addMana(player, BLACK, 1)` | 1U + 1B |
+| `{B}{G}` | `addMana(player, BLACK, 1); addMana(player, GREEN, 1)` | 1B + 1G |
+| `{R}{G}` | `addMana(player, RED, 1); addMana(player, GREEN, 1)` | 1R + 1G |
+| `{W}{U}` | `addMana(player, WHITE, 1); addMana(player, BLUE, 1)` | 1W + 1U |
+| `{1}{R}{W}` | `addMana(player, RED, 1); addMana(player, WHITE, 1); addMana(player, COLORLESS, 1)` | 1R + 1W + 1 generic |
+| `{1}{B}{G}` | `addMana(player, BLACK, 1); addMana(player, GREEN, 1); addMana(player, COLORLESS, 1)` | 1B + 1G + 1 generic |
+| `{2}{W}{U}` | `addMana(player, WHITE, 1); addMana(player, BLUE, 1); addMana(player, COLORLESS, 2)` | 1W + 1U + 2 generic |
+| `{2}{B}{R}` | `addMana(player, BLACK, 1); addMana(player, RED, 1); addMana(player, COLORLESS, 2)` | 1B + 1R + 2 generic |
+| `{1}{W}{U}{B}` | `addMana(player, WHITE, 1); addMana(player, BLUE, 1); addMana(player, BLACK, 1); addMana(player, COLORLESS, 1)` | 3-color + 1 generic |
+
+**Pattern:** Add exact colored amounts per color, then add generic as `COLORLESS`.
+
+### X-cost cards
+
+X is chosen at cast time. Add the colored requirement plus X of any color:
+
+| Mana cost | `addMana` call for X=3 | Breakdown |
+|---|---|---|
+| `{X}{R}` | `addMana(player, RED, 4)` | X(3) + 1R |
+| `{X}{U}` | `addMana(player, BLUE, 4)` | X(3) + 1U |
+| `{X}{B}{B}` | `addMana(player, BLACK, 5)` | X(3) + 2B |
+| `{X}{R}{G}` | `addMana(player, RED, 1); addMana(player, GREEN, 1); addMana(player, COLORLESS, 3)` | 1R + 1G + X(3) generic |
+
+### Colorless / artifact cards
 
 | Mana cost | `addMana` call | Notes |
 |---|---|---|
-| `{W}` | `addMana(player, WHITE, 1)` | |
-| `{1}{W}` | `addMana(player, WHITE, 2)` | 1 generic + 1 white |
-| `{2}{W}` | `addMana(player, WHITE, 3)` | 2 generic + 1 white |
-| `{X}{R}` | `addMana(player, RED, 1+X)` | X chosen at cast time |
-| `{2}{U}{U}` | `addMana(player, BLUE, 4)` | 2 generic + 2 blue |
-| `{1}{B}{G}` | `addMana(player, BLACK, 1); addMana(player, GREEN, 1); addMana(player, COLORLESS, 1)` | Multi-color: add each color separately, generic as COLORLESS |
-| `{R}{W}` | `addMana(player, RED, 1); addMana(player, WHITE, 1)` | Multi-color |
+| `{0}` | *(no mana needed)* | Free cast |
+| `{1}` | `addMana(player, COLORLESS, 1)` | Any color also works |
+| `{2}` | `addMana(player, COLORLESS, 2)` | |
+| `{3}` | `addMana(player, COLORLESS, 3)` | |
+| `{5}` | `addMana(player, COLORLESS, 5)` | |

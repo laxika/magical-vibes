@@ -34,6 +34,27 @@ class ExampleCardTest extends BaseCardTest {
 
 **Do NOT test Scryfall metadata** (name, type, mana cost, color, power, toughness, subtypes, keywords) — it is auto-loaded from Scryfall. Only test engine logic: effects, abilities, targeting, game interactions.
 
+## Adding mana in tests
+
+Generic mana (e.g. the `{2}` in `{2}{W}`) can be paid with any color. For single-color cards, add total CMC of that color in one call. For multi-color, add each color separately and generic as COLORLESS. See `ORACLE_TEXT_EFFECT_MAP.md → Mana cost → test addMana reference` for the full table.
+
+Quick examples:
+```java
+// {2}{W} → 3 white covers 2 generic + 1 white
+harness.addMana(player1, ManaColor.WHITE, 3);
+
+// {1}{B}{G} → each color separately, generic as COLORLESS
+harness.addMana(player1, ManaColor.BLACK, 1);
+harness.addMana(player1, ManaColor.GREEN, 1);
+harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+// {X}{R} with X=3 → 4 red covers X(3) + 1 red
+harness.addMana(player1, ManaColor.RED, 4);
+
+// {3} colorless artifact → any ManaColor works, COLORLESS is clearest
+harness.addMana(player1, ManaColor.COLORLESS, 3);
+```
+
 ## Recipe: cast targeted instant/sorcery
 
 ```java
