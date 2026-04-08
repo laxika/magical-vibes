@@ -6,7 +6,7 @@
 - If you can recreate an effect by combining existing ones then do not create a new class for it. For example "Orcish Artillery deals 2 damage to any target and 3 damage to you." could be achieved by combining DealDamageToAnyTargetEffect with DealDamageToControllerEffect.
 - If you can reuse an effect by adding predicates to it then do so. Whenever creating new effect try to add parameters as predicates. Instead of DestroyTargetArtifactEffect create a DestroyTargetPermanentEffect that accepts a PermanentPredicate.
 - If you create new effects, etc then make sure to update the files in the agent-docs folder.
-- If you need to implement a new card, then start by checking that a version of it (from a different set) was already implemented. If that's the case then add the `@CardRegistration` annotation for the new printing but do nothing else (do not run/check tests, etc).
+- If you need to implement a new card, first run a reprint check to see if the card class already exists: `grep -r "class CardName " magical-vibes-card/src/` (replace `CardName` with the PascalCase class name). If the class exists, just add the `@CardRegistration` annotation for the new printing and do nothing else (do not run/check tests, etc).
 - If unit tests exists for the service classes that you need to extend, then make sure that you create unit tests as well for the new features you add to those services.
 - When running the full test suite, always use `run_in_background: true` on the Bash tool call. The tests take over 20 minutes, which exceeds the maximum timeout.
 

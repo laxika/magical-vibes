@@ -4,13 +4,14 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 
 ## Fast workflow
 
-1. Find a similar card in `CARD_PATTERN_INDEX.md` for reference.
-2. Reuse existing effects from `EFFECTS_INDEX.md`.
-3. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and EffectSlot reference.
-4. Add card class + `@CardRegistration`.
-5. Use `target(filter).addEffect(slot, effect)` for targeting spells.
-6. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
-7. Only if needed: add new effect record + annotated resolver method (see below).
+1. **Reprint check** — run `grep -r "class CardName " magical-vibes-card/src/` (replace `CardName` with the PascalCase class name). If the class already exists, just add a `@CardRegistration` annotation for the new set/collector-number and stop — no new code or tests needed.
+2. Find a similar card in `CARD_PATTERN_INDEX.md` for reference.
+3. Reuse existing effects from `EFFECTS_INDEX.md`.
+4. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and EffectSlot reference.
+5. Add card class + `@CardRegistration`.
+6. Use `target(filter).addEffect(slot, effect)` for targeting spells.
+7. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
+8. Only if needed: add new effect record + annotated resolver method (see below).
 
 ## Card class template
 
