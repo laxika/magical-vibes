@@ -191,6 +191,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "gain control of target [permanent]" | `GainControlOfTargetPermanentEffect()` | SPELL | Permanent |
+| "gain control of target creature with power <= creature count" | `GainControlOfTargetPermanentEffect()` + `PermanentPowerAtMostControlledCreatureCountPredicate` filter | ability | Dynamic power check vs creature count |
 | "gain control of target creature until end of turn" | `GainControlOfTargetPermanentUntilEndOfTurnEffect()` | SPELL | Threaten |
 | "you control enchanted creature" | `GainControlOfEnchantedTargetEffect()` | STATIC | Control Magic |
 

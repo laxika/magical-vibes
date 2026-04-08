@@ -378,6 +378,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 | `PermanentPowerAtLeastPredicate` | `(int minPower)` | creatures with power >= N |
 | `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
 | `PermanentPowerAtMostXPredicate` | `()` | creatures with power <= X, where X is the xValue from FilterContext (used with abilities that have variable X, e.g. Aryel) |
+| `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures the source's controller controls. Requires FilterContext with gameData + sourceControllerId (e.g. Beguiler of Wills) |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X, where X is the xValue from FilterContext. Returns true when xValue is null (valid-target checks before X is chosen). Used by Entrancing Melody |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power |

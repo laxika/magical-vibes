@@ -101,6 +101,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Prevent combat damage (selective) | `m/Moonmist.java` | TransformAllEffect(PermanentHasSubtypePredicate(HUMAN)) + PreventCombatDamageExceptBySubtypesEffect(PermanentHasAnySubtypePredicate(WEREWOLF, WOLF)) — transform all Humans, prevent combat damage by non-Werewolves/Wolves |
 | Steal creature (temp) | `t/Threaten.java` | GainControlOfTargetCreatureUntilEndOfTurn + haste + untap |
 | Steal artifact (temp) | `m/MetallicMastery.java` | GainControlOfTargetPermanentUntilEndOfTurn + untap + haste + PermanentIsArtifactPredicate filter |
+| Steal creature (permanent, tap ability, power check) | `b/BeguilerOfWills.java` | Tap ability + GainControlOfTargetPermanentEffect + PermanentAllOfPredicate(PermanentIsCreaturePredicate, PermanentPowerAtMostControlledCreatureCountPredicate) target filter — gain control of creature with power <= your creature count |
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |
 | Extra combat | `r/RelentlessAssault.java` | AdditionalCombatMainPhaseEffect |
 | Mill half library (spell) | `t/Traumatize.java` | MillHalfLibraryEffect(false) |
