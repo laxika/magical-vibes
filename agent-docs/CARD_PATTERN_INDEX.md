@@ -449,6 +449,19 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Coin flip activated ability | `s/SorcerersStrongbox.java` | Tap+{2} FlipCoinWinEffect(SacrificeSelfAndDrawCardsEffect(3)) — flip a coin, if you win sacrifice self and draw 3 |
 | Token creation + tap-X-subtype destruction | `a/AryelKnightOfWindgrace.java` | Ability 1: tap+{2}{W} CreateTokenEffect(Knight 2/2 white vigilance). Ability 2: tap+{B}+TapXPermanentsCost(Knight, excludeSource)+DestroyTargetPermanentEffect with PermanentPowerAtMostXPredicate target filter — tap X untapped Knights to destroy creature with power X or less |
 
+### Activated abilities with dynamic/game-state target filters
+
+| Pattern | Reference | Notes |
+|---------|-----------|-------|
+| Steal creature (power <= controlled creature count) | `b/BeguilerOfWills.java` | Tap ability + GainControlOfTargetPermanentEffect + PermanentAllOfPredicate(PermanentIsCreaturePredicate, PermanentPowerAtMostControlledCreatureCountPredicate) target filter — gain control of creature with power <= your creature count |
+| Destroy creature (power <= X tapped permanents) | `a/AryelKnightOfWindgrace.java` | Tap+{B}+TapXPermanentsCost(Knight)+DestroyTargetPermanentEffect + PermanentPowerAtMostXPredicate — tap X Knights to destroy creature with power X or less |
+| Grant flying (toughness < source power, controlled) | `s/StoneGiant.java` | Tap ability + GrantKeywordEffect(FLYING) + ControlledPermanentPredicateTargetFilter with PermanentAllOfPredicate(PermanentIsCreaturePredicate, PermanentToughnessLessThanSourcePowerPredicate) — target controlled creature with toughness less than Stone Giant's power |
+| Deal toughness damage (in-combat target) | `s/SteadfastArmasaur.java` | {1}{W}+tap + DealDamageToPermanentEqualToSourceToughnessEffect + PermanentInCombatWithSourcePredicate target filter — deals toughness damage to creature blocking or blocked by it |
+| Tap multiple subtype cost + steal | `c/CaptivatingVampire.java` | TapMultiplePermanentsCost(5, Vampire) + GainControlOfTargetPermanentEffect(VAMPIRE) + PermanentIsCreaturePredicate target filter — tap 5 Vampires to steal creature, granting it Vampire subtype |
+| Tap multiple subtype cost + token creation (morbid) | `s/SkirsdagHighPriest.java` | Tap + TapMultiplePermanentsCost(2, creature) + CreateTokenEffect + MORBID timing restriction — tap 2 other creatures to create 5/5 Demon token, only if a creature died this turn |
+| ETB destroy (dealt damage this turn) | `f/FathomFleetCutthroat.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect + PermanentAllOfPredicate(PermanentIsCreaturePredicate, PermanentDealtDamageThisTurnPredicate, PermanentControlledBySourceControllerPredicate with NOT) — destroy opponent's creature that was dealt damage this turn |
+| Saga (greatest power among controlled) | `t/TriumphOfGerrard.java` | Saga chapters target creature you control with greatest power — uses PermanentHasGreatestPowerAmongControlledCreaturesPredicate + ControlledPermanentPredicateTargetFilter |
+
 ## Vehicles
 
 | Pattern | Reference | Notes |

@@ -345,75 +345,27 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 
 ---
 
-## TargetFilter types
+## TargetFilter types and Predicates
 
-| Filter class | Constructor | Use when |
-|-------------|-------------|----------|
-| `PermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target any permanent matching predicate |
-| `ControlledPermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target only permanents YOU control matching predicate |
-| `OwnedPermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target only permanents YOU OWN matching predicate (ownership via stolenCreatures map) |
-| `StackEntryPredicateTargetFilter` | `(StackEntryPredicate, String errorMsg)` | Target a spell on the stack |
-| `PlayerPredicateTargetFilter` | `(PlayerPredicate, String errorMsg)` | Target a player matching predicate |
+**Full reference:** See **PREDICATES_REFERENCE.md** for complete tables of all TargetFilter types, PermanentPredicate, StackEntryPredicate, and PlayerPredicate compositions.
 
-### Common PermanentPredicate compositions
+**Quick summary of TargetFilter types:**
 
-| Predicate | Constructor | Matches |
-|-----------|-------------|---------|
-| `PermanentIsCreaturePredicate` | `()` | creatures |
-| `PermanentIsArtifactPredicate` | `()` | artifacts |
-| `PermanentIsLandPredicate` | `()` | lands |
-| `PermanentIsEnchantmentPredicate` | `()` | enchantments |
-| `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
-| `PermanentIsTappedPredicate` | `()` | tapped permanents |
-| `PermanentIsAttackingPredicate` | `()` | attacking creatures |
-| `PermanentIsBlockingPredicate` | `()` | blocking creatures |
-| `PermanentIsSourceCardPredicate` | `()` | the source card itself |
-| `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
-| `PermanentIsTokenPredicate` | `()` | token permanents |
-| `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors |
-| `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
-| `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
-| `PermanentHasSupertypePredicate` | `(CardSupertype)` | permanents with specific supertype (e.g. LEGENDARY) |
-| `PermanentHasKeywordPredicate` | `(Keyword)` | permanents with specific keyword |
-| `PermanentPowerAtLeastPredicate` | `(int minPower)` | creatures with power >= N |
-| `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
-| `PermanentPowerAtMostXPredicate` | `()` | creatures with power <= X, where X is the xValue from FilterContext (used with abilities that have variable X, e.g. Aryel) |
-| `PermanentPowerAtMostControlledCreatureCountPredicate` | `()` | creatures with power <= number of creatures the source's controller controls. Requires FilterContext with gameData + sourceControllerId (e.g. Beguiler of Wills) |
-| `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X, where X is the xValue from FilterContext. Returns true when xValue is null (valid-target checks before X is chosen). Used by Entrancing Melody |
-| `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
-| `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power |
-| `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with the same name as the source permanent (uses current card name, works with clones) |
-| `PermanentHasGreatestPowerAmongControlledCreaturesPredicate` | `()` | creatures controlled by source's controller with the greatest power (ties allowed). Requires FilterContext with gameData + sourceControllerId |
-| `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by the source's controller |
-| `PermanentAttachedToSourceControllerPredicate` | `()` | permanents attached to (enchanting/cursing) the source's controller |
-| `PermanentHasCountersPredicate` | `(CounterType)` | permanents with one or more counters of the specified type (supports ANY for any counter) |
-| `PermanentDealtDamageThisTurnPredicate` | `()` | permanents that were dealt damage this turn (from any source). Evaluated against `GameData.permanentsDealtDamageThisTurn` |
-| `PermanentTruePredicate` | `()` | always matches (no restriction) |
-| `PermanentAllOfPredicate` | `(List<PermanentPredicate>)` | AND: all predicates must match |
-| `PermanentAnyOfPredicate` | `(List<PermanentPredicate>)` | OR: at least one predicate matches |
-| `PermanentNotPredicate` | `(PermanentPredicate)` | NOT: inverts a predicate |
+| Filter class | Use when |
+|-------------|----------|
+| `PermanentPredicateTargetFilter` | Target any permanent matching predicate |
+| `ControlledPermanentPredicateTargetFilter` | Target only permanents YOU control |
+| `OwnedPermanentPredicateTargetFilter` | Target only permanents YOU OWN |
+| `StackEntryPredicateTargetFilter` | Target a spell on the stack |
+| `PlayerPredicateTargetFilter` | Target a player |
 
-### Common StackEntryPredicate compositions
+**Quick summary of composition predicates:**
 
-| Predicate | Constructor | Matches |
-|-----------|-------------|---------|
-| `StackEntryTypeInPredicate` | `(Set<StackEntryType>)` | spells of specific types |
-| `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
-| `StackEntryManaValuePredicate` | `(int manaValue)` | spells with exact mana value |
-| `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
-| `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to `validateSpellTargetOnStack` to include triggered/activated abilities in the search, not just spells. Used by cards like Spellskite that target "target spell or ability." |
-| `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
-| `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
-| `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player ("you control") |
-| `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
-| `StackEntryTargetsYouOrCreatureYouControlPredicate` | `()` | spells/abilities targeting you (the player) or a creature you control |
-| `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |
-
-### PlayerPredicate compositions
-
-| Predicate | Constructor | Matches |
-|-----------|-------------|---------|
-| `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
+| Predicate | Use |
+|-----------|-----|
+| `PermanentAllOfPredicate(List)` | AND: all must match |
+| `PermanentAnyOfPredicate(List)` | OR: at least one matches |
+| `PermanentNotPredicate(predicate)` | NOT: inverts |
 
 ---
 
@@ -481,33 +433,33 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ENCHANTED_PERMANENT_TAPPED` | The permanent this aura is attached to becomes tapped. Does NOT fire for "enters tapped" (CR 603.6d). `affectedPlayerId` is baked in at trigger time with the enchanted permanent's controller |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` | Any permanent deals damage to this permanent's controller |
 | `ON_ALLY_PERMANENT_SACRIFICED` | A permanent you control is sacrificed (not this one — "another") |
-| `ON_BECOMES_TARGET_OF_SPELL` | Fires when the permanent (or a permanent this is attached to) becomes the target of a spell. Used by equipment like Livewire Lash |
-| `ON_BECOMES_TARGET_OF_OPPONENT_SPELL` | Fires when the permanent (or a permanent this is attached to) becomes the target of a spell controlled by an opponent. For CounterUnlessPaysEffect, puts counter trigger directly on stack targeting the spell. Used by Frost Titan |
-| `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | Fires when the permanent (or a permanent this is attached to) becomes the target of any spell or activated ability. Triggered ability goes directly on stack with sourcePermanentId. Used by Ice Cage |
-| `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Fires on ALL permanents with this slot on the creature's controller's battlefield when a creature that player controls becomes the target of an opponent's spell or ability. Unlike the above ON_BECOMES_TARGET_* slots, this is a global monitor (not on the targeted permanent). Used by Shapers' Sanctuary |
-| `ON_EQUIPPED_CREATURE_DIES` | The creature this equipment is attached to dies. Only checked for equipment permanents. Used by Sylvok Lifestaff |
-| `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | The permanent this aura is attached to is put into a graveyard from the battlefield. Searches all battlefields for auras (non-equipment) attached to the dying permanent. Controller of the triggered ability is the aura's controller. Used by Viridian Harvest |
-| `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD` | The permanent this aura is attached to leaves the battlefield (any destination: graveyard, exile, hand, or library). Broader than `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD`. Checked in `PermanentRemovalService` after the permanent is removed but before orphaned auras are cleaned up. Use `EnchantedPermanentLeavesConditionalEffect` for conditional triggers (e.g. "if it was historic"). Used by Curator's Ward |
-| `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | A land enters the battlefield under an opponent's control. Fires for every land. Wrap with `PermanentEnteredThisTurnConditionalEffect` for intervening-if conditions (e.g. "second+ land this turn"). Target player is auto-set to the land's controller |
-| `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | A land enters the battlefield under the controller's control (landfall). Fires for every land. All effects on this slot for a single permanent are bundled into one StackEntry (one triggered ability). Used by Tatyova, Benthic Druid |
-| `ON_OPPONENT_CREATURE_DIES` | A creature an opponent controls dies (includes tokens). Only fires when the dying creature's controller is an opponent of this permanent's controller. Used by Glissa, the Traitor |
-| `ON_DEALT_DAMAGE` | Whenever a source deals damage to this creature. Fires once per source for both combat and non-combat damage. For combat, trigger data is collected before dead creatures are removed. Used by Nested Ghoul |
-| `ON_OPENING_HAND_REVEAL` | Fires at the beginning of the first upkeep for cards in players' hands (Chancellor cycle). The card remains in hand. Wrap with `MayEffect` for "you may reveal" prompt. For immediate effects (e.g. Chancellor of the Dross), the inner effect resolves directly. For delayed triggers (e.g. Chancellor of the Annex), wrap with `RegisterDelayedCounterTriggerEffect` to register a counter-first-spell delayed trigger in GameData |
-| `ON_OPPONENT_LOSES_LIFE` | Whenever an opponent loses life (damage or direct life loss). Fires inline from TriggerCollectionService.checkLifeLossTriggers(). Amount of life lost is passed at trigger time. Currently hooked into LifeResolutionService.applyLifeLoss(), DamageResolutionService.dealDamageToPlayer(), and CombatDamageService.applyPlayerDamage(). Used by Mindcrank |
-| `ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD` | An Equipment enters the battlefield under your control. Checked via `CardSubtype.EQUIPMENT` subtype on entering card. Fires for all equipment (token and non-token). Used by Puresteel Paladin |
-| `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` | A creature an opponent controls enters the battlefield. Fires for all opponent creatures. For MayEffect-wrapped effects, the opponent player ID is passed as `targetCardId` and source permanent ID as `sourcePermanentId` via `queueMayAbility`. Used by Suture Priest |
-| `ON_OPPONENT_SHUFFLES_LIBRARY` | Whenever an opponent shuffles their library. Fires via `LibraryShuffleHelper.shuffleLibrary()` which replaces all `Collections.shuffle(deck)` calls. Creates `PendingMayAbility` entries. Target player (shuffling opponent) is passed via `targetCardId`. Used by Psychic Surgery |
-| `ON_CONTROLLER_GAINS_LIFE` | Whenever the controller gains life. Fires inline from TriggerCollectionService.checkLifeGainTriggers(). Hooked into LifeResolutionService.applyGainLife(), CombatDamageService.grantLifeToPlayer(), and LifeResolutionService exchange life totals. Used by Ajani's Pridemate |
-| `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE` | Whenever an opponent is dealt noncombat damage (spell/ability damage, NOT combat damage). Fires inline from DamageResolutionService.dealDamageToPlayer() via TriggerCollectionService.checkNoncombatDamageToOpponentTriggers(). Iterates all battlefields except the damaged player's. Used by Chandra's Spitfire |
-| `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` | Whenever a creature you control deals combat damage to a player. Fires from CombatDamageService.checkAllyCreatureCombatDamageToPlayerTriggers(). Iterates controller's battlefield looking for permanents with this slot. Effects use PermanentPredicate to filter which creatures trigger it. Used by Rakish Heir with PutCountersOnDamageDealerEffect |
-| `ON_SELF_MILLED` | Triggers when this card is put into its owner's graveyard from their library (milled). Checked per-card inside `GraveyardService.resolveMillPlayer()` after all milled cards have been added to the graveyard. Only fires if the card actually entered the graveyard (not intercepted by a replacement effect). Currently supports `ShuffleGraveyardIntoLibraryEffect` to shuffle owner's graveyard into library. Used by Gaea's Blessing |
-| `STATE_TRIGGERED` | State-triggered ability (MTG rule 603.8). Checked by `StateTriggerService` after SBAs run. When the `StateTriggerEffect`'s predicate is true and the ability is not already on the stack, a triggered ability is pushed onto the stack. Won't retrigger while on the stack; fires again once resolved/countered. Used by Phylactery Lich |
-| `SAGA_CHAPTER_I` | Saga chapter I ability (MTG rule 714). Triggers when the first lore counter is placed on the Saga (on ETB and at beginning of precombat main). Effects are pushed onto the stack as a TRIGGERED_ABILITY. Used by Chainer's Torment |
-| `SAGA_CHAPTER_II` | Saga chapter II ability (MTG rule 714). Triggers when the second lore counter is placed. Used by Chainer's Torment |
-| `SAGA_CHAPTER_III` | Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. Saga is sacrificed as SBA after this ability leaves the stack. Used by Chainer's Torment |
-| `BEGINNING_OF_COMBAT_TRIGGERED` | At the beginning of combat on the controller's turn. Only fires for the active player's permanents. Used by Helm of the Host |
-| `ON_OPPONENT_CREATURE_DEALT_DAMAGE` | Whenever a creature an opponent controls is dealt damage (combat or non-combat). Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields for permanents with this slot whose controller differs from the damaged creature's controller. Called once per damaged creature, producing one trigger per listening permanent. Hooked into DamageResolutionService (spell/ability damage) and CombatDamageService (combat damage). Used by Kazarov, Sengir Pureblood |
-| `ON_CONTROLLER_LOSES_LIFE` | Whenever the controller of this permanent loses life (damage or direct life loss). Fires on the controller's own permanents. Amount of life lost is passed via TriggerContext.LifeLoss. Hooked into TriggerCollectionService.checkLifeLossTriggers() alongside ON_OPPONENT_LOSES_LIFE. Used by Lich's Mastery |
-| `ON_SELF_LEAVES_BATTLEFIELD` | Triggers when this permanent leaves the battlefield by any means (destruction, exile, bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal from all removal paths. Fires the effects as triggered abilities on the stack. Used by Lich's Mastery |
-| `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Whenever an Aura or Equipment controlled by the same player is put into a graveyard from the battlefield (destroyed, sacrificed, or orphaned aura). Checked in DeathTriggerService. Used by Tiana, Ship's Caretaker with `RegisterDelayedReturnCardFromGraveyardToHandEffect` |
-| `ON_TRANSFORM_TO_BACK_FACE` | Triggers when this permanent transforms from its front face to its back face. Checked in `AnimationResolutionService.resolveTransformSelf()` after the permanent's card reference is switched to the back face. MayEffects are queued via `queueMayAbility()`. Used by Werewolf Ransacker with `MayEffect(DestroyTargetPermanentAndDamageControllerIfDestroyedEffect(3))` |
+| `ON_BECOMES_TARGET_OF_SPELL` | This permanent becomes target of a spell |
+| `ON_BECOMES_TARGET_OF_OPPONENT_SPELL` | This permanent becomes target of an opponent's spell |
+| `ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | This permanent becomes target of any spell or ability |
+| `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | Global monitor: a creature you control becomes target of opponent's spell/ability. Used by Shapers' Sanctuary |
+| `ON_EQUIPPED_CREATURE_DIES` | Equipped creature dies |
+| `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted permanent dies (graveyard only) |
+| `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD` | Enchanted permanent leaves battlefield (any destination) |
+| `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | Opponent's land enters. Wrap with `PermanentEnteredThisTurnConditionalEffect` for "second+ land" |
+| `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | Your land enters (landfall) |
+| `ON_OPPONENT_CREATURE_DIES` | An opponent's creature dies |
+| `ON_DEALT_DAMAGE` | This creature is dealt damage (combat or non-combat) |
+| `ON_OPENING_HAND_REVEAL` | First upkeep, cards in hand (Chancellor cycle). Wrap with `MayEffect` |
+| `ON_OPPONENT_LOSES_LIFE` | Opponent loses life (damage or direct) |
+| `ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD` | An Equipment enters under your control |
+| `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` | An opponent's creature enters |
+| `ON_OPPONENT_SHUFFLES_LIBRARY` | Opponent shuffles library |
+| `ON_CONTROLLER_GAINS_LIFE` | Controller gains life |
+| `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE` | Opponent dealt noncombat damage |
+| `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` | A creature you control deals combat damage to a player |
+| `ON_SELF_MILLED` | This card is milled into graveyard |
+| `STATE_TRIGGERED` | State-triggered ability (rule 603.8). Fires when predicate is true, won't retrigger while on stack |
+| `SAGA_CHAPTER_I` | Saga chapter I (first lore counter placed, on ETB and precombat main) |
+| `SAGA_CHAPTER_II` | Saga chapter II (second lore counter) |
+| `SAGA_CHAPTER_III` | Saga chapter III (third lore counter, saga sacrificed after) |
+| `BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on controller's turn |
+| `ON_OPPONENT_CREATURE_DEALT_DAMAGE` | An opponent's creature is dealt damage |
+| `ON_CONTROLLER_LOSES_LIFE` | Controller loses life |
+| `ON_SELF_LEAVES_BATTLEFIELD` | This permanent leaves the battlefield (any means) |
+| `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Your Aura or Equipment dies |
+| `ON_TRANSFORM_TO_BACK_FACE` | This permanent transforms to back face |

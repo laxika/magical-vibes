@@ -194,6 +194,31 @@ Then do all of:
   Use `TargetValidationService` helper methods: `requireTarget()`, `requireBattlefieldTarget()`, `requireCreature()`, `checkProtection()`, `requireTargetPlayer()`.
 - Add test coverage for normal path + invalid/fizzle path if applicable
 
+## When a new PermanentPredicate is required
+
+Create a new predicate only when the targeting condition cannot be expressed by existing predicates or their compositions (`AllOf`, `AnyOf`, `Not`). Check **PREDICATES_REFERENCE.md** first.
+
+Then do all of:
+
+1. **Create predicate record** in `magical-vibes-domain/src/main/java/.../model/filter/`:
+   ```java
+   public record YourNewPredicate() implements PermanentPredicate {
+   }
+   ```
+   Add constructor parameters only if the predicate needs static values (e.g. `(int maxPower)`). Dynamic predicates that read game state at evaluation time typically have no parameters.
+
+2. **Add evaluation logic** in `GameQueryService.matchesPermanentPredicate()` (in `magical-vibes-backend/.../service/battlefield/GameQueryService.java`):
+   - Find the predicate chain (search for `instanceof PermanentPowerAtMost` to see examples)
+   - Add a new `if (predicate instanceof YourNewPredicate)` block
+   - Use `filterContext.gameData()`, `filterContext.sourceControllerId()`, `filterContext.sourceCardId()`, `filterContext.xValue()` as needed
+   - Add the import at the top of the file
+
+3. **Update agent-docs**:
+   - Add the predicate to `PREDICATES_REFERENCE.md` in the appropriate section
+   - Add the predicate to `ACTIVATED_ABILITY_GUIDE.md` if it's relevant to ability targeting
+   - Add an oracle text mapping in `ORACLE_TEXT_EFFECT_MAP.md` if applicable
+   - Add a card pattern entry in `CARD_PATTERN_INDEX.md`
+
 ## Quick anti-patterns
 
 - Adding new effect records for simple two-step effects that already compose.
