@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
@@ -2772,6 +2773,41 @@ class HardAiDecisionEngineTest {
             ai.handleMessage("GAME_STATE", "");
 
             // AI should NOT cast Grizzly Bears precombat — defer to postcombat
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Skips removal on creature with protection from spell's color")
+        void skipsRemovalOnCreatureWithProtectionFromSpellColor() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+            // AI has two 2/2 attackers
+            Permanent bear1 = new Permanent(new GrizzlyBears());
+            bear1.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear1);
+            Permanent bear2 = new Permanent(new GrizzlyBears());
+            bear2.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bear2);
+
+            // Give AI mana for Eviscerate (3B — black spell)
+            for (int i = 0; i < 4; i++) {
+                Permanent swamp = new Permanent(new Swamp());
+                swamp.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(swamp);
+            }
+
+            // Opponent's only blocker is White Knight (protection from black)
+            // Eviscerate is black, so it can't target White Knight
+            Permanent whiteKnight = new Permanent(new WhiteKnight());
+            whiteKnight.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(whiteKnight);
+            gd.playerLifeTotals.put(player2.getId(), 4);
+
+            harness.setHand(player1, List.of(new Eviscerate()));
+
+            ai.handleMessage("GAME_STATE", "");
+
+            // AI should NOT cast Eviscerate — target has protection from black
             assertThat(gd.stack).isEmpty();
         }
     }

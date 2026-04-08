@@ -853,11 +853,16 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     /**
      * Checks whether a removal spell's effects can remove a specific creature.
-     * Accounts for hexproof, shroud, indestructible, and damage vs toughness.
+     * Accounts for hexproof, shroud, protection, targeting restrictions,
+     * indestructible, and damage vs toughness.
      */
     private boolean canEffectRemoveCreature(GameData gameData, Card spell, Permanent creature) {
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.HEXPROOF)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.SHROUD)) return false;
+        if (gameQueryService.hasProtectionFromSource(gameData, creature, spell)) return false;
+        if (gameQueryService.cantBeTargetedBySpellColor(gameData, creature, spell.getColor())) return false;
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, spell)) return false;
+        if (gameQueryService.hasHexproofFromColor(gameData, creature, spell.getColor())) return false;
 
         for (CardEffect effect : spell.getEffects(EffectSlot.SPELL)) {
             if (canSingleEffectRemoveCreature(gameData, effect, creature)) return true;
