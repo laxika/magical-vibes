@@ -242,28 +242,43 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     return;
                 }
 
-                // Explicit precombat heuristics: removal to clear blockers for lethal,
-                // lords to pump attackers, haste creatures that can join the attack
-                if (tryCastPrecombatPrioritySpell(gameData)) {
-                    return;
-                }
-
-                // Broader combat-relevant spells: removal for damage gain (not just lethal),
-                // lords/anthems that meaningfully pump, any haste creature.
-                // Non-combat spells (card draw, non-haste creatures, enchantments) are
-                // deferred to postcombat main where they don't delay the attack.
-                if (tryCastCombatRelevantSpellPrecombat(gameData)) {
-                    return;
-                }
-
-                // If we have potential attackers, defer non-combat spells to postcombat
-                // so we don't waste time before combat. If we have no attackers, combat
-                // is irrelevant and we can cast everything now.
-                if (hasPotentialAttackers(gameData)) {
-                    // Skip general sorcery casting — defer to postcombat
-                } else {
-                    if (tryCastSpellWithInstantAwareness(gameData)) {
+                // Check if alpha strike + burn would be lethal. If so, only cast
+                // combat-relevant spells (removal to clear blockers, lords, haste
+                // creatures) and preserve remaining mana for post-combat burn.
+                if (isAlphaStrikePlusBurnLethalPrecombat(gameData)) {
+                    log.info("AI (Hard): Alpha strike + burn plan detected precombat — " +
+                            "only casting combat-relevant spells in game {}", gameId);
+                    if (tryCastPrecombatPrioritySpell(gameData)) {
                         return;
+                    }
+                    if (tryCastCombatRelevantSpellPrecombat(gameData)) {
+                        return;
+                    }
+                    // Skip non-combat spells — proceed to combat to execute the plan
+                } else {
+                    // Explicit precombat heuristics: removal to clear blockers for lethal,
+                    // lords to pump attackers, haste creatures that can join the attack
+                    if (tryCastPrecombatPrioritySpell(gameData)) {
+                        return;
+                    }
+
+                    // Broader combat-relevant spells: removal for damage gain (not just lethal),
+                    // lords/anthems that meaningfully pump, any haste creature.
+                    // Non-combat spells (card draw, non-haste creatures, enchantments) are
+                    // deferred to postcombat main where they don't delay the attack.
+                    if (tryCastCombatRelevantSpellPrecombat(gameData)) {
+                        return;
+                    }
+
+                    // If we have potential attackers, defer non-combat spells to postcombat
+                    // so we don't waste time before combat. If we have no attackers, combat
+                    // is irrelevant and we can cast everything now.
+                    if (hasPotentialAttackers(gameData)) {
+                        // Skip general sorcery casting — defer to postcombat
+                    } else {
+                        if (tryCastSpellWithInstantAwareness(gameData)) {
+                            return;
+                        }
                     }
                 }
             } else {
@@ -2295,6 +2310,20 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
 
+        // Alpha strike + burn lethal: if attacking with everything and then burning
+        // the opponent's face with remaining mana would kill them, go all-in.
+        if (isAlphaStrikePlusBurnLethal(gameData, availableIndices)) {
+            List<Integer> attackerIndices = new ArrayList<>(availableIndices);
+            attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
+            attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
+            log.info("AI (Hard): Alpha strike + burn is lethal! Declaring {} attackers in game {}",
+                    attackerIndices.size(), gameId);
+            final List<Integer> finalAttackerIndices = attackerIndices;
+            send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+                    new DeclareAttackersRequest(finalAttackerIndices, null)));
+            return;
+        }
+
         // Evaluate race state to adjust aggression
         RaceEvaluator.RaceState raceState = evaluateRace(gameData);
 
@@ -2680,5 +2709,160 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return raceEvaluator.evaluate(gameData, aiPlayer.getId(), castableBurn);
+    }
+
+    /**
+     * Precombat main phase variant of the alpha strike + burn check. Gathers potential
+     * attackers directly from the battlefield (untapped, non-defender, combat-ready
+     * creatures) since {@code CombatAttackService.getAttackableCreatureIndices} is only
+     * available during the declare attackers step.
+     *
+     * @return true if an alpha strike + burn plan appears lethal
+     */
+    private boolean isAlphaStrikePlusBurnLethalPrecombat(GameData gameData) {
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        if (opponentId == null) return false;
+        int opponentLife = gameData.getLife(opponentId);
+        if (opponentLife <= 0) return false;
+
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        if (hand.isEmpty()) return false;
+
+        // Gather potential attackers from battlefield
+        List<Permanent> attackers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            if (perm.isTapped()) continue;
+            if (perm.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
+            attackers.add(perm);
+        }
+        if (attackers.isEmpty()) return false;
+
+        // Gather opponent's potential blockers
+        List<Permanent> blockers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            blockers.add(perm);
+        }
+
+        int combatDamage = estimateUnblockableDamage(gameData, attackers, blockers);
+        if (combatDamage >= opponentLife) return false; // Pure combat lethal — handled elsewhere
+
+        VirtualManaPool landOnlyPool = manaManager.buildLandOnlyVirtualManaPool(gameData, aiPlayer.getId());
+        int burnDamage = computeAffordableBurnDamage(gameData, hand, landOnlyPool);
+
+        return burnDamage > 0 && combatDamage + burnDamage >= opponentLife;
+    }
+
+    /**
+     * Checks whether an alpha strike (attacking with all available creatures) combined
+     * with burn spells in hand would deal lethal damage to the opponent. Accounts for
+     * the opponent's blockers via {@link #estimateUnblockableDamage} and ensures the AI
+     * can actually afford the burn spells from its land-based mana pool (creature mana
+     * producers will be tapped from attacking).
+     *
+     * <p>This catches scenarios that the separate burn-lethal and race checks miss:
+     * a board of 3/3 + 2/2 against a 5/5 blocker might only push 2 damage through,
+     * but 2 damage + Lightning Bolt (3) = 5, which is lethal against an opponent at 5 life.
+     *
+     * @param availableAttackerIndices indices of creatures that can attack
+     * @return true if alpha strike + burn is lethal
+     */
+    private boolean isAlphaStrikePlusBurnLethal(GameData gameData, List<Integer> availableAttackerIndices) {
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        if (opponentId == null) return false;
+        int opponentLife = gameData.getLife(opponentId);
+        if (opponentLife <= 0) return false;
+
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        if (hand.isEmpty()) return false;
+
+        // Build the list of attacker permanents from indices
+        List<Permanent> attackers = new ArrayList<>();
+        for (int idx : availableAttackerIndices) {
+            if (idx < aiBattlefield.size()) {
+                attackers.add(aiBattlefield.get(idx));
+            }
+        }
+        if (attackers.isEmpty()) return false;
+
+        // Gather opponent's potential blockers (untapped creatures)
+        List<Permanent> blockers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            blockers.add(perm);
+        }
+
+        // Estimate combat damage that would get through to the opponent's face
+        int combatDamage = estimateUnblockableDamage(gameData, attackers, blockers);
+
+        // If combat alone is lethal, no need for burn — the "winning the race" check
+        // or MCTS will handle it. This method is specifically for combat + burn combos.
+        if (combatDamage >= opponentLife) return false;
+
+        int damageNeeded = opponentLife - combatDamage;
+
+        // Calculate affordable burn damage from land-based mana only.
+        // After the alpha strike, creature mana producers will be tapped, so we
+        // build a virtual pool that excludes creature-based mana.
+        VirtualManaPool landOnlyPool = manaManager.buildLandOnlyVirtualManaPool(gameData, aiPlayer.getId());
+
+        // Greedily fit burn spells into the available mana, highest damage first
+        int burnDamage = computeAffordableBurnDamage(gameData, hand, landOnlyPool);
+
+        if (burnDamage <= 0) return false;
+        if (combatDamage + burnDamage < opponentLife) return false;
+
+        log.info("AI (Hard): Alpha strike + burn is lethal! combat={} + burn={} >= life={} in game {}",
+                combatDamage, burnDamage, opponentLife, gameId);
+        return true;
+    }
+
+    /**
+     * Computes the maximum burn-to-face damage achievable by greedily fitting castable
+     * burn spells from highest damage to lowest, respecting mana affordability.
+     * Uses effective mana cost (including cost modifiers) to ensure accuracy.
+     *
+     * @param hand         the AI's current hand
+     * @param virtualPool  the available mana pool (typically land-only after alpha strike)
+     * @return total burn damage affordable within the mana budget
+     */
+    private int computeAffordableBurnDamage(GameData gameData, List<Card> hand, ManaPool virtualPool) {
+        record BurnCandidate(Card card, int damage, int effectiveCost) {}
+        List<BurnCandidate> candidates = new ArrayList<>();
+
+        for (Card card : hand) {
+            if (card.getManaCost() == null) continue;
+            int damage = raceEvaluator.getBurnToFaceDamage(card);
+            if (damage <= 0) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+
+            int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+            int effectiveCost = Math.max(0, card.getManaValue() + costModifier);
+            candidates.add(new BurnCandidate(card, damage, effectiveCost));
+        }
+
+        if (candidates.isEmpty()) return 0;
+
+        // Sort by damage descending — prioritize highest damage per spell
+        candidates.sort(Comparator.comparingInt(BurnCandidate::damage).reversed());
+
+        int totalDamage = 0;
+        int manaSpent = 0;
+        int totalMana = virtualPool.getTotal();
+
+        for (BurnCandidate candidate : candidates) {
+            if (manaSpent + candidate.effectiveCost() <= totalMana) {
+                totalDamage += candidate.damage();
+                manaSpent += candidate.effectiveCost();
+            }
+        }
+
+        return totalDamage;
     }
 }

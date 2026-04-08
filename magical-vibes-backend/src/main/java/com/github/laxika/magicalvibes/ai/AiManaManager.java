@@ -114,6 +114,58 @@ public class AiManaManager {
     }
 
     /**
+     * Builds a virtual mana pool from non-creature mana sources only (lands, artifacts, etc.).
+     * Used to estimate mana available after an alpha strike where all creatures will be
+     * tapped from attacking. Includes mana already in the pool plus untapped non-creature
+     * permanents with mana abilities.
+     */
+    public VirtualManaPool buildLandOnlyVirtualManaPool(GameData gameData, UUID aiPlayerId) {
+        VirtualManaPool virtual = new VirtualManaPool();
+
+        ManaPool current = gameData.playerManaPools.get(aiPlayerId);
+        if (current != null) {
+            for (ManaColor color : ManaColor.values()) {
+                virtual.add(color, current.get(color));
+            }
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayerId);
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (perm.isTapped()) {
+                    continue;
+                }
+                boolean isCreature = gameQueryService.isCreature(gameData, perm);
+                // Skip creatures — they will be tapped from attacking
+                if (isCreature) {
+                    continue;
+                }
+                if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
+                    continue;
+                }
+                ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gameData, perm);
+                if (overriddenColor != null) {
+                    virtual.add(overriddenColor, 1);
+                } else if (hasOnTapManaEffects(perm.getCard())) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
+                        if (effect instanceof AwardManaEffect manaEffect) {
+                            virtual.add(manaEffect.color(), manaEffect.amount());
+                        } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                            virtual.add(ManaColor.COLORLESS, aace.amount());
+                        } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                            virtual.add(ManaColor.COLORLESS);
+                        }
+                    }
+                } else {
+                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, false, perm, gameData, aiPlayerId);
+                }
+            }
+        }
+
+        return virtual;
+    }
+
+    /**
      * Adds mana from activated mana abilities to the virtual pool.
      * For permanents with multiple free-tap mana abilities (e.g. dual lands),
      * all possible colors are added but the total is corrected via flexibleOvercount
