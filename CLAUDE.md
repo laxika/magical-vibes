@@ -9,6 +9,7 @@
 - If you need to implement a new card, first run a reprint check to see if the card class already exists: `grep -r "class CardName " magical-vibes-card/src/` (replace `CardName` with the PascalCase class name). If the class exists, just add the `@CardRegistration` annotation for the new printing and do nothing else (do not run/check tests, etc).
 - If unit tests exists for the service classes that you need to extend, then make sure that you create unit tests as well for the new features you add to those services.
 - When running the full test suite, always use `run_in_background: true` on the Bash tool call. The tests take over 20 minutes, which exceeds the maximum timeout.
+- Always call Scryfall with curl instead of the built in fetcher (use random heades).
 
 ## Documentation
 
