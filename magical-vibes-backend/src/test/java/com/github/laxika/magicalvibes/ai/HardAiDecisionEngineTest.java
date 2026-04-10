@@ -151,6 +151,38 @@ class HardAiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("MCTS search completes within time budget for blocker declaration")
+    void mctsSearchCompletesForBlockers() {
+        // Add blockers for player1
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SerraAngel());
+        gd.playerBattlefields.get(player1.getId()).forEach(p -> p.setSummoningSick(false));
+
+        // Add attacking creatures for player2
+        harness.addToBattlefield(player2, new EliteVanguard());
+        harness.addToBattlefield(player2, new BerserkersOfBloodRidge());
+        gd.playerBattlefields.get(player2.getId()).forEach(p -> {
+            p.setSummoningSick(false);
+            p.setAttacking(true);
+        });
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.forceActivePlayer(player2);
+        gd.interaction.beginBlockerDeclaration(player1.getId());
+
+        GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
+        MCTSEngine engine = new MCTSEngine(simulator);
+
+        long start = System.currentTimeMillis();
+        SimulationAction action = engine.search(gd, player1.getId(), 200);
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertThat(action).isNotNull();
+        assertThat(action).isInstanceOf(SimulationAction.DeclareBlockers.class);
+        assertThat(elapsed).isLessThan(3000);
+    }
+
+    @Test
     @DisplayName("HardAiDecisionEngine constructor initializes without errors")
     void hardEngineConstructorWorks() {
         HardAiDecisionEngine engine = new HardAiDecisionEngine(

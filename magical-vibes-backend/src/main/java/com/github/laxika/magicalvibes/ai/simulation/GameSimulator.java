@@ -495,11 +495,45 @@ public class GameSimulator {
                 }
             }
             case BLOCKER_DECLARATION -> {
-                // Use CombatSimulator for blockers — offer best blocking and no blocking
+                // Offer diverse blocking options for MCTS to explore:
+                // 1) No blocking at all
                 actions.add(new SimulationAction.DeclareBlockers(List.of()));
+
+                // 2) Best blocking from CombatSimulator (greedy heuristic)
                 List<int[]> bestBlockers = findBestBlockerAssignments(gd, playerId);
                 if (!bestBlockers.isEmpty()) {
                     actions.add(new SimulationAction.DeclareBlockers(bestBlockers));
+                }
+
+                // 3) Individual "block only the biggest attacker" per blocker —
+                //    lets MCTS discover partial blocking strategies (e.g. trade one
+                //    blocker on the biggest threat, keep others for next turn).
+                UUID oppId = getOpponentId(gd, playerId);
+                List<Permanent> oppBf = gd.playerBattlefields.getOrDefault(oppId, List.of());
+                List<Permanent> aiBf = gd.playerBattlefields.getOrDefault(playerId, List.of());
+                // Find the biggest unblockable-safe attacker (highest power)
+                int biggestAttackerIdx = -1;
+                int biggestPower = 0;
+                for (int i = 0; i < oppBf.size(); i++) {
+                    Permanent att = oppBf.get(i);
+                    if (att.isAttacking()) {
+                        int power = gameQueryService.getEffectivePower(gd, att);
+                        if (power > biggestPower) {
+                            biggestPower = power;
+                            biggestAttackerIdx = i;
+                        }
+                    }
+                }
+                if (biggestAttackerIdx >= 0) {
+                    // For each available blocker, offer "block only the biggest attacker"
+                    for (int bi = 0; bi < aiBf.size(); bi++) {
+                        if (!gameQueryService.canBlock(gd, aiBf.get(bi))) continue;
+                        List<int[]> singleBlock = List.of(new int[]{bi, biggestAttackerIdx});
+                        // Avoid duplicating an already-added option
+                        if (!singleBlock.equals(bestBlockers)) {
+                            actions.add(new SimulationAction.DeclareBlockers(singleBlock));
+                        }
+                    }
                 }
             }
             case CARD_CHOICE, DISCARD_CHOICE, REVEALED_HAND_CHOICE -> {

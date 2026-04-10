@@ -2462,13 +2462,42 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        // Losing the race or neutral — use exhaustive search which already handles
-        // lethal-incoming chump blocking logic via CombatSimulator
+        // Losing the race or neutral — MCTS can evaluate "chump block now and cast a creature
+        // next turn" vs "take damage but keep the blocker for a bigger threat."
         if (raceState.aiLosingRace()) {
             log.info("AI (Hard): Losing race (AI clock={}, opp clock={}), blocking defensively in game {}",
                     raceState.aiClock(), raceState.opponentClock(), gameId);
         }
 
+        // If 0-1 blockers, use CombatSimulator directly (no need for MCTS)
+        if (blockerIndices.size() <= 1) {
+            handleBlockersWithSimulator(gameData, attackerIndices, blockerIndices);
+            return;
+        }
+
+        // Use MCTS for blocker selection — it can "see" post-combat implications
+        // (e.g. keeping a creature alive to cast next turn vs chump blocking now)
+        try {
+            SimulationAction bestAction = mctsEngine.search(gameData, aiPlayer.getId(), MCTS_BUDGET);
+
+            if (bestAction instanceof SimulationAction.DeclareBlockers db) {
+                List<BlockerAssignment> blockerAssignments = db.blockerAssignments().stream()
+                        .map(a -> new BlockerAssignment(a[0], a[1]))
+                        .toList();
+                log.info("AI (Hard/MCTS): Declaring {} blockers in game {}", blockerAssignments.size(), gameId);
+                sendBlockerDeclaration(gameData, new DeclareBlockersRequest(blockerAssignments));
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("AI (Hard): MCTS blocker search failed, falling back to exhaustive search", e);
+        }
+
+        // Fall back to CombatSimulator exhaustive search
+        handleBlockersWithSimulator(gameData, attackerIndices, blockerIndices);
+    }
+
+    private void handleBlockersWithSimulator(GameData gameData, List<Integer> attackerIndices,
+                                              List<Integer> blockerIndices) {
         List<int[]> assignments = combatSimulator.findBestBlockersExhaustive(
                 gameData, aiPlayer.getId(), attackerIndices, blockerIndices);
 
