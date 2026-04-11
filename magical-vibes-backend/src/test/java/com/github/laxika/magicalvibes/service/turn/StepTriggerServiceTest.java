@@ -43,12 +43,13 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -84,7 +85,9 @@ class StepTriggerServiceTest {
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
 
-    @InjectMocks
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
+
     private StepTriggerService sut;
 
     private GameData gd;
@@ -93,6 +96,20 @@ class StepTriggerServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Build the SUT manually so we can pass a REAL TriggerTargetCollector. The collector's
+        // opponent-filter / valid-target logic is exercised by several tests in this class, so a
+        // mock would silently return nulls and break them.
+        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(gameQueryService);
+        sut = new StepTriggerService(
+                drawService,
+                gameQueryService,
+                gameBroadcastService,
+                playerInputService,
+                permanentRemovalService,
+                battlefieldEntryService,
+                triggerCollectionService,
+                triggerTargetCollector);
+
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

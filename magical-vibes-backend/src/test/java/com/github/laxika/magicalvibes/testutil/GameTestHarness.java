@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.turn.TurnResolutionService;
 import com.github.laxika.magicalvibes.service.turn.AutoPassService;
@@ -191,8 +192,9 @@ public class GameTestHarness {
                 staticSessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, staticGameQueryService, validTargetService);
         DraftRegistry draftRegistry = new DraftRegistry();
         staticLegendRuleService = new LegendRuleService(staticPlayerInputService, staticGameQueryService);
+        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(staticGameQueryService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
-                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory);
+                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory, triggerTargetCollector);
         CreatureControlService creatureControlService = new CreatureControlService(staticGameBroadcastService, staticGameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(staticGameQueryService);
         GameOutcomeService gameOutcomeService = new GameOutcomeService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticGameRegistry, draftRegistry, null);
@@ -300,7 +302,7 @@ public class GameTestHarness {
                 staticBattlefieldEntryService, cloneService, graveyardService, staticLegendRuleService, staticStateBasedActionService, staticGameQueryService, staticTargetLegalityService,
                 staticGameBroadcastService, effectResolutionService, staticPlayerInputService, staticTriggerCollectionService, creatureControlService, stateTriggerService, exileService);
         UntapStepService untapStepService = new UntapStepService(staticGameQueryService, staticGameBroadcastService);
-        StepTriggerService stepTriggerService = new StepTriggerService(staticDrawService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService, staticBattlefieldEntryService, staticTriggerCollectionService);
+        StepTriggerService stepTriggerService = new StepTriggerService(staticDrawService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService, staticBattlefieldEntryService, staticTriggerCollectionService, triggerTargetCollector);
         AutoPassService autoPassService = new AutoPassService(staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService, staticStackResolutionService, stepTriggerService, staticCombatAttackService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, staticGameBroadcastService, staticPlayerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);

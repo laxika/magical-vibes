@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -28,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
@@ -44,13 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnCo
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -94,6 +89,7 @@ public class StepTriggerService {
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggerTargetCollector triggerTargetCollector;
 
     /**
      * Scans battlefields, graveyards, and (on turn 1) hands for upkeep-triggered
@@ -1362,60 +1358,17 @@ public class StepTriggerService {
 
         PermanentChoiceContext.EndStepTriggerTarget trigger = gameData.pendingEndStepTriggerTargets.removeFirst();
 
-        // Collect valid targets, respecting the card's target filter if present
         TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
-        FilterContext filterCtx = targetFilter != null
-                ? new FilterContext(gameData, trigger.sourceCard().getId(), trigger.controllerId(), null)
-                : null;
-
-        List<UUID> validTargets = new ArrayList<>();
-        boolean canTargetPlayers = trigger.effects().stream().anyMatch(e -> {
-            CardEffect inner = e instanceof ConditionalEffect ce ? ce.wrapped() : e;
-            return inner.canTargetPlayer();
-        });
-        boolean canTargetPermanents = trigger.effects().stream().anyMatch(e -> {
-            CardEffect inner = e instanceof ConditionalEffect ce ? ce.wrapped() : e;
-            return inner.canTargetPermanent();
-        });
-
-        if (canTargetPlayers) {
-            if (targetFilter instanceof PlayerPredicateTargetFilter ppf
-                    && ppf.predicate() instanceof PlayerRelationPredicate prp
-                    && prp.relation() == PlayerRelation.OPPONENT) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    if (!pid.equals(trigger.controllerId())) {
-                        validTargets.add(pid);
-                    }
-                }
-            } else {
-                validTargets.addAll(gameData.orderedPlayerIds);
-            }
-        }
-        if (canTargetPermanents) {
-            // Extract target predicate from effects (e.g. UntapTargetPermanentEffect with artifact restriction)
-            PermanentPredicate effectPredicate = trigger.effects().stream()
-                    .map(e -> e instanceof ConditionalEffect ce ? ce.wrapped() : e)
-                    .filter(e -> e.canTargetPermanent() && e.targetPredicate() != null)
-                    .map(CardEffect::targetPredicate)
-                    .findFirst().orElse(null);
-            FilterContext effectFilterCtx = effectPredicate != null
-                    ? new FilterContext(gameData, trigger.sourceCard().getId(), trigger.controllerId(), null)
-                    : null;
-
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
-                        if (!gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
-                    }
-                    if (effectPredicate != null) {
-                        if (!gameQueryService.matchesPermanentPredicate(p, effectPredicate, effectFilterCtx)) continue;
-                    }
-                    validTargets.add(p.getId());
-                }
-            }
-        }
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData,
+                trigger.effects(),
+                targetFilter,
+                trigger.controllerId(),
+                trigger.sourceCard(),
+                TriggerTargetCollector.Options.END_STEP);
+        List<UUID> validTargets = result.validTargets();
+        boolean canTargetPlayers = result.canTargetPlayers();
+        boolean canTargetPermanents = result.canTargetPermanents();
 
         if (validTargets.isEmpty()) {
             String logEntry = trigger.sourceCard().getName() + "'s end step trigger has no valid targets.";

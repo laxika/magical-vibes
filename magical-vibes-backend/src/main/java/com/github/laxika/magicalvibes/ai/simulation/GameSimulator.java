@@ -132,6 +132,7 @@ import com.github.laxika.magicalvibes.service.trigger.LandTapTriggerCollectorSer
 import com.github.laxika.magicalvibes.service.trigger.MiscTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.trigger.SpellCastTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
@@ -234,8 +235,9 @@ public class GameSimulator {
         this.gameRegistry = new GameRegistry();
 
         LegendRuleService legendRuleService = new LegendRuleService(playerInputService, gameQueryService);
+        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(gameQueryService);
         TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
-                gameQueryService, gameBroadcastService, playerInputService, cardViewFactory);
+                gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, triggerTargetCollector);
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(gameQueryService);
         GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, noOpSession, gameRegistry, draftRegistry, null);
@@ -342,7 +344,7 @@ public class GameSimulator {
                 battlefieldEntryService, cloneService, graveyardService, legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameBroadcastService, effectResolutionService, playerInputService, triggerCollectionService, creatureControlService, stateTriggerService, exileService);
         UntapStepService untapStepService = new UntapStepService(gameQueryService, gameBroadcastService);
-        StepTriggerService stepTriggerService = new StepTriggerService(drawService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, battlefieldEntryService, triggerCollectionService);
+        StepTriggerService stepTriggerService = new StepTriggerService(drawService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, battlefieldEntryService, triggerCollectionService, triggerTargetCollector);
         AutoPassService autoPassService = new AutoPassService(gameQueryService, gameBroadcastService, triggerCollectionService, stackResolutionService, stepTriggerService, combatAttackService);
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);

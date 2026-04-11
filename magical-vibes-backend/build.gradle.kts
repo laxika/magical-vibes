@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":magical-vibes-websocket"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.github.classgraph:classgraph:4.8.179")
 }
 
 group = "com.magicalvibes"
