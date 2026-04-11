@@ -30,6 +30,15 @@ public class CombatSimulator {
     private static final int MAX_ATTACKER_SUBSET_BITS = 12;
     private static final long MAX_BLOCKER_SEARCH_SPACE = 2_000_000L;
 
+    /**
+     * Life threshold below which the defensive value penalty kicks in. At life totals
+     * at or above this, we're not in "losing the race" territory, so attacking with
+     * non-vigilance creatures isn't penalized. Chosen to comfortably cover the standard
+     * 20-starting-life danger zone while still letting the penalty engage before things
+     * turn critical.
+     */
+    private static final int DEFENSIVE_PENALTY_LIFE_THRESHOLD = 15;
+
     private final GameQueryService gameQueryService;
     private final BoardEvaluator boardEvaluator;
 
@@ -85,6 +94,7 @@ public class CombatSimulator {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         int opponentLife = gameData.getLife(opponentId);
         int opponentPoison = gameData.playerPoisonCounters.getOrDefault(opponentId, 0);
+        int aiLife = gameData.getLife(aiPlayerId);
 
         // Build creature info for available attackers
         Set<Integer> mustAttackSet = new HashSet<>(mustAttackIndices);
@@ -107,6 +117,31 @@ public class CombatSimulator {
             if (!gameQueryService.isCreature(gameData, perm)) continue;
             if (perm.isTapped()) continue;
             blockerInfos.add(buildCreatureInfo(gameData, perm, i, opponentId, aiPlayerId));
+        }
+
+        // ===== Defensive value context =====
+        // Preserving blockers matters when the opponent has a board that can counter-attack
+        // AND we're under real pressure. We gate the analysis on a simple life threshold:
+        // when the AI is at 15+ life, a few points of extra damage from a sub-optimal
+        // attack don't change the game plan, and the penalty's greedy counter-attack
+        // model (which ignores the attackers' own removal of opponents in combat) can
+        // actively mis-evaluate trades in MCTS rollouts. The original motivation is
+        // "losing the race with your last blockers", which only applies when life is low.
+        // This cheap gate also keeps the MCTS rollout hot path free of any extra work
+        // at typical starting-life totals.
+        List<CreatureInfo> opponentNextTurnAttackers = List.of();
+        List<CreatureInfo> aiPotentialBlockers = List.of();
+        DefensiveBaseline defensiveBaseline = null;
+        if (aiLife > 0 && aiLife < DEFENSIVE_PENALTY_LIFE_THRESHOLD) {
+            opponentNextTurnAttackers = buildOpponentNextTurnAttackers(
+                    gameData, aiPlayerId, opponentId, oppBattlefield, aiBattlefield);
+            if (!opponentNextTurnAttackers.isEmpty()) {
+                aiPotentialBlockers = buildAiPotentialBlockers(
+                        gameData, aiPlayerId, opponentId, aiBattlefield);
+                double[] baselineOutcome = estimateCounterAttackOutcome(
+                        gameData, opponentNextTurnAttackers, aiPotentialBlockers, aiLife);
+                defensiveBaseline = new DefensiveBaseline(baselineOutcome[0], baselineOutcome[1]);
+            }
         }
 
         // Limit optional attackers to top creatures by score if too many
@@ -171,6 +206,15 @@ public class CombatSimulator {
             // Apply pessimism for opponent's potential combat tricks
             if (threatEstimate.hasThreat()) {
                 score -= computeAttackTrickRisk(gameData, subset, blockerInfos, threatEstimate);
+            }
+
+            // Apply defensive value penalty: attacking taps non-vigilance creatures,
+            // leaving them unable to block the opponent's counter-attack. When the
+            // opponent has a significant board, sending creatures into a losing race
+            // is worse than holding them back.
+            if (defensiveBaseline != null) {
+                score -= computeDefensiveValuePenalty(gameData, subset, aiPotentialBlockers,
+                        opponentNextTurnAttackers, defensiveBaseline, aiLife);
             }
 
             if (score > bestScore) {
@@ -1137,6 +1181,229 @@ public class CombatSimulator {
             }
         }
         return false;
+    }
+
+    // ===== Counter-Attack Estimation =====
+
+    /**
+     * Estimates the outcome of a greedy counter-attack by the opponent given the
+     * AI's remaining blockers. Unlike {@link #simulateCombat}, this method models
+     * chump blocking: when the total incoming damage would be lethal, the AI
+     * blocks even at a negative trade because not blocking would lose the game.
+     * <p>
+     * Returns a two-element array: {@code [damageTaken, creaturesLostValue]}.
+     * Infect damage is counted as 2x its power in life-equivalent terms (since
+     * 10 poison = loss, and 20 life = loss).
+     */
+    double[] estimateCounterAttackOutcome(GameData gameData,
+                                           List<CreatureInfo> attackers,
+                                           List<CreatureInfo> blockers,
+                                           int aiLife) {
+        if (attackers.isEmpty()) return new double[]{0, 0};
+
+        // Total raw incoming damage if we don't block at all (used for lethal-chump check)
+        int rawIncoming = 0;
+        for (CreatureInfo a : attackers) {
+            rawIncoming += a.power;
+        }
+
+        // Process attackers biggest-first so the AI uses blockers on the largest threats
+        List<CreatureInfo> sorted = new ArrayList<>(attackers);
+        sorted.sort(Comparator.comparingInt((CreatureInfo c) -> c.power).reversed());
+
+        boolean[] blockerUsed = new boolean[blockers.size()];
+        double damageTaken = 0;
+        double creaturesLostValue = 0;
+        int remainingIncoming = rawIncoming;
+
+        for (CreatureInfo attacker : sorted) {
+            int unblockedPower = attacker.power;
+
+            if (attacker.cantBeBlocked) {
+                damageTaken += unblockedPower;
+                remainingIncoming -= unblockedPower;
+                continue;
+            }
+
+            // Find the best single blocker for this attacker
+            int bestIdx = -1;
+            double bestValue = Double.NEGATIVE_INFINITY;
+            for (int j = 0; j < blockers.size(); j++) {
+                if (blockerUsed[j]) continue;
+                CreatureInfo b = blockers.get(j);
+                if (!canBlock(gameData, b, attacker)) continue;
+                double v = attacker.trample
+                        ? evaluateTrampleBlock(attacker, b)
+                        : evaluateBlock(attacker, b);
+                if (v > bestValue) {
+                    bestValue = v;
+                    bestIdx = j;
+                }
+            }
+
+            boolean mustChump = remainingIncoming >= aiLife;
+            if (bestIdx >= 0 && (bestValue > 0 || mustChump)) {
+                CreatureInfo b = blockers.get(bestIdx);
+                blockerUsed[bestIdx] = true;
+
+                boolean blockerDies = !b.indestructible && attacker.power >= b.toughness;
+                if (blockerDies) {
+                    creaturesLostValue += b.creatureScore;
+                }
+
+                if (attacker.trample) {
+                    int trampleDmg = Math.max(0, attacker.power - b.toughness);
+                    damageTaken += trampleDmg;
+                    remainingIncoming -= (unblockedPower - trampleDmg);
+                } else {
+                    // All damage absorbed by the blocker
+                    remainingIncoming -= unblockedPower;
+                }
+            } else {
+                // Not blocked: full damage goes through
+                damageTaken += unblockedPower;
+                remainingIncoming -= unblockedPower;
+            }
+        }
+
+        return new double[]{damageTaken, creaturesLostValue};
+    }
+
+    // ===== Defensive Value Penalty =====
+
+    /**
+     * Snapshot of the opponent's potential next-turn attack when every AI creature
+     * is available as a blocker. Used as the baseline against which per-subset
+     * reductions are compared: attacking creatures (without vigilance) get removed
+     * from the blocker pool, and the incremental damage / creature loss is the
+     * penalty for attacking with them.
+     */
+    record DefensiveBaseline(double damageTaken, double creaturesLostValue) {}
+
+    /**
+     * Collects the opponent's creatures that could legally attack on their next
+     * turn — non-defender creatures with positive power. Currently-tapped
+     * creatures are included because they will untap at the opponent's next
+     * untap step; summoning sickness similarly resolves by then.
+     */
+    List<CreatureInfo> buildOpponentNextTurnAttackers(GameData gameData, UUID aiPlayerId,
+                                                       UUID opponentId,
+                                                       List<Permanent> oppBattlefield,
+                                                       List<Permanent> aiBattlefield) {
+        List<CreatureInfo> result = new ArrayList<>();
+        if (opponentId == null) return result;
+        for (int i = 0; i < oppBattlefield.size(); i++) {
+            Permanent perm = oppBattlefield.get(i);
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+            int power = gameQueryService.getEffectivePower(gameData, perm);
+            if (power <= 0) continue;
+            result.add(buildCreatureInfo(gameData, perm, i, opponentId, aiPlayerId, aiBattlefield));
+        }
+        return result;
+    }
+
+    /**
+     * Collects AI creatures that will be available to block on the opponent's
+     * next turn. Currently-tapped creatures are excluded because they will
+     * still be tapped when the opponent attacks (AI's untap step hasn't come
+     * around yet). Summoning-sick creatures are included — MTG rules allow
+     * summoning-sick creatures to block.
+     */
+    List<CreatureInfo> buildAiPotentialBlockers(GameData gameData, UUID aiPlayerId,
+                                                 UUID opponentId, List<Permanent> aiBattlefield) {
+        List<CreatureInfo> result = new ArrayList<>();
+        for (int i = 0; i < aiBattlefield.size(); i++) {
+            Permanent perm = aiBattlefield.get(i);
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            result.add(buildCreatureInfo(gameData, perm, i, aiPlayerId, opponentId));
+        }
+        return result;
+    }
+
+    /**
+     * Computes a penalty reflecting the defensive value we lose by attacking
+     * with a given subset of creatures. Non-vigilance attackers become tapped
+     * and cannot block the opponent's next-turn attack.
+     * <p>
+     * The penalty compares the opponent's counter-attack outcome with all AI
+     * creatures as blockers (baseline) vs the subset of creatures remaining
+     * after the attack. Extra life lost and extra creature value lost both
+     * contribute to the penalty. If attacking converts a survivable
+     * counter-attack into a lethal one, a large sentinel penalty is added.
+     * <p>
+     * The penalty weight scales with urgency: when the AI's post-counter life
+     * total is low, each point of lost life hurts more.
+     */
+    double computeDefensiveValuePenalty(GameData gameData,
+                                        List<CreatureInfo> attackSubset,
+                                        List<CreatureInfo> aiPotentialBlockers,
+                                        List<CreatureInfo> opponentNextTurnAttackers,
+                                        DefensiveBaseline baseline,
+                                        int aiLife) {
+        if (baseline == null || opponentNextTurnAttackers.isEmpty()) return 0;
+        if (attackSubset.isEmpty()) return 0;
+
+        // Identify which AI creatures would be tapped (non-vigilance attackers).
+        // Vigilance attackers stay untapped and can still block, so they don't
+        // reduce our defensive capability.
+        Set<UUID> tappedAttackerIds = new HashSet<>();
+        for (CreatureInfo info : attackSubset) {
+            if (gameQueryService.hasKeyword(gameData, info.perm, Keyword.VIGILANCE)) continue;
+            tappedAttackerIds.add(info.id);
+        }
+        if (tappedAttackerIds.isEmpty()) return 0;
+
+        // Remove tapped attackers from the potential blocker pool.
+        List<CreatureInfo> remainingBlockers = new ArrayList<>(aiPotentialBlockers.size());
+        for (CreatureInfo blocker : aiPotentialBlockers) {
+            if (!tappedAttackerIds.contains(blocker.id)) {
+                remainingBlockers.add(blocker);
+            }
+        }
+        // If we didn't actually remove anything (e.g. attackers weren't in the
+        // potential-blocker set for some reason), the attack doesn't reduce defense.
+        if (remainingBlockers.size() == aiPotentialBlockers.size()) return 0;
+
+        double[] reducedOutcome = estimateCounterAttackOutcome(
+                gameData, opponentNextTurnAttackers, remainingBlockers, aiLife);
+        double reducedDamage = reducedOutcome[0];
+        double reducedCreatureLoss = reducedOutcome[1];
+
+        double damageDelta = reducedDamage - baseline.damageTaken();
+        double creatureLossDelta = reducedCreatureLoss - baseline.creaturesLostValue();
+
+        // If the attack doesn't worsen our defensive outcome, there's nothing to penalize.
+        if (damageDelta <= 0 && creatureLossDelta <= 0) return 0;
+
+        double penalty = 0;
+
+        // Lethal flip sentinel: attacking turns a survivable counter-attack into a
+        // lethal one. This is the worst-case scenario and must strongly outweigh
+        // any attack upside short of actual lethal this turn.
+        double lifeAfterBaseline = aiLife - baseline.damageTaken();
+        double lifeAfterReduced = aiLife - reducedDamage;
+        if (lifeAfterBaseline > 0 && lifeAfterReduced <= 0) {
+            penalty += 1000;
+        }
+
+        // Base penalty: each point of extra damage scales roughly like the
+        // attacker-side life-loss weight (2.0 per point) used in evaluationDelta,
+        // so the defensive trade-off is commensurate with offensive gain.
+        penalty += Math.max(0, damageDelta) * 2.0;
+
+        // Creature loss delta: extra blockers we'd lose in the counter-attack.
+        penalty += Math.max(0, creatureLossDelta);
+
+        // Urgency scaling: at full life the penalty stays baseline; as our
+        // post-counter life falls, each point hurts more (up to ~2x at near-zero life).
+        if (lifeAfterReduced > 0 && aiLife > 0) {
+            double urgency = 1.0 + (1.0 - Math.min(1.0, lifeAfterReduced / (double) aiLife));
+            penalty *= urgency;
+        }
+
+        return penalty;
     }
 
     // ===== Opponent Trick Risk Estimation =====

@@ -1593,4 +1593,199 @@ class CombatSimulatorTest {
         // Blocking is forced — chump to survive
         assertThat(blocks).hasSize(1);
     }
+
+    // ===== Defensive value penalty tests =====
+
+    @Test
+    @DisplayName("Defensive value: AI 3/3 holds back against opponent's 5/5")
+    void defensiveValueHoldsBackLastBlocker() {
+        // The scenario from the task description: AI has a single 3/3, opponent
+        // has a single 5/5. Attacking for 3 is correct if we can still block,
+        // but since our 3/3 is our only blocker and attacking taps it, the
+        // opponent's 5/5 comes through for 5 while we deal 3 to their face.
+        // Holding back lets us chump-block the 5/5 next turn, taking 0 damage
+        // instead of 5 — the defensive penalty should favor not attacking.
+        gd.playerLifeTotals.put(player1.getId(), 6);
+        gd.playerLifeTotals.put(player2.getId(), 20);
+
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        Permanent opp5_5 = new Permanent(new GrizzlyBears());
+        opp5_5.getCard().setPower(5);
+        opp5_5.getCard().setToughness(5);
+        opp5_5.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp5_5);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        // The 3/3 is our only blocker against a lethal 5/5. Attacking gives up
+        // 5 damage next turn (and dies to the counter-attack); holding back
+        // trades the 3/3 for their 5/5 (or at least chump-blocks it).
+        assertThat(attackers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Defensive value: AI still attacks when opponent has no counter-attack")
+    void defensiveValueAllowsAttackWhenOpponentHasNoBoard() {
+        // Same 3/3 AI creature, but opponent has no creatures. No defensive
+        // value to preserve — the attack should go through.
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(attackers).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Defensive value: vigilance attacker ignores defensive penalty")
+    void defensiveValueVigilanceCanAttackFreely() {
+        // Serra Angel (4/4 flying, vigilance) attacks — vigilance means the
+        // angel stays untapped and is still available to block next turn,
+        // so the defensive penalty must not discourage the attack.
+        gd.playerLifeTotals.put(player1.getId(), 6);
+
+        Permanent aiAngel = new Permanent(new SerraAngel());
+        aiAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiAngel);
+
+        // Opponent has a 5/5 threatening lethal
+        Permanent opp5_5 = new Permanent(new GrizzlyBears());
+        opp5_5.getCard().setPower(5);
+        opp5_5.getCard().setToughness(5);
+        opp5_5.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp5_5);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        // Vigilance means the angel can attack AND block, so sending it is safe.
+        assertThat(attackers).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Defensive value: unblockable flyer still attacks while ground blocker stays back")
+    void defensiveValueAttackWithSpareBlockers() {
+        // AI has an Air Elemental (4/4 flying) and a 3/3 ground creature.
+        // Opponent has a 5/5 ground creature (no flying/reach), which threatens
+        // 5 damage next turn. The flyer is unblockable and profitable to attack;
+        // the 3/3 should stay back to (chump-)block the counter-attack.
+        gd.playerLifeTotals.put(player1.getId(), 6);
+
+        Permanent aiFlyer = new Permanent(new AirElemental());
+        aiFlyer.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiFlyer);
+
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        Permanent opp5_5 = new Permanent(new GrizzlyBears());
+        opp5_5.getCard().setPower(5);
+        opp5_5.getCard().setToughness(5);
+        opp5_5.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp5_5);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of());
+
+        // Flyer (index 0) is unblockable and can safely attack; the 3/3 holds back.
+        assertThat(attackers).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Defensive value: computePenalty returns zero when opponent has no board")
+    void computeDefensivePenaltyZeroWithNoOpponent() {
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        CombatSimulator.CreatureInfo attacker = simulator.buildCreatureInfo(
+                gd, ai3_3, 0, player1.getId(), player2.getId());
+
+        double penalty = simulator.computeDefensiveValuePenalty(
+                gd, List.of(attacker), List.of(attacker), List.of(), null, 20);
+
+        assertThat(penalty).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Defensive value: computePenalty returns zero when all attackers have vigilance")
+    void computeDefensivePenaltyZeroWithVigilance() {
+        Permanent aiAngel = new Permanent(new SerraAngel());
+        aiAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiAngel);
+
+        Permanent opp5_5 = new Permanent(new GrizzlyBears());
+        opp5_5.getCard().setPower(5);
+        opp5_5.getCard().setToughness(5);
+        opp5_5.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp5_5);
+
+        CombatSimulator.CreatureInfo angelInfo = simulator.buildCreatureInfo(
+                gd, aiAngel, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo oppInfo = simulator.buildCreatureInfo(
+                gd, opp5_5, 0, player2.getId(), player1.getId());
+
+        double[] baselineOutcome = simulator.estimateCounterAttackOutcome(
+                gd, List.of(oppInfo), List.of(angelInfo), 20);
+        var baseline = new CombatSimulator.DefensiveBaseline(baselineOutcome[0], baselineOutcome[1]);
+
+        double penalty = simulator.computeDefensiveValuePenalty(
+                gd, List.of(angelInfo), List.of(angelInfo), List.of(oppInfo), baseline, 20);
+
+        // Angel has vigilance: attacking doesn't tap it, so there's nothing to penalize.
+        assertThat(penalty).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Defensive value: penalty scales with extra damage taken")
+    void computeDefensivePenaltyPositiveWhenDefenseWorsens() {
+        // AI at 5 life, 3/3 blocker vs opp 5/5. At such low life the 5/5's
+        // attack is lethal, so the AI chump-blocks (loses the 3/3, takes 0
+        // damage). If the 3/3 attacks, no blocker remains — the 5/5 lands
+        // lethal damage: a large penalty must result.
+        gd.playerLifeTotals.put(player1.getId(), 5);
+
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        Permanent opp5_5 = new Permanent(new GrizzlyBears());
+        opp5_5.getCard().setPower(5);
+        opp5_5.getCard().setToughness(5);
+        opp5_5.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(opp5_5);
+
+        CombatSimulator.CreatureInfo aiInfo = simulator.buildCreatureInfo(
+                gd, ai3_3, 0, player1.getId(), player2.getId());
+        CombatSimulator.CreatureInfo oppInfo = simulator.buildCreatureInfo(
+                gd, opp5_5, 0, player2.getId(), player1.getId());
+
+        double[] baselineOutcome = simulator.estimateCounterAttackOutcome(
+                gd, List.of(oppInfo), List.of(aiInfo), 5);
+        var baseline = new CombatSimulator.DefensiveBaseline(baselineOutcome[0], baselineOutcome[1]);
+
+        double penalty = simulator.computeDefensiveValuePenalty(
+                gd, List.of(aiInfo), List.of(aiInfo), List.of(oppInfo), baseline, 5);
+
+        // Sending the 3/3 in forfeits the lethal-chump — a very large penalty
+        // (including the lethal-flip sentinel) must result.
+        assertThat(penalty).isGreaterThan(500.0);
+    }
 }
