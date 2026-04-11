@@ -207,6 +207,98 @@ class MCTSEngineTest {
     }
 
     @Test
+    @DisplayName("Identical consecutive searches warm-start from the cached tree")
+    void identicalSearchesReuseTree() {
+        harness.setHand(player1, List.of(new SerraAngel(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        engine.search(gd, player1.getId(), 200);
+        assertThat(engine.getCacheMisses()).isEqualTo(1);
+        assertThat(engine.getCacheHits()).isZero();
+
+        // Second call at the same decision point: should hit the cache.
+        engine.search(gd, player1.getId(), 200);
+        assertThat(engine.getCacheHits()).isEqualTo(1);
+        assertThat(engine.getCacheMisses()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Warm-started tree accumulates visits across calls")
+    void warmStartedTreeAccumulatesVisits() {
+        harness.setHand(player1, List.of(new SerraAngel(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        // First search: fresh tree, up to 200 iterations.
+        engine.search(gd, player1.getId(), 200);
+        int visitsAfterFirst = engine.getCachedRootChildVisitSum();
+        assertThat(visitsAfterFirst).isPositive();
+
+        // Second search at the same decision point: should build on top of the first,
+        // so the cached root's total visits strictly grow beyond what a single 200-iter
+        // run would produce.
+        engine.search(gd, player1.getId(), 200);
+        int visitsAfterSecond = engine.getCachedRootChildVisitSum();
+
+        assertThat(visitsAfterSecond)
+                .as("Warm-started tree should accumulate visits from both calls")
+                .isGreaterThan(visitsAfterFirst);
+    }
+
+    @Test
+    @DisplayName("Changing legal actions invalidates the cache")
+    void changingLegalActionsInvalidatesCache() {
+        harness.setHand(player1, List.of(new SerraAngel(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        engine.search(gd, player1.getId(), 100);
+        assertThat(engine.getCacheMisses()).isEqualTo(1);
+
+        // Drop the white mana: Serra Angel (5W) is no longer castable, so the
+        // legal-action set shrinks from {PlayCard(Serra), PlayCard(Bears), Pass}
+        // to {PlayCard(Bears), Pass}. The signature must no longer match.
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        engine.search(gd, player1.getId(), 100);
+        assertThat(engine.getCacheMisses())
+                .as("Second call with different legal actions should miss the cache")
+                .isEqualTo(2);
+        assertThat(engine.getCacheHits()).isZero();
+    }
+
+    @Test
+    @DisplayName("clearCache forces a fresh search even at the same decision point")
+    void clearCacheForcesFreshTree() {
+        harness.setHand(player1, List.of(new SerraAngel(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        engine.search(gd, player1.getId(), 100);
+        engine.clearCache();
+
+        engine.search(gd, player1.getId(), 100);
+        assertThat(engine.getCacheHits())
+                .as("Clearing the cache should prevent the second search from reusing the tree")
+                .isZero();
+        assertThat(engine.getCacheMisses()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Multi-turn lookahead completes within time budget with deeper rollouts")
     void multiTurnLookaheadCompletesInTime() {
         // Use a non-seeded engine here because this test validates the time budget

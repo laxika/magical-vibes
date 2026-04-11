@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -52,6 +55,20 @@ public class MCTSEngine {
     private final boolean timeBudgetEnabled;
     private final int maxBudget;
 
+    /**
+     * Warm-start cache. When the AI passes priority and then gets priority back at a
+     * structurally identical decision point (same legal actions), we can reuse the
+     * previous search tree to keep accumulating visit statistics. This is especially
+     * valuable when an opponent pass or a stack resolution leaves us at the same
+     * information set — all the tree work done in the prior call is still valid.
+     * <p>
+     * Invalidated automatically whenever the root legal-action signature changes.
+     */
+    private MCTSNode cachedRoot;
+    private String cachedSignature;
+    private int cacheHits;
+    private int cacheMisses;
+
     public MCTSEngine(GameSimulator simulator) {
         this.simulator = simulator;
         this.determinizer = new Determinizer();
@@ -92,7 +109,23 @@ public class MCTSEngine {
             return rootActions.getFirst();
         }
 
-        MCTSNode root = new MCTSNode(null, null, rootActions);
+        // Warm-start from the cached tree if the decision point hasn't changed.
+        // Otherwise invalidate and build a fresh root.
+        String signature = buildSignature(rootActions);
+        MCTSNode root;
+        if (cachedRoot != null && signature.equals(cachedSignature)) {
+            root = cachedRoot;
+            cacheHits++;
+            if (log.isDebugEnabled()) {
+                log.debug("MCTS: Warm-starting from cached tree ({} prior visits, {} children expanded)",
+                        root.visits, root.children.size());
+            }
+        } else {
+            root = new MCTSNode(null, null, rootActions);
+            cachedRoot = root;
+            cachedSignature = signature;
+            cacheMisses++;
+        }
         long deadline = timeBudgetEnabled ? System.currentTimeMillis() + TIME_BUDGET_MS : Long.MAX_VALUE;
         int effectiveBudget = maxBudget > 0 ? Math.min(budget, maxBudget) : budget;
 
@@ -310,5 +343,76 @@ public class MCTSEngine {
             node.totalReward += reward;
             node = node.parent;
         }
+    }
+
+    /**
+     * Clears the warm-start cache. The next {@link #search} call will build a
+     * fresh tree regardless of legal-action signature match.
+     */
+    public void clearCache() {
+        cachedRoot = null;
+        cachedSignature = null;
+    }
+
+    /** Number of times {@link #search} reused the cached tree. Exposed for tests/diagnostics. */
+    public int getCacheHits() {
+        return cacheHits;
+    }
+
+    /** Number of times {@link #search} built a fresh tree (first call or invalidation). */
+    public int getCacheMisses() {
+        return cacheMisses;
+    }
+
+    /**
+     * Returns the sum of visit counts across the cached root's children — i.e. the
+     * total number of MCTS iterations that have flowed through the current warm-start
+     * tree. Useful for tests asserting that the tree accumulates visits across calls.
+     */
+    public int getCachedRootChildVisitSum() {
+        if (cachedRoot == null) return 0;
+        int sum = 0;
+        for (MCTSNode child : cachedRoot.children) {
+            sum += child.visits;
+        }
+        return sum;
+    }
+
+    /**
+     * Builds a stable signature from the root legal-action list. Two states produce the
+     * same signature iff they present the same set of root decisions to the AI — which
+     * is the strongest soundness guarantee we can get without introspecting {@link GameData}.
+     */
+    private static String buildSignature(List<SimulationAction> actions) {
+        List<String> parts = new ArrayList<>(actions.size());
+        for (SimulationAction a : actions) {
+            parts.add(canonicalString(a));
+        }
+        Collections.sort(parts);
+        return String.join("|", parts);
+    }
+
+    /**
+     * Produces a canonical string form for a simulation action. Records that contain
+     * primitive arrays (notably {@link SimulationAction.DeclareBlockers}) cannot rely on
+     * the default {@code toString} for stable comparison, so they get explicit handling.
+     */
+    private static String canonicalString(SimulationAction action) {
+        if (action instanceof SimulationAction.DeclareBlockers db) {
+            List<int[]> sorted = new ArrayList<>(db.blockerAssignments());
+            sorted.sort(Comparator.<int[]>comparingInt(a -> a[0]).thenComparingInt(a -> a[1]));
+            StringBuilder sb = new StringBuilder("DB[");
+            for (int i = 0; i < sorted.size(); i++) {
+                if (i > 0) sb.append(',');
+                sb.append(sorted.get(i)[0]).append("->").append(sorted.get(i)[1]);
+            }
+            return sb.append(']').toString();
+        }
+        if (action instanceof SimulationAction.DeclareAttackers da) {
+            List<Integer> sorted = new ArrayList<>(da.attackerIndices());
+            Collections.sort(sorted);
+            return "DA" + sorted;
+        }
+        return action.toString();
     }
 }
