@@ -2498,8 +2498,24 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     private void handleBlockersWithSimulator(GameData gameData, List<Integer> attackerIndices,
                                               List<Integer> blockerIndices) {
+        // Estimate opponent's combat trick threat from their open mana and hand size,
+        // then let the exhaustive search "play around" pump spells the same way it
+        // already does for attacker selection.
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        OpponentThreatEstimator.ThreatEstimate threatEstimate = OpponentThreatEstimator.ThreatEstimate.NONE;
+        if (opponentId != null) {
+            int oppHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
+            ManaPool oppMana = manaManager.buildVirtualManaPool(gameData, opponentId);
+            threatEstimate = OpponentThreatEstimator.estimate(oppHandSize, oppMana);
+            if (threatEstimate.hasThreat()) {
+                log.info("AI (Hard): Block-time opponent threat — prob={}, pump=+{}/+{} in game {}",
+                        String.format("%.0f%%", threatEstimate.trickProbability() * 100),
+                        threatEstimate.estimatedPumpBoost(), threatEstimate.estimatedPumpBoost(), gameId);
+            }
+        }
+
         List<int[]> assignments = combatSimulator.findBestBlockersExhaustive(
-                gameData, aiPlayer.getId(), attackerIndices, blockerIndices);
+                gameData, aiPlayer.getId(), attackerIndices, blockerIndices, threatEstimate);
 
         List<BlockerAssignment> blockerAssignments = assignments.stream()
                 .map(a -> new BlockerAssignment(a[0], a[1]))

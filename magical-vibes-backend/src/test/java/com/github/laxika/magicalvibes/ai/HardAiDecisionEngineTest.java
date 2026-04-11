@@ -2713,6 +2713,111 @@ class HardAiDecisionEngineTest {
         }
     }
 
+    // ===== Block-time combat trick pessimism =====
+
+    @Nested
+    @DisplayName("Block-time combat trick pessimism")
+    class BlockTimeTrickPessimism {
+
+        /**
+         * Sets up the shared board for block-pessimism tests: AI at 4 life with a
+         * single 5/5 blocker, opponent attacking with a 2/3. Pump threat from a
+         * +3/+3 spell would turn the profitable 5/5-blocks-2/3 trade into a disaster
+         * (attacker becomes 5/6, our 5/5 dies, their attacker lives).
+         */
+        private Permanent setUpRiskyBlockScenario() {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+
+            // AI at low life so aiLosingRace is true and we reach handleBlockersWithSimulator
+            // rather than the winning-race early-return that only honors mandatory blocks.
+            gd.playerLifeTotals.put(player2.getId(), 4);
+
+            // Opponent attacks with a 2/3 — profitable to block with a 5/5 absent tricks.
+            Permanent opp2_3 = new Permanent(new GrizzlyBears());
+            opp2_3.getCard().setPower(2);
+            opp2_3.getCard().setToughness(3);
+            opp2_3.setSummoningSick(false);
+            opp2_3.setAttacking(true);
+            gd.playerBattlefields.get(player1.getId()).add(opp2_3);
+
+            // AI has a single 5/5 blocker — a +3/+3 pump on the attacker would flip
+            // the combat (5/5 vs 5/6 → blocker dies, attacker survives).
+            Permanent ai5_5 = new Permanent(new GrizzlyBears());
+            ai5_5.getCard().setPower(5);
+            ai5_5.getCard().setToughness(5);
+            ai5_5.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(ai5_5);
+
+            return ai5_5;
+        }
+
+        @Test
+        @DisplayName("Hard AI skips risky block when opponent has open mana and cards in hand")
+        void skipsRiskyBlockWhenPumpThreatPresent() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+            Permanent aiBlocker = setUpRiskyBlockScenario();
+
+            // Opponent controls an untapped Forest — green mana = Giant Growth threat.
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(forest);
+
+            // Opponent has a full hand — pushes trick probability to the 50% cap so
+            // the pessimism penalty clearly outweighs the 2 damage being saved.
+            harness.setHand(player1, List.of(
+                    new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                    new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+            // Block-time pessimism should make the AI decline the otherwise-profitable
+            // block: a +3/+3 would flip the 5/5 vs 2/3 trade into losing our 5/5.
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(aiBlocker.isBlocking()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Hard AI still blocks when opponent's hand is empty (no trick possible)")
+        void blocksWhenOpponentHasNoCardsInHand() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+            Permanent aiBlocker = setUpRiskyBlockScenario();
+
+            // Opponent has untapped Forest (open mana) but an empty hand — threat
+            // estimate returns NONE because there's no card that could be a trick.
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(forest);
+
+            harness.setHand(player1, List.of());
+
+            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+            // With no trick threat, the block is unambiguously profitable.
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(aiBlocker.isBlocking()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Hard AI still blocks when opponent has no open mana")
+        void blocksWhenOpponentHasNoOpenMana() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+            Permanent aiBlocker = setUpRiskyBlockScenario();
+
+            // Opponent has cards in hand but no untapped lands — no mana for tricks.
+            harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+            // No threat possible → block as usual.
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(aiBlocker.isBlocking()).isTrue();
+        }
+    }
+
     // ===== Precombat vs Postcombat Timing =====
 
     @Nested

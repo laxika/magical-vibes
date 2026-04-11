@@ -1440,4 +1440,157 @@ class CombatSimulatorTest {
                 gd, player1.getId(), List.of(0), List.of(), highThreat);
         assertThat(attackersWithThreat).isEmpty();
     }
+
+    // ===== Block trick risk tests =====
+
+    @Test
+    @DisplayName("Block trick risk: no penalty when opponent has no threat")
+    void blockTrickRiskZeroWhenNoThreat() {
+        // Simple block scenario, but threat estimate is NONE — risk should be 0.
+        Permanent oppAttacker = new Permanent(new GrizzlyBears());
+        oppAttacker.setSummoningSick(false);
+        oppAttacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppAttacker);
+
+        Permanent aiBlocker = new Permanent(new GrizzlyBears());
+        aiBlocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBlocker);
+
+        CombatSimulator.CreatureInfo attackerInfo = simulator.buildCreatureInfo(
+                gd, oppAttacker, 0, player2.getId(), player1.getId());
+        CombatSimulator.CreatureInfo blockerInfo = simulator.buildCreatureInfo(
+                gd, aiBlocker, 0, player1.getId(), player2.getId());
+
+        List<List<CombatSimulator.CreatureInfo>> assignments = new ArrayList<>();
+        assignments.add(new ArrayList<>(List.of(blockerInfo)));
+
+        double risk = simulator.computeBlockTrickRisk(
+                List.of(attackerInfo), assignments, 20, 0,
+                OpponentThreatEstimator.ThreatEstimate.NONE);
+
+        assertThat(risk).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Block trick risk: positive penalty when pump flips a profitable block")
+    void blockTrickRiskPositiveWhenPumpFlipsBlock() {
+        // AI 3/3 blocks opponent's 2/3. Without trick: attacker dies (3 >= 3),
+        // blocker survives (2 < 3) — profitable block. With +3/+3: attacker becomes
+        // 5/6, blocker dies (3 tough <= 5 power), attacker survives (3 power < 6).
+        // Big swing.
+        Permanent opp2_3 = new Permanent(new GrizzlyBears());
+        opp2_3.getCard().setPower(2);
+        opp2_3.getCard().setToughness(3);
+        opp2_3.setSummoningSick(false);
+        opp2_3.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(opp2_3);
+
+        Permanent ai3_3 = new Permanent(new GrizzlyBears());
+        ai3_3.getCard().setPower(3);
+        ai3_3.getCard().setToughness(3);
+        ai3_3.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai3_3);
+
+        CombatSimulator.CreatureInfo attackerInfo = simulator.buildCreatureInfo(
+                gd, opp2_3, 0, player2.getId(), player1.getId());
+        CombatSimulator.CreatureInfo blockerInfo = simulator.buildCreatureInfo(
+                gd, ai3_3, 0, player1.getId(), player2.getId());
+
+        List<List<CombatSimulator.CreatureInfo>> assignments = new ArrayList<>();
+        assignments.add(new ArrayList<>(List.of(blockerInfo)));
+
+        var threat = new OpponentThreatEstimator.ThreatEstimate(0.30, 3);
+
+        double risk = simulator.computeBlockTrickRisk(
+                List.of(attackerInfo), assignments, 20, 0, threat);
+
+        assertThat(risk).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Block trick risk: no penalty when no blockers are assigned")
+    void blockTrickRiskZeroWhenNoBlocks() {
+        // Attacker exists but we don't block — pump threats on unblocked attackers
+        // don't affect the relative merit of the "no block" choice.
+        Permanent oppAttacker = new Permanent(new GrizzlyBears());
+        oppAttacker.setSummoningSick(false);
+        oppAttacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(oppAttacker);
+
+        CombatSimulator.CreatureInfo attackerInfo = simulator.buildCreatureInfo(
+                gd, oppAttacker, 0, player2.getId(), player1.getId());
+
+        List<List<CombatSimulator.CreatureInfo>> assignments = new ArrayList<>();
+        assignments.add(new ArrayList<>()); // no blockers assigned
+
+        var threat = new OpponentThreatEstimator.ThreatEstimate(0.50, 4);
+
+        double risk = simulator.computeBlockTrickRisk(
+                List.of(attackerInfo), assignments, 20, 0, threat);
+
+        assertThat(risk).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Block pessimism: AI avoids a block that a pump would flip into a disaster")
+    void blockPessimismSkipsRiskyBlock() {
+        // AI 5/5 could block opponent's 2/3. Without threat: profitable block
+        // (blocker kills attacker and survives untouched). With a high pump threat:
+        // a +3/+3 on the attacker turns it into a 5/6, which kills our valuable 5/5
+        // while surviving. The AI should decline the block rather than risk its
+        // bigger creature for the 2-damage savings it would otherwise gain.
+        gd.playerLifeTotals.put(player1.getId(), 20);
+
+        Permanent opp2_3 = new Permanent(new GrizzlyBears());
+        opp2_3.getCard().setPower(2);
+        opp2_3.getCard().setToughness(3);
+        opp2_3.setSummoningSick(false);
+        opp2_3.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(opp2_3);
+
+        Permanent ai5_5 = new Permanent(new GrizzlyBears());
+        ai5_5.getCard().setPower(5);
+        ai5_5.getCard().setToughness(5);
+        ai5_5.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ai5_5);
+
+        // Without threat: AI blocks (profitable — kill their 2/3, keep our 5/5 untouched)
+        List<int[]> blocksNoThreat = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0),
+                OpponentThreatEstimator.ThreatEstimate.NONE);
+        assertThat(blocksNoThreat).hasSize(1);
+
+        // With high threat: AI declines the block rather than risk its 5/5 for the
+        // ~2 damage it would save.
+        var highThreat = new OpponentThreatEstimator.ThreatEstimate(0.50, 3);
+        List<int[]> blocksWithThreat = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0), highThreat);
+        assertThat(blocksWithThreat).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Block pessimism: AI still blocks when incoming damage is lethal")
+    void blockPessimismStillBlocksLethal() {
+        // AI at 2 life, opponent's 3/3 attacking — must block even if risky,
+        // because not blocking is certain death.
+        gd.playerLifeTotals.put(player1.getId(), 2);
+
+        Permanent opp3_3 = new Permanent(new GrizzlyBears());
+        opp3_3.getCard().setPower(3);
+        opp3_3.getCard().setToughness(3);
+        opp3_3.setSummoningSick(false);
+        opp3_3.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(opp3_3);
+
+        Permanent aiBlocker = new Permanent(new GrizzlyBears());
+        aiBlocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(aiBlocker);
+
+        var highThreat = new OpponentThreatEstimator.ThreatEstimate(0.50, 4);
+        List<int[]> blocks = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0), highThreat);
+
+        // Blocking is forced — chump to survive
+        assertThat(blocks).hasSize(1);
+    }
 }

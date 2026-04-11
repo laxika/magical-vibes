@@ -382,6 +382,21 @@ public class CombatSimulator {
     public List<int[]> findBestBlockersExhaustive(GameData gameData, UUID aiPlayerId,
                                                    List<Integer> attackerIndices,
                                                    List<Integer> availableBlockerIndices) {
+        return findBestBlockersExhaustive(gameData, aiPlayerId, attackerIndices,
+                availableBlockerIndices, OpponentThreatEstimator.ThreatEstimate.NONE);
+    }
+
+    /**
+     * Finds the best blocker assignments, applying a pessimism modifier based on the
+     * opponent's estimated combat trick threat. When the opponent has untapped mana
+     * and cards in hand, block configurations that would be flipped by a pump spell
+     * (e.g. "3/3 blocking 2/3" becoming a disaster if the attacker gets +3/+3) are
+     * penalized.
+     */
+    public List<int[]> findBestBlockersExhaustive(GameData gameData, UUID aiPlayerId,
+                                                   List<Integer> attackerIndices,
+                                                   List<Integer> availableBlockerIndices,
+                                                   OpponentThreatEstimator.ThreatEstimate threatEstimate) {
         if (attackerIndices.isEmpty() || availableBlockerIndices.isEmpty()) {
             return List.of();
         }
@@ -498,6 +513,14 @@ public class CombatSimulator {
             }
 
             double score = evaluateDefenderCombat(attackerInfos, forcedAssignments, aiLife, aiPoison);
+
+            // Apply pessimism for opponent's potential combat tricks: a block that
+            // looks profitable now could flip to a disaster if the opponent pumps an
+            // attacker (e.g. 3/3 blocking 2/3 becomes a blocker loss after Giant Growth).
+            if (threatEstimate.hasThreat()) {
+                score -= computeBlockTrickRisk(attackerInfos, forcedAssignments, aiLife, aiPoison, threatEstimate);
+            }
+
             if (score > bestScore) {
                 bestScore = score;
                 System.arraycopy(choices, 0, bestChoices, 0, n);
@@ -1157,6 +1180,66 @@ public class CombatSimulator {
         }
 
         return maxVulnerability * threat.trickProbability();
+    }
+
+    /**
+     * Computes a risk penalty for a set of blocker assignments when the opponent may
+     * have combat tricks. For each blocked attacker, evaluates how the defender's combat
+     * score changes if that attacker receives the estimated pump. The penalty is the
+     * worst-case swing (the single best pump target for the opponent) scaled by trick
+     * probability. This captures the key scenario: a profitable-looking block that flips
+     * to a disaster when the opponent casts a pump spell on their creature.
+     * <p>
+     * Only the worst single attacker is considered because a typical opponent has at
+     * most one pump spell in hand — they can't pump every attacker simultaneously.
+     */
+    double computeBlockTrickRisk(List<CreatureInfo> attackerInfos,
+                                  List<List<CreatureInfo>> blockAssignments,
+                                  int aiLife, int aiPoison,
+                                  OpponentThreatEstimator.ThreatEstimate threat) {
+        if (!threat.hasThreat()) return 0;
+        int pump = threat.estimatedPumpBoost();
+
+        double baselineScore = evaluateDefenderCombat(attackerInfos, blockAssignments, aiLife, aiPoison);
+        double maxSwing = 0;
+
+        for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            // Unblocked attackers don't interact with our creatures — a pump on them
+            // would deal a bit more damage, but that applies equally whether we block
+            // elsewhere or not, so it doesn't affect the relative ranking of blocks.
+            if (blockAssignments.get(ai).isEmpty()) continue;
+
+            CreatureInfo original = attackerInfos.get(ai);
+            if (original.indestructible) {
+                // Pump toughness doesn't matter for an already-indestructible attacker,
+                // but pumped power could still kill blockers. Continue to simulate.
+            }
+
+            CreatureInfo pumped = withPump(original, pump);
+            List<CreatureInfo> pumpedList = new ArrayList<>(attackerInfos);
+            pumpedList.set(ai, pumped);
+
+            double pumpedScore = evaluateDefenderCombat(pumpedList, blockAssignments, aiLife, aiPoison);
+            double swing = baselineScore - pumpedScore;
+            if (swing > maxSwing) {
+                maxSwing = swing;
+            }
+        }
+
+        return maxSwing * threat.trickProbability();
+    }
+
+    /**
+     * Returns a copy of the given CreatureInfo with power and toughness increased by
+     * the given pump amount. Used by combat trick risk estimation.
+     */
+    private static CreatureInfo withPump(CreatureInfo c, int pump) {
+        return new CreatureInfo(
+                c.index, c.id, c.perm,
+                c.power + pump, c.toughness + pump,
+                c.flying, c.firstStrike, c.doubleStrike, c.trample, c.lifelink,
+                c.indestructible, c.menace, c.fear, c.intimidate, c.reach, c.defender,
+                c.cantBeBlocked, c.isArtifact, c.infect, c.color, c.creatureScore);
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {
