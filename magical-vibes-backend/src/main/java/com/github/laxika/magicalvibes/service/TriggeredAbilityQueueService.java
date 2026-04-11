@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
@@ -56,8 +59,19 @@ public class TriggeredAbilityQueueService {
                     : null;
 
             List<UUID> validTargets = new ArrayList<>();
+            boolean opponentOnly = targetFilter instanceof PlayerPredicateTargetFilter ppf
+                    && ppf.predicate() instanceof PlayerRelationPredicate prp
+                    && prp.relation() == PlayerRelation.OPPONENT;
             if (canTargetPlayers) {
-                validTargets.addAll(gameData.orderedPlayerIds);
+                if (opponentOnly) {
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        if (!pid.equals(pending.controllerId())) {
+                            validTargets.add(pid);
+                        }
+                    }
+                } else {
+                    validTargets.addAll(gameData.orderedPlayerIds);
+                }
             }
             if (canTargetPermanents) {
                 for (UUID pid : gameData.orderedPlayerIds) {
@@ -89,7 +103,7 @@ public class TriggeredAbilityQueueService {
             gameData.pendingDeathTriggerTargets.removeFirst();
             gameData.interaction.setPermanentChoiceContext(pending);
             String targetDescription = (canTargetPlayers && canTargetPermanents) ? "any target"
-                    : canTargetPlayers ? "target player" : "target creature";
+                    : canTargetPlayers ? (opponentOnly ? "target opponent" : "target player") : "target creature";
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.dyingCard().getName() + "'s ability - Choose " + targetDescription + ".");
 

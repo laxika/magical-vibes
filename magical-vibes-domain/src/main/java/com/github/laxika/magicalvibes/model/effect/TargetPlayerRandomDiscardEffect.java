@@ -9,4 +9,9 @@ public record TargetPlayerRandomDiscardEffect(int amount, boolean causedByOppone
     public TargetPlayerRandomDiscardEffect(int amount) {
         this(amount, false);
     }
+
+    @Override
+    public boolean canTargetPlayer() {
+        return causedByOpponent;
+    }
 }
