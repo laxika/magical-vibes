@@ -1982,7 +1982,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     /**
      * Tries to activate the best non-mana activated ability on any controlled permanent.
      * Checks timing restrictions, costs, targeting, and evaluates expected value.
-     * Skips mana abilities (handled by AiManaManager) and loyalty abilities (complex).
+     * Skips mana abilities (handled by AiManaManager) and variable loyalty cost abilities.
+     * Supports planeswalker loyalty abilities (+N uptick, -N for value) with proper
+     * sorcery-speed timing, once-per-turn limits, and loyalty counter management.
      * Uses timing awareness to only activate combat-oriented abilities during combat
      * and card-draw abilities at end of opponent's turn.
      */
@@ -2009,8 +2011,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Skip mana abilities (already handled by AiManaManager)
                 if (isManaAbility(ability)) continue;
 
-                // Skip loyalty abilities (complex planeswalker rules)
-                if (ability.getLoyaltyCost() != null) continue;
+                // Skip variable loyalty cost abilities (-X, too complex)
+                if (ability.isVariableLoyaltyCost()) continue;
 
                 // Skip spell-targeting abilities (counterspell-type, too complex for v1)
                 if (ability.isNeedsSpellTarget()) continue;
@@ -2022,12 +2024,29 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
 
                 // Timing-awareness: skip pump abilities outside combat, draw abilities outside end step
-                if (!isGoodTimingForAbility(gameData, ability)) continue;
+                // Loyalty abilities are already gated to sorcery speed by canActivateAbility
+                if (ability.getLoyaltyCost() == null && !isGoodTimingForAbility(gameData, ability)) continue;
 
                 // Evaluate value
                 double value = spellEvaluator.evaluateAbilityEffects(
                         gameData, ability.getEffects(), aiPlayer.getId());
                 value -= evaluateAbilityCosts(gameData, ability, permanent);
+
+                // For loyalty abilities, add value for loyalty gain (protects planeswalker)
+                // and ensure even modest +N abilities are worth activating
+                if (ability.getLoyaltyCost() != null) {
+                    int loyaltyCost = ability.getLoyaltyCost();
+                    if (loyaltyCost > 0) {
+                        // Gaining loyalty is inherently valuable — protects the planeswalker
+                        value += loyaltyCost * 1.5;
+                    }
+                    // Planeswalker abilities should almost always be activated if legal,
+                    // so set a minimum value floor for uptick abilities
+                    if (loyaltyCost >= 0 && value < 1.0) {
+                        value = 1.0;
+                    }
+                }
+
                 if (value <= 0) continue;
 
                 // Find target if needed
@@ -2104,11 +2123,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     /**
      * Checks whether an activated ability can be activated: tap state, summoning sickness,
-     * Arrest, timing restriction, per-turn limit, mana affordability, and cost effects.
+     * Arrest, timing restriction, per-turn limit, mana affordability, loyalty rules,
+     * and cost effects.
      */
     private boolean canActivateAbility(GameData gameData, Permanent permanent,
                                        ActivatedAbility ability, int abilityIndex,
                                        ManaPool virtualPool) {
+        // Loyalty ability rules: sorcery speed, once per turn, sufficient loyalty
+        if (ability.getLoyaltyCost() != null) {
+            if (!canActivateLoyaltyAbility(gameData, permanent, ability)) return false;
+        }
+
         // Tap check
         if (ability.isRequiresTap()) {
             if (permanent.isTapped()) return false;
@@ -2146,6 +2171,34 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // Cost effects payability
         return canPayAbilityCostEffects(gameData, ability, permanent);
+    }
+
+    /**
+     * Checks planeswalker loyalty ability activation rules:
+     * must be active player, main phase, stack empty, once-per-turn limit,
+     * and sufficient loyalty counters for negative costs.
+     */
+    private boolean canActivateLoyaltyAbility(GameData gameData, Permanent permanent,
+                                               ActivatedAbility ability) {
+        // Must be active player (our turn)
+        if (!aiPlayer.getId().equals(gameData.activePlayerId)) return false;
+
+        // Must be a main phase
+        if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN
+                && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) return false;
+
+        // Stack must be empty
+        if (!gameData.stack.isEmpty()) return false;
+
+        // Once per turn (twice with Oath of Teferi or similar)
+        int maxActivations = gameQueryService.hasExtraLoyaltyActivation(gameData, aiPlayer.getId()) ? 2 : 1;
+        if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) return false;
+
+        // For negative loyalty costs, check sufficient loyalty counters
+        int loyaltyCost = ability.getLoyaltyCost();
+        if (loyaltyCost < 0 && permanent.getLoyaltyCounters() < Math.abs(loyaltyCost)) return false;
+
+        return true;
     }
 
     /**
@@ -2232,6 +2285,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         double cost = 0;
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         BoardEvaluator boardEval = new BoardEvaluator(gameQueryService);
+
+        // Loyalty cost: losing counters makes the planeswalker more vulnerable
+        if (ability.getLoyaltyCost() != null && ability.getLoyaltyCost() < 0) {
+            int loyaltyLost = Math.abs(ability.getLoyaltyCost());
+            int loyaltyRemaining = permanent.getLoyaltyCounters() - loyaltyLost;
+            // Base cost: each loyalty counter lost is worth ~1.5
+            cost += loyaltyLost * 1.5;
+            // Extra penalty if the planeswalker would be left at very low loyalty
+            if (loyaltyRemaining <= 1) {
+                cost += 3.0;
+            }
+        }
 
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof SacrificeSelfCost) {

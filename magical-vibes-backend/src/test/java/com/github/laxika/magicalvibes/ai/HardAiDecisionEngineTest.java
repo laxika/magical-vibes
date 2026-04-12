@@ -3556,4 +3556,195 @@ class HardAiDecisionEngineTest {
         // Should not cast — precombat main is bad timing for FLASH_CREATURE
         assertThat(gd.stack).isEmpty();
     }
+
+    // ===== Planeswalker Loyalty Ability Activation =====
+
+    private Permanent addPlaneswalkerToBattlefield(Player player, Card card, int loyalty) {
+        Permanent perm = new Permanent(card);
+        perm.setLoyaltyCounters(loyalty);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    @Test
+    @DisplayName("Hard AI activates untargeted +N loyalty ability during main phase")
+    void activatesUntargetedPlusLoyaltyAbility() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Jace Beleren: +2 each player draws a card (no target)
+        Permanent jace = addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should activate +2 ability — puts ability on stack and pays loyalty
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(jace.getLoyaltyCounters()).isEqualTo(5); // 3 + 2
+    }
+
+    @Test
+    @DisplayName("Hard AI activates targeted +N loyalty ability against opponent")
+    void activatesTargetedPlusLoyaltyAbility() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Chandra Bold Pyromancer: +1 deal 2 damage to target player
+        Permanent chandra = addPlaneswalkerToBattlefield(player1,
+                new com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer(), 5);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+        assertThat(chandra.getLoyaltyCounters()).isEqualTo(6); // 5 + 1
+    }
+
+    @Test
+    @DisplayName("Hard AI activates -N loyalty ability when effect value justifies loyalty cost")
+    void activatesMinusLoyaltyAbilityWhenWorthIt() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Garruk Wildspeaker with 5 loyalty: −1 create a 3/3 Beast token (no target)
+        // The +1 is multi-target (untap two lands) so it's skipped, leaving −1 as best option
+        Permanent garruk = addPlaneswalkerToBattlefield(player1,
+                new com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker(), 5);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should activate −1 (create 3/3 token) — good value
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(garruk.getLoyaltyCounters()).isEqualTo(4); // 5 - 1
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate loyalty ability during opponent's turn")
+    void doesNotActivateLoyaltyAbilityOnOpponentsTurn() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Loyalty abilities require sorcery speed — can't activate on opponent's turn
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate loyalty ability during combat step")
+    void doesNotActivateLoyaltyAbilityDuringCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Loyalty abilities require main phase — can't activate during combat
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate loyalty ability when stack is not empty")
+    void doesNotActivateLoyaltyAbilityWithNonEmptyStack() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Put something on the stack
+        gd.stack.add(new StackEntry(new GrizzlyBears(), player2.getId()));
+
+        addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Loyalty abilities require empty stack — should not add another entry
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate loyalty ability twice on same planeswalker")
+    void doesNotActivateLoyaltyAbilityTwicePerTurn() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        Permanent jace = addPlaneswalkerToBattlefield(player1,
+                new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
+        // Simulate that loyalty was already activated this turn
+        jace.setLoyaltyActivationsThisTurn(1);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Once-per-turn limit reached — should not activate
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate -N ability with insufficient loyalty counters")
+    void doesNotActivateMinusAbilityWithInsufficientLoyalty() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Garruk Wildspeaker with only 1 loyalty — can't afford -4 ultimate,
+        // +1 is multi-target (skipped), -1 needs at least 1 counter
+        // The only non-multi-target abilities are -1 (needs 1 loyalty) and -4 (needs 4 loyalty)
+        // With 0 loyalty counters, -1 can't be paid either
+        Permanent garruk = addPlaneswalkerToBattlefield(player1,
+                new com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker(), 0);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Can't afford any negative loyalty cost with 0 counters
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI skips variable loyalty cost abilities (-X)")
+    void skipsVariableLoyaltyCostAbility() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+
+        // Chandra Nalaar: +1 (targeted, damage to player/PW), -X (variable), -8 (ultimate)
+        // With 2 loyalty: +1 is the only option since -X is skipped and -8 is unaffordable
+        Permanent chandra = addPlaneswalkerToBattlefield(player1,
+                new com.github.laxika.magicalvibes.cards.c.ChandraNalaar(), 2);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should activate +1 (not -X) — target opponent's face or a planeswalker
+        assertThat(gd.stack).hasSize(1);
+        assertThat(chandra.getLoyaltyCounters()).isEqualTo(3); // 2 + 1
+    }
 }
