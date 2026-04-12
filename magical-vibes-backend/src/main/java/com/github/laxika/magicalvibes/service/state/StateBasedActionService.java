@@ -32,51 +32,14 @@ public class StateBasedActionService {
     private final GraveyardService graveyardService;
     private final StateTriggerService stateTriggerService;
 
+    private enum DeathReason {
+        ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY
+    }
+
+    private record DeathEntry(Permanent permanent, DeathReason reason) {}
+
     public void performStateBasedActions(GameData gameData) {
-        boolean anyDied = false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-
-            // Two-pass: collect dead permanents first, then remove via PermanentRemovalService
-            List<Permanent> toDie = new ArrayList<>();
-            for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                    toDie.add(p);
-                } else if (gameQueryService.isCreature(gameData, p)
-                        && p.getMarkedDamage() >= gameQueryService.getEffectiveToughness(gameData, p)
-                        && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
-                        && !graveyardService.tryRegenerate(gameData, p)) {
-                    // CR 704.5g — creature with damage >= toughness is destroyed (regeneration can replace this)
-                    toDie.add(p);
-                } else if (p.getCard().hasType(CardType.PLANESWALKER) && p.getLoyaltyCounters() <= 0) {
-                    toDie.add(p);
-                }
-            }
-
-            for (Permanent p : toDie) {
-                boolean isCreature = gameQueryService.isCreature(gameData, p);
-                permanentRemovalService.removePermanentToGraveyard(gameData, p);
-
-                if (isCreature && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                    String logEntry = p.getCard().getName() + " is put into the graveyard (0 toughness).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, p.getCard().getName());
-                } else if (isCreature) {
-                    String logEntry = p.getCard().getName() + " is destroyed (lethal damage).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} dies to state-based actions (lethal damage)", gameData.id, p.getCard().getName());
-                } else {
-                    String logEntry = p.getCard().getName() + " has no loyalty counters and is put into the graveyard.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, p.getCard().getName());
-                }
-                anyDied = true;
-            }
-        }
-        if (anyDied) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
+        destroyLethalCreaturesAndPlaneswalkers(gameData);
 
         // CR 704.5a — player with 0 or less life loses the game
         // CR 704.5c — player with ten or more poison counters loses the game
@@ -84,36 +47,82 @@ public class StateBasedActionService {
             return;
         }
 
-        // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
-        // (unless it has a chapter ability still on the stack)
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
+        sacrificeCompletedSagas(gameData);
+        cancelCounters(gameData);
 
-            List<Permanent> sagasToSacrifice = new ArrayList<>();
-            for (Permanent p : battlefield) {
-                if (!p.getCard().isSaga()) continue;
-                int finalChapter = p.getCard().getSagaFinalChapter();
-                if (finalChapter <= 0 || p.getLoreCounters() < finalChapter) continue;
+        // CR 603.8 — check state-triggered abilities after SBAs
+        stateTriggerService.checkStateTriggers(gameData);
 
-                // Don't sacrifice if a chapter ability from this Saga is still on the stack (CR 714.4)
-                boolean chapterOnStack = gameData.stack.stream()
-                        .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                                && p.getId().equals(e.getSourcePermanentId()));
-                if (!chapterOnStack) {
-                    sagasToSacrifice.add(p);
-                }
+        checkEmptyLibraryLoss(gameData);
+    }
+
+    private void destroyLethalCreaturesAndPlaneswalkers(GameData gameData) {
+        List<DeathEntry> toDie = new ArrayList<>();
+        gameData.forEachPermanent((playerId, p) -> {
+            if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
+                toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
+            } else if (gameQueryService.isCreature(gameData, p)
+                    && p.getMarkedDamage() >= gameQueryService.getEffectiveToughness(gameData, p)
+                    && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
+                    && !graveyardService.tryRegenerate(gameData, p)) {
+                // CR 704.5g — creature with damage >= toughness is destroyed (regeneration can replace this)
+                toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
+            } else if (p.getCard().hasType(CardType.PLANESWALKER) && p.getLoyaltyCounters() <= 0) {
+                toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
             }
+        });
 
-            for (Permanent saga : sagasToSacrifice) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, saga);
-                String logEntry = saga.getCard().getName() + " is sacrificed (final chapter reached).";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
+        for (DeathEntry entry : toDie) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+            String name = entry.permanent().getCard().getName();
+            switch (entry.reason()) {
+                case ZERO_TOUGHNESS -> {
+                    gameBroadcastService.logAndBroadcast(gameData, name + " is put into the graveyard (0 toughness).");
+                    log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, name);
+                }
+                case LETHAL_DAMAGE -> {
+                    gameBroadcastService.logAndBroadcast(gameData, name + " is destroyed (lethal damage).");
+                    log.info("Game {} - {} dies to state-based actions (lethal damage)", gameData.id, name);
+                }
+                case ZERO_LOYALTY -> {
+                    gameBroadcastService.logAndBroadcast(gameData, name + " has no loyalty counters and is put into the graveyard.");
+                    log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, name);
+                }
             }
         }
 
-        // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out
+        if (!toDie.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+    }
+
+    // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
+    // (unless it has a chapter ability still on the stack)
+    private void sacrificeCompletedSagas(GameData gameData) {
+        List<Permanent> sagasToSacrifice = new ArrayList<>();
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!p.getCard().isSaga()) return;
+            int finalChapter = p.getCard().getSagaFinalChapter();
+            if (finalChapter <= 0 || p.getLoreCounters() < finalChapter) return;
+
+            boolean chapterOnStack = gameData.stack.stream()
+                    .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                            && p.getId().equals(e.getSourcePermanentId()));
+            if (!chapterOnStack) {
+                sagasToSacrifice.add(p);
+            }
+        });
+
+        for (Permanent saga : sagasToSacrifice) {
+            permanentRemovalService.removePermanentToGraveyard(gameData, saga);
+            String logEntry = saga.getCard().getName() + " is sacrificed (final chapter reached).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
+        }
+    }
+
+    // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out
+    private void cancelCounters(GameData gameData) {
         gameData.forEachPermanent((pid, p) -> {
             int plus = p.getPlusOnePlusOneCounters();
             int minus = p.getMinusOneMinusOneCounters();
@@ -130,22 +139,21 @@ public class StateBasedActionService {
                 }
             }
         });
+    }
 
-        // CR 603.8 — check state-triggered abilities after SBAs
-        stateTriggerService.checkStateTriggers(gameData);
+    // CR 704.5b — player who attempted to draw from an empty library loses the game
+    private void checkEmptyLibraryLoss(GameData gameData) {
+        if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
 
-        // CR 704.5b — player who attempted to draw from an empty library loses the game
-        if (!gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) {
-            for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {
-                if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
-                    UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
-                    String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
-                    gameOutcomeService.declareWinner(gameData, winnerId);
-                }
+        for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {
+            if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
+                gameOutcomeService.declareWinner(gameData, winnerId);
             }
-            gameData.playersAttemptedDrawFromEmptyLibrary.clear();
         }
+        gameData.playersAttemptedDrawFromEmptyLibrary.clear();
     }
 }

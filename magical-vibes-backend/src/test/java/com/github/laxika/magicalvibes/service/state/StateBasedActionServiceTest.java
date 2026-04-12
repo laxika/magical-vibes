@@ -309,10 +309,10 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            // Note: because isCreature is true and toughness > 0, the log falls into the
-            // "lethal damage" branch — this is the actual code behavior for this edge case
+            // Death reason is captured at collection time: creature checks fail (healthy toughness,
+            // no lethal damage), but planeswalker check succeeds (0 loyalty)
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Gideon Jura is destroyed (lethal damage)."));
+                    eq("Gideon Jura has no loyalty counters and is put into the graveyard."));
         }
 
         @Test
