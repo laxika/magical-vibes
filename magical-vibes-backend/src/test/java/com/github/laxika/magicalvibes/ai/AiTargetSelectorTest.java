@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -1163,6 +1164,53 @@ class AiTargetSelectorTest {
 
             // Growth creature should be prioritized due to scaling threat
             assertThat(target).isEqualTo(neonate.getId());
+        }
+
+        @Test
+        @DisplayName("Exile spell targets lord over bigger vanilla creature")
+        void exileSpellTargetsLordOverVanilla() {
+            // Same wide-board setup as the destroy test — exile should route through the
+            // same removal-target selection and use contextual threat scoring.
+            Permanent marshal = harness.addToBattlefieldAndReturn(human, new BenalishMarshal());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new AirElemental());
+
+            Card exileSpell = new Card();
+            exileSpell.setName("Test Exile");
+            exileSpell.setType(CardType.INSTANT);
+            exileSpell.addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+
+            UUID target = threatAwareSelector.chooseTarget(gd, exileSpell, aiPlayer.getId());
+
+            assertThat(target).isEqualTo(marshal.getId());
+        }
+
+        @Test
+        @DisplayName("Damage spell (general fallback) targets lord over bigger vanilla creature")
+        void damageSpellTargetsLordOverVanilla() {
+            // Damage-to-any-target spells don't go through the destroy path — they fall into
+            // the general fallback. Before the fix this just picked whichever creature came
+            // first on the battlefield list; now it should pick the most threatening one.
+            Permanent marshal = harness.addToBattlefieldAndReturn(human, new BenalishMarshal());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new AirElemental());
+
+            Card damageSpell = new Card();
+            damageSpell.setName("Test Bolt");
+            damageSpell.setType(CardType.INSTANT);
+            damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+
+            UUID target = threatAwareSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
+
+            assertThat(target).isEqualTo(marshal.getId());
         }
 
         @Test

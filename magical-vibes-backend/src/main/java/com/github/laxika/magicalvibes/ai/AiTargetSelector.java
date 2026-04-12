@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -109,14 +110,16 @@ class AiTargetSelector {
                     .orElse(null);
         }
 
-        // Handle destroy effects (ETB creatures or removal spells)
+        // Handle destroy/exile removal effects (ETB creatures or removal spells)
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof DestroyTargetPermanentEffect) {
+            if (effect instanceof DestroyTargetPermanentEffect
+                    || effect instanceof ExileTargetPermanentEffect) {
                 return chooseDestroyTarget(gameData, card, aiPlayerId, opponentId);
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof DestroyTargetPermanentEffect) {
+            if (effect instanceof DestroyTargetPermanentEffect
+                    || effect instanceof ExileTargetPermanentEffect) {
                 return chooseDestroyTarget(gameData, card, aiPlayerId, opponentId);
             }
         }
@@ -147,7 +150,7 @@ class AiTargetSelector {
             }
             return null; // Aura was handled by specific logic — don't fall through
         } else if (card.isAura()) {
-            // Detrimental aura — target opponent's highest-power creature that doesn't already have this effect
+            // Detrimental aura — target opponent's most threatening creature that doesn't already have this effect
             List<Permanent> oppBattlefield = gameData.playerBattlefields.get(opponentId);
             if (oppBattlefield != null) {
                 List<Class<? extends CardEffect>> auraEffectClasses = card.getEffects(EffectSlot.STATIC).stream()
@@ -157,7 +160,7 @@ class AiTargetSelector {
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
                         .filter(p -> auraEffectClasses.stream().noneMatch(ec -> gameQueryService.hasAuraWithEffect(gameData, p, ec)))
-                        .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
+                        .max(Comparator.comparingDouble(p -> threatScore(gameData, p, opponentId, aiPlayerId)))
                         .map(Permanent::getId)
                         .orElse(null);
                 if (target != null) return target;
@@ -173,12 +176,18 @@ class AiTargetSelector {
                 return p.getId();
             }
         }
-        // Then search opponent battlefield
+        // Then search opponent battlefield — prefer the most threatening valid target so that
+        // damage, bounce, tap, and similar "soft" removal spells still attack the real threat
+        // (e.g. a 2/2 lord pumping four other creatures) rather than whichever creature happens
+        // to come first in the battlefield list.
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        for (Permanent p : oppBattlefield) {
-            if (isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
-                return p.getId();
-            }
+        UUID oppTarget = oppBattlefield.stream()
+                .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
+                .max(Comparator.comparingDouble(p -> generalTargetPriority(gameData, p, opponentId, aiPlayerId)))
+                .map(Permanent::getId)
+                .orElse(null);
+        if (oppTarget != null) {
+            return oppTarget;
         }
 
         // No valid permanent targets — fall back to targeting the opponent if the spell allows it
@@ -329,19 +338,26 @@ class AiTargetSelector {
 
     /**
      * Picks a permanent target for a specific multi-target group, using the group's filter.
-     * Searches opponent's battlefield first (more likely target for harmful effects).
+     * Searches opponent's battlefield first (more likely target for harmful effects), picking
+     * the most threatening valid target. Falls back to the AI's own battlefield if nothing on
+     * the opponent's side is legal (e.g. when the target group only accepts own permanents).
      */
     private UUID pickPermanentTargetForGroup(GameData gameData, Card card, UUID aiPlayerId,
                                               UUID opponentId, SpellTarget st, Set<UUID> alreadyChosen) {
         TargetFilter groupFilter = st.getFilter();
         for (UUID playerId : new UUID[]{opponentId, aiPlayerId}) {
             if (playerId == null) continue;
-            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (alreadyChosen.contains(p.getId())) continue;
-                if (!validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter)) {
-                    continue;
-                }
-                return p.getId();
+            boolean searchingOpponent = playerId.equals(opponentId);
+            UUID best = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(p -> !alreadyChosen.contains(p.getId()))
+                    .filter(p -> validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter))
+                    .max(Comparator.comparingDouble(p -> searchingOpponent
+                            ? generalTargetPriority(gameData, p, opponentId, aiPlayerId)
+                            : generalTargetPriority(gameData, p, aiPlayerId, opponentId)))
+                    .map(Permanent::getId)
+                    .orElse(null);
+            if (best != null) {
+                return best;
             }
         }
         return null;
@@ -662,6 +678,19 @@ class AiTargetSelector {
             return boardEvaluator.creatureThreatScore(gameData, perm, controllerId, opponentId);
         }
         return gameQueryService.getEffectivePower(gameData, perm);
+    }
+
+    /**
+     * General-purpose target priority for picking an opponent's permanent when the spell's
+     * effect type is unknown. Creatures are ranked by contextual threat (lord bonuses,
+     * activated abilities, evasion, growth); non-creatures fall back to their mana value
+     * as a simple proxy for board impact.
+     */
+    private double generalTargetPriority(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
+        if (gameQueryService.isCreature(gameData, perm)) {
+            return threatScore(gameData, perm, controllerId, opponentId);
+        }
+        return perm.getCard().getManaValue();
     }
 
     // ===== Activated Ability Targeting =====
