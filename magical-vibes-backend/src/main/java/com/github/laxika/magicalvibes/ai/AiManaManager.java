@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
@@ -271,6 +273,11 @@ public class AiManaManager {
     }
 
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action) {
+        tapLandsForCost(gameData, aiPlayerId, manaCostStr, costModifier, action, false);
+    }
+
+    void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,
+                         boolean skipChoiceSources) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
@@ -305,6 +312,11 @@ public class AiManaManager {
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
+                // Skip mana abilities that would trigger a color choice (e.g. Birds of Paradise)
+                // when paying attack tax, to avoid overwriting the ATTACKER_DECLARATION state.
+                if (skipChoiceSources && wouldManaAbilityTriggerChoice(perm.getCard())) {
+                    continue;
+                }
                 Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm, gameData, aiPlayerId);
                 if (abilityIndex == null) {
                     continue;
@@ -537,6 +549,93 @@ public class AiManaManager {
             }
         }
         return colors;
+    }
+
+    /**
+     * Builds a virtual mana pool excluding mana sources whose activated abilities
+     * would trigger an interactive choice (e.g. AwardAnyColorManaEffect on Birds of Paradise).
+     * Used when computing affordable attackers for attack tax, to avoid activating
+     * choice-triggering abilities during ATTACKER_DECLARATION.
+     */
+    public VirtualManaPool buildSafeVirtualManaPool(GameData gameData, UUID aiPlayerId) {
+        VirtualManaPool virtual = new VirtualManaPool();
+
+        ManaPool current = gameData.playerManaPools.get(aiPlayerId);
+        if (current != null) {
+            for (ManaColor color : ManaColor.values()) {
+                virtual.add(color, current.get(color));
+                virtual.addCreatureMana(color, current.getCreatureMana(color));
+            }
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayerId);
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (perm.isTapped()) {
+                    continue;
+                }
+                boolean isCreature = gameQueryService.isCreature(gameData, perm);
+                if (isCreature && perm.isSummoningSick()
+                        && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
+                    continue;
+                }
+                if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
+                    continue;
+                }
+                ManaColor overriddenColor = gameQueryService.getOverriddenLandManaColor(gameData, perm);
+                if (overriddenColor != null) {
+                    virtual.add(overriddenColor, 1);
+                    if (isCreature) {
+                        virtual.addCreatureMana(overriddenColor, 1);
+                    }
+                } else if (hasOnTapManaEffects(perm.getCard())) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
+                        if (effect instanceof AwardManaEffect manaEffect) {
+                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            if (isCreature) {
+                                virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                            }
+                        } else if (effect instanceof AwardAnyColorManaEffect aace) {
+                            virtual.add(ManaColor.COLORLESS, aace.amount());
+                            if (isCreature) {
+                                virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
+                            }
+                        } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
+                            virtual.add(ManaColor.COLORLESS);
+                        }
+                    }
+                } else {
+                    // Skip activated mana abilities that would trigger a color choice
+                    if (!wouldManaAbilityTriggerChoice(perm.getCard())) {
+                        addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm, gameData, aiPlayerId);
+                    }
+                }
+            }
+        }
+
+        return virtual;
+    }
+
+    /**
+     * Returns true if the card's activated mana abilities would trigger an interactive
+     * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise).
+     * Cards with ON_TAP effects are always safe — they produce mana without choices.
+     */
+    static boolean wouldManaAbilityTriggerChoice(Card card) {
+        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            if (!isFreeTapManaAbility(ability)) {
+                continue;
+            }
+            for (CardEffect effect : ability.getEffects()) {
+                if (effect instanceof AwardAnyColorManaEffect
+                        || effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect
+                        || effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect
+                        || effect instanceof AwardFlashbackOnlyAnyColorManaEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

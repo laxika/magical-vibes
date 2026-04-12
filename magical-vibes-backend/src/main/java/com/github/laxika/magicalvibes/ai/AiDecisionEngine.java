@@ -294,13 +294,17 @@ public abstract class AiDecisionEngine {
         if (taxPerCreature <= 0) {
             return Integer.MAX_VALUE;
         }
-        VirtualManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        // Use safe pool that excludes mana sources requiring a color choice
+        // (e.g. Birds of Paradise) to avoid overwriting the ATTACKER_DECLARATION state.
+        VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, aiPlayer.getId());
         return virtualPool.getTotal() / taxPerCreature;
     }
 
     /**
      * Caps the attacker list to the maximum affordable given the attack tax,
      * then taps lands to pay the tax before the declaration is sent.
+     * Uses only mana sources that won't trigger interactive choices (e.g. skips
+     * Birds of Paradise) to avoid corrupting the ATTACKER_DECLARATION interaction state.
      */
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
@@ -314,10 +318,12 @@ public abstract class AiDecisionEngine {
         List<Integer> capped = attackerIndices.size() <= maxAffordable
                 ? attackerIndices
                 : new ArrayList<>(attackerIndices.subList(0, maxAffordable));
-        // Tap lands to put enough mana in the pool to pay the tax
+        // Tap lands to put enough mana in the pool to pay the tax.
+        // skipChoiceSources=true avoids mana abilities like Birds of Paradise that
+        // require a color choice, which would overwrite the ATTACKER_DECLARATION state.
         int totalTax = taxPerCreature * capped.size();
         String taxCostStr = "{" + totalTax + "}";
-        manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, manaTapAction());
+        manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, manaTapAction(), true);
         return capped;
     }
 

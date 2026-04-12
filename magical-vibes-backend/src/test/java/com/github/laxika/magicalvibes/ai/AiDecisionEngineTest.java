@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.a.AwakenerDruid;
 import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
+import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
@@ -1688,6 +1689,34 @@ class AiDecisionEngineTest {
                 .filter(Permanent::isAttacking)
                 .count();
         assertThat(attackingCount).isLessThanOrEqualTo(1);
+    }
+
+    // ===== prepareAttackersForTax skips choice-triggering mana sources =====
+
+    @Test
+    @DisplayName("prepareAttackersForTax skips Birds of Paradise to avoid color choice")
+    void prepareAttackersForTaxSkipsBirdsOfParadise() {
+        // Setup: opponent controls Baird (tax {1} per attacker)
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has 1 Plains + 1 Birds of Paradise
+        // With safe pool: only 1 mana from Plains → can afford 1 attacker
+        // Without safe pool: 2 mana (Plains + BoP) → would try 2 attackers
+        giveAiPlains(1);
+        Permanent bop = new Permanent(new BirdsOfParadise());
+        bop.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bop);
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1, 2));
+
+        // Should cap at 1 attacker (only Plains counted in safe pool)
+        assertThat(result).hasSize(1);
+        // Birds of Paradise should NOT be tapped
+        assertThat(bop.isTapped()).isFalse();
+        // Interaction state should still be null (no color choice triggered)
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     // ===== tryPlayLand silent failure recovery =====
