@@ -217,6 +217,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | On death | `b/BogardanFirefiend.java` | ON_DEATH DealDamageToTargetCreatureEffect |
+| On death + target opponent discards | `b/BlackCat.java` | ON_DEATH TargetPlayerRandomDiscardEffect + PlayerPredicateTargetFilter(OPPONENT) — target opponent discards a card at random when this dies |
 | On death with cascading tokens | `m/MitoticSlime.java` | ON_DEATH CreateTokenEffect with TokenEffectEntry — tokens themselves have death triggers creating smaller tokens |
 | On death exile self + random return | `m/MoldgrafMonstrosity.java` | ON_DEATH ReturnCardFromGraveyardEffect with `exileSourceFromGraveyard(true)` + `returnAtRandom(true)` + `randomCount(2)` + creature filter — exiles self then returns random creatures to battlefield |
 | Upkeep sacrifice/discard | `r/RazormaneMasticore.java` | UPKEEP_TRIGGERED + DRAW_TRIGGERED |
