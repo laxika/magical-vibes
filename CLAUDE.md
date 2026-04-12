@@ -9,18 +9,21 @@
 - If you need to implement a new card, first run a reprint check to see if the card class already exists: `grep -r "class CardName " magical-vibes-card/src/` (replace `CardName` with the PascalCase class name). If the class exists, just add the `@CardRegistration` annotation for the new printing and do nothing else (do not run/check tests, etc).
 - If unit tests exists for the service classes that you need to extend, then make sure that you create unit tests as well for the new features you add to those services.
 - When running the full test suite, always use `run_in_background: true` on the Bash tool call. The tests take over 20 minutes, which exceeds the maximum timeout.
-- Always call Scryfall with curl instead of the built in fetcher (use random heades).
+- Always call Scryfall with curl instead of the built in fetcher (use random heades). For quick lookups, use `bash scripts/scryfall-lookup.sh <SET> <COLLECTOR_NUMBER>` (e.g. `bash scripts/scryfall-lookup.sh DKA 29`) — it returns only `name`, `mana_cost`, `type_line`, `oracle_text`, `power`, `toughness`, and `keywords`.
 
 ## Documentation
 
-Check the agent-docs folder for more info on the following:
-- ORACLE_TEXT_EFFECT_MAP.md — Maps oracle text phrases (e.g. "deals N damage to any target") directly to effect classes + slots. **Check this first** to jump from card text to the right effect.
-- EFFECTS_QUICK_REFERENCE.md — Compact lookup of all ~210 effects (name + constructor + one-line description), readable in a single pass. Check when the oracle text map doesn't cover your case.
-- EFFECTS_INDEX.md — Full details for every effect (detailed descriptions, usage notes). Consult when the quick reference isn't enough.
+When implementing a card, follow this lookup order:
+1. **CARD_PATTERN_INDEX.md** — **Check this first.** Find the closest archetype, read the reference card, and use the copy-paste template if one exists. This is the fastest path for most cards.
+2. **ORACLE_TEXT_EFFECT_MAP.md** — If the pattern index doesn't cover your case, search here to map oracle text phrases to effect classes + slots.
+3. **EFFECTS_QUICK_REFERENCE.md** — Compact lookup of all ~210 effects. Check when the oracle text map doesn't cover your case.
+4. Only consult the detailed docs below when the above aren't enough.
+
+Full agent-docs reference:
+- EFFECTS_INDEX.md — Full details for every effect (detailed descriptions, usage notes).
 - ACTIVATED_ABILITY_GUIDE.md — All ActivatedAbility constructor overloads with "use this when" guidance, EffectSlot reference (all 28 slots with when each fires), and cost effects.
 - PREDICATES_REFERENCE.md — Complete reference for all TargetFilter types, PermanentPredicate, StackEntryPredicate, and PlayerPredicate compositions. Includes dynamic/game-state predicates that need FilterContext.
-- TRIGGER_SLOT_TARGETING.md — Per-trigger-slot matrix of which targeting features (player target, permanent target, PlayerRelationPredicate.OPPONENT, PermanentPredicateTargetFilter, effect-level targetPredicate) the engine currently supports. **Check this before implementing a targeted triggered ability** — slots not wired into the death/attack/end-step pipelines require an engine change, not just a new card.
-- CARD_PATTERN_INDEX.md — One reference card per archetype (burn spell, ETB creature, pain land, lord, aura, equipment, etc.) **plus copy-paste card+test templates** for the most common archetypes (pump instant, burn spell, draw spell, destroy spell, ETB creature, counterspell). Includes a section for activated abilities with dynamic target filters. Start here to find a similar existing card to base your implementation on.
+- TRIGGER_SLOT_TARGETING.md — Per-trigger-slot matrix of which targeting features the engine currently supports. **Check this before implementing a targeted triggered ability.**
 - CARD_IMPLEMENTATION_PLAYBOOK.md — Step-by-step workflow for adding cards, canonical patterns, targeting checklist, anti-patterns, and checklists for adding new effects/predicates.
 - TEST_RECIPES.md — Standard test skeletons for card tests using GameTestHarness.
 - TEST_CREATURES_REFERENCE.md — Quick lookup of common test creatures by P/T, plus common non-creature test cards and helper method reference.

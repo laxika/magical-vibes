@@ -62,6 +62,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Counter (filtered by mana value) | `m/MentalMisstep.java` | StackEntryPredicateTargetFilter + StackEntryManaValuePredicate. Phyrexian mana cost |
 | Counter + bonus | `d/Discombobulate.java` | Counter + ReorderTopCardsOfLibraryEffect |
 | Counter + bounce | `l/LostInTheMist.java` | CounterSpellEffect + ReturnTargetPermanentToHandEffect — targets both a spell and a permanent. Uses `targetId` (spell, Zone.STACK) + `targetIds` (permanent). Multi-zone fizzle: only fizzles if ALL targets become illegal |
+| Counter (filtered) + draw | `b/BoneToAsh.java` | CounterSpellEffect + DrawCardEffect + creature-spell filter via target() chain |
 | Counter (filtered) + life loss | `p/PsychicBarrier.java` | TargetSpellControllerLosesLifeEffect(1) + CounterSpellEffect + creature-spell filter. Life loss placed before counter so target is still on stack |
 | Counter-unless-pay + discard | `f/FrightfulDelusion.java` | TargetSpellControllerDiscardsEffect(1) + CounterUnlessPaysEffect(1). Discard placed before counter so target is still on stack |
 | Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + ReduceOwnCastCostIfMetalcraftEffect(1) — costs {1} less with 3+ artifacts |
@@ -1296,3 +1297,195 @@ class CARDNAMETest extends BaseCardTest {
 ```
 
 **Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `PRIMARY_COLOR`, `TOTAL_MANA`.
+
+---
+
+### Filtered counterspell + bonus effect instant
+
+"Counter target [type] spell. [bonus effect]."
+
+Reference: `b/BoneToAsh.java` (counter creature spell + draw), `h/HaltOrder.java` (counter artifact spell + draw), `p/PsychicBarrier.java` (counter creature spell + opponent loses life)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.BONUS_EFFECT_CLASS;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+
+import java.util.Set;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        target(new StackEntryPredicateTargetFilter(
+                new StackEntryTypeInPredicate(Set.of(StackEntryType.SPELL_TYPE)),
+                "Target must be a SPELL_TYPE_LABEL spell."
+        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect())
+          .addEffect(EffectSlot.SPELL, new BONUS_EFFECT_CLASS(BONUS_ARGS));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.BONUS_EFFECT_CLASS;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
+        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
+                new StackEntryTypeInPredicate(Set.of(StackEntryType.SPELL_TYPE)),
+                "Target must be a SPELL_TYPE_LABEL spell."
+        ));
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(BONUS_EFFECT_CLASS.class);
+    }
+
+    @Test
+    @DisplayName("Casting puts it on the stack targeting a SPELL_TYPE_LABEL spell")
+    void castingPutsOnStackTargetingSpell() {
+        // TARGET_CARD = creature (GrizzlyBears) or artifact (Millstone) etc.
+        TARGET_CARD target = new TARGET_CARD();
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.TARGET_COLOR, TARGET_MANA);
+
+        harness.setHand(player2, List.of(new CARDNAME()));
+        harness.addMana(player2, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);  // or castArtifact
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).hasSize(2);
+        StackEntry entry = gd.stack.getLast();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
+        assertThat(entry.getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+        assertThat(entry.getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot target a WRONG_TYPE spell")
+    void cannotTargetWrongType() {
+        // Use a card of the wrong type (artifact if filtering creature, creature if filtering artifact, etc.)
+        WRONG_CARD wrong = new WRONG_CARD();
+        harness.setHand(player1, List.of(wrong));
+        harness.addMana(player1, ManaColor.WRONG_COLOR, WRONG_MANA);
+
+        harness.setHand(player2, List.of(new CARDNAME()));
+        harness.addMana(player2, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);  // or castArtifact
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, wrong.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Resolving counters the spell")
+    void countersSpell() {
+        TARGET_CARD target = new TARGET_CARD();
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.TARGET_COLOR, TARGET_MANA);
+
+        harness.setHand(player2, List.of(new CARDNAME()));
+        harness.addMana(player2, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);  // or castArtifact
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("TARGET_DISPLAY_NAME"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("TARGET_DISPLAY_NAME"));
+    }
+
+    @Test
+    @DisplayName("Resolving applies bonus effect")
+    void appliesBonusEffect() {
+        TARGET_CARD target = new TARGET_CARD();
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.TARGET_COLOR, TARGET_MANA);
+
+        harness.setHand(player2, List.of(new CARDNAME()));
+        harness.addMana(player2, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        // CUSTOMIZE: capture state before (e.g. hand size for draw, life total for life loss)
+
+        harness.castCreature(player1, 0);  // or castArtifact
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        // CUSTOMIZE: assert bonus effect (e.g. drew a card, opponent lost life)
+    }
+
+    @Test
+    @DisplayName("Fizzles if target spell is no longer on the stack")
+    void fizzlesIfTargetSpellRemoved() {
+        TARGET_CARD target = new TARGET_CARD();
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.TARGET_COLOR, TARGET_MANA);
+
+        harness.setHand(player2, List.of(new CARDNAME()));
+        harness.addMana(player2, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);  // or castArtifact
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        gd.stack.removeIf(se -> se.getCard().getName().equals("TARGET_DISPLAY_NAME"));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("CARD_DISPLAY_NAME"));
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `SPELL_TYPE` (e.g. `CREATURE_SPELL`, `ARTIFACT_SPELL`), `SPELL_TYPE_LABEL` (e.g. "creature", "artifact"), `BONUS_EFFECT_CLASS`/`BONUS_ARGS` (e.g. `DrawCardEffect`/none, `TargetSpellControllerLosesLifeEffect`/`1`), `TARGET_CARD`/`TARGET_DISPLAY_NAME`/`TARGET_COLOR`/`TARGET_MANA` (the spell being countered), `WRONG_CARD`/`WRONG_COLOR`/`WRONG_MANA` (a spell of the wrong type for the negative test), `PRIMARY_COLOR`, `TOTAL_MANA`.
