@@ -1828,11 +1828,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * it saves counterspells for high-impact spells rather than wasting them on mediocre threats.
      */
     private double evaluateCounterspellValue(GameData gameData, Card counterSpell, UUID spellTargetId) {
+        return evaluateCounterspellValue(gameData, counterSpell.getManaValue(), spellTargetId);
+    }
+
+    /**
+     * Overload for activated abilities that counter spells (e.g. Spiketail Hatchling).
+     * Accepts the mana value of the counter source directly instead of extracting it from a Card.
+     */
+    private double evaluateCounterspellValue(GameData gameData, int counterManaValue, UUID spellTargetId) {
         for (StackEntry entry : gameData.stack) {
             if (entry.getCard().getId().equals(spellTargetId)) {
                 Card targetCard = entry.getCard();
                 int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayer.getId(), 20);
-                int counterManaValue = counterSpell.getManaValue();
 
                 // Evaluate from the opponent's perspective — how much does this spell help them?
                 // Board wipes score huge when the AI has a big board, removal scores high when
@@ -2014,14 +2021,29 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Skip variable loyalty cost abilities (-X, too complex)
                 if (ability.isVariableLoyaltyCost()) continue;
 
-                // Skip spell-targeting abilities (counterspell-type, too complex for v1)
-                if (ability.isNeedsSpellTarget()) continue;
-
                 // Skip multi-target abilities (rare for activated abilities)
                 if (ability.isMultiTarget()) continue;
 
                 // Basic activation checks
                 if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
+
+                // Spell-targeting abilities (counterspell-type, e.g. Spiketail Hatchling):
+                // use the same evaluation logic as hand counterspells
+                if (ability.isNeedsSpellTarget()) {
+                    UUID spellTargetId = targetSelector.chooseSpellTarget(
+                            gameData, ability.getTargetFilter(), aiPlayer.getId());
+                    if (spellTargetId == null) continue;
+
+                    int abilityManaValue = ability.getManaCost() != null
+                            ? new ManaCost(ability.getManaCost()).getManaValue() : 0;
+                    double value = evaluateCounterspellValue(gameData, abilityManaValue, spellTargetId);
+                    value -= evaluateAbilityCosts(gameData, ability, permanent);
+                    if (value <= 0) continue;
+
+                    candidates.add(new AbilityCandidate(permIdx, abilIdx, ability,
+                            permanent, value, spellTargetId));
+                    continue;
+                }
 
                 // Timing-awareness: skip pump abilities outside combat, draw abilities outside end step
                 // Loyalty abilities are already gated to sorcery speed by canActivateAbility

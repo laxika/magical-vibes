@@ -3747,4 +3747,138 @@ class HardAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(chandra.getLoyaltyCounters()).isEqualTo(3); // 2 + 1
     }
+
+    // ===== Spell-Targeting Activated Abilities (Counterspell-Type) =====
+
+    @Test
+    @DisplayName("Hard AI activates Spiketail Hatchling sacrifice to counter opponent's high-value creature spell")
+    void activatesSpiketailHatchlingToCounterHighValueSpell() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // Opponent's turn, they just cast a spell
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // Opponent's Serra Angel (MV=5) on the stack
+        SerraAngel angel = new SerraAngel();
+        StackEntry opponentSpell = new StackEntry(angel, player2.getId());
+        gd.stack.add(opponentSpell);
+
+        // AI has Spiketail Hatchling on the battlefield (1/1 flyer with sacrifice-to-counter)
+        Permanent hatchling = new Permanent(new com.github.laxika.magicalvibes.cards.s.SpiketailHatchling());
+        hatchling.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(hatchling);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // The AI should sacrifice the Hatchling to counter the Serra Angel
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+        StackEntry abilityOnStack = gd.stack.getLast();
+        assertThat(abilityOnStack.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(abilityOnStack.getTargetId()).isEqualTo(angel.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate Spiketail Hatchling when no spells are on the stack")
+    void doesNotActivateSpiketailHatchlingWithEmptyStack() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+        gd.stack.clear();
+
+        // AI has Spiketail Hatchling on the battlefield
+        Permanent hatchling = new Permanent(new com.github.laxika.magicalvibes.cards.s.SpiketailHatchling());
+        hatchling.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(hatchling);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // No spell to counter — should not sacrifice the Hatchling
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hard AI saves Spiketail Hatchling when board is strong and threat is mediocre")
+    void savesSpiketailHatchlingWhenBoardStrongAndThreatMediocre() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // AI has a strong board — Serra Angels
+        for (int i = 0; i < 3; i++) {
+            Permanent angel = new Permanent(new SerraAngel());
+            angel.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(angel);
+        }
+
+        // Opponent casts a mediocre creature (GrizzlyBears MV=2, 2/2)
+        GrizzlyBears bears = new GrizzlyBears();
+        StackEntry lowValueSpell = new StackEntry(bears, player2.getId());
+        gd.stack.add(lowValueSpell);
+
+        // AI has Spiketail Hatchling
+        Permanent hatchling = new Permanent(new com.github.laxika.magicalvibes.cards.s.SpiketailHatchling());
+        hatchling.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(hatchling);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Threat reservation: strong board + mediocre threat → AI passes priority instead
+        // of sacrificing the Hatchling. Hatchling should still be on the battlefield.
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        assertThat(aiBattlefield.stream().anyMatch(p ->
+                p.getCard().getName().equals("Spiketail Hatchling"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hard AI does not activate Spiketail Hatchling to counter own spells")
+    void doesNotActivateSpiketailHatchlingOnOwnSpells() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        // It's the opponent's turn — AI's spell is on the stack from a previous interaction
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.setAwaitingInput(null);
+
+        // AI's own spell on the stack
+        GrizzlyBears bears = new GrizzlyBears();
+        StackEntry ownSpell = new StackEntry(bears, player1.getId());
+        gd.stack.add(ownSpell);
+
+        Permanent hatchling = new Permanent(new com.github.laxika.magicalvibes.cards.s.SpiketailHatchling());
+        hatchling.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(hatchling);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Should not sacrifice to counter own spell — Hatchling stays on battlefield
+        List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
+        assertThat(aiBattlefield.stream().anyMatch(p ->
+                p.getCard().getName().equals("Spiketail Hatchling"))).isTrue();
+    }
 }

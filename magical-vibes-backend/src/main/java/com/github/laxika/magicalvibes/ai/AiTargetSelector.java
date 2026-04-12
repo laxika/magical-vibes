@@ -207,7 +207,14 @@ class AiTargetSelector {
      * @return the card ID of the targeted spell, or null if no valid target exists
      */
     UUID chooseSpellTarget(GameData gameData, Card counterSpell, UUID aiPlayerId) {
-        TargetFilter targetFilter = counterSpell.getTargetFilter();
+        return chooseSpellTarget(gameData, counterSpell.getTargetFilter(), aiPlayerId);
+    }
+
+    /**
+     * Overload for activated abilities that target spells (e.g. Spiketail Hatchling).
+     * Accepts a TargetFilter directly instead of extracting it from a Card.
+     */
+    UUID chooseSpellTarget(GameData gameData, TargetFilter targetFilter, UUID aiPlayerId) {
         StackEntry bestTarget = null;
         double bestValue = 0;
 
