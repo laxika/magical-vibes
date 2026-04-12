@@ -56,6 +56,7 @@ public class Card {
     @Setter private boolean token;
     @Setter private boolean requiresCreatureMana;
     @Setter private int additionalCostPerExtraTarget;
+    @Setter private boolean requireDistinctTargets;
 
     // Target-first targeting system: each target() call adds a SpellTarget
     @Getter(AccessLevel.NONE)

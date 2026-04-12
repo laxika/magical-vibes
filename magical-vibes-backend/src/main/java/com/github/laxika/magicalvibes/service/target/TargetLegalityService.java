@@ -321,6 +321,11 @@ public class TargetLegalityService {
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
         validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets(), card.getSpellTargets());
 
+        // CR 114.10a: "another" / "different" requires all targets to be distinct across groups
+        if (card.isRequireDistinctTargets() && new HashSet<>(targetIds).size() != targetIds.size()) {
+            throw new IllegalStateException("All targets must be different");
+        }
+
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);

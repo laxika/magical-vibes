@@ -19,6 +19,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "deals X damage to target creature" | `DealXDamageToTargetCreatureEffect()` | SPELL | X-cost |
 | "deals damage equal to its power to target" | `FirstTargetDealsPowerDamageToSecondTargetEffect()` | SPELL | Bite — multi-target |
 | "fights target creature" | `FirstTargetFightsSecondTargetEffect()` | SPELL | Multi-target |
+| "target creature fights another target creature" | `FirstTargetFightsSecondTargetEffect()` + `setRequireDistinctTargets(true)` | SPELL | Multi-target, any two creatures (CR 114.10a) |
 | "deals N damage to you" | `DealDamageToControllerEffect(N)` | SPELL/trigger | Self-damage |
 
 ## Creature pump / boost
