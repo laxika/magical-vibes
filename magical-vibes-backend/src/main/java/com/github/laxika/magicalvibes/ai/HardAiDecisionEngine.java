@@ -65,7 +65,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -2693,13 +2695,29 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (landCount == 0 && mulliganCount < 2) return false;
         if (landCount > 5) return false;
 
-        // Collect all mana colors producible by lands in hand
-        Set<ManaColor> availableColors = EnumSet.noneOf(ManaColor.class);
+        // Count how many lands produce each color
+        Map<ManaColor, Integer> colorSourceCounts = new EnumMap<>(ManaColor.class);
         for (Card card : hand) {
             if (card.hasType(CardType.LAND)) {
-                availableColors.addAll(manaManager.getProducedColors(card));
+                for (ManaColor color : manaManager.getProducedColors(card)) {
+                    colorSourceCounts.merge(color, 1, Integer::sum);
+                }
             }
         }
+
+        // Count how many spells need each color (for demand pressure analysis)
+        Map<ManaColor, Integer> colorDemandCounts = new EnumMap<>(ManaColor.class);
+        for (Card card : hand) {
+            if (card.hasType(CardType.LAND)) continue;
+            if (card.getManaCost() == null || card.getManaCost().isEmpty()) continue;
+            ManaCost cost = new ManaCost(card.getManaCost());
+            for (ManaColor color : cost.getColoredCosts().keySet()) {
+                colorDemandCounts.merge(color, 1, Integer::sum);
+            }
+        }
+
+        Set<Integer> castableManaValues = new HashSet<>();
+        boolean hasCastableRemoval = false;
 
         double handScore = 0;
         for (Card card : hand) {
@@ -2708,20 +2726,42 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 continue;
             }
 
-            // Check if the spell's colored requirements can be met by available lands
-            boolean colorCastable = isColorCastable(card, availableColors);
-
             int mv = card.getManaValue();
-            if (!colorCastable) {
-                // Spell requires colors our lands can't produce — nearly dead card
+            double penalty = colorDepthPenalty(card, colorSourceCounts, colorDemandCounts);
+
+            if (penalty >= 1.0) {
+                // Spell requires a color our lands can't produce — nearly dead card
                 handScore += 0.25;
-            } else if (mv <= landCount + 1) {
-                handScore += 3.0;
-            } else if (mv <= landCount + 3) {
-                handScore += 1.5;
             } else {
-                handScore += 0.5;
+                castableManaValues.add(mv);
+                if (!hasCastableRemoval && spellEvaluator.hasRemovalEffects(card)) {
+                    hasCastableRemoval = true;
+                }
+
+                double baseScore;
+                if (mv <= landCount + 1) {
+                    baseScore = 3.0;
+                } else if (mv <= landCount + 3) {
+                    baseScore = 1.5;
+                } else {
+                    baseScore = 0.5;
+                }
+                handScore += baseScore * (1.0 - penalty);
             }
+        }
+
+        // Mana curve diversity: a hand with 2-drop, 3-drop, 4-drop plays out
+        // much better than three 4-drops
+        if (castableManaValues.size() >= 3) {
+            handScore += 2.0;
+        } else if (castableManaValues.size() == 2) {
+            handScore += 1.0;
+        }
+
+        // Removal in the opening hand is very valuable — you almost always want
+        // at least one answer to an opponent's early threat
+        if (hasCastableRemoval) {
+            handScore += 1.5;
         }
 
         double threshold = 12.0 - mulliganCount * 3.0;
@@ -2729,19 +2769,43 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Returns true if all colored mana requirements of the spell can be produced
-     * by the given set of available colors. Colorless and generic costs are always
-     * satisfiable. Phyrexian mana is ignored since it can be paid with life.
+     * Returns a penalty factor (0.0–1.0) based on how well the hand's color
+     * sources support this spell. A penalty of 1.0 means totally uncastable
+     * (a required color is completely absent). Considers both per-pip
+     * requirements ({U}{U} needs at least 2 blue sources) and hand-wide
+     * demand pressure (many spells competing for scarce sources).
      */
-    private boolean isColorCastable(Card spell, Set<ManaColor> availableColors) {
-        if (spell.getManaCost() == null || spell.getManaCost().isEmpty()) return true;
+    private double colorDepthPenalty(Card spell, Map<ManaColor, Integer> colorSourceCounts,
+                                      Map<ManaColor, Integer> colorDemandCounts) {
+        if (spell.getManaCost() == null || spell.getManaCost().isEmpty()) return 0.0;
         ManaCost cost = new ManaCost(spell.getManaCost());
-        for (ManaColor required : cost.getColoredCosts().keySet()) {
-            if (!availableColors.contains(required)) {
-                return false;
+        Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
+        if (coloredCosts.isEmpty()) return 0.0;
+
+        double worstPenalty = 0.0;
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            ManaColor color = entry.getKey();
+            int pipsNeeded = entry.getValue();
+            int sources = colorSourceCounts.getOrDefault(color, 0);
+
+            if (sources == 0) {
+                return 1.0; // completely uncastable
+            }
+
+            // Per-pip deficit: e.g. {U}{U} with only 1 Island can't be cast
+            if (sources < pipsNeeded) {
+                worstPenalty = Math.max(worstPenalty, 0.5);
+            }
+
+            // Hand-wide demand pressure: many spells fighting for few sources
+            int demand = colorDemandCounts.getOrDefault(color, 1);
+            if (sources < demand) {
+                double strain = 1.0 - (double) sources / demand;
+                worstPenalty = Math.max(worstPenalty, strain * 0.3);
             }
         }
-        return true;
+
+        return Math.min(worstPenalty, 0.8);
     }
 
     /**

@@ -1868,9 +1868,8 @@ class HardAiDecisionEngineTest {
             gd.mulliganCounts.put(player1.getId(), 0);
 
             TestableMulliganEngine engine = new TestableMulliganEngine(player1);
-            // Slagstorms score normally (3.0 each), AirElementals score 0.25 each
-            // Score: 3*1.5 + 2*3.0 + 2*0.25 = 4.5 + 6.0 + 0.5 = 11.0 < 12.0 threshold
-            // This hand should be mulliganed — the blue spells drag the score down
+            // Slagstorms score normally (3.0 each, no color penalty), AirElementals score 0.25 (uncastable)
+            // Score: 3*1.5 + 2*3.0 + 2*0.25 = 11.0, no removal/curve bonus → 11.0 < 12.0
             assertThat(engine.testShouldKeepHand(gd)).isFalse();
         }
 
@@ -1886,6 +1885,60 @@ class HardAiDecisionEngineTest {
 
             TestableMulliganEngine engine = new TestableMulliganEngine(player1);
             assertThat(engine.testShouldKeepHand(gd)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Mulligans when double-pip requirements can't be met by single source")
+        void mulligansWhenDoublePipRequirementsCannotBeMet() {
+            // 1 Island + 2 Forests + 4 Cancel ({1}{U}{U})
+            // Cancel needs {U}{U} but we only have 1 blue source — can never cast it
+            // Old scoring would keep (16.5) because blue "exists"; new scoring mulligans
+            // because per-pip penalty halves each Cancel's score: 4.5 + 4*1.5 = 10.5 < 12.0
+            harness.setHand(player1, List.of(
+                    new Island(), new Forest(), new Forest(),
+                    new Cancel(), new Cancel(), new Cancel(), new Cancel()
+            ));
+            gd.mulliganCounts.put(player1.getId(), 0);
+
+            TestableMulliganEngine engine = new TestableMulliganEngine(player1);
+            assertThat(engine.testShouldKeepHand(gd)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Removal bonus helps borderline hand keep")
+        void removalBonusHelpsKeepBorderlineHand() {
+            // 2 Swamps + Eviscerate (removal, mv=4) + 2 BogWraith (mv=4) + SeveredLegion (mv=3) + AirElemental
+            // With landCount=2: mv=4 → 4 ≤ 5 → base 1.5; mv=3 → 3 ≤ 3 → base 3.0
+            // Black demand=4, supply=2, strain penalty ~0.15 on each
+            // Base: 3.0 + 2.55 + 3*1.275 + 0.25 = 9.625
+            // + curve (MVs={3,4}): +1.0; + removal (Eviscerate): +1.5
+            // Total: 12.125 >= 12.0 → keep
+            harness.setHand(player1, List.of(
+                    new Swamp(), new Swamp(),
+                    new Eviscerate(), new BogWraith(), new BogWraith(),
+                    new SeveredLegion(), new AirElemental()
+            ));
+            gd.mulliganCounts.put(player1.getId(), 0);
+
+            TestableMulliganEngine engine = new TestableMulliganEngine(player1);
+            assertThat(engine.testShouldKeepHand(gd)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Mulligans same borderline hand without removal")
+        void mulligansBorderlineHandWithoutRemoval() {
+            // 2 Swamps + 3 BogWraith (mv=4, not removal) + SeveredLegion (mv=3) + AirElemental
+            // Same base score as above (9.625), same curve bonus (+1.0)
+            // But no removal bonus → Total: 10.625 < 12.0 → mulligan
+            harness.setHand(player1, List.of(
+                    new Swamp(), new Swamp(),
+                    new BogWraith(), new BogWraith(), new BogWraith(),
+                    new SeveredLegion(), new AirElemental()
+            ));
+            gd.mulliganCounts.put(player1.getId(), 0);
+
+            TestableMulliganEngine engine = new TestableMulliganEngine(player1);
+            assertThat(engine.testShouldKeepHand(gd)).isFalse();
         }
     }
 

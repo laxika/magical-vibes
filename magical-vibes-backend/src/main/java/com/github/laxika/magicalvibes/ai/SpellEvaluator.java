@@ -1049,7 +1049,7 @@ public class SpellEvaluator {
         return 0;
     }
 
-    private boolean hasRemovalEffects(Card card) {
+    boolean hasRemovalEffects(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (isRemovalEffect(effect)) return true;
         }
