@@ -225,6 +225,82 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(3);
     }
 
+    // ===== Priority preservation after mana ability (CR 605.3b) =====
+
+    @Test
+    @DisplayName("CR 605.3b: Activating Shrine mana ability does not clear priority")
+    void manaAbilityDoesNotClearPriority() {
+        Permanent shrine = addReadyShrine(player1);
+        shrine.setChargeCounters(2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        // Simulate: active player (player2) passed, now player1 has priority
+        gd.priorityPassedBy.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        // Player1 should still have priority — active player's pass should be preserved
+        assertThat(gd.priorityPassedBy).containsExactly(player2.getId());
+        // Mana should be in pool
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("CR 605.3b: Non-active player can cast after Shrine mana ability")
+    void nonActivePlayerCanCastAfterShrineManaAbility() {
+        Permanent shrine = addReadyShrine(player2);
+        shrine.setChargeCounters(4);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        // Active player (player1) passed priority → non-active player2 has priority
+        gd.priorityPassedBy.clear();
+        gd.priorityPassedBy.add(player1.getId());
+
+        // Player2 activates Shrine for 4 colorless mana
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, null, null);
+
+        // Player2 should still have priority — the Shock cast below should succeed
+        harness.addMana(player2, ManaColor.RED, 1);
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+
+        // This would throw "You do not have priority" before the fix
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Shock");
+    }
+
+    @Test
+    @DisplayName("CR 605.3b: Multiple mana abilities in sequence don't clear priority")
+    void multipleManaAbilitiesPreservePriority() {
+        // Add two shrines
+        Permanent shrine1 = addReadyShrine(player1);
+        shrine1.setChargeCounters(2);
+        Permanent shrine2 = addReadyShrine(player1);
+        shrine2.setChargeCounters(3);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.priorityPassedBy.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        // Activate first shrine (index 0)
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.priorityPassedBy).containsExactly(player2.getId());
+
+        // After sacrifice, shrine2 is now at index 0
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.priorityPassedBy).containsExactly(player2.getId());
+
+        // Total mana: 2 + 3 = 5
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(5);
+    }
+
     // ===== Helper methods =====
 
     private Permanent addReadyShrine(Player player) {

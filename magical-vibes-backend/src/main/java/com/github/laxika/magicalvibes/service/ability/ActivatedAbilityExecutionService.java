@@ -251,9 +251,15 @@ public class ActivatedAbilityExecutionService {
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
-            // Mana resolves immediately, then deferred triggers go on the stack
-            gameData.stack.addAll(deferredTapTriggers);
-            gameData.stack.addAll(deferredCostTriggers);
+            // Mana resolves immediately, then deferred triggers go on the stack.
+            // CR 605.3b: Activating a mana ability does not change who has priority.
+            // Only clear priority when deferred triggers are pushed onto the stack,
+            // since those require both players to pass priority again.
+            if (!deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty()) {
+                gameData.stack.addAll(deferredTapTriggers);
+                gameData.stack.addAll(deferredCostTriggers);
+                gameData.priorityPassedBy.clear();
+            }
             return;
         }
 
@@ -473,7 +479,8 @@ public class ActivatedAbilityExecutionService {
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);
-        gameData.priorityPassedBy.clear();
+        // CR 605.3b: Do NOT clear priorityPassedBy here — mana abilities don't affect priority.
+        // Priority clearing is handled by the caller when deferred triggers are pushed onto the stack.
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }

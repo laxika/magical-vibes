@@ -901,16 +901,16 @@ class ActivatedAbilityExecutionServiceTest {
     }
 
     // =========================================================================
-    // Priority clearing after activation
+    // Priority preservation / clearing after activation (CR 605.3b)
     // =========================================================================
 
     @Nested
-    @DisplayName("post-activation state")
+    @DisplayName("post-activation priority state")
     class PostActivationState {
 
         @Test
-        @DisplayName("Priority is cleared after mana ability resolution")
-        void priorityClearedAfterManaAbility() {
+        @DisplayName("CR 605.3b: Mana ability does NOT clear priority")
+        void manaAbilityPreservesPriority() {
             Card card = createCard("Test Mana Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
             List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.COLORLESS, 1));
@@ -921,17 +921,84 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
+            // Mana abilities don't use the stack and don't affect priority (CR 605.3b)
+            assertThat(gameData.priorityPassedBy).containsExactly(player1Id);
+        }
+
+        @Test
+        @DisplayName("CR 605.3b: Mana ability preserves opponent's priority pass")
+        void manaAbilityPreservesOpponentPriorityPass() {
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}.");
+            // Simulate: active player passed, non-active is tapping mana before casting
+            gameData.activePlayerId = player2Id;
+            gameData.priorityPassedBy.add(player2Id);
+
+            stubIsCreature(perm, false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            // Active player's priority pass should still be recorded
+            assertThat(gameData.priorityPassedBy).containsExactly(player2Id);
+        }
+
+        @Test
+        @DisplayName("CR 605.3b: Pain land mana ability does NOT clear priority")
+        void painLandManaAbilityPreservesPriority() {
+            Card card = createCard("Test Pain Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
+            gameData.priorityPassedBy.add(player2Id);
+
+            stubIsCreature(perm, false);
+            stubDamagePathForNormalDamage(perm, 1);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.priorityPassedBy).containsExactly(player2Id);
+        }
+
+        @Test
+        @DisplayName("CR 605.3b: Mana ability with empty priorityPassedBy keeps it empty")
+        void manaAbilityWithEmptyPriorityKeepsItEmpty() {
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.GREEN, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {G}.");
+
+            stubIsCreature(perm, false);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
             assertThat(gameData.priorityPassedBy).isEmpty();
         }
 
         @Test
-        @DisplayName("Priority is cleared after non-mana ability activation")
+        @DisplayName("Non-mana ability clears priority (puts ability on stack)")
         void priorityClearedAfterStackPush() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
             List<CardEffect> effects = List.of(new RegenerateEffect());
             ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Regenerate");
             gameData.priorityPassedBy.add(player1Id);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.priorityPassedBy).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Non-mana ability clears priority even when both players had passed")
+        void nonManaAbilityClearsBothPasses() {
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new RegenerateEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Regenerate");
+            gameData.priorityPassedBy.add(player1Id);
+            gameData.priorityPassedBy.add(player2Id);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
