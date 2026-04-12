@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WallOfFire;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -514,6 +515,71 @@ class SpellEvaluatorTest {
         double discardRatio = airElementalValue / bearsValue;
 
         assertThat(discardRatio).isLessThan(rawRatio);
+    }
+
+    @Test
+    @DisplayName("Discard: far-off expensive card valued much lower with few lands than many lands")
+    void discardExpensiveCardManaTrajectory() {
+        // Scenario 1: only 2 lands — Shivan Dragon (6 mana) is 4 turns away
+        for (int i = 0; i < 2; i++) {
+            gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Forest()));
+        }
+        Card dragon = new ShivanDragon();
+        List<Card> hand = List.of(dragon, new GrizzlyBears());
+        double valueFewLands = spellEvaluator.evaluateCardForDiscard(gd, dragon, hand, player1.getId());
+
+        // Scenario 2: 5 lands — Shivan Dragon castable next turn
+        gd.playerBattlefields.get(player1.getId()).clear();
+        for (int i = 0; i < 5; i++) {
+            gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Forest()));
+        }
+        double valueManyLands = spellEvaluator.evaluateCardForDiscard(gd, dragon, hand, player1.getId());
+
+        // With 5 lands the dragon is almost castable and should be worth much more
+        assertThat(valueManyLands).isGreaterThan(valueFewLands * 2);
+    }
+
+    @Test
+    @DisplayName("Discard: lands in hand improve castability of expensive spells")
+    void discardLandsInHandImproveCastability() {
+        // 3 lands on board, Air Elemental (5 mana) = 2 turns away
+        for (int i = 0; i < 3; i++) {
+            gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Forest()));
+        }
+        Card airElemental = new AirElemental();
+
+        // Hand without lands: must topdeck to reach 5 mana
+        List<Card> handNoLands = List.of(airElemental, new GrizzlyBears());
+        double valueNoLands = spellEvaluator.evaluateCardForDiscard(gd, airElemental, handNoLands, player1.getId());
+
+        // Hand with a land: guaranteed land drop next turn brings us closer
+        List<Card> handWithLand = List.of(airElemental, new GrizzlyBears(), new Forest());
+        double valueWithLand = spellEvaluator.evaluateCardForDiscard(gd, airElemental, handWithLand, player1.getId());
+
+        // Having lands in hand to bridge the gap should make the expensive spell more valuable
+        assertThat(valueWithLand).isGreaterThan(valueNoLands);
+    }
+
+    @Test
+    @DisplayName("Discard: castability multiplier smooth decay — 2 turns away better than 5 turns")
+    void discardCastabilitySmootheDecay() {
+        List<Permanent> twoLands = new ArrayList<>();
+        List<Permanent> fourLands = new ArrayList<>();
+        for (int i = 0; i < 2; i++) twoLands.add(new Permanent(new Forest()));
+        for (int i = 0; i < 4; i++) fourLands.add(new Permanent(new Forest()));
+
+        Card dragon = new ShivanDragon(); // 6 mana
+        List<Card> hand = List.of(dragon);
+
+        // 2 lands: 4 turns away; 4 lands: 2 turns away
+        double mult2Lands = spellEvaluator.castabilityMultiplier(dragon, twoLands, hand);
+        double mult4Lands = spellEvaluator.castabilityMultiplier(dragon, fourLands, hand);
+
+        assertThat(mult4Lands).isGreaterThan(mult2Lands);
+        // 4 turns away should be a meaningful penalty
+        assertThat(mult2Lands).isLessThanOrEqualTo(0.5);
+        // 2 turns away should be a moderate penalty
+        assertThat(mult4Lands).isGreaterThanOrEqualTo(0.6);
     }
 
     // ===== Defensive pressure multiplier =====

@@ -987,7 +987,7 @@ public class SpellEvaluator {
         value += removalContextBonus(gameData, card, opponentId, oppBattlefield, aiPlayerId);
 
         // Castability penalty: cards we can't cast soon are less valuable to keep
-        value *= castabilityMultiplier(card, aiBattlefield);
+        value *= castabilityMultiplier(card, aiBattlefield, hand);
 
         // Redundancy penalty: second+ copy of same card in hand is worth less
         value *= redundancyMultiplier(card, hand);
@@ -1073,10 +1073,12 @@ public class SpellEvaluator {
     }
 
     /**
-     * Returns a multiplier (0.0–1.0) based on how likely we are to cast this card
-     * given our available mana sources. Uncastable cards are discounted.
+     * Returns a multiplier (0.2–1.0) based on how many turns until we can cast this card.
+     * Considers current mana sources and lands in hand (guaranteed future land drops).
+     * Cards many turns away are heavily discounted; lacking lands in hand to bridge
+     * the gap penalises further (topdecking lands is ~50% per draw).
      */
-    private double castabilityMultiplier(Card card, List<Permanent> aiBattlefield) {
+    double castabilityMultiplier(Card card, List<Permanent> aiBattlefield, List<Card> hand) {
         if (card.getManaCost() == null || card.getManaCost().isEmpty()) return 1.0;
 
         int manaValue = card.getManaValue();
@@ -1087,11 +1089,23 @@ public class SpellEvaluator {
         // Can cast right now or next turn (with one more land drop)
         if (manaValue <= totalMana + 1) return 1.0;
 
-        // 2-3 turns away: still keepable but slightly discounted
-        if (manaValue <= totalMana + 3) return 0.8;
+        int turnsAway = (int) (manaValue - totalMana);
 
-        // 4+ turns away: significantly discounted
-        return 0.5;
+        // Count lands in hand (excluding the card being evaluated) — each guarantees
+        // a future land drop, making expensive spells more reachable
+        long landsInHand = hand.stream()
+                .filter(c -> c != card && c.hasType(CardType.LAND))
+                .count();
+
+        // We need (turnsAway - 1) additional land drops beyond the next one.
+        // Lands in hand cover some of those drops; the rest require topdecks,
+        // which add ~0.5 effective turns each (~50% chance of drawing a land).
+        long guaranteedDrops = Math.min(landsInHand, turnsAway - 1);
+        long missingDrops = (turnsAway - 1) - guaranteedDrops;
+        double effectiveTurnsAway = turnsAway + missingDrops * 0.5;
+
+        // Smooth decay: each effective turn away reduces the multiplier by 0.15
+        return Math.max(0.2, 1.0 - effectiveTurnsAway * 0.15);
     }
 
     /**
