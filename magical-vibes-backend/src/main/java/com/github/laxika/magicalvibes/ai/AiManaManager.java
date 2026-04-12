@@ -301,6 +301,7 @@ public class AiManaManager {
                 continue;
             }
 
+            int sizeBefore = battlefield.size();
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
@@ -309,6 +310,12 @@ public class AiManaManager {
                     continue;
                 }
                 action.tap(i, abilityIndex);
+            }
+            // If the tap action removed a permanent (e.g. SacrificeSelfCost), adjust
+            // the loop index so we don't skip the next permanent in the list.
+            int removed = sizeBefore - battlefield.size();
+            if (removed > 0) {
+                i -= removed;
             }
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
@@ -352,6 +359,7 @@ public class AiManaManager {
                 continue;
             }
 
+            int sizeBefore = battlefield.size();
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
@@ -360,6 +368,10 @@ public class AiManaManager {
                     continue;
                 }
                 action.tap(i, abilityIndex);
+            }
+            int removed = sizeBefore - battlefield.size();
+            if (removed > 0) {
+                i -= removed;
             }
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);
@@ -406,6 +418,7 @@ public class AiManaManager {
                 continue;
             }
 
+            int sizeBefore = battlefield.size();
             if (hasOnTapManaEffects(perm.getCard())) {
                 action.tap(i, null);
             } else {
@@ -414,6 +427,10 @@ public class AiManaManager {
                     continue;
                 }
                 action.tap(i, abilityIndex);
+            }
+            int removed = sizeBefore - battlefield.size();
+            if (removed > 0) {
+                i -= removed;
             }
 
             currentPool = gameData.playerManaPools.get(aiPlayerId);

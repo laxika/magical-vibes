@@ -1142,6 +1142,39 @@ class AiManaManagerTest {
 
             verify(action).tap(0, 0);
         }
+
+        @Test
+        @DisplayName("adjusts index when sacrifice mana ability removes permanent from battlefield")
+        void adjustsIndexAfterSacrifice() {
+            // Shrine of Boundless Growth (sacrifice for mana) at index 0
+            Permanent shrine = addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 1);
+            // Forest at index 1
+            addUntappedLand("Forest", ManaColor.GREEN);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+
+            // When Shrine is activated at index 0, it sacrifices itself (removed from list)
+            // and adds 1 colorless mana. This shifts Forest from index 1 to index 0.
+            lenient().doAnswer(invocation -> {
+                gd.playerBattlefields.get(player1Id).remove(shrine);
+                gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+                return null;
+            }).when(action).tap(eq(0), eq(0));
+
+            // When Forest is tapped (now at index 0 after shrine removal), add green mana
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+                return null;
+            }).when(action).tap(eq(0), eq(null));
+
+            // Cost is {1}{G} — needs both colorless from Shrine and green from Forest
+            manager.tapLandsForCost(gd, player1Id, "{1}{G}", 0, action);
+
+            // Both should have been tapped: Shrine at original index 0, then Forest at
+            // adjusted index 0 (after Shrine was removed)
+            verify(action).tap(0, 0);      // Shrine activated
+            verify(action).tap(0, null);   // Forest tapped (shifted to index 0)
+        }
     }
 
     // ── tapCreaturesForCost ─────────────────────────────────────────
