@@ -132,6 +132,202 @@ harness.setLife(player2, 20);
 assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 ```
 
+## Recipe: dies → targeted trigger (creature targets creature)
+
+Pattern for cards like Bogardan Firefiend, Festering Goblin, Necropede, Sparring Construct — creature dies and controller chooses a target creature for the death trigger.
+
+### Helper: set up combat death
+
+```java
+private void setupCombatWhereCardDies(String cardName) {
+    Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
+            .filter(p -> p.getCard().getName().equals(cardName))
+            .findFirst().orElseThrow();
+    perm.setSummoningSick(false);
+    perm.setAttacking(true);
+
+    GrizzlyBears bigBear = new GrizzlyBears();
+    bigBear.setPower(3);
+    bigBear.setToughness(3);
+    Permanent blockerPerm = new Permanent(bigBear);
+    blockerPerm.setSummoningSick(false);
+    blockerPerm.setBlocking(true);
+    blockerPerm.addBlockingTarget(0);
+    gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+
+    harness.forceActivePlayer(player1);
+    harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+    harness.clearPriorityPassed();
+}
+```
+
+### Test: death trigger prompts for target
+
+```java
+@Test
+@DisplayName("When CardName dies, controller is prompted to choose a target creature")
+void deathTriggerPromptsForTarget() {
+    harness.addToBattlefield(player1, new CardName());
+    harness.addToBattlefield(player2, new GrizzlyBears());
+    setupCombatWhereCardDies("CardName");
+
+    harness.passBothPriorities(); // combat damage — CardName dies
+
+    assertThat(gd.playerGraveyards.get(player1.getId()))
+            .anyMatch(c -> c.getName().equals("CardName"));
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+}
+```
+
+### Test: death trigger resolves on chosen target
+
+```java
+@Test
+@DisplayName("Death trigger applies effect to chosen creature")
+void deathTriggerResolvesOnTarget() {
+    harness.addToBattlefield(player1, new CardName());
+    harness.addToBattlefield(player2, new GrizzlyBears());
+    UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+    setupCombatWhereCardDies("CardName");
+    harness.passBothPriorities(); // CardName dies
+
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+
+    // Choose target — handlePermanentChosen puts the triggered ability on the stack
+    harness.handlePermanentChosen(player1, bearsId);
+
+    // Verify stack entry
+    assertThat(gd.stack).hasSize(1);
+    assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+    assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("CardName");
+    assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearsId);
+
+    // Resolve — assert the effect (damage, -1/-1, counters, etc.)
+    harness.passBothPriorities();
+
+    // TODO: assert the effect on bearsId (e.g. zone change, modifier, life change)
+}
+```
+
+### Test: validIds contains only legal targets
+
+```java
+@Test
+@DisplayName("Death trigger only offers valid creature targets")
+void deathTriggerValidIds() {
+    harness.addToBattlefield(player1, new CardName());
+    GrizzlyBears bear = new GrizzlyBears();
+    harness.addToBattlefield(player2, bear);
+    UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+    setupCombatWhereCardDies("CardName");
+    harness.passBothPriorities();
+
+    assertThat(gd.interaction.permanentChoice().validIds()).contains(bearsId);
+}
+```
+
+### Test: no valid targets after Wrath (creature-only triggers)
+
+```java
+@Test
+@DisplayName("Death trigger skips if no creatures on battlefield (Wrath)")
+void deathTriggerSkipsWithNoCreatures() {
+    harness.addToBattlefield(player1, new CardName());
+    harness.addToBattlefield(player2, new GrizzlyBears());
+
+    harness.setHand(player1, List.of(new WrathOfGod()));
+    harness.addMana(player1, ManaColor.WHITE, 4);
+
+    harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+    harness.passBothPriorities(); // Wrath resolves — all creatures die
+
+    // No creature-only trigger prompt (no valid targets)
+    assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+}
+```
+
+### Test: fizzle when target removed before resolution
+
+```java
+@Test
+@DisplayName("Ability fizzles when target creature is removed before resolution")
+void abilityFizzlesWhenTargetRemoved() {
+    harness.addToBattlefield(player1, new CardName());
+    harness.addToBattlefield(player2, new GrizzlyBears());
+    UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+    setupCombatWhereCardDies("CardName");
+    harness.passBothPriorities(); // CardName dies
+
+    harness.handlePermanentChosen(player1, bearsId);
+
+    // Remove target before resolution
+    gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(bearsId));
+
+    harness.passBothPriorities(); // resolve — should fizzle
+
+    assertThat(gd.stack).isEmpty();
+    assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+}
+```
+
+## Recipe: dies → targeted trigger (any target — creature or player)
+
+Variant for cards like Perilous Myr, Pitchburn Devils — `DealDamageToAnyTargetEffect` allows choosing a creature OR a player.
+
+The combat-death helper and creature-target tests are identical to the creature-only recipe above. The difference is the player-targeting tests:
+
+### Test: death trigger targets a player
+
+```java
+@Test
+@DisplayName("Death trigger deals damage to chosen player")
+void deathTriggerTargetsPlayer() {
+    harness.addToBattlefield(player1, new CardName());
+    harness.setLife(player2, 20);
+
+    setupCombatWhereCardDies("CardName");
+    harness.passBothPriorities(); // CardName dies
+
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+
+    // Target a player (pass player UUID instead of permanent UUID)
+    harness.handlePermanentChosen(player1, player2.getId());
+    harness.passBothPriorities();
+
+    assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18); // adjust for damage amount
+}
+```
+
+### Test: any-target trigger still fires after Wrath (can target players)
+
+```java
+@Test
+@DisplayName("Any-target death trigger still fires after Wrath (targets player)")
+void deathTriggerAfterWrathTargetsPlayer() {
+    harness.addToBattlefield(player1, new CardName());
+    harness.setLife(player2, 20);
+
+    harness.setHand(player1, List.of(new WrathOfGod()));
+    harness.addMana(player1, ManaColor.WHITE, 4);
+
+    harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+    harness.passBothPriorities();
+
+    // Any-target trigger should still fire — players are valid targets
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+
+    harness.handlePermanentChosen(player1, player2.getId());
+    harness.passBothPriorities();
+
+    assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+}
+```
+
 ## Recipe: interaction-required effects
 
 - Use `handleMayAbilityChosen`, `handleCardChosen`, `handlePermanentChosen`, `handleListChoice`, or graveyard/library helpers depending on awaiting input.
@@ -247,4 +443,7 @@ assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/c/CondemnTest.java`
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/t/TwincastTest.java`
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommanderTest.java`
+- `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/b/BogardanFirefiendTest.java` — dies → targeted creature trigger
+- `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/p/PerilousMyrTest.java` — dies → any-target trigger (creature or player)
+- `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/f/FesteringGoblinTest.java` — dies → targeted creature trigger (-1/-1)
 
