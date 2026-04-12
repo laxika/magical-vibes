@@ -9,9 +9,12 @@ import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.v.ViashinoRunner;
@@ -194,6 +197,107 @@ class BoardEvaluatorTest {
         double score = evaluator.evaluate(gd, player1.getId());
         // 2 cards * 6.0 = 12.0
         assertThat(score).isEqualTo(12.0);
+    }
+
+    // ===== Mana tempo scoring =====
+
+    @Nested
+    @DisplayName("Mana tempo scoring")
+    class ManaTempoScoring {
+
+        @BeforeEach
+        void clearBoards() {
+            gd.playerBattlefields.get(player1.getId()).clear();
+            gd.playerBattlefields.get(player2.getId()).clear();
+        }
+
+        @Test
+        @DisplayName("manaTempoScore returns 0 when both players have equal mana sources")
+        void equalManaSourcesZeroScore() {
+            assertThat(BoardEvaluator.manaTempoScore(3, 3)).isEqualTo(0.0);
+            assertThat(BoardEvaluator.manaTempoScore(0, 0)).isEqualTo(0.0);
+            assertThat(BoardEvaluator.manaTempoScore(7, 7)).isEqualTo(0.0);
+        }
+
+        @Test
+        @DisplayName("manaTempoScore is positive when AI has more mana sources")
+        void moreManaSourcesPositive() {
+            assertThat(BoardEvaluator.manaTempoScore(5, 3)).isGreaterThan(0.0);
+        }
+
+        @Test
+        @DisplayName("manaTempoScore is negative when opponent has more mana sources")
+        void lessManaSourcesNegative() {
+            assertThat(BoardEvaluator.manaTempoScore(3, 5)).isLessThan(0.0);
+        }
+
+        @Test
+        @DisplayName("Early mana gap (3 vs 5) is worth more than late mana gap (8 vs 10)")
+        void diminishingReturns() {
+            double earlyGap = BoardEvaluator.manaTempoScore(5, 3);
+            double lateGap = BoardEvaluator.manaTempoScore(10, 8);
+
+            assertThat(earlyGap).isGreaterThan(lateGap);
+        }
+
+        @Test
+        @DisplayName("Mana advantage contributes positively to board evaluation")
+        void manaAdvantageInBoardEvaluation() {
+            // Give player1 five lands, player2 three lands
+            for (int i = 0; i < 5; i++) {
+                Permanent land = new Permanent(new Forest());
+                land.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(land);
+            }
+            for (int i = 0; i < 3; i++) {
+                Permanent land = new Permanent(new Forest());
+                land.setSummoningSick(false);
+                gd.playerBattlefields.get(player2.getId()).add(land);
+            }
+
+            double score = evaluator.evaluate(gd, player1.getId());
+            assertThat(score).isGreaterThan(0.0);
+        }
+
+        @Test
+        @DisplayName("Non-land mana sources (mana dorks) count as mana sources")
+        void manaDorksCountAsManaSource() {
+            // Player1 has 3 lands + 1 mana dork = 4 mana sources
+            for (int i = 0; i < 3; i++) {
+                Permanent land = new Permanent(new Plains());
+                land.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(land);
+            }
+            Permanent elf = new Permanent(new LlanowarElves());
+            elf.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(elf);
+
+            // Player2 has 3 lands = 3 mana sources
+            for (int i = 0; i < 3; i++) {
+                Permanent land = new Permanent(new Plains());
+                land.setSummoningSick(false);
+                gd.playerBattlefields.get(player2.getId()).add(land);
+            }
+
+            double scoreWithDork = evaluator.evaluate(gd, player1.getId());
+
+            // Now remove the dork and give player1 only 3 lands (equal to opponent)
+            gd.playerBattlefields.get(player1.getId()).remove(elf);
+
+            double scoreWithout = evaluator.evaluate(gd, player1.getId());
+
+            // The mana dork should contribute to a higher score (both as creature and mana source)
+            assertThat(scoreWithDork).isGreaterThan(scoreWithout);
+        }
+
+        @Test
+        @DisplayName("manaTempoScore is antisymmetric")
+        void antisymmetric() {
+            double score5v3 = BoardEvaluator.manaTempoScore(5, 3);
+            double score3v5 = BoardEvaluator.manaTempoScore(3, 5);
+
+            assertThat(score5v3).isEqualTo(-score3v5);
+        }
     }
 
     @Test

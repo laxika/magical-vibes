@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -38,7 +39,7 @@ public class BoardEvaluator {
     private static final double LIFE_WEIGHT = 2.0;
     private static final double CARD_ADVANTAGE_WEIGHT = 6.0;
     private static final double CREATURE_WEIGHT = 1.0;
-    private static final double MANA_SOURCE_WEIGHT = 1.0;
+    private static final double MANA_TEMPO_WEIGHT = 4.0;
     private static final double NON_CREATURE_PERMANENT_WEIGHT = 1.0;
     private static final double LOW_LIFE_BONUS = 10.0;
     private static final double GAME_OVER_SCORE = 100000.0;
@@ -90,8 +91,8 @@ public class BoardEvaluator {
 
         double aiCreatureQuality = 0;
         double oppCreatureQuality = 0;
-        int aiLandCount = 0;
-        int oppLandCount = 0;
+        int aiManaSourceCount = 0;
+        int oppManaSourceCount = 0;
         double aiNonCreatureValue = 0;
         double oppNonCreatureValue = 0;
 
@@ -99,8 +100,8 @@ public class BoardEvaluator {
             if (gameQueryService.isCreature(gameData, perm)) {
                 aiCreatureQuality += creatureScore(gameData, perm, aiPlayerId, opponentId);
             }
-            if (perm.getCard().hasType(CardType.LAND)) {
-                aiLandCount++;
+            if (isManaSource(perm)) {
+                aiManaSourceCount++;
             }
             if (perm.getCard().hasType(CardType.ENCHANTMENT) || perm.getCard().hasType(CardType.ARTIFACT)) {
                 if (!gameQueryService.isCreature(gameData, perm)) {
@@ -113,8 +114,8 @@ public class BoardEvaluator {
             if (gameQueryService.isCreature(gameData, perm)) {
                 oppCreatureQuality += creatureScore(gameData, perm, opponentId, aiPlayerId);
             }
-            if (perm.getCard().hasType(CardType.LAND)) {
-                oppLandCount++;
+            if (isManaSource(perm)) {
+                oppManaSourceCount++;
             }
             if (perm.getCard().hasType(CardType.ENCHANTMENT) || perm.getCard().hasType(CardType.ARTIFACT)) {
                 if (!gameQueryService.isCreature(gameData, perm)) {
@@ -124,7 +125,7 @@ public class BoardEvaluator {
         }
 
         score += (aiCreatureQuality - oppCreatureQuality) * CREATURE_WEIGHT;
-        score += (aiLandCount - oppLandCount) * MANA_SOURCE_WEIGHT;
+        score += manaTempoScore(aiManaSourceCount, oppManaSourceCount);
         score += (aiNonCreatureValue - oppNonCreatureValue) * NON_CREATURE_PERMANENT_WEIGHT;
 
         return score;
@@ -526,6 +527,28 @@ public class BoardEvaluator {
     static double lifeGainMultiplier(int opponentBoardDamage, int controllerLife) {
         if (controllerLife <= 0 || opponentBoardDamage <= 0) return 0.3;
         return Math.max(0.3, Math.min(3.0, (double) opponentBoardDamage / controllerLife));
+    }
+
+    /**
+     * Returns true if the permanent is a mana source: lands or non-land permanents
+     * with mana-producing tap abilities (e.g. mana dorks, mana rocks).
+     */
+    private boolean isManaSource(Permanent perm) {
+        if (perm.getCard().hasType(CardType.LAND)) {
+            return true;
+        }
+        return perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                .anyMatch(ManaProducingEffect.class::isInstance);
+    }
+
+    /**
+     * Computes the tempo score from the mana source differential using diminishing returns.
+     * Each additional mana source is worth less than the previous one, modeling the fact
+     * that the difference between 3 and 5 mana is far more impactful than 8 and 10.
+     * Uses sqrt scaling: score = MANA_TEMPO_WEIGHT * (sqrt(aiCount) - sqrt(oppCount)).
+     */
+    static double manaTempoScore(int aiManaSourceCount, int oppManaSourceCount) {
+        return MANA_TEMPO_WEIGHT * (Math.sqrt(aiManaSourceCount) - Math.sqrt(oppManaSourceCount));
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {
