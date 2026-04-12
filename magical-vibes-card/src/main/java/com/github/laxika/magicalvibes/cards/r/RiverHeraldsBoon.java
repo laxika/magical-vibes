@@ -16,6 +16,8 @@ import java.util.List;
 public class RiverHeraldsBoon extends Card {
 
     public RiverHeraldsBoon() {
+        setAllowSharedTargets(true);
+
         // Put a +1/+1 counter on target creature and a +1/+1 counter on up to one target Merfolk.
 
         // First target: any creature (mandatory)

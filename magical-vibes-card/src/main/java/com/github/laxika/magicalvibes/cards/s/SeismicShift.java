@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class SeismicShift extends Card {
 
     public SeismicShift() {
+        setAllowSharedTargets(true);
+
         // Destroy target land
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),

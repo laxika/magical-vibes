@@ -17,6 +17,8 @@ import java.util.List;
 public class WingPuncture extends Card {
 
     public WingPuncture() {
+        setAllowSharedTargets(true);
+
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"

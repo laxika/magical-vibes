@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class LeechingBite extends Card {
 
     public LeechingBite() {
+        setAllowSharedTargets(true);
+
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature"

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class IntoTheMawOfHell extends Card {
 
     public IntoTheMawOfHell() {
+        setAllowSharedTargets(true);
+
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "First target must be a land"

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class BurningSunsAvatar extends Card {
 
     public BurningSunsAvatar() {
+        setAllowSharedTargets(true);
+
         // Deals 3 damage to target opponent or planeswalker
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),

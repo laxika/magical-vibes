@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class BloodFeud extends Card {
 
     public BloodFeud() {
-        setRequireDistinctTargets(true);
-
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature"

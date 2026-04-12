@@ -19,6 +19,8 @@ import java.util.List;
 public class NewHorizons extends Card {
 
     public NewHorizons() {
+        setAllowSharedTargets(true);
+
         // Enchant land — grants "{T}: Add two mana of any one color."
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),

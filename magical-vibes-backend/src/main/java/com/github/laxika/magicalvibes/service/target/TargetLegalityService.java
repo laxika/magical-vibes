@@ -319,12 +319,8 @@ public class TargetLegalityService {
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
-        validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets(), card.getSpellTargets());
-
-        // CR 114.10a: "another" / "different" requires all targets to be distinct across groups
-        if (card.isRequireDistinctTargets() && new HashSet<>(targetIds).size() != targetIds.size()) {
-            throw new IllegalStateException("All targets must be different");
-        }
+        validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets(),
+                card.getSpellTargets(), card.isAllowSharedTargets());
 
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
         for (int i = 0; i < targetIds.size(); i++) {
@@ -632,20 +628,25 @@ public class TargetLegalityService {
     }
 
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max) {
-        validateMultiTargetCount(targetIds, min, max, null);
+        validateMultiTargetCount(targetIds, min, max, null, false);
     }
 
     /**
-     * Validates target count and uniqueness. Per MTG rule 114.6c, the same permanent
-     * can be chosen for different targeting instances (target groups), but targets
-     * within the same group must be unique.
+     * Validates target count and uniqueness.
+     * <p>
+     * By default, all targets must be globally unique across all groups — this matches the
+     * common MTG pattern where separate "target" words imply distinct objects. Cards whose
+     * oracle text does NOT use "another" and whose target filters can overlap must set
+     * {@code allowSharedTargets = true} to opt in to the CR 114.6c rule that allows the same
+     * permanent across different target groups (within-group uniqueness is still enforced).
      */
-    private void validateMultiTargetCount(List<UUID> targetIds, int min, int max, List<SpellTarget> spellTargets) {
+    private void validateMultiTargetCount(List<UUID> targetIds, int min, int max,
+                                          List<SpellTarget> spellTargets, boolean allowSharedTargets) {
         if (targetIds == null || targetIds.size() < min || targetIds.size() > max) {
             throw new IllegalStateException("Must target between " + min + " and " + max + " targets");
         }
-        if (spellTargets != null && spellTargets.size() > 1) {
-            // Multi-group: check uniqueness within each group, not across groups (CR 114.6c)
+        if (allowSharedTargets && spellTargets != null && spellTargets.size() > 1) {
+            // CR 114.6c: same permanent allowed across groups; enforce within-group uniqueness only
             int consumed = 0;
             for (SpellTarget group : spellTargets) {
                 int groupSize = Math.min(group.getMaxTargets(), targetIds.size() - consumed);
@@ -656,7 +657,7 @@ public class TargetLegalityService {
                 consumed += groupSize;
             }
         } else {
-            // Single group or no group info: check global uniqueness
+            // Default: global uniqueness across all targets
             if (new HashSet<>(targetIds).size() != targetIds.size()) {
                 throw new IllegalStateException("All targets must be different");
             }
