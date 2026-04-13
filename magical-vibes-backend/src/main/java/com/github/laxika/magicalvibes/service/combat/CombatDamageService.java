@@ -180,6 +180,10 @@ public class CombatDamageService {
 
         resolveRedirectedDamage(gameData, state, redirectTarget);
 
+        // CR 510.1 — Snapshot Phyrexian Unlife infect conversion before lifelink changes life totals.
+        // All combat damage is simultaneous, so the infect check must use pre-damage life.
+        state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
+
         // Process lifelink before removing dead creatures
         processLifelink(gameData, state.combatDamageDealt);
         processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
@@ -1047,8 +1051,9 @@ public class CombatDamageService {
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
-        // Phyrexian Unlife: convert normal combat damage to poison when at 0 or less life
-        if (state.damageToDefendingPlayer > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId)) {
+        // Phyrexian Unlife: convert normal combat damage to poison when at 0 or less life.
+        // Uses pre-lifelink snapshot (CR 510.1: all combat damage is simultaneous).
+        if (state.damageToDefendingPlayer > 0 && state.defenderDamageAsInfect) {
             state.poisonDamageToDefendingPlayer += state.damageToDefendingPlayer;
             state.damageToDefendingPlayer = 0;
         }

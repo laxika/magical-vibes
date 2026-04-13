@@ -40,4 +40,8 @@ class CombatDamageState {
     // Per-source damage amounts to each target creature (for ON_DEALT_DAMAGE triggers needing damage amount)
     // Key: source permanent, Value: map of target creature ID -> damage amount
     final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToCreatures = new HashMap<>();
+
+    // CR 510.1 — Snapshot of whether defender's damage should be dealt as infect (Phyrexian Unlife),
+    // captured before lifelink is processed so simultaneous combat damage uses pre-damage life total.
+    boolean defenderDamageAsInfect;
 }
