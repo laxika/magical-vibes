@@ -179,9 +179,12 @@ public class AutoPassService {
 
             if (gameData.priorityPassedBy.size() >= 2) {
                 advanceStep.accept(gameData);
-            } else {
-                gameBroadcastService.broadcastGameState(gameData);
             }
+            // When only one player auto-passed, skip the intermediate broadcast.
+            // The next loop iteration will either broadcast (other player can act)
+            // or auto-pass the other player too. All loop exit paths already
+            // broadcast, so this avoids redundant view computation and reduces
+            // lock contention for AI games.
         }
 
         // Safety: if we somehow looped 100 times, broadcast current state and stop

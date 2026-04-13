@@ -367,7 +367,7 @@ class AutoPassServiceTest {
         }
 
         @Test
-        @DisplayName("Broadcasts after single auto-pass when second player has playable cards")
+        @DisplayName("Broadcasts once when second player has playable cards after first auto-passes")
         void broadcastsAfterSingleAutoPass() {
             // First call: player1 has priority, nothing to play → auto-pass
             // Second call: player2 has priority, has playable cards → stop
@@ -379,8 +379,8 @@ class AutoPassServiceTest {
 
             // Player1 auto-passed, player2 was not auto-passed (has playable cards)
             assertThat(gd.priorityPassedBy).containsExactly(player1Id);
-            // Broadcast twice: once after player1's auto-pass, once when player2 can act
-            verify(gameBroadcastService, times(2)).broadcastGameState(gd);
+            // Single broadcast when player2 can act (no intermediate broadcast after player1's auto-pass)
+            verify(gameBroadcastService, times(1)).broadcastGameState(gd);
         }
     }
 
