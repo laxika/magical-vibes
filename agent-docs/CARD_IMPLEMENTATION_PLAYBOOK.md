@@ -166,6 +166,43 @@ public class ExampleCard extends Card {
 - Multi-zone targeting (spell + permanent): when a spell targets both a spell on the stack and a permanent (e.g. Lost in the Mist), chain both effects (`CounterSpellEffect` + `ReturnTargetPermanentToHandEffect`). The engine stores the spell target in `targetId` (Zone.STACK) and permanent targets in `targetIds`. Uses multi-zone fizzle logic: only fizzles when ALL targets become illegal. Cast in tests via `castInstant(player, cardIndex, spellTargetId, permanentTargetId)`.
 - Multi-zone targeting (graveyard + permanent): when a spell targets both a card in a graveyard and a permanent (e.g. Yawgmoth's Vile Offering), use `addEffect(SPELL, ReturnCardFromGraveyardEffect.builder().targetGraveyard(true)...)` for the graveyard target and `target(filter, 0, 1).addEffect(SPELL, ...)` for the permanent target. The engine stores the graveyard target in `targetId` (Zone.GRAVEYARD) and permanent targets in `targetIds`. Cast in tests via `castSorcery(player, cardIndex, graveyardCardId, List.of(permanentId))`.
 
+## MayEffect lifecycle
+
+`MayEffect(CardEffect wrapped, String prompt)` wraps an inner effect with a "you may" choice at resolution time. Understanding the lifecycle prevents unnecessary code-tracing:
+
+### Flow for `UPKEEP_TRIGGERED` with `MayEffect`
+
+1. **Trigger time**: `StepTriggerService` sees `MayEffect` in the upkeep effects → calls `gameData.queueMayAbility(card, controllerId, may, null, perm.getId())` which pushes a `StackEntry` with the `MayEffect` and `sourcePermanentId = perm.getId()`.
+2. **Stack resolution**: `EffectResolutionService` encounters the `MayEffect` → dispatches to `PlayerInteractionResolutionService.resolveMayEffect()` → sets `resolvingMayEffectFromStack = true` and adds a `PendingMayAbility`.
+3. **Player prompt**: The system pauses, awaiting `MAY_ABILITY_CHOICE` input from the controller.
+4. **Player responds**: `MayAbilityHandlerService.handleResolutionTimeMayChoice()` sets `resolvedMayAccepted = true/false`.
+5. **Re-entry**: `EffectResolutionService` re-runs the same effect index. Now `resolvedMayAccepted != null`:
+   - **Accepted**: unwraps to `may.wrapped()` and resolves the inner effect via its handler.
+   - **Declined**: skips the effect entirely.
+
+### Test pattern for MayEffect upkeep triggers
+
+```java
+// 1. Set up permanent on battlefield
+// 2. Advance to upkeep
+advanceToUpkeep(player1);
+// 3. Resolve stack → MayEffect prompts
+harness.passBothPriorities();
+assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+// 4. Accept or decline
+harness.handleMayAbilityChosen(player1, true);  // or false to decline
+// 5. Inner effect now resolves (may trigger further interaction)
+```
+
+### Usage on cards
+
+```java
+.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        new MayEffect(new YourInnerEffect(), "Do the thing?"))
+```
+
+For `ETB_TRIGGERED` and other slots, `MayEffect` also works — the resolution system handles it uniformly.
+
 ## When a new effect is actually required
 
 Create a new `CardEffect` record only if both are true:
@@ -281,6 +318,88 @@ private void resolveYourEffect(GameData gameData, StackEntry entry) {
     gameBroadcastService.logAndBroadcast(gameData, logMsg);
 }
 ```
+
+## Writing a new "look at top N cards" effect
+
+All "look at top N" effects live in `LibraryRevealResolutionService` and follow a common pattern. Use this template when creating a new variant:
+
+```java
+@HandlesEffect(YourLookAtTopEffect.class)
+void resolveYourLookAtTopEffect(GameData gameData, StackEntry entry, YourLookAtTopEffect effect) {
+    // 1. Take cards from top of library (broadcastLook=true logs "looks at the top N cards")
+    TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
+    if (result == null) return;  // empty library — already logged
+    UUID controllerId = result.controllerId();
+    List<Card> topCards = result.topCards();
+
+    // 2. Filter for eligible cards
+    List<Card> matchingCards = topCards.stream()
+            .filter(card -> /* your eligibility criteria */)
+            .toList();
+
+    // 3. No matches → reorder all to bottom
+    if (matchingCards.isEmpty()) {
+        reorderRemainingToBottom(gameData, controllerId, topCards);
+        return;
+    }
+
+    // 4. Present choice to controller via LibrarySearchParams
+    gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, matchingCards)
+            .canFailToFind(true)           // "you may" — player can decline
+            .sourceCards(topCards)          // all looked-at cards (for reordering remainder)
+            .reorderRemainingToBottom(true) // rest go to bottom in any order
+            .shuffleAfterSelection(false)
+            .prompt("Your prompt here.")
+            .destination(LibrarySearchDestination.BATTLEFIELD)  // or HAND, etc.
+            .build());
+
+    List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+    sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+            cardViews, "Your prompt here.", true));
+}
+```
+
+**Key helpers** (all private in `LibraryRevealResolutionService`):
+- `takeTopCardsFromLibrary(gameData, entry, count, broadcastLook)` → removes cards from top, returns `TopCardsResult(controllerId, topCards, playerName)` or `null` if empty.
+- `reorderRemainingToBottom(gameData, controllerId, cards)` → if 1 card, puts directly on bottom; if >1, begins `LIBRARY_REORDER` interaction.
+
+**LibrarySearchDestination options**: `HAND`, `BATTLEFIELD`, `BATTLEFIELD_TAPPED`, `TOP_OF_LIBRARY`, `GRAVEYARD`, `EXILE`, `CAST_WITHOUT_PAYING`, etc.
+
+**Test flow** for the complete interaction:
+```java
+harness.passBothPriorities();                                    // effect resolves
+assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+harness.getGameService().handleLibraryCardChosen(gd, player1, 0);  // choose first match (or -1 to decline)
+assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, ...));  // order remaining
+```
+
+## "Shares a creature type" pattern
+
+When comparing creature types between two objects (permanents, cards, or a mix), use this Changeling-aware pattern from `StaticEffectResolutionService` (Coat of Arms):
+
+```java
+// For permanents on the battlefield:
+List<CardSubtype> typesA = new ArrayList<>(permanentA.getCard().getSubtypes());
+typesA.addAll(permanentA.getTransientSubtypes());
+boolean aIsChangeling = permanentA.hasKeyword(Keyword.CHANGELING);
+
+// For cards NOT on the battlefield (library, hand, graveyard):
+List<CardSubtype> typesB = cardB.getSubtypes();
+boolean bIsChangeling = cardB.getKeywords().contains(Keyword.CHANGELING);
+
+// Shares a creature type?
+boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
+        || (bIsChangeling && !typesA.isEmpty())
+        || typesA.stream().anyMatch(typesB::contains);
+```
+
+**Why three conditions**:
+1. A is Changeling (has all types) → shares with anything that has types
+2. B is Changeling (has all types) → shares with anything that has types
+3. Normal overlap check
+
+**Permanent vs Card**: Permanents can have `transientSubtypes` (from clone/copy/animate effects) and keyword grants, so use `permanent.hasKeyword()` and include `getTransientSubtypes()`. Cards in non-battlefield zones only have their printed subtypes/keywords.
 
 ## Quick anti-patterns
 

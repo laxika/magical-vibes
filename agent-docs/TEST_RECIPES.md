@@ -545,6 +545,136 @@ assertThat(gd.playerBattlefields.get(player1.getId()))
                 && p.getAttachedTo().equals(bearsPerm.getId()));
 ```
 
+## Recipe: aura with upkeep MayEffect trigger + library manipulation
+
+For auras like Call to the Kindred that have an upkeep "you may" trigger leading to a library search/choice interaction. This combines several patterns: aura setup, upkeep advancement, MayEffect handling, and library search interaction.
+
+### Helper: set up aura attached to creature
+
+```java
+private void setupAuraOnCreature() {
+    Permanent creature = new Permanent(new GrizzlyBears());
+    creature.setSummoningSick(false);
+    gd.playerBattlefields.get(player1.getId()).add(creature);
+
+    Permanent auraPerm = new Permanent(new YourAura());
+    auraPerm.setAttachedTo(creature.getId());
+    gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+}
+
+private void setupLibraryTopCards(List<Card> cards) {
+    List<Card> deck = gd.playerDecks.get(player1.getId());
+    deck.clear();
+    deck.addAll(cards);
+}
+
+private void advanceToUpkeep(Player activePlayer) {
+    harness.forceActivePlayer(activePlayer);
+    harness.forceStep(TurnStep.UNTAP);
+    harness.clearPriorityPassed();
+    harness.passBothPriorities(); // advances to UPKEEP
+}
+```
+
+### Test: upkeep prompts may ability
+
+```java
+@Test
+void upkeepPromptsMayAbility() {
+    setupAuraOnCreature();
+    setupLibraryTopCards(List.of(new GrizzlyBears(), new LlanowarElves(), new Shock(), new Plains(), new Plains()));
+
+    advanceToUpkeep(player1);
+    harness.passBothPriorities(); // resolve MayEffect from stack
+
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+    assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+}
+```
+
+### Test: declining does nothing
+
+```java
+@Test
+void decliningDoesNothing() {
+    setupAuraOnCreature();
+    Card topCard = new GrizzlyBears();
+    setupLibraryTopCards(List.of(topCard, new LlanowarElves(), new Shock(), new Plains(), new Plains()));
+
+    advanceToUpkeep(player1);
+    harness.passBothPriorities();
+    harness.handleMayAbilityChosen(player1, false);
+
+    assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
+}
+```
+
+### Test: accepting offers matching cards for library search
+
+```java
+@Test
+void acceptingOffersMatchingCards() {
+    setupAuraOnCreature();
+    setupLibraryTopCards(List.of(new GrizzlyBears(), new LlanowarElves(), new Shock(), new Plains(), new Plains()));
+
+    advanceToUpkeep(player1);
+    harness.passBothPriorities();
+    harness.handleMayAbilityChosen(player1, true);
+
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+    assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+    // Assert only expected cards are offered
+    assertThat(gd.interaction.librarySearch().cards()).hasSize(EXPECTED_COUNT);
+}
+```
+
+### Test: choosing a card puts it onto the battlefield, then reorders rest
+
+```java
+@Test
+void choosingPutsOnBattlefieldThenReorders() {
+    setupAuraOnCreature();
+    setupLibraryTopCards(List.of(new GrizzlyBears(), new LlanowarElves(), new Shock(), new Plains(), new Plains()));
+
+    advanceToUpkeep(player1);
+    harness.passBothPriorities();
+    harness.handleMayAbilityChosen(player1, true);
+
+    // Choose first matching card
+    harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+
+    // Verify card on battlefield
+    assertThat(gd.playerBattlefields.get(player1.getId()))
+            .anyMatch(p -> p.getCard().getName().equals("Expected Card Name"));
+
+    // Remaining cards in reorder phase
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+    assertThat(gd.interaction.libraryView().reorderCards()).hasSize(REMAINING_COUNT);
+}
+```
+
+### Test: declining to choose (index -1) reorders all
+
+```java
+@Test
+void decliningToChooseReordersAll() {
+    setupAuraOnCreature();
+    setupLibraryTopCards(List.of(new GrizzlyBears(), new LlanowarElves(), new Shock(), new Plains(), new Plains()));
+
+    advanceToUpkeep(player1);
+    harness.passBothPriorities();
+    harness.handleMayAbilityChosen(player1, true);
+
+    int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+    harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+
+    assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
+    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+}
+```
+
+Reference: `CallToTheKindredTest.java` — full working example.
+
 ## Reference tests
 
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/o/OrcishArtilleryTest.java`
@@ -558,4 +688,5 @@ assertThat(gd.playerBattlefields.get(player1.getId()))
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/p/PerilousMyrTest.java` — dies → any-target trigger (creature or player)
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/f/FesteringGoblinTest.java` — dies → targeted creature trigger (-1/-1)
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/b/BurningOilTest.java` — flashback instant targeting attacking/blocking creatures
+- `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/c/CallToTheKindredTest.java` — aura with upkeep MayEffect + library creature-sharing-type search
 
