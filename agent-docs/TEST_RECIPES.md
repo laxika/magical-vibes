@@ -105,6 +105,43 @@ harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
 Use this for cards that care about combat windows, attack restrictions, or blocking.
 
+## Pitfall: flashback + combat targeting (passPriority drains mana)
+
+**Problem:** When testing a flashback spell that targets attacking/blocking creatures, calling
+`passPriority(player1)` before `castFlashback(player2, ...)` can trigger the auto-pass system.
+Auto-pass checks whether player2 has playable cards **in hand** — it does not recognize flashback-castable
+cards in the graveyard. If player2's hand has nothing playable, auto-pass fires for player2 too,
+both players have passed, the step advances, and the **mana pool is emptied**. The subsequent
+`castFlashback` then fails with "Not enough mana to pay flashback cost".
+
+**Solution:** Do NOT call `passPriority()` before `castFlashback()`. The `castFlashback` helper
+internally calls `ensurePriority(player)`, which sets up the priority state correctly without
+triggering auto-pass.
+
+```java
+// WRONG — passPriority triggers auto-pass, which may drain mana
+harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+harness.clearPriorityPassed();
+harness.setGraveyard(player2, List.of(new MyFlashbackCard()));
+harness.addMana(player2, ManaColor.WHITE, 1);
+harness.addMana(player2, ManaColor.COLORLESS, 3);
+harness.passPriority(player1);           // ← auto-pass may advance step & empty pool
+harness.castFlashback(player2, 0, targetId); // ← "Not enough mana" error
+
+// CORRECT — castFlashback handles priority internally via ensurePriority()
+harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+harness.clearPriorityPassed();
+harness.setGraveyard(player2, List.of(new MyFlashbackCard()));
+harness.addMana(player2, ManaColor.WHITE, 1);
+harness.addMana(player2, ManaColor.COLORLESS, 3);
+harness.castFlashback(player2, 0, targetId); // ← works, ensurePriority sets up state
+```
+
+**Note:** This only affects flashback (graveyard) casts. Hand casts with `castInstant` still need
+`passPriority(player1)` because the auto-pass system recognizes cards in hand as playable.
+
+Reference: `BurningOilTest.java` — flashback instant targeting attacking/blocking creatures.
+
 ## Recipe: verify stack/fizzle behavior
 
 ```java
@@ -520,4 +557,5 @@ assertThat(gd.playerBattlefields.get(player1.getId()))
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/b/BogardanFirefiendTest.java` — dies → targeted creature trigger
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/p/PerilousMyrTest.java` — dies → any-target trigger (creature or player)
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/f/FesteringGoblinTest.java` — dies → targeted creature trigger (-1/-1)
+- `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/b/BurningOilTest.java` — flashback instant targeting attacking/blocking creatures
 
