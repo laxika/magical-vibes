@@ -102,6 +102,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(3, 2) + DealDamageToControllerEffect(2) |
 | Library reveal (type to hand, rest to graveyard) | `m/Mulch.java` | RevealTopCardsTypeToHandRestToGraveyardEffect(count, cardTypes) — deterministic, no player choice |
 | Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect |
+| Aura upkeep — library creature sharing type to battlefield | `c/CallToTheKindred.java` | MayEffect wrapping LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect(5) in UPKEEP_TRIGGERED |
 | Targeted discard | `d/Distress.java` | ChooseCardFromTargetHandToDiscardEffect |
 | Exile by name (multi-zone) | `m/Memoricide.java` | ChooseCardNameAndExileFromZonesEffect(excludedTypes) — choose nonland name, exile from hand+graveyard+library, shuffle |
 | Tutor to hand | `d/DiabolicTutor.java` | SearchLibraryForCardToHandEffect |

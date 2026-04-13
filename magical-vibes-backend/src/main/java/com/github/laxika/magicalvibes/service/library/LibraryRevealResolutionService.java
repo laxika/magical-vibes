@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPaying
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseNToHandRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
@@ -52,6 +53,9 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1260,6 +1264,91 @@ public class LibraryRevealResolutionService {
         sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
                 cardViews,
                 prompt,
+                true
+        ));
+    }
+
+    /**
+     * Looks at the top N cards of the controller's library. The player may put a creature card
+     * that shares a creature type with the enchanted creature onto the battlefield. Remaining
+     * cards go to the bottom of the library in any order.
+     *
+     * <p>The enchanted creature is determined by finding the source permanent (the aura) via
+     * {@code entry.getSourcePermanentId()} and then following its {@code attachedTo} reference.
+     */
+    @HandlesEffect(LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect.class)
+    void resolveLookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefield(
+            GameData gameData,
+            StackEntry entry,
+            LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect effect
+    ) {
+        // Find the source aura permanent and the enchanted creature
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            log.warn("Game {} - No source permanent for Call to the Kindred effect", gameData.id);
+            return;
+        }
+        Permanent auraPerm = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (auraPerm == null || !auraPerm.isAttached()) {
+            log.info("Game {} - Aura no longer on battlefield or not attached, effect does nothing", gameData.id);
+            return;
+        }
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, auraPerm.getAttachedTo());
+        if (enchantedCreature == null) {
+            log.info("Game {} - Enchanted creature no longer on battlefield, effect does nothing", gameData.id);
+            return;
+        }
+
+        // Collect the enchanted creature's creature subtypes (including transient subtypes)
+        List<CardSubtype> enchantedTypes = new ArrayList<>(enchantedCreature.getCard().getSubtypes());
+        enchantedTypes.addAll(enchantedCreature.getTransientSubtypes());
+        boolean enchantedIsChangeling = enchantedCreature.hasKeyword(Keyword.CHANGELING);
+
+        if (enchantedTypes.isEmpty() && !enchantedIsChangeling) {
+            // Enchanted creature has no creature types — no card can share a type
+            TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
+            if (result == null) return;
+            reorderRemainingToBottom(gameData, result.controllerId(), result.topCards());
+            return;
+        }
+
+        TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+
+        // Filter for creature cards that share a creature type with the enchanted creature
+        List<Card> matchingCards = topCards.stream()
+                .filter(card -> card.getType() == CardType.CREATURE
+                        || card.getAdditionalTypes().contains(CardType.CREATURE))
+                .filter(card -> {
+                    List<CardSubtype> cardTypes = card.getSubtypes();
+                    boolean cardIsChangeling = card.getKeywords().contains(Keyword.CHANGELING);
+
+                    return (enchantedIsChangeling && (cardIsChangeling || !cardTypes.isEmpty()))
+                            || (cardIsChangeling && !enchantedTypes.isEmpty())
+                            || enchantedTypes.stream().anyMatch(cardTypes::contains);
+                })
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            reorderRemainingToBottom(gameData, controllerId, topCards);
+            return;
+        }
+
+        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, matchingCards)
+                .canFailToFind(true)
+                .sourceCards(topCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .prompt("You may put a creature card that shares a creature type with the enchanted creature onto the battlefield.")
+                .destination(LibrarySearchDestination.BATTLEFIELD)
+                .build());
+
+        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
+        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
+                cardViews,
+                "You may put a creature card that shares a creature type with the enchanted creature onto the battlefield.",
                 true
         ));
     }
