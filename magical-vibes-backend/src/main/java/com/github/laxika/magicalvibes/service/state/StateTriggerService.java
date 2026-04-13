@@ -50,7 +50,7 @@ public class StateTriggerService {
             for (Permanent perm : snapshot) {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.STATE_TRIGGERED);
                 for (int i = 0; i < effects.size(); i++) {
-                    if (!(effects.get(i) instanceof StateTriggerEffect trigger)) continue;
+                    StateTriggerEffect trigger = (StateTriggerEffect) effects.get(i);
 
                     // Rule 603.8: don't retrigger while already on the stack
                     StateTriggerKey key = new StateTriggerKey(perm.getId(), i);

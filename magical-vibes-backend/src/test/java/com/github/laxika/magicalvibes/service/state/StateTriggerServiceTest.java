@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -219,20 +220,15 @@ class StateTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Skips non-StateTriggerEffect registered in STATE_TRIGGERED slot")
-        void skipsNonStateTriggerEffectInSlot() {
+        @DisplayName("Rejects non-StateTriggerEffect registered in STATE_TRIGGERED slot")
+        void rejectsNonStateTriggerEffectInSlot() {
             Card card = new Card();
             card.setName("Odd Card");
             card.setType(CardType.ENCHANTMENT);
-            card.addEffect(EffectSlot.STATE_TRIGGERED, new GainLifeEffect(1));
-            Permanent perm = new Permanent(card);
-            gd.playerBattlefields.get(player1Id).add(perm);
 
-            sut.checkStateTriggers(gd);
-
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.stateTriggerOnStack).isEmpty();
-            verifyNoInteractions(gameBroadcastService);
+            assertThatThrownBy(() -> card.addEffect(EffectSlot.STATE_TRIGGERED, new GainLifeEffect(1)))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("STATE_TRIGGERED slot requires StateTriggerEffect");
         }
 
         @Test

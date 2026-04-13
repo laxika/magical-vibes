@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -260,13 +261,22 @@ public class Card {
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
+        validateEffectSlotType(slot, effect);
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect));
         effectCache.remove(slot);
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
+        validateEffectSlotType(slot, effect);
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect, triggerMode));
         effectCache.remove(slot);
+    }
+
+    private void validateEffectSlotType(EffectSlot slot, CardEffect effect) {
+        if (slot == EffectSlot.STATE_TRIGGERED && !(effect instanceof StateTriggerEffect)) {
+            throw new IllegalArgumentException(
+                    "STATE_TRIGGERED slot requires StateTriggerEffect, got " + effect.getClass().getSimpleName());
+        }
     }
 
     public void addCastingOption(CastingOption option) {
