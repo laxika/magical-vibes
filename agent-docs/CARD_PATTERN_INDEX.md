@@ -154,6 +154,8 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
+| ETB pump target creature | `b/BriarpackAlpha.java` | `target(CreaturePredicate).addEffect(ON_ENTER_BATTLEFIELD, BoostTargetCreatureEffect(P, T))` — any creature. See also `v/VulshokHeartstoker.java` (+2/+0). Flash is auto-loaded from Scryfall, no constructor code needed |
+| ETB pump target creature (own only, +keyword) | `i/ImperialAerosaur.java` | PermanentAllOfPredicate(IsCreature, ControlledBySourceController, NotSource) + BoostTargetCreatureEffect + GrantKeywordEffect(FLYING, TARGET) |
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
 | ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillControllerEffect(4) — controller mills N cards, no target |
@@ -1575,3 +1577,283 @@ class CARDNAMETest extends BaseCardTest {
 ```
 
 **Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `SPELL_TYPE` (e.g. `CREATURE_SPELL`, `ARTIFACT_SPELL`), `SPELL_TYPE_LABEL` (e.g. "creature", "artifact"), `BONUS_EFFECT_CLASS`/`BONUS_ARGS` (e.g. `DrawCardEffect`/none, `TargetSpellControllerLosesLifeEffect`/`1`), `TARGET_CARD`/`TARGET_DISPLAY_NAME`/`TARGET_COLOR`/`TARGET_MANA` (the spell being countered), `WRONG_CARD`/`WRONG_COLOR`/`WRONG_MANA` (a spell of the wrong type for the negative test), `PRIMARY_COLOR`, `TOTAL_MANA`.
+
+---
+
+### ETB pump target creature
+
+"When this creature enters, target creature gets +P/+T until end of turn."
+
+Reference: `b/BriarpackAlpha.java` (flash, +2/+2, any creature), `v/VulshokHeartstoker.java` (+2/+0, any creature), `i/ImperialAerosaur.java` (+1/+1 + flying, another creature you control)
+
+**Flash note:** Flash is auto-loaded from Scryfall — no constructor code needed. If the card has Flash, add the flash-specific tests (opponent's turn, combat step) shown below.
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(POWER_BOOST, TOUGHNESS_BOOST));
+    }
+}
+```
+
+**"Another creature you control" variant:** Replace `PermanentIsCreaturePredicate` with `PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentControlledBySourceControllerPredicate(), new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))` and change message to `"Target must be another creature you control"`.
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    // ===== Card properties =====
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct ETB effect")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
+        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
+                .isInstanceOf(BoostTargetCreatureEffect.class);
+        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        assertThat(effect.powerBoost()).isEqualTo(POWER_BOOST);
+        assertThat(effect.toughnessBoost()).isEqualTo(TOUGHNESS_BOOST);
+    }
+
+    // ===== Flash tests (include only if card has Flash) =====
+
+    @Test
+    @DisplayName("Can cast during opponent's turn thanks to Flash")
+    void canCastDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        gs.passPriority(gd, player2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+    }
+
+    @Test
+    @DisplayName("Can cast during combat step thanks to Flash")
+    void canCastDuringCombat() {
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+    }
+
+    // ===== ETB targeting and resolution =====
+
+    @Test
+    @DisplayName("Casting with a target puts it on the stack")
+    void castingWithTargetPutsOnStack() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gs.playCard(gd, player1, 0, 0, targetId, null);
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(entry.getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    @DisplayName("Resolving creature spell puts ETB trigger on stack")
+    void resolvingPutsEtbOnStack() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gs.playCard(gd, player1, 0, 0, targetId, null);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("CARD_DISPLAY_NAME"));
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry trigger = gd.stack.getFirst();
+        assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(trigger.getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+        assertThat(trigger.getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    @DisplayName("ETB resolves and gives target creature +POWER_BOOST/+TOUGHNESS_BOOST")
+    void etbBoostsTargetCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gs.playCard(gd, player1, 0, 0, targetId, null);
+
+        harness.passBothPriorities(); // Resolve creature
+        harness.passBothPriorities(); // Resolve ETB
+
+        assertThat(gd.stack).isEmpty();
+
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getId().equals(targetId))
+                .findFirst().orElseThrow();
+        assertThat(bears.getPowerModifier()).isEqualTo(POWER_BOOST);
+        assertThat(bears.getToughnessModifier()).isEqualTo(TOUGHNESS_BOOST);
+        assertThat(bears.getEffectivePower()).isEqualTo(2 + POWER_BOOST);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2 + TOUGHNESS_BOOST);
+    }
+
+    // ===== Boost wears off =====
+
+    @Test
+    @DisplayName("Boost wears off at end of turn")
+    void boostWearsOffAtEndOfTurn() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gs.playCard(gd, player1, 0, 0, targetId, null);
+
+        harness.passBothPriorities(); // Resolve creature
+        harness.passBothPriorities(); // Resolve ETB
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getId().equals(targetId))
+                .findFirst().orElseThrow();
+        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    // ===== Can target own creature =====
+
+    @Test
+    @DisplayName("Can target own creature")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        gs.playCard(gd, player1, 0, 0, targetId, null);
+
+        harness.passBothPriorities(); // Resolve creature
+        harness.passBothPriorities(); // Resolve ETB
+
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getId().equals(targetId))
+                .findFirst().orElseThrow();
+        assertThat(bears.getEffectivePower()).isEqualTo(2 + POWER_BOOST);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2 + TOUGHNESS_BOOST);
+    }
+
+    // ===== Fizzle =====
+
+    @Test
+    @DisplayName("ETB fizzles if target creature is removed before resolution")
+    void etbFizzlesIfTargetRemoved() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gs.playCard(gd, player1, 0, 0, targetId, null);
+
+        harness.passBothPriorities(); // Resolve creature — ETB on stack
+
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        harness.passBothPriorities(); // Resolve ETB — fizzles
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    // ===== No target scenarios =====
+
+    @Test
+    @DisplayName("Can cast without a target when no creatures on battlefield")
+    void canCastWithoutTarget() {
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+    }
+
+    @Test
+    @DisplayName("ETB does not trigger when cast without a target")
+    void etbDoesNotTriggerWithoutTarget() {
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("CARD_DISPLAY_NAME"));
+        assertThat(gd.stack).isEmpty();
+    }
+}
+```
+
+**Placeholders:** `LETTER` (package letter), `SET`/`NUM` (card printing), `CARDNAME` (class name), `CARD_DISPLAY_NAME` (oracle name), `POWER_BOOST`/`TOUGHNESS_BOOST` (integers), `PRIMARY_COLOR` (ManaColor), `TOTAL_MANA` (CMC integer). Remove the Flash tests section if the card does not have Flash.
