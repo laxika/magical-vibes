@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -1703,22 +1704,24 @@ public class PlayerInteractionResolutionService {
 
             if (EffectResolution.needsTarget(revealed)) {
                 // Targeted spell — check for valid targets
+                Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(revealed);
                 List<UUID> validTargets = new ArrayList<>();
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (revealed.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                if (allowedTargets.contains(TargetType.PERMANENT)) {
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                        if (battlefield == null) continue;
+                        for (Permanent p : battlefield) {
+                            if (revealed.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                                if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                    validTargets.add(p.getId());
+                                }
+                            } else if (gameQueryService.isCreature(gameData, p)) {
                                 validTargets.add(p.getId());
                             }
-                        } else if (gameQueryService.isCreature(gameData, p)) {
-                            validTargets.add(p.getId());
                         }
                     }
                 }
-                boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-                if (canTargetPlayer) {
+                if (allowedTargets.contains(TargetType.PLAYER)) {
                     validTargets.addAll(gameData.orderedPlayerIds);
                 }
 
