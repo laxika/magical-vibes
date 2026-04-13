@@ -42,6 +42,7 @@ Purpose: quickly find a reference card for the pattern you're implementing. One 
 | Pump target | `g/GiantGrowth.java` | BoostTargetCreatureEffect |
 | X pump target | `u/UntamedMight.java` | BoostTargetCreatureXEffect |
 | Pump all + keyword | `o/Overrun.java` | BoostAllOwnCreaturesEffect + GrantKeywordEffect |
+| Pump all + conditional keyword | `b/BreakOfDay.java` | BoostAllOwnCreaturesEffect + ControllerLifeAtOrBelowThresholdConditionalEffect wrapping GrantKeywordEffect — pump always, keyword only if condition met (fateful hour, morbid, raid, etc.) |
 | Grant triggered bounce | `a/ArmWithAether.java` | GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect — grants "damage to opponent, may bounce creature" to all controlled creatures until end of turn |
 | Protection choice (color or artifacts) | `a/ApostlesBlessing.java` | GrantProtectionChoiceUntilEndOfTurnEffect(true) + ControlledPermanentPredicateTargetFilter(AnyOf(artifact, creature)). Phyrexian mana. On resolution, player chooses color or artifacts → protection until end of turn |
 | Pump attacking + keyword | `r/RallyTheForces.java` | BoostAllCreaturesEffect(filter) + GrantKeywordEffect(ALL_CREATURES, filter) with PermanentIsAttackingPredicate |
@@ -589,6 +590,8 @@ Ready-to-use templates for the most common archetypes. Replace `PLACEHOLDER` val
 "Creatures you control get +X/+Y until end of turn."
 
 Reference: `c/Charge.java` (instant, +1/+1), `b/BarTheDoor.java` (instant, +0/+4), `i/InspiredCharge.java` (instant, +2/+1)
+
+Also covers: pump + conditional keyword (fateful hour, morbid, raid, etc.) — see [Pump all + conditional keyword](#pump-all--conditional-keyword-instantsorcery) template below.
 
 **Card:**
 
@@ -1170,7 +1173,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SET", collectorNumber = "NUM")
@@ -1204,6 +1207,89 @@ public class CARDNAME extends Card {
         }
     }
 ```
+
+---
+
+### Pump all + conditional keyword instant/sorcery
+
+"Creatures you control get +X/+Y until end of turn. [Condition] — If [condition], those creatures gain [keyword] until end of turn."
+
+Covers: fateful hour (`ControllerLifeAtOrBelowThresholdConditionalEffect`), morbid (`MorbidConditionalEffect`), raid (`RaidConditionalEffect`), metalcraft (`MetalcraftConditionalEffect`), etc.
+
+Reference: `b/BreakOfDay.java` (instant, +1/+1, fateful hour indestructible)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CONDITIONAL_EFFECT_CLASS;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        addEffect(EffectSlot.SPELL, new CONDITIONAL_EFFECT_CLASS(CONDITION_ARGS,
+                new GrantKeywordEffect(Keyword.KEYWORD, GrantScope.OWN_CREATURES)));
+    }
+}
+```
+
+**Test:** Same structure as the pump instant template, plus fateful hour / conditional tests:
+
+```java
+    @Test
+    @DisplayName("Conditional keyword granted when condition met")
+    void conditionalKeywordGrantedWhenConditionMet() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        // Set up condition (e.g. harness.setLife(player1, 5) for fateful hour)
+
+        harness.castInstant(player1, 0);  // or castSorcery
+        harness.passBothPriorities();
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        for (Permanent p : battlefield) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
+                assertThat(p.getPowerModifier()).isEqualTo(POWER_BOOST);
+                assertThat(p.getToughnessModifier()).isEqualTo(TOUGHNESS_BOOST);
+                assertThat(p.getGrantedKeywords()).contains(Keyword.KEYWORD);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Conditional keyword NOT granted when condition not met")
+    void conditionalKeywordNotGrantedWhenConditionNotMet() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+        // Do NOT set up condition (default state should not meet it)
+
+        harness.castInstant(player1, 0);  // or castSorcery
+        harness.passBothPriorities();
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        for (Permanent p : battlefield) {
+            if (p.getCard().hasType(CardType.CREATURE)) {
+                assertThat(p.getPowerModifier()).isEqualTo(POWER_BOOST);
+                assertThat(p.getToughnessModifier()).isEqualTo(TOUGHNESS_BOOST);
+                assertThat(p.getGrantedKeywords()).doesNotContain(Keyword.KEYWORD);
+            }
+        }
+    }
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `POWER_BOOST`/`TOUGHNESS_BOOST`, `CONDITIONAL_EFFECT_CLASS` (e.g. `ControllerLifeAtOrBelowThresholdConditionalEffect`), `CONDITION_ARGS` (e.g. `5`), `KEYWORD`, `PRIMARY_COLOR`, `TOTAL_MANA`.
 
 ---
 
