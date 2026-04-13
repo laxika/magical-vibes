@@ -31,6 +31,7 @@ public class StackEntry {
     @Setter private boolean castWithFlashback;
     @Setter private boolean kicked;
     @Setter private Card damageSourceCard;
+    @Setter private int stateTriggerEffectIndex = -1;
     private final List<UUID> targetIds;
 
     // Creature spell constructor
@@ -195,6 +196,7 @@ public class StackEntry {
         this.castWithFlashback = source.castWithFlashback;
         this.kicked = source.kicked;
         this.damageSourceCard = source.damageSourceCard;
+        this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }
 

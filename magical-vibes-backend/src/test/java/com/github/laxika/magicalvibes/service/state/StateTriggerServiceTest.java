@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -100,7 +101,8 @@ class StateTriggerServiceTest {
             assertThat(entry.getDescription()).isEqualTo("Test trigger");
             assertThat(entry.getEffectsToResolve()).isEqualTo(effects);
             assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
-            assertThat(gd.stateTriggerOnStack).contains(perm.getId());
+            assertThat(entry.getStateTriggerEffectIndex()).isZero();
+            assertThat(gd.stateTriggerOnStack).contains(new StateTriggerKey(perm.getId(), 0));
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Test trigger triggers."));
         }
 
@@ -119,7 +121,7 @@ class StateTriggerServiceTest {
             sut.checkStateTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.stateTriggerOnStack).doesNotContain(perm.getId());
+            assertThat(gd.stateTriggerOnStack).doesNotContain(new StateTriggerKey(perm.getId(), 0));
             verifyNoInteractions(gameBroadcastService);
         }
 
@@ -134,7 +136,7 @@ class StateTriggerServiceTest {
             Card card = createCardWithStateTrigger("Already On Stack", trigger);
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
-            gd.stateTriggerOnStack.add(perm.getId());
+            gd.stateTriggerOnStack.add(new StateTriggerKey(perm.getId(), 0));
 
             sut.checkStateTriggers(gd);
 
@@ -195,7 +197,9 @@ class StateTriggerServiceTest {
             sut.checkStateTriggers(gd);
 
             assertThat(gd.stack).hasSize(2);
-            assertThat(gd.stateTriggerOnStack).containsExactlyInAnyOrder(perm1.getId(), perm2.getId());
+            assertThat(gd.stateTriggerOnStack).containsExactlyInAnyOrder(
+                    new StateTriggerKey(perm1.getId(), 0),
+                    new StateTriggerKey(perm2.getId(), 0));
         }
 
         @Test
@@ -232,8 +236,8 @@ class StateTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Only fires first state trigger per permanent — second blocked by tracking")
-        void onlyFiresFirstTriggerPerPermanent() {
+        @DisplayName("Fires all state triggers on same permanent independently")
+        void firesAllTriggersOnSamePermanent() {
             StateTriggerEffect trigger1 = new StateTriggerEffect(
                     (gameData, perm, controllerId) -> true,
                     List.of(new GainLifeEffect(1)),
@@ -254,10 +258,45 @@ class StateTriggerServiceTest {
 
             sut.checkStateTriggers(gd);
 
-            // Only the first trigger fires; the second is blocked because perm.getId()
-            // was added to stateTriggerOnStack by the first trigger
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.get(0).getDescription()).isEqualTo("First trigger");
+            assertThat(gd.stack.get(0).getStateTriggerEffectIndex()).isZero();
+            assertThat(gd.stack.get(1).getDescription()).isEqualTo("Second trigger");
+            assertThat(gd.stack.get(1).getStateTriggerEffectIndex()).isEqualTo(1);
+            assertThat(gd.stateTriggerOnStack).containsExactlyInAnyOrder(
+                    new StateTriggerKey(perm.getId(), 0),
+                    new StateTriggerKey(perm.getId(), 1));
+        }
+
+        @Test
+        @DisplayName("Does not retrigger specific effect while on stack — other effects still fire")
+        void doesNotRetriggerSpecificEffectWhileOnStack() {
+            StateTriggerEffect trigger1 = new StateTriggerEffect(
+                    (gameData, perm, controllerId) -> true,
+                    List.of(new GainLifeEffect(1)),
+                    "First trigger"
+            );
+            StateTriggerEffect trigger2 = new StateTriggerEffect(
+                    (gameData, perm, controllerId) -> true,
+                    List.of(new GainLifeEffect(2)),
+                    "Second trigger"
+            );
+            Card card = new Card();
+            card.setName("Multi Trigger Card");
+            card.setType(CardType.ENCHANTMENT);
+            card.addEffect(EffectSlot.STATE_TRIGGERED, trigger1);
+            card.addEffect(EffectSlot.STATE_TRIGGERED, trigger2);
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            // Mark only the first trigger as already on stack
+            gd.stateTriggerOnStack.add(new StateTriggerKey(perm.getId(), 0));
+
+            sut.checkStateTriggers(gd);
+
+            // Only the second trigger fires
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getDescription()).isEqualTo("First trigger");
+            assertThat(gd.stack.getFirst().getDescription()).isEqualTo("Second trigger");
         }
 
         @Test
@@ -304,10 +343,10 @@ class StateTriggerServiceTest {
     class CleanupResolvedStateTrigger {
 
         @Test
-        @DisplayName("Removes permanent ID from stateTriggerOnStack for triggered ability")
+        @DisplayName("Removes state trigger key from stateTriggerOnStack for triggered ability")
         void removesTrackingForTriggeredAbility() {
             UUID sourcePermanentId = UUID.randomUUID();
-            gd.stateTriggerOnStack.add(sourcePermanentId);
+            gd.stateTriggerOnStack.add(new StateTriggerKey(sourcePermanentId, 0));
 
             Card card = new Card();
             card.setName("Trigger Card");
@@ -320,17 +359,19 @@ class StateTriggerServiceTest {
                     null,
                     sourcePermanentId
             );
+            entry.setStateTriggerEffectIndex(0);
 
             sut.cleanupResolvedStateTrigger(gd, entry);
 
-            assertThat(gd.stateTriggerOnStack).doesNotContain(sourcePermanentId);
+            assertThat(gd.stateTriggerOnStack).doesNotContain(new StateTriggerKey(sourcePermanentId, 0));
         }
 
         @Test
         @DisplayName("Does not remove tracking when sourcePermanentId is null")
         void doesNotRemoveWhenSourcePermanentIdIsNull() {
             UUID otherId = UUID.randomUUID();
-            gd.stateTriggerOnStack.add(otherId);
+            StateTriggerKey otherKey = new StateTriggerKey(otherId, 0);
+            gd.stateTriggerOnStack.add(otherKey);
 
             Card card = new Card();
             card.setName("No Source Card");
@@ -344,14 +385,15 @@ class StateTriggerServiceTest {
 
             sut.cleanupResolvedStateTrigger(gd, entry);
 
-            assertThat(gd.stateTriggerOnStack).contains(otherId);
+            assertThat(gd.stateTriggerOnStack).contains(otherKey);
         }
 
         @Test
         @DisplayName("Does not remove tracking for non-triggered-ability entry types")
         void doesNotRemoveForNonTriggeredAbility() {
             UUID sourcePermanentId = UUID.randomUUID();
-            gd.stateTriggerOnStack.add(sourcePermanentId);
+            StateTriggerKey key = new StateTriggerKey(sourcePermanentId, 0);
+            gd.stateTriggerOnStack.add(key);
 
             Card card = new Card();
             card.setName("Creature Card");
@@ -359,7 +401,32 @@ class StateTriggerServiceTest {
 
             sut.cleanupResolvedStateTrigger(gd, entry);
 
-            assertThat(gd.stateTriggerOnStack).contains(sourcePermanentId);
+            assertThat(gd.stateTriggerOnStack).contains(key);
+        }
+
+        @Test
+        @DisplayName("Does not remove tracking for triggered ability without stateTriggerEffectIndex")
+        void doesNotRemoveForNonStateTrigger() {
+            UUID sourcePermanentId = UUID.randomUUID();
+            StateTriggerKey key = new StateTriggerKey(sourcePermanentId, 0);
+            gd.stateTriggerOnStack.add(key);
+
+            Card card = new Card();
+            card.setName("ETB Card");
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    player1Id,
+                    "ETB trigger",
+                    List.of(),
+                    null,
+                    sourcePermanentId
+            );
+            // stateTriggerEffectIndex defaults to -1 (not a state trigger)
+
+            sut.cleanupResolvedStateTrigger(gd, entry);
+
+            assertThat(gd.stateTriggerOnStack).contains(key);
         }
 
         @Test

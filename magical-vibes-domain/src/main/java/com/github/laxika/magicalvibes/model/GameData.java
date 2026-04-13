@@ -356,10 +356,11 @@ public class GameData {
     // CR 704.5b — track players who attempted to draw from an empty library
     public final Set<UUID> playersAttemptedDrawFromEmptyLibrary = ConcurrentHashMap.newKeySet();
 
-    /** Tracks permanent IDs whose state-triggered abilities (rule 603.8) are currently on the
-     *  stack. Prevents re-triggering while the ability is pending. Cleaned up when the
-     *  ability resolves, is countered, or otherwise leaves the stack. */
-    public final Set<UUID> stateTriggerOnStack = ConcurrentHashMap.newKeySet();
+    /** Tracks individual state-triggered abilities (rule 603.8) currently on the stack.
+     *  Each key is a (permanentId, effectIndex) pair so multiple state triggers on the
+     *  same permanent are tracked independently. Cleaned up when the ability resolves,
+     *  is countered, or otherwise leaves the stack. */
+    public final Set<StateTriggerKey> stateTriggerOnStack = ConcurrentHashMap.newKeySet();
 
     /** When true, this GameData is an MCTS simulation copy — suppress all external side effects
      *  (broadcasting, session messages, registry mutations, logging). */

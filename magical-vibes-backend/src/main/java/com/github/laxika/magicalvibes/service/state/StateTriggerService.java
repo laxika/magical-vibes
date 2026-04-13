@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StateTriggerKey;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import lombok.RequiredArgsConstructor;
@@ -46,14 +48,16 @@ public class StateTriggerService {
             // Snapshot to avoid ConcurrentModificationException if a trigger modifies the list
             List<Permanent> snapshot = List.copyOf(battlefield);
             for (Permanent perm : snapshot) {
-                for (var effect : perm.getCard().getEffects(EffectSlot.STATE_TRIGGERED)) {
-                    if (!(effect instanceof StateTriggerEffect trigger)) continue;
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.STATE_TRIGGERED);
+                for (int i = 0; i < effects.size(); i++) {
+                    if (!(effects.get(i) instanceof StateTriggerEffect trigger)) continue;
 
                     // Rule 603.8: don't retrigger while already on the stack
-                    if (gameData.stateTriggerOnStack.contains(perm.getId())) continue;
+                    StateTriggerKey key = new StateTriggerKey(perm.getId(), i);
+                    if (gameData.stateTriggerOnStack.contains(key)) continue;
 
                     if (trigger.predicate().test(gameData, perm, playerId)) {
-                        gameData.stateTriggerOnStack.add(perm.getId());
+                        gameData.stateTriggerOnStack.add(key);
 
                         StackEntry entry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -64,6 +68,7 @@ public class StateTriggerService {
                                 null,
                                 perm.getId()
                         );
+                        entry.setStateTriggerEffectIndex(i);
                         gameData.stack.add(entry);
 
                         gameBroadcastService.logAndBroadcast(gameData,
@@ -83,8 +88,10 @@ public class StateTriggerService {
      */
     public void cleanupResolvedStateTrigger(GameData gameData, StackEntry entry) {
         if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getSourcePermanentId() != null) {
-            gameData.stateTriggerOnStack.remove(entry.getSourcePermanentId());
+                && entry.getSourcePermanentId() != null
+                && entry.getStateTriggerEffectIndex() >= 0) {
+            gameData.stateTriggerOnStack.remove(
+                    new StateTriggerKey(entry.getSourcePermanentId(), entry.getStateTriggerEffectIndex()));
         }
     }
 }
