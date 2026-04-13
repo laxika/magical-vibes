@@ -242,6 +242,33 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears losesAllAbilitiesUntilEndOfTurn flag on permanents")
+        void clearsLosesAllAbilitiesUntilEndOfTurn() {
+            Card card = createCardWithName("Alloy Myr");
+            Permanent perm = new Permanent(card);
+            perm.setLosesAllAbilitiesUntilEndOfTurn(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Clears losesAllAbilitiesUntilEndOfTurn even when no other modifiers are set")
+        void clearsLosesAllAbilitiesAlone() {
+            Card card = createCardWithName("Alloy Myr");
+            Permanent perm = new Permanent(card);
+            // Only set losesAllAbilities — no power/toughness/keyword modifiers
+            perm.setLosesAllAbilitiesUntilEndOfTurn(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
+        }
+
+        @Test
         @DisplayName("Clears global damage prevention flags")
         void clearsGlobalDamagePreventionFlags() {
             gd.globalDamagePreventionShield = 10;

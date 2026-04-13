@@ -2332,6 +2332,17 @@ public class GameQueryService {
     public boolean canActivateManaAbility(GameData gameData, Permanent permanent) {
         String cardName = permanent.getCard().getName();
 
+        // Check temporary ability loss (e.g. Merfolk Trickster)
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return false;
+        }
+
+        // Check continuous ability loss (e.g. Deep Freeze aura)
+        StaticBonus staticBonus = computeStaticBonus(gameData, permanent);
+        if (staticBonus.losesAllAbilities()) {
+            return false;
+        }
+
         // Check aura-based locks (Arrest, Ice Cage)
         if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             return false;

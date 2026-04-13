@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
@@ -2807,6 +2808,40 @@ class GameQueryServiceTest {
 
             Card myrCard = createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR));
             Permanent myr = addPermanent(player1Id, myrCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns false when permanent has losesAllAbilitiesUntilEndOfTurn set")
+        void returnsFalse_whenLosesAllAbilitiesUntilEndOfTurn() {
+            Card myrCard = createArtifactCreature("Alloy Myr", 2, 2, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+            myr.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns true when losesAllAbilitiesUntilEndOfTurn is not set")
+        void returnsTrue_whenLosesAllAbilitiesNotSet() {
+            Card myrCard = createArtifactCreature("Alloy Myr", 2, 2, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            assertThat(gqs.canActivateManaAbility(gd, myr)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when static LosesAllAbilitiesEffect applies via aura")
+        void returnsFalse_whenStaticLosesAllAbilitiesFromAura() {
+            Card myrCard = createArtifactCreature("Alloy Myr", 2, 2, List.of(CardSubtype.MYR));
+            Permanent myr = addPermanent(player1Id, myrCard);
+
+            // Deep Freeze-style aura that removes all abilities
+            Card auraCard = createAura("Deep Freeze",
+                    new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE));
+            Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(myr.getId());
 
             assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
         }
