@@ -922,55 +922,90 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Casts a specific spell from hand. Used by precombat heuristics that have
-     * already decided which spell to cast. Handles targeting, modal spells,
-     * X costs, sacrifice costs, etc.
-     *
-     * @param forcedTargetId if non-null, overrides targetSelector choice
+     * Encapsulates all pre-cast preparation for a spell: modal handling, targeting,
+     * costs, X-value calculation. Built by {@link #buildSpellCastingPlan}.
      */
-    private boolean tryCastSpecificSpell(GameData gameData, int handIndex, UUID forcedTargetId) {
+    private record SpellCastingPlan(
+            int handIndex,
+            Card card,
+            UUID targetId,
+            List<UUID> multiTargetIds,
+            Integer xValue,
+            Map<UUID, Integer> damageAssignments,
+            UUID sacrificePermanentId,
+            List<Integer> exileGraveyardCardIndices,
+            int targetingTax
+    ) {}
+
+    /**
+     * Builds a SpellCastingPlan for the given card, handling modal spells, damage
+     * distribution, targeting, sacrifice costs, graveyard exile, and X-value calculation.
+     *
+     * @param gameData         the current game state
+     * @param handIndex        index of the card in the AI's hand
+     * @param initialTargetId  pre-selected target (e.g. from MCTS or forced targeting), may be null
+     * @param checkSpellTarget if true, checks EffectResolution.needsSpellTarget for counterspells
+     * @return the plan, or null if any required step fails
+     */
+    private SpellCastingPlan buildSpellCastingPlan(GameData gameData, int handIndex,
+                                                    UUID initialTargetId, boolean checkSpellTarget) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         Card card = hand.get(handIndex);
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
-        // Handle modal spells
+        // 1. Modal spells
         ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
         if (modalPlan == null && findChooseOneEffect(card) != null) {
-            return false;
+            return null;
         }
 
-        // Handle damage distribution
+        // 2. Damage distribution
         Map<UUID, Integer> damageAssignments = null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
-            if (damageAssignments == null) return false;
+            if (damageAssignments == null) return null;
         }
 
-        // Targeting
-        UUID targetId = forcedTargetId;
+        // 3. Targeting
+        UUID targetId = initialTargetId;
         List<UUID> multiTargetIds = null;
         boolean isMultiTarget = card.getSpellTargets().size() > 1;
         if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
-            if (multiTargetIds == null) return false;
+            if (multiTargetIds == null) return null;
+            targetId = null;
         } else if (targetId == null && modalPlan != null) {
             targetId = modalPlan.targetId();
-        } else if (targetId == null && !EffectResolution.needsDamageDistribution(card)
+        } else if (targetId == null && checkSpellTarget && modalPlan == null
+                && EffectResolution.needsSpellTarget(card)) {
+            targetId = targetSelector.chooseSpellTarget(gameData, card, aiPlayer.getId());
+            if (targetId == null) return null;
+        } else if (targetId == null && modalPlan == null
+                && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
-            if (targetId == null) return false;
+            if (targetId == null) return null;
         }
 
-        // Targeting tax
+        // Damage distribution spells don't use a single targetId
+        if (damageAssignments != null) {
+            targetId = null;
+        }
+        // Modal target overrides any pre-set target (e.g. from MCTS)
+        if (modalPlan != null && multiTargetIds == null && damageAssignments == null) {
+            targetId = modalPlan.targetId();
+        }
+
+        // 4. Targeting tax
         int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
         if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
-            return false;
+            return null;
         }
 
-        // Sacrifice cost
+        // 5. Sacrifice cost
         UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
 
-        // Graveyard exile cost
+        // 6. Graveyard exile cost
         List<Integer> exileGraveyardCardIndices = null;
         if (findExileXGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
@@ -979,7 +1014,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     gameData, findExileNGraveyardCost(card));
         }
 
-        // X value
+        // 7. X value
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
         int costModifier = gameBroadcastService.getCastCostModifier(
@@ -987,11 +1022,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
-                if (maxX <= 0) return false;
+                if (maxX <= 0) return null;
                 List<Permanent> validTargets =
                         targetSelector.findValidPermanentTargetsForManaValueX(
                                 gameData, card, aiPlayer.getId(), maxX);
-                if (validTargets.isEmpty()) return false;
+                if (validTargets.isEmpty()) return null;
                 Permanent chosen = validTargets.stream()
                         .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
                         .orElse(validTargets.getFirst());
@@ -1001,34 +1036,62 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 int smartX = manaManager.calculateSmartX(
                         gameData, card, targetId, virtualPool, costModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
-                if (smartX <= 0) return false;
+                if (smartX <= 0) return null;
                 xValue = smartX;
             }
         }
 
-        // Cast
-        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
-            return true; // Mana ability triggered a pending choice
+        return new SpellCastingPlan(handIndex, card, targetId, multiTargetIds, xValue,
+                damageAssignments, sacrificePermanentId, exileGraveyardCardIndices, targetingTax);
+    }
+
+    /**
+     * Executes a prepared spell casting plan: taps mana, sends the PlayCardRequest,
+     * and verifies the cast succeeded.
+     *
+     * @return true if the spell was cast or a mana ability triggered a pending choice
+     */
+    private boolean executeSpellCast(GameData gameData, SpellCastingPlan plan, String logLabel) {
+        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax)) {
+            return true;
         }
         int handSizeBefore = hand.size();
-        final int idx = handIndex;
-        final UUID fTargetId = targetId;
-        final Integer fXValue = xValue;
-        final Map<UUID, Integer> fDamageAssignments = damageAssignments;
-        final UUID fSacrificePermanentId = sacrificePermanentId;
-        final List<Integer> fExileIndices = exileGraveyardCardIndices;
-        final List<UUID> fMultiTargetIds = multiTargetIds;
+        final int idx = plan.handIndex;
+        final UUID fTargetId = plan.targetId;
+        final Integer fXValue = plan.xValue;
+        final Map<UUID, Integer> fDamage = plan.damageAssignments;
+        final UUID fSacrifice = plan.sacrificePermanentId;
+        final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
+        final List<UUID> fMultiTargets = plan.multiTargetIds;
         send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(idx, fXValue, fTargetId, fDamageAssignments,
-                        fMultiTargetIds, null, null, fSacrificePermanentId,
+                new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
+                        fMultiTargets, null, null, fSacrifice,
                         null, null, null, null, null, fExileIndices, null, null, null)));
         if (hand.size() >= handSizeBefore) {
             Card failedCard = hand.size() > idx ? hand.get(idx) : null;
-            log.warn("AI (Hard): Precombat priority cast failed for '{}' in game {}",
-                    failedCard != null ? failedCard.getName() : "?", gameId);
+            ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
+            log.warn("{}: PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
+                    logLabel, gameId, failedCard != null ? failedCard.getName() : "?", idx,
+                    gameData.currentStep, aiPlayer.getId().equals(gameData.activePlayerId),
+                    gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
+                    gameData.priorityPassedBy);
             return false;
         }
         return true;
+    }
+
+    /**
+     * Casts a specific spell from hand. Used by precombat heuristics that have
+     * already decided which spell to cast. Handles targeting, modal spells,
+     * X costs, sacrifice costs, etc.
+     *
+     * @param forcedTargetId if non-null, overrides targetSelector choice
+     */
+    private boolean tryCastSpecificSpell(GameData gameData, int handIndex, UUID forcedTargetId) {
+        SpellCastingPlan plan = buildSpellCastingPlan(gameData, handIndex, forcedTargetId, false);
+        if (plan == null) return false;
+        return executeSpellCast(gameData, plan, "AI (Hard)");
     }
 
     /**
@@ -1254,114 +1317,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             SimulationAction bestAction = mctsEngine.search(gameData, aiPlayer.getId(), MCTS_BUDGET);
 
             if (bestAction instanceof SimulationAction.PlayCard pc) {
-                Card card = hand.get(pc.handIndex());
-
-                // Handle modal spells (ChooseOneEffect)
-                ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
-                if (modalPlan == null && findChooseOneEffect(card) != null) {
-                    return false;
-                }
-
-                // Build damage assignments for divided damage spells
-                Map<UUID, Integer> damageAssignments = null;
-                if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
-                    damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
-                    if (damageAssignments == null) {
-                        return false;
-                    }
-                }
-
-                // Select sacrifice target if the spell has a sacrifice cost
-                UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
-
-                // Select graveyard cards to exile if the spell has a graveyard exile cost
-                List<Integer> exileGraveyardCardIndices = null;
-                if (findExileXGraveyardCost(card) != null) {
-                    exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
-                } else if (findExileNGraveyardCost(card) != null) {
-                    exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
-                }
-
-                ManaCost castCost = new ManaCost(card.getManaCost());
-                Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-                UUID mctsTargetId = pc.targetId();
-                // Check targeting tax (e.g. Kopala, Warden of Waves)
-                int targetingTax = computeTargetingTax(gameData, mctsTargetId, null);
-                if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
-                    return false;
-                }
-                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
-                if (castCost.hasX() && xValue == null) {
-                    if (hasPermanentManaValueEqualsXTarget(card)) {
-                        int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
-                        if (maxX <= 0) {
-                            return false;
-                        }
-                        List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
-                                gameData, card, aiPlayer.getId(), maxX);
-                        if (validTargets.isEmpty()) {
-                            return false;
-                        }
-                        Permanent chosen = validTargets.stream()
-                                .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
-                                .orElse(validTargets.getFirst());
-                        mctsTargetId = chosen.getId();
-                        xValue = chosen.getCard().getManaValue();
-                    } else {
-                        int smartX = manaManager.calculateSmartX(gameData, card, mctsTargetId, virtualPool, costModifier);
-                        smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
-                        if (smartX <= 0) {
-                            return false;
-                        }
-                        xValue = smartX;
-                    }
-                }
-                // Multi-target spells: select per-group targets
-                List<UUID> mctsMultiTargetIds = null;
-                boolean mctsIsMultiTarget = card.getSpellTargets().size() > 1;
-                if (mctsIsMultiTarget && modalPlan == null) {
-                    mctsMultiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
-                    if (mctsMultiTargetIds == null) {
-                        return false;
-                    }
-                    // Recompute targeting tax with multi-targets
-                    int multiTargetTax = computeTargetingTax(gameData, null, mctsMultiTargetIds);
-                    if (multiTargetTax > targetingTax) {
-                        targetingTax = multiTargetTax;
-                        if (!canAffordSpell(gameData, card, virtualPool, targetingTax)) {
-                            return false;
-                        }
-                    }
-                    mctsTargetId = null; // Use targetIds, not targetId
-                }
-                log.info("AI (Hard/MCTS): Casting {}{} in game {}", card.getName(),
-                        xValue != null ? " (X=" + xValue + ")" : "", gameId);
-                if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
-                    return true; // Mana ability triggered a pending choice; will resume after it resolves
-                }
-                int handSizeBefore = hand.size();
-                final int cardIndex = pc.handIndex();
-                final UUID targetId = modalPlan != null ? modalPlan.targetId() : (EffectResolution.needsDamageDistribution(card) ? null : mctsTargetId);
-                final Integer finalXValue = xValue;
-                final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
-                final UUID finalSacrificePermanentId = sacrificePermanentId;
-                final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
-                final List<UUID> finalMctsMultiTargetIds = mctsMultiTargetIds;
-                send(() -> messageHandler.handlePlayCard(selfConnection,
-                        new PlayCardRequest(cardIndex, finalXValue, targetId, finalDamageAssignments, finalMctsMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
-                // Verify the spell was actually cast — handlePlayCard silently
-                // swallows errors, so we must confirm the state actually changed.
-                if (hand.size() >= handSizeBefore) {
-                    Card failedCard = hand.size() > cardIndex ? hand.get(cardIndex) : null;
-                    ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
-                    log.warn("AI (Hard/MCTS): PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
-                            gameId, failedCard != null ? failedCard.getName() : "?", cardIndex,
-                            gameData.currentStep, aiPlayer.getId().equals(gameData.activePlayerId),
-                            gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
-                            gameData.priorityPassedBy);
-                    return false;
-                }
-                return true;
+                SpellCastingPlan plan = buildSpellCastingPlan(gameData, pc.handIndex(), pc.targetId(), false);
+                if (plan == null) return false;
+                log.info("AI (Hard/MCTS): Casting {}{} in game {}", plan.card().getName(),
+                        plan.xValue() != null ? " (X=" + plan.xValue() + ")" : "", gameId);
+                return executeSpellCast(gameData, plan, "AI (Hard/MCTS)");
             }
 
             if (bestAction instanceof SimulationAction.PassPriority) {
@@ -1449,114 +1409,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (best == null) {
             return false;
         }
-        Card card = hand.get(best.index);
 
-        // Handle modal spells (ChooseOneEffect)
-        ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
-        if (modalPlan == null && findChooseOneEffect(card) != null) {
-            return false;
-        }
-
-        // Build damage assignments for divided damage spells
-        Map<UUID, Integer> damageAssignments = null;
-        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
-            damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
-            if (damageAssignments == null) {
-                return false;
-            }
-        }
-
-        // Determine target if needed (skip for modal and damage distribution spells)
-        UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        List<UUID> multiTargetIds = null;
-        boolean isMultiTarget = card.getSpellTargets().size() > 1;
-        if (isMultiTarget && modalPlan == null) {
-            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
-            if (multiTargetIds == null) {
-                return false;
-            }
-        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
-            targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
-            if (targetId == null) {
-                return false;
-            }
-        }
-
-        // Check targeting tax (e.g. Kopala, Warden of Waves)
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
-            return false;
-        }
-
-        // Select sacrifice target if the spell has a sacrifice cost
-        UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
-
-        // Select graveyard cards to exile if the spell has a graveyard exile cost
-        List<Integer> exileGraveyardCardIndices = null;
-        if (findExileXGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
-        } else if (findExileNGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
-        }
-
-        ManaCost castCost = new ManaCost(card.getManaCost());
-        Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
-        if (castCost.hasX() && xValue == null) {
-            if (hasPermanentManaValueEqualsXTarget(card)) {
-                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
-                if (maxX <= 0) {
-                    return false;
-                }
-                List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
-                        gameData, card, aiPlayer.getId(), maxX);
-                if (validTargets.isEmpty()) {
-                    return false;
-                }
-                Permanent chosen = validTargets.stream()
-                        .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
-                        .orElse(validTargets.getFirst());
-                targetId = chosen.getId();
-                xValue = chosen.getCard().getManaValue();
-            } else {
-                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool, costModifier);
-                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
-                if (smartX <= 0) {
-                    return false;
-                }
-                xValue = smartX;
-            }
-        }
-
-        log.info("AI (Hard): Casting {}{} (value={}) in game {}", card.getName(),
-                xValue != null ? " (X=" + xValue + ")" : "",
+        SpellCastingPlan plan = buildSpellCastingPlan(gameData, best.index, null, false);
+        if (plan == null) return false;
+        log.info("AI (Hard): Casting {}{} (value={}) in game {}", plan.card().getName(),
+                plan.xValue() != null ? " (X=" + plan.xValue() + ")" : "",
                 String.format("%.1f", best.value), gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
-            return true; // Mana ability triggered a pending choice; will resume after it resolves
-        }
-        int handSizeBefore = hand.size();
-        final UUID finalTargetId = targetId;
-        final int cardIndex = best.index;
-        final Integer finalXValue = xValue;
-        final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
-        final UUID finalSacrificePermanentId = sacrificePermanentId;
-        final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
-        final List<UUID> finalMultiTargetIds = multiTargetIds;
-        send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
-        // Verify the spell was actually cast — handlePlayCard silently
-        // swallows errors, so we must confirm the state actually changed.
-        if (hand.size() >= handSizeBefore) {
-            Card failedCard = hand.size() > cardIndex ? hand.get(cardIndex) : null;
-            ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
-            log.warn("AI (Hard): PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
-                    gameId, failedCard != null ? failedCard.getName() : "?", cardIndex,
-                    gameData.currentStep, aiPlayer.getId().equals(gameData.activePlayerId),
-                    gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
-                    gameData.priorityPassedBy);
-            return false;
-        }
-        return true;
+        return executeSpellCast(gameData, plan, "AI (Hard)");
     }
 
     /**
@@ -1896,94 +1755,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * sacrifice costs, graveyard exile, and X-value calculation.
      */
     private boolean castInstantAtIndex(GameData gameData, List<Card> hand, int cardIndex, double value) {
-        Card card = hand.get(cardIndex);
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
-
-        // Handle modal spells (ChooseOneEffect)
-        ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
-        if (modalPlan == null && findChooseOneEffect(card) != null) {
-            return false;
-        }
-
-        Map<UUID, Integer> damageAssignments = null;
-        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
-            damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
-            if (damageAssignments == null) return false;
-        }
-
-        UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        List<UUID> multiTargetIds = null;
-        boolean isMultiTarget = card.getSpellTargets().size() > 1;
-        if (isMultiTarget && modalPlan == null) {
-            multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
-            if (multiTargetIds == null) return false;
-        } else if (modalPlan == null && EffectResolution.needsSpellTarget(card)) {
-            // Counterspells target a spell on the stack
-            targetId = targetSelector.chooseSpellTarget(gameData, card, aiPlayer.getId());
-            if (targetId == null) return false;
-        } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
-            targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
-            if (targetId == null) return false;
-        }
-
-        // Check targeting tax (e.g. Kopala, Warden of Waves)
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
-            return false;
-        }
-
-        UUID sacrificePermanentId = selectSacrificeTarget(gameData, card);
-
-        List<Integer> exileGraveyardCardIndices = null;
-        if (findExileXGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
-        } else if (findExileNGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
-        }
-
-        ManaCost castCost = new ManaCost(card.getManaCost());
-        Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int instantCostModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
-        if (castCost.hasX() && xValue == null) {
-            if (hasPermanentManaValueEqualsXTarget(card)) {
-                int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);
-                if (maxX <= 0) return false;
-                List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
-                        gameData, card, aiPlayer.getId(), maxX);
-                if (validTargets.isEmpty()) return false;
-                Permanent chosen = validTargets.stream()
-                        .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
-                        .orElse(validTargets.getFirst());
-                targetId = chosen.getId();
-                xValue = chosen.getCard().getManaValue();
-            } else {
-                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool, instantCostModifier);
-                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
-                if (smartX <= 0) return false;
-                xValue = smartX;
-            }
-        }
-
-        log.info("AI (Hard): Casting {} at instant speed{} (value={}) in game {}", card.getName(),
-                xValue != null ? " (X=" + xValue + ")" : "",
+        SpellCastingPlan plan = buildSpellCastingPlan(gameData, cardIndex, null, true);
+        if (plan == null) return false;
+        log.info("AI (Hard): Casting {} at instant speed{} (value={}) in game {}", plan.card().getName(),
+                plan.xValue() != null ? " (X=" + plan.xValue() + ")" : "",
                 String.format("%.1f", value), gameId);
-        if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
-            return true; // Mana ability triggered a pending choice; will resume after it resolves
-        }
-        int handSizeBefore = hand.size();
-        final UUID finalTargetId = targetId;
-        final Integer finalXValue = xValue;
-        final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
-        final UUID finalSacrificePermanentId = sacrificePermanentId;
-        final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
-        final List<UUID> finalMultiTargetIds = multiTargetIds;
-        send(() -> messageHandler.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
-        if (hand.size() >= handSizeBefore) {
-            log.warn("AI (Hard): Instant-speed cast failed silently in game {}", gameId);
-            return false;
-        }
-        return true;
+        return executeSpellCast(gameData, plan, "AI (Hard)");
     }
 
     // ===== Activated Abilities =====
