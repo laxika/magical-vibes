@@ -324,6 +324,14 @@ public abstract class AiDecisionEngine {
         int totalTax = taxPerCreature * capped.size();
         String taxCostStr = "{" + totalTax + "}";
         manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, manaTapAction(), true);
+        // A mana source used to pay the tax may have been one of the selected attackers
+        // (e.g. Leaden Myr tapped for mana). Remove any attackers that are now tapped.
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        if (battlefield != null) {
+            capped = capped.stream()
+                    .filter(idx -> idx < battlefield.size() && !battlefield.get(idx).isTapped())
+                    .toList();
+        }
         return capped;
     }
 

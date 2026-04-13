@@ -1719,6 +1719,92 @@ class AiDecisionEngineTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("prepareAttackersForTax removes attackers that were tapped as mana sources")
+    void prepareAttackersForTaxRemovesTappedManaCreatures() {
+        // Setup: opponent controls Baird (tax {1} per attacker)
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI battlefield: LlanowarElves (creature mana source) + GrizzlyBears (vanilla creature)
+        // No lands — only LlanowarElves can produce mana for the tax.
+        Permanent elves = new Permanent(new LlanowarElves());
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elves);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+
+        // Both creatures are at indices 0 (elves) and 1 (bears) — request both as attackers
+        // Tax for 2 attackers = {2}, but only 1 mana available from elves.
+        // prepareAttackersForTax caps to 1, taps elves for mana, then should remove elves
+        // from the attacker list since it's now tapped.
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1));
+
+        assertThat(elves.isTapped()).isTrue();
+        // Elves (index 0) should be removed because it was tapped for mana
+        assertThat(result).doesNotContain(0);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax keeps attackers that were not tapped for mana")
+    void prepareAttackersForTaxKeepsUntappedAttackers() {
+        // Setup: opponent controls Baird (tax {1} per attacker)
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has: 1 Plains (mana source) + 1 GrizzlyBears (attacker)
+        giveAiPlains(1);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+
+        // Plains at index 0, Bears at index 1 — only Bears is an attacker
+        // Tax for 1 attacker = {1}, paid by tapping Plains
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(1));
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(result).containsExactly(1);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax removes all attackers when all were tapped for mana")
+    void prepareAttackersForTaxRemovesAllWhenAllTapped() {
+        // Setup: opponent controls Baird (tax {1} per attacker)
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has only 1 LlanowarElves — it's both the attacker and the only mana source.
+        Permanent elves = new Permanent(new LlanowarElves());
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elves);
+
+        // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+
+        // Request elves (index 0) as sole attacker. Tax = {1}, paid by tapping elves itself.
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0));
+
+        assertThat(elves.isTapped()).isTrue();
+        assertThat(result).isEmpty();
+    }
+
     // ===== tryPlayLand silent failure recovery =====
 
     @Nested
