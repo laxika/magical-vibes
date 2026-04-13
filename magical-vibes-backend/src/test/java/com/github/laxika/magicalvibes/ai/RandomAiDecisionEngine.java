@@ -89,9 +89,21 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Always try to play a land (maximizes mana for more interesting games)
             tryPlayLand(gameData);
 
+            // Re-check priority: playing a land can trigger abilities that set
+            // awaiting input (e.g. a queued death trigger needing target selection).
+            if (!hasPriority(gameData)) {
+                return;
+            }
+
             if (gameData.stack.isEmpty() && tryCastRandomSpell(gameData, false)) {
                 return;
             }
+        }
+
+        // Re-check priority: casting a sorcery-speed spell above may have triggered
+        // abilities that set awaiting input.
+        if (!hasPriority(gameData)) {
+            return;
         }
 
         // Outside main phase (or after failing to cast a sorcery), try an instant
