@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TapEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedUntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
@@ -82,6 +83,40 @@ public class TapUntapResolutionService {
         String logEntry = self.getCard().getName() + " taps itself.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} taps itself", gameData.id, self.getCard().getName());
+    }
+
+    @HandlesEffect(TapEnchantedCreatureEffect.class)
+    private void resolveTapEnchantedCreature(GameData gameData, StackEntry entry) {
+        Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (auraPerm == null) {
+            log.info("Game {} - Aura {} no longer on battlefield, skipping tap enchanted creature",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        UUID enchantedId = auraPerm.getAttachedTo();
+        if (enchantedId == null) {
+            log.info("Game {} - {} is not attached to anything, skipping tap enchanted creature",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedId);
+        if (enchantedCreature == null) {
+            log.info("Game {} - Enchanted creature no longer on battlefield, skipping tap",
+                    gameData.id);
+            return;
+        }
+
+        boolean wasTapped = enchantedCreature.isTapped();
+        enchantedCreature.tap();
+        if (!wasTapped) {
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, enchantedCreature);
+        }
+
+        String logMsg = entry.getCard().getName() + " taps " + enchantedCreature.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} taps enchanted creature {}", gameData.id, entry.getCard().getName(), enchantedCreature.getCard().getName());
     }
 
     @HandlesEffect(TapOrUntapTargetPermanentEffect.class)

@@ -907,6 +907,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
+| `TapEnchantedCreatureEffect` | `()` | taps the creature the source aura is attached to; used by auras with activated abilities like "{1}: Tap enchanted creature." Resolution finds the aura via `sourcePermanentId`, then taps `attachedTo` creature. Used by Burden of Guilt |
 | `TapTargetPermanentEffect` | `()` | tap target permanent |
 | `TapOrUntapTargetPermanentEffect` | `()` | tap or untap target permanent |
 | `UntapTargetPermanentEffect` | `(PermanentPredicate targetPredicate)` | untap target permanent; optional predicate restricts valid targets (e.g. `PermanentIsArtifactPredicate`). No-arg ctor defaults to null (any permanent). |

@@ -182,6 +182,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
+| "tap enchanted creature" | `TapEnchantedCreatureEffect()` | ability | aura's own activated ability; no targeting |
 | "tap target [permanent]" | `TapTargetPermanentEffect()` | SPELL/ability | + filter |
 | "untap target [permanent]" | `UntapTargetPermanentEffect(predicate)` | SPELL/ability | |
 | "untap all [permanents] you control" | `UntapAllControlledPermanentsEffect(predicate)` | SPELL | |

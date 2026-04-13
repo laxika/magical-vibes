@@ -348,6 +348,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Tap / untap
 
+- `TapEnchantedCreatureEffect()` — tap aura's enchanted creature
 - `TapTargetPermanentEffect()` — tap target
 - `UntapTargetPermanentEffect(PermanentPredicate)` — untap target
 - `TapSelfEffect()` — tap self
