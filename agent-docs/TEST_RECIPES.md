@@ -436,10 +436,84 @@ void deathTriggerAfterWrathTargetsPlayer() {
 | `getMessageHandler()` | `MessageHandler` | For AI/message handler tests |
 | `getSessionManager()` | `WebSocketSessionManager` | Access session management |
 
+## Recipe: aura with static effect
+
+```java
+// Setup: attach aura directly (skip casting)
+Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+Permanent auraPerm = new Permanent(new YourAura());
+auraPerm.setAttachedTo(bearsPerm.getId());
+gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+// Assert static effect (e.g. P/T boost via GameQueryService)
+assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(EXPECTED);
+
+// Remove aura and verify effect is gone
+gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
+assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(BASE);
+```
+
+## Recipe: aura's own activated ability (not granted)
+
+The ability is on the aura permanent itself. `permanentIndex` points to the **aura**, not the enchanted creature.
+
+```java
+// Setup
+Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears()); // index 0
+Permanent auraPerm = new Permanent(new YourAura());
+auraPerm.setAttachedTo(bearsPerm.getId());
+gd.playerBattlefields.get(player1.getId()).add(auraPerm);           // index 1
+
+harness.addMana(player1, ManaColor.COLORLESS, 1); // ability cost
+
+// Activate on the AURA (index 1), no target needed
+harness.activateAbility(player1, 1, null, null);
+harness.passBothPriorities();
+
+// Assert effect on enchanted creature
+assertThat(bearsPerm.isTapped()).isTrue();
+```
+
+## Recipe: aura grants activated ability to creature
+
+The creature gets the ability. `permanentIndex` points to the **creature**, not the aura.
+
+```java
+// Setup
+Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears()); // index 0
+Permanent auraPerm = new Permanent(new YourAura());
+auraPerm.setAttachedTo(bearsPerm.getId());
+gd.playerBattlefields.get(player1.getId()).add(auraPerm);           // index 1
+
+// Activate on the CREATURE (index 0), with target
+harness.activateAbility(player1, 0, null, targetId);
+harness.passBothPriorities();
+```
+
+## Recipe: cast aura targeting a creature
+
+```java
+Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+harness.setHand(player1, List.of(new YourAura()));
+harness.addMana(player1, ManaColor.WHITE, TOTAL_CMC);
+
+gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+harness.passBothPriorities();
+
+// Verify attached
+assertThat(gd.playerBattlefields.get(player1.getId()))
+        .anyMatch(p -> p.getCard().getName().equals("Your Aura")
+                && p.isAttached()
+                && p.getAttachedTo().equals(bearsPerm.getId()));
+```
+
 ## Reference tests
 
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/o/OrcishArtilleryTest.java`
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/s/ShockTest.java`
+- `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/a/ArcaneTeachingsTest.java` — aura granting activated ability to creature
+- `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/b/BurdenOfGuiltTest.java` — aura with own activated ability
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/c/CondemnTest.java`
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/t/TwincastTest.java`
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommanderTest.java`

@@ -220,6 +220,68 @@ Then do all of:
    - Add an oracle text mapping in `ORACLE_TEXT_EFFECT_MAP.md` if applicable
    - Add a card pattern entry in `CARD_PATTERN_INDEX.md`
 
+## Lombok conventions
+
+Domain model classes use Lombok `@Getter`/`@Setter`. Access fields via `getFieldName()`, not `fieldName()`. For example:
+- `ActivatedAbility` → `ability.getEffects()`, `ability.getDescription()`, `ability.getManaCost()`
+- `Card` → `card.getActivatedAbilities()`, `card.getEffects(slot)`, `card.getName()`
+- `Permanent` → `perm.getAttachedTo()`, `perm.isTapped()`, `perm.getCard()`
+- `StackEntry` → `entry.getSourcePermanentId()`, `entry.getTargetId()`, `entry.getControllerId()`
+
+Records (effect classes, predicates, filters) use Java record accessors: `effect.powerBoost()`, `filter.predicate()`.
+
+## Resolution handler templates
+
+When adding a new effect that operates on the enchanted creature (for aura abilities):
+
+```java
+@HandlesEffect(YourEnchantedCreatureEffect.class)
+private void resolveYourEffect(GameData gameData, StackEntry entry) {
+    // 1. Find the aura permanent via sourcePermanentId
+    Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+    if (auraPerm == null) {
+        log.info("Game {} - Aura no longer on battlefield", gameData.id);
+        return;
+    }
+
+    // 2. Find the enchanted creature via attachedTo
+    UUID enchantedId = auraPerm.getAttachedTo();
+    if (enchantedId == null) {
+        log.info("Game {} - Not attached to anything", gameData.id);
+        return;
+    }
+
+    Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedId);
+    if (enchantedCreature == null) {
+        log.info("Game {} - Enchanted creature no longer on battlefield", gameData.id);
+        return;
+    }
+
+    // 3. Apply effect to enchantedCreature
+    // e.g. enchantedCreature.tap(), deal damage, add counter, etc.
+
+    String logMsg = entry.getCard().getName() + " affects " + enchantedCreature.getCard().getName() + ".";
+    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+}
+```
+
+When adding a simple targeted effect:
+
+```java
+@HandlesEffect(YourTargetEffect.class)
+private void resolveYourEffect(GameData gameData, StackEntry entry) {
+    Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+    if (target == null) {
+        return;
+    }
+
+    // Apply effect to target
+
+    String logMsg = entry.getCard().getName() + " affects " + target.getCard().getName() + ".";
+    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+}
+```
+
 ## Quick anti-patterns
 
 - Adding new effect records for simple two-step effects that already compose.

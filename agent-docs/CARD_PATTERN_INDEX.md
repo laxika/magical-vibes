@@ -2,6 +2,26 @@
 
 Purpose: quickly find a reference card for the pattern you're implementing. One or two examples per archetype. All paths relative to `cards/`.
 
+## Quick navigation
+
+| Section | Key patterns |
+|---------|-------------|
+| [Lands](#lands) | basic, pain, check, fast, creature, utility |
+| [Spells](#spells) | burn, pump, destroy, board wipe, draw, mill, counterspell, modal, graveyard |
+| [Vanilla creatures](#vanilla-creatures-empty-body-all-from-scryfall) | no abilities |
+| [Keyword creatures](#keyword-creatures-keywords-from-scryfall-empty-body) | flying, first strike, haste, etc. |
+| [ETB creatures](#etb-creatures) | enters-the-battlefield triggers (targeted + non-targeted) |
+| [Triggered creatures](#triggered-creatures) | attack, block, death, damage, upkeep, draw triggers |
+| [Static permanents](#static-permanents) | lords, anthems, restrictions, cost reduction |
+| [Auras](#auras) | lockdown, boost, control, grant ability, own ability, curses |
+| [Artifacts](#artifacts) | ETB, activated, static |
+| [Vehicles](#vehicles) | crew |
+| [Equipment](#equipment) | equip, grant keyword, grant ability |
+| [Activated abilities](#activated-abilities) | tap-to-X, mana abilities, sacrifice, pump |
+| [Planeswalkers](#planeswalkers) | loyalty abilities |
+| [Sagas](#sagas) | chapter triggers |
+| [Copy-paste templates](#copy-paste-templates-card--test) | full card+test templates for common archetypes |
+
 ## Lands
 
 | Pattern | Reference | Notes |
@@ -1858,3 +1878,401 @@ class CARDNAMETest extends BaseCardTest {
 ```
 
 **Placeholders:** `LETTER` (package letter), `SET`/`NUM` (card printing), `CARDNAME` (class name), `CARD_DISPLAY_NAME` (oracle name), `POWER_BOOST`/`TOUGHNESS_BOOST` (integers), `PRIMARY_COLOR` (ManaColor), `TOTAL_MANA` (CMC integer). Remove the Flash tests section if the card does not have Flash.
+
+---
+
+### Aura with static effect (enchant creature)
+
+"Enchant creature. Enchanted creature can't attack or block." / "Enchanted creature gets +X/+Y."
+
+Reference: `p/Pacifism.java` (can't attack/block), `h/HolyStrength.java` (+1/+2 boost)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.STATIC_EFFECT_CLASS;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        )).addEffect(EffectSlot.STATIC, new STATIC_EFFECT_CLASS(ARGS));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.STATIC_EFFECT_CLASS;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
+        assertThat(card.isAura()).isTrue();
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(STATIC_EFFECT_CLASS.class);
+    }
+
+    @Test
+    @DisplayName("Casting puts it on the stack")
+    void castingPutsOnStack() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
+    }
+
+    @Test
+    @DisplayName("Resolving attaches to target creature")
+    void resolvingAttachesToTarget() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("CARD_DISPLAY_NAME")
+                        && p.isAttached()
+                        && p.getAttachedTo().equals(bearsPerm.getId()));
+    }
+
+    @Test
+    @DisplayName("Static effect is active while aura is attached")
+    void staticEffectActive() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent auraPerm = new Permanent(new CARDNAME());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        // CUSTOMIZE: assert the static effect (e.g. getEffectivePower, cant attack, etc.)
+    }
+
+    @Test
+    @DisplayName("Static effect stops when aura is removed")
+    void staticEffectStopsWhenRemoved() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent auraPerm = new Permanent(new CARDNAME());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
+
+        // CUSTOMIZE: assert the static effect is gone
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `STATIC_EFFECT_CLASS` (e.g. `EnchantedCreatureCantAttackOrBlockEffect`, `StaticBoostEffect`), `ARGS` (e.g. none, or `2, 2, GrantScope.ENCHANTED_CREATURE`), `PRIMARY_COLOR`, `TOTAL_MANA`.
+
+---
+
+### Aura with own activated ability (enchant creature)
+
+"Enchant creature. {COST}: [effect on enchanted creature]."
+
+The aura itself has the activated ability (not granted to the creature). The ability finds the enchanted creature via the aura's `attachedTo`.
+
+Reference: `b/BurdenOfGuilt.java` ({1}: Tap enchanted creature)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.EFFECT_CLASS;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+import java.util.List;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        ));
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{MANA_COST}",
+                List.of(new EFFECT_CLASS(ARGS)),
+                "{MANA_COST}: ABILITY_DESCRIPTION."
+        ));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.EFFECT_CLASS;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
+        assertThat(card.isAura()).isTrue();
+        assertThat(card.getActivatedAbilities()).hasSize(1);
+        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
+                .isInstanceOf(EFFECT_CLASS.class);
+    }
+
+    @Test
+    @DisplayName("Resolving attaches to target creature")
+    void resolvingAttachesToTarget() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new CARDNAME()));
+        harness.addMana(player1, ManaColor.PRIMARY_COLOR, TOTAL_MANA);
+
+        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("CARD_DISPLAY_NAME")
+                        && p.isAttached()
+                        && p.getAttachedTo().equals(bearsPerm.getId()));
+    }
+
+    @Test
+    @DisplayName("Activating ability puts it on the stack")
+    void activatingAbilityPutsOnStack() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        // Aura at index 1 (creature at 0)
+        Permanent auraPerm = new Permanent(new CARDNAME());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        harness.addMana(player1, ManaColor.ABILITY_COLOR, ABILITY_MANA);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("CARD_DISPLAY_NAME");
+    }
+
+    @Test
+    @DisplayName("Ability resolves and affects enchanted creature")
+    void abilityResolvesOnEnchantedCreature() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent auraPerm = new Permanent(new CARDNAME());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        harness.addMana(player1, ManaColor.ABILITY_COLOR, ABILITY_MANA);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        // CUSTOMIZE: assert effect on bearsPerm (e.g. isTapped(), damage, etc.)
+    }
+
+    @Test
+    @DisplayName("Can enchant and affect opponent's creature")
+    void canEnchantOpponentCreature() {
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent auraPerm = new Permanent(new CARDNAME());
+        auraPerm.setAttachedTo(opponentCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        harness.addMana(player1, ManaColor.ABILITY_COLOR, ABILITY_MANA);
+
+        // Aura is at index 0 on player1's battlefield (only permanent)
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        // CUSTOMIZE: assert effect on opponentCreature
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `EFFECT_CLASS` (e.g. `TapEnchantedCreatureEffect`), `ARGS`, `MANA_COST` (e.g. `1`), `ABILITY_DESCRIPTION`, `PRIMARY_COLOR`/`TOTAL_MANA` (for casting), `ABILITY_COLOR`/`ABILITY_MANA` (for activating).
+
+**Key detail:** The `permanentIndex` in `activateAbility` refers to the aura's position on the controller's battlefield, NOT the enchanted creature. If the creature is at index 0 and the aura at index 1, use `1`.
+
+---
+
+### Aura granting activated ability to enchanted creature
+
+"Enchant creature. Enchanted creature has '{COST}: [effect].'"
+
+The creature gets the ability (not the aura). The creature's controller activates it. Uses `GrantActivatedAbilityEffect` with `GrantScope.ENCHANTED_CREATURE`.
+
+Reference: `a/ArcaneTeachings.java` (+2/+2, {T}: deal 1 damage)
+
+**Card:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GRANTED_EFFECT_CLASS;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+import java.util.List;
+
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class CARDNAME extends Card {
+
+    public CARDNAME() {
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        )).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                new ActivatedAbility(
+                        REQUIRES_TAP,
+                        "ABILITY_MANA_COST_OR_NULL",
+                        List.of(new GRANTED_EFFECT_CLASS(ARGS)),
+                        "ABILITY_RULES_TEXT"
+                ),
+                GrantScope.ENCHANTED_CREATURE
+        ));
+    }
+}
+```
+
+**Test:**
+
+```java
+package com.github.laxika.magicalvibes.cards.LETTER;
+
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class CARDNAMETest extends BaseCardTest {
+
+    @Test
+    @DisplayName("CARD_DISPLAY_NAME has correct card properties")
+    void hasCorrectProperties() {
+        CARDNAME card = new CARDNAME();
+
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
+        assertThat(card.isAura()).isTrue();
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(STATIC_COUNT);
+        // Check for GrantActivatedAbilityEffect in static effects
+    }
+
+    @Test
+    @DisplayName("Enchanted creature can use granted ability")
+    void enchantedCreatureCanUseGrantedAbility() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent auraPerm = new Permanent(new CARDNAME());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        // activateAbility on the CREATURE (index 0), not the aura
+        // Add mana if ability has a mana cost
+        harness.activateAbility(player1, 0, null, TARGET_ID);
+        harness.passBothPriorities();
+
+        // CUSTOMIZE: assert effect (damage, tap, etc.)
+    }
+
+    @Test
+    @DisplayName("Granted ability is lost when aura is removed")
+    void grantedAbilityLostWhenAuraRemoved() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent auraPerm = new Permanent(new CARDNAME());
+        auraPerm.setAttachedTo(bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+
+        gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, TARGET_ID))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+}
+```
+
+**Placeholders:** `LETTER`, `SET`/`NUM`, `CARDNAME`, `CARD_DISPLAY_NAME`, `REQUIRES_TAP` (true/false), `ABILITY_MANA_COST_OR_NULL` (e.g. `null` for tap-only, `"{1}"` for mana cost), `GRANTED_EFFECT_CLASS`/`ARGS`, `ABILITY_RULES_TEXT`, `STATIC_COUNT` (number of static effects), `TARGET_ID` (target for the granted ability, or `null` if untargeted).
+
+**Key detail:** `activateAbility` index points to the **creature** (which now has the granted ability), not the aura. If the aura grants a tap ability, summoning sickness and already-tapped rules apply to the creature.
