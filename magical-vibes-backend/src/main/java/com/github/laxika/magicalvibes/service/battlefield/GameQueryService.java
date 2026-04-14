@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreatu
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
@@ -2340,6 +2341,11 @@ public class GameQueryService {
         // Check continuous ability loss (e.g. Deep Freeze aura)
         StaticBonus staticBonus = computeStaticBonus(gameData, permanent);
         if (staticBonus.losesAllAbilities()) {
+            return false;
+        }
+
+        // Check aura-based ability removal (Deep Freeze)
+        if (hasAuraWithEffect(gameData, permanent, LosesAllAbilitiesEffect.class)) {
             return false;
         }
 
