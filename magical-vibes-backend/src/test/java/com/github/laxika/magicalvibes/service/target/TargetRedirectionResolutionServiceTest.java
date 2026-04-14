@@ -305,6 +305,53 @@ class TargetRedirectionResolutionServiceTest {
         }
 
         @Test
+        @DisplayName("Excludes invalid candidates on the stack via checkSpellTargetOnStack")
+        void excludesInvalidStackCandidates() {
+            Card redirectCard = createCard("Deflection");
+            Card counterspellCard = createCard("Counterspell");
+            counterspellCard.setType(CardType.INSTANT);
+            counterspellCard.addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+
+            Card currentTargetSpell = createCard("Giant Growth");
+            Card validSpell = createCard("Shock");
+            Card invalidSpell = createCard("Lightning Bolt");
+
+            StackEntry currentTargetEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
+                    currentTargetSpell, player2Id, "Giant Growth", List.of(), 0);
+            StackEntry validEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
+                    validSpell, player2Id, "Shock", List.of(), 0);
+            StackEntry invalidEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
+                    invalidSpell, player1Id, "Lightning Bolt", List.of(), 0);
+
+            // Counterspell targets Giant Growth on the stack
+            StackEntry counterspellEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
+                    counterspellCard, player2Id, "Counterspell", counterspellCard.getEffects(EffectSlot.SPELL),
+                    currentTargetSpell.getId(), Zone.STACK);
+            addToStack(currentTargetEntry);
+            addToStack(validEntry);
+            addToStack(invalidEntry);
+            addToStack(counterspellEntry);
+
+            StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, counterspellCard.getId());
+
+            // Lightning Bolt fails spell-target validation
+            when(targetLegalityService.checkSpellTargetOnStack(eq(gd), eq(invalidSpell.getId()), any(), eq(player2Id)))
+                    .thenReturn(Optional.of("not a valid spell target"));
+
+            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
+            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
+                    idsCaptor.capture(), anyString());
+
+            assertThat(idsCaptor.getValue())
+                    .contains(validSpell.getId())
+                    .doesNotContain(invalidSpell.getId())
+                    .doesNotContain(currentTargetSpell.getId());
+        }
+
+        @Test
         @DisplayName("Collects targets from the stack when target zone is STACK")
         void collectsTargetsFromStackWhenZoneIsStack() {
             Card redirectCard = createCard("Deflection");
@@ -584,6 +631,81 @@ class TargetRedirectionResolutionServiceTest {
             service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
 
             assertThat(captureLogMessage()).contains("does not have a single target");
+        }
+
+        @Test
+        @DisplayName("Uses checkSpellTargetOnStack when target spell needs spell target")
+        void usesSpellTargetCheckWhenTargetSpellNeedsSpellTarget() {
+            Card redirectCard = createCard("Spellskite");
+            Card counterspellCard = createCard("Counterspell");
+            counterspellCard.setType(CardType.INSTANT);
+            counterspellCard.addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+
+            Card spellOnStack = createCard("Giant Growth");
+            StackEntry spellOnStackEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
+                    spellOnStack, player2Id, "Giant Growth", List.of(), 0);
+            gd.stack.add(spellOnStackEntry);
+
+            // Counterspell targets Giant Growth on the stack
+            StackEntry counterspellEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
+                    counterspellCard, player2Id, "Counterspell", counterspellCard.getEffects(EffectSlot.SPELL),
+                    spellOnStack.getId(), Zone.STACK);
+            addToStack(counterspellEntry);
+
+            Permanent sourcePermanent = createCreature("Spellskite");
+            gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+
+            StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, counterspellCard.getId(), sourcePermanent.getId());
+
+            when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
+            // Source permanent is not a valid spell target
+            when(targetLegalityService.checkSpellTargetOnStack(eq(gd), eq(sourcePermanent.getId()), any(), eq(player2Id)))
+                    .thenReturn(Optional.of("not a spell"));
+
+            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+
+            // Target should remain unchanged
+            assertThat(counterspellEntry.getTargetId()).isEqualTo(spellOnStack.getId());
+            assertThat(captureLogMessage()).contains("not a legal target");
+        }
+
+        @Test
+        @DisplayName("Uses checkGraveyardRetargetCandidate when target spell targets graveyard")
+        void usesGraveyardCheckWhenTargetSpellTargetsGraveyard() {
+            Card redirectCard = createCard("Spellskite");
+            Card graveyardSpellCard = createCard("Raise Dead");
+            graveyardSpellCard.setType(CardType.SORCERY);
+            ReturnCardFromGraveyardEffect graveyardEffect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                    .targetGraveyard(true)
+                    .build();
+            graveyardSpellCard.addEffect(EffectSlot.SPELL, graveyardEffect);
+
+            Card graveyardTarget = createCard("Grizzly Bears");
+            graveyardTarget.setType(CardType.CREATURE);
+            gd.playerGraveyards.get(player2Id).add(graveyardTarget);
+
+            StackEntry graveyardSpell = new StackEntry(StackEntryType.SORCERY_SPELL,
+                    graveyardSpellCard, player2Id, "Raise Dead", graveyardSpellCard.getEffects(EffectSlot.SPELL),
+                    graveyardTarget.getId(), Zone.GRAVEYARD);
+            addToStack(graveyardSpell);
+
+            Permanent sourcePermanent = createCreature("Spellskite");
+            gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+
+            StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, graveyardSpellCard.getId(), sourcePermanent.getId());
+
+            when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
+            // Source permanent is not a valid graveyard target
+            when(targetLegalityService.checkGraveyardRetargetCandidate(eq(gd), eq(graveyardSpellCard), eq(sourcePermanent.getId()), eq(player2Id)))
+                    .thenReturn(Optional.of("not in graveyard"));
+
+            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+
+            // Target should remain unchanged
+            assertThat(graveyardSpell.getTargetId()).isEqualTo(graveyardTarget.getId());
+            assertThat(captureLogMessage()).contains("not a legal target");
         }
 
         @Test
