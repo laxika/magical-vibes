@@ -675,6 +675,125 @@ void decliningToChooseReordersAll() {
 
 Reference: `CallToTheKindredTest.java` — full working example.
 
+## Recipe: transform DFC
+
+### Helper: add artifact (or enchantment) ready on battlefield
+
+```java
+private Permanent addArtifactReady(Player player) {
+    FrontFaceCard card = new FrontFaceCard();
+    Permanent perm = new Permanent(card);
+    perm.setSummoningSick(false);
+    gd.playerBattlefields.get(player.getId()).add(perm);
+    return perm;
+}
+```
+
+### Helper: add already-transformed permanent
+
+```java
+private Permanent addTransformedPermanent(Player player) {
+    FrontFaceCard card = new FrontFaceCard();
+    Permanent perm = new Permanent(card);
+    perm.setSummoningSick(false);
+    perm.setCard(card.getBackFaceCard());
+    perm.setTransformed(true);
+    gd.playerBattlefields.get(player.getId()).add(perm);
+    return perm;
+}
+```
+
+### Helper: find index of permanent
+
+```java
+private int indexOf(Player player, Permanent perm) {
+    return gd.playerBattlefields.get(player.getId()).indexOf(perm);
+}
+```
+
+### Test: card structure (front + back face)
+
+```java
+@Test
+void frontFaceStructure() {
+    FrontFaceCard card = new FrontFaceCard();
+    assertThat(card.getBackFaceCard()).isNotNull();
+    assertThat(card.getBackFaceClassName()).isEqualTo("BackFaceCard");
+    // assert activated abilities, effects, etc.
+}
+
+@Test
+void backFaceStructure() {
+    FrontFaceCard card = new FrontFaceCard();
+    BackFaceCard backFace = (BackFaceCard) card.getBackFaceCard();
+    // assert back face abilities, effects, etc.
+}
+```
+
+### Test: activated ability transforms at threshold
+
+```java
+@Test
+void transformsWhenConditionMet() {
+    Permanent perm = addArtifactReady(player1);
+    harness.setLife(player1, 29); // will be 30 after gaining 1
+
+    harness.activateAbility(player1, 0, null, null);
+    harness.passBothPriorities();
+
+    assertThat(perm.isTransformed()).isTrue();
+    assertThat(perm.getCard().getName()).isEqualTo("Back Face Name");
+}
+
+@Test
+void doesNotTransformWhenConditionNotMet() {
+    Permanent perm = addArtifactReady(player1);
+    harness.setLife(player1, 28); // will be 29, below threshold
+
+    harness.activateAbility(player1, 0, null, null);
+    harness.passBothPriorities();
+
+    assertThat(perm.isTransformed()).isFalse();
+}
+```
+
+### Test: upkeep may-transform (e.g. Arguel's Blood Fast pattern)
+
+```java
+@Test
+void transformsWhenAcceptingMayAtUpkeep() {
+    Permanent perm = addArtifactReady(player1);
+    harness.setLife(player1, 5); // meets threshold
+
+    harness.forceActivePlayer(player1);
+    harness.forceStep(TurnStep.UNTAP);
+    harness.clearPriorityPassed();
+    harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+    harness.passBothPriorities(); // resolve triggered ability — queues may prompt
+    harness.handleMayAbilityChosen(player1, true);
+
+    assertThat(perm.isTransformed()).isTrue();
+}
+```
+
+### Test: back face activated ability
+
+```java
+@Test
+void backFaceAbilityWorks() {
+    Permanent perm = addTransformedPermanent(player1);
+    harness.setLife(player2, 20);
+
+    int permIdx = indexOf(player1, perm);
+    harness.activateAbility(player1, permIdx, null, player2.getId());
+    harness.passBothPriorities();
+
+    assertThat(gd.getLife(player2.getId())).isEqualTo(15); // adjust for effect
+}
+```
+
+Reference: `ChaliceOfLifeTest.java`, `ArguelsBloodFastTest.java`, `TreasureMapTest.java`
+
 ## Reference tests
 
 - `magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/o/OrcishArtilleryTest.java`

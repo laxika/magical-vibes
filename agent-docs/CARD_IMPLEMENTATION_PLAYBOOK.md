@@ -401,6 +401,90 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
 
 **Permanent vs Card**: Permanents can have `transientSubtypes` (from clone/copy/animate effects) and keyword grants, so use `permanent.hasKeyword()` and include `getTransientSubtypes()`. Cards in non-battlefield zones only have their printed subtypes/keywords.
 
+## Transform DFC checklist
+
+1. **Back face class** — Create `BackFaceName.java` in the appropriate `cards/{letter}/` package. No `@CardRegistration`. Add only engine logic (activated abilities, effects). Scryfall auto-loads metadata.
+2. **Front face class** — Create `FrontFaceName.java` with `@CardRegistration`. In constructor:
+   - Instantiate back face: `BackFaceName backFace = new BackFaceName(); backFace.setSetCode(getSetCode()); backFace.setCollectorNumber(getCollectorNumber()); setBackFaceCard(backFace);`
+   - Add front face abilities/effects
+   - Override `getBackFaceClassName()` returning `"BackFaceName"`
+3. **Transform trigger** — Choose the right pattern:
+   - Werewolf: `EACH_UPKEEP_TRIGGERED` + `NoSpellsCastLastTurnConditionalEffect` (front) / `TwoOrMoreSpellsCastLastTurnConditionalEffect` (back)
+   - Life threshold: `ControllerLifeThresholdConditionalEffect(N, TransformSelfEffect())` or `ControllerLifeAtOrBelowThresholdConditionalEffect(N, MayEffect(TransformSelfEffect(), "..."))`
+   - Counter threshold: `PutCounterOnSelfThenTransformIfThresholdEffect(counterType, N, optional, onTransformEffects)`
+   - Creature count: `ControlsPermanentCountConditionalEffect(N, PermanentIsCreaturePredicate, TransformSelfEffect())`
+   - Activated ability: `ActivatedAbility(tap, null, List.of(TransformSelfEffect()), "...")` with optional subtype restriction
+   - Inline conditional: chain effects in activated ability list, e.g. `[GainLifeEffect(1), ControllerLifeThresholdConditionalEffect(30, TransformSelfEffect())]`
+4. **Tests** — See TEST_RECIPES.md "Transform DFC" recipe
+
+### Transform card template
+
+```java
+@CardRegistration(set = "SET", collectorNumber = "NUM")
+public class FrontFace extends Card {
+    public FrontFace() {
+        BackFace backFace = new BackFace();
+        backFace.setSetCode(getSetCode());
+        backFace.setCollectorNumber(getCollectorNumber());
+        setBackFaceCard(backFace);
+
+        // Front face abilities here
+    }
+
+    @Override
+    public String getBackFaceClassName() {
+        return "BackFace";
+    }
+}
+```
+
+```java
+public class BackFace extends Card {
+    public BackFace() {
+        // Back face abilities here
+    }
+}
+```
+
+## ConditionalEffect context reference
+
+Which engine layers support each ConditionalEffect. Check this before using a conditional in a new context.
+
+| ConditionalEffect | Static | Effect Resolution | Trigger Time |
+|---|---|---|---|
+| `ControllerLifeThresholdConditionalEffect` | yes | yes | - |
+| `ControllerLifeAtOrBelowThresholdConditionalEffect` | - | yes | yes (upkeep) |
+| `MetalcraftConditionalEffect` | yes | yes | yes (graveyard upkeep) |
+| `MorbidConditionalEffect` | - | yes | yes (end step) |
+| `KickedConditionalEffect` | - | yes | - |
+| `NotKickedConditionalEffect` | - | yes | yes (end step) |
+| `RaidConditionalEffect` | - | yes | yes (end step) |
+| `EquippedConditionalEffect` | yes | yes | - |
+| `ControlsSubtypeConditionalEffect` | yes | yes | - |
+| `ControlsAnotherSubtypeConditionalEffect` | yes | yes | - |
+| `ControlsPermanentConditionalEffect` | - | yes | - |
+| `ControlsPermanentCountConditionalEffect` | - | yes | yes (upkeep, end step) |
+| `NoOtherSubtypeConditionalEffect` | - | yes | yes (upkeep) |
+| `NoSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |
+| `TwoOrMoreSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |
+| `ActivationCountConditionalEffect` | - | yes | - |
+| `DidntAttackConditionalEffect` | - | yes | yes (end step) |
+| `AttacksAloneConditionalEffect` | - | yes | yes (attack) |
+| `MinimumAttackersConditionalEffect` | - | yes | yes (attack) |
+| `HasNontokenSubtypeAttackerConditionalEffect` | - | yes | yes (attack) |
+| `ControllerGraveyardCardThresholdConditionalEffect` | yes | yes | - |
+| `DefendingPlayerPoisonedConditionalEffect` | - | yes | - |
+| `PermanentEnteredThisTurnConditionalEffect` | - | yes | - |
+| `ControllerTurnConditionalEffect` | yes | - | - |
+| `OpponentControlsSubtypeConditionalEffect` | yes | - | - |
+| `AnyPlayerControlsColorConditionalEffect` | yes | - | - |
+| `SelfHasKeywordConditionalEffect` | yes | - | - |
+| `TopCardOfLibraryColorConditionalEffect` | yes | - | - |
+| `BlockedByMinCreaturesConditionalEffect` | yes | - | - |
+| `OpponentPoisonedConditionalEffect` | yes | - | - |
+
+**Key:** "yes" = supported; "-" = not supported. If you need a conditional in a context marked "-", you must add a handler in the corresponding service (`StaticEffectResolutionService`, `EffectResolutionService.evaluateCondition()`, or `StepTriggerService`).
+
 ## Quick anti-patterns
 
 - Adding new effect records for simple two-step effects that already compose.
