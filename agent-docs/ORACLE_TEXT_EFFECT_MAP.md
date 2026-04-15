@@ -137,6 +137,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "target player mills N cards" / "puts the top N cards into their graveyard" | `MillTargetPlayerEffect(N)` | SPELL | |
 | "each opponent mills N cards" | `MillEachOpponentEffect(N)` | SPELL/trigger | |
+| "each player mills N cards" | `MillControllerEffect(N)` + `EachOpponentMillsEffect(N)` | SPELL/trigger | Combine two effects — no targeting. See `GhoulcallersBell`, `ChillOfForeboding` |
 | "mill N cards" (self) | `MillControllerEffect(N)` | SPELL/trigger | |
 | "target player mills half their library" | `MillHalfLibraryEffect()` | SPELL | |
 
